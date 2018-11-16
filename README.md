@@ -1,0 +1,1 @@
+# SolidStateDetectors.jl
