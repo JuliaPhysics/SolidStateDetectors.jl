@@ -1,0 +1,169 @@
+{
+	"name":"ExampleSegmentedBEGe",
+	"class":"BEGe",
+	"type":"n",
+	"cyclic":120,
+	"materials":
+	{
+		"detector":"HPGe",
+		"environment":"Vacuum"
+	},
+	"geometry":
+	{
+		"unit": "mm",
+		"crystal":
+		{
+			"length": 40.0,
+			"radius": 40.0
+		},
+		"point_contact":
+		{
+			"depth":0.3,
+			"radius":7.5
+		},
+		"groove":
+		{
+			"endplate":"top",
+			"rInner":9.5,
+			"width":2.0,
+			"depth":0.0
+		},
+		"taper":
+		{
+			"top":
+			{
+				"rInner":33,
+				"length":0
+			},
+			"bot":
+			{
+				"rInner":36,
+				"length":0
+			}
+		}
+	},
+	"charge_carrier_density":
+	{
+		"unit": "cm-3",
+		"top": 0.61,
+		"bot": 1.35
+	},
+	"segmentation":
+	{
+		"n_contacts_total": 5,
+		"core":
+		{
+			"type": "Tubs",
+			"rStart": 0.0,
+			"rStop": 7.5,
+			"phiStart": 0,
+			"phiStop": 360,
+			"zStart": 39.7,
+			"zStop": 40.0,
+			"potential": 4500.0
+		},
+		"n_individual_segments": 4,
+		"S1":
+		{
+			"type": "Tubs",
+			"rStart": 40.0,
+			"rStop": 40.0,
+			"phiStart": 0,
+			"phiStop": 60,
+			"zStart": 0.0,
+			"zStop": 40.0,
+			"potential": 0.0,
+			"boundaryWidth":
+			{
+				"radial":0.0,
+				"vertical": 0.0,
+				"horizontal": 0.5
+			},
+			"repetitive":true,
+			"repetitions":
+			{
+				"radial":0,
+				"vertical": 0,
+				"horizontal": 5
+			}
+		},
+		"S2":
+		{
+			"type": "Tubs",
+			"rStart": 17.0,
+			"rStop": 40.0,
+			"phiStart": 0,
+			"phiStop": 60,
+			"zStart": 40.0,
+			"zStop": 40.0,
+			"potential": 0.0,
+			"boundaryWidth":
+			{
+				"radial":0.0,
+				"vertical": 0.0,
+				"horizontal": 0.5
+			},
+			"repetitive":true,
+			"repetitions":
+			{
+				"radial": 0,
+				"vertical": 0,
+				"horizontal": 5
+			}
+		},
+		"S3":
+		{
+			"type": "Tubs",
+			"rStart": 12.5,
+			"rStop": 40.0,
+			"phiStart": 0,
+			"phiStop": 60,
+			"zStart": 0.0,
+			"zStop": 0.0,
+			"potential": 0.0,
+			"boundaryWidth":
+			{
+				"radial":0.0,
+				"vertical": 0.0,
+				"horizontal": 0.5
+			},
+			"repetitive":true,
+			"repetitions":
+			{
+				"radial": 0,
+				"vertical": 0,
+				"horizontal": 5
+			}
+		},
+		"S4":
+		{
+			"type": "Tubs",
+			"rStart": 0.0,
+			"rStop": 12.5,
+			"phiStart": 0,
+			"phiStop": 360,
+			"zStart": 0.0,
+			"zStop": 0.0,
+			"potential": 0.0,
+			"boundaryWidth":
+			{
+				"radial":0.0,
+				"vertical": 0.0,
+				"horizontal": 0.0
+			},
+			"repetitive":false,
+			"repetitions":
+			{
+				"radial": 0,
+				"vertical": 0,
+				"horizontal": 0
+			}
+		},
+		"custom_grouping":true,
+		"Chn1":"1",
+		"Chn2":"2-8-14",
+		"Chn3":"4-10-16",
+		"Chn4":"6-12-18",
+		"Chn5":"3-5-7-9-11-13-15-17-19-20"
+	}
+}

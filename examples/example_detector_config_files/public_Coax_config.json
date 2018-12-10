@@ -1,0 +1,152 @@
+{
+	"name":"ExampleCoax",
+	"class":"Coax",
+	"type": "n",
+	"cyclic": 360,
+	"materials":{
+		"detector":"HPGe",
+		"environment":"Vacuum"
+	},
+	"geometry":
+	{
+		"unit": "mm",
+		"crystal":
+		{
+			"length": 70.00,
+			"radius": 37.5
+		},
+		"borehole":
+		{
+			"length": 70,
+			"radius": 5
+		},
+		"point_contact":
+		{
+			"depth": 0.0,
+			"radius": 0.0
+		},
+		"groove":
+		{
+			"endplate":"top",
+			"rInner": 0.0,
+			"width": 0.0,
+			"depth": 0.0
+		},
+		"taper":
+		{
+			"inner":
+			{
+				"top":
+				{
+					"rOuter": 10,
+					"length": 5
+				},
+				"bot":
+				{
+					"rOuter": 10,
+					"length": 5
+				}
+			},
+			"outer":
+			{
+				"top":
+				{
+					"rInner": 0,
+					"length": 0
+				},
+				"bot":
+				{
+					"rInner": 0,
+					"length": 0
+				}
+			}
+		}
+	},
+	"charge_carrier_density":
+	{
+		"unit": "cm-3",
+		"top": 0.61,
+		"bot": 1.35
+		},
+	"segmentation":
+	{
+		"n_contacts_total": 19,
+		"core":
+		{
+			"type": "Tubs",
+			"rStart": 5.0,
+			"rStop": 5.0,
+			"phiStart": 0,
+			"phiStop": 360,
+			"zStart": 5.0,
+			"zStop": 65.0,
+			"potential": 6000.0
+		},
+		"n_repetitive_segments":0,
+		"repetitive_segment":
+		{
+			"rStart": 37.5,
+			"rStop": 37.5,
+			"phiStart": 0,
+			"phiStop": 60,
+			"zStart": 0,
+			"zStop": 23.3333,
+			"potential": 0.0,
+			"boundaryWidth":
+			{
+				"vertical": 0.5,
+				"horizontal": 0.5
+			},
+			"repetitions":
+			{
+				"vertical": 3,
+				"horizontal": 6
+			}
+		},
+		"n_individual_segments": 1,
+		"S1":
+		{
+			"type":"Tubs",
+			"rStart": 37.5,
+			"rStop": 37.5,
+			"phiStart": 0,
+			"phiStop": 60,
+			"zStart": 0,
+			"zStop": 23.3333,
+			"potential": 0.0,
+			"boundaryWidth":
+			{
+				"radial":0.0,
+				"vertical": 0.5,
+				"horizontal": 0.5
+			},
+			"repetitive":true,
+			"repetitions":
+			{
+				"radial":0,
+				"vertical":2,
+				"horizontal":5
+			}
+		},
+		"custom_grouping":true,
+		"Chn1":"1",
+		"Chn2":"2",
+		"Chn3":"3",
+		"Chn4":"4",
+		"Chn5":"5",
+		"Chn6":"6",
+		"Chn7":"7",
+		"Chn8":"8",
+		"Chn9":"9",
+		"Chn10":"10",
+		"Chn11":"11",
+		"Chn12":"12",
+		"Chn13":"13",
+		"Chn14":"14",
+		"Chn15":"15",
+		"Chn16":"16",
+		"Chn17":"17",
+		"Chn18":"18",
+		"Chn19":"19"
+	}
+}

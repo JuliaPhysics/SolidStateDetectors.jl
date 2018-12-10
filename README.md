@@ -1,1 +1,15 @@
 # SolidStateDetectors.jl
+
+[![Documentation for development version](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaHEP.github.io/SolidStateDetectors.jl/dev)
+[![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
+[![Travis Build Status](https://travis-ci.com/JuliaHEP/SolidStateDetectors.jl.svg?branch=master)](https://travis-ci.com/JuliaHEP/SolidStateDetectors.jl)
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/github/JuliaHEP/SolidStateDetectors.jl?branch=master&svg=true)](https://ci.appveyor.com/project/JuliaHEP/SolidStateDetectors-jl)
+[![Codecov](https://codecov.io/gh/JuliaHEP/SolidStateDetectors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaHEP/SolidStateDetectors.jl)
+
+SolidStateDetectors.jl is a Julia package for fast 2D and 3D simulation of Solid State Detectors.
+
+## Documentation
+
+* [Documentation for development version](https://JuliaHEP.github.io/SolidStateDetectors.jl/dev)
+
+
