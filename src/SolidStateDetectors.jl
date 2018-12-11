@@ -57,8 +57,4 @@ include("IO/IO.jl")
 
 include("examples.jl")
 
-function check_borehole(x,testfunction)
-return 1 + testfunction(x)
-end
-
 end # module
