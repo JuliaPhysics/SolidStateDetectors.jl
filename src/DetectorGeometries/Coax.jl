@@ -40,7 +40,7 @@ mutable struct Coax{T<:AbstractFloat} <: SolidStateDetector{T}
 
     ### Segmentaion
     n_total_contacts::Int
-    n_repetitive_segments::Int
+    # n_repetitive_segments::Int
     n_individual_segments::Int
 
     segmentation_r_ranges::Array{Tuple{T,T},1}
@@ -117,13 +117,13 @@ function Coax{T}(config_file::Dict)::Coax where T<:AbstractFloat
 
     ### Segmentation
     c.n_total_contacts = config_file["segmentation"]["n_contacts_total"]
-    c.n_repetitive_segments = config_file["segmentation"]["n_repetitive_segments"]
+    # c.n_repetitive_segments = config_file["segmentation"]["n_repetitive_segments"]
     c.n_individual_segments = config_file["segmentation"]["n_individual_segments"]
     c.custom_grouping = config_file["segmentation"]["custom_grouping"]
 
     # c.segmentation_boundaryWidth_vertical = round(c.geometry_unit_factor *config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"],digits=5)
     # c.segmentation_boundaryWidth_horizontal = round(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"]*c.geometry_unit_factor *180/(π*c.crystal_radius), digits=5)
-    construct_segmentation_arrays_from_repetitive_segment(c,config_file)
+    # construct_segmentation_arrays_from_repetitive_segment(c, config_file)
     c.n_individual_segments > 0 ? construct_segmentation_arrays_for_individual_segments(c,config_file) : nothing
     construct_grouped_channels_array(c, config_file)
     construct_floating_boundary_arrays(c)
