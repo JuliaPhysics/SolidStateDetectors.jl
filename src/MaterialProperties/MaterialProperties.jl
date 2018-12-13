@@ -17,3 +17,13 @@ material_properties[:HPGe] = (
     ρ = 5.323Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
     name = "High Purity Germanium"
 )
+
+
+# These values might just be approximations
+material_properties[:Si] = (
+    E_ionisation = 3.62u"eV",
+    f_fano = 0.11,
+    ϵ_r = 11.7,
+    ρ = 2.3290Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
+    name = "Silicon"
+)
