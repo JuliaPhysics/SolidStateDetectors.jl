@@ -27,3 +27,11 @@ material_properties[:Si] = (
     ρ = 2.3290Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
     name = "Silicon"
 )
+
+material_properties[:LAr] = (
+    name = "Silicon",
+    E_ionisation = 0u"eV",
+    f_fano = 0.107,
+    ϵ_r = 1.505,
+    ρ = 1.396Unitful.g / (Unitful.ml), # u"g/cm^3" throws warnings in precompilation
+)
