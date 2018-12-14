@@ -1055,7 +1055,9 @@ function get_charge_density(detector::SolidStateDetector, r::Real, ϕ::Real, z::
     top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
-    return bot_net_charge_carrier_density + z * slope
+    ρ::T = bot_net_charge_carrier_density + z * slope
+    # ρ = ρ - (r - detector.borehole_radius) * 0.2 * ρ / (detector.crystal_radius - detector.borehole_radius) 
+    return ρ 
 end
 
 function json_to_dict(inputfile::String)::Dict
