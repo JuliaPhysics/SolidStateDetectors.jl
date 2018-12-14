@@ -144,26 +144,27 @@ function CylindricalGrid(detector::SolidStateDetector, r_arr::AbstractArray, φ_
     return CylindricalGrid{T}(cyclic, r_arr, φ_arr, z_arr, only_2d=only_2d)
 end
 
-function CylindricalGrid(detector::SolidStateDetector; init_grid_spacing::Real=2e-3, cyclic::Real=2π, only_2d::Bool = false)::CylindricalGrid
+function CylindricalGrid(detector::SolidStateDetector; init_grid_spacing::Vector{<:Real}=[2e-3, 2π / 72, 2e-3], cyclic::Real=2π, only_2d::Bool = false)::CylindricalGrid
     T = get_precision_type(detector)
 
     only_2d::Bool = cyclic == 0 ? true : false
 
-    grid_spacing::T = init_grid_spacing
-
     r_start::T = 0
-    r_stop::T = detector.crystal_radius + 4 * grid_spacing
-    r_step::T = grid_spacing # 1mm
+    r_step::T = init_grid_spacing[1] # 1mm
+    r_stop::T = detector.crystal_radius + 4 * r_step
     r_length::Int = div(r_stop - r_start, r_step)
     r_arr::Vector{T} = collect(range(r_start, stop=r_stop, length=r_length))
-
+    
+    five_degree_in_rad::T = 2π / 72
+    
     φ_start::T = 0
-    φ_step::T = grid_spacing / r_arr[2]
+    φ_step::T = init_grid_spacing[2]
     
     # φ_length::Int = div(φ_stop - φ_start, φ_step)
-    φ_length = 8
-    φ_step = cyclic / φ_length 
+    # φ_length = 8
+    # φ_step = cyclic / φ_length 
     φ_stop::T = cyclic - φ_step
+    φ_length::Int = div(φ_stop - φ_start, φ_step)
 
     if isodd(φ_length) φ_length += 1 end
     if φ_length == 0 φ_length = 2 end
@@ -173,9 +174,9 @@ function CylindricalGrid(detector::SolidStateDetector; init_grid_spacing::Real=2
         collect(range(φ_start, stop=φ_stop, length=φ_length) )
     end
 
-    z_start::T =  -4 * grid_spacing
-    z_step::T = grid_spacing # 1 mm
-    z_stop::T = detector.crystal_length + 4 * grid_spacing
+    z_step::T = init_grid_spacing[3] # 1 mm
+    z_start::T =  -4 * z_step
+    z_stop::T = detector.crystal_length + 4 * z_step
     z_length::Int = div(z_stop - z_start, z_step)
     if isodd(z_length)
         z_length + 1
