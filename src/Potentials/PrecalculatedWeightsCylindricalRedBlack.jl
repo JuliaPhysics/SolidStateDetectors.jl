@@ -404,9 +404,16 @@ function get_active_volume(grid::CylindricalGrid, pts::PointTypes{T}) where {T}
             end
         end
     end
+    if grid.cyclic > 0
+        active_volume *= 2π / grid.cyclic
+    end
 
     f::T = 10^6
     return active_volume * f * Unitful.cm * Unitful.cm * Unitful.cm
+end
+
+function is_fully_depleted(pts::PointTypes{T})::Bool where {T}
+    return !(undepleted_bit in (pts.pointtypes .& undepleted_bit))
 end
 
 
