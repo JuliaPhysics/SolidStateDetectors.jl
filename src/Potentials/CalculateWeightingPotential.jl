@@ -19,6 +19,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `sor_consts::Vector{<:Real}`: Two element array. First element contains the SOR constant for `r` = 0. Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between. First element should be smaller than the second one and both should be ∈ [1.0, 2.0].
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement. Default is `10000`. If set to `-1` there will be no limit.
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
+- `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 2π / 72, 2e-3] <=> [2mm, 5 degree, 2mm ]
 
 # Additional Information
 
@@ -29,7 +30,7 @@ function calculate_weighting_potential( det::SolidStateDetector, channel::Int;#c
                                         max_refinements::Int=3,
                                         refinement_limits::Vector{<:Real}=[1e-4, 1e-4, 1e-4],
                                         min_grid_spacing::Vector{<:Real}=[1e-4, 1e-2, 1e-4],
-                                        init_grid_spacing::Real=2e-3, # 2 mm
+                                        init_grid_spacing::Vector{<:Real}=[2e-3, 2π / 72, 2e-3], # 2mm, 5 degree, 2 mm
                                         depletion_handling::Bool=false,
                                         nthreads::Int=Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4, 1.85],
@@ -41,7 +42,7 @@ function calculate_weighting_potential( det::SolidStateDetector, channel::Int;#c
     bias_voltage::T = 1
     refinement_limits = T.(refinement_limits)
     min_grid_spacing = T.(min_grid_spacing)
-    init_grid_spacing = T(init_grid_spacing)
+    init_grid_spacing = T.(init_grid_spacing)
     sor_consts = T.(sor_consts)
     refine::Bool = max_refinements > 0 ? true : false
 

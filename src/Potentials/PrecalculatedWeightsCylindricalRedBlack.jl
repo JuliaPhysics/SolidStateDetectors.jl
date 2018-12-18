@@ -72,8 +72,7 @@ function PrecalculatedWeightsCylindricalRedBlack(detector::SolidStateDetector, g
     odd::Int  = 1
     even::Int = 2
 
-    # @inbounds begin
-    begin
+    @inbounds begin
         nr::Int = length(grid.r)
         nφ::Int = length(grid.φ)
         nz::Int = length(grid.z)
@@ -289,15 +288,6 @@ function PrecalculatedWeightsCylindricalRedBlack(detector::SolidStateDetector, g
                     inside_detector::Bool = contains(detector, pos_r, pos_φ, pos_z)
                     if inside_detector point_types[pwinds...] += pn_junction_bit end
 
-                    # deprecated:
-                    # ρ = if inside_detector
-                    #     get_charge_density(detector, pos_r, pos_φ, pos_z) * effective_electron_charge_vacuum
-                    #         This charge is not fully correct.The charge should be a weighted sum of the neighbouring (8) cells.
-                    #         This will be correct later. The error should be small for now.
-                    # else
-                    #     zero(T)
-                    # end
-
                     charge[pwinds...] = dV * ρ
                 end
             end
@@ -414,9 +404,16 @@ function get_active_volume(grid::CylindricalGrid, pts::PointTypes{T}) where {T}
             end
         end
     end
+    if grid.cyclic > 0
+        active_volume *= 2π / grid.cyclic
+    end
 
     f::T = 10^6
     return active_volume * f * Unitful.cm * Unitful.cm * Unitful.cm
+end
+
+function is_fully_depleted(pts::PointTypes{T})::Bool where {T}
+    return !(undepleted_bit in (pts.pointtypes .& undepleted_bit))
 end
 
 
@@ -443,8 +440,7 @@ function get_epsilon_r_and_charge(detector::SolidStateDetector, grid::Cylindrica
     odd::Int  = 1
     even::Int = 2
 
-    # @inbounds begin
-    begin
+    @inbounds begin
         nr::Int = length(grid.r)
         nφ::Int = length(grid.φ)
         nz::Int = length(grid.z)
@@ -521,17 +517,9 @@ function get_epsilon_r_and_charge(detector::SolidStateDetector, grid::Cylindrica
                 while pos_φ < 0 
                     pos_φ += grid.cyclic
                 end
-                # if iz == 12
-                #     # @show pos_φ, pos_z
-                # end
-                # pos_φ += 0.1
                 for ir in 2:size(epsilon_r, 1)
                     pos_r = mpr[ir]
 
-                    if iz == 12 && iφ == 1 
-                        ct = contains(detector, pos_r, pos_φ, pos_z)
-                        @show pos_z, pos_φ, pos_r, ct
-                    end
                     if contains(detector, pos_r, pos_φ, pos_z)
                         epsilon_r[ir, iφ, iz]::T = detector_material_ϵ_r
                         charge_tmp[ir, iφ, iz]::T = get_charge_density(detector, pos_r, pos_φ, pos_z) * effective_electron_charge_vacuum

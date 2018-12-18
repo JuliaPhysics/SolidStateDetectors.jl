@@ -19,6 +19,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `return_2π_grid::Bool`: If set to `true`, the grid is extended to 2π in `φ` after it is computated. Default is `true`. This keyword is ignored if the simulation is in 2D. Use `extent_2D_grid_to_3D()` function to extend a 2D grid into 3D.
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement. Default is `10000`. If set to `-1` there will be no limit.
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
+- `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 2π / 72, 2e-3] <=> [2mm, 5 degree, 2mm ]
 
 # Additional Information
 - The function always turns the detector into a p-type detector to compute the potential. At the end it turns the signs to make it n-type again if it was n-type.
@@ -29,7 +30,7 @@ function calculate_electric_potential(  det::SolidStateDetector;
                                         max_refinements::Int=3,
                                         refinement_limits::Vector{<:Real}=[1e-4, 1e-4, 1e-4],
                                         min_grid_spacing::Vector{<:Real}=[1e-4, 1e-2, 1e-4],
-                                        init_grid_spacing::Real=2e-3, # 2 mm
+                                        init_grid_spacing::Vector{<:Real}=[2e-3, 2π / 72, 2e-3], # 2mm, 5 degree, 2 mm
                                         depletion_handling::Bool=false,
                                         nthreads::Int=Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4, 1.85],
@@ -41,7 +42,7 @@ function calculate_electric_potential(  det::SolidStateDetector;
     bias_voltage = T(det.segment_bias_voltages[1]);
     refinement_limits = T.(refinement_limits)
     min_grid_spacing = T.(min_grid_spacing)
-    init_grid_spacing = T(init_grid_spacing)
+    init_grid_spacing = T.(init_grid_spacing)
     sor_consts = T.(sor_consts)
     refine::Bool = max_refinements > 0 ? true : false
 
@@ -169,10 +170,13 @@ function calculate_electric_potential(  det::SolidStateDetector;
     abs_min::T = abs(minimum(cg.potential))
     if det_tmp.bulk_type == :ntype cg.potential *= -1 end
 
+    abs_max_bv::T = abs(maximum(det.segment_bias_voltages))
+    abs_min_bv::T = abs(minimum(det.segment_bias_voltages))
+    
     # Checks
     if bias_voltage_abs < abs_max + abs_min
     # if abs_max > abs(det.segment_bias_voltages[1])
-        @warn "Detector not fully depleted at this bias voltage ($(det.segment_bias_voltages[1]) V). At least on grid point has a higher (or lower) potential value ($(sign(det.segment_bias_voltages[1]) * abs_max) V). This should not be."
+        @warn "Detector not fully depleted at this bias voltage ($( max(abs_max_bv, abs_min_bv) ) V). At least on grid point has a higher (or lower) potential value ($( max(abs_max, abs_min) ) V). This should not be. However, small overshoots might be due to over relaxation and not full convergence."
     end
     if !in(det.segment_bias_voltages[1], cg.potential)
         @warn "Something is wrong. Applied bias voltage ($(det.segment_bias_voltages[1]) V) does not occur in the grid. This should not be since it is a fixed value."

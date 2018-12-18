@@ -848,7 +848,7 @@ function is_boundary_point(d::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{
     end
     digits::Int=6
     if  d.borehole_modulation == true
-        idx_r_closest_gridpoint_to_borehole = find_closest_gridpoint(rs, d.borehole_radius + d.borehole_ModulationFunction(φ))
+        idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs, d.borehole_radius + d.borehole_ModulationFunction(φ))
         idx_r = findfirst(x->x==r,rs)
         bore_hole_r = rs[idx_r_closest_gridpoint_to_borehole]
     else
@@ -874,7 +874,7 @@ function is_boundary_point(d::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{
                     if d.segmentation_types[iseg]=="Tubs"
                         rv = true
                     else
-                        if isapprox(rs[find_closest_gridpoint(rs,analytical_taper_r_from_φz(φ,z,
+                        if isapprox(rs[searchsortednearest(rs,analytical_taper_r_from_φz(φ,z,
                             d.segmentation_types[iseg],
                             d.segmentation_r_ranges[iseg],
                             d.segmentation_phi_ranges[iseg],
@@ -971,20 +971,18 @@ function analytical_taper_r_from_φz(φ,z,orientation,r_bounds,φ_bounds,z_bound
     r
 end
 
-# function modulated_borehole_r()
-
-function find_closest_gridpoint(array::Vector{<:T}, value::T)::Int where {T<:Real}
-    high::Int = findfirst(x -> x > value, array)
-    idx::Int = -1
-    if high==1
-        idx=1
-    elseif sum(array[high-1:high])/2 > value
-        idx = high - 1
+function searchsortednearest(a::AbstractArray{T, 1}, x::T)::Int where {T <: Real}
+    idx::Int = searchsortedfirst(a, x)
+    if (idx == 1) return idx end
+    if (idx > length(a)) return length(a) end
+    if (a[idx] == x) return idx end
+    if (abs(a[idx] - x) < abs(a[idx - 1] - x))
+        return idx
     else
-        idx = high
+        return idx - 1
     end
-    return idx
 end
+
 
 function get_segment_idx(d::SolidStateDetector,r::Real,φ::Real,z::Real)
     digits=6
@@ -1008,7 +1006,7 @@ function get_segment_idx(d::SolidStateDetector,r::Real,φ::Real,z::Real)
 end
 function get_segment_idx(d::SolidStateDetector,r::Real,φ::Real,z::Real,rs::Vector{<:Real})
     digits=6
-    idx_r_closest_gridpoint_to_borehole = find_closest_gridpoint(rs,d.borehole_radius+d.borehole_ModulationFunction(φ))
+    idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs,d.borehole_radius+d.borehole_ModulationFunction(φ))
     idx_r = findfirst(x->x==r,rs)
     bore_hole_r = rs[idx_r_closest_gridpoint_to_borehole]
     for iseg in 1:size(d.segment_bias_voltages,1)
@@ -1057,7 +1055,9 @@ function get_charge_density(detector::SolidStateDetector, r::Real, ϕ::Real, z::
     top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
-    return bot_net_charge_carrier_density + z * slope
+    ρ::T = bot_net_charge_carrier_density + z * slope
+    # ρ = ρ - (r - detector.borehole_radius) * 0.2 * ρ / (detector.crystal_radius - detector.borehole_radius) 
+    return ρ 
 end
 
 function json_to_dict(inputfile::String)::Dict
