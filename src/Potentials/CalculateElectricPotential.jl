@@ -170,10 +170,13 @@ function calculate_electric_potential(  det::SolidStateDetector;
     abs_min::T = abs(minimum(cg.potential))
     if det_tmp.bulk_type == :ntype cg.potential *= -1 end
 
+    abs_max_bv::T = abs(maximum(det.segment_bias_voltages))
+    abs_min_bv::T = abs(minimum(det.segment_bias_voltages))
+    
     # Checks
     if bias_voltage_abs < abs_max + abs_min
     # if abs_max > abs(det.segment_bias_voltages[1])
-        @warn "Detector not fully depleted at this bias voltage ($(det.segment_bias_voltages[1]) V). At least on grid point has a higher (or lower) potential value ($(sign(det.segment_bias_voltages[1]) * max(abs_max, abs_min)) V). This should not be."
+        @warn "Detector not fully depleted at this bias voltage ($( max(abs_max_bv, abs_min_bv) ) V). At least on grid point has a higher (or lower) potential value ($( max(abs_max, abs_min) ) V). This should not be. However, small overshoots might be due to over relaxation and not full convergence."
     end
     if !in(det.segment_bias_voltages[1], cg.potential)
         @warn "Something is wrong. Applied bias voltage ($(det.segment_bias_voltages[1]) V) does not occur in the grid. This should not be since it is a fixed value."
