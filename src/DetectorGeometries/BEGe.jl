@@ -4,6 +4,7 @@ mutable struct BEGe{T<:AbstractFloat} <: SolidStateDetector{T}
     material_detector::NamedTuple
     material_environment::NamedTuple
     cyclic::T
+    mirror_symmetry_θ::Bool
     bulk_type::Symbol
     geometry_unit_factor::T
     crystal_length::T
@@ -80,6 +81,7 @@ function BEGe{T}(config_file::Dict)::BEGe where T<:Real
         "ptype" => :ptype,
         "p" => :ptype  )
     b.cyclic = deg2rad(config_file["cyclic"])
+    b.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
     b.bulk_type = bulk_types[ config_file["type"]  ]
     b.borehole_modulation=false
     b.crystal_length = round(b.geometry_unit_factor * config_file["geometry"]["crystal"]["length"], sigdigits=5)
@@ -135,3 +137,4 @@ function construct_grouped_channels_array(d,config_file)
     end
     d.grouped_channels=channels
 end
+

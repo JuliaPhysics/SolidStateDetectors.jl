@@ -3,6 +3,7 @@ mutable struct InvertedCoax{T<:AbstractFloat} <: SolidStateDetector{T}
     material_detector::NamedTuple
     material_environment::NamedTuple
     cyclic::T
+    mirror_symmetry_θ::Bool
     #### Importet Values from JSON file
     geometry_unit_factor
     bulk_type::Symbol
@@ -77,6 +78,7 @@ function InvertedCoax{T}(config_file::Dict)::InvertedCoax where T <: AbstractFlo
         "p" => :ptype  )
     ivc.bulk_type = bulk_types[ config_file["type"] ]
     ivc.cyclic = deg2rad(config_file["cyclic"])
+    ivc.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
     ivc.borehole_modulation=false
     ivc.crystal_length = ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]
     ivc.crystal_radius = ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]
@@ -155,3 +157,4 @@ function InvertedCoax(mytype::Type{<:AbstractFloat},inputfilename::String)
     parsed_json_file::Dict = JSON.parse(dicttext)
     return InvertedCoax{mytype}(parsed_json_file)
 end
+

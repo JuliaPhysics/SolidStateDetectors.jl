@@ -13,7 +13,7 @@ Example minimum config file for an Inverted Coax detector (IVC) plus explanation
     "class":"InvertedCoax",  // either "Coax", "BEGe", "InvertedCoax"
     "type":"p", // either "p", "ptype", "p-type", "n", "ntype" or "n-type"
     "cyclic":0, // The periodicity of the detector in degree. 
-                // `0` means complete symmetric in ϕ -> 2D simulation. 
+                // `0` means complete symmetric in θ -> 2D simulation. 
                 // The condition "360 / `cyclic` = n; n = 1, 2, 3, ..." must be fulfilled.
     "materials":{
         "detector":"HPGe",  // Material of the detector 

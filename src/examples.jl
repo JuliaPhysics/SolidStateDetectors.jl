@@ -18,3 +18,5 @@ SSD_examples[:InvertedCoax] = (
 SSD_examples[:BEGe] = (
     joinpath(@__DIR__, "../examples/example_detector_config_files/public_SegBEGe_config.json")
 )
+
+

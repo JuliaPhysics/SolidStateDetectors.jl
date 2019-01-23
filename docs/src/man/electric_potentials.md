@@ -43,18 +43,18 @@ E_pot, point_types = calculate_electric_potential(detector);
 
 A plot recipe for the struct [`SolidStateDetectors.CylindricalGrid`](@ref) exists so the result can be visualized through
 ```@example electric_potential
-plot(E_pot, φ=0)
+plot(E_pot, θ=0)
 ```
 
-Since this is a fully φ-symmetric detector, the 3-dimensional grid has only 1 tick in the polar coordinate φ.
-But due to effects of the crystal axes the grid has to be extended in φ in order to deterime the electric 
+Since this is a fully θ-symmetric detector, the 3-dimensional grid has only 1 tick in the polar coordinate θ.
+But due to effects of the crystal axes the grid has to be extended in θ in order to deterime the electric 
 and drift fields. This can be done through [`SolidStateDetectors.extent_2D_grid_to_3D!`](@ref):
 
 ```@example electric_potential
 SolidStateDetectors.extent_2D_grid_to_3D!(E_pot, 36);
 ```
 
-Now it can also be plotted in the r-φ plane: 
+Now it can also be plotted in the r-θ plane: 
 ```@example electric_potential
 plot(E_pot, z=0.04)
 ```
