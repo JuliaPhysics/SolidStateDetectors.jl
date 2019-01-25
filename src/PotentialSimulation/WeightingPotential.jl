@@ -10,7 +10,7 @@ end
 @inline getindex(wp::WeightingPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(wp.grid, s)
 
 
-function WeightingPotential(fss::PotentialSimulationSetup{T, N, S})::WeightingPotential{T, N, S} where {T, N, S}
+function WeightingPotential(fss::PotentialSimulationSetup{T, N, S}; kwargs...)::WeightingPotential{T, N, S} where {T, N, S}
     return get_2π_potential(WeightingPotential{T, N, S}(fss.potential, fss.grid); kwargs...)
 end
 
