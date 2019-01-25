@@ -1,6 +1,10 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
-const material_properties = Dict{Symbol,NamedTuple}()
+
+const elementary_charge = Float64(1.602176487e-19)
+const ϵ0  = Float64(8.8541878176e-12)
+
+const material_properties = Dict{Symbol, NamedTuple}()
 
 material_properties[:Vacuum] = (
     E_ionisation = 0.0u"eV",
@@ -19,7 +23,7 @@ material_properties[:HPGe] = (
 )
 
 
-# These values might just be approximations
+# These values might just be approximationsl
 material_properties[:Si] = (
     E_ionisation = 3.62u"eV",
     f_fano = 0.11,

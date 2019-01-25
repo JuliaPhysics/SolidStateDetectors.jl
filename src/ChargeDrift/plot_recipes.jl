@@ -83,7 +83,7 @@ end
         height = 300
         mywidths = [1/3,2/3]
         size --> (1200,500)
-        layout --> grid(1,2,widths=mywidths)
+        layout --> (1, 2) #grid(1,2,widths=mywidths)
     else
         n_wps = size(cde.signal,1)
         width = 800
@@ -93,7 +93,7 @@ end
         for i in 1:n_wps
             push!(myheights,(width/2)/length)
         end
-        layout  -->  grid(n_wps+1,1,heights=myheights)
+        layout  -->  (1, 2) #grid(n_wps+1,1,heights=myheights)
         # layout --> grid(1+size(cde.signal,1),1)
     end
     @series begin
@@ -130,7 +130,7 @@ end
             push!(myheights,(width/2)/length)
         end
 
-        layout  -->  grid(n_wps+1,1,heights=myheights)
+        layout  -->  (n_wps+1,1) #grid(n_wps+1,1,heights=myheights)
         @series begin
             subplot := 1
             coloring --> coloring

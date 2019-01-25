@@ -2,7 +2,8 @@
 	"name":"ExampleInvertedCoax",
 	"class":"InvertedCoax",
 	"type":"p",
-	"cyclic":0,
+	"cyclic": 0,
+	"mirror_symmetry_θ": "true",
 	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"
@@ -50,8 +51,8 @@
 	"charge_carrier_density":
 	{
 		"unit": "cm-3",
-		"top": 0.94,
-		"bot": 1.10
+		"top": -0.94,
+		"bot": -1.10
 	},
 	"segmentation":
 	{
@@ -77,7 +78,7 @@
 			"phiStop": 360,
 			"zStart": 0,
 			"zStop": 0,
-			"potential": 3500.0,
+			"potential": 2500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -101,7 +102,7 @@
 			"phiStop": 360,
 			"zStart": 0.0,
 			"zStop": 20.0,
-			"potential": 3500.0,
+			"potential": 2500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -125,7 +126,7 @@
 			"phiStop": 360,
 			"zStart": 80.0,
 			"zStop": 80.0,
-			"potential": 3500.0,
+			"potential": 2500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -149,7 +150,7 @@
 			"phiStop": 360,
 			"zStart": 25.0,
 			"zStop": 80.0,
-			"potential": 3500.0,
+			"potential": 2500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -173,7 +174,7 @@
 			"phiStop": 360,
 			"zStart": 25.0,
 			"zStop": 25.0,
-			"potential": 3500.0,
+			"potential": 2500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -198,7 +199,7 @@
 			"phiStop": 360,
 			"zStart": 20.0,
 			"zStop": 80.0,
-			"potential": 3500.0,
+			"potential": 2500,
 			"boundaryWidth":
 			{
 				"radial":0.0,

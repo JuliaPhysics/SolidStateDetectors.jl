@@ -11,7 +11,7 @@ end
 
 struct CylindricalPoint{T<:Real}
     r::T
-    φ::T # in radian
+    θ::T # in radian
     z::T
 end
 
@@ -36,8 +36,8 @@ const SpacialPoint = Union{SomeCartesianPoint, SomeCylindricalPoint}
 function CylindricalPoint{T}(p::StaticArray{Tuple{3}}) where {T}
     x = p[1]; y = p[2]; z = p[3]
     r = sqrt(x * x + y * y)
-    φ = atan(y, x)
-    CylindricalPoint{T}(r, φ, z)
+    θ = atan(y, x)
+    CylindricalPoint{T}(r, θ, z)
 end
 
 
@@ -47,7 +47,7 @@ end
 @inline Base.convert(T::Type{<:CylindricalPoint}, p::StaticArray{Tuple{3}}) = T(p)
 
 
-@inline CartesianPoint{T}(p::CylindricalPoint) where {T} = CartesianPoint{T}(p.r * cos(p.φ), p.r * sin(p.φ), p.z)
+@inline CartesianPoint{T}(p::CylindricalPoint) where {T} = CartesianPoint{T}(p.r * cos(p.θ), p.r * sin(p.θ), p.z)
 @inline SVector{3,T}(p::CylindricalPoint) where {T} = SVector(CartesianPoint{T}(p))
 
 @inline CartesianPoint(p::CylindricalPoint{T}) where {T} = CartesianPoint{T}(p)
@@ -66,7 +66,7 @@ end
 
 
 CoordinateTransformations.Cylindrical{T}(p::CylindricalPoint) where {T} =
-    CoordinateTransformations.Cylindrical(p.r, p.φ, p.z)
+    CoordinateTransformations.Cylindrical(p.r, p.θ, p.z)
 
 CoordinateTransformations.Cylindrical(p::CylindricalPoint{T}) where {T} =
     CoordinateTransformations.Cylindrical{T}(p)

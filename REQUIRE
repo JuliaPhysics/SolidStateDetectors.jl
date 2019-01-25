@@ -4,10 +4,10 @@ Clustering
 CoordinateTransformations
 Distributions
 Interpolations
+IntervalSets
 JSON
 LaTeXStrings
 ParallelProcessingTools
-Plots
 ProgressMeter
 RecipesBase
 StaticArrays

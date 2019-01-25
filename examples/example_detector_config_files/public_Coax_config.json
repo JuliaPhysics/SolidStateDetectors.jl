@@ -2,7 +2,8 @@
 	"name":"ExampleCoax",
 	"class":"Coax",
 	"type": "n",
-	"cyclic": 360,
+	"cyclic": 60,
+	"mirror_symmetry_θ": "true",
 	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"

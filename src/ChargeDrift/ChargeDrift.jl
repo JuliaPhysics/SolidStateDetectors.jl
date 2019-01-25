@@ -203,8 +203,8 @@ function driftonecharge_wo(det, startposition::AbstractArray, nsteps::Integer, s
             position_cyl=CylFromCart(prevposition)
             if contains(det, position_cyl)
                 # println("in$istep")
-            # rφz_position=get_rφz_from_xyz(prevposition)
-            # if contains(det, rφz_position...)# contains in rφz position returns true if inside detector
+            # rθz_position=get_rθz_from_xyz(prevposition)
+            # if contains(det, rθz_position...)# contains in rθz position returns true if inside detector
 
             # if contains(det, (prevposition[1], prevposition[2], prevposition[3])) == 1
                 if charge == :e
@@ -419,40 +419,40 @@ function get_cartesian_paths(a::Array{SArray{Tuple{3},T,1,3},1};scaling::Real = 
     end
     xpath,ypath,zpath
 end
-function get_rϕz_vector_from_xyz(vector::AbstractArray)::AbstractArray
+function get_rθz_vector_from_xyz(vector::AbstractArray)::AbstractArray
   @fastmath begin
     x = vector[1]
     y = vector[2]
     z = vector[3]
     r = sqrt(x^2 + y^2)
-    # ϕ = atan(y , x)
-    ϕ = atan(y / x)
-    x <  0 && y >= 0 ? ϕ += π  : nothing
-    x <= 0 && y <  0 ? ϕ += π  : nothing
-    x >  0 && y <  0 ? ϕ += 2π : nothing
+    # θ = atan(y , x)
+    θ = atan(y / x)
+    x <  0 && y >= 0 ? θ += π  : nothing
+    x <= 0 && y <  0 ? θ += π  : nothing
+    x >  0 && y <  0 ? θ += 2π : nothing
   end
-  return [r, ϕ, z]
+  return [r, θ, z]
 end
 
-function get_rφz_from_xyz(v::AbstractArray)::AbstractArray
+function get_rθz_from_xyz(v::AbstractArray)::AbstractArray
     r = sqrt(v[1]^2+v[2]^2)
-    φ = atan(v[2],v[1])
-    while φ<0
-        φ+=2π
+    θ = atan(v[2],v[1])
+    while θ<0
+        θ+=2π
     end
-    while φ>2π
-        φ-=2π
+    while θ>2π
+        θ-=2π
     end
     z=v[3]
-    [r,φ,z]
+    [r,θ,z]
 end
 
-function convert_xyz_vectorfield_in_rφz_to_rφz_vectorfield_in_rφz(field,grid)
+function convert_xyz_vectorfield_in_rθz_to_rθz_vectorfield_in_rθz(field,grid)
     outputfield = Array{Array{Float32,1}}(undef,size(field,1),size(field,2),size(field,3))
     for (iz,z) in enumerate(grid.z)
-        for (iφ,φ) in enumerate(grid.φ)
+        for (iθ,θ) in enumerate(grid.θ)
             for (ir,r) in enumerate(grid.r)
-                outputfield[ir,iφ,iz]=get_rφz_from_xyz(field[ir,iφ,iz])
+                outputfield[ir,iθ,iz]=get_rθz_from_xyz(field[ir,iθ,iz])
             end
         end
     end
@@ -472,9 +472,9 @@ end
 
 function add_cylindric_vectors(v1,v2)::AbstractArray
     r = sqrt(v1[1]^2 +v2[1]^2 + 2*v1[1]*v2[1]*cos(v2[2]-v1[2]))
-    φ = v1[2]+atan(v2[1]*sin(v2[2]-v1[2]),v1[1]+v2[1]*cos(v2[2]-v1[2]))
+    θ = v1[2]+atan(v2[1]*sin(v2[2]-v1[2]),v1[1]+v2[1]*cos(v2[2]-v1[2]))
     z = v1[3]+v2[3]
-    [r,φ,z]
+    [r,θ,z]
 end
 
 
@@ -485,7 +485,7 @@ end
     getvelocityvector(interpolated_vectorfield, CylindricalPoint(point))
 
 @inline getvelocityvector(interpolated_vectorfield, point::CylindricalPoint{T}) where T =
-    interpolated_vectorfield(point.r, point.φ, point.z)::SVector{3,T}
+    interpolated_vectorfield(point.r, point.θ, point.z)::SVector{3,T}
 
 
 struct Trajectory
@@ -494,15 +494,15 @@ struct Trajectory
     indv_charge::Int
     n_steps::Int
     timestep::AbstractFloat
-    rφz_path::Array{Cylindrical,1}
+    rθz_path::Array{Cylindrical,1}
     x_path::Vector
     y_path::Vector
     z_path::Vector
     endposition::Vector
     drifttime::AbstractFloat
 
-    function Trajectory(startposition, n_charges, indv_charge, n_steps, timestep, rφz_path, x_path, y_path, z_path,endposition, drifttime)
-        return new(startposition, n_charges, indv_charge, n_steps, timestep, rφz_path, x_path,y_path, z_path, endposition, drifttime)
+    function Trajectory(startposition, n_charges, indv_charge, n_steps, timestep, rθz_path, x_path, y_path, z_path,endposition, drifttime)
+        return new(startposition, n_charges, indv_charge, n_steps, timestep, rθz_path, x_path,y_path, z_path, endposition, drifttime)
     end
 end
 
@@ -521,18 +521,18 @@ function show(io::IO,::MIME"text/plain", trj::Trajectory)
     show(io, trj)
 end
 
-function Trajectory(det::SolidStateDetector,startposition_rϕz::Cylindrical,n_steps::Int,timestep,carriertype::Symbol,velocity_field,n_charges = 1)
-    x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition_rϕz,n_steps,timestep,carriertype,velocity_field,velocity_field)
-    rφz_path =[]
+function Trajectory(det::SolidStateDetector,startposition_rθz::Cylindrical,n_steps::Int,timestep,carriertype::Symbol,velocity_field,n_charges = 1)
+    x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition_rθz,n_steps,timestep,carriertype,velocity_field,velocity_field)
+    rθz_path =[]
     carriertype == :e ? charge = -1 : charge = 1
-    Trajectory(CartFromCyl(startposition_rϕz), n_charges, charge, n_steps, timestep, rφz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
+    Trajectory(CartFromCyl(startposition_rθz), n_charges, charge, n_steps, timestep, rθz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
 end
 
 function Trajectory(det::SolidStateDetector,startposition::AbstractArray,n_steps::Int,timestep,carriertype::Symbol,velocity_field, n_charges = 1)
     x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition,n_steps,timestep,carriertype,velocity_field,velocity_field)
-    rφz_path =[]
+    rθz_path =[]
     carriertype == :e ? charge = -1 : charge = 1
-    Trajectory(startposition, n_charges, charge, n_steps, timestep, rφz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
+    Trajectory(startposition, n_charges, charge, n_steps, timestep, rθz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
 end
 
 struct Pulse
@@ -673,14 +673,14 @@ function Pulse(Trajectory_e::Trajectory, Trajectory_h::Trajectory, wp_int, energ
     signal::Array{T,1} = zeros(T,n_steps)
     for i_step in eachindex(electron_contribution)
         curr_loc_xyz_e::SVector{3,T} = SVector(Trajectory_e.x_path[i_step],Trajectory_e.y_path[i_step],Trajectory_e.z_path[i_step])
-        # curr_loc_rφz_e=get_rφz_from_xyz(curr_loc_xyz_e)
-        curr_loc_rφz_e::Cylindrical = CylFromCart(curr_loc_xyz_e)
+        # curr_loc_rθz_e=get_rθz_from_xyz(curr_loc_xyz_e)
+        curr_loc_rθz_e::Cylindrical = CylFromCart(curr_loc_xyz_e)
         curr_loc_xyz_h::SVector{3,T} = SVector(Trajectory_h.x_path[i_step],Trajectory_h.y_path[i_step],Trajectory_h.z_path[i_step])
-        # curr_loc_rφz_h=get_rφz_from_xyz(curr_loc_xyz_h)
-        curr_loc_rφz_h::Cylindrical=CylFromCart(curr_loc_xyz_h)
-        # electron_contribution[i_step] = -1 * energy * wp_int(curr_loc_rφz_e...)
-        electron_contribution[i_step] = -1 * energy * wp_int(curr_loc_rφz_e.r, curr_loc_rφz_e.θ, curr_loc_rφz_e.z)
-        hole_contribution[i_step] = energy * wp_int(curr_loc_rφz_h.r, curr_loc_rφz_h.θ, curr_loc_rφz_h.z)
+        # curr_loc_rθz_h=get_rθz_from_xyz(curr_loc_xyz_h)
+        curr_loc_rθz_h::Cylindrical=CylFromCart(curr_loc_xyz_h)
+        # electron_contribution[i_step] = -1 * energy * wp_int(curr_loc_rθz_e...)
+        electron_contribution[i_step] = -1 * energy * wp_int(curr_loc_rθz_e.r, curr_loc_rθz_e.θ, curr_loc_rθz_e.z)
+        hole_contribution[i_step] = energy * wp_int(curr_loc_rθz_h.r, curr_loc_rθz_h.θ, curr_loc_rθz_h.z)
         signal[i_step] = (hole_contribution[i_step] + electron_contribution[i_step])
     end
     Pulse(SVector{n_steps}(electron_contribution), SVector{n_steps}(hole_contribution), SVector{n_steps}(signal), energy)

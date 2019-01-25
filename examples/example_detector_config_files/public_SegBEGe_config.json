@@ -2,9 +2,9 @@
 	"name":"ExampleSegmentedBEGe",
 	"class":"BEGe",
 	"type":"n",
-	"cyclic":120,
-	"materials":
-	{
+	"cyclic": 120,
+	"mirror_symmetry_θ": "true",
+	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"
 	},

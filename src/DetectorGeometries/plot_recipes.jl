@@ -1,24 +1,24 @@
 
 @recipe function f( d::InvertedCoax, dim::Symbol;
                     r=missing,
-                    φ=missing,
+                    θ=missing,
                     z=missing,
                     half=true)
     T = typeof(d.crystal_radius)
 
-    cross_section::Symbol, value::T = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 0
-    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, φ
-    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
+    cross_section::Symbol, value::T = if ismissing(θ) && ismissing(r) && ismissing(z)
+        :θ, 0
+    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
+        :θ, θ
+    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
         :r, r
-    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
         :z, z
     else
-        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
     end
 
-    if cross_section == :φ
+    if cross_section == :θ
         points_to_connect::AbstractVector = [SVector{2,T}(0.0,0.0)]
         add_point!(points_to_connect, d.groove_rInner,T(0.0))
         add_point!(points_to_connect, d.groove_rInner,d.groove_depth)
@@ -47,24 +47,24 @@ end
 
 @recipe function f( d::BEGe, dim::Symbol;
                     r=missing,
-                    φ=missing,
+                    θ=missing,
                     z=missing,
                     half=true)
     T = typeof(d.crystal_radius)
 
-    cross_section::Symbol, value::T = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 0
-    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, φ
-    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
+    cross_section::Symbol, value::T = if ismissing(θ) && ismissing(r) && ismissing(z)
+        :θ, 0
+    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
+        :θ, θ
+    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
         :r, r
-    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
         :z, z
     else
-        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
     end
 
-    if cross_section == :φ
+    if cross_section == :θ
         points_to_connect::AbstractVector = [SVector{2,T}(0.0,0.0)]
         add_point!(points_to_connect, d.groove_rInner,T(0.0))
         if d.groove_endplate == "bot"
@@ -154,18 +154,18 @@ end
 struct outer_taper{T<:AbstractFloat}
     rStart::T
     rStop::T
-    φStart::T
-    φStop::T
+    θStart::T
+    θStop::T
     zStart::T
     zStop::T
     orientation::String
-    function outer_taper(rStart::T, rStop::T, φStart::T, φStop::T, zStart::T, zStop::T, orientation) where T<:AbstractFloat
-        return new{T}(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
+    function outer_taper(rStart::T, rStop::T, θStart::T, θStop::T, zStart::T, zStop::T, orientation) where T<:AbstractFloat
+        return new{T}(rStart, rStop, θStart, θStop, zStart, zStop, orientation)
     end
 end
 
-function outer_taper(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
-    return outer_taper{typeof(rStart)}(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
+function outer_taper(rStart, rStop, θStart, θStop, zStart, zStop, orientation)
+    return outer_taper{typeof(rStart)}(rStart, rStop, θStart, θStop, zStart, zStop, orientation)
 end
 
 @recipe function f(b::InvertedCoax; coloring=[], labeling=[])
@@ -178,8 +178,8 @@ end
     for i_part in 1:size(b.segmentation_r_ranges,1)
         rStart = f*b.segmentation_r_ranges[i_part][1]
         rStop = f*b.segmentation_r_ranges[i_part][2]
-        φStart = b.segmentation_phi_ranges[i_part][1]
-        φStop = b.segmentation_phi_ranges[i_part][2]
+        θStart = b.segmentation_phi_ranges[i_part][1]
+        θStop = b.segmentation_phi_ranges[i_part][2]
         zStart = f*b.segmentation_z_ranges[i_part][1]
         zStop = f*b.segmentation_z_ranges[i_part][2]
         if !isempty(coloring)
@@ -194,7 +194,7 @@ end
                 else
                     label := ""
                 end
-                Tubs("",1,1.,"",0.0,rStart,rStop,φStart,φStop,zStart,zStop)
+                Tubs("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop)
             end
         else
             @series begin
@@ -203,8 +203,8 @@ end
                 else
                     label := ""
                 end
-                # Taper("",1,1.,"",0.0,rStart,rStop,φStart,φStop,zStart,zStop,"bl")
-                outer_taper(rStart,rStop,φStart,φStop,zStart,zStop,"c//")
+                # Taper("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop,"bl")
+                outer_taper(rStart,rStop,θStart,θStop,zStart,zStop,"c//")
             end
         end
     end
@@ -227,8 +227,8 @@ end
     for i_part in 1:size(b.segmentation_r_ranges,1)
         rStart = f*b.segmentation_r_ranges[i_part][1]
         rStop = f*b.segmentation_r_ranges[i_part][2]
-        φStart = b.segmentation_phi_ranges[i_part][1]
-        φStop = b.segmentation_phi_ranges[i_part][2]
+        θStart = b.segmentation_phi_ranges[i_part][1]
+        θStop = b.segmentation_phi_ranges[i_part][2]
         zStart = f*b.segmentation_z_ranges[i_part][1]
         zStop = f*b.segmentation_z_ranges[i_part][2]
         if !isempty(coloring)
@@ -243,7 +243,7 @@ end
                 else
                     label := ""
                 end
-                Tubs("",1,1.,"",0.0,rStart,rStop,φStart,φStop,zStart,zStop)
+                Tubs("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop)
             end
         else
             @series begin
@@ -252,8 +252,8 @@ end
                 else
                     label := ""
                 end
-                # Taper("",1,1.,"",0.0,rStart,rStop,φStart,φStop,zStart,zStop,"bl")
-                outer_taper(rStart,rStop,φStart,φStop,zStart,zStop,"c//")
+                # Taper("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop,"bl")
+                outer_taper(rStart,rStop,θStart,θStop,zStart,zStop,"c//")
             end
         end
     end
@@ -262,61 +262,61 @@ end
 @recipe function f(Vol::Tubs{T}) where T<:AbstractFloat
 
     @series begin
-        partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
+        partialcircle_3d(Vol.rStop,Vol.θStart,Vol.θStop,[0,0,Vol.zStart])
     end
     @series begin
         label:= ""
-        partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
+        partialcircle_3d(Vol.rStop,Vol.θStart,Vol.θStop,[0,0,Vol.zStop])
     end
     @series begin
         label:= ""
-        partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
+        partialcircle_3d(Vol.rStart,Vol.θStart,Vol.θStop,[0,0,Vol.zStart])
     end
     @series begin
         label:= ""
-        partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
+        partialcircle_3d(Vol.rStart,Vol.θStart,Vol.θStop,[0,0,Vol.zStop])
     end
     ## Vertical Lines
 
     if !iszero(Vol.rStart)
         @series begin
             label:= ""
-            line_3d(Vol.rStart,Vol.rStart,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
+            line_3d(Vol.rStart,Vol.rStart,Vol.θStart,Vol.θStart,Vol.zStart,Vol.zStop)
         end
     end
     if !iszero(Vol.rStart)
         @series begin
             label:= ""
-            line_3d(Vol.rStart,Vol.rStart,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
+            line_3d(Vol.rStart,Vol.rStart,Vol.θStop,Vol.θStop,Vol.zStart,Vol.zStop)
         end
     end
     @series begin
         label:= ""
-        line_3d(Vol.rStop,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
+        line_3d(Vol.rStop,Vol.rStop,Vol.θStart,Vol.θStart,Vol.zStart,Vol.zStop)
     end
     @series begin
         label:= ""
-        line_3d(Vol.rStop,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
+        line_3d(Vol.rStop,Vol.rStop,Vol.θStop,Vol.θStop,Vol.zStart,Vol.zStop)
     end
 
     ##Horizontal Lines
 
-    if !isapprox((Vol.φStop - Vol.φStart)%2π , 0.0,atol=0.00001)
+    if !isapprox((Vol.θStop - Vol.θStart)%2π , 0.0,atol=0.00001)
         @series begin
             label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStart)
+            line_3d(Vol.rStart,Vol.rStop,Vol.θStart,Vol.θStart,Vol.zStart,Vol.zStart)
         end
         @series begin
             label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStart)
+            line_3d(Vol.rStart,Vol.rStop,Vol.θStop,Vol.θStop,Vol.zStart,Vol.zStart)
         end
         @series begin
             label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStop,Vol.zStop)
+            line_3d(Vol.rStart,Vol.rStop,Vol.θStart,Vol.θStart,Vol.zStop,Vol.zStop)
         end
         @series begin
             label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStop,Vol.zStop)
+            line_3d(Vol.rStart,Vol.rStop,Vol.θStop,Vol.θStop,Vol.zStop,Vol.zStop)
         end
     end
 end
@@ -324,14 +324,14 @@ end
 @recipe function f(o::outer_taper,n_aux_lines =0)
     if o.orientation=="c//"
         @series begin
-            line_3d(o.rStop,o.rStart,o.φStart,o.φStart,o.zStart,o.zStop)
+            line_3d(o.rStop,o.rStart,o.θStart,o.θStart,o.zStart,o.zStop)
         end
         @series begin
-            line_3d(o.rStop,o.rStart,o.φStop,o.φStop,o.zStart,o.zStop)
+            line_3d(o.rStop,o.rStart,o.θStop,o.θStop,o.zStart,o.zStop)
         end
         for ia in 0:n_aux_lines
             @series begin
-                line_3d(o.rStop,o.rStart,o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.zStart,o.zStop)
+                line_3d(o.rStop,o.rStart,o.θStart+ia*(o.θStop-o.θStart)/(n_aux_lines+1),o.θStart+ia*(o.θStop-o.θStart)/(n_aux_lines+1),o.zStart,o.zStop)
             end
         end
     end
