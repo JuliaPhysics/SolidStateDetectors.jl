@@ -168,54 +168,105 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                             ρ_cell += ρ_tmp[inr, inθ,  iz] * wzr[inz] * wrl[inr] * wθl[inθ]
                             ρ_cell += ρ_tmp[inr, inθ, inz] * wzl[inz] * wrl[inr] * wθl[inθ]
                         else
-                            ρ_cell += ρ_tmp[ ir,  iθ,  iz] * wzr[inz] * wθr[inθ]
-                            ρ_cell += ρ_tmp[ ir,  iθ, inz] * wzl[inz] * wθr[inθ]
-                            ρ_cell += ρ_tmp[ ir, inθ,  iz] * wzr[inz] * wθl[inθ]
-                            ρ_cell += ρ_tmp[ ir, inθ, inz] * wzl[inz] * wθl[inθ]
+                            ρ_cell += ρ_tmp[ ir,  iθ,  iz] * wzr[inz] * 0.5 #wθr[inθ]
+                            ρ_cell += ρ_tmp[ ir,  iθ, inz] * wzl[inz] * 0.5 #wθr[inθ]
+                            ρ_cell += ρ_tmp[ ir, inθ,  iz] * wzr[inz] * 0.5 #wθl[inθ]
+                            ρ_cell += ρ_tmp[ ir, inθ, inz] * wzl[inz] * 0.5 #wθl[inθ]
                         end
                     end
+                    if inr > 1
+                        wrr_eps::T = ϵ[  ir,  iθ, inz + 1] * wθr[inθ] * wzr[inz]
+                        wrr_eps   += ϵ[  ir, inθ, inz + 1] * wθl[inθ] * wzr[inz]
+                        wrr_eps   += ϵ[  ir,  iθ, inz ]    * wθr[inθ] * wzl[inz]
+                        wrr_eps   += ϵ[  ir, inθ, inz ]    * wθl[inθ] * wzl[inz]
+                        # # left weight in r: wrr
+                        wrl_eps::T = ϵ[ inr,  iθ, inz + 1] * wθr[inθ] * wzr[inz]
+                        wrl_eps   += ϵ[ inr, inθ, inz + 1] * wθl[inθ] * wzr[inz]
+                        wrl_eps   += ϵ[ inr,  iθ, inz ]    * wθr[inθ] * wzl[inz]
+                        wrl_eps   += ϵ[ inr, inθ, inz ]    * wθl[inθ] * wzl[inz]
+                        # right weight in θ: wθr
+                        wθr_eps::T = ϵ[ inr,  iθ, inz + 1] * wrl[inr] * wzr[inz]
+                        wθr_eps   += ϵ[  ir,  iθ, inz + 1] * wrr[inr] * wzr[inz]
+                        wθr_eps   += ϵ[ inr,  iθ, inz ]    * wrl[inr] * wzl[inz]
+                        wθr_eps   += ϵ[  ir,  iθ, inz ]    * wrr[inr] * wzl[inz]
+                        # left weight in θ: wθl
+                        wθl_eps::T = ϵ[ inr, inθ, inz + 1] * wrl[inr] * wzr[inz]
+                        wθl_eps   += ϵ[  ir, inθ, inz + 1] * wrr[inr] * wzr[inz]
+                        wθl_eps   += ϵ[ inr, inθ, inz ]    * wrl[inr] * wzl[inz]
+                        wθl_eps   += ϵ[  ir, inθ, inz ]    * wrr[inr] * wzl[inz]
+                        # right weight in z: wzr
+                        wzr_eps::T = ϵ[  ir,  iθ, inz + 1] * wrr[inr] * wθr[inθ]
+                        wzr_eps   += ϵ[  ir, inθ, inz + 1] * wrr[inr] * wθl[inθ]
+                        wzr_eps   += ϵ[ inr,  iθ, inz + 1] * wrl[inr] * wθr[inθ]
+                        wzr_eps   += ϵ[ inr, inθ, inz + 1] * wrl[inr] * wθl[inθ]
+                        # left weight in z: wzr
+                        wzl_eps::T = ϵ[  ir,  iθ,    inz ] * wrr[inr] * wθr[inθ]
+                        wzl_eps   += ϵ[  ir, inθ,    inz ] * wrr[inr] * wθl[inθ]
+                        wzl_eps   += ϵ[ inr,  iθ,    inz ] * wrl[inr] * wθr[inθ]
+                        wzl_eps   += ϵ[ inr, inθ,    inz ] * wrl[inr] * wθl[inθ]
 
-                    wrr_eps::T = ϵ[  ir,  iθ, inz + 1] * wθr[inθ] * wzr[inz]
-                    wrr_eps   += ϵ[  ir, inθ, inz + 1] * wθl[inθ] * wzr[inz]
-                    wrr_eps   += ϵ[  ir,  iθ, inz ]    * wθr[inθ] * wzl[inz]
-                    wrr_eps   += ϵ[  ir, inθ, inz ]    * wθl[inθ] * wzl[inz]
-                    # # left weight in r: wrr
-                    wrl_eps::T = ϵ[ inr,  iθ, inz + 1] * wθr[inθ] * wzr[inz]
-                    wrl_eps   += ϵ[ inr, inθ, inz + 1] * wθl[inθ] * wzr[inz]
-                    wrl_eps   += ϵ[ inr,  iθ, inz ]    * wθr[inθ] * wzl[inz]
-                    wrl_eps   += ϵ[ inr, inθ, inz ]    * wθl[inθ] * wzl[inz]
-                    # right weight in θ: wθr
-                    wθr_eps::T = ϵ[ inr,  iθ, inz + 1] * wrl[inr] * wzr[inz]
-                    wθr_eps   += ϵ[  ir,  iθ, inz + 1] * wrr[inr] * wzr[inz]
-                    wθr_eps   += ϵ[ inr,  iθ, inz ]    * wrl[inr] * wzl[inz]
-                    wθr_eps   += ϵ[  ir,  iθ, inz ]    * wrr[inr] * wzl[inz]
-                    # left weight in θ: wθl
-                    wθl_eps::T = ϵ[ inr, inθ, inz + 1] * wrl[inr] * wzr[inz]
-                    wθl_eps   += ϵ[  ir, inθ, inz + 1] * wrr[inr] * wzr[inz]
-                    wθl_eps   += ϵ[ inr, inθ, inz ]    * wrl[inr] * wzl[inz]
-                    wθl_eps   += ϵ[  ir, inθ, inz ]    * wrr[inr] * wzl[inz]
-                    # right weight in z: wzr
-                    wzr_eps::T = ϵ[  ir,  iθ, inz + 1] * wrr[inr] * wθr[inθ]
-                    wzr_eps   += ϵ[  ir, inθ, inz + 1] * wrr[inr] * wθl[inθ]
-                    wzr_eps   += ϵ[ inr,  iθ, inz + 1] * wrl[inr] * wθr[inθ]
-                    wzr_eps   += ϵ[ inr, inθ, inz + 1] * wrl[inr] * wθl[inθ]
-                    # left weight in z: wzr
-                    wzl_eps::T = ϵ[  ir,  iθ,    inz ] * wrr[inr] * wθr[inθ]
-                    wzl_eps   += ϵ[  ir, inθ,    inz ] * wrr[inr] * wθl[inθ]
-                    wzl_eps   += ϵ[ inr,  iθ,    inz ] * wrl[inr] * wθr[inθ]
-                    wzl_eps   += ϵ[ inr, inθ,    inz ] * wrl[inr] * wθl[inθ]
+                        volume_weight::T = wrr_eps * Δr_ext_inv[ ir] * mpr[ ir] * Δmpθ[inθ] * Δmpz[inz]
+                        volume_weight += wrl_eps * Δr_ext_inv[inr] * mpr[inr] * Δmpθ[inθ] * Δmpz[inz]
+                        volume_weight += wθr_eps * r_inv[inr] * Δθ_ext_inv[ iθ] * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wθl_eps * r_inv[inr] * Δθ_ext_inv[inθ] * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wzr_eps * Δz_ext_inv[ iz] * Δmpθ[inθ] * Δmpr_squared[inr]
+                        volume_weight += wzl_eps * Δz_ext_inv[inz] * Δmpθ[inθ] * Δmpr_squared[inr]
 
-                    volume_weight::T = wrr_eps * Δr_ext_inv[ ir] * mpr[ ir] * Δmpθ[inθ] * Δmpz[inz]
-                    volume_weight += wrl_eps * Δr_ext_inv[inr] * mpr[inr] * Δmpθ[inθ] * Δmpz[inz]
-                    volume_weight += wθr_eps * r_inv[inr] * Δθ_ext_inv[ iθ] * Δmpr[inr] * Δmpz[inz]
-                    volume_weight += wθl_eps * r_inv[inr] * Δθ_ext_inv[inθ] * Δmpr[inr] * Δmpz[inz]
-                    volume_weight += wzr_eps * Δz_ext_inv[ iz] * Δmpθ[inθ] * Δmpr_squared[inr]
-                    volume_weight += wzl_eps * Δz_ext_inv[inz] * Δmpθ[inθ] * Δmpr_squared[inr]
+                        volume_weights[ irbz, iθ, ir, rbi ] = inv(volume_weight)
+                        
+                        dV::T = Δmpz[inz] * Δmpθ[inθ] * Δmpr_squared[inr]
+                        ρ[ irbz, iθ, ir, rbi ] = dV * ρ_cell
+                    else
+                        wrr_eps = ϵ[  ir,  iθ, inz + 1] * 0.5 * wzr[inz]
+                        wrr_eps   += ϵ[  ir, inθ, inz + 1] * 0.5 * wzr[inz]
+                        wrr_eps   += ϵ[  ir,  iθ, inz ]    * 0.5 * wzl[inz]
+                        wrr_eps   += ϵ[  ir, inθ, inz ]    * 0.5 * wzl[inz]
+                        # # left weight in r: wrr
+                        wrl_eps = ϵ[ inr,  iθ, inz + 1] * 0.5 * wzr[inz]
+                        wrl_eps   += ϵ[ inr, inθ, inz + 1] * 0.5 * wzr[inz]
+                        wrl_eps   += ϵ[ inr,  iθ, inz ]    * 0.5 * wzl[inz]
+                        wrl_eps   += ϵ[ inr, inθ, inz ]    * 0.5 * wzl[inz]
+                        # right weight in θ: wθr
+                        wθr_eps = ϵ[ inr,  iθ, inz + 1] * wrl[inr] * wzr[inz]
+                        wθr_eps   += ϵ[  ir,  iθ, inz + 1] * wrr[inr] * wzr[inz]
+                        wθr_eps   += ϵ[ inr,  iθ, inz ]    * wrl[inr] * wzl[inz]
+                        wθr_eps   += ϵ[  ir,  iθ, inz ]    * wrr[inr] * wzl[inz]
+                        # left weight in θ: wθl
+                        wθl_eps = ϵ[ inr, inθ, inz + 1] * wrl[inr] * wzr[inz]
+                        wθl_eps   += ϵ[  ir, inθ, inz + 1] * wrr[inr] * wzr[inz]
+                        wθl_eps   += ϵ[ inr, inθ, inz ]    * wrl[inr] * wzl[inz]
+                        wθl_eps   += ϵ[  ir, inθ, inz ]    * wrr[inr] * wzl[inz]
+                        # right weight in z: wzr
+                        wzr_eps = ϵ[  ir,  iθ, inz + 1] * wrr[inr] * 0.5
+                        wzr_eps   += ϵ[  ir, inθ, inz + 1] * wrr[inr] * 0.5
+                        wzr_eps   += ϵ[ inr,  iθ, inz + 1] * wrl[inr] * 0.5
+                        wzr_eps   += ϵ[ inr, inθ, inz + 1] * wrl[inr] * 0.5
+                        # left weight in z: wzr
+                        wzl_eps = ϵ[  ir,  iθ,    inz ] * wrr[inr] * 0.5
+                        wzl_eps   += ϵ[  ir, inθ,    inz ] * wrr[inr] * 0.5
+                        wzl_eps   += ϵ[ inr,  iθ,    inz ] * wrl[inr] * 0.5
+                        wzl_eps   += ϵ[ inr, inθ,    inz ] * wrl[inr] * 0.5
 
-                    volume_weights[ irbz, iθ, ir, rbi ] = inv(volume_weight)
-                    
-                    dV::T = Δmpz[inz] * Δmpθ[inθ] * Δmpr_squared[inr]
-                    ρ[ irbz, iθ, ir, rbi ] = dV * ρ_cell
+                        # if inr == 1
+                        #     pwwθr = 0.5f0
+                        #     pwwθl = 0.5f0
+                        #     pwΔmpθ = 2π
+                        #     Δθ_ext_inv_r = 0.15915494f0
+                        #     Δθ_ext_inv_l = 0.15915494f0
+                        # end
+
+                        volume_weight = wrr_eps * Δr_ext_inv[ ir] * mpr[ ir] * 2π * Δmpz[inz]
+                        volume_weight += wrl_eps * Δr_ext_inv[inr] * mpr[inr] * Δmpθ[inθ] * Δmpz[inz]
+                        volume_weight += wθr_eps * r_inv[inr] * 0.15915494f0 * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wθl_eps * r_inv[inr] * 0.15915494f0 * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wzr_eps * Δz_ext_inv[ iz] * 2π * Δmpr_squared[inr]
+                        volume_weight += wzl_eps * Δz_ext_inv[inz] * 2π * Δmpr_squared[inr]
+
+                        volume_weights[ irbz, iθ, ir, rbi ] = inv(volume_weight)
+                        
+                        dV = Δmpz[inz] * 2π * Δmpr_squared[inr]
+                        ρ[ irbz, iθ, ir, rbi ] = dV * ρ_cell
+                    end
                 end
             end
         end

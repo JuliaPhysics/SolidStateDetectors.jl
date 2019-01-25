@@ -30,7 +30,7 @@ end
                                 depletion_handling::Val{depletion_handling_enabled},
                                 bulk_is_ptype::Val{_bulk_is_ptype}  )::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype}
 
-Inner loop for Cylindrical coordinates.                            
+(Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the fied calculation.                            
 """
 @fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_θ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical},
                                 update_even_points::Val{even_points},
@@ -55,6 +55,14 @@ Inner loop for Cylindrical coordinates.
             pwΔmpθ::T       = gw_θ[3, inθ]
             Δθ_ext_inv_r::T = gw_θ[4,  iθ]
             Δθ_ext_inv_l::T = gw_θ[4, inθ]
+
+            if inr == 1
+                pwwθr = 0.5f0
+                pwwθl = 0.5f0
+                pwΔmpθ = 2π
+                Δθ_ext_inv_r = 0.15915494f0
+                Δθ_ext_inv_l = 0.15915494f0
+            end
             
             rθi_is_even::Bool = iseven(ir + iθ)
             rθi_is_even_t = iseven(ir + iθ) ? Val{true}() : Val{false}()
