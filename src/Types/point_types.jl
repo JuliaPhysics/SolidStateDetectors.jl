@@ -74,15 +74,17 @@ end
     
     @series begin
         clims --> (0, max_pointtype_value)
-        title --> "Point Type Map @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
         if cross_section == :θ
+            title --> "Point Type Map @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
             size --> ( 400, 350 / (g[:r][end] - g[:r][1]) * (g[:z][end] - g[:z][1]) )
             g[:r], g[:z], pts.data[:, idx,:]'
         elseif cross_section == :r
+            title --> "Point Type Map @$(cross_section) = $(round(value, sigdigits = 2))"
             g[:θ], g[:z], pts.data[idx,:,:]'
         elseif cross_section == :z
+            title --> "Point Type Map @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
             g[:θ], g[:r], pts.data[:,:,idx]
         end

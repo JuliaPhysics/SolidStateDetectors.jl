@@ -55,8 +55,8 @@ end
     
     @series begin
         clims --> (0, 1)
-        title --> "WeightingPotential Potential @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
         if cross_section == :θ
+            title --> "WeightingPotential Potential @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
             size --> ( 400, 350 / (g[:r][end] - g[:r][1]) * (g[:z][end] - g[:z][1]) )
@@ -64,6 +64,7 @@ end
         elseif cross_section == :r
             g[:θ], g[:z], wp.data[idx,:,:]'
         elseif cross_section == :z
+            title --> "WeightingPotential Potential @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
             g[:θ], g[:r], wp.data[:,:,idx]
         end

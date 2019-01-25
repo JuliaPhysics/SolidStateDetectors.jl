@@ -55,15 +55,17 @@ end
     end
 
     @series begin
-        title --> "Charge Density @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
         if cross_section == :θ
+            title --> "Charge Density @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
             size --> ( 400, 350 / (g[:r][end] - g[:r][1]) * (g[:z][end] - g[:z][1]) )
             g[:r], g[:z], ρ.data[:, idx,:]'
         elseif cross_section == :r
+            title --> "Charge Density @$(cross_section) = $(round(value, sigdigits = 2))"
             g[:θ], g[:z], ρ.data[idx,:,:]'
         elseif cross_section == :z
+            title --> "Charge Density @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
             g[:θ], g[:r], ρ.data[:,:,idx]
         end
