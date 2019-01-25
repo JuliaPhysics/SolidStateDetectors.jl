@@ -65,7 +65,8 @@ include("PotentialSimulationSetupRBCylindrical.jl")
 @recipe function f( pss::PotentialSimulationSetup{T, 3, :Cylindrical};
                     r = missing,
                     θ = missing,
-                    z = missing ) where {T}
+                    z = missing,
+                    n_points_in_θ = 36 ) where {T}
     g::Grid{T, 3, :Cylindrical} = pss.grid
     layout --> (2, 2) 
 
@@ -118,6 +119,6 @@ include("PotentialSimulationSetupRBCylindrical.jl")
     end
     @series begin
         subplot := 4
-        ElectricPotential(pss)
+        ElectricPotential(pss, n_points_in_θ=n_points_in_θ)
     end
 end
