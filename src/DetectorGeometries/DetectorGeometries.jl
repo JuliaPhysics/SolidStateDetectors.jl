@@ -39,7 +39,7 @@ function uniq(v::Vector{T})::Vector{T} where {T <: Real}
     return v1
 end
 
-function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.001 )::Vector{T} where {T}
+function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
     v::Vector{T} = T[]
     for r in impticks push!(v, r) end
     for r in ax push!(v, r) end
@@ -63,7 +63,7 @@ function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Ve
 end
 
 function Grid(  detector::SolidStateDetector{T}; 
-                init_grid_spacing::Vector{<:Real} = [0.005, 10.0, 0.005], 
+                init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], 
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
     important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
@@ -75,7 +75,7 @@ function Grid(  detector::SolidStateDetector{T};
     # r
     int_r = Interval{:closed, :closed, T}(0, detector.crystal_radius + 3 * init_grid_spacing[1])
     ax_r::DiscreteAxis{T, :r0, :infinite} = DiscreteAxis{:r0, :infinite}(int_r, step = init_grid_spacing[1])
-    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points)
+    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
     ax_r = DiscreteAxis{T, :r0, :infinite}(int_r, rticks)
     
     # θ
@@ -98,26 +98,26 @@ function Grid(  detector::SolidStateDetector{T};
     end
     ax_θ = nθ >= 2 ? DiscreteAxis{:periodic, :periodic}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) : DiscreteAxis{T, :periodic, :periodic}(int_θ, T[0])
     if length(ax_θ) > 1 
-        θticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_θ, important_θ_points)
+        θticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_θ, important_θ_points, atol=deg2rad(init_grid_spacing[2])/4)
         ax_θ = typeof(ax_θ)(int_θ, θticks)
     end
 
     #z 
     int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], detector.crystal_length + 3 * init_grid_spacing[3])
     ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points)
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
     ax_z = typeof(ax_z)(int_z, zticks)
     if isodd(length(ax_z)) # must be even
-        int_z = Interval{:closed, :closed, T}( round(-3 * init_grid_spacing[3], sigdigits = 6), round(detector.crystal_length + 4 * init_grid_spacing[3], sigdigits = 6 ) ) 
-        ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) # must be even
-        zticks = merge_axis_ticks_with_important_ticks(ax_z, important_z_points)
-        ax_z = typeof(ax_z)(int_z, zticks)
+        int_z = ax_z.interval
+        zticks = ax_z.ticks
+        push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
+        sort!(zticks)
+        ax_z = DiscreteAxis{T, :infinite, :infinite}(int_z, zticks) # must be even
     end
     @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
 
     return CylindricalGrid{T}( (ax_r, ax_θ, ax_z) )
 end
-
 
 include("BEGe.jl")
 include("Coax.jl")
