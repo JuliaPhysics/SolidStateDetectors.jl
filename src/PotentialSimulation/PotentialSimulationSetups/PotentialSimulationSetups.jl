@@ -54,21 +54,12 @@ function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1,
     return s
 end
 
-function get_ρ_and_ϵ(pt, config::AbstractConfig{T})::Tuple{T, T} where {T <: AbstractFloat}
-    error("User has to define a method `get_ρ_and_ϵ` for `pt::$(typeof(pt))` and `config::$(typeof(config))`.")
-end
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, grid::Grid{T, N, S}, config::AbstractConfig{T})::Nothing where {T, N, G, S} 
-    error("User has to define a method `set_pointtypes_and_fixed_potentials!` for `config::$(typeof(config))`.")
-end
-
-
 function PotentialSimulationSetup(ssd::SolidStateDetector{T}, grid::Grid{T, N, S} = Grid(ssd), potential_array::Union{Missing, Array{T, N}} = missing)::PotentialSimulationSetup{T, N, S} where {T, N, S}   
     fssrb::PotentialSimulationSetupRB{T, N, N + 1, S} = PotentialSimulationSetupRB(ssd, grid, potential_array)
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
 include("PotentialSimulationSetupRBCylindrical.jl")
-
 
 
 @recipe function f( pss::PotentialSimulationSetup{T, 3, :Cylindrical};

@@ -4,10 +4,10 @@ abstract type AbstractDiscreteAxis{T, BL, BR <: Number} <: AbstractAxis{T, BL, B
 """
     DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
 
-T: Type of ticks
-BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
-BL: left boundary condition
-BR: right boundary condition
+* T: Type of ticks
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
+* BL: left boundary condition
+* BR: right boundary condition
 """
 struct DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR} 
     interval::Interval{L, R, T} where {L, R}
@@ -23,10 +23,10 @@ end
 """
     DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
 
-T: Type of ticks
-BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
-L, R {:closed, :open} 
-ticks: Ticks of the axis
+* T: Type of ticks
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
+* L, R {:closed, :open} 
+* ticks: Ticks of the axis
 """
 function DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
     int::Interval{L, R, T} = Interval{L, R, T}( left_endpoint, right_endpoint )

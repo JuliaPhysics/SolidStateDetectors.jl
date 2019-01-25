@@ -15,6 +15,7 @@ Example minimum config file for an Inverted Coax detector (IVC) plus explanation
     "cyclic":0, // The periodicity of the detector in degree. 
                 // `0` means complete symmetric in θ -> 2D simulation. 
                 // The condition "360 / `cyclic` = n; n = 1, 2, 3, ..." must be fulfilled.
+    "mirror_symmetry_θ": "true", // set to true, if a mirror symmetry exists within the periodicity specified via `cyclic`
     "materials":{
         "detector":"HPGe",  // Material of the detector 
         "environment":"Vacuum" // Material of the environment

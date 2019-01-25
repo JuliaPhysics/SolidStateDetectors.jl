@@ -34,24 +34,25 @@ using SolidStateDetectors
 detector = SolidStateDetector(SSD_examples[:InvertedCoax]);
 ```
 
-Then, the electric potential can be calculated through the function [`calculate_electric_potential`](@ref). It returns the electric potential `E_pot`
-in form of the the struct [`SolidStateDetectors.CylindricalGrid`](@ref) and an 3-dimensional array of point types `point_types`.
+Then, the electric potential can be calculated through the function [`calculate_electric_potential`](@ref). It returns a collection struct [`SolidStateDetectors.PotentialSimulationSetup`](@ref) in which the electric potential is stored. Also it stores the grid, the charge density, the dielectric distribution and the point types [`SolidStateDetectors.PointTypes`](@ref).
+The electric potential can be extracted via the function [`SolidStateDetectors.ElectricPotential()`](@ref). The struct ElectricPotential also holds the corresponding grid [`SolidStateDetectors.Grid`](@ref). 
 
 ```@example electric_potential
-E_pot, point_types = calculate_electric_potential(detector);
+E_pot_setup = calculate_electric_potential(detector);
+E_pot = ElectricPotential(E_pot_setup);
 ```
 
-A plot recipe for the struct [`SolidStateDetectors.CylindricalGrid`](@ref) exists so the result can be visualized through
+
+
+A plot recipe for the struct [`SolidStateDetectors.ElectricPotential`](@ref) exists so the result can be visualized through
 ```@example electric_potential
 plot(E_pot, θ=0)
 ```
 
-Since this is a fully θ-symmetric detector, the 3-dimensional grid has only 1 tick in the polar coordinate θ.
-But due to effects of the crystal axes the grid has to be extended in θ in order to deterime the electric 
-and drift fields. This can be done through [`SolidStateDetectors.extent_2D_grid_to_3D!`](@ref):
+Since this is a fully θ-symmetric detector, the 3-dimensional grid has only 1 tick in the polar coordinate θ. But due to effects of the crystal axes the grid has to be extended in θ in order to deterime the electric and drift fields. This can be done through [`SolidStateDetectors.extent_2D_grid_to_3D!`](@ref):
 
 ```@example electric_potential
-SolidStateDetectors.extent_2D_grid_to_3D!(E_pot, 36);
+E_pot = SolidStateDetectors.get_2π_potential(E_pot, n_points_in_θ = 36);
 ```
 
 Now it can also be plotted in the r-θ plane: 

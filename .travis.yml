@@ -10,6 +10,12 @@ julia:
   - 1.0
   - nightly
 
+addons:
+  apt:
+    packages:
+      - python3-matplotlib
+
+
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
 matrix:

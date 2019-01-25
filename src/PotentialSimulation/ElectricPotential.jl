@@ -10,9 +10,10 @@ end
 @inline getindex(ep::ElectricPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
 
 
-function ElectricPotential(fss::PotentialSimulationSetup{T, N, S})::ElectricPotential{T, N, S} where {T, N, S}
-    return ElectricPotential{T, N, S}( fss.potential, fss.grid )
+function ElectricPotential(fss::PotentialSimulationSetup{T, N, S} ; kwargs...)::ElectricPotential{T, N, S} where {T, N, S}
+    return get_2π_potential(ElectricPotential{T, N, S}(fss.potential, fss.grid); kwargs...)
 end
+
 
 @recipe function f( ep::ElectricPotential{T, 3, :Cylindrical};
                     r = missing,

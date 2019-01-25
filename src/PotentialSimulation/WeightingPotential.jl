@@ -11,7 +11,7 @@ end
 
 
 function WeightingPotential(fss::PotentialSimulationSetup{T, N, S})::WeightingPotential{T, N, S} where {T, N, S}
-    return WeightingPotential{T, N, S}( fss.potential, fss.grid )
+    return get_2π_potential(WeightingPotential{T, N, S}(fss.potential, fss.grid); kwargs...)
 end
 
 @recipe function f( wp::WeightingPotential{T, 3, :Cylindrical};
@@ -145,7 +145,6 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}; n_points_in_
         return get_2π_potential(wp, axθ, int)
     end
 end
-
 
 function WeightingPotential(nt::NamedTuple)
     grid = Grid(nt.grid)

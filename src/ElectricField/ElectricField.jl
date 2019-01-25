@@ -12,7 +12,6 @@ end
 
 
 function get_magnitude_of_rθz_vector(vector::AbstractArray,cutoff=NaN)
-
     magn=0
     magn+=(vector[1])^2
     magn+=(vector[3])^2
@@ -175,26 +174,26 @@ end
 #     return EField(ef)
 # end
 function get_component_field(ef,component=:r,cutoff=NaN)
-        components = [:r,:phi,:z]
-        # component_index = findfirst(components,component)
-        component_index = findfirst(x->x==component,components)
-        ef_component = Array{Float32}(undef,size(ef,1),size(ef,2),size(ef,3))
-        for iz in 1:size(ef, 3)
-                for iθ in 1:size(ef, 2)
-                        for ir in 1:size(ef, 1)
-                                if !isnan(cutoff)
-                                        if abs(ef[ir,iθ ,iz][component_index]) >=cutoff
-                                                ef_component[ir,iθ,iz] = 0.0
-                                        else
-                                                ef_component[ir,iθ,iz] = ef[ir,iθ ,iz][component_index]
-                                        end
-                                else
-                                        ef_component[ir,iθ,iz] = ef[ir,iθ ,iz][component_index]
-                                end
-                        end
+    components = [:r,:phi,:z]
+    # component_index = findfirst(components,component)
+    component_index = findfirst(x->x==component,components)
+    ef_component = Array{Float32}(undef,size(ef,1),size(ef,2),size(ef,3))
+    for iz in 1:size(ef, 3)
+        for iθ in 1:size(ef, 2)
+            for ir in 1:size(ef, 1)
+                if !isnan(cutoff)
+                    if abs(ef[ir,iθ ,iz][component_index]) >=cutoff
+                        ef_component[ir,iθ,iz] = 0.0
+                    else
+                        ef_component[ir,iθ,iz] = ef[ir,iθ ,iz][component_index]
+                    end
+                else
+                    ef_component[ir,iθ,iz] = ef[ir,iθ ,iz][component_index]
                 end
+            end
         end
-        return ef_component
+    end
+    return ef_component
 end
 function get_xyz_vector_from_rθz_vector(v::AbstractArray)::AbstractArray
     return [v[1]*cos(v[2]),v[1]*sin(v[2]),v[3]]
@@ -211,17 +210,17 @@ function get_xyz_vector_from_field_vector(field,r,θ,z,ir,iθ,iz)
 end
 
 function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, θa::Array{T, 1})::Array{SVector{3, T},3} where {T}
-        field_xyz = Array{SVector{3,T},3}(undef, size(field)...);
-        for (iθ, θ) in enumerate(θa)
-                Rα::SMatrix{3,3,T} = @SArray([cos(θ) -1*sin(θ) 0;sin(θ) cos(θ) 0;0 0 1])
-                for iz in axes(field, 3)
-                        for ir in axes(field, 1)
-                                field_xyz[ir,iθ,iz] = Rα * field[ir,iθ,iz]
-                                # field_xyz[ir,iθ,iz] = get_xyz_vector_from_field_vector(field[ir,iθ,iz], θ)
-                        end
-                end
+    field_xyz = Array{SVector{3,T},3}(undef, size(field)...);
+    for (iθ, θ) in enumerate(θa)
+        Rα::SMatrix{3,3,T} = @SArray([cos(θ) -1*sin(θ) 0;sin(θ) cos(θ) 0;0 0 1])
+        for iz in axes(field, 3)
+            for ir in axes(field, 1)
+                field_xyz[ir,iθ,iz] = Rα * field[ir,iθ,iz]
+                # field_xyz[ir,iθ,iz] = get_xyz_vector_from_field_vector(field[ir,iθ,iz], θ)
+            end
         end
-        return field_xyz
+    end
+    return field_xyz
 end
 
 function get_xyz_vector_from_field_vector(vector, α)

@@ -168,7 +168,7 @@ end
 
 
 @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T}; 
-            θ=missing, spacing=0.003, n_steps=2000, scaling=1, potential=true, contours_equal_potential=true) where {T <: AbstractFloat}
+            θ=missing, spacing=0.003, n_steps=3000, potential=true, contours_equal_potential=true) where {T <: AbstractFloat}
     size --> (700,900)
     det.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electric_field, ep.grid) : nothing
     det.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x -> -1*x, electric_field), ep.grid) : nothing

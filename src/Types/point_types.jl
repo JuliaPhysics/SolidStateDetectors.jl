@@ -91,7 +91,7 @@ end
 
 
 """
-    get_active_volume(grid::CylindricalGrid, pts::PointTypes{T}) where {T}
+    get_active_volume(pts::PointTypes{T}) where {T}
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
 all depleted cells.
 """
@@ -174,39 +174,4 @@ function NamedTuple(pts::PointTypes{T, 3, :Cylindrical}) where {T}
 end
 
 Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
-
-
-
-# function PointTypes(nt::NamedTuple)
-#     T = typeof(ustrip(nt.edges.r[1]))
-#     PointTypes(
-#         convert(Array{T}, ustrip.(uconvert.(u"m", nt.edges.r))),
-#         convert(Array{T}, ustrip.(uconvert.(u"rad", nt.edges.phi))),
-#         convert(Array{T}, ustrip.(uconvert.(u"m", nt.edges.z))),
-#         convert(Array{PointType}, ustrip.(uconvert.(NoUnits, nt.values)))
-#     )
-# end
-
-# Base.convert(T::Type{PointTypes}, x::NamedTuple) = T(x)
-
-
-# function NamedTuple(pointtypes::PointTypes)
-#     (
-#         values = pointtypes.pointtypes,
-#         edges = (
-#             r = pointtypes.r * u"m",
-#             phi = pointtypes.θ * u"rad",
-#             z = pointtypes.z * u"m"
-#         )
-#     )
-# end
-
-# Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
-
-
-
-# size(pts::PointTypes) = size(pts.pointtypes)
-# getindex(pts::PointTypes, i::Int) = getindex(pts.pointtypes, i)
-# getindex(pts::PointTypes, I::Vararg{Int, N}) where {N} = getindex(pts.pointtypes, I...)
-
 
