@@ -358,6 +358,9 @@ function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindri
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
                 dV::T = fssrb.geom_weights[1].weights[6, ir] * Δmpzθ  #Δmpz[inz] * Δmpθ[inθ] * Δmpr_squared[inr]
+                if ir == 1
+                    dV = dV * 2π / Δmpθ
+                end
                 ρ[ir, iθ, iz] = fssrb.ρ[irbz, irbθ, irbr, rbi ] / dV
             end
         end
