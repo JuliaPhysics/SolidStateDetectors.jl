@@ -122,7 +122,6 @@ end
 include("BEGe.jl")
 include("Coax.jl")
 include("Inverted_Coax.jl")
-include("CGD.jl")
 # include("DetectorGeometries_V2.jl")
 
 function println(io::IO, d::SolidStateDetector)
