@@ -127,6 +127,7 @@ end
 include("BEGe.jl")
 include("Coax.jl")
 include("Inverted_Coax.jl")
+include("CGD.jl")
 # include("DetectorGeometries_V2.jl")
 
 function println(io::IO, d::SolidStateDetector)
@@ -532,8 +533,9 @@ end
 @inline in(point::CylindricalPoint, detector::SolidStateDetector) =
     contains(detector, point)
 
-@inline in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
-    convert(CylindricalPoint, point) in detector
+# thats wrong: point::StaticArray{Tuple{3},<:Real} = CartesianPoint in CoordinateTransformations.jl
+# @inline Base.in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
+#     convert(CylindricalPoint, point) in detector
 
 @inline in(point::StaticArray{Tuple{3},<:Quantity}, detector::SolidStateDetector) =
     to_internal_units(u"m", point) in detector
@@ -542,9 +544,11 @@ end
     convert(CylindricalPoint, point) in detector
 
 
+
 # TODO: Deprecate function contains in favour of Base.in (see above):
 
 # false -> outside
+
 function contains(c::Coax, r::Real, θ::Real, z::Real)::Bool
     rv::Bool = true
     if !check_outer_limits(c, r, θ, z) rv = false end

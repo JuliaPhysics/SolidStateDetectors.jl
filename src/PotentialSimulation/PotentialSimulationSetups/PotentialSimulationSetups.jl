@@ -65,6 +65,7 @@ function PotentialSimulationSetup(ssd::SolidStateDetector{T}, grid::Grid{T, N, S
 end
 
 include("PotentialSimulationSetupRBCylindrical.jl")
+include("PotentialSimulationSetupRBCartesian3D.jl")
 
 
 @recipe function f( pss::PotentialSimulationSetup{T, 3, :Cylindrical};
