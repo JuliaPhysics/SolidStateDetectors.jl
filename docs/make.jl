@@ -5,6 +5,11 @@
 # for local builds.
 
 using Documenter
+using Pkg
+ENV["PYTHON"]=""
+Pkg.build("PyCall")
+using Plots
+pyplot(fmt=:svg)
 using SolidStateDetectors
 
 makedocs(
