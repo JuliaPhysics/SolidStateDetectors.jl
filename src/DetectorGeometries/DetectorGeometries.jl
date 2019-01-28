@@ -122,6 +122,7 @@ end
 include("BEGe.jl")
 include("Coax.jl")
 include("Inverted_Coax.jl")
+include("CGD.jl")
 # include("DetectorGeometries_V2.jl")
 
 function println(io::IO, d::SolidStateDetector)
@@ -167,6 +168,8 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector whe
         return BEGe{T}(filename)
     elseif detector_class == "InvertedCoax"
         return InvertedCoax{T}(filename)
+    elseif detector_class == "CGD"
+        return CGD{T}(filename)
     else
         error("Config File does not suit any of the predefined detector geometries. You may want to implement your own 'class'")
     end
