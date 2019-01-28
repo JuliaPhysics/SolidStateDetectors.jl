@@ -1,3 +1,8 @@
+"""
+    abstract type SolidStateDetector{T} 
+
+Supertype of all detector structs.
+"""
 abstract type SolidStateDetector{T} end
 
 abstract type Volume end
@@ -167,6 +172,8 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector whe
         return BEGe{T}(filename)
     elseif detector_class == "InvertedCoax"
         return InvertedCoax{T}(filename)
+    elseif detector_class == "CGD"
+        return CGD{T}(filename)
     else
         error("Config File does not suit any of the predefined detector geometries. You may want to implement your own 'class'")
     end
@@ -522,16 +529,16 @@ function add_detector_specific_outer_boundaries(ivc::InvertedCoax,rs,phis,zs,myt
 end
 
 
-@inline Base.in(point::CylindricalPoint, detector::SolidStateDetector) =
+@inline in(point::CylindricalPoint, detector::SolidStateDetector) =
     contains(detector, point)
 
-@inline Base.in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
+@inline in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
     convert(CylindricalPoint, point) in detector
 
-@inline Base.in(point::StaticArray{Tuple{3},<:Quantity}, detector::SolidStateDetector) =
+@inline in(point::StaticArray{Tuple{3},<:Quantity}, detector::SolidStateDetector) =
     to_internal_units(u"m", point) in detector
 
-@inline Base.in(point::CoordinateTransformations.Cylindrical, detector::SolidStateDetector) =
+@inline in(point::CoordinateTransformations.Cylindrical, detector::SolidStateDetector) =
     convert(CylindricalPoint, point) in detector
 
 

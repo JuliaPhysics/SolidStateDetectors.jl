@@ -23,6 +23,11 @@ const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is 
 
 const max_pointtype_value = update_bit + undepleted_bit + pn_junction_bit #+ bubble_bit
 
+"""
+    PointTypes{T, N, S} <: AbstractArray{T, N}
+
+PointTypes stores the point type of each grid point.
+"""
 struct PointTypes{T, N, S} <: AbstractArray{T, N}
     data::Array{PointType, N}
     grid::Grid{T, N, S}
