@@ -166,3 +166,15 @@ end
 
 Base.convert(T::Type{NamedTuple}, x::WeightingPotential) = T(x)
 
+
+
+"""
+    PointTypes(setup::PotentialSimulationSetup{T, 3, :Cylindrical} ; kwargs...)::PointTypes{T, 3, :Cylindrical}
+
+Extracts the electric potential from `setup` and extrapolate it to an 2π grid.
+
+For 2D grids (r and z) the user has to set the keyword `n_points_in_θ::Int`, e.g.: `n_points_in_θ = 36`.
+"""
+function PointTypes(setup::PotentialSimulationSetup{T, 3, :Cylindrical} ; kwargs...)::PointTypes{T, 3, :Cylindrical} where {T}
+    return get_2π_potential(PointTypes{T, 3, :Cylindrical}(setup.pointtypes, setup.grid); kwargs...)
+end
