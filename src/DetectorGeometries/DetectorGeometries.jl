@@ -53,7 +53,7 @@ function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Ve
         end
     end
     delete_idcs = sort(uniq(delete_idcs))
-    deleteat!(v, delete_idcs) 
+    deleteat!(v, delete_idcs)
     for impv in impticks
         if !in(impv, v)
             error("Important ticks were removed.")
@@ -62,8 +62,8 @@ function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Ve
     return v
 end
 
-function Grid(  detector::SolidStateDetector{T}; 
-                init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], 
+function Grid(  detector::SolidStateDetector{T};
+                init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005],
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
     important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
@@ -71,15 +71,15 @@ function Grid(  detector::SolidStateDetector{T};
     important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
-    
+
     # r
     int_r = Interval{:closed, :closed, T}(0, detector.crystal_radius + 3 * init_grid_spacing[1])
     ax_r::DiscreteAxis{T, :r0, :infinite} = DiscreteAxis{:r0, :infinite}(int_r, step = init_grid_spacing[1])
     rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
     ax_r = DiscreteAxis{T, :r0, :infinite}(int_r, rticks)
-    
+
     # θ
-    if !(0 <= detector.cyclic <= T(2π)) 
+    if !(0 <= detector.cyclic <= T(2π))
         @warn "'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' is ∉ [0, 360] -> Set 'cyclic' to 360°."
         detector.cyclic = T(2π)
     end
@@ -97,14 +97,14 @@ function Grid(  detector::SolidStateDetector{T};
         end
     end
     ax_θ = nθ >= 2 ? DiscreteAxis{:periodic, :periodic}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) : DiscreteAxis{T, :periodic, :periodic}(int_θ, T[0])
-    if length(ax_θ) > 1 
+    if length(ax_θ) > 1
         θticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_θ, important_θ_points, atol=deg2rad(init_grid_spacing[2])/4)
         ax_θ = typeof(ax_θ)(int_θ, θticks)
     end
 
-    #z 
+    #z
     int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], detector.crystal_length + 3 * init_grid_spacing[3])
-    ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
+    ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3])
     zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
     ax_z = typeof(ax_z)(int_z, zticks)
     if isodd(length(ax_z)) # must be even
@@ -174,7 +174,7 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector whe
     end
 end
 
-get_precision_type(d::SolidStateDetector{T}) where {T} = T 
+get_precision_type(d::SolidStateDetector{T}) where {T} = T
 
 function get_important_r_points_from_geometry(c::Coax)
     important_r_points_from_geometry::Vector = []
@@ -949,7 +949,7 @@ function is_boundary_point(d::SolidStateDetector, r::T, θ::T, z::T, rs::Vector{
     else
         nothing
     end
-    
+
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
              # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)+ϵ,digits=digits))
@@ -1140,8 +1140,8 @@ function get_charge_density(detector::SolidStateDetector, r::Real, θ::Real, z::
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
     ρ::T = bot_net_charge_carrier_density + z * slope
-    # ρ = ρ - (r - detector.borehole_radius) * 0.2 * ρ / (detector.crystal_radius - detector.borehole_radius) 
-    return ρ 
+    # ρ = ρ - (r - detector.borehole_radius) * 0.2 * ρ / (detector.crystal_radius - detector.borehole_radius)
+    return ρ
 end
 
 function json_to_dict(inputfile::String)::Dict
@@ -1152,5 +1152,13 @@ function json_to_dict(inputfile::String)::Dict
         parsed_json_file = JSON.parse(dicttext)
     end
     return parsed_json_file
+end
+function bounding_box(d::SolidStateDetector)
+    T = get_precision_type(d)
+    (
+    r_range = ClosedInterval{T}(0.0,d.crystal_radius),
+    Θ_range = ClosedInterval{T}(0.0,2π),
+    z_range = ClosedInterval{T}(0.0,d.crystal_length)
+    )
 end
 include("plot_recipes.jl")

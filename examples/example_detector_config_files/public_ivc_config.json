@@ -78,7 +78,7 @@
 			"phiStop": 360,
 			"zStart": 0,
 			"zStop": 0,
-			"potential": 2500,
+			"potential": 3500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -102,7 +102,7 @@
 			"phiStop": 360,
 			"zStart": 0.0,
 			"zStop": 20.0,
-			"potential": 2500,
+			"potential": 3500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -126,7 +126,7 @@
 			"phiStop": 360,
 			"zStart": 80.0,
 			"zStop": 80.0,
-			"potential": 2500,
+			"potential": 3500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -150,7 +150,7 @@
 			"phiStop": 360,
 			"zStart": 25.0,
 			"zStop": 80.0,
-			"potential": 2500,
+			"potential": 3500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -174,7 +174,7 @@
 			"phiStop": 360,
 			"zStart": 25.0,
 			"zStop": 25.0,
-			"potential": 2500,
+			"potential": 3500,
 			"boundaryWidth":
 			{
 				"radial":0.0,
@@ -199,7 +199,7 @@
 			"phiStop": 360,
 			"zStart": 20.0,
 			"zStop": 80.0,
-			"potential": 2500,
+			"potential": 3500,
 			"boundaryWidth":
 			{
 				"radial":0.0,

@@ -41,7 +41,10 @@ export VacuumChargeDriftModel, ADLChargeDriftModel
 export get_active_volume
 export Grid
 export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential
-export generate_charge_signals!, generate_charge_signals    
+export generate_charge_signals!, generate_charge_signals
+
+export bounding_box
+export generate_random_startpositions
 
 include("GeometryRounding.jl")
 

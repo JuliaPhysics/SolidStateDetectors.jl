@@ -178,8 +178,8 @@ end
     for i_part in 1:size(b.segmentation_r_ranges,1)
         rStart = f*b.segmentation_r_ranges[i_part][1]
         rStop = f*b.segmentation_r_ranges[i_part][2]
-        θStart = b.segmentation_phi_ranges[i_part][1]
-        θStop = b.segmentation_phi_ranges[i_part][2]
+        ΘStart = b.segmentation_phi_ranges[i_part][1]
+        ΘStop = b.segmentation_phi_ranges[i_part][2]
         zStart = f*b.segmentation_z_ranges[i_part][1]
         zStop = f*b.segmentation_z_ranges[i_part][2]
         if !isempty(coloring)
@@ -188,13 +188,38 @@ end
             color := :black
         end
         if b.segmentation_types[i_part]=="Tubs"
-            @series begin
-                if !isempty(labeling)
-                    label := labeling[i_part]
-                else
-                    label := ""
+            if !isempty(labeling)
+                label := labeling[i_part]
+            else
+                label := ""
+            end
+            if b.borehole_modulation == true && i_part in [b.borehole_segment_idx,b.borehole_bot_segment_idx]
+                @series begin
+                    phirange = [i for i in 0:0.05:2π+0.5]
+                    xs = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius) * cos(phirange[i]) for i in eachindex(phirange)] .* f
+                    ys = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius)* sin(phirange[i]) for i in eachindex(phirange)] .* f
+                    zs = [zStart for i in eachindex(phirange)]
+                    xs, ys, zs
                 end
-                Tubs("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop)
+            elseif b.borehole_modulation == true && i_part == b.borehole_top_segment_idx
+                @series begin
+                    phirange = [i for i in 0:0.05:2π+0.5]
+                    xs = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius) * cos(phirange[i]) for i in eachindex(phirange)] .* f
+                    ys = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius)* sin(phirange[i]) for i in eachindex(phirange)] .* f
+                    zs = [zStart for i in eachindex(phirange)]
+                    xs, ys, zs
+                end
+                @series begin
+                    phirange = [i for i in 0:0.05:2π+0.5]
+                    xs = [rStop * cos(phirange[i]) for i in eachindex(phirange)]
+                    ys = [rStop * sin(phirange[i]) for i in eachindex(phirange)]
+                    zs = [zStart for i in eachindex(phirange)]
+                    xs, ys, zs
+                end
+            else
+                @series begin
+                    Tubs("",1,1.,"",0.0,rStart,rStop,ΘStart,ΘStop,zStart,zStop)
+                end
             end
         else
             @series begin
@@ -203,8 +228,8 @@ end
                 else
                     label := ""
                 end
-                # Taper("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop,"bl")
-                outer_taper(rStart,rStop,θStart,θStop,zStart,zStop,"c//")
+                # Taper("",1,1.,"",0.0,rStart,rStop,ΘStart,ΘStop,zStart,zStop,"bl")
+                outer_taper(rStart,rStop,ΘStart,ΘStop,zStart,zStop,"c//")
             end
         end
     end

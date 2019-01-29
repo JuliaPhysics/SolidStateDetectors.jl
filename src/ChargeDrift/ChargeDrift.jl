@@ -859,4 +859,18 @@ function find_intersection(sl1::StraightLine,sl2::StraightLine)
     end
 end
 
+function generate_random_startpositions(d::SolidStateDetector, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister())
+    T=get_precision_type(d)
+    n_filled::Int = 0
+    positions = Vector{SVector{3,T}}(undef,n)
+    while n_filled < n
+        sample=Cylindrical{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:Θ_range].left:0.00001:Volume[:Θ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
+        if contains(d,sample)
+            n_filled += 1
+            positions[n_filled]=CartFromCyl(sample)
+        end
+    end
+    positions
+end
+
 include("plot_recipes.jl")
