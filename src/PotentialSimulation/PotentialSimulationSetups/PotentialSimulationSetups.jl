@@ -112,7 +112,7 @@ include("PotentialSimulationSetupRBCylindrical.jl")
 
     @series begin
         subplot := 1
-        PointTypes(pss)
+        PointTypes(pss, n_points_in_θ=n_points_in_θ)
     end
     @series begin
         subplot := 2
