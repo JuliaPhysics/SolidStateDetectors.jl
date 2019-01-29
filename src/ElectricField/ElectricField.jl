@@ -27,7 +27,7 @@ function get_magnitude_of_rθz_vector(vector::AbstractArray,cutoff=NaN)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T}, fieldvector_coordinates=:xyz)::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat} 
+function get_electric_field_from_potential(ep::ElectricPotential{T}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat} 
     p = ep.data
     axr::Vector{T} = collect(ep.grid[:r])
     axθ::Vector{T} = collect(ep.grid[:θ])
@@ -57,21 +57,20 @@ function get_electric_field_from_potential(ep::ElectricPotential{T}, fieldvector
                 if iθ < 2
                     Δp_θ_1 = p[ir ,iθ+1, iz]-p[ir ,iθ, iz]
                     Δp_θ_2 = p[ir ,iθ, iz]-p[ir ,end, iz]
-                    d_θ_1 = (axθ[iθ+1]-axθ[iθ])/axr[ir]# to get the proper value in length units
-                    d_θ_2 = (cyclic - axθ[end]) / axr[ir]
+                    d_θ_1 = (axθ[iθ+1]-axθ[iθ]) * axr[ir]# to get the proper value in length units
+                    d_θ_2 = (cyclic - axθ[end]) * axr[ir]
                     eθ = ( Δp_θ_1/d_θ_1 + Δp_θ_2/d_θ_2) / 2
                 elseif iθ == size(ef,2)
-
                     Δp_θ_1 = p[ir ,1, iz]-p[ir ,iθ, iz]
                     Δp_θ_2 = p[ir ,iθ, iz]-p[ir ,iθ-1, iz]
-                    d_θ_1 = (axθ[1]-axθ[iθ])/axr[ir]# to get the proper value in length units
-                    d_θ_2 = (axθ[iθ]-axθ[iθ-1])/axr[ir]
+                    d_θ_1 = (axθ[1]-axθ[iθ]) * axr[ir]# to get the proper value in length units
+                    d_θ_2 = (axθ[iθ]-axθ[iθ-1]) * axr[ir]
                     eθ = ( Δp_θ_1/d_θ_1 + Δp_θ_2/d_θ_2) / 2
                 else
                     Δp_θ_1 = p[ir ,iθ+1, iz]-p[ir ,iθ, iz]
                     Δp_θ_2 = p[ir ,iθ, iz]-p[ir ,iθ-1, iz]
-                    d_θ_1 = (axθ[iθ+1]-axθ[iθ])/axr[ir]# to get the proper value in length units
-                    d_θ_2 = (axθ[iθ]-axθ[iθ-1])/axr[ir]
+                    d_θ_1 = (axθ[iθ+1]-axθ[iθ]) * axr[ir]# to get the proper value in length units
+                    d_θ_2 = (axθ[iθ]-axθ[iθ-1]) * axr[ir]
                     eθ = ( Δp_θ_1/d_θ_1 + Δp_θ_2/d_θ_2) / 2
                 end
                 isinf(eθ) || isnan(eθ) ? eθ = 0.0 : nothing # for small radii and small distances(center of the grid) it would yield Infs or Nans
@@ -90,8 +89,12 @@ function get_electric_field_from_potential(ep::ElectricPotential{T}, fieldvector
                     d_z_2 = axz[iz]-axz[iz-1]
                     ez = ( Δp_z_1/d_z_1 + Δp_z_2/d_z_2) / 2
                 end
-                e_vector = [-er,-eθ,-ez]
-                ef[ir,iθ,iz] = e_vector
+                if pointtypes[ir, iθ, iz] & update_bit == 0 # boundary points 
+                    if (1 < ir < size(pointtypes, 1)) if (pointtypes[ir - 1, iθ, iz] & update_bit > 0) && (pointtypes[ir + 1, iθ, iz] & update_bit > 0) er = 0 end end
+                    if (1 < iθ < size(pointtypes, 2)) if (pointtypes[ir, iθ - 1, iz] & update_bit > 0) && (pointtypes[ir, iθ + 1, iz] & update_bit > 0) eθ = 0 end end
+                    if (1 < iz < size(pointtypes, 3)) if (pointtypes[ir, iθ, iz - 1] & update_bit > 0) && (pointtypes[ir, iθ, iz + 1] & update_bit > 0) ez = 0 end end
+                end 
+                ef[ir,iθ,iz] = [-er, -eθ, -ez]
             end
         end
     end

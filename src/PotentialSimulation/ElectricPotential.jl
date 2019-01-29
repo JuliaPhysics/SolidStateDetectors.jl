@@ -10,8 +10,15 @@ end
 @inline getindex(ep::ElectricPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
 
 
-function ElectricPotential(fss::PotentialSimulationSetup{T, N, S} ; kwargs...)::ElectricPotential{T, N, S} where {T, N, S}
-    return get_2π_potential(ElectricPotential{T, N, S}(fss.potential, fss.grid); kwargs...)
+"""
+    ElectricPotential(setup::PotentialSimulationSetup{T, 3, :Cylindrical} ; kwargs...)::ElectricPotential{T, 3, :Cylindrical}
+
+Extracts the electric potential from `setup` and extrapolate it to an 2π grid.
+
+For 2D grids (r and z) the user has to set the keyword `n_points_in_θ::Int`, e.g.: `n_points_in_θ = 36`.
+"""
+function ElectricPotential(setup::PotentialSimulationSetup{T, 3, :Cylindrical} ; kwargs...)::ElectricPotential{T, 3, :Cylindrical} where {T}
+    return get_2π_potential(ElectricPotential{T, 3, :Cylindrical}(setup.potential, setup.grid); kwargs...)
 end
 
 

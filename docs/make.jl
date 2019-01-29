@@ -13,7 +13,6 @@ using SolidStateDetectors
 makedocs(
     sitename = "SolidStateDetectors.jl",
     modules = [SolidStateDetectors],
-    format = :html,
     pages=[
         "Home" => "index.md",
         "Manual" => Any[
@@ -29,10 +28,11 @@ makedocs(
         "LICENSE" => "LICENSE.md",
     ],
     doctest = ("fixdoctests" in ARGS) ? :fix : true,
-    html_prettyurls = !("local" in ARGS),
-    html_canonical = "https://JuliaHEP.github.io/SolidStateDetectors.jl/stable/",
+    format = Documenter.HTML(canonical = "https://JuliaHEP.github.io/SolidStateDetectors.jl/stable/", prettyurls = !("local" in ARGS))
 )
 
 deploydocs(
-    repo = "github.com/JuliaHEP/SolidStateDetectors.jl.git"
+    repo = "github.com/JuliaHEP/SolidStateDetectors.jl.git",
+    devbranch = "master",
+    devurl = "master",
 )

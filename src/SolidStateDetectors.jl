@@ -25,26 +25,21 @@ import Distributions
 import Tables
 import TypedTables
 
-import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype
+import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
 import Base: show, print, println, display, +
 
+
+const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
-const SSD = SolidStateDetectors
-export SSD
-
-export calculate_electric_potential, calculate_weighting_potential
 
 export AbstractChargeDriftModels, get_electron_drift_field, get_hole_drift_field
 export VacuumChargeDriftModel, ADLChargeDriftModel
-export get_active_volume
 export Grid
 export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential
+export calculate_electric_potential, calculate_weighting_potential, get_active_volume
 export generate_charge_signals!, generate_charge_signals
-
-export bounding_box
-export generate_random_startpositions
 
 include("GeometryRounding.jl")
 
