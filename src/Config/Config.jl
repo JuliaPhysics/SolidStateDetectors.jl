@@ -49,7 +49,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                     pot::T = if ismissing(weighting_potential_channel_idx)
                         get_boundary_value( ssd, r, θ, z, axr)
                     else
-                        in(get_segment_idx(ssd, r, θ, z), channels) ? 1 : 0
+                        in(get_segment_idx(ssd, r, θ, z, axr), channels) ? 1 : 0
                     end
                     potential[ ir, iθ, iz ] = pot
                     pointtypes[ ir, iθ, iz ] = zero(PointType)

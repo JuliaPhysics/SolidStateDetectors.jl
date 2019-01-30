@@ -369,7 +369,7 @@ function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindri
 end
 
 
-function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical})::Array{T, 3} where {T}
+function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
     return fssrb.ϵ 
 end
 

@@ -24,8 +24,8 @@
 	},
 	"charge_carrier_density": {
 		"unit": "cm-3",
-		"top": 0.70,
-		"bot": 1.02
+		"top": 0.1,
+		"bot": 1.9
 	},
 	"segmentation":	{
 		"n_contacts": {
@@ -40,7 +40,7 @@
 					"yStop":  10.0,
 					"zStart":  0.0,
 					"zStop":  10.0,
-					"potential": 2000.0
+					"potential": 500.0
 				}
 			]
 		},

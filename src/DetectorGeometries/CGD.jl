@@ -7,11 +7,19 @@ mutable struct CartesianBox3D{T} <: AbstractGeometry{T}
     z::Tuple{T, T}
 end
 
+function in(pt::StaticVector{3, T}, g::CartesianBox3D{T})::Bool where {T}
+    return (g.x[1] <= pt[1] <= g.x[2]) && (g.y[1] <= pt[2] <= g.y[2]) && (g.z[1] <= pt[3] <= g.z[2])
+end
+
 abstract type AbstractContact{T} end
 mutable struct Contact{T, D} <: AbstractContact{T}
     potential::T
     id::Int
     geometry::AbstractGeometry{T}
+end
+
+function in(pt::StaticVector{3, T}, c::Contact{T})::Bool where {T}
+    return in(pt, c.geometry)
 end
 
 # CGD: Cuboid Germanium Detector
@@ -128,13 +136,11 @@ function CGD(inputfilename::String)::CGD
 end
 
 function println(c::CGD)
-    println()
-    println("\tCuboid Germanium Detector:")
-    println("\t++++++++++++++++++++++++++")
-    println("\tGeometry:")
-    println("\t  length x = $( uconvert(c.geometry_unit, (c.crystal_length_x * u"m"))) ")
-    println("\t  length y = $( uconvert(c.geometry_unit, (c.crystal_length_y * u"m"))) ")
-    println("\t  length z = $( uconvert(c.geometry_unit, (c.crystal_length_z * u"m"))) ")
+    println("Cuboid Germanium Detector:")
+    println("  Geometry:")
+    println("    crystal length x = $( uconvert(c.geometry_unit, (c.crystal_length_x * u"m"))) ")
+    println("    crystal length y = $( uconvert(c.geometry_unit, (c.crystal_length_y * u"m"))) ")
+    println("    crystal length z = $( uconvert(c.geometry_unit, (c.crystal_length_z * u"m"))) ")
 end
 function show(c::CGD)  println(c)   end
 function display(c::CGD)  println(c)   end
@@ -158,13 +164,13 @@ function Grid(  det::CGD{T};
     ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2]) 
     ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
 
-    if isodd(length(ax_z)) # RedBlack dimension must be of even length
-        zticks = ax_z.ticks
-        push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
-        sort!(zticks)
-        ax_z = DiscreteAxis{T, :infinite, :infinite}(int_z, zticks) # must be even
+    if isodd(length(ax_x)) # RedBlack dimension must be of even length
+        xticks = ax_x.ticks
+        push!(xticks, geom_round((xticks[end] + xticks[end-1]) * 0.5))
+        sort!(xticks)
+        ax_x = DiscreteAxis{T, :infinite, :infinite}(int_x, xticks) # must be even
     end
-    @assert iseven(length(ax_z)) "CartesianGrid3D must have even number of points in z."
+    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
     
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) ) 
 end
@@ -182,6 +188,34 @@ function get_charge_density(detector::SolidStateDetector{T}, pt::StaticVector{3,
     return ρ 
 end
 
+function get_boundary_value(det::CGD{T}, pt::StaticVector{3, T}, weighting_potential_channel_ids::Union{Missing, Vector{Int}} = missing)::Tuple{Bool, T} where {T}
+    is_boundary_point::Bool = false
+    boundary_potential::T = 0
+    contact_id::Int = -1
+    for contact in det.n_contacts
+        if in(pt, contact)
+            is_boundary_point = true
+            contact_id = contact.id
+            boundary_potential = contact.potential
+            break
+        end
+    end
+    if !is_boundary_point 
+        for contact in det.p_contacts
+            if in(pt, contact)
+                is_boundary_point = true
+                contact_id = contact.id
+                boundary_potential = contact.potential
+                break
+            end
+        end
+    end
+    if !ismissing(weighting_potential_channel_ids) 
+        error("todo...")
+    end
+    return is_boundary_point, boundary_potential
+end
+
 function get_ρ_and_ϵ(pt::StaticVector{3, T}, ssd::CGD{T})::Tuple{T, T} where {T <: AbstractFloat}
     if in(pt, ssd)
         ρ::T = get_charge_density(ssd, pt) * elementary_charge
@@ -192,4 +226,40 @@ function get_ρ_and_ϵ(pt::StaticVector{3, T}, ssd::CGD{T})::Tuple{T, T} where {
         ϵ = ssd.material_environment.ϵ_r 
         return ρ, ϵ
     end
+end
+
+function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
+        grid::Grid{T, 3, :Cartesian}, ssd::CGD{T}; weighting_potential_channel_idx::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+    
+    is_weighting_potential::Bool = !ismissing(weighting_potential_channel_idx)
+
+    weighting_potential_channel_ids = if is_weighting_potential
+        error("to be implemented")
+        # ssd.grouped_channels[weighting_potential_channel_idx]
+    else
+        missing
+    end
+
+    ax_x::Vector{T} = grid[:x].ticks
+    ax_y::Vector{T} = grid[:y].ticks
+    ax_z::Vector{T} = grid[:z].ticks
+    for iz in axes(potential, 3)
+        z::T = ax_z[iz]
+        for iy in axes(potential, 2)
+            y::T = ax_y[iy]
+            for ix in axes(potential, 1)
+                x::T = ax_x[ix]
+                pt::StaticVector{3, T} = SVector{3, T}( x, y, z )              
+                is_boundary_point, boundary_potential = get_boundary_value(ssd, pt, weighting_potential_channel_ids)
+                if is_boundary_point                    
+                    potential[ ix, iy, iz ]  = boundary_potential
+                    pointtypes[ ix, iy, iz ] = zero(PointType)
+                elseif in(pt, ssd)
+                    pointtypes[ ix, iy, iz ] += pn_junction_bit 
+                end
+
+            end
+        end
+    end
+    nothing
 end

@@ -12,13 +12,13 @@ Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ])
     @inbounds begin 
         rb_tar_idx::Int, rb_src_idx::Int = even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int,rb_even::Int) 
 
-        gw1::Array{T, 2} = fssrb.geom_weights[1].weights
-        gw2::Array{T, 2} = fssrb.geom_weights[2].weights
-        gw3::Array{T, 2} = fssrb.geom_weights[3].weights
+        gw1::Array{T, 2} = fssrb.geom_weights[1].weights  # r or x 
+        gw2::Array{T, 2} = fssrb.geom_weights[2].weights  # θ or y
+        gw3::Array{T, 2} = fssrb.geom_weights[3].weights  # z or z
 
-        # for ir in 2:(size(fssrb.potential, 3) - 1)
-        @onthreads 1:use_nthreads for idx1 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
-            innerloops!( idx1, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, bulk_is_ptype, is_weighting_potential)
+        # for idx3 in 2:(size(fssrb.potential, 3) - 1)
+        @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
+            innerloops!( idx3, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, bulk_is_ptype, is_weighting_potential)
         end 
     end 
     nothing
@@ -30,7 +30,7 @@ end
                                 depletion_handling::Val{depletion_handling_enabled},
                                 bulk_is_ptype::Val{_bulk_is_ptype}  )::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype}
 
-(Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the fied calculation.                            
+(Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the field calculation.                            
 """
 @fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_θ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical},
                                 update_even_points::Val{even_points},
@@ -65,7 +65,7 @@ end
             end
             
             rθi_is_even::Bool = iseven(ir + iθ)
-            rθi_is_even_t = iseven(ir + iθ) ? Val{true}() : Val{false}()
+            rθi_is_even_t = rθi_is_even ? Val{true}() : Val{false}()
 
             pwwrr_pwwθr::T = pwwrr * pwwθr
             pwwrr_pwwθl::T = pwwrr * pwwθl

@@ -104,3 +104,31 @@ function RBExtBy2Array( a::Array{T, N}, grid::Grid{TG, N, :Cylindrical} )::Array
     return rbarray
 end
 
+
+"""
+    RBExtBy2Array( et::Type, g::Grid{T, 3, :Cartesian} )::Array{et, 4} where {T}
+
+Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
+"""
+function RBExtBy2Array( et::Type, g::Grid{T, 3, :Cartesian} )::Array{et, 4} where {T}
+    nx, ny, nz = size(g)
+    return zeros(T, div(nx, 2) + mod(nx, 2) + 2, ny + 2, nz + 2, 2)
+end
+function RBExtBy2Array( a::Array{T, 3}, grid::Grid{TG, 3, :Cartesian} )::Array{T, 4} where {T, TG}
+    rbarray::Array{T, 4} = RBExtBy2Array(T, grid)
+    for iz in axes(a, 3)
+        irbz::Int = iz + 1
+        for iy in axes(a, 2)
+            irby::Int = iy + 1
+            idxsum::Int = iz + iy
+            for ix in axes(a, 1)
+                irbx::Int = rbidx(ix) 
+                rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
+                rbarray[ irbx, irby, irbz, rbi ] = a[ix, iy, iz]
+            end
+        end
+    end
+    return rbarray
+end
+
+
