@@ -57,11 +57,11 @@ end
             Δθ_ext_inv_l::T = gw_θ[4, inθ]
 
             if inr == 1
-                pwwθr = 0.5f0
-                pwwθl = 0.5f0
-                pwΔmpθ = 2π
-                Δθ_ext_inv_r = 0.15915494f0
-                Δθ_ext_inv_l = 0.15915494f0
+                pwwθr = T(0.5)
+                pwwθl = T(0.5)
+                pwΔmpθ = T(2π)
+                Δθ_ext_inv_r = inv(pwΔmpθ)
+                Δθ_ext_inv_l = Δθ_ext_inv_r
             end
             
             rθi_is_even::Bool = iseven(ir + iθ)
