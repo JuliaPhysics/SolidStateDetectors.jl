@@ -138,3 +138,13 @@ function construct_grouped_channels_array(d,config_file)
     d.grouped_channels=channels
 end
 
+
+function get_important_r_points_from_geometry(b::BEGe)
+    important_r_points_from_geometry::Vector = []
+    push!(important_r_points_from_geometry,b.crystal_radius)
+    push!(important_r_points_from_geometry,b.taper_bot_rInner)
+    push!(important_r_points_from_geometry,b.taper_top_rInner)
+    push!(important_r_points_from_geometry,b.groove_rInner)
+    push!(important_r_points_from_geometry,b.groove_rInner+b.groove_width)
+    important_r_points_from_geometry
+end

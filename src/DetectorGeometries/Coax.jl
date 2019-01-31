@@ -168,3 +168,12 @@ function display(c::Coax)  println(c)   end
 function print(c::Coax)  println(c)   end
 
 
+
+function get_important_r_points_from_geometry(c::Coax)
+    important_r_points_from_geometry::Vector = []
+    push!(important_r_points_from_geometry,c.crystal_radius)
+    push!(important_r_points_from_geometry,c.borehole_radius)
+    push!(important_r_points_from_geometry,c.taper_inner_bot_rOuter)
+    push!(important_r_points_from_geometry,c.taper_inner_top_rOuter)
+    important_r_points_from_geometry
+end

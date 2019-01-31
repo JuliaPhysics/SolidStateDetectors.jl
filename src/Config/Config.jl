@@ -1,17 +1,3 @@
-"""
-    abstract type AbstractConfig{T <: AbstractFloat} end
-
-`T`: Type of points or precision. 
-"""
-abstract type AbstractConfig{T <: AbstractFloat} end
-
-function get_ρ_and_ϵ(pt, config::AbstractConfig{T})::Tuple{T, T} where {T <: AbstractFloat}
-    error("User has to define a method `get_ρ_and_ϵ` for `pt::$(typeof(pt))` and `config::$(typeof(config))`.")
-end
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, grid::Grid{T, N, S}, config::AbstractConfig{T})::Nothing where {T, N, G, S} 
-    error("User has to define a method `set_pointtypes_and_fixed_potentials!` for `config::$(typeof(config))`.")
-end
-
 
 
 function get_ρ_and_ϵ(pt::Cylindrical{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}

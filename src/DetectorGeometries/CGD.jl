@@ -1,27 +1,3 @@
-
-
-abstract type AbstractGeometry{T} end
-mutable struct CartesianBox3D{T} <: AbstractGeometry{T}
-    x::Tuple{T, T}
-    y::Tuple{T, T}
-    z::Tuple{T, T}
-end
-
-function in(pt::StaticVector{3, T}, g::CartesianBox3D{T})::Bool where {T}
-    return (g.x[1] <= pt[1] <= g.x[2]) && (g.y[1] <= pt[2] <= g.y[2]) && (g.z[1] <= pt[3] <= g.z[2])
-end
-
-abstract type AbstractContact{T} end
-mutable struct Contact{T, D} <: AbstractContact{T}
-    potential::T
-    id::Int
-    geometry::AbstractGeometry{T}
-end
-
-function in(pt::StaticVector{3, T}, c::Contact{T})::Bool where {T}
-    return in(pt, c.geometry)
-end
-
 # CGD: Cuboid Germanium Detector
 mutable struct CGD{T<:AbstractFloat} <: SolidStateDetector{T}
     name::String

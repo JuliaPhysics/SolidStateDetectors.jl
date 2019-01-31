@@ -3,167 +3,28 @@
 
 Supertype of all detector structs.
 """
-abstract type SolidStateDetector{T} end
+abstract type SolidStateDetector{T <: AbstractFloat} end
+        
+get_precision_type(d::SolidStateDetector{T}) where {T} = T 
+        
+include("Geometries/Geometries.jl")
+include("contacts.jl")
 
-abstract type Volume end
-
-struct Tubs{T<:AbstractFloat}<:Volume
-    name::String
-    hierarchy::Int
-    ϵ
-    behaviour::String
-    potential
-    rStart::T
-    rStop::T
-    θStart::T
-    θStop::T
-    zStart::T
-    zStop::T
-    function Tubs(name::String, hierarchy::Int, ϵ, behaviour::String, potential, rStart::T, rStop::T, θStart::T, θStop::T, zStart::T, zStop::T) where T<:AbstractFloat
-    return new{T}(name, hierarchy, ϵ, behaviour, potential, rStart, rStop, θStart, θStop, zStart, zStop)
-    end
-end
-
-function Tubs(name, hierarchy, ϵ, behaviour, potential, rStart::T, rStop::T, θStart::T, θStop::T, zStart::T, zStop::T) where T<:AbstractFloat
-    return Tubs{typeof(zStop)}(name, hierarchy, ϵ, behaviour, potential, rStart, rStop, θStart, θStop, zStart, zStop)
-end
-
-
-function uniq(v::Vector{T})::Vector{T} where {T <: Real}
-    v1::Vector{T} = Vector{T}()
-    if length(v) > 0
-        laste::T = v[1]
-        push!(v1, laste)
-        for e in v
-            if e != laste
-                laste = e
-                push!(v1, laste)
-            end
-        end
-    end
-    return v1
-end
-
-function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
-    v::Vector{T} = T[]
-    for r in impticks push!(v, r) end
-    for r in ax push!(v, r) end
-    sort!(v)
-    v = uniq(v)
-    delete_idcs::Vector{Int} = Int[]
-    for i in 1:(length(v) - 1)
-        if (v[i + 1] - v[i]) < atol
-            if !in(v[i], impticks) push!(delete_idcs, i) end
-            if !in(v[i + 1], impticks) push!(delete_idcs, i + 1) end
-        end
-    end
-    delete_idcs = sort(uniq(delete_idcs))
-    deleteat!(v, delete_idcs) 
-    for impv in impticks
-        if !in(impv, v)
-            error("Important ticks were removed.")
-        end
-    end
-    return v
-end
-
-function Grid(  detector::SolidStateDetector{T}; 
-                init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], 
-                for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
-
-    important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
-    important_θ_points::Vector{T} = T[]#!only_2d ? sort(get_important_θ_points(detector)) : T[]
-    important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
-
-    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
-    
-    # r
-    int_r = Interval{:closed, :closed, T}(0, detector.crystal_radius + 3 * init_grid_spacing[1])
-    ax_r::DiscreteAxis{T, :r0, :infinite} = DiscreteAxis{:r0, :infinite}(int_r, step = init_grid_spacing[1])
-    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
-    ax_r = DiscreteAxis{T, :r0, :infinite}(int_r, rticks)
-    
-    # θ
-    if !(0 <= detector.cyclic <= T(2π)) 
-        @warn "'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' is ∉ [0, 360] -> Set 'cyclic' to 360°."
-        detector.cyclic = T(2π)
-    end
-    int_θ = if !for_weighting_potential
-        detector.mirror_symmetry_θ > 0 ? Interval{:closed, :closed, T}(0, detector.cyclic / 2) : Interval{:closed, :open, T}(0, detector.cyclic)
-    else
-        detector.cyclic == 0 ? Interval{:closed, :closed, T}(0, 0) : Interval{:closed, :open, T}(0, 2π)
-    end
-    nθ::Int = div(int_θ.right, deg2rad(init_grid_spacing[2])) # nθ must be even or equals to 1 ( 1 -> 2D special case)
-    if detector.cyclic > 0
-        try
-            nsym_θ::Int = Int(round(T(2π) / detector.cyclic, digits = 3))
-        catch err
-            error("360° divided by 'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' does not give an integer -> Set 'cyclic' to 360°.")
-        end
-    end
-    ax_θ = nθ >= 2 ? DiscreteAxis{:periodic, :periodic}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) : DiscreteAxis{T, :periodic, :periodic}(int_θ, T[0])
-    if length(ax_θ) > 1 
-        θticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_θ, important_θ_points, atol=deg2rad(init_grid_spacing[2])/4)
-        ax_θ = typeof(ax_θ)(int_θ, θticks)
-    end
-
-    #z 
-    int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], detector.crystal_length + 3 * init_grid_spacing[3])
-    ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
-    ax_z = typeof(ax_z)(int_z, zticks)
-    if isodd(length(ax_z)) # must be even
-        int_z = ax_z.interval
-        zticks = ax_z.ticks
-        push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
-        sort!(zticks)
-        ax_z = DiscreteAxis{T, :infinite, :infinite}(int_z, zticks) # must be even
-    end
-    @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
-
-    return CylindricalGrid{T}( (ax_r, ax_θ, ax_z) )
-end
-
-include("BEGe.jl")
+# Cylindrical:
 include("Coax.jl")
+include("BEGe.jl")
 include("Inverted_Coax.jl")
-include("CGD.jl")
 # include("DetectorGeometries_V2.jl")
 
-function println(io::IO, d::SolidStateDetector)
-    println("________"*d.name*"________\n")
-    println("---General Properties---")
-    println("Detector Material: \t $(d.material_detector.name)")
-    println("Environment Material: \t $(d.material_environment.name)")
-    println("Bulk type: \t\t $(d.bulk_type)")
-    println("Core Bias Voltage: \t $(d.segment_bias_voltages[1]) V")
-    println("Mantle Bias Voltage: \t $(d.segment_bias_voltages[2]) V\n")
-    println("---Geometry---")
-    println("Outer Crystal Dimensions: ")
-    println("Crystal length: \t $(round(d.crystal_length * 1000, sigdigits=6)) mm")
-    println("Crystal diameter: \t $(round(2 * d.crystal_radius * 1000, sigdigits=6)) mm")
-end
-
-function show(io::IO, d::SolidStateDetector) println(d) end
-function print(io::IO, d::SolidStateDetector) println(d) end
-function display(io::IO, d::SolidStateDetector ) println(d) end
-function show(io::IO,::MIME"text/plain", d::SolidStateDetector)
-    show(io, d)
-end
-
-function SolidStateDetector(mytype::Type{<:AbstractFloat},filename::AbstractString)::SolidStateDetector
-    SolidStateDetector{mytype}(filename)
-end
-function SolidStateDetector(filename::AbstractString)::SolidStateDetector
-    SolidStateDetector{Float32}(filename)
-end
+# Cartesian:
+include("CGD.jl")
 
 """
-    SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector where T <: AbstractFloat
+    SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: AbstractFloat}
 
 Reads in a config-JSON file and returns an Detector struct which holds all information specified in the config file.
 """
-function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector where T <: AbstractFloat
+function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: AbstractFloat}
     dicttext = read(filename, String)
     parsed_json_file = JSON.parse(dicttext)
     detector_class = parsed_json_file["class"]
@@ -180,71 +41,50 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector whe
     end
 end
 
-get_precision_type(d::SolidStateDetector{T}) where {T} = T 
-
-function get_important_r_points_from_geometry(c::Coax)
-    important_r_points_from_geometry::Vector = []
-    push!(important_r_points_from_geometry,c.crystal_radius)
-    push!(important_r_points_from_geometry,c.borehole_radius)
-    push!(important_r_points_from_geometry,c.taper_inner_bot_rOuter)
-    push!(important_r_points_from_geometry,c.taper_inner_top_rOuter)
-    important_r_points_from_geometry
+function SolidStateDetector(T::Type{<:AbstractFloat}, filename::AbstractString)::SolidStateDetector{T}
+    SolidStateDetector{T}(filename)
+end
+function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float32}
+    SolidStateDetector{Float32}(filename)
 end
 
-function get_important_r_points_from_geometry(b::BEGe)
-    important_r_points_from_geometry::Vector = []
-    push!(important_r_points_from_geometry,b.crystal_radius)
-    push!(important_r_points_from_geometry,b.taper_bot_rInner)
-    push!(important_r_points_from_geometry,b.taper_top_rInner)
-    push!(important_r_points_from_geometry,b.groove_rInner)
-    push!(important_r_points_from_geometry,b.groove_rInner+b.groove_width)
-    important_r_points_from_geometry
-end
-function get_important_r_points_from_geometry(ivc::InvertedCoax)
-    important_r_points_from_geometry::Vector = []
-    for v in ivc.volumes
-            push!(important_r_points_from_geometry,v.rStart)
-            push!(important_r_points_from_geometry,v.rStop)
-    end
-    important_r_points_from_geometry
-end
 
-function get_important_r_points(d::SolidStateDetector)
-    T=get_precision_type(d)
+
+function get_important_r_points(d::SolidStateDetector{T})::Vector{T} where {T <: AbstractFloat}
     important_r_points::Vector{T} = []
     ## Outer Shape
-    push!(important_r_points,get_important_r_points_from_geometry(d)...)
+    push!(important_r_points, get_important_r_points_from_geometry(d)...)
     ## From Segmentation
     for tuple in d.segmentation_r_ranges
-        !in(tuple[1],important_r_points) ? push!(important_r_points,tuple[1]) : nothing
-        !in(tuple[2],important_r_points) ? push!(important_r_points,tuple[2]) : nothing
+        !in(tuple[1],important_r_points) ? push!(important_r_points, tuple[1]) : nothing
+        !in(tuple[2],important_r_points) ? push!(important_r_points, tuple[2]) : nothing
     end
-    important_r_points
+    return important_r_points
 end
 
-function get_important_θ_points(d::SolidStateDetector)
-    T = get_precision_type(d)
+function get_important_θ_points(d::SolidStateDetector{T})::Vector{T} where {T <: AbstractFloat} 
     important_θ_points::Vector{T} = []
     for tuple in d.segmentation_phi_ranges
         !in(tuple[1],important_θ_points) ? push!(important_θ_points,tuple[1]) : nothing
         !in(tuple[2],important_θ_points) ? push!(important_θ_points,tuple[2]) : nothing
     end
     for boundary_midpoint in d.segmentation_boundaryMidpoints_horizontal
-        !in(boundary_midpoint,important_θ_points) ? push!(important_θ_points,boundary_midpoint) : nothing
+        !in(boundary_midpoint,important_θ_points) ? push!(important_θ_points, boundary_midpoint) : nothing
     end
-    important_θ_points
+    return important_θ_points
 end
 
-function get_important_z_points_from_geometry(c::Coax)
-    important_z_points_from_geometry::Vector = []
+function get_important_z_points_from_geometry(c::Coax{T})::Vector{T} where {T <: AbstractFloat} 
+    important_z_points_from_geometry::Vector{T} = []
     push!(important_z_points_from_geometry,0.0)
     push!(important_z_points_from_geometry,c.crystal_length)
     push!(important_z_points_from_geometry,c.taper_inner_bot_length)
     push!(important_z_points_from_geometry,c.crystal_length-c.taper_inner_top_length)
     important_z_points_from_geometry
 end
-function get_important_z_points_from_geometry(b::BEGe)
-    important_z_points_from_geometry::Vector = []
+
+function get_important_z_points_from_geometry(b::BEGe{T})::Vector{T} where {T <: AbstractFloat} 
+    important_z_points_from_geometry::Vector{T} = []
     push!(important_z_points_from_geometry,0.0)
     push!(important_z_points_from_geometry,b.crystal_length)
     push!(important_z_points_from_geometry,b.taper_bot_length)
@@ -276,9 +116,8 @@ function get_important_z_points(d::SolidStateDetector)
     important_z_points
 end
 
-function construct_segmentation_arrays_from_repetitive_segment(d::SolidStateDetector,config_file::Dict)::Nothing
+function construct_segmentation_arrays_from_repetitive_segment(d::SolidStateDetector{T}, config_file::Dict)::Nothing where {T <: AbstractFloat}
     n_total_segments::Int = d.n_total_contacts
-    T = get_precision_type(d)
     f = d.geometry_unit_factor
     segmentation_r_ranges::Array{Tuple{T,T},1}= []
     segmentation_phi_ranges::Array{Tuple{T,T},1} = []
@@ -330,9 +169,8 @@ function construct_segmentation_arrays_from_repetitive_segment(d::SolidStateDete
     nothing
 end
 
-function construct_segmentation_arrays_for_individual_segments(d::SolidStateDetector,config_file::Dict)::Nothing
+function construct_segmentation_arrays_for_individual_segments(d::SolidStateDetector{T}, config_file::Dict)::Nothing where {T <: AbstractFloat}
     n_individual_segments::Int = d.n_individual_segments
-    T = get_precision_type(d)
     f = d.geometry_unit_factor
 
     segmentation_r_ranges::Array{Tuple{T,T},1}= []
@@ -425,7 +263,7 @@ function construct_segmentation_arrays_for_individual_segments(d::SolidStateDete
     nothing
 end
 
-function construct_floating_boundary_arrays(d::SolidStateDetector)
+function construct_floating_boundary_arrays(d::SolidStateDetector{T}) where {T <: AbstractFloat}
     ## Groove
     floating_boundary_r_ranges=[]
     floating_boundary_phi_ranges=[]
@@ -480,7 +318,7 @@ function construct_floating_boundary_arrays(d::SolidStateDetector)
     d.floating_boundary_types=floating_boundary_types
 end
 
-function add_detector_specific_outer_boundaries(c::Coax,rs,phis,zs,mytypes)
+function add_detector_specific_outer_boundaries(c::Coax, rs,phis, zs, mytypes)
     ## taper_top
     if !iszero(c.taper_outer_top_length)
             push!(rs,(c.taper_outer_top_rInner,c.crystal_radius))
@@ -530,8 +368,9 @@ function add_detector_specific_outer_boundaries(ivc::InvertedCoax,rs,phis,zs,myt
 end
 
 
-@inline in(point::CylindricalPoint, detector::SolidStateDetector) =
+@inline function in(point::CylindricalPoint{T}, detector::SolidStateDetector{T})::Bool where {T <: AbstractFloat}
     contains(detector, point)
+end
 
 # thats wrong: point::StaticArray{Tuple{3},<:Real} = CartesianPoint in CoordinateTransformations.jl
 # @inline Base.in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
@@ -1125,7 +964,7 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real,rs::Vect
 end
 
 # get_potential
-function get_boundary_value(d::SolidStateDetector, r::Real, θ::Real, z::Real, rs::Vector{<:Real})::get_precision_type(d)
+function get_boundary_value(d::SolidStateDetector{T}, r::Real, θ::Real, z::Real, rs::Vector{<:Real})::T where {T <: AbstractFloat}
     if d.borehole_modulation==true
         res::get_precision_type(d)=0.0
         try
@@ -1142,9 +981,7 @@ function get_boundary_value(d::SolidStateDetector, r::Real, θ::Real, z::Real, r
 end
 
 
-
-function get_charge_density(detector::SolidStateDetector, r::Real, θ::Real, z::Real)::get_precision_type(detector)
-    T = get_precision_type(detector)
+function get_charge_density(detector::SolidStateDetector{T}, r::Real, θ::Real, z::Real)::T where {T <: AbstractFloat}
     top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
