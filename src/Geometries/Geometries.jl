@@ -33,3 +33,14 @@ const SomeCartesianPoint{T} = Union{
 const SomeCylindricalPoint = Union{
     CylindricalPoint,
 }
+
+
+
+
+function geom_round(pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: AbstractFloat} 
+    return CylindricalPoint{T}( geom_round(pt.r), geom_round(pt.θ), geom_round(pt.z)  )
+end
+
+function geom_round(pt::CartesianPoint{T})::CartesianPoint{T} where {T <: AbstractFloat} 
+    return CartesianPoint{T}( geom_round(pt.x), geom_round(pt.y), geom_round(pt.z)  )
+end

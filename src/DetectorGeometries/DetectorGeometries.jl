@@ -818,12 +818,18 @@ end
 function point_type(d::SolidStateDetector, p::CylindricalPoint)
     point_type(d, p.r, p.θ, p.z)
 end
-function point_type(d::SolidStateDetector, r::T, θ::T, z::T) where {T<:AbstractFloat}
-    T==Float32 ? atol = 0.000001 : atol = 0.000000000000001
+function point_type(d::SolidStateDetector{T}, r::T, θ::T, z::T) where { T<: AbstractFloat}
+    # T==Float32 ? atol = 0.000001 : atol = 0.000000000000001
     rv::Symbol = :bulk
     !contains(d, CylindricalPoint{T}(r,θ,z)) ? rv = :outside : nothing
     i=0
-    digits::Int=6
+    digits::Int=5
+    r = geom_round(r)
+    θ = geom_round(θ)
+    z = geom_round(z)
+
+    while θ < 0 θ += (2π) end 
+    while θ >= T(2π) θ -= (2π) end 
     ############################# Electrode Definitions
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
@@ -842,14 +848,15 @@ function point_type(d::SolidStateDetector, r::T, θ::T, z::T) where {T<:Abstract
                         rv = :electrode
                         i=iseg
                     else
-                        if isapprox(analytical_taper_r_from_θz(θ,z,
+                        analytic_r::T = geom_round(analytical_taper_r_from_θz(θ,z,
                             d.segmentation_types[iseg],
                             d.segmentation_r_ranges[iseg],
                             d.segmentation_phi_ranges[iseg],
                             d.segmentation_z_ranges[iseg]
-                            ),r, atol = atol )
-                        rv = :electrode
-                        i=iseg
+                        ))
+                        if isapprox(analytic_r, r )
+                            rv = :electrode
+                            i=iseg
                         end
                     end
                 end
@@ -857,32 +864,33 @@ function point_type(d::SolidStateDetector, r::T, θ::T, z::T) where {T<:Abstract
         end
     end
 
-    if i==0
-    ############################ Floating Boundary Definitions
-    for iseg in 1:size(d.floating_boundary_r_ranges,1)
-        if (d.floating_boundary_r_ranges[iseg][1] <= r <= d.floating_boundary_r_ranges[iseg][2])
-            if (d.floating_boundary_phi_ranges[iseg][1] <= θ <= d.floating_boundary_phi_ranges[iseg][2])
-                if (d.floating_boundary_z_ranges[iseg][1] <= z <= d.floating_boundary_z_ranges[iseg][2])
-                    if d.floating_boundary_types[iseg]=="Tubs"
-                        rv = :floating_boundary
-                        i=iseg
-                    else
-                        if isapprox(analytical_taper_r_from_θz(θ,z,
-                            d.floating_boundary_types[iseg],
-                            d.floating_boundary_r_ranges[iseg],
-                            d.floating_boundary_phi_ranges[iseg],
-                            d.floating_boundary_z_ranges[iseg]
-                            ),r, atol = atol )
-                        rv = :floating_boundary
-                        i=iseg
+    if i == 0
+        ############################ Floating Boundary Definitions
+        for iseg in 1:size(d.floating_boundary_r_ranges,1)
+            if (d.floating_boundary_r_ranges[iseg][1] <= r <= d.floating_boundary_r_ranges[iseg][2])
+                if (d.floating_boundary_phi_ranges[iseg][1] <= θ <= d.floating_boundary_phi_ranges[iseg][2])
+                    if (d.floating_boundary_z_ranges[iseg][1] <= z <= d.floating_boundary_z_ranges[iseg][2])
+                        if d.floating_boundary_types[iseg]=="Tubs"
+                            rv = :floating_boundary
+                            i=iseg
+                        else
+                            analytic_r = geom_round(analytical_taper_r_from_θz(θ,z,
+                                d.floating_boundary_types[iseg],
+                                d.floating_boundary_r_ranges[iseg],
+                                d.floating_boundary_phi_ranges[iseg],
+                                d.floating_boundary_z_ranges[iseg]
+                            ))
+                            if isapprox(analytic_r, r)
+                                rv = :floating_boundary
+                                i=iseg
+                            end
+                        end
                     end
                 end
             end
         end
     end
-end
-end
-rv, i
+    return rv, i
 end
 
 function analytical_taper_r_from_θz(θ,z,orientation,r_bounds,θ_bounds,z_bounds)

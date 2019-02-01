@@ -14,25 +14,20 @@ function drift_charge!(
     crossing_pos_cyl::CylindricalPoint{T} = CylindricalPoint{T}(0,0,0)
     crossing_pos_type::Symbol = :Idle
     boundary_index::Int=0
-
     
     drift_path[1] = startpos
-    @show CartesianPoint(drift_path[1])
 
     for istep in eachindex(drift_path)[2:end]
         if done == false
-            pos_cyl = CylindricalPoint(CartesianPoint(drift_path[istep-1])) # update pos_cyl
+            pos_cyl = geom_round(CylindricalPoint(CartesianPoint(drift_path[istep-1]))) # update pos_cyl
             if contains(det, pos_cyl)
-                @show pos_cyl
                 stepvector = getvelocityvector(velocity_field, pos_cyl) * delta_t
-                @show stepvector
                 drift_path[istep] = drift_path[istep-1] + stepvector
             elseif istep < 3
                 done = true
                 drifttime = delta_t * (istep-1)
                 throw(ErrorException("start position $pos_cyl is not contained in detector"))
             else
-                @show drift_path[istep-2]
                 crossing_pos_cyl, crossing_pos_type, boundary_index = get_crossing_pos(det, drift_path[istep-2], drift_path[istep-1])
                 if crossing_pos_type == :electrode
                     done = true
@@ -48,7 +43,6 @@ function drift_charge!(
                     @show crossing_pos_cyl,crossing_pos_type, boundary_index
                     @show typeof(crossing_pos_cyl)
                     @show typeof(pos_cyl)
-                    @show istep
                     throw(ErrorException("Internal error"))
                 end
             end
@@ -299,7 +293,7 @@ function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T},
     current_pos_xyz::SVector{3,T} = 0.5*(current_pos_in .+ current_pos_out)
     current_pos_cyl::CylindricalPoint{T} = CylindricalPoint(CartesianPoint(current_pos_xyz))
     i_limit::Int = 0
-    while (point_type(detector, current_pos_cyl.r, current_pos_cyl.θ, current_pos_cyl.z)[2]==0) && i_limit < max_n_iter
+    while (point_type(detector, current_pos_cyl.r, current_pos_cyl.θ, current_pos_cyl.z)[2] == 0) && i_limit < max_n_iter
         if contains(detector, current_pos_cyl)
             current_pos_in[1] = current_pos_xyz[1]
             current_pos_in[2] = current_pos_xyz[2]
@@ -310,9 +304,10 @@ function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T},
             current_pos_out[3] = current_pos_xyz[3]
         end
         current_pos_xyz = 0.5*(current_pos_out .+ current_pos_in)
-        current_pos_cyl = CylindricalPoint(CartesianPoint(current_pos_xyz))
+        current_pos_cyl = geom_round(CylindricalPoint(CartesianPoint(current_pos_xyz)))
         i_limit += 1
     end
+    current_pos_cyl = geom_round(current_pos_cyl)
     crossing_pos_type, boundary_index = point_type(detector, current_pos_cyl.r, current_pos_cyl.θ, current_pos_cyl.z)
     if i_limit==max_n_iter
         # println("Boundary Point was rounded.")
