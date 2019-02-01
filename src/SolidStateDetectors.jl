@@ -9,7 +9,6 @@ using Random
 using Statistics
 
 using ArraysOfArrays
-using CoordinateTransformations
 using Interpolations
 using IntervalSets
 using JSON

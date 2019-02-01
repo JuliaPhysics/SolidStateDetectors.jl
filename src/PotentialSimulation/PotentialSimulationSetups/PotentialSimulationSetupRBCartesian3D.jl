@@ -103,7 +103,7 @@ function PotentialSimulationSetupRB(ssd::CGD{T}, grid::Grid{T, 3, :Cartesian} = 
                 pos_y::T = mpy[iy]
                 for ix in 1:size(ϵ, 1)
                     pos_x = mpx[ix]
-                    pt = SVector{3, T}(pos_x, pos_y, pos_z)
+                    pt::CartesianPoint{T} = CartesianPoint{T}(pos_x, pos_y, pos_z)
                     ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 end
             end

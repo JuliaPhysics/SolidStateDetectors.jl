@@ -126,12 +126,12 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                 if axr[1] == 0
                     pos_r = axr[2] * 0.5
                 end
-                pt::Cylindrical{T} = Cylindrical{T}(pos_r, pos_θ, pos_z)
+                pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_θ, pos_z)
                 ρ_tmp[ir, iθ, iz]::T, ϵ[ir, iθ, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 
                 for ir in 2:size(ϵ, 1)
                     pos_r = mpr[ir]
-                    pt = Cylindrical{T}(pos_r, pos_θ, pos_z)
+                    pt = CylindricalPoint{T}(pos_r, pos_θ, pos_z)
                     ρ_tmp[ir, iθ, iz]::T, ϵ[ir, iθ, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 end
             end

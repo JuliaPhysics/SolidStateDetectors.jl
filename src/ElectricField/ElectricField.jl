@@ -9,7 +9,11 @@ function EField(vectorfield::Array{SVector{3,T},3}) where T<:AbstractFloat
     return EField{T}(vectorfield)
 end
 
-
+# # new: to be consistent with ElectricPotential, ...
+# struct ElectricField{T, N, S}
+#     data::Array{SVector{3, T},3} # equaly this could already be the interpolated object?
+#     grid::Grid{T, N, S}
+# end
 
 function get_magnitude_of_rθz_vector(vector::AbstractArray,cutoff=NaN)
     magn=0
@@ -27,7 +31,7 @@ function get_magnitude_of_rθz_vector(vector::AbstractArray,cutoff=NaN)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat} 
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat} 
     p = ep.data
     axr::Vector{T} = collect(ep.grid[:r])
     axθ::Vector{T} = collect(ep.grid[:θ])
@@ -90,16 +94,35 @@ function get_electric_field_from_potential(ep::ElectricPotential{T}, pointtypes:
                     ez = ( Δp_z_1/d_z_1 + Δp_z_2/d_z_2) / 2
                 end
                 if pointtypes[ir, iθ, iz] & update_bit == 0 # boundary points 
-                    if (1 < ir < size(pointtypes, 1)) if (pointtypes[ir - 1, iθ, iz] & update_bit > 0) && (pointtypes[ir + 1, iθ, iz] & update_bit > 0) er = 0 end end
-                    if (1 < iθ < size(pointtypes, 2)) if (pointtypes[ir, iθ - 1, iz] & update_bit > 0) && (pointtypes[ir, iθ + 1, iz] & update_bit > 0) eθ = 0 end end
-                    if (1 < iz < size(pointtypes, 3)) if (pointtypes[ir, iθ, iz - 1] & update_bit > 0) && (pointtypes[ir, iθ, iz + 1] & update_bit > 0) ez = 0 end end
+                    if (1 < ir < size(pointtypes, 1)) 
+                        if (pointtypes[ir - 1, iθ, iz] & update_bit > 0) && (pointtypes[ir + 1, iθ, iz] & update_bit > 0) 
+                            er = 0 
+                        elseif (pointtypes[ir - 1, iθ, iz] & update_bit > 0) || (pointtypes[ir + 1, iθ, iz] & update_bit > 0) 
+                            er *= 2
+                        end 
+                    end
+                    if (1 < iθ < size(pointtypes, 2)) 
+                        if (pointtypes[ir, iθ - 1, iz] & update_bit > 0) && (pointtypes[ir, iθ + 1, iz] & update_bit > 0) 
+                            eθ = 0 
+                        elseif (pointtypes[ir, iθ - 1, iz] & update_bit > 0) || (pointtypes[ir, iθ + 1, iz] & update_bit > 0) 
+                            eθ *= 2
+                        end 
+                    end
+                    if (1 < iz < size(pointtypes, 3)) 
+                        if (pointtypes[ir, iθ, iz - 1] & update_bit > 0) && (pointtypes[ir, iθ, iz + 1] & update_bit > 0) 
+                            ez = 0 
+                        elseif (pointtypes[ir, iθ, iz - 1] & update_bit > 0) || (pointtypes[ir, iθ, iz + 1] & update_bit > 0) 
+                            ez *= 2 
+                        end 
+                    end
+
                 end 
                 ef[ir,iθ,iz] = [-er, -eθ, -ez]
             end
         end
     end
     if fieldvector_coordinates == :xyz
-        ef = convert_field_vectors_to_xyz(ef,axθ)
+        ef = convert_field_vectors_to_xyz(ef, axθ)
     end
     return ef
 end
@@ -281,3 +304,111 @@ function get_interpolated_drift_field(velocity_field, grid::CylindricalGrid{T}) 
 end
 
 include("plot_recipes.jl")
+
+
+
+
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat} 
+    axr::Vector{T} = collect(ep.grid[:x])
+    axθ::Vector{T} = collect(ep.grid[:y])
+    axz::Vector{T} = collect(ep.grid[:z])
+    axr_ext::Vector{T} = get_extended_ticks(ep.grid[:x])
+    axθ_ext::Vector{T} = get_extended_ticks(ep.grid[:y])
+    axz_ext::Vector{T} = get_extended_ticks(ep.grid[:z])
+
+    ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(ep.data))
+
+    for iz in eachindex(axz)
+        for iz in eachindex(axz)
+            for iz in eachindex(axz)
+
+            end
+        end
+    end
+
+    # for iz in 1:size(ef, 3)
+    #     for iθ in 1:size(ef, 2)
+    #         for ir in 1:size(ef, 1)
+    #             ### r ###
+    #             if ir-1<1
+    #                 Δp_r_1 = p[ir+1 ,iθ, iz] - p[ir ,iθ, iz]
+    #                 d_r_1 = axr[ir+1]-axr[ir]
+    #                 er = ( Δp_r_1 / d_r_1 )
+    #             elseif  ir+1 > size(ef,1)
+    #                 Δp_r_1 = p[ir ,iθ, iz]-p[ir-1 ,iθ, iz]
+    #                 d_r_1 = axr[ir]-axr[ir-1]
+    #                 er = ( Δp_r_1/d_r_1 )
+    #             else
+    #                 Δp_r_1 = p[ir+1 ,iθ, iz]-p[ir ,iθ, iz]
+    #                 Δp_r_2 = p[ir ,iθ, iz]-p[ir-1 ,iθ, iz]
+    #                 d_r_1 = axr[ir+1]-axr[ir]
+    #                 d_r_2 = axr[ir]-axr[ir-1]
+    #                 er = ( Δp_r_1/d_r_1 + Δp_r_2/d_r_2) / 2
+    #             end
+    #             ### θ ###
+    #             if iθ < 2
+    #                 Δp_θ_1 = p[ir ,iθ+1, iz]-p[ir ,iθ, iz]
+    #                 Δp_θ_2 = p[ir ,iθ, iz]-p[ir ,end, iz]
+    #                 d_θ_1 = (axθ[iθ+1]-axθ[iθ]) * axr[ir]# to get the proper value in length units
+    #                 d_θ_2 = (cyclic - axθ[end]) * axr[ir]
+    #                 eθ = ( Δp_θ_1/d_θ_1 + Δp_θ_2/d_θ_2) / 2
+    #             elseif iθ == size(ef,2)
+    #                 Δp_θ_1 = p[ir ,1, iz]-p[ir ,iθ, iz]
+    #                 Δp_θ_2 = p[ir ,iθ, iz]-p[ir ,iθ-1, iz]
+    #                 d_θ_1 = (axθ[1]-axθ[iθ]) * axr[ir]# to get the proper value in length units
+    #                 d_θ_2 = (axθ[iθ]-axθ[iθ-1]) * axr[ir]
+    #                 eθ = ( Δp_θ_1/d_θ_1 + Δp_θ_2/d_θ_2) / 2
+    #             else
+    #                 Δp_θ_1 = p[ir ,iθ+1, iz]-p[ir ,iθ, iz]
+    #                 Δp_θ_2 = p[ir ,iθ, iz]-p[ir ,iθ-1, iz]
+    #                 d_θ_1 = (axθ[iθ+1]-axθ[iθ]) * axr[ir]# to get the proper value in length units
+    #                 d_θ_2 = (axθ[iθ]-axθ[iθ-1]) * axr[ir]
+    #                 eθ = ( Δp_θ_1/d_θ_1 + Δp_θ_2/d_θ_2) / 2
+    #             end
+    #             isinf(eθ) || isnan(eθ) ? eθ = 0.0 : nothing # for small radii and small distances(center of the grid) it would yield Infs or Nans
+    #             if iz-1<1
+    #                 Δp_z_1 = p[ir ,iθ, iz+1]-p[ir ,iθ, iz]
+    #                 d_z_1 = axz[iz+1]-axz[iz]
+    #                 ez = ( Δp_z_1/d_z_1 )
+    #             elseif  iz+1 > size(ef,3)
+    #                 Δp_z_1 = p[ir ,iθ, iz]-p[ir ,iθ, iz-1]
+    #                 d_z_1 = axz[iz]-axz[iz-1]
+    #                 ez = ( Δp_z_1/d_z_1 )
+    #             else
+    #                 Δp_z_1 = p[ir ,iθ, iz+1]-p[ir ,iθ, iz]
+    #                 Δp_z_2 = p[ir ,iθ, iz]-p[ir ,iθ, iz-1]
+    #                 d_z_1 = axz[iz+1]-axz[iz]
+    #                 d_z_2 = axz[iz]-axz[iz-1]
+    #                 ez = ( Δp_z_1/d_z_1 + Δp_z_2/d_z_2) / 2
+    #             end
+    #             if pointtypes[ir, iθ, iz] & update_bit == 0 # boundary points 
+    #                 if (1 < ir < size(pointtypes, 1)) 
+    #                     if (pointtypes[ir - 1, iθ, iz] & update_bit > 0) && (pointtypes[ir + 1, iθ, iz] & update_bit > 0) 
+    #                         er = 0 
+    #                     elseif (pointtypes[ir - 1, iθ, iz] & update_bit > 0) || (pointtypes[ir + 1, iθ, iz] & update_bit > 0) 
+    #                         er *= 2
+    #                     end 
+    #                 end
+    #                 if (1 < iθ < size(pointtypes, 2)) 
+    #                     if (pointtypes[ir, iθ - 1, iz] & update_bit > 0) && (pointtypes[ir, iθ + 1, iz] & update_bit > 0) 
+    #                         eθ = 0 
+    #                     elseif (pointtypes[ir, iθ - 1, iz] & update_bit > 0) || (pointtypes[ir, iθ + 1, iz] & update_bit > 0) 
+    #                         eθ *= 2
+    #                     end 
+    #                 end
+    #                 if (1 < iz < size(pointtypes, 3)) 
+    #                     if (pointtypes[ir, iθ, iz - 1] & update_bit > 0) && (pointtypes[ir, iθ, iz + 1] & update_bit > 0) 
+    #                         ez = 0 
+    #                     elseif (pointtypes[ir, iθ, iz - 1] & update_bit > 0) || (pointtypes[ir, iθ, iz + 1] & update_bit > 0) 
+    #                         ez *= 2 
+    #                     end 
+    #                 end
+
+    #             end 
+    #             ef[ir,iθ,iz] = [-er, -eθ, -ez]
+    #         end
+    #     end
+    # end
+
+    return ef
+end

@@ -372,15 +372,14 @@ end
     contains(detector, point)
 end
 
+
 # thats wrong: point::StaticArray{Tuple{3},<:Real} = CartesianPoint in CoordinateTransformations.jl
 # @inline Base.in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
 #     convert(CylindricalPoint, point) in detector
 
-@inline in(point::StaticArray{Tuple{3},<:Quantity}, detector::SolidStateDetector) =
-    to_internal_units(u"m", point) in detector
-
-@inline in(point::CoordinateTransformations.Cylindrical, detector::SolidStateDetector) =
-    convert(CylindricalPoint, point) in detector
+@inline function in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector)
+    CylindricalPoint(CartesianPoint(to_internal_units(u"m", point))) in detector
+end
 
 
 
@@ -416,13 +415,7 @@ function contains(b::BEGe, p::CylindricalPoint)::Bool
     check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
     rv
 end
-function contains(b::BEGe, p::Cylindrical)::Bool
-    rv::Bool = true
-    check_outer_limits(b,p.r,p.θ,p.z) ? nothing : rv = false
-    check_tapers(b,p.r,p.θ,p.z) ? nothing : rv = false
-    check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
-    rv
-end
+
 function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real)::Bool
     rv::Bool = true
     check_outer_limits(ivc,r,θ,z) ? nothing : rv = false
@@ -435,18 +428,7 @@ function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real)::Bool
     check_grooves(ivc,r,θ,z) ? nothing : rv = false
     rv
 end
-function contains(ivc::InvertedCoax,p::Cylindrical)::Bool
-    rv::Bool = true
-    check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    if ivc.borehole_modulation == true
-        check_borehole(ivc,p.r,p.θ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
-    else
-        check_borehole(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    end
-    check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    rv
-end
+
 function contains(ivc::InvertedCoax,p::CylindricalPoint)::Bool
     rv::Bool = true
     check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
@@ -833,13 +815,13 @@ function is_boundary_point(d::SolidStateDetector, r::T, θ::T, z::T, rs::Vector{
     rv
 end
 
-function point_type(d::SolidStateDetector, p::Cylindrical)
-    point_type(d,p.r,p.θ,p.z)
+function point_type(d::SolidStateDetector, p::CylindricalPoint)
+    point_type(d, p.r, p.θ, p.z)
 end
 function point_type(d::SolidStateDetector, r::T, θ::T, z::T) where {T<:AbstractFloat}
     T==Float32 ? atol = 0.000001 : atol = 0.000000000000001
     rv::Symbol = :bulk
-    !contains(d, Cylindrical{T}(r,θ,z)) ? rv = :outside : nothing
+    !contains(d, CylindricalPoint{T}(r,θ,z)) ? rv = :outside : nothing
     i=0
     digits::Int=6
     ############################# Electrode Definitions
@@ -990,7 +972,7 @@ function get_charge_density(detector::SolidStateDetector{T}, r::Real, θ::Real, 
 end
 
 
-function get_ρ_and_ϵ(pt::Cylindrical{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
+function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
     if in(pt, ssd)
         ρ::T = get_charge_density(ssd, pt.r, pt.θ, pt.z) * elementary_charge
         ϵ::T = ssd.material_detector.ϵ_r
@@ -1019,7 +1001,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             θ::T = axθ[iθ]
             for ir in axes(potential, 1)
                 r::T = axr[ir]
-                pt::Cylindrical{T} = Cylindrical{T}( r, θ, z )              
+                pt::CylindricalPoint{T} = CylindricalPoint{T}( r, θ, z )              
 
                 if is_boundary_point(ssd, r, θ, z, axr, axθ, axz)
                     pot::T = if ismissing(weighting_potential_contact_id)

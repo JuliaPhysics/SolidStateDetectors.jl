@@ -220,7 +220,7 @@ end
             end
         end
     end
-    spawn_positions_xyz = map(x -> CartFromCyl(Cylindrical(x[1],x[2],x[3])), spawn_positions)
+    spawn_positions_xyz::Vector{SVector{3, T}} = map(x -> CartesianPoint(CylindricalPoint(x[1],x[2],x[3])), spawn_positions)
     for i in eachindex(spawn_positions[1:end])
         path = [@SVector zeros(T,3) for i in 1:n_steps]
         drift_charge!(path, det, spawn_positions_xyz[i], T(1f-9), interpolated_efield)
