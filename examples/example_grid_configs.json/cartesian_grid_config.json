@@ -1,6 +1,6 @@
 {
-    "coordinate_system": {
-        "type": "Cartesian",
+    "Grid": {
+        "coordinate_system": "Cartesian",
         "ax1": {
             "unit": "mm",
             "interval": "[-10, 10]",

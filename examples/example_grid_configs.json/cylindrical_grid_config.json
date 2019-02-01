@@ -1,6 +1,6 @@
 {
-    "coordinate_system": {
-        "type": "Cylindrical",
+    "Grid": {
+        "coordinate_system": "Cylindrical",
         "ax1": {
             "unit": "mm",
             "interval": "[0, 6]",

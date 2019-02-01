@@ -102,9 +102,9 @@ function Grid(  det::CGD{T};
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
     
-    int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(-det.crystal_length_x, 2 * det.crystal_length_x)
-    int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(-det.crystal_length_y, 2 * det.crystal_length_y)
-    int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(-det.crystal_length_z, 2 * det.crystal_length_z)
+    int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.bulk_geometry.x[1] - 0.005, det.bulk_geometry.x[2] + 0.005)
+    int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.bulk_geometry.y[1] - 0.005, det.bulk_geometry.y[2] + 0.005)
+    int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.bulk_geometry.z[1] - 0.005, det.bulk_geometry.z[2] + 0.005)
     ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1]) 
     ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2]) 
     ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
@@ -120,16 +120,16 @@ function Grid(  det::CGD{T};
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) ) 
 end
 
-
 function in(pt::StaticVector{3, T}, det::CGD{T})::Bool where {T}
-    return (0 <= pt[1] <= det.crystal_length_x) && (0 <= pt[2] <= det.crystal_length_y) && (0 <= pt[3] <= det.crystal_length_z)
+    return in(pt, det.bulk_geometry)
 end
 
 function get_charge_density(detector::SolidStateDetector{T}, pt::StaticVector{3, T})::T where {T}
     top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
-    slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length_z
-    ρ::T = bot_net_charge_carrier_density + pt[3] * slope
+    crystal_length_x::T = detector.bulk_geometry.x[2] - detector.bulk_geometry.x[1]
+    slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / crystal_length_x
+    ρ::T = bot_net_charge_carrier_density + pt[1] * slope
     return ρ 
 end
 

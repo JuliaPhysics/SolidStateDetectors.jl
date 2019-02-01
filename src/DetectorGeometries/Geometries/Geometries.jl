@@ -25,8 +25,6 @@ function Tubs(name, hierarchy, ϵ, behaviour, potential, rStart::T, rStop::T, θ
 end
 
 
-
-
 mutable struct CartesianBox3D{T} <: AbstractGeometry{T}
     x::Tuple{T, T}
     y::Tuple{T, T}

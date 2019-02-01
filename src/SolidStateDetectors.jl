@@ -49,6 +49,7 @@ include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
 include("Geometries/Geometries.jl")
+include("Config/Config.jl")
 include("DetectorGeometries/DetectorGeometries.jl")
 
 include("Config/Config.jl")

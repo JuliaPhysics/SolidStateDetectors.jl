@@ -1,9 +1,9 @@
 """
-    abstract type SolidStateDetector{T} 
+    abstract type SolidStateDetector{T} <: AbstractConfig{T}
 
 Supertype of all detector structs.
 """
-abstract type SolidStateDetector{T <: AbstractFloat} end
+abstract type SolidStateDetector{T <: AbstractFloat} <: AbstractConfig{T} end
         
 get_precision_type(d::SolidStateDetector{T}) where {T} = T 
         
@@ -986,9 +986,61 @@ function get_charge_density(detector::SolidStateDetector{T}, r::Real, θ::Real, 
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
     ρ::T = bot_net_charge_carrier_density + z * slope
-    # ρ = ρ - (r - detector.borehole_radius) * 0.2 * ρ / (detector.crystal_radius - detector.borehole_radius) 
     return ρ 
 end
+
+
+function get_ρ_and_ϵ(pt::Cylindrical{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
+    if in(pt, ssd)
+        ρ::T = get_charge_density(ssd, pt.r, pt.θ, pt.z) * elementary_charge
+        ϵ::T = ssd.material_detector.ϵ_r
+        return ρ, ϵ
+    else
+        ρ = 0
+        ϵ = ssd.material_environment.ϵ_r 
+        return ρ, ϵ
+    end
+end
+function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
+        grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_channel_idx::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+    
+    channels::Array{Int, 1} = if !ismissing(weighting_potential_channel_idx)
+        ssd.grouped_channels[weighting_potential_channel_idx]
+    else
+        Int[]
+    end
+
+    axr::Vector{T} = grid[:r].ticks
+    axθ::Vector{T} = grid[:θ].ticks
+    axz::Vector{T} = grid[:z].ticks
+    for iz in axes(potential, 3)
+        z::T = axz[iz]
+        for iθ in axes(potential, 2)
+            θ::T = axθ[iθ]
+            for ir in axes(potential, 1)
+                r::T = axr[ir]
+                pt::Cylindrical{T} = Cylindrical{T}( r, θ, z )              
+
+                if is_boundary_point(ssd, r, θ, z, axr, axθ, axz)
+                    pot::T = if ismissing(weighting_potential_channel_idx)
+                        get_boundary_value( ssd, r, θ, z, axr)
+                    else
+                        in(ssd.borehole_modulation ? get_segment_idx(ssd, r, θ, z, axr) : get_segment_idx(ssd, r, θ, z), channels) ? 1 : 0
+                    end
+                    potential[ ir, iθ, iz ] = pot
+                    pointtypes[ ir, iθ, iz ] = zero(PointType)
+                elseif in(pt, ssd)
+                    pointtypes[ ir, iθ, iz ] += pn_junction_bit 
+                end
+
+            end
+        end
+    end
+    nothing
+end
+
+
+
 
 function json_to_dict(inputfile::String)::Dict
     parsed_json_file = Dict()
