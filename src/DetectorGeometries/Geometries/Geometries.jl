@@ -36,3 +36,11 @@ end
 function in(pt::StaticVector{3, T}, g::CartesianBox3D{T})::Bool where {T}
     return (g.x[1] <= pt[1] <= g.x[2]) && (g.y[1] <= pt[2] <= g.y[2]) && (g.z[1] <= pt[3] <= g.z[2])
 end
+
+
+function CartesianBox3D{T}(dict::Dict{String, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: AbstractFloat}
+    return CartesianBox3D{T}(
+        (geom_round(ustrip(uconvert(u"m", T(dict["xStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["xStop"]) * inputunit)))),
+        (geom_round(ustrip(uconvert(u"m", T(dict["yStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["yStop"]) * inputunit)))),
+        (geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))))  )
+end

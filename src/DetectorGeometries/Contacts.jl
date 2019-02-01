@@ -17,3 +17,7 @@ end
     return in(pt, c.geometry)
 end
 
+
+function Contact{T, D}(dict::Dict{String, Any}, inputunit::Unitful.Units)::Contact{T, D} where {T <: AbstractFloat, D}
+    return Contact{T, D}( dict["potential"], dict["id"], CartesianBox3D{T}( dict, inputunit ) )
+end

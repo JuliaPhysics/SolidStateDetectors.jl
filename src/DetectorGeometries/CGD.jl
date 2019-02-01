@@ -13,9 +13,7 @@ mutable struct CGD{T<:AbstractFloat} <: SolidStateDetector{T}
     
     geometry_unit::Unitful.Units
 
-    crystal_length_x::T
-    crystal_length_y::T
-    crystal_length_z::T
+    bulk_geometry::AbstractGeometry{T}
 
     charge_carrier_density_unit_factor::T
     charge_carrier_density_top::T
@@ -33,7 +31,7 @@ function CGD(mytype::Type{<:AbstractFloat},config_file::Dict)::CGD
 end
 
 
-function CGD{T}(config_file::Dict)::CGD where T<:AbstractFloat
+function CGD{T}(config_file::Dict)::CGD where {T <: AbstractFloat}
     config_file["class"] != "CGD" ? error() : nothing
     det::CGD = CGD{T}()
     det.name = config_file["name"]
@@ -50,47 +48,15 @@ function CGD{T}(config_file::Dict)::CGD where T<:AbstractFloat
         "p" => :ptype  )
     det.bulk_type = bulk_types[ config_file["type"] ]
 
-    crystal_dimensions = config_file["geometry"]["crystal"]["dimensions"]
+    det.bulk_geometry = CartesianBox3D{T}( config_file["geometry"]["crystal"], det.geometry_unit )
 
-    det.crystal_length_x = geom_round(ustrip(uconvert(u"m", T(crystal_dimensions["x"]) * det.geometry_unit)))
-    det.crystal_length_y = geom_round(ustrip(uconvert(u"m", T(crystal_dimensions["x"]) * det.geometry_unit)))
-    det.crystal_length_z = geom_round(ustrip(uconvert(u"m", T(crystal_dimensions["y"]) * det.geometry_unit)))
+
 
     det.charge_carrier_density_top = geom_round(T(config_file["charge_carrier_density"]["top"]))
     det.charge_carrier_density_bot = geom_round(T(config_file["charge_carrier_density"]["bot"]))
-
-    n_contacts::Vector{Contact{T, :N}} = Contact{T, :N}[]
-    p_contacts::Vector{Contact{T, :P}} = Contact{T, :P}[]
-
-    json_n_contact_array = config_file["segmentation"]["n_contacts"]["contacts"]
-    json_p_contact_array = config_file["segmentation"]["p_contacts"]["contacts"]
-
-    for c in json_n_contact_array
-        new_contact::Contact{T, :N} = Contact{T, :N}(
-            c["potential"],
-            c["id"],
-            CartesianBox3D{T}(
-                (geom_round(ustrip(uconvert(u"m", T(c["xStart"]) * det.geometry_unit ))), geom_round(ustrip(uconvert(u"m", T(c["xStop"]) * det.geometry_unit)))),
-                (geom_round(ustrip(uconvert(u"m", T(c["yStart"]) * det.geometry_unit ))), geom_round(ustrip(uconvert(u"m", T(c["yStop"]) * det.geometry_unit)))),
-                (geom_round(ustrip(uconvert(u"m", T(c["zStart"]) * det.geometry_unit ))), geom_round(ustrip(uconvert(u"m", T(c["zStop"]) * det.geometry_unit))))
-            )
-        )
-        push!(n_contacts, new_contact)
-    end
-    for c in json_p_contact_array
-        new_contact::Contact{T, :P} = Contact{T, :P}(
-            c["potential"],
-            c["id"],
-            CartesianBox3D{T}(
-                (geom_round(ustrip(uconvert(u"m", T(c["xStart"]) * det.geometry_unit))), geom_round(ustrip(uconvert(u"m", T(c["xStop"]) * det.geometry_unit)))),
-                (geom_round(ustrip(uconvert(u"m", T(c["yStart"]) * det.geometry_unit))), geom_round(ustrip(uconvert(u"m", T(c["yStop"]) * det.geometry_unit)))),
-                (geom_round(ustrip(uconvert(u"m", T(c["zStart"]) * det.geometry_unit))), geom_round(ustrip(uconvert(u"m", T(c["zStop"]) * det.geometry_unit))))
-            )
-        )
-        push!(p_contacts, new_contact)
-    end
-    det.n_contacts = n_contacts
-    det.p_contacts = p_contacts
+    
+    det.n_contacts = Contact{T, :N}[ Contact{T, :N}( contact_dict, det.geometry_unit ) for contact_dict in config_file["segmentation"]["n_contacts"]["contacts"] ]
+    det.p_contacts = Contact{T, :P}[ Contact{T, :P}( contact_dict, det.geometry_unit ) for contact_dict in config_file["segmentation"]["p_contacts"]["contacts"] ]
     return det
 end
 
@@ -114,13 +80,16 @@ end
 function println(c::CGD)
     println("Cuboid Germanium Detector:")
     println("  Geometry:")
-    println("    crystal length x = $( uconvert(c.geometry_unit, (c.crystal_length_x * u"m"))) ")
-    println("    crystal length y = $( uconvert(c.geometry_unit, (c.crystal_length_y * u"m"))) ")
-    println("    crystal length z = $( uconvert(c.geometry_unit, (c.crystal_length_z * u"m"))) ")
+    println("    crystal: x: $( uconvert.(c.geometry_unit, (c.bulk_geometry.x .* u"m"))) ")
+    println("    crystal: y: $( uconvert.(c.geometry_unit, (c.bulk_geometry.y .* u"m"))) ")
+    println("    crystal: z: $( uconvert.(c.geometry_unit, (c.bulk_geometry.z .* u"m"))) ")
 end
-function show(c::CGD)  println(c)   end
 function display(c::CGD)  println(c)   end
 function print(c::CGD)  println(c)   end
+function show(c::CGD)  println(c)   end
+function show(io::IO, ::MIME"text/plain",  c::CGD) 
+    show(io, c)
+end
 
 
 function Grid(  det::CGD{T}; 

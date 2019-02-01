@@ -8,7 +8,7 @@ abstract type SolidStateDetector{T <: AbstractFloat} end
 get_precision_type(d::SolidStateDetector{T}) where {T} = T 
         
 include("Geometries/Geometries.jl")
-include("contacts.jl")
+include("Contacts.jl")
 
 # Cylindrical:
 include("Coax.jl")
