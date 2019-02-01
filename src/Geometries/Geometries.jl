@@ -7,15 +7,11 @@ struct CartesianPoint{T<:RealQuantity} <: StaticArrays.FieldVector{3,T}
     z::T
 end
 
-
-
 struct CylindricalPoint{T<:Real}
     r::T
     θ::T # in radian
     z::T
 end
-
-
 
 const SomeCartesianPoint{T} = Union{
     CartesianPoint{T},
@@ -39,7 +35,6 @@ function CylindricalPoint{T}(p::StaticArray{Tuple{3}}) where {T}
     θ = atan(y, x)
     CylindricalPoint{T}(r, θ, z)
 end
-
 
 @inline CylindricalPoint(p::StaticArray{Tuple{3},T,1}) where {T<:Real} =
     CylindricalPoint{float(T)}(p)

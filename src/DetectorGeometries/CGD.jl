@@ -133,7 +133,7 @@ function get_charge_density(detector::SolidStateDetector{T}, pt::StaticVector{3,
     return ρ 
 end
 
-function get_boundary_value(det::CGD{T}, pt::StaticVector{3, T}, weighting_potential_channel_ids::Union{Missing, Vector{Int}} = missing)::Tuple{Bool, T} where {T}
+function get_boundary_value(det::CGD{T}, pt::StaticVector{3, T}, weighting_potential_contact_id::Union{Missing, Int} = missing)::Tuple{Bool, T} where {T}
     is_boundary_point::Bool = false
     boundary_potential::T = 0
     contact_id::Int = -1
@@ -155,8 +155,12 @@ function get_boundary_value(det::CGD{T}, pt::StaticVector{3, T}, weighting_poten
             end
         end
     end
-    if !ismissing(weighting_potential_channel_ids) 
-        error("todo...")
+    if is_boundary_point && !ismissing(weighting_potential_contact_id) 
+        if contact_id == weighting_potential_contact_id
+            boundary_potential = 1
+        else
+            boundary_potential = 0
+        end
     end
     return is_boundary_point, boundary_potential
 end
@@ -174,16 +178,9 @@ function get_ρ_and_ϵ(pt::StaticVector{3, T}, ssd::CGD{T})::Tuple{T, T} where {
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
-        grid::Grid{T, 3, :Cartesian}, ssd::CGD{T}; weighting_potential_channel_idx::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+        grid::Grid{T, 3, :Cartesian}, ssd::CGD{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
     
-    is_weighting_potential::Bool = !ismissing(weighting_potential_channel_idx)
-
-    weighting_potential_channel_ids = if is_weighting_potential
-        error("to be implemented")
-        # ssd.grouped_channels[weighting_potential_channel_idx]
-    else
-        missing
-    end
+    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
     ax_x::Vector{T} = grid[:x].ticks
     ax_y::Vector{T} = grid[:y].ticks
@@ -195,7 +192,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             for ix in axes(potential, 1)
                 x::T = ax_x[ix]
                 pt::StaticVector{3, T} = SVector{3, T}( x, y, z )              
-                is_boundary_point, boundary_potential = get_boundary_value(ssd, pt, weighting_potential_channel_ids)
+                is_boundary_point, boundary_potential = get_boundary_value(ssd, pt, weighting_potential_contact_id)
                 if is_boundary_point                    
                     potential[ ix, iy, iz ]  = boundary_potential
                     pointtypes[ ix, iy, iz ] = zero(PointType)

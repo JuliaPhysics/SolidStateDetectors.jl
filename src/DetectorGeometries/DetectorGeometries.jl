@@ -1002,10 +1002,10 @@ function get_ρ_and_ϵ(pt::Cylindrical{T}, ssd::SolidStateDetector{T})::Tuple{T,
     end
 end
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
-        grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_channel_idx::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+        grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
     
-    channels::Array{Int, 1} = if !ismissing(weighting_potential_channel_idx)
-        ssd.grouped_channels[weighting_potential_channel_idx]
+    channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
+        ssd.grouped_channels[weighting_potential_contact_id]
     else
         Int[]
     end
@@ -1022,7 +1022,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 pt::Cylindrical{T} = Cylindrical{T}( r, θ, z )              
 
                 if is_boundary_point(ssd, r, θ, z, axr, axθ, axz)
-                    pot::T = if ismissing(weighting_potential_channel_idx)
+                    pot::T = if ismissing(weighting_potential_contact_id)
                         get_boundary_value( ssd, r, θ, z, axr)
                     else
                         in(ssd.borehole_modulation ? get_segment_idx(ssd, r, θ, z, axr) : get_segment_idx(ssd, r, θ, z), channels) ? 1 : 0

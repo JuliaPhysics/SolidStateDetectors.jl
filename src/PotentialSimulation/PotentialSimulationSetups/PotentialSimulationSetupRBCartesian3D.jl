@@ -1,6 +1,6 @@
 function PotentialSimulationSetupRB(ssd::CGD{T}, grid::Grid{T, 3, :Cartesian} = Grid(ssd), 
-                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_channel_idx::Union{Missing, Int} = missing) where {T}#::PotentialSimulationSetupRB{T} where {T} 
-    is_weighting_potential::Bool = !ismissing(weighting_potential_channel_idx)
+                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing) where {T}#::PotentialSimulationSetupRB{T} where {T} 
+    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
     @inbounds begin
         begin # Geometrical weights of the Axes 
@@ -187,7 +187,7 @@ function PotentialSimulationSetupRB(ssd::CGD{T}, grid::Grid{T, 3, :Cartesian} = 
         
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_channel_idx = weighting_potential_channel_idx  )
+        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
         rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )
         potential = clear(potential)
