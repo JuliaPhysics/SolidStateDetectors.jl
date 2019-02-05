@@ -20,6 +20,12 @@ function drift_charge!(
     for istep in eachindex(drift_path)[2:end]
         if done == false
             pos_cyl = geom_round(CylindricalPoint(CartesianPoint(drift_path[istep-1]))) # update pos_cyl
+            while pos_cyl.θ < 0
+                 pos_cyl = CylindricalPoint{T}(pos_cyl.r, pos_cyl.θ + T(2π), pos_cyl.z )
+            end
+            while pos_cyl.θ >= 2π
+                 pos_cyl = CylindricalPoint{T}(pos_cyl.r, pos_cyl.θ - T(2π), pos_cyl.z )
+            end
             if contains(det, pos_cyl)
                 stepvector = getvelocityvector(velocity_field, pos_cyl) * delta_t
                 drift_path[istep] = drift_path[istep-1] + stepvector

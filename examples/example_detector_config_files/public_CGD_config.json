@@ -1,20 +1,28 @@
 {
 	"name":"ExampleCuboid",
 	"class":"CGD",
-	"type": "n",
 	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"
 	},
-	"geometry":	{
-		"unit": "mm",
-		"crystal": {
-			"xStart": 0.0,
-			"xStop": 10.0,
-			"yStart": 0.0,
-			"yStop": 10.0,
-			"zStart": 0.0,
-			"zStop": 10.0
+	"unit": "mm",	
+	"crystal":	{
+		"type": "n",
+		"geometry": [
+			{
+				"type": "CartesianBox3D",
+				"xStart": 0.0,
+				"xStop": 10.0,
+				"yStart": 0.0,
+				"yStop": 10.0,
+				"zStart": 0.0,
+				"zStop": 10.0
+			}
+		],
+		"charge_carrier_density": {
+			"unit": "cm-3",
+			"top": 0.1,
+			"bot": 1.9
 		}
 	},
 	"symmetries": {
@@ -23,43 +31,42 @@
 			"z": 5.0
 		}
 	},
-	"charge_carrier_density": {
-		"unit": "cm-3",
-		"top": 0.1,
-		"bot": 1.9
-	},
-	"segmentation":	{
-		"n_contacts": {
-			"total_number": 1,
-			"contacts" : [
-				{
-					"type": "Tubs",
-					"id" : 1,
-					"xStart":  0.0,
-					"xStop":   0.0,
-					"yStart":  0.0,
-					"yStop":  10.0,
-					"zStart":  0.0,
-					"zStop":  10.0,
-					"potential": 500.0
-				}
-			]
-		},
-		"p_contacts": {
-			"total_number": 1,
-			"contacts": [
-				{
-					"type": "Tubs",
-					"id" : 2,
-					"xStart": 10.0,
-					"xStop": 10.0,
-					"yStart": 0.0,
-					"yStop": 10.0,
-					"zStart": 0.0,
-					"zStop": 10.0,
-					"potential": 0.0
-				}
-			]
-		}
+	"contacts":	{
+		"n_contacts": [
+			{
+				"name" : "Core",
+				"id": 1,
+				"potential": 500.0, 
+				"geometry": [
+					{
+						"type": "CartesianBox3D",
+						"xStart": 0.0,
+						"xStop":  0.1,
+						"yStart": 0.0,
+						"yStop": 10.0,
+						"zStart": 0.0,
+						"zStop": 10.0
+					}
+				]
+			}
+		],
+		"p_contacts": [
+			{
+				"name": "Segment 1",
+				"id": 2,
+				"potential": 0.0,
+				"geometry": [
+					{
+						"type": "CartesianBox3D",
+						"xStart":  9.9,
+						"xStop":  10.0,
+						"yStart":  0.0,
+						"yStop":  10.0,
+						"zStart":  0.0,
+						"zStop":  10.0
+					}
+				]
+			}
+		]
 	}
 }

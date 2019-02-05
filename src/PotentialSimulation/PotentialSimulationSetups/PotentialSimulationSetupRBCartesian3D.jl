@@ -88,7 +88,7 @@ function PotentialSimulationSetupRB(ssd::CGD{T}, grid::Grid{T, 3, :Cartesian} = 
         environment_material_ϵ_r::T = ssd.material_environment.ϵ_r
         
         bulk_is_ptype::Bool = ssd.bulk_type == :ptype ? true : false
-        contact_bias_voltages::Vector{T} = T[contact.potential for contact in vcat(ssd.n_contacts, ssd.p_contacts)]
+        contact_bias_voltages::Vector{T} = T[contact.potential for contact in ssd.contacts]
         minimum_applied_potential::T = minimum(contact_bias_voltages) 
         maximum_applied_potential::T = maximum(contact_bias_voltages) 
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential

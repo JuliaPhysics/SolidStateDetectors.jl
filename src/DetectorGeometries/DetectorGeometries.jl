@@ -368,7 +368,7 @@ function add_detector_specific_outer_boundaries(ivc::InvertedCoax,rs,phis,zs,myt
 end
 
 
-@inline function in(point::CylindricalPoint{T}, detector::SolidStateDetector{T})::Bool where {T <: AbstractFloat}
+@inline function in(point::CylindricalPoint{T}, detector::Union{Coax{T}, BEGe{T}, InvertedCoax{T}})::Bool where {T <: AbstractFloat}
     contains(detector, point)
 end
 
