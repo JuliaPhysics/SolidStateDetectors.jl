@@ -378,8 +378,8 @@ end
 @inline in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector) =
     to_internal_units(u"m", point) in detector
 
-@inline in(point::CoordinateTransformations.Cylindrical, detector::SolidStateDetector) =
-    convert(CylindricalPoint, point) in detector
+# @inline in(point::CoordinateTransformations.Cylindrical, detector::SolidStateDetector) =
+#     convert(CylindricalPoint, point) in detector
 
 
 
@@ -416,13 +416,13 @@ function contains(b::BEGe, p::CylindricalPoint)::Bool
     check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
     rv
 end
-function contains(b::BEGe, p::Cylindrical)::Bool
-    rv::Bool = true
-    check_outer_limits(b,p.r,p.θ,p.z) ? nothing : rv = false
-    check_tapers(b,p.r,p.θ,p.z) ? nothing : rv = false
-    check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
-    rv
-end
+# function contains(b::BEGe, p::Cylindrical)::Bool
+#     rv::Bool = true
+#     check_outer_limits(b,p.r,p.θ,p.z) ? nothing : rv = false
+#     check_tapers(b,p.r,p.θ,p.z) ? nothing : rv = false
+#     check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
+#     rv
+# end
 
 function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real)::Bool
     rv::Bool = true
@@ -449,18 +449,18 @@ function contains(ivc::InvertedCoax,p::CylindricalPoint)::Bool
     check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
     rv
 end
-function contains(ivc::InvertedCoax, p::Cylindrical)::Bool
-    rv::Bool = true
-    check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    if ivc.borehole_modulation == true
-        check_borehole(ivc,p.r,p.θ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
-    else
-        check_borehole(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    end
-    check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    rv
-end
+# function contains(ivc::InvertedCoax, p::Cylindrical)::Bool
+#     rv::Bool = true
+#     check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#     check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#     if ivc.borehole_modulation == true
+#         check_borehole(ivc,p.r,p.θ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
+#     else
+#         check_borehole(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#     end
+#     check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#     rv
+# end
 # function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real, accepted_ϵ=[16.0])::Bool
 #     rv::Bool = true
 #     crystal_basic_shape = ivc.volumes[1]
