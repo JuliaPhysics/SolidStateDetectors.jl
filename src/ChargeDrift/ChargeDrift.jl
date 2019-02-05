@@ -9,23 +9,16 @@ function drift_charge!(
 ) where T <:Real
     drifttime::T = 0.0
     done::Bool = false
-    stepvector = @SVector zeros(T,3)
-    pos_cyl::CylindricalPoint{T} = CylindricalPoint{T}(0,0,0)
-    crossing_pos_cyl::CylindricalPoint{T} = CylindricalPoint{T}(0,0,0)
+    stepvector = @SVector zeros(T, 3)
+    pos_cyl = CylindricalPoint{T}(0, 0, 0)
+    crossing_pos_cyl = CylindricalPoint{T}(0, 0, 0)
     crossing_pos_type::Symbol = :Idle
     boundary_index::Int=0
-    
-    drift_path[1] = startpos
 
+    drift_path[1] = startpos
     for istep in eachindex(drift_path)[2:end]
         if done == false
-            pos_cyl = geom_round(CylindricalPoint(CartesianPoint(drift_path[istep-1]))) # update pos_cyl
-            while pos_cyl.θ < 0
-                 pos_cyl = CylindricalPoint{T}(pos_cyl.r, pos_cyl.θ + T(2π), pos_cyl.z )
-            end
-            while pos_cyl.θ >= 2π
-                 pos_cyl = CylindricalPoint{T}(pos_cyl.r, pos_cyl.θ - T(2π), pos_cyl.z )
-            end
+            pos_cyl = CylindricalPoint(CartesianPoint{T}(drift_path[istep-1])) # update pos_cyl
             if contains(det, pos_cyl)
                 stepvector = getvelocityvector(velocity_field, pos_cyl) * delta_t
                 drift_path[istep] = drift_path[istep-1] + stepvector
@@ -38,15 +31,18 @@ function drift_charge!(
                 if crossing_pos_type == :electrode
                     done = true
                     drifttime = delta_t * (istep-1)
-                    drift_path[istep-1] = CartesianPoint(crossing_pos_cyl)
+                    # drift_path[istep-1] = CartFromCyl(crossing_pos_cyl)
+                    drift_path[istep-1] = CartesianPoint(CylindricalPoint{T}(crossing_pos_cyl))
+                    # @show drift_path[istep-1]
+                    # error("err")
                     drift_path[istep] = drift_path[istep-1]
                 elseif crossing_pos_type == :floating_boundary
                     stepvector = getvelocityvector(velocity_field, crossing_pos_cyl) * delta_t
                     projected_vector = project_to_plane(stepvector, get_fb_plane(det, crossing_pos_cyl, boundary_index).n⃗)
-                    drift_path[istep-1] = CartesianPoint(crossing_pos_cyl)
+                    drift_path[istep-1] = CartesianPoint(CylindricalPoint{T}(crossing_pos_cyl))#CartFromCyl(crossing_pos_cyl)
                     drift_path[istep] = drift_path[istep-1] + projected_vector
                 else
-                    @show crossing_pos_cyl,crossing_pos_type, boundary_index
+                    @show crossing_pos_cyl, crossing_pos_type, boundary_index
                     @show typeof(crossing_pos_cyl)
                     @show typeof(pos_cyl)
                     throw(ErrorException("Internal error"))
@@ -61,12 +57,12 @@ end
 
 
 function drift_and_acc_charge!(
-    drift_path::AbstractVector{CartesianPoint{<:Real}},
+    drift_path::AbstractVector{<:SomeCartesianPoint{<:Real}},
     charge_signal::AbstractVector{<:RealQuantity},
     detector::SolidStateDetector,
     velocity_field::Interpolations.Extrapolation{<:SVector{3},3},
     weighting_potential::Interpolations.Extrapolation{<:Real,3},
-    startpos::CartesianPoint{<:RealQuantity},
+    startpos::SomeCartesianPoint{<:RealQuantity},
     charge::RealQuantity,
     delta_t::RealQuantity,
 )
@@ -86,147 +82,6 @@ function drift_and_acc_charge!(
     from_internal_units(time_unit, u"s", t_drift)
 end
 
-
-
-function driftonecharge(det::SolidStateDetector{T}, startposition::AbstractArray, nsteps::Int, steptime, charge::Symbol, interpolation_field_e, interpolation_field_h) where {T} #where {T<:AbstractFloat}#{T=get_precision_type(det)}
-    # T::Type = eltype(startposition)
-    pathx::AbstractArray{T, 1} = zeros(T, nsteps)
-    pathy::AbstractArray{T, 1} = zeros(T, nsteps)
-    pathz::AbstractArray{T, 1} = zeros(T, nsteps)
-
-    pathx[1] = startposition[1]
-    pathy[1] = startposition[2]
-    pathz[1] = startposition[3]
-    prevposition::SVector{3, T} = startposition
-    drifttime::T = 0.0
-    done::Bool = false
-    for istep in 2:nsteps
-        if done == false
-            stepvector = zeros(T, 3)
-            position_cyl::CylindricalPoint{T}=CylindricalPoint(prevposition)
-            if contains(det, position_cyl)
-                if charge == :e
-                    stepvector = getvelocityvector(interpolation_field_e,prevposition) * steptime
-                elseif charge == :h
-                    stepvector = getvelocityvector(interpolation_field_h,prevposition) * steptime
-                else
-                    error("wrong symbol for charge")
-                end
-                nextposition = prevposition + stepvector
-                pathx[istep] = nextposition[1]
-                pathy[istep] = nextposition[2]
-                pathz[istep] = nextposition[3]
-                prevposition = nextposition
-            elseif istep < 3
-                done = true
-                drifttime = istep-1*steptime
-                @warn "spawn_position is not contained $position_cyl"
-                pathx[istep] = pathx[istep-1]
-                pathy[istep] = pathy[istep-1]
-                pathz[istep] = pathz[istep-1]
-            else
-                crossingpoint_cyl, cp_type, boundary_index = get_cyl_intersection_qad2(det,SVector{3,T}(pathx[istep-2],pathy[istep-2],pathz[istep-2]),prevposition)
-                if cp_type == :electrode
-                    done = true
-                    drifttime = istep-1*steptime
-                    crossingpoint=CartesianPoint(crossingpoint_cyl)
-                    pathx[istep-1] = crossingpoint[1]
-                    pathy[istep-1] = crossingpoint[2]
-                    pathz[istep-1] = crossingpoint[3]
-
-                    pathx[istep] = crossingpoint[1]
-                    pathy[istep] = crossingpoint[2]
-                    pathz[istep] = crossingpoint[3]
-
-                elseif cp_type == :floating_boundary
-                    println("Boundary Handling triggered...")
-                    if charge == :e
-                        stepvector = getvelocityvector(interpolation_field_e,prevposition) * steptime
-                    elseif charge == :h
-                        stepvector = getvelocityvector(interpolation_field_h,prevposition) * steptime
-                    else
-                        error("wrong symbol for charge")
-                    end
-                    projected_vector::SVector{3,T} = project_to_plane(stepvector,get_fb_plane(det,crossingpoint_cyl,boundary_index).n⃗)
-                    crossingpoint=CartesianPoint(crossingpoint_cyl)
-                    pathx[istep-1] = crossingpoint[1]
-                    pathy[istep-1] = crossingpoint[2]
-                    pathz[istep-1] = crossingpoint[3]
-
-                    nextposition = crossingpoint + projected_vector
-                    pathx[istep] = nextposition[1]
-                    pathy[istep] = nextposition[2]
-                    pathz[istep] = nextposition[3]
-                    prevposition = nextposition
-                else
-                    @show crossingpoint_cyl,cp_type, boundary_index
-                    @show typeof(crossingpoint_cyl)
-                    @show position_cyl
-                    @show typeof(position_cyl)
-                    error("sth went wrong: ...")
-                end
-            end
-        elseif done == true
-            pathx[istep] = pathx[istep - 1]
-            pathy[istep] = pathy[istep - 1]
-            pathz[istep] = pathz[istep - 1]
-        end
-    end
-
-    return pathx, pathy, pathz, drifttime
-end
-
-function driftonecharge_wo(det, startposition::AbstractArray, nsteps::Integer, steptime::AbstractFloat, charge::Symbol, interpolation_field_e, interpolation_field_h)
-    # T::Type = eltype(startposition)
-    T::Type = eltype(det.crystal_radius)
-    pathx = zeros(T, nsteps)
-    pathy = zeros(T, nsteps)
-    pathz = zeros(T, nsteps)
-
-    pathx[1] = startposition[1]
-    pathy[1] = startposition[2]
-    pathz[1] = startposition[3]
-    prevposition = startposition
-    # println("test")
-    done::Bool=false
-    for istep in 2:nsteps
-        # println("$istep,$done")
-        if done==false
-            stepvector = zeros(T, 3)
-            position_cyl=CylindricalPoint(prevposition)
-            if contains(det, position_cyl)
-                # println("in$istep")
-            # rθz_position=get_rθz_from_xyz(prevposition)
-            # if contains(det, rθz_position...)# contains in rθz position returns true if inside detector
-
-            # if contains(det, (prevposition[1], prevposition[2], prevposition[3])) == 1
-                if charge == :e
-                    stepvector = getvelocityvector(interpolation_field_e,prevposition) * steptime
-                elseif charge == :h
-                    stepvector = getvelocityvector(interpolation_field_h,prevposition) * steptime
-                else
-                    error("wrong symbol for charge")
-                end
-            end
-            nextposition = prevposition + stepvector
-            pathx[istep] = nextposition[1]
-            pathy[istep] = nextposition[2]
-            pathz[istep] = nextposition[3]
-            prevposition = nextposition
-
-        elseif done == true
-            pathx[istep] = pathx[istep-1]
-            pathy[istep] = pathy[istep-1]
-            pathz[istep] = pathz[istep-1]
-        end
-    end
-
-    return pathx, pathy, pathz
-end
-function driftonecharge(det::SolidStateDetector, startposition_cyl::CylindricalPoint, nsteps::Integer, steptime::AbstractFloat, charge::Symbol, interpolation_field_e, interpolation_field_h)
-    T=typeof(det.crystal_radius)
-    driftonecharge(det, CartesianPoint(startposition_cyl), nsteps, T(steptime), charge, interpolation_field_e, interpolation_field_h)
-end
 
 struct DriftPath{T<:Real}
     e_path::AbstractVector{SVector{3,T}}
@@ -296,10 +151,10 @@ function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T},
     T==Float64 ? dig = 13 : nothing
     current_pos_in = MVector{3,T}(point_in...)
     current_pos_out = MVector{3,T}(point_out...)
-    current_pos_xyz::SVector{3,T} = 0.5*(current_pos_in .+ current_pos_out)
-    current_pos_cyl::CylindricalPoint{T} = CylindricalPoint(CartesianPoint(current_pos_xyz))
+    current_pos_xyz::SVector{3,T} = 0.5 * (current_pos_in .+ current_pos_out)
+    current_pos_cyl::CylindricalPoint{T} = CylindricalPoint(CartesianPoint{T}(current_pos_xyz))
     i_limit::Int = 0
-    while (point_type(detector, current_pos_cyl.r, current_pos_cyl.θ, current_pos_cyl.z)[2] == 0) && i_limit < max_n_iter
+    while (point_type(detector, current_pos_cyl)[2] == 0) && i_limit < max_n_iter
         if contains(detector, current_pos_cyl)
             current_pos_in[1] = current_pos_xyz[1]
             current_pos_in[2] = current_pos_xyz[2]
@@ -309,12 +164,12 @@ function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T},
             current_pos_out[2] = current_pos_xyz[2]
             current_pos_out[3] = current_pos_xyz[3]
         end
-        current_pos_xyz = 0.5*(current_pos_out .+ current_pos_in)
-        current_pos_cyl = geom_round(CylindricalPoint(CartesianPoint(current_pos_xyz)))
+        current_pos_xyz = 0.5 * (current_pos_out .+ current_pos_in)
+        current_pos_cyl = CylindricalPoint(CartesianPoint{T}(current_pos_xyz))
+
         i_limit += 1
     end
-    current_pos_cyl = geom_round(current_pos_cyl)
-    crossing_pos_type, boundary_index = point_type(detector, current_pos_cyl.r, current_pos_cyl.θ, current_pos_cyl.z)
+    crossing_pos_type, boundary_index = point_type(detector,current_pos_cyl.r,current_pos_cyl.θ,current_pos_cyl.z)
     if i_limit==max_n_iter
         # println("Boundary Point was rounded.")
         # @show round(current_pos_cyl.r,digits=dig),round(current_pos_cyl.θ,digits=dig),round(current_pos_cyl.z,digits=dig)
@@ -328,12 +183,12 @@ function get_cyl_intersection_qad2(det::SolidStateDetector, p_in::AbstractArray,
     T = typeof(det.crystal_length)
     T == Float64 ? dig=11 : nothing
     pos::SVector{3,T} = 0.5*(p_out .+ p_in)
-    pos_cyl::CylindricalPoint{T}=CylindricalPoint(pos)
+    pos_cyl::CylindricalPoint{T} = CylindricalPoint(CartesianPoint{T}(pos))
     i_limit=0
     while (point_type(det,pos_cyl.r,pos_cyl.θ,pos_cyl.z)[2]==0) && i_limit < max_n_iter
         contains(det,pos_cyl) ? p_in=pos : p_out = pos
         pos = 0.5*(p_out .+ p_in)
-        pos_cyl=CylindricalPoint(pos)
+        pos_cyl = CylindricalPoint(CartesianPoint{T}(pos))
         i_limit+=1
     end
 
@@ -366,6 +221,8 @@ function lineplanecollision(planenorm::Vector, planepnt::Vector, raydir::Vector,
     ψ  = w .+ si .* raydir .+ planepnt
     return ψ
 end
+
+
 
 
 function get_cartesian_paths(a::Array{CylindricalPoint,1})
@@ -450,10 +307,10 @@ function add_cylindric_vectors(v1,v2)::AbstractArray
 end
 
 
-@inline getvelocityvector(interpolation_field, position::CartesianPoint) =
+@inline getvelocityvector(interpolation_field, position::SomeCartesianPoint) =
     getvelocityvector(interpolation_field, convert(CylindricalPoint, position))
 
-# @inline getvelocityvector(interpolated_vectorfield, point::CylindricalPoint) =
+# @inline getvelocityvector(interpolated_vectorfield, point::Cylindrical) =
 #     getvelocityvector(interpolated_vectorfield, CylindricalPoint(point))
 
 @inline getvelocityvector(interpolated_vectorfield, point::CylindricalPoint{T}) where T =
@@ -466,7 +323,7 @@ struct Trajectory
     indv_charge::Int
     n_steps::Int
     timestep::AbstractFloat
-    rθz_path::Vector{CylindricalPoint}
+    rθz_path::Array{CylindricalPoint,1}
     x_path::Vector
     y_path::Vector
     z_path::Vector
@@ -493,19 +350,19 @@ function show(io::IO,::MIME"text/plain", trj::Trajectory)
     show(io, trj)
 end
 
-function Trajectory(det::SolidStateDetector,startposition_rθz::CylindricalPoint, n_steps::Int,timestep,carriertype::Symbol,velocity_field,n_charges = 1)
-    x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition_rθz, n_steps, timestep,carriertype,velocity_field,velocity_field)
-    rθz_path =[]
-    carriertype == :e ? charge = -1 : charge = 1
-    Trajectory(CartesianPoint(startposition_rθz), n_charges, charge, n_steps, timestep, rθz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
-end
+# function Trajectory(det::SolidStateDetector,startposition_rθz::CylindricalPoint,n_steps::Int,timestep,carriertype::Symbol,velocity_field,n_charges = 1)
+#     x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition_rθz,n_steps,timestep,carriertype,velocity_field,velocity_field)
+#     rθz_path =[]
+#     carriertype == :e ? charge = -1 : charge = 1
+#     Trajectory(CartFromCyl(startposition_rθz), n_charges, charge, n_steps, timestep, rθz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
+# end
 
-function Trajectory(det::SolidStateDetector,startposition::AbstractArray,n_steps::Int,timestep,carriertype::Symbol,velocity_field, n_charges = 1)
-    x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition,n_steps,timestep,carriertype,velocity_field,velocity_field)
-    rθz_path =[]
-    carriertype == :e ? charge = -1 : charge = 1
-    Trajectory(startposition, n_charges, charge, n_steps, timestep, rθz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
-end
+# function Trajectory(det::SolidStateDetector,startposition::AbstractArray,n_steps::Int,timestep,carriertype::Symbol,velocity_field, n_charges = 1)
+#     x_path,  y_path, z_path, drifttime = driftonecharge(det,startposition,n_steps,timestep,carriertype,velocity_field,velocity_field)
+#     rθz_path =[]
+#     carriertype == :e ? charge = -1 : charge = 1
+#     Trajectory(startposition, n_charges, charge, n_steps, timestep, rθz_path, x_path, y_path, z_path, [x_path[end],y_path[end],z_path[end]], drifttime)
+# end
 
 struct Pulse
     electron_contribution::Vector
@@ -518,7 +375,7 @@ struct Pulse
 end
 
 @inline function _get_wpot_at(Wpot_interp::Interpolations.Extrapolation{T,3}, pos::SVector{3,T}) where T<:Real
-    pos_cyl::CylindricalPoint{T} = CylindricalPoint(pos)
+    pos_cyl::CylindricalPoint{T} = CylindricalPoint(CartesianPoint{T}(pos)) #CylFromCart(pos)
     # isapprox(Wpot_interp(pos_cyl.r,pos_cyl.θ,pos_cyl.z),0.0,atol = 5e-5) ? T(0.0) : Wpot_interp(pos_cyl.r,pos_cyl.θ,pos_cyl.z)
     Wpot_interp(pos_cyl.r,pos_cyl.θ,pos_cyl.z)
 end
@@ -638,7 +495,7 @@ function generate_charge_signals(
 end
 
 
-function Pulse(Trajectory_e::Trajectory, Trajectory_h::Trajectory, wp_int, energy::T = 1.0) where T <: AbstractFloat#wp_int = interpolation field for the weighting potential
+function Pulse(Trajectory_e::Trajectory, Trajectory_h::Trajectory, wp_int, energy::T = 1.0) where {T <: AbstractFloat}#wp_int = interpolation field for the weighting potential
     n_steps = Trajectory_e.n_steps
     electron_contribution::Array{T,1} = zeros(T, n_steps)
     hole_contribution::Array{T,1} = zeros(T, n_steps)
@@ -646,10 +503,10 @@ function Pulse(Trajectory_e::Trajectory, Trajectory_h::Trajectory, wp_int, energ
     for i_step in eachindex(electron_contribution)
         curr_loc_xyz_e::SVector{3,T} = SVector(Trajectory_e.x_path[i_step],Trajectory_e.y_path[i_step],Trajectory_e.z_path[i_step])
         # curr_loc_rθz_e=get_rθz_from_xyz(curr_loc_xyz_e)
-        curr_loc_rθz_e::CylindricalPoint = CylindricalPoint(curr_loc_xyz_e)
+        curr_loc_rθz_e::CylindricalPoint{T} = CylindricalPoint(CartesianPoint{T}(curr_loc_xyz_e)) #CylFromCart(curr_loc_xyz_e)
         curr_loc_xyz_h::SVector{3,T} = SVector(Trajectory_h.x_path[i_step],Trajectory_h.y_path[i_step],Trajectory_h.z_path[i_step])
         # curr_loc_rθz_h=get_rθz_from_xyz(curr_loc_xyz_h)
-        curr_loc_rθz_h::CylindricalPoint=CylindricalPoint(curr_loc_xyz_h)
+        curr_loc_rθz_h::CylindricalPoint{T} = CylindricalPoint(CartesianPoint{T}(curr_loc_xyz_h)) #CylFromCart(curr_loc_xyz_h)
         # electron_contribution[i_step] = -1 * energy * wp_int(curr_loc_rθz_e...)
         electron_contribution[i_step] = -1 * energy * wp_int(curr_loc_rθz_e.r, curr_loc_rθz_e.θ, curr_loc_rθz_e.z)
         hole_contribution[i_step] = energy * wp_int(curr_loc_rθz_h.r, curr_loc_rθz_h.θ, curr_loc_rθz_h.z)
@@ -663,16 +520,16 @@ function println(io::IO,P::Pulse)
 end
 
 
-struct Energy_Deposition{T <: AbstractFloat} 
-    location::CartesianPoint{T}
-    energy::T
+struct Energy_Deposition
+    location::SVector{3}
+    energy::AbstractFloat
     n_eh_pairs::Int
-end
-function Energy_Deposition(location::AbstractVector{T}, energy::T, n_eh_pairs::Int) where {T <: AbstractFloat}
-    return Energy_Deposition{T}(CartesianPoint{T}(location), T(energy), n_eh_pairs)
-end
-function Energy_Deposition(location::CylindricalPoint{T},energy::T,n_eh_pairs::Int) where {T <: AbstractFloat}
-    return Energy_Deposition{T}(CartesianPoint(location), T(energy), n_eh_pairs)
+    function Energy_Deposition(location::AbstractArray,energy::AbstractFloat,n_eh_pairs::Int)
+        return new(location,energy,n_eh_pairs)
+    end
+    function Energy_Deposition(location::CylindricalPoint{T},energy::AbstractFloat,n_eh_pairs::Int) where {T <: AbstractFloat}
+        return new(CartesianPoint(location),energy,n_eh_pairs)
+    end
 end
 
 function println(io::IO,edep::Energy_Deposition)
@@ -775,13 +632,12 @@ end
 
 struct Plane
     reference_point::AbstractArray
-    n⃗::AbstractArray
+        n⃗::AbstractArray
     function Plane(n⃗,reference_point)
         return new(n⃗,reference_point)
     end
 end
-function get_fb_plane(det, pCyl::CylindricalPoint, boundary_index)::Plane
-    T=typeof(det.crystal_length)
+function get_fb_plane(det,pCyl::CylindricalPoint{T},boundary_index)::Plane where {T <: AbstractFloat}
     pCart::CartesianPoint{T} = CartesianPoint(pCyl)
     if det.floating_boundary_r_ranges[boundary_index][1]==det.floating_boundary_r_ranges[boundary_index][2]
         # println("radial boundary")

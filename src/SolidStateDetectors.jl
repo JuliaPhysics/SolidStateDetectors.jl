@@ -19,6 +19,8 @@ using RecipesBase
 using StaticArrays
 using Unitful
 
+using CoordinateTransformations
+
 import Clustering
 import Distributions
 import Tables

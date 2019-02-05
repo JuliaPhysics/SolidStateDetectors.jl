@@ -368,18 +368,19 @@ function add_detector_specific_outer_boundaries(ivc::InvertedCoax,rs,phis,zs,myt
 end
 
 
-@inline function in(point::CylindricalPoint{T}, detector::Union{Coax{T}, BEGe{T}, InvertedCoax{T}})::Bool where {T <: AbstractFloat}
+
+@inline in(point::CylindricalPoint, detector::SolidStateDetector) =
     contains(detector, point)
-end
 
+@inline in(point::StaticArray{Tuple{3}, <:Real}, detector::SolidStateDetector) =
+    convert(CylindricalPoint, point) in detector
 
-# thats wrong: point::StaticArray{Tuple{3},<:Real} = CartesianPoint in CoordinateTransformations.jl
-# @inline Base.in(point::StaticArray{Tuple{3},<:Real}, detector::SolidStateDetector) =
-#     convert(CylindricalPoint, point) in detector
+@inline in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector) =
+    to_internal_units(u"m", point) in detector
 
-@inline function in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector)
-    CylindricalPoint(CartesianPoint(to_internal_units(u"m", point))) in detector
-end
+@inline in(point::CoordinateTransformations.Cylindrical, detector::SolidStateDetector) =
+    convert(CylindricalPoint, point) in detector
+
 
 
 
@@ -415,6 +416,13 @@ function contains(b::BEGe, p::CylindricalPoint)::Bool
     check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
     rv
 end
+function contains(b::BEGe, p::Cylindrical)::Bool
+    rv::Bool = true
+    check_outer_limits(b,p.r,p.θ,p.z) ? nothing : rv = false
+    check_tapers(b,p.r,p.θ,p.z) ? nothing : rv = false
+    check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
+    rv
+end
 
 function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real)::Bool
     rv::Bool = true
@@ -430,6 +438,18 @@ function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real)::Bool
 end
 
 function contains(ivc::InvertedCoax,p::CylindricalPoint)::Bool
+    rv::Bool = true
+    check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+    check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+    if ivc.borehole_modulation == true
+        check_borehole(ivc,p.r,p.θ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
+    else
+        check_borehole(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+    end
+    check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+    rv
+end
+function contains(ivc::InvertedCoax, p::Cylindrical)::Bool
     rv::Bool = true
     check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
     check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false

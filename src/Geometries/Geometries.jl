@@ -15,12 +15,17 @@ end
 
 
 function CylindricalPoint( pt::CartesianPoint{T} )::CylindricalPoint{T} where {T <: RealQuantity}
-    return CylindricalPoint(sqrt(pt.x * pt.x + pt.y * pt.y), atan(pt.y, pt.x), pt.z)
+    cyl::CylindricalPoint{T} = CylindricalPoint(sqrt(pt.x * pt.x + pt.y * pt.y), atan(pt.y, pt.x), pt.z)
+    while cyl.θ < 0 cyl = CylindricalPoint{T}(cyl.r, cyl.θ + 2π, cyl.z) end 
+    while cyl.θ > 2π cyl = CylindricalPoint{T}(cyl.r, cyl.θ - 2π, cyl.z) end 
+    while cyl.θ == 2π cyl = CylindricalPoint{T}(cyl.r, 0, cyl.z) end 
+    return geom_round(cyl)
+    # return cyl
 end
 
 function CartesianPoint( pt::CylindricalPoint{T} )::CartesianPoint{T} where {T <: RealQuantity}
     sθ::T, cθ::T = sincos(pt.θ)
-    return CartesianPoint{T}(pt.r * cθ, pt.r * sθ, pt.z)
+    return geom_round(CartesianPoint{T}(pt.r * cθ, pt.r * sθ, pt.z))
 end
 
 
@@ -49,3 +54,12 @@ function geom_round(pt::CartesianPoint{T})::CartesianPoint{T} where {T <: Abstra
     return CartesianPoint{T}( geom_round(pt.x), geom_round(pt.y), geom_round(pt.z)  )
 end
 
+
+# # Deprecated
+# function CartFromCyl(p::CylindricalPoint{T}) where {T <: AbstractFloat}
+#     CartesianPoint( p )
+# end
+
+# function CylFromCart(p::SVector{3, T})::CylindricalPoint{T} where {T <:AbstractFloat}
+#     return CylindricalPoint(CartesianPoint{T}(p))
+# end

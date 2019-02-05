@@ -9,11 +9,7 @@ function EField(vectorfield::Array{SVector{3,T},3}) where T<:AbstractFloat
     return EField{T}(vectorfield)
 end
 
-# # new: to be consistent with ElectricPotential, ...
-# struct ElectricField{T, N, S}
-#     data::Array{SVector{3, T},3} # equaly this could already be the interpolated object?
-#     grid::Grid{T, N, S}
-# end
+
 
 function get_magnitude_of_rθz_vector(vector::AbstractArray,cutoff=NaN)
     magn=0
