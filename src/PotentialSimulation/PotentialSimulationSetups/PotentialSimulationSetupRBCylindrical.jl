@@ -296,6 +296,9 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         bulk_is_ptype,
         grid_boundary_factors
      )
+
+    apply_boundary_conditions!(fssrb, Val{true}(),  only_2d) # even points
+    apply_boundary_conditions!(fssrb, Val{false}(), only_2d) # odd 
     return fssrb
 end
 
