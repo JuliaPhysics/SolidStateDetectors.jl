@@ -194,7 +194,15 @@ function Grid(  detector::Union{Coax{T}, BEGe{T}, InvertedCoax{T}};
             error("360° divided by 'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' does not give an integer -> Set 'cyclic' to 360°.")
         end
     end
-    ax_θ = nθ >= 2 ? DiscreteAxis{:periodic, :periodic}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) : DiscreteAxis{T, :periodic, :periodic}(int_θ, T[0])
+    ax_θ = if nθ >= 2 
+        if detector.mirror_symmetry_θ
+            DiscreteAxis{:reflecting, :reflecting}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) 
+        else
+            DiscreteAxis{:periodic, :periodic}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) 
+        end
+    else
+        DiscreteAxis{T, :periodic, :periodic}(int_θ, T[0])
+    end
     if length(ax_θ) > 1 
         θticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_θ, important_θ_points, atol=deg2rad(init_grid_spacing[2])/4)
         ax_θ = typeof(ax_θ)(int_θ, θticks)
