@@ -64,6 +64,8 @@ function PotentialSimulationSetup(ssd::SolidStateDetector{T}, grid::Grid{T, N, S
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
+include("BoundaryConditions/BoundaryConditions.jl")
+
 include("PotentialSimulationSetupRBCylindrical.jl")
 include("PotentialSimulationSetupRBCartesian3D.jl")
 
