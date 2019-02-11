@@ -5,7 +5,7 @@ abstract type AbstractDiscreteAxis{T, BL, BR <: Number} <: AbstractAxis{T, BL, B
     DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :zero} 
 * BL: left boundary condition
 * BR: right boundary condition
 """
@@ -24,7 +24,7 @@ end
     DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :zero} 
 * L, R {:closed, :open} 
 * ticks: Ticks of the axis
 """

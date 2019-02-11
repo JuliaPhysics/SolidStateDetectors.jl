@@ -48,12 +48,13 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
     str_mirror_sym::String = detector.mirror_symmetry_θ ? " and has mirror symmetry" : ""
+    cyclic_print::T = detector.mirror_symmetry_θ ? (cyclic * 2) : cyclic
     n_θ_sym_info_txt = if only_2d  
         "θ symmetry: Detector is θ-symmetric -> 2D computation."
     elseif n_θ_sym > 1 
-        "θ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))°$(str_mirror_sym) -> calculating just 1/$(n_θ_sym) in θ of the detector."
+        "θ symmetry: cyclic = $(round(rad2deg(cyclic_print), digits = 0))°$(str_mirror_sym) -> calculating just 1/$(n_θ_sym) in θ of the detector."
     else
-        "θ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))°$(str_mirror_sym) -> no symmetry -> calculating for 360°."
+        "θ symmetry: cyclic = $(round(rad2deg(cyclic_print), digits = 0))°$(str_mirror_sym) -> no symmetry -> calculating for 360°."
     end
     
     fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB(detector, grid);

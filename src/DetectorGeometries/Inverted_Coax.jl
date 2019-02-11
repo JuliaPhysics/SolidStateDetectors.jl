@@ -103,22 +103,13 @@ function InvertedCoax{T}(config_file::Dict)::InvertedCoax where T <: AbstractFlo
     ivc.custom_grouping = config_file["segmentation"]["custom_grouping"]
 
     ivc.volumes=[]
-    push!(ivc.volumes,Tubs("Outer_Shape", 1, 16.0, "floating", 0.0,
-    0.0,
-    ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"],
-    0.0,
-    2π,
-    0.0,
-    ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]
+    push!(ivc.volumes,Tubs("Outer_Shape", 1, 16.0, "floating", 0.0, 0.0,  ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"], 0.0, 2π, 0.0, 
+                            ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]
     ))
 
-    push!(ivc.volumes,Tubs("Borehole", 2, 1.0, "floating", 0.0,
-    0.0,
-    ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["radius"],
-    0.0,
-    2π,
-    ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]-ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["length"],
-    ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]
+    push!(ivc.volumes,Tubs("Borehole", 2, 1.0, "floating", 0.0,  0.0,  ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["radius"],  0.0,  2π, 
+                            ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]-ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["length"],
+                                ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]
     ))
 
     push!(ivc.volumes,Tubs("Groove", 2, 1.0, "floating", 0.0,
@@ -178,7 +169,7 @@ function Grid(  detector::Union{Coax{T}, BEGe{T}, InvertedCoax{T}};
     
     # θ
     if !(0 <= detector.cyclic <= T(2π)) 
-        @warn "'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' is ∉ [0, 360] -> Set 'cyclic' to 360°."
+        @warn "'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' is ∉ [0, 360] -> 'cyclic' set to 360°."
         detector.cyclic = T(2π)
     end
     int_θ = if !for_weighting_potential
@@ -195,13 +186,13 @@ function Grid(  detector::Union{Coax{T}, BEGe{T}, InvertedCoax{T}};
         end
     end
     ax_θ = if nθ >= 2 
-        if detector.mirror_symmetry_θ
+        if detector.mirror_symmetry_θ && !for_weighting_potential
             DiscreteAxis{:reflecting, :reflecting}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) 
         else
             DiscreteAxis{:periodic, :periodic}(int_θ, length = iseven(nθ) ? nθ : nθ + 1) 
         end
     else
-        DiscreteAxis{T, :periodic, :periodic}(int_θ, T[0])
+        DiscreteAxis{T, :reflecting, :reflecting}(int_θ, T[0])
     end
     if length(ax_θ) > 1 
         θticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_θ, important_θ_points, atol=deg2rad(init_grid_spacing[2])/4)

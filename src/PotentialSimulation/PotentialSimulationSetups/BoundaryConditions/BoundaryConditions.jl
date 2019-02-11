@@ -4,10 +4,16 @@ function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir
     rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
     nothing
 end
-function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :closed, T},
+# function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :closed, T},
+#                                                 grid_boundary_factors::NTuple{2, T})::Nothing where {T}
+#     rbpot[iz,   1, ir, rbi] = rbpot[ iz, end - 1, ir, rbi] # cycling boundary
+#     rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
+#     nothing
+# end
+function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
                                                 grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[iz,   1, ir, rbi] = rbpot[ iz, end - 1, ir, rbi] # cycling boundary
-    rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
+    rbpot[iz,   1, ir, rbi] = rbpot[ iz, 3, ir, rbi] # cycling boundary
+    rbpot[iz, end, ir, rbi] = rbpot[ iz, end - 2, ir, rbi] # cycling boundary
     nothing
 end
 function apply_boundary_conditions_on_r_axis!(  rbpot::Array{T, 4}, iz::Int, iθ::Int, rbi::Int, ax::DiscreteAxis{T, :r0, :infinite}, int::Interval{:closed, :closed, T},
