@@ -271,7 +271,7 @@ function pulse_from_drift_paths(drift_paths, energy_depositions::AbstractVector{
     else
         charge_signal = zeros(T,size(drift_paths[1].e_path,1))
         for i in eachindex(drift_paths)
-            accumulate_charge!(charge_signal, drift_paths[i].e_path, Wpot_interp, -1*energy_depositions[i])
+            accumulate_charge!(charge_signal, drift_paths[i].e_path, Wpot_interp, T(-1)*energy_depositions[i])
             accumulate_charge!(charge_signal, drift_paths[i].h_path, Wpot_interp, energy_depositions[i])
         end
         return charge_signal
@@ -300,8 +300,7 @@ function drift_charges(detector::SolidStateDetector, starting_positions::Abstrac
     return ChargeDriftEvent(drift_paths,signal)
 end
 
-function get_crossing_pos( detector::SolidStateDetector,point_in::SVector{3,T},point_out::SVector{3,T}; dig::Int=6, max_n_iter::Int=2000) where T <:Real
-    T==Float64 ? dig = 13 : nothing
+function get_crossing_pos( detector::SolidStateDetector,point_in::SVector{3,T},point_out::SVector{3,T}; max_n_iter::Int=2000) where T <:Real
     current_pos_in = MVector{3,T}(point_in...)
     current_pos_out = MVector{3,T}(point_out...)
     current_pos_xyz::SVector{3,T} = 0.5*(current_pos_in .+ current_pos_out)
@@ -321,16 +320,41 @@ function get_crossing_pos( detector::SolidStateDetector,point_in::SVector{3,T},p
         current_pos_cyl=CylFromCart(current_pos_xyz)
         i_limit += 1
     end
+    dig=6
     crossing_pos_type, boundary_index = point_type(detector,current_pos_cyl.r,current_pos_cyl.θ,current_pos_cyl.z)
     if i_limit==max_n_iter
-        # println("Boundary Point was rounded.")
-        # @show round(current_pos_cyl.r,digits=dig),round(current_pos_cyl.θ,digits=dig),round(current_pos_cyl.z,digits=dig)
-        crossing_pos_type, boundary_index = point_type(detector,round(current_pos_cyl.r,digits=dig),round(current_pos_cyl.θ,digits=dig),round(current_pos_cyl.z,digits=dig))
-        # @show crossing_pos_type, boundary_index
+        # crossing_pos_type, boundary_index = point_type(detector,round(current_pos_cyl.r,digits=dig),round(current_pos_cyl.θ,digits=dig),round(current_pos_cyl.z,digits=dig))
+        current_pos_cyl, crossing_pos_type, boundary_index = get_crossing_pos_w_rounding(detector, point_in, point_out, i_limit, max_n_iter = 4000)
     end
     current_pos_cyl, crossing_pos_type, boundary_index
 end
-
+function get_crossing_pos_w_rounding(detector::SolidStateDetector, point_in::SVector{3,T}, point_out::SVector{3,T},i_limit::Int; max_n_iter::Int=4000) where T <:Real
+    current_pos_in = MVector{3,T}(point_in...)
+    current_pos_out = MVector{3,T}(point_out...)
+    current_pos_xyz::SVector{3,T} = 0.5*(current_pos_in .+ current_pos_out)
+    current_pos_cyl::Cylindrical{T} = CylFromCart(current_pos_xyz)
+    i_limit::Int=0
+    while (point_type(detector, current_pos_cyl.r, current_pos_cyl.θ, current_pos_cyl.z)[2]==0) && i_limit < max_n_iter
+        if contains(detector,current_pos_cyl)
+            current_pos_in[1] = current_pos_xyz[1]
+            current_pos_in[2] = current_pos_xyz[2]
+            current_pos_in[3] = current_pos_xyz[3]
+        else
+            current_pos_out[1] = current_pos_xyz[1]
+            current_pos_out[2] = current_pos_xyz[2]
+            current_pos_out[3] = current_pos_xyz[3]
+        end
+        current_pos_xyz = 0.5*(current_pos_out .+ current_pos_in)
+        current_pos_cyl=geom_round(CylFromCart(current_pos_xyz))
+        i_limit +=1
+    end
+    if i_limit == max_n_iter
+        nothing
+        # error("charge cannot be collected, something is wrong...")
+    end
+    crossing_pos_type, boundary_index = point_type(detector,current_pos_cyl.r,current_pos_cyl.θ,current_pos_cyl.z)
+    current_pos_cyl, crossing_pos_type, boundary_index
+end
 function get_cyl_intersection_qad2(det::SolidStateDetector, p_in::AbstractArray, p_out::AbstractArray, dig=6, max_n_iter::Int=2000)
     T = typeof(det.crystal_length)
     T == Float64 ? dig=11 : nothing
@@ -389,7 +413,7 @@ function CylFromCart(p::SVector{3,T})::Cylindrical where T <:AbstractFloat
         θ-=2π
     end
     if T==Float32
-        return Cylindrical{T}(round(t.r,digits=7),θ,round(t.z,digits=7))
+        return Cylindrical{T}(geom_round(t.r),θ,geom_round(t.z))
     else
         return Cylindrical{T}(t.r,θ,t.z)
     end
@@ -551,7 +575,6 @@ end
     Wpot_interp(pos_cyl.r,pos_cyl.θ,pos_cyl.z)
 end
 
-
 function accumulate_charge!(charge_signal::AbstractVector{<:RealQuantity}, drift_path::AbstractVector{<:SVector{3,T}}, Wpot_interp::Interpolations.Extrapolation{T,3}, charge::RealQuantity) where T <:Real
     idxs = eachindex(charge_signal)
     eachindex(drift_path) == idxs || throw(ArgumentError("Vectors charge_signal and drift_path must have same indices"))
@@ -560,13 +583,29 @@ function accumulate_charge!(charge_signal::AbstractVector{<:RealQuantity}, drift
     V_prev::typeof(V_0) = V_0
     @inbounds for i in idxs
         pos_current = drift_path[i]
-        V_current = pos_current ≈ pos_prev ? V_prev : _get_wpot_at(Wpot_interp, drift_path[i])
+        V_current = _get_wpot_at(Wpot_interp, drift_path[i])
         charge_signal[i] = muladd(charge, V_current - V_0, charge_signal[i])
-        V_prev = V_current
-        pos_prev = pos_current
     end
     charge_signal
 end
+
+# function accumulate_charge!(charge_signal::AbstractVector{<:RealQuantity}, drift_path::AbstractVector{<:SVector{3,T}}, Wpot_interp::Interpolations.Extrapolation{T,3}, charge::RealQuantity) where T <:Real
+#     idxs = eachindex(charge_signal)
+#     eachindex(drift_path) == idxs || throw(ArgumentError("Vectors charge_signal and drift_path must have same indices"))
+#     pos_prev = drift_path[first(idxs)]
+#     V_0 = _get_wpot_at(Wpot_interp, pos_prev)
+#     V_prev::typeof(V_0) = V_0
+#     @inbounds for i in idxs
+#         pos_current = drift_path[i]
+#         V_current = pos_current ≈ pos_prev ? V_prev : _get_wpot_at(Wpot_interp, drift_path[i])
+#         charge_signal[i] = muladd(charge, V_current - V_0, charge_signal[i])
+#         println(charge)
+#         println(typeof(charge))
+#         V_prev = V_current
+#         pos_prev = pos_current
+#     end
+#     charge_signal
+# end
 
 
 function generate_charge_signals!(
@@ -859,13 +898,14 @@ function find_intersection(sl1::StraightLine,sl2::StraightLine)
     end
 end
 
-function generate_random_startpositions(d::SolidStateDetector, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister())
+function generate_random_startpositions(d::SolidStateDetector, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(),min_dist_from_boundary = 5e-5)
     T=get_precision_type(d)
+    delta = T(min_dist_from_boundary)
     n_filled::Int = 0
     positions = Vector{SVector{3,T}}(undef,n)
     while n_filled < n
-        sample=Cylindrical{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:Θ_range].left:0.00001:Volume[:Θ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
-        if contains(d,sample)
+        sample=Cylindrical{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:θ_range].left:0.00001:Volume[:θ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
+        if contains(d,sample) && contains(d,Cylindrical{T}(sample.r+delta,sample.θ,sample.z))&& contains(d,Cylindrical{T}(sample.r-delta,sample.θ,sample.z))&& contains(d,Cylindrical{T}(sample.r,sample.θ,sample.z+delta))&& contains(d,Cylindrical{T}(sample.r,sample.θ,sample.z-delta))
             n_filled += 1
             positions[n_filled]=CartFromCyl(sample)
         end
