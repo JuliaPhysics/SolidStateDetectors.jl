@@ -80,21 +80,21 @@ function InvertedCoax{T}(config_file::Dict)::InvertedCoax where T <: AbstractFlo
     ivc.cyclic = deg2rad(config_file["cyclic"])
     ivc.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
     ivc.borehole_modulation=false
-    ivc.crystal_length = ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]
-    ivc.crystal_radius = ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]
-    ivc.pc_depth = ivc.geometry_unit_factor * config_file["geometry"]["point_contact"]["depth"]
-    ivc.pc_radius = ivc.geometry_unit_factor * config_file["geometry"]["point_contact"]["radius"]
-    ivc.groove_depth = ivc.geometry_unit_factor * config_file["geometry"]["groove"]["depth"]
-    ivc.groove_rInner = ivc.geometry_unit_factor * config_file["geometry"]["groove"]["rInner"]
-    ivc.groove_width = ivc.geometry_unit_factor * config_file["geometry"]["groove"]["width"]
+    ivc.crystal_length = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]))
+    ivc.crystal_radius = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]))
+    ivc.pc_depth = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["point_contact"]["depth"]))
+    ivc.pc_radius = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["point_contact"]["radius"]))
+    ivc.groove_depth = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["groove"]["depth"]))
+    ivc.groove_rInner = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["groove"]["rInner"]))
+    ivc.groove_width = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["groove"]["width"]))
     ivc.groove_endplate = config_file["geometry"]["groove"]["endplate"]
-    ivc.borehole_length = ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["length"]
-    ivc.borehole_radius = ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["radius"]
-    ivc.taper_outer_length = ivc.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["length"]
-    ivc.taper_outer_rInner = ivc.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["rInner"]
-    ivc.taper_outer_angle = atan((ivc.crystal_radius-ivc.taper_outer_rInner)/ivc.taper_outer_length)
-    ivc.taper_inner_length = ivc.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["length"]
-    ivc.taper_inner_rOuter = ivc.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["rOuter"]
+    ivc.borehole_length = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["length"]))
+    ivc.borehole_radius = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["borehole"]["radius"]))
+    ivc.taper_outer_length = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["length"]))
+    ivc.taper_outer_rInner = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["rInner"]))
+    ivc.taper_outer_angle = geom_round(T(atan((ivc.crystal_radius-ivc.taper_outer_rInner)/ivc.taper_outer_length)))
+    ivc.taper_inner_length = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["length"]))
+    ivc.taper_inner_rOuter = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["rOuter"]))
     ivc.taper_inner_angle = atan((ivc.taper_inner_rOuter-ivc.borehole_radius)/ivc.taper_inner_length)
     ivc.charge_carrier_density_top = config_file["charge_carrier_density"]["top"]
     ivc.charge_carrier_density_bot = config_file["charge_carrier_density"]["bot"]
@@ -157,4 +157,3 @@ function InvertedCoax(mytype::Type{<:AbstractFloat},inputfilename::String)
     parsed_json_file::Dict = JSON.parse(dicttext)
     return InvertedCoax{mytype}(parsed_json_file)
 end
-

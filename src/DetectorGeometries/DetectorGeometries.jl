@@ -1,5 +1,5 @@
 """
-    abstract type SolidStateDetector{T} 
+    abstract type SolidStateDetector{T}
 
 Supertype of all detector structs.
 """
@@ -71,9 +71,9 @@ function Grid(  detector::SolidStateDetector{T};
                 init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005],
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
-    important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
+    important_r_points::Vector{T} = uniq(sort(geom_round.(get_important_r_points(detector))))
     important_θ_points::Vector{T} = T[]#!only_2d ? sort(get_important_θ_points(detector)) : T[]
-    important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
+    important_z_points::Vector{T} = uniq(sort(geom_round.(get_important_z_points(detector)))) #T[]
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
@@ -289,22 +289,22 @@ function construct_segmentation_arrays_from_repetitive_segment(d::SolidStateDete
     segmentation_boundaryMidpoints_horizontal::Array{T,1} = []
 
     #Core
-    push!(segmentation_r_ranges,(round(config_file["segmentation"]["core"]["rStart"]*f, digits=5),round(config_file["segmentation"]["core"]["rStop"]*f, digits=5)))
-    push!(segmentation_phi_ranges,(round(deg2rad(config_file["segmentation"]["core"]["phiStart"]), digits=5),round(deg2rad(config_file["segmentation"]["core"]["phiStop"]), digits=5)))
-    push!(segmentation_z_ranges,(round(config_file["segmentation"]["core"]["zStart"]*f, digits=5),round(config_file["segmentation"]["core"]["zStop"]*f, digits=5)))
-    push!(segment_bias_voltages,round(config_file["segmentation"]["core"]["potential"], digits=5))
+    push!(segmentation_r_ranges,(geom_round(config_file["segmentation"]["core"]["rStart"]*f),geom_round(config_file["segmentation"]["core"]["rStop"]*f)))
+    push!(segmentation_phi_ranges,(geom_round(deg2rad(config_file["segmentation"]["core"]["phiStart"])),geom_round(deg2rad(config_file["segmentation"]["core"]["phiStop"]))))
+    push!(segmentation_z_ranges,(geom_round(config_file["segmentation"]["core"]["zStart"]*f),geom_round(config_file["segmentation"]["core"]["zStop"]*f)))
+    push!(segment_bias_voltages,geom_round(config_file["segmentation"]["core"]["potential"]))
 
     #repetitive Segments
     # if d.n_repetitive_segments > 0
-    rStart=round(config_file["segmentation"]["repetitive_segment"]["rStart"]*f, digits=5)
-    rStop=round(config_file["segmentation"]["repetitive_segment"]["rStop"]*f, digits=5)
-    boundaryWidth_horizontal = round(deg2rad(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["horizontal"]*f*180/(π*d.crystal_radius)), digits=5)
-    phiStart=round(deg2rad(config_file["segmentation"]["repetitive_segment"]["phiStart"])+boundaryWidth_horizontal/2, digits=5)
-    phiStop=round(deg2rad(config_file["segmentation"]["repetitive_segment"]["phiStop"]) - boundaryWidth_horizontal/2, digits=5)
-    zStart=round(config_file["segmentation"]["repetitive_segment"]["zStart"]*f, digits=5)
-    boundaryWidth_vertical=round(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"]*f, digits=5)
-    zStop=round(config_file["segmentation"]["repetitive_segment"]["zStop"]*f - boundaryWidth_vertical, digits=5)
-    potential=round(config_file["segmentation"]["repetitive_segment"]["potential"], digits=5)
+    rStart=geom_round(config_file["segmentation"]["repetitive_segment"]["rStart"]*f)
+    rStop=geom_round(config_file["segmentation"]["repetitive_segment"]["rStop"]*f)
+    boundaryWidth_horizontal = geom_round(deg2rad(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["horizontal"]*f*180/(π*d.crystal_radius)))
+    phiStart=geom_round(deg2rad(config_file["segmentation"]["repetitive_segment"]["phiStart"])+boundaryWidth_horizontal/2)
+    phiStop=geom_round(deg2rad(config_file["segmentation"]["repetitive_segment"]["phiStop"]) - boundaryWidth_horizontal/2)
+    zStart=geom_round(config_file["segmentation"]["repetitive_segment"]["zStart"]*f)
+    boundaryWidth_vertical=geom_round(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"]*f)
+    zStop=geom_round(config_file["segmentation"]["repetitive_segment"]["zStop"]*f - boundaryWidth_vertical)
+    potential=geom_round(config_file["segmentation"]["repetitive_segment"]["potential"])
     n_vertical_repetitions = config_file["segmentation"]["repetitive_segment"]["repetitions"]["vertical"]
     n_horizontal_repetitions = config_file["segmentation"]["repetitive_segment"]["repetitions"]["horizontal"]
     for v_rseg in 0 : n_vertical_repetitions-1
@@ -332,7 +332,7 @@ end
 function construct_segmentation_arrays_for_individual_segments(d::SolidStateDetector,config_file::Dict)::Nothing
     n_individual_segments::Int = d.n_individual_segments
     T = get_precision_type(d)
-    f = d.geometry_unit_factor
+    f = T(d.geometry_unit_factor)
 
     segmentation_r_ranges::Array{Tuple{T,T},1}= []
     segmentation_phi_ranges::Array{Tuple{T,T},1} = []
@@ -345,11 +345,11 @@ function construct_segmentation_arrays_for_individual_segments(d::SolidStateDete
     segmentation_boundaryMidpoints_vertical::Array{T,1} = []
     segmentation_boundaryMidpoints_horizontal::Array{T,1} = []
 
-    push!(segmentation_r_ranges,(round(config_file["segmentation"]["core"]["rStart"]*f, digits = 5),round(config_file["segmentation"]["core"]["rStop"]*f, digits = 5)))
-    push!(segmentation_phi_ranges,(round(deg2rad(config_file["segmentation"]["core"]["phiStart"]), digits = 5),round(deg2rad(config_file["segmentation"]["core"]["phiStop"]), digits = 5)))
-    push!(segmentation_z_ranges,(round(config_file["segmentation"]["core"]["zStart"]*f, digits = 5),round(config_file["segmentation"]["core"]["zStop"]*f, digits = 5)))
+    push!(segmentation_r_ranges,(geom_round(config_file["segmentation"]["core"]["rStart"]*f),geom_round(config_file["segmentation"]["core"]["rStop"]*f)))
+    push!(segmentation_phi_ranges,(geom_round(deg2rad(config_file["segmentation"]["core"]["phiStart"])),geom_round(deg2rad(config_file["segmentation"]["core"]["phiStop"]))))
+    push!(segmentation_z_ranges,(geom_round(config_file["segmentation"]["core"]["zStart"]*f),geom_round(config_file["segmentation"]["core"]["zStop"]*f)))
     push!(segmentation_types,config_file["segmentation"]["core"]["type"])
-    push!(segment_bias_voltages,round(config_file["segmentation"]["core"]["potential"], digits = 5))
+    push!(segment_bias_voltages,geom_round(config_file["segmentation"]["core"]["potential"]))
     for i_idv_seg in 1:n_individual_segments
             ID = "S$i_idv_seg"
             if config_file["segmentation"][ID]["type"] == "Tubs"
@@ -357,16 +357,16 @@ function construct_segmentation_arrays_for_individual_segments(d::SolidStateDete
             elseif config_file["segmentation"][ID]["type"] == "Taper"
             seg_type = config_file["segmentation"][ID]["orientation"]
             end
-            boundaryWidth_radial = round(config_file["segmentation"][ID]["boundaryWidth"]["radial"]*f, digits = 5)
-            rStart=round(config_file["segmentation"][ID]["rStart"]*f, digits = 5)+boundaryWidth_radial
-            rStop=round(config_file["segmentation"][ID]["rStop"]*f, digits = 5)
-            boundaryWidth_horizontal = round(deg2rad(config_file["segmentation"][ID]["boundaryWidth"]["horizontal"]*f*180/(π*d.crystal_radius)), digits = 5)
-            phiStart=round(deg2rad(config_file["segmentation"][ID]["phiStart"]) + boundaryWidth_horizontal/2, digits = 5)
-            phiStop=round(deg2rad(config_file["segmentation"][ID]["phiStop"]) - boundaryWidth_horizontal/2, digits = 5)
-            boundaryWidth_vertical=round(config_file["segmentation"][ID]["boundaryWidth"]["vertical"]*f, digits = 5)
-            zStart=round(config_file["segmentation"][ID]["zStart"]*f + boundaryWidth_vertical/2, digits = 5)
-            zStop=round(config_file["segmentation"][ID]["zStop"]*f - boundaryWidth_vertical/2, digits = 5)
-            potential=round(config_file["segmentation"][ID]["potential"], digits = 5)
+            boundaryWidth_radial::T = geom_round(T(config_file["segmentation"][ID]["boundaryWidth"]["radial"]*f))
+            rStart::T=geom_round(T(config_file["segmentation"][ID]["rStart"]*f+boundaryWidth_radial))
+            rStop::T=geom_round(T(config_file["segmentation"][ID]["rStop"]*f))
+            boundaryWidth_horizontal::T = geom_round(T(deg2rad(config_file["segmentation"][ID]["boundaryWidth"]["horizontal"]*f*180/(π*d.crystal_radius))))
+            phiStart::T=geom_round(T(deg2rad(config_file["segmentation"][ID]["phiStart"]) + boundaryWidth_horizontal/2))
+            phiStop::T=geom_round(T(deg2rad(config_file["segmentation"][ID]["phiStop"]) - boundaryWidth_horizontal/2))
+            boundaryWidth_vertical::T=geom_round(T(config_file["segmentation"][ID]["boundaryWidth"]["vertical"]*f))
+            zStart::T=geom_round(T(config_file["segmentation"][ID]["zStart"]*f + boundaryWidth_vertical/2))
+            zStop::T=geom_round(T(config_file["segmentation"][ID]["zStop"]*f - boundaryWidth_vertical/2))
+            potential::T=geom_round(T(config_file["segmentation"][ID]["potential"]))
             if config_file["segmentation"][ID]["repetitive"]==true
                 n_radial_repetitions = config_file["segmentation"][ID]["repetitions"]["radial"]
                 n_vertical_repetitions = config_file["segmentation"][ID]["repetitions"]["vertical"]
@@ -660,7 +660,7 @@ function check_outer_limits(b::SolidStateDetector, p::Tuple)::Bool
     rv::Bool = true
     T::Type = get_precision_type(b)
     @fastmath begin
-        r::T = round(sqrt(p[1]^2 + p[2]^2), digits=5)
+        r::T = geom_round(sqrt(p[1]^2 + p[2]^2))
         if r > b.crystal_radius || p[3] < 0 || p[3] > b.crystal_length
                 rv = false
         end
@@ -679,7 +679,7 @@ function check_borehole(c::Coax,p::Tuple)::Bool
     T::Type = get_precision_type(c)
     rv::Bool = true
     @fastmath begin
-        r::T = round(sqrt(p[1]^2 + p[2]^2), digits=5)
+        r::T = geom_round(sqrt(p[1]^2 + p[2]^2))
         if r < c.borehole_radius
                 rv = false
         end
@@ -689,17 +689,16 @@ end
 
 function check_borehole(ivc::InvertedCoax, r::Real, θ::Real, z::Real)::Bool#returns true if point is not inside borehole
     rv = true
-    if r < round(ivc.borehole_radius,digits=6) && z >round(ivc.crystal_length-ivc.borehole_length,digits=6)
+    if r < geom_round(ivc.borehole_radius) && z >geom_round(ivc.crystal_length-ivc.borehole_length)
         rv = false
     end
     rv
 end
 
-function check_borehole(ivc::InvertedCoax, r::T, θ::T, z::T,modulation_function::Function)::Bool where T<:Real#returns true if point is not inside borehole
+function check_borehole(ivc::InvertedCoax, r::T, θ::T, z::T, modulation_function::Function)::Bool where T<:Real#returns true if point is not inside borehole
     rv = true
-    epsilon::T=0.000
     # if r < round(ivc.borehole_radius+modulation_function(θ)-epsilon,digits=6) && z >round(ivc.crystal_length-ivc.borehole_length,digits=6)
-    if r < round(ivc.borehole_radius+modulation_function(θ),digits=6) && z >round(ivc.crystal_length-ivc.borehole_length,digits=6)
+    if r < geom_round(ivc.borehole_radius+modulation_function(θ)) && z >geom_round(ivc.crystal_length-ivc.borehole_length)
         rv = false
     end
     rv
@@ -756,14 +755,14 @@ function check_tapers(b::BEGe,r::Real,θ::Real,z::Real)::Bool
     rv
 end
 
-function check_tapers(ivc::InvertedCoax, r::Real, θ::Real, z::Real)::Bool
+function check_tapers(ivc::InvertedCoax, r::T, θ::T, z::T)::Bool where T<:Real
     rv::Bool = true
-    if !iszero(ivc.taper_outer_length) && z > (ivc.crystal_length-ivc.taper_outer_length)
-        if r > ivc.crystal_radius-get_r_from_z_for_taper(ivc.taper_outer_angle, z-(ivc.crystal_length-ivc.taper_outer_length))
+    if !iszero(ivc.taper_outer_length) && z > geom_round(ivc.crystal_length-ivc.taper_outer_length)
+        if r > geom_round(ivc.crystal_radius-get_r_from_z_for_taper(ivc.taper_outer_angle, z-(ivc.crystal_length-ivc.taper_outer_length)))
                 rv=false
         end
     end
-    if !iszero(ivc.taper_inner_length) && z > (ivc.crystal_length-ivc.taper_inner_length)
+    if !iszero(ivc.taper_inner_length) && z > geom_round(ivc.crystal_length-ivc.taper_inner_length)
         if r < ivc.borehole_radius + get_r_from_z_for_taper(ivc.taper_inner_angle, z-(ivc.crystal_length-ivc.taper_inner_length))
                 rv=false
         end
@@ -771,8 +770,8 @@ function check_tapers(ivc::InvertedCoax, r::Real, θ::Real, z::Real)::Bool
     rv
 end
 
-function get_r_from_z_for_taper(angle,z)
-    return z*tan(angle)
+function get_r_from_z_for_taper(angle::T,z::T)::T where T<:Real
+    return geom_round(z*tan(angle))
 end
 
 function check_tapers(c::Coax, r::Real, θ::Real, z::Real)::Bool
@@ -799,7 +798,7 @@ function check_tapers(c::Coax, r::Real, θ::Real, z::Real)::Bool
         angle_taper_inner_top = atan((c.taper_inner_top_rOuter-c.borehole_radius)/c.taper_inner_top_length)
         r_taper_inner_top = c.taper_inner_top_rOuter - tan(angle_taper_inner_top) * (c.crystal_length - z)
         # if r < signif(c.type_precision(r_taper_inner_top), 5)
-        if r < round(r_taper_inner_top, sigdigits=5)
+        if r < geom_round(r_taper_inner_top)
             # println("top inner taper")
             return false
         end
@@ -808,7 +807,7 @@ function check_tapers(c::Coax, r::Real, θ::Real, z::Real)::Bool
         angle_taper_inner_bot = atan((c.taper_inner_bot_rOuter-c.borehole_radius)/c.taper_inner_bot_length)
         r_taper_inner_bot = c.taper_inner_bot_rOuter - tan(angle_taper_inner_bot) * z
         # if r < signif(c.type_precision(r_taper_inner_bot), 5)
-        if r < round(r_taper_inner_bot, sigdigits=5)
+        if r < geom_round(r_taper_inner_bot)
             # println("bot inner taper")
             return false
         end
@@ -823,7 +822,7 @@ function check_tapers(c::Coax, p::Tuple)::Bool
         if p[3] > (c.crystal_length - c.taper_outer_top_length) && p[3] <= c.crystal_length ##Check top taper
             angle_taper_outer_top::T = atan((c.crystal_radius - c.taper_outer_top_rInner) / c.taper_outer_top_length)
             r_taper_outer_top::T = tan(angle_taper_outer_top) * (c.crystal_length - p[3]) + c.taper_outer_top_rInner
-            r_point::T = round(sqrt(p[1]^2 + p[2]^2), digits=5)
+            r_point::T = geom_round(sqrt(p[1]^2 + p[2]^2))
             if r_point > r_taper_outer_top
                 # println("top outer taper")
                 rv = false
@@ -831,7 +830,7 @@ function check_tapers(c::Coax, p::Tuple)::Bool
         elseif p[3] < c.taper_outer_bot_length && p[3] >= 0 ## Check bot taper
             angle_taper_outer_bot = atan((c.crystal_radius - c.taper_outer_bot_rInner) / c.taper_outer_bot_length)
             r_taper_outer_bot = tan(angle_taper_outer_bot) * p[3] + c.taper_outer_bot_rInner
-            r_point = round(sqrt(p[1]^2 + p[2]^2), digits=5)
+            r_point = geom_round(sqrt(p[1]^2 + p[2]^2))
             if r_point > r_taper_outer_bot
                 # println("bot outer taper")
                 rv = false
@@ -841,7 +840,7 @@ function check_tapers(c::Coax, p::Tuple)::Bool
         if p[3] > (c.crystal_length - c.taper_inner_top_length) && p[3] <= c.crystal_length ##Check top taper
             angle_taper_inner_top = atan((c.taper_inner_top_rOuter - c.borehole_radius) / c.taper_inner_top_length)
             r_taper_inner_top = c.taper_inner_top_rOuter - tan(angle_taper_inner_top) * (c.crystal_length - p[3])
-            r_point = round(sqrt(p[1]^2 + p[2]^2), digits=5)
+            r_point = geom_round(sqrt(p[1]^2 + p[2]^2))
             if r_point < r_taper_inner_top
                 # println("top inner taper")
                 rv = false
@@ -849,7 +848,7 @@ function check_tapers(c::Coax, p::Tuple)::Bool
         elseif p[3] < (c.taper_inner_bot_length) && p[3] >= T(0) ## Check bot taper
             angle_taper_inner_bot = atan((c.taper_inner_bot_rOuter - c.borehole_radius) / c.taper_inner_bot_length)
             r_taper_inner_bot = c.taper_inner_bot_rOuter - tan(angle_taper_inner_bot) * p[3]
-            r_point = round(sqrt(p[1]^2 + p[2]^2), digits=5)
+            r_point = geom_round(sqrt(p[1]^2 + p[2]^2))
             if r_point < r_taper_inner_bot
                 # println("bot inner taper")
                 rv = false
@@ -960,10 +959,10 @@ function is_boundary_point(d::SolidStateDetector, r::T, θ::T, z::T, rs::Vector{
              # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)+ϵ,digits=digits))
              x = (idx_r_closest_gridpoint_to_borehole == idx_r)
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
-             x = (d.segmentation_r_ranges[iseg][1] <= r <= round(bore_hole_r,digits=digits))
+             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(bore_hole_r))
              # x = idx_r_closest_gridpoint_to_borehole == idx_r
         elseif d.borehole_modulation == true && iseg == d.borehole_top_segment_idx
-            x = (round(bore_hole_r,digits=digits) <= r <= d.segmentation_r_ranges[iseg][2])
+            x = (geom_round(bore_hole_r) <= r <= d.segmentation_r_ranges[iseg][2])
             # x = idx_r_closest_gridpoint_to_borehole == idx_r
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
@@ -1002,11 +1001,11 @@ function point_type(d::SolidStateDetector, r::T, θ::T, z::T) where {T<:Abstract
     ############################# Electrode Definitions
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
-             x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ),digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ),digits=digits))
+             x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
-             x = (d.segmentation_r_ranges[iseg][1] <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ),digits=digits))
+             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_top_segment_idx
-            x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ),digits=digits) <= r <= d.segmentation_r_ranges[iseg][2])
+            x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= d.segmentation_r_ranges[iseg][2])
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
         end
@@ -1077,11 +1076,11 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real)
     digits=6
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
-             x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ),digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ),digits=digits))
+             x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
-             x = (d.segmentation_r_ranges[iseg][1] <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ),digits=digits))
+             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_top_segment_idx
-            x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ),digits=digits) <= r <= d.segmentation_r_ranges[iseg][2])
+            x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= d.segmentation_r_ranges[iseg][2])
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
         end
@@ -1095,7 +1094,7 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real)
 end
 function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real,rs::Vector{<:Real})
     digits=6
-    idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs,d.borehole_radius+d.borehole_ModulationFunction(θ))
+    idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs, d.borehole_radius+d.borehole_ModulationFunction(θ))
     idx_r = findfirst(x->x==r,rs)
     bore_hole_r = rs[idx_r_closest_gridpoint_to_borehole]
     for iseg in 1:size(d.segment_bias_voltages,1)
@@ -1103,10 +1102,10 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real,rs::Vect
              # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)+ϵ,digits=digits))
              x = (idx_r_closest_gridpoint_to_borehole == idx_r)
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
-             x = (d.segmentation_r_ranges[iseg][1] <= r <= round(bore_hole_r,digits=digits))
+             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(bore_hole_r))
              # x = idx_r_closest_gridpoint_to_borehole == idx_r
         elseif d.borehole_modulation == true && iseg == d.borehole_top_segment_idx
-            x = (round(bore_hole_r,digits=digits) <= r <= d.segmentation_r_ranges[iseg][2])
+            x = (geom_round(bore_hole_r) <= r <= d.segmentation_r_ranges[iseg][2])
             # x = idx_r_closest_gridpoint_to_borehole == idx_r
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
@@ -1162,7 +1161,7 @@ function bounding_box(d::SolidStateDetector)
     T = get_precision_type(d)
     (
     r_range = ClosedInterval{T}(0.0,d.crystal_radius),
-    Θ_range = ClosedInterval{T}(0.0,2π),
+    θ_range = ClosedInterval{T}(0.0,2π),
     z_range = ClosedInterval{T}(0.0,d.crystal_length)
     )
 end
