@@ -3,7 +3,7 @@
 	"class":"InvertedCoax",
 	"type":"p",
 	"cyclic": 0,
-	"mirror_symmetry_θ": "true",
+	"mirror_symmetry_θ": "false",
 	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"
