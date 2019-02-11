@@ -189,6 +189,10 @@ function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Ve
     ticks_ext[2:end-1] = ax.ticks
     ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
     ticks_ext[end] = ticks_ext[end - 1] + (ticks_ext[end - 1] - ticks_ext[end - 2])
+    if length(ticks_ext) == 3
+        ticks_ext[1] = -2π
+        ticks_ext[3] = +2π
+    end
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :periodic, :periodic} )::Vector{T} where {T}
