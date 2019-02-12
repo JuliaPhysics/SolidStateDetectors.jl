@@ -1,5 +1,5 @@
 function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T},
-                                                grid_boundary_factors::NTuple{2, T})::Nothing where {T}
+                                                grid_boundary_factors::NTuple{2, T}, only2d::Val{only_2d})::Nothing where {T, only_2d}
     rbpot[iz,   1, ir, rbi] = rbpot[ iz, end - 1, ir, rbi] # cycling boundary
     rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
     nothing
@@ -11,9 +11,14 @@ end
 #     nothing
 # end
 function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
-                                                grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[iz,   1, ir, rbi] = rbpot[ iz, 3, ir, rbi] # cycling boundary
-    rbpot[iz, end, ir, rbi] = rbpot[ iz, end - 2, ir, rbi] # cycling boundary
+                                                grid_boundary_factors::NTuple{2, T}, only2d::Val{only_2d})::Nothing where {T, only_2d}
+    if only_2d
+        rbpot[iz,   1, ir, rbi] = rbpot[ iz, 2, ir, rbi] # cycling boundary
+        rbpot[iz, end, ir, rbi] = rbpot[ iz, 2, ir, rbi] # cycling boundary
+    else
+        rbpot[iz,   1, ir, rbi] = rbpot[ iz, 3, ir, rbi] # cycling boundary
+        rbpot[iz, end, ir, rbi] = rbpot[ iz, end - 2, ir, rbi] # cycling boundary
+    end
     nothing
 end
 function apply_boundary_conditions_on_r_axis!(  rbpot::Array{T, 4}, iz::Int, iθ::Int, rbi::Int, ax::DiscreteAxis{T, :r0, :infinite}, int::Interval{:closed, :closed, T},
@@ -46,7 +51,7 @@ function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :
         iθ::Int = 2
         @inbounds for iz in axes(fssrb.potential, 1)
             for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_θ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2])
+                apply_boundary_conditions_on_θ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2], only2d)
             end
             apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iθ, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
         end
@@ -59,7 +64,7 @@ function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :
                 apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iθ, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
             end
             for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_θ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2])
+                apply_boundary_conditions_on_θ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2], only2d)
             end
         end
         @inbounds for iθ in axes(fssrb.potential, 2) # z boundaries
