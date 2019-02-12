@@ -95,27 +95,27 @@ function Coax{T}(config_file::Dict)::Coax where T<:AbstractFloat
     c.cyclic = deg2rad(config_file["cyclic"])
     c.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
     c.borehole_modulation=false
-    c.crystal_length = round(c.geometry_unit_factor * config_file["geometry"]["crystal"]["length"], sigdigits=5)
-    c.crystal_radius = round(c.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"], sigdigits=5)
-    c.borehole_length = round(c.geometry_unit_factor * config_file["geometry"]["borehole"]["length"],sigdigits=5)
-    c.borehole_radius = round(c.geometry_unit_factor * config_file["geometry"]["borehole"]["radius"],sigdigits=5)
-    # c.pc_depth = round(c.geometry_unit_factor * config_file["geometry"]["point_contact"]["depth"],digits=5)
-    # c.pc_radius = round(c.geometry_unit_factor * config_file["geometry"]["point_contact"]["radius"],digits=5)
+    c.crystal_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]))
+    c.crystal_radius = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]))
+    c.borehole_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["borehole"]["length"]))
+    c.borehole_radius = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["borehole"]["radius"]))
+    # c.pc_depth = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["point_contact"]["depth"]))
+    # c.pc_radius = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["point_contact"]["radius"]))
     c.groove_endplate = config_file["geometry"]["groove"]["endplate"]
-    c.groove_depth = round(c.geometry_unit_factor * config_file["geometry"]["groove"]["depth"],digits=5)
-    c.groove_rInner = round(c.geometry_unit_factor * config_file["geometry"]["groove"]["rInner"],digits=5)
-    c.groove_width = round(c.geometry_unit_factor * config_file["geometry"]["groove"]["width"],digits=5)
-    c.taper_inner_bot_length = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["bot"]["length"],digits=5)
-    c.taper_inner_bot_rOuter = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["bot"]["rOuter"],digits=5)
-    c.taper_inner_top_length = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["top"]["length"],digits=5)
-    c.taper_inner_top_rOuter = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["top"]["rOuter"],digits=5)
-    c.taper_outer_bot_length = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["bot"]["length"],digits=5)
-    c.taper_outer_bot_rInner = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["bot"]["rInner"],digits=5)
-    c.taper_outer_top_length = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["top"]["length"],digits=5)
-    c.taper_outer_top_rInner = round(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["top"]["rInner"],digits=5)
-    # c.sfc_depth = round(c.geometry_unit_factor * config_file["geometry"]["surface_contact"]["depth"],digits=5)
-    c.charge_carrier_density_top = round(config_file["charge_carrier_density"]["top"],digits=5)
-    c.charge_carrier_density_bot = round(config_file["charge_carrier_density"]["bot"],digits=5)
+    c.groove_depth = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["groove"]["depth"]))
+    c.groove_rInner = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["groove"]["rInner"]))
+    c.groove_width = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["groove"]["width"]))
+    c.taper_inner_bot_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["bot"]["length"]))
+    c.taper_inner_bot_rOuter = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["bot"]["rOuter"]))
+    c.taper_inner_top_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["top"]["length"]))
+    c.taper_inner_top_rOuter = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["inner"]["top"]["rOuter"]))
+    c.taper_outer_bot_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["bot"]["length"]))
+    c.taper_outer_bot_rInner = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["bot"]["rInner"]))
+    c.taper_outer_top_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["top"]["length"]))
+    c.taper_outer_top_rInner = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["taper"]["outer"]["top"]["rInner"]))
+    # c.sfc_depth = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["surface_contact"]["depth"]))
+    c.charge_carrier_density_top = geom_round(T(config_file["charge_carrier_density"]["top"]))
+    c.charge_carrier_density_bot = geom_round(T(config_file["charge_carrier_density"]["bot"]))
 
     ### Segmentation
     c.n_total_contacts = config_file["segmentation"]["n_contacts_total"]
@@ -123,8 +123,8 @@ function Coax{T}(config_file::Dict)::Coax where T<:AbstractFloat
     c.n_individual_segments = config_file["segmentation"]["n_individual_segments"]
     c.custom_grouping = config_file["segmentation"]["custom_grouping"]
 
-    # c.segmentation_boundaryWidth_vertical = round(c.geometry_unit_factor *config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"],digits=5)
-    # c.segmentation_boundaryWidth_horizontal = round(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"]*c.geometry_unit_factor *180/(π*c.crystal_radius), digits=5)
+    # c.segmentation_boundaryWidth_vertical = geom_round(T(c.geometry_unit_factor *config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"]))
+    # c.segmentation_boundaryWidth_horizontal = geom_round(T(config_file["segmentation"]["repetitive_segment"]["boundaryWidth"]["vertical"]*c.geometry_unit_factor *180/(π*c.crystal_radius)))
     # construct_segmentation_arrays_from_repetitive_segment(c, config_file)
     c.n_individual_segments > 0 ? construct_segmentation_arrays_for_individual_segments(c,config_file) : nothing
     construct_grouped_channels_array(c, config_file)
@@ -166,5 +166,3 @@ end
 function show(c::Coax)  println(c)   end
 function display(c::Coax)  println(c)   end
 function print(c::Coax)  println(c)   end
-
-

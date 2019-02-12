@@ -84,10 +84,10 @@ function BEGe{T}(config_file::Dict)::BEGe where T<:Real
     b.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
     b.bulk_type = bulk_types[ config_file["type"]  ]
     b.borehole_modulation=false
-    b.crystal_length = round(b.geometry_unit_factor * config_file["geometry"]["crystal"]["length"], sigdigits=5)
-    b.crystal_radius = round(b.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"], sigdigits=5)
-    b.pc_depth = round(b.geometry_unit_factor * config_file["geometry"]["point_contact"]["depth"], sigdigits=5)
-    b.pc_radius = round(b.geometry_unit_factor * config_file["geometry"]["point_contact"]["radius"], sigdigits=5)
+    b.crystal_length = geom_round(T(b.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]))
+    b.crystal_radius = geom_round(T(b.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]))
+    b.pc_depth = geom_round(T(b.geometry_unit_factor * config_file["geometry"]["point_contact"]["depth"]))
+    b.pc_radius = geom_round(T(b.geometry_unit_factor * config_file["geometry"]["point_contact"]["radius"]))
     b.groove_endplate = config_file["geometry"]["groove"]["endplate"]
     b.groove_depth = b.geometry_unit_factor * config_file["geometry"]["groove"]["depth"]
     b.groove_rInner = b.geometry_unit_factor * config_file["geometry"]["groove"]["rInner"]
@@ -96,8 +96,8 @@ function BEGe{T}(config_file::Dict)::BEGe where T<:Real
     b.taper_bot_rInner = b.geometry_unit_factor * config_file["geometry"]["taper"]["bot"]["rInner"]
     b.taper_top_length = b.geometry_unit_factor * config_file["geometry"]["taper"]["top"]["length"]
     b.taper_top_rInner = b.geometry_unit_factor * config_file["geometry"]["taper"]["top"]["rInner"]
-    b.charge_carrier_density_top = round(config_file["charge_carrier_density"]["top"], digits = 5)
-    b.charge_carrier_density_bot = round(config_file["charge_carrier_density"]["bot"], digits = 5)
+    b.charge_carrier_density_top = geom_round(T(config_file["charge_carrier_density"]["top"]))
+    b.charge_carrier_density_bot = geom_round(T(config_file["charge_carrier_density"]["bot"]))
     b.n_total_contacts = config_file["segmentation"]["n_contacts_total"]
 
     b.n_individual_segments = config_file["segmentation"]["n_individual_segments"]
@@ -137,4 +137,3 @@ function construct_grouped_channels_array(d,config_file)
     end
     d.grouped_channels=channels
 end
-
