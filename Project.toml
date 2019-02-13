@@ -4,7 +4,6 @@ uuid = "71e43887-2bd9-5f77-aebd-47f656f0a3f0"
 [deps]
 ArraysOfArrays = "65a8f2f4-9b39-5baf-92e2-a9cc46fdf018"
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
-CoordinateTransformations = "150eb455-5306-5404-9cee-2592286d6298"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
@@ -23,6 +22,3 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]

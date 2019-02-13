@@ -17,7 +17,7 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Installation" => "man/installation.md",
-            "Detectors" => "man/detectors.md",
+            "Detectors" => "man/detector_geometries.md",
             "Electric Potentials" => "man/electric_potentials.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
             "Electric Fields" => "man/electric_fields.md",

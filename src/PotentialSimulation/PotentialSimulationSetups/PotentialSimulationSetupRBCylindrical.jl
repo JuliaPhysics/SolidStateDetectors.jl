@@ -1,10 +1,10 @@
 function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical} = Grid(ssd), 
-                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_channel_idx::Union{Missing, Int} = missing)::PotentialSimulationSetupRB{T} where {T} 
+                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing)::PotentialSimulationSetupRB{T} where {T} 
     r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0 
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
 
-    is_weighting_potential::Bool = !ismissing(weighting_potential_channel_idx)
+    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
     @inbounds begin
         begin # Geometrical weights of the Axes 
@@ -126,12 +126,12 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                 if axr[1] == 0
                     pos_r = axr[2] * 0.5
                 end
-                pt::Cylindrical{T} = Cylindrical{T}(pos_r, pos_θ, pos_z)
+                pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_θ, pos_z)
                 ρ_tmp[ir, iθ, iz]::T, ϵ[ir, iθ, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 
                 for ir in 2:size(ϵ, 1)
                     pos_r = mpr[ir]
-                    pt = Cylindrical{T}(pos_r, pos_θ, pos_z)
+                    pt = CylindricalPoint{T}(pos_r, pos_θ, pos_z)
                     ρ_tmp[ir, iθ, iz]::T, ϵ[ir, iθ, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 end
             end
@@ -273,7 +273,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_channel_idx = weighting_potential_channel_idx  )
+        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
         rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )
         potential = clear(potential)
@@ -296,6 +296,9 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         bulk_is_ptype,
         grid_boundary_factors
      )
+
+    apply_boundary_conditions!(fssrb, Val{ true}(), only_2d ? Val{true}() : Val{false}()) # even points
+    apply_boundary_conditions!(fssrb, Val{false}(), only_2d ? Val{true}() : Val{false}()) # odd 
     return fssrb
 end
 
@@ -369,7 +372,7 @@ function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindri
 end
 
 
-function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical})::Array{T, 3} where {T}
+function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
     return fssrb.ϵ 
 end
 

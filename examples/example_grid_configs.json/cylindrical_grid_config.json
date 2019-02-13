@@ -1,0 +1,26 @@
+{
+    "Grid": {
+        "coordinate_system": "Cylindrical",
+        "ax1": {
+            "unit": "mm",
+            "interval": "[0, 6]",
+            "init_tick_spacing": 1,
+            "left_boundary_condition": "r0",
+            "right_boundary_condition": "infinity"
+        },
+        "ax2": {
+            "unit": "degree",
+            "interval": "[0, 360)",
+            "init_tick_spacing": 20,
+            "left_boundary_condition": "periodic",
+            "right_boundary_condition": "periodic"
+        },
+        "ax3": {
+            "unit": "mm",
+            "interval": "[-2, 10]",
+            "init_tick_spacing": 1,
+            "left_boundary_condition": "infinity",
+            "right_boundary_condition": "infinity"
+        }
+    }
+}

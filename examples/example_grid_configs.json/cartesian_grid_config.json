@@ -1,0 +1,26 @@
+{
+    "Grid": {
+        "coordinate_system": "Cartesian",
+        "ax1": {
+            "unit": "mm",
+            "interval": "[-10, 10]",
+            "init_tick_spacing": 1,
+            "left_boundary_condition": "infinity",
+            "right_boundary_condition": "infinity"
+        },
+        "ax2": {
+            "unit": "mm",
+            "interval": "[-10, 10]",
+            "init_tick_spacing": 1,
+            "left_boundary_condition": "infinity",
+            "right_boundary_condition": "infinity"
+        },
+        "ax3": {
+            "unit": "mm",
+            "interval": "[-10, 10]",
+            "init_tick_spacing": 1,
+            "left_boundary_condition": "infinity",
+            "right_boundary_condition": "infinity"
+        }
+    }
+}

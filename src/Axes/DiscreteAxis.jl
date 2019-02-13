@@ -5,7 +5,7 @@ abstract type AbstractDiscreteAxis{T, BL, BR <: Number} <: AbstractAxis{T, BL, B
     DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :zero} 
 * BL: left boundary condition
 * BR: right boundary condition
 """
@@ -24,7 +24,7 @@ end
     DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0} 
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :zero} 
 * L, R {:closed, :open} 
 * ticks: Ticks of the axis
 """
@@ -58,6 +58,45 @@ end
 
 function get_boundary_types(ax::DiscreteAxis{T,LB,RB})::NTuple{4, Symbol} where {T, LB, RB}
     return LB, RB, get_boundary_types(ax.interval)...
+end
+
+
+function uniq(v::Vector{T})::Vector{T} where {T <: Real}
+    v1::Vector{T} = Vector{T}()
+    if length(v) > 0
+        laste::T = v[1]
+        push!(v1, laste)
+        for e in v
+            if e != laste
+                laste = e
+                push!(v1, laste)
+            end
+        end
+    end
+    return v1
+end
+
+function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
+    v::Vector{T} = T[]
+    for r in impticks push!(v, r) end
+    for r in ax push!(v, r) end
+    sort!(v)
+    v = uniq(v)
+    delete_idcs::Vector{Int} = Int[]
+    for i in 1:(length(v) - 1)
+        if (v[i + 1] - v[i]) < atol
+            if !in(v[i], impticks) push!(delete_idcs, i) end
+            if !in(v[i + 1], impticks) push!(delete_idcs, i + 1) end
+        end
+    end
+    delete_idcs = sort(uniq(delete_idcs))
+    deleteat!(v, delete_idcs) 
+    for impv in impticks
+        if !in(impv, v)
+            error("Important ticks were removed.")
+        end
+    end
+    return v
 end
 
 
@@ -148,8 +187,9 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
-    ticks_ext[end] = ticks_ext[end - 1] + (ticks_ext[end - 1] - ticks_ext[end - 2])
+    # ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
+    # ticks_ext[end] = ticks_ext[end - 1] + (ticks_ext[end - 1] - ticks_ext[end - 2])
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :periodic, :periodic} )::Vector{T} where {T}
@@ -192,9 +232,9 @@ function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:open
 end
 
 function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
-    if length(ticks) == 3 && ticks[2] == 0
-        ticks[1] = -2π
-        ticks[end] = 2π # -> Δmidpoint_θ = 2π -> area of circle is 2π * 0.5*r^2   
+    if length(ticks) == 3 
+        ticks[1] = ticks[2] - 2π
+        ticks[end] = ticks[2] + 2π # -> Δmidpoint_θ = 2π -> area of circle is 2π * 0.5*r^2   
     else
         ticks[1] = ticks[2] - (ticks[3] - ticks[2])
         ticks[end] = ticks[end - 1] + (ticks[end - 1] - ticks[end - 2])

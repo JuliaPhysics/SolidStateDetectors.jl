@@ -189,3 +189,106 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :Cylindr
 
     return sort(inds_r), sort(inds_θ), sort(inds_z)
 end
+
+
+function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :Cartesian}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
+    inds_x::Vector{Int} = Int[]
+    inds_y::Vector{Int} = Int[]
+    inds_z::Vector{Int} = Int[]
+
+    ax1::DiscreteAxis{T} = grid[1]
+    ax2::DiscreteAxis{T} = grid[2]
+    ax3::DiscreteAxis{T} = grid[3]
+    int1::Interval = ax1.interval
+    int2::Interval = ax2.interval
+    int3::Interval = ax3.interval
+
+    refinement_value_x::T = max_diff[1]
+    refinement_value_y::T = max_diff[2]
+    refinement_value_z::T = max_diff[3]
+
+    minimum_distance_x::T = minimum_distance[1]
+    minimum_distance_y::T = minimum_distance[2]
+    minimum_distance_z::T = minimum_distance[3]
+
+    ax_x::Vector{T} = collect(grid.axes[1])
+    ax_y::Vector{T} = collect(grid.axes[2])
+    ax_z::Vector{T} = collect(grid.axes[3])
+
+    for iz in 1:size(potential, 3)
+        z = ax_z[iz]
+        for iy in 1:size(potential, 2)
+            y = ax_y[iy]
+            isum = iz + iy
+            for ix in 1:size(potential, 1)
+                x = ax_x[ix]
+
+                # x
+                if ix != size(potential, 1)
+                    if abs(potential[ix + 1, iy, iz] - potential[ix, iy, iz]) >= refinement_value_x
+                        if ax_x[ix + 1] - ax_x[ix] > minimum_distance_x
+                            if !in(ix, inds_x) push!(inds_x, ix) end
+                        end
+                    end
+                end
+
+                # y
+                if iy != size(potential, 2)
+                    if abs(potential[ix, iy + 1, iz] - potential[ix, iy, iz]) >= refinement_value_y
+                        if ax_y[iy + 1] - ax_y[iy] > minimum_distance_y
+                            if !in(iy, inds_y) push!(inds_y, iy) end
+                        end
+                    end
+                end
+
+                # z
+                if iz != size(potential, 3)
+                    if abs(potential[ix, iy, iz + 1] - potential[ix, iy, iz]) >= refinement_value_z
+                        if ax_z[iz + 1] - ax_z[iz] > minimum_distance_z
+                            if !in(iz, inds_z) push!(inds_z, iz) end
+                        end
+                    end
+                end
+
+            end
+        end
+    end
+
+    if isodd(length(inds_x))
+        for ix in 1:size(potential, 1)
+            if !in(ix, inds_x)
+                if ix != size(potential, 1)
+                    if ax_x[ix + 1] - ax_x[ix] > minimum_distance_x
+                        append!(inds_x, ix)
+                        break
+                    end
+                end
+            end
+        end
+    end
+    if isodd(length(inds_x))
+        b = true
+        diffs = diff(ax_x)
+        while b
+            if length(diffs) > 0
+                idx = findmax(diffs)[2]
+                if !in(idx, inds_x)
+                    append!(inds_x, idx)
+                    b = false
+                else
+                    deleteat!(diffs, idx)
+                end
+            else
+                for i in eachindex(ax_x[1:end-1])
+                    if !in(i, inds_x) push!(inds_x, i) end
+                end
+                b = false
+            end
+        end
+    end
+    if isodd(length(inds_x)) inds_x = inds_x[1:end-1] end
+    @assert iseven(length(inds_x)) "Refinement would result in uneven grid in x. This is not allowed since this is the red black dimension."
+    
+
+    return sort(inds_x), sort(inds_y), sort(inds_z)
+end

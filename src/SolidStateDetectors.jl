@@ -9,7 +9,6 @@ using Random
 using Statistics
 
 using ArraysOfArrays
-using CoordinateTransformations
 using Interpolations
 using IntervalSets
 using JSON
@@ -49,6 +48,7 @@ include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
 include("Geometries/Geometries.jl")
+include("Config/Config.jl")
 include("DetectorGeometries/DetectorGeometries.jl")
 
 include("Config/Config.jl")

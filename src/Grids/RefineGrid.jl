@@ -166,3 +166,137 @@ function add_points_and_interpolate(potential::Array{T, 3}, grid::CylindricalGri
     potential, grid = add_points_in_z_and_interpolate(potential, grid, idcs_z)
     potential, grid
 end
+
+function add_points_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs_x::Vector{Int}, idcs_y::Vector{Int}, idcs_z::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
+    potential::Array{T, 3}, grid::CartesianGrid3D{T} = add_points_in_x_and_interpolate(potential, grid, idcs_x)
+    potential, grid = add_points_in_y_and_interpolate(potential, grid, idcs_y)
+    potential, grid = add_points_in_z_and_interpolate(potential, grid, idcs_z)
+    potential, grid
+end
+
+
+function add_points_in_z_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
+    ax::Vector{T} = collect(grid[:z])
+    n = length(idcs)
+    if n == 0 return nothing end
+    if idcs[end] >= length(ax)
+        error("Can not append point in z at the end. Only in between.")
+    end
+
+    ranges = [ 1:idcs[1] ]
+    for i in (2:n)
+        push!(ranges, idcs[i-1]+1:idcs[i])
+    end
+    push!(ranges, idcs[end]+1:length(ax))
+
+    ax = cat(ax, zeros(T, n), dims = 1)
+
+    for (i, range) in enumerate(reverse(ranges))
+        ax[range .+ (n + 1 - i)] = ax[range]
+    end
+    for (i, range) in enumerate(reverse(ranges[2:end]))
+        ax[first(range .+ (n + 1 - i)) - 1] = 0.5 * (ax[first(range .+ (n + 1 - i))] + ax[first(range .+ (n + 1 - i)) - 2])
+    end
+
+    # 1: extend arrays
+    potential = cat( potential, zeros(T, size( potential, 1), size( potential, 2), n), dims = 3)
+    # 2: copy old values to new locations
+    for (i, range) in enumerate(reverse(ranges))
+        potential[:, :, range .+ (n+1-i)] = potential[:, :, range]
+    end
+     # 3: interpolate new positions
+    for (i, range) in enumerate(reverse(ranges[2:end]))
+        potential[:, :, first(range .+ (n+1-i))-1] = 0.5 * ( potential[:, :, first(range .+ (n+1-i))] + potential[:, :, first(range .+ (n+1-i))-2])
+    end
+
+    BL::Symbol = typeof(grid.axes[3]).parameters[2]
+    BR::Symbol = typeof(grid.axes[3]).parameters[3]
+    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid[:z].interval, ax )
+    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (grid[:x], grid[:y], da) )
+
+    return potential, grid
+end
+
+function add_points_in_x_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
+    ax::Vector{T} = collect(grid[:x])
+    n = length(idcs)
+    if n == 0 return nothing end
+    if idcs[end] >= length(ax)
+        error("Can not append point in z at the end. Only in between.")
+    end
+
+    ranges = [ 1:idcs[1] ]
+    for i in (2:n)
+        push!(ranges, idcs[i-1]+1:idcs[i])
+    end
+    push!(ranges, idcs[end]+1:length(ax))
+
+    ax = cat(ax, zeros(T, n), dims = 1)
+
+    for (i, range) in enumerate(reverse(ranges))
+        ax[range .+ (n + 1 - i)] = ax[range]
+    end
+    for (i, range) in enumerate(reverse(ranges[2:end]))
+        ax[first(range .+ (n + 1 - i)) - 1] = 0.5 * (ax[first(range .+ (n + 1 - i))] + ax[first(range .+ (n + 1 - i)) - 2])
+    end
+
+    # 1: extend arrays
+    potential = cat( potential, zeros(T, n, size( potential, 2), size( potential, 3)), dims = 1)
+    # 2: copy old values to new locations
+    for (i, range) in enumerate(reverse(ranges))
+        potential[range .+ (n+1-i), :, :] = potential[range, :, :]
+    end
+     # 3: interpolate new positions
+    for (i, range) in enumerate(reverse(ranges[2:end]))
+        potential[first(range .+ (n+1-i))-1, :, :] = 0.5 * ( potential[first(range .+ (n+1-i)), :, :] + potential[first(range .+ (n+1-i))-2, :, :])
+    end
+
+    BL::Symbol = typeof(grid[:x]).parameters[2]
+    BR::Symbol = typeof(grid[:x]).parameters[3]
+    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid[:x].interval, ax )
+    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (da, grid[:y], grid[:z]) )
+
+    return potential, grid
+end
+
+function add_points_in_y_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
+    ax::Vector{T} = collect(grid[:y])
+    n = length(idcs)
+    if n == 0 return nothing end
+    if idcs[end] >= length(ax)
+        error("Can not append point in z at the end. Only in between.")
+    end
+
+    ranges = [ 1:idcs[1] ]
+    for i in (2:n)
+        push!(ranges, idcs[i-1]+1:idcs[i])
+    end
+    push!(ranges, idcs[end]+1:length(ax))
+
+    ax = cat(ax, zeros(T, n), dims = 1)
+
+    for (i, range) in enumerate(reverse(ranges))
+        ax[range .+ (n + 1 - i)] = ax[range]
+    end
+    for (i, range) in enumerate(reverse(ranges[2:end]))
+        ax[first(range .+ (n + 1 - i)) - 1] = 0.5 * (ax[first(range .+ (n + 1 - i))] + ax[first(range .+ (n + 1 - i)) - 2])
+    end
+
+    # 1: extend arrays
+    potential = cat( potential, zeros(T, size( potential, 1), n, size( potential, 3)), dims = 2)
+    # 2: copy old values to new locations
+    for (i, range) in enumerate(reverse(ranges))
+        potential[:, range .+ (n+1-i), :] = potential[:, range, :]
+    end
+     # 3: interpolate new positions
+    for (i, range) in enumerate(reverse(ranges[2:end]))
+        potential[:, first(range .+ (n+1-i))-1, :] = 0.5 * ( potential[:, first(range .+ (n+1-i)), :] + potential[:, first(range .+ (n+1-i))-2, :])
+    end
+
+    BL::Symbol = typeof(grid[:y]).parameters[2]
+    BR::Symbol = typeof(grid[:y]).parameters[3]
+    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid[:y].interval, ax )
+    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (grid[:x], da,  grid[:z]) )
+
+    return potential, grid
+end

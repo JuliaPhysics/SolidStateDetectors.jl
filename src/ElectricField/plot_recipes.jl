@@ -191,12 +191,12 @@ end
     end
 
     corner_offset = 5e-5
-    spawn_positions=[]
+    spawn_positions = []
 
     for (i,tuple) in enumerate(det.segmentation_r_ranges)
         if tuple[1]==tuple[2]
             for z in corner_offset + det.segmentation_z_ranges[i][1]:spacing:det.segmentation_z_ranges[i][2] - corner_offset
-                push!(spawn_positions,SVector{3,T}(tuple[1],θ_rad,z))
+                push!(spawn_positions, MVector{3,T}(tuple[1],θ_rad,z))
             end
         end
     end
@@ -204,7 +204,7 @@ end
     for (i,tuple) in enumerate(det.segmentation_z_ranges)
         if tuple[1]==tuple[2]
             for r in corner_offset+det.segmentation_r_ranges[i][1]:spacing:det.segmentation_r_ranges[i][2] - corner_offset
-                push!(spawn_positions,SVector{3,T}(r,θ_rad,tuple[1]))
+                push!(spawn_positions, MVector{3,T}(r,θ_rad,tuple[1]))
             end
         end
     end
@@ -213,14 +213,37 @@ end
         if orientation != "Tubs"
             if orientation[1]=='c' o=-1 else o=1 end
             for z in det.segmentation_z_ranges[i][1]:spacing:det.segmentation_z_ranges[i][2]
-                push!(spawn_positions,SVector{3,T}(o * corner_offset+analytical_taper_r_from_θz(θ_rad, z, orientation, det.segmentation_r_ranges[i],
+                push!(spawn_positions,MVector{3,T}(o * corner_offset+analytical_taper_r_from_θz(θ_rad, z, orientation, det.segmentation_r_ranges[i],
                                                                                                             det.segmentation_phi_ranges[i],
                                                                                                             det.segmentation_z_ranges[i]),
                                                                                                             θ_rad, z))
             end
         end
     end
-    spawn_positions_xyz = map(x -> CartFromCyl(Cylindrical(x[1],x[2],x[3])), spawn_positions)
+    if typeof(det) <: Union{BEGe, Coax, InvertedCoax}
+        for i in eachindex(spawn_positions)
+            if spawn_positions[i][3] == geom_round(det.crystal_length)
+                spawn_positions[i][3] -= 1e-5
+            end
+            if spawn_positions[i][1] == geom_round(det.crystal_radius)
+                spawn_positions[i][1] -= 1e-5
+            end
+            if spawn_positions[i][3] == 0
+                spawn_positions[i][3] += 1e-5
+            end
+            if typeof(det) <: Union{Coax, InvertedCoax}
+                if spawn_positions[i][1] == geom_round(det.borehole_radius) #&& spawn_positions[i][3] != det.borehole_length
+                    spawn_positions[i][1] += 1e-4
+                end
+                if spawn_positions[i][1] == geom_round(det.borehole_length )
+                    spawn_positions[i][1] -= 1e-4
+                end
+            end
+        end
+    end
+    spawn_positions_xyz::Vector{SVector{3, T}} = map(x -> CartesianPoint(CylindricalPoint(x[1],x[2],x[3])), spawn_positions)
+
+
     for i in eachindex(spawn_positions[1:end])
         path = [@SVector zeros(T,3) for i in 1:n_steps]
         drift_charge!(path, det, spawn_positions_xyz[i], T(1f-9), interpolated_efield)

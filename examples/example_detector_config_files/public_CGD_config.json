@@ -1,0 +1,72 @@
+{
+	"name":"ExampleCuboid",
+	"class":"CGD",
+	"materials":{
+		"detector":"HPGe",
+		"environment":"Vacuum"
+	},
+	"unit": "mm",	
+	"crystal":	{
+		"type": "n",
+		"geometry": [
+			{
+				"type": "CartesianBox3D",
+				"xStart": 0.0,
+				"xStop": 10.0,
+				"yStart": 0.0,
+				"yStop": 10.0,
+				"zStart": 0.0,
+				"zStop": 10.0
+			}
+		],
+		"charge_carrier_density": {
+			"unit": "cm-3",
+			"top": 0.1,
+			"bot": 1.9
+		}
+	},
+	"symmetries": {
+		"mirror_axes":{
+			"y": 5.0,  
+			"z": 5.0
+		}
+	},
+	"contacts":	{
+		"n_contacts": [
+			{
+				"name" : "Core",
+				"id": 1,
+				"potential": 500.0, 
+				"geometry": [
+					{
+						"type": "CartesianBox3D",
+						"xStart": 0.0,
+						"xStop":  0.1,
+						"yStart": 0.0,
+						"yStop": 10.0,
+						"zStart": 0.0,
+						"zStop": 10.0
+					}
+				]
+			}
+		],
+		"p_contacts": [
+			{
+				"name": "Segment 1",
+				"id": 2,
+				"potential": 0.0,
+				"geometry": [
+					{
+						"type": "CartesianBox3D",
+						"xStart":  9.9,
+						"xStop":  10.0,
+						"yStart":  0.0,
+						"yStop":  10.0,
+						"zStart":  0.0,
+						"zStop":  10.0
+					}
+				]
+			}
+		]
+	}
+}

@@ -12,13 +12,13 @@ Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ])
     @inbounds begin 
         rb_tar_idx::Int, rb_src_idx::Int = even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int,rb_even::Int) 
 
-        gw1::Array{T, 2} = fssrb.geom_weights[1].weights
-        gw2::Array{T, 2} = fssrb.geom_weights[2].weights
-        gw3::Array{T, 2} = fssrb.geom_weights[3].weights
+        gw1::Array{T, 2} = fssrb.geom_weights[1].weights  # r or x 
+        gw2::Array{T, 2} = fssrb.geom_weights[2].weights  # θ or y
+        gw3::Array{T, 2} = fssrb.geom_weights[3].weights  # z or z
 
-        # for ir in 2:(size(fssrb.potential, 3) - 1)
-        @onthreads 1:use_nthreads for idx1 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
-            innerloops!( idx1, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, bulk_is_ptype, is_weighting_potential)
+        # for idx3 in 2:(size(fssrb.potential, 3) - 1)
+        @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
+            innerloops!( idx3, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, bulk_is_ptype, is_weighting_potential)
         end 
     end 
     nothing
@@ -30,7 +30,7 @@ end
                                 depletion_handling::Val{depletion_handling_enabled},
                                 bulk_is_ptype::Val{_bulk_is_ptype}  )::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype}
 
-(Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the fied calculation.                            
+(Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the field calculation.                            
 """
 @fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_θ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical},
                                 update_even_points::Val{even_points},
@@ -57,15 +57,15 @@ end
             Δθ_ext_inv_l::T = gw_θ[4, inθ]
 
             if inr == 1
-                pwwθr = 0.5f0
-                pwwθl = 0.5f0
-                pwΔmpθ = 2π
-                Δθ_ext_inv_r = 0.15915494f0
-                Δθ_ext_inv_l = 0.15915494f0
+                pwwθr = T(0.5)
+                pwwθl = T(0.5)
+                pwΔmpθ = T(2π)
+                Δθ_ext_inv_r = inv(pwΔmpθ)
+                Δθ_ext_inv_l = Δθ_ext_inv_r
             end
             
             rθi_is_even::Bool = iseven(ir + iθ)
-            rθi_is_even_t = iseven(ir + iθ) ? Val{true}() : Val{false}()
+            rθi_is_even_t = rθi_is_even ? Val{true}() : Val{false}()
 
             pwwrr_pwwθr::T = pwwrr * pwwθr
             pwwrr_pwwθl::T = pwwrr * pwwθl
@@ -213,93 +213,6 @@ end
             end # z loop
         end # θ loop
     end # inbounds
-end
-
-function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T},
-                                                grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[iz,   1, ir, rbi] = rbpot[ iz, end - 1, ir, rbi] # cycling boundary
-    rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
-    nothing
-end
-function apply_boundary_conditions_on_θ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :closed, T},
-                                                grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[iz,   1, ir, rbi] = rbpot[ iz, end - 1, ir, rbi] # cycling boundary
-    rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
-    nothing
-end
-function apply_boundary_conditions_on_r_axis!(  rbpot::Array{T, 4}, iz::Int, iθ::Int, rbi::Int, ax::DiscreteAxis{T, :r0, :infinite}, int::Interval{:closed, :closed, T},
-                                                grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[iz, iθ, end, rbi] = grid_boundary_factors[2] * rbpot[iz, iθ, end - 2, rbi] # infinity boundaries in r
-    nothing
-end
-function apply_boundary_conditions_on_r_axis!(  rbpot::Array{T, 4}, iz::Int, iθ::Int, rbi::Int, ax::DiscreteAxis{T, :r0, :reflecting}, int::Interval{:closed, :closed, T},
-                                                grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[iz, iθ, end, rbi] = rbpot[iz, iθ, end - 2, rbi] # infinity boundaries in r
-    nothing
-end
-function apply_boundary_conditions_on_cyl_z_axis!(  rbpot::Array{T, 4}, ir::Int, iθ::Int, rbi::Int, ax::DiscreteAxis{T, :infinite, :infinite}, int::Interval{:closed, :closed, T},
-                                                    grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[  1, iθ, ir, rbi] = grid_boundary_factors[1] * rbpot[ 2, iθ, ir, rbi]  # infinity boundaries in z (only ±1 because this is the compressed (redblack) dimension)
-    rbpot[end, iθ, ir, rbi] = grid_boundary_factors[2] * rbpot[ end - 1, iθ, ir, rbi]    # infinity boundaries in z (only ±1 because this is the compressed (redblack) dimension)
-    nothing
-end
-function apply_boundary_conditions_on_cyl_z_axis!(  rbpot::Array{T, 4}, ir::Int, iθ::Int, rbi::Int, ax::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
-                                                    grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[  1, iθ, ir, rbi] = rbpot[ 2, iθ, ir, rbi]  # infinity boundaries in z (only ±1 because this is the compressed (redblack) dimension)
-    rbpot[end, iθ, ir, rbi] = rbpot[ end - 1, iθ, ir, rbi]    # infinity boundaries in z (only ±1 because this is the compressed (redblack) dimension)
-    nothing
-end
-
-
-function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, N1, N2, :Cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, N1, N2, even_points, only_2d}
-    rbi::Int = even_points ? rb_even::Int : rb_odd::Int
-    if only_2d
-        iθ::Int = 2
-        @inbounds for iz in axes(fssrb.potential, 1)
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_θ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2])
-            end
-            apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iθ, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
-        end
-        @inbounds for ir in axes(fssrb.potential, 3)
-            apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iθ, rbi, fssrb.grid.axes[3], fssrb.grid.axes[3].interval, fssrb.grid_boundary_factors[3])
-        end
-    else
-        @inbounds for iz in axes(fssrb.potential, 1)
-            for iθ in axes(fssrb.potential, 2)
-                apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iθ, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
-            end
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_θ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2])
-            end
-        end
-        @inbounds for iθ in axes(fssrb.potential, 2) # z boundaries
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iθ, rbi, fssrb.grid.axes[3], fssrb.grid.axes[3].interval, fssrb.grid_boundary_factors[3])
-            end
-        end
-        begin # r = 0 handling
-            nθ::Int = size(fssrb.potential, 2) - 1
-            gw_θ::Array{T, 2} = fssrb.geom_weights[2].weights
-            @inbounds for inz in 1:(size(fssrb.ϵ, 3) - 1)
-                m::T = 0
-                l::T = 0
-                for inθ in 1:nθ
-                    if even_points ? isodd(inz + inθ) : iseven(inz + inθ)
-                        l += gw_θ[3, inθ] 
-                        m += fssrb.potential[rbidx(inz), inθ + 1, 2, rbi] * gw_θ[3, inθ] 
-                    end
-                end
-                m *= inv(l)
-                for inθ in 1:nθ
-                    if even_points ? isodd(inz + inθ) : iseven(inz + inθ)
-                        fssrb.potential[rbidx(inz), inθ + 1, 2, rbi]::T = m
-                    end
-                end
-            end
-        end
-    end
-    nothing
 end
 
 

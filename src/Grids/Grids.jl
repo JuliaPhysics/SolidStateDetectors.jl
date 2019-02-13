@@ -21,7 +21,7 @@ const SphericalGrid{T} = Grid{T, 3, :Spherical}
 @inline size(g::Grid{T, N, S}) where {T, N, S} = size.(g.axes, 1)
 @inline length(g::Grid{T, N, S}) where {T, N, S} = prod(size(g))
 @inline getindex(g::Grid{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = broadcast(getindex, g.axes, I)
-@inline getindex(g::Grid{T, N, S}, i::Int) where {T, N, S} = g.axes[i]
+@inline getindex(g::Grid{T, N, S}, i::Int) where {T, N, S} = getproperty(g, :axes)[i]
 @inline getindex(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getindex(g, Val{s}())
 
 @inline getindex(g::CylindricalGrid{T}, ::Val{:r}) where {T} = g.axes[1]

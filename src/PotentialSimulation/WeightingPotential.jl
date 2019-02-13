@@ -95,7 +95,7 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axθ::Discre
     return new_wp
 end
 
-function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axθ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :closed, T}) where {T}
+function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axθ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T}) where {T}
     @assert int.right != 0 "Right boundary of θ interval is not allowed to be 0"
     Potential::Type = typeof(wp)
     l::Int = 2 * length( axθ ) - 2
@@ -116,7 +116,7 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axθ::Discre
     # return new_wp
 end
 
-function extend_2D_to_3D_by_n_points(wp::ScalarPotential{T, 3, :Cylindrical}, axθ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :closed, T},
+function extend_2D_to_3D_by_n_points(wp::ScalarPotential{T, 3, :Cylindrical}, axθ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
         n_points_in_θ::Int ) where {T}
     Potential::Type = typeof(wp)
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
