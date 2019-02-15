@@ -1,41 +1,41 @@
 
 @recipe function f( pss::PotentialSimulationSetup{T, 3, :Cylindrical};
                     r = missing,
-                    θ = missing,
+                    φ = missing,
                     z = missing,
-                    n_points_in_θ = 36 ) where {T}
+                    n_points_in_φ = 36 ) where {T}
     g::Grid{T, 3, :Cylindrical} = pss.grid
     layout --> (2, 2) 
 
-    cross_section::Symbol, idx::Int = if ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, 1
-    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
-        θ_rad::T = T(deg2rad(θ))
-        while !(g[:θ].interval.left <= θ_rad <= g[:θ].interval.right)
-            if θ_rad > g[:θ].interval.right
-                θ_rad -= g[:θ].interval.right - g[:θ].interval.left
-            elseif θ_rad < g[:θ].interval.left
-                θ_rad += g[:θ].interval.right - g[:θ].interval.left
+    cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, 1
+    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
+        φ_rad::T = T(deg2rad(φ))
+        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
+            if φ_rad > g[:φ].interval.right
+                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
+            elseif φ_rad < g[:φ].interval.left
+                φ_rad += g[:φ].interval.right - g[:φ].interval.left
             end
         end
-        :θ, searchsortednearest(g[:θ], θ_rad)
-    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
+        :φ, searchsortednearest(g[:φ], φ_rad)
+    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, searchsortednearest(g[:r], T(r))
-    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
         :z, searchsortednearest(g[:z], T(z))
     else
-        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
-    value::T = if cross_section == :θ
-        g[:θ][idx]
+    value::T = if cross_section == :φ
+        g[:φ][idx]
     elseif cross_section == :r    
         g[:r][idx]
     elseif cross_section == :z
         g[:z][idx]
     end
 
-    if cross_section == :θ
-        θ --> θ
+    if cross_section == :φ
+        φ --> φ
     elseif cross_section == :z
         z --> z
     elseif cross_section == :r
@@ -44,7 +44,7 @@
 
     @series begin
         subplot := 1
-        PointTypes(pss, n_points_in_θ=n_points_in_θ)
+        PointTypes(pss, n_points_in_φ=n_points_in_φ)
     end
     @series begin
         subplot := 2
@@ -56,7 +56,7 @@
     end
     @series begin
         subplot := 4
-        ElectricPotential(pss, n_points_in_θ=n_points_in_θ)
+        ElectricPotential(pss, n_points_in_φ=n_points_in_φ)
     end
 end
 

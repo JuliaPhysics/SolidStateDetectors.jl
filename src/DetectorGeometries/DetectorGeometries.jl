@@ -4,9 +4,9 @@
 Supertype of all detector structs.
 """
 abstract type SolidStateDetector{T <: AbstractFloat} <: AbstractConfig{T} end
-        
-get_precision_type(d::SolidStateDetector{T}) where {T} = T 
-        
+
+get_precision_type(d::SolidStateDetector{T}) where {T} = T
+
 include("Geometries/Geometries.jl")
 include("Contacts.jl")
 
@@ -40,10 +40,12 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} 
         error("Config File does not suit any of the predefined detector geometries. You may want to implement your own 'class'")
     end
 end
-function SolidStateDetector(T::Type{<:AbstractFloat}, filename::AbstractString)::SolidStateDetector{T}
+function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
     SolidStateDetector{T}(filename)
 end
-
+function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float32}
+    SolidStateDetector{Float32}(filename)
+end
 function get_important_r_points_from_geometry(c::Coax)
     important_r_points_from_geometry::Vector = []
     push!(important_r_points_from_geometry,c.crystal_radius)
@@ -62,15 +64,22 @@ function get_important_r_points_from_geometry(b::BEGe)
     push!(important_r_points_from_geometry,b.groove_rInner+b.groove_width)
     important_r_points_from_geometry
 end
-function get_important_r_points_from_geometry(ivc::InvertedCoax)
-    important_r_points_from_geometry::Vector = []
+# function get_important_r_points_from_geometry(ivc::InvertedCoax)
+#     important_r_points_from_geometry::Vector = []
+#     for v in ivc.volumes
+#             push!(important_r_points_from_geometry,v.rStart)
+#             push!(important_r_points_from_geometry,v.rStop)
+#     end
+#     important_r_points_from_geometry
+# end
+function get_important_r_points_from_geometry(ivc::InvertedCoax{T})::Vector{T} where {T <: AbstractFloat}
+    important_r_points_from_geometry::Vector{T} = []
     for v in ivc.volumes
-            push!(important_r_points_from_geometry,v.rStart)
-            push!(important_r_points_from_geometry,v.rStop)
+            push!(important_r_points_from_geometry, v.rStart)
+            push!(important_r_points_from_geometry, v.rStop)
     end
     important_r_points_from_geometry
 end
-
 
 
 function get_important_r_points(d::SolidStateDetector{T})::Vector{T} where {T <: AbstractFloat}
@@ -85,19 +94,19 @@ function get_important_r_points(d::SolidStateDetector{T})::Vector{T} where {T <:
     return important_r_points
 end
 
-function get_important_θ_points(d::SolidStateDetector{T})::Vector{T} where {T <: AbstractFloat} 
-    important_θ_points::Vector{T} = []
+function get_important_φ_points(d::SolidStateDetector{T})::Vector{T} where {T <: AbstractFloat}
+    important_φ_points::Vector{T} = []
     for tuple in d.segmentation_phi_ranges
-        !in(tuple[1],important_θ_points) ? push!(important_θ_points,tuple[1]) : nothing
-        !in(tuple[2],important_θ_points) ? push!(important_θ_points,tuple[2]) : nothing
+        !in(tuple[1],important_φ_points) ? push!(important_φ_points,tuple[1]) : nothing
+        !in(tuple[2],important_φ_points) ? push!(important_φ_points,tuple[2]) : nothing
     end
     for boundary_midpoint in d.segmentation_boundaryMidpoints_horizontal
-        !in(boundary_midpoint,important_θ_points) ? push!(important_θ_points, boundary_midpoint) : nothing
+        !in(boundary_midpoint,important_φ_points) ? push!(important_φ_points, boundary_midpoint) : nothing
     end
-    return important_θ_points
+    return important_φ_points
 end
 
-function get_important_z_points_from_geometry(c::Coax{T})::Vector{T} where {T <: AbstractFloat} 
+function get_important_z_points_from_geometry(c::Coax{T})::Vector{T} where {T <: AbstractFloat}
     important_z_points_from_geometry::Vector{T} = []
     push!(important_z_points_from_geometry,0.0)
     push!(important_z_points_from_geometry,c.crystal_length)
@@ -106,7 +115,7 @@ function get_important_z_points_from_geometry(c::Coax{T})::Vector{T} where {T <:
     important_z_points_from_geometry
 end
 
-function get_important_z_points_from_geometry(b::BEGe{T})::Vector{T} where {T <: AbstractFloat} 
+function get_important_z_points_from_geometry(b::BEGe{T})::Vector{T} where {T <: AbstractFloat}
     important_z_points_from_geometry::Vector{T} = []
     push!(important_z_points_from_geometry,0.0)
     push!(important_z_points_from_geometry,b.crystal_length)
@@ -409,91 +418,91 @@ end
 # TODO: Deprecate function contains in favour of Base.in (see above):
 
 # false -> outside
-function contains(c::Coax, r::Real, θ::Real, z::Real)::Bool
+function contains(c::Coax, r::Real, φ::Real, z::Real)::Bool
     rv::Bool = true
-    if !check_outer_limits(c, r, θ, z) rv = false end
-    if !check_borehole(c, r, θ, z) rv = false end
-    if !check_tapers(c, r, θ, z) rv = false end
+    if !check_outer_limits(c, r, φ, z) rv = false end
+    if !check_borehole(c, r, φ, z) rv = false end
+    if !check_tapers(c, r, φ, z) rv = false end
     return rv
 end
 function contains(c::Coax, p::CylindricalPoint)::Bool
     rv::Bool = true
-    if !check_outer_limits(c, p.r,p.θ,p.z) rv = false end
-    if !check_borehole(c, p.r,p.θ,p.z) rv = false end
-    if !check_tapers(c, p.r,p.θ,p.z) rv = false end
+    if !check_outer_limits(c, p.r,p.φ,p.z) rv = false end
+    if !check_borehole(c, p.r,p.φ,p.z) rv = false end
+    if !check_tapers(c, p.r,p.φ,p.z) rv = false end
     return rv
 end
-function contains(b::BEGe, r::Real, θ::Real, z::Real)::Bool
+function contains(b::BEGe, r::Real, φ::Real, z::Real)::Bool
     rv::Bool = true
-    check_outer_limits(b,r,θ,z) ? nothing : rv = false
-    check_tapers(b,r,θ,z) ? nothing : rv = false
-    check_grooves(b,r,θ,z) ? nothing : rv = false
+    check_outer_limits(b,r,φ,z) ? nothing : rv = false
+    check_tapers(b,r,φ,z) ? nothing : rv = false
+    check_grooves(b,r,φ,z) ? nothing : rv = false
     rv
 end
 function contains(b::BEGe, p::CylindricalPoint)::Bool
     rv::Bool = true
-    check_outer_limits(b,p.r,p.θ,p.z) ? nothing : rv = false
-    check_tapers(b,p.r,p.θ,p.z) ? nothing : rv = false
-    check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
+    check_outer_limits(b,p.r,p.φ,p.z) ? nothing : rv = false
+    check_tapers(b,p.r,p.φ,p.z) ? nothing : rv = false
+    check_grooves(b,p.r,p.φ,p.z) ? nothing : rv = false
     rv
 end
 # function contains(b::BEGe, p::Cylindrical)::Bool
 #     rv::Bool = true
-#     check_outer_limits(b,p.r,p.θ,p.z) ? nothing : rv = false
-#     check_tapers(b,p.r,p.θ,p.z) ? nothing : rv = false
-#     check_grooves(b,p.r,p.θ,p.z) ? nothing : rv = false
+#     check_outer_limits(b,p.r,p.φ,p.z) ? nothing : rv = false
+#     check_tapers(b,p.r,p.φ,p.z) ? nothing : rv = false
+#     check_grooves(b,p.r,p.φ,p.z) ? nothing : rv = false
 #     rv
 # end
 
-function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real)::Bool
+function contains(ivc::InvertedCoax,r::Real, φ::Real, z::Real)::Bool
     rv::Bool = true
-    check_outer_limits(ivc,r,θ,z) ? nothing : rv = false
-    check_tapers(ivc,r,θ,z) ? nothing : rv = false
+    check_outer_limits(ivc,r,φ,z) ? nothing : rv = false
+    check_tapers(ivc,r,φ,z) ? nothing : rv = false
     if ivc.borehole_modulation == true
-        check_borehole(ivc,r,θ,z,ivc.borehole_ModulationFunction) ? nothing : rv = false
+        check_borehole(ivc,r,φ,z,ivc.borehole_ModulationFunction) ? nothing : rv = false
     else
-        check_borehole(ivc,r,θ,z) ? nothing : rv = false
+        check_borehole(ivc,r,φ,z) ? nothing : rv = false
     end
-    check_grooves(ivc,r,θ,z) ? nothing : rv = false
+    check_grooves(ivc,r,φ,z) ? nothing : rv = false
     rv
 end
 
 function contains(ivc::InvertedCoax,p::CylindricalPoint)::Bool
     rv::Bool = true
-    check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-    check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+    check_outer_limits(ivc,p.r,p.φ,p.z) ? nothing : rv = false
+    check_tapers(ivc,p.r,p.φ,p.z) ? nothing : rv = false
     if ivc.borehole_modulation == true
-        check_borehole(ivc,p.r,p.θ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
+        check_borehole(ivc,p.r,p.φ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
     else
-        check_borehole(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+        check_borehole(ivc,p.r,p.φ,p.z) ? nothing : rv = false
     end
-    check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+    check_grooves(ivc,p.r,p.φ,p.z) ? nothing : rv = false
     rv
 end
 # function contains(ivc::InvertedCoax, p::Cylindrical)::Bool
 #     rv::Bool = true
-#     check_outer_limits(ivc,p.r,p.θ,p.z) ? nothing : rv = false
-#     check_tapers(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#     check_outer_limits(ivc,p.r,p.φ,p.z) ? nothing : rv = false
+#     check_tapers(ivc,p.r,p.φ,p.z) ? nothing : rv = false
 #     if ivc.borehole_modulation == true
-#         check_borehole(ivc,p.r,p.θ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
+#         check_borehole(ivc,p.r,p.φ,p.z,ivc.borehole_ModulationFunction) ? nothing : rv = false
 #     else
-#         check_borehole(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#         check_borehole(ivc,p.r,p.φ,p.z) ? nothing : rv = false
 #     end
-#     check_grooves(ivc,p.r,p.θ,p.z) ? nothing : rv = false
+#     check_grooves(ivc,p.r,p.φ,p.z) ? nothing : rv = false
 #     rv
 # end
-# function contains(ivc::InvertedCoax,r::Real, θ::Real, z::Real, accepted_ϵ=[16.0])::Bool
+# function contains(ivc::InvertedCoax,r::Real, φ::Real, z::Real, accepted_ϵ=[16.0])::Bool
 #     rv::Bool = true
 #     crystal_basic_shape = ivc.volumes[1]
-#     if check_volume(crystal_basic_shape,r,θ,z)
+#     if check_volume(crystal_basic_shape,r,φ,z)
 #         for v in ivc.volumes
 #             if v.ϵ in accepted_ϵ
 #                 nothing
 #             else
-#                 if check_volume(v,r,θ,z) rv=false end
+#                 if check_volume(v,r,φ,z) rv=false end
 #             end
 #         end
-#         check_tapers(ivc,r,θ,z) ? nothing : rv = false
+#         check_tapers(ivc,r,φ,z) ? nothing : rv = false
 #     else
 #         rv = false
 #     end
@@ -514,7 +523,7 @@ function contains(c::Coax, p::Tuple)::UInt8
     return 1
 end
 
-function check_outer_limits(d::SolidStateDetector, r::Real, θ::Real, z::Real)::Bool
+function check_outer_limits(d::SolidStateDetector, r::Real, φ::Real, z::Real)::Bool
     rv::Bool = true
     if (r > d.crystal_radius) || (z < 0) || (z > d.crystal_length)
         return false
@@ -534,7 +543,7 @@ function check_outer_limits(b::SolidStateDetector, p::Tuple)::Bool
     return rv
 end
 
-function check_borehole(c::Coax, r::Real, θ::Real, z::Real)::Bool
+function check_borehole(c::Coax, r::Real, φ::Real, z::Real)::Bool
     rv = true
     if r < c.borehole_radius
         rv = false
@@ -553,7 +562,7 @@ function check_borehole(c::Coax,p::Tuple)::Bool
     return rv
 end
 
-function check_borehole(ivc::InvertedCoax, r::Real, θ::Real, z::Real)::Bool#returns true if point is not inside borehole
+function check_borehole(ivc::InvertedCoax, r::Real, φ::Real, z::Real)::Bool#returns true if point is not inside borehole
     rv = true
     if r < geom_round(ivc.borehole_radius) && z >geom_round(ivc.crystal_length-ivc.borehole_length)
         rv = false
@@ -561,11 +570,11 @@ function check_borehole(ivc::InvertedCoax, r::Real, θ::Real, z::Real)::Bool#ret
     rv
 end
 
-function check_borehole(ivc::InvertedCoax, r::T, θ::T, z::T, modulation_function::Function)::Bool where T<:Real#returns true if point is not inside borehole
+function check_borehole(ivc::InvertedCoax, r::T, φ::T, z::T, modulation_function::Function)::Bool where T<:Real#returns true if point is not inside borehole
     rv = true
     epsilon::T=0.000
-    # if r < round(ivc.borehole_radius+modulation_function(θ)-epsilon,digits=6) && z >round(ivc.crystal_length-ivc.borehole_length,digits=6)
-    if r < geom_round(ivc.borehole_radius+modulation_function(θ)) && z >geom_round(ivc.crystal_length-ivc.borehole_length)
+    # if r < round(ivc.borehole_radius+modulation_function(φ)-epsilon,digits=6) && z >round(ivc.crystal_length-ivc.borehole_length,digits=6)
+    if r < geom_round(ivc.borehole_radius+modulation_function(φ)) && z >geom_round(ivc.crystal_length-ivc.borehole_length)
         rv = false
     end
     rv
@@ -600,7 +609,7 @@ function check_tapers(b::BEGe, p::Tuple)
     return true
 end
 
-function check_tapers(b::BEGe,r::Real,θ::Real,z::Real)::Bool
+function check_tapers(b::BEGe,r::Real,φ::Real,z::Real)::Bool
     rv::Bool = true
     if z > (b.crystal_length-b.taper_top_length) && z <= b.crystal_length ##Check top taper
         angle_taper_top = atan((b.crystal_radius-b.taper_top_rInner)/b.taper_top_length)
@@ -622,7 +631,7 @@ function check_tapers(b::BEGe,r::Real,θ::Real,z::Real)::Bool
     rv
 end
 
-function check_tapers(ivc::InvertedCoax, r::T, θ::T, z::T)::Bool where T<:Real
+function check_tapers(ivc::InvertedCoax, r::T, φ::T, z::T)::Bool where T<:Real
     rv::Bool = true
     if !iszero(ivc.taper_outer_length) && z > geom_round(ivc.crystal_length-ivc.taper_outer_length)
         if r > geom_round(ivc.crystal_radius-get_r_from_z_for_taper(ivc.taper_outer_angle, z-(ivc.crystal_length-ivc.taper_outer_length)))
@@ -641,7 +650,7 @@ function get_r_from_z_for_taper(angle::T,z::T)::T where T<:Real
     return geom_round(z*tan(angle))
 end
 
-function check_tapers(c::Coax, r::Real, θ::Real, z::Real)::Bool
+function check_tapers(c::Coax, r::Real, φ::Real, z::Real)::Bool
     if z > (c.crystal_length-c.taper_outer_top_length) && z <= c.crystal_length ##Check top taper
         angle_taper_outer_top = atan((c.crystal_radius-c.taper_outer_top_rInner)/c.taper_outer_top_length)
         r_taper_outer_top = tan(angle_taper_outer_top)*(c.crystal_length-z)+c.taper_outer_top_rInner
@@ -725,7 +734,7 @@ end
 return rv
 end
 
-function check_grooves(b::BEGe,r::Real,θ::Real,z::Real)::Bool
+function check_grooves(b::BEGe,r::Real,φ::Real,z::Real)::Bool
     # T = get_precision_type(b)
     rv::Bool=true
     if b.groove_endplate == "bot"
@@ -744,7 +753,7 @@ function check_grooves(b::BEGe,r::Real,θ::Real,z::Real)::Bool
     rv
 end
 
-function check_grooves(ivc::InvertedCoax,r::Real,θ::Real,z::Real)::Bool
+function check_grooves(ivc::InvertedCoax,r::Real,φ::Real,z::Real)::Bool
     T=typeof(z)
     rv::Bool=true
     if z >= T(0.0) && z < ivc.groove_depth
@@ -757,13 +766,13 @@ function check_grooves(ivc::InvertedCoax,r::Real,θ::Real,z::Real)::Bool
     rv
 end
 
-function check_volume(v::Volume,r::Real,θ::Real,z::Real)::Bool #return true if in volume
+function check_volume(v::Volume,r::Real,φ::Real,z::Real)::Bool #return true if in volume
     rv=true
     T=typeof(v.rStart)
     if typeof(v) == Tubs{T}
         if r< v.rStart || r > v.rStop
             rv = false
-        elseif θ < v.θStart || θ > v.θStop
+        elseif φ < v.φStart || φ > v.φStop
             rv = false
         elseif z < v.zStart || z > v.zStop
             rv = false
@@ -791,11 +800,11 @@ function rfromxy(x::Real, y::Real)
 end
 
 # is_boundary
-# function is_boundary_point(d::SolidStateDetector, r::Real, θ::Real, z::Real)::Bool
+# function is_boundary_point(d::SolidStateDetector, r::Real, φ::Real, z::Real)::Bool
 #     rv::Bool = false
 #     for iseg in 1:size(d.segment_bias_voltages,1)
 #         if (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
-#             if (d.segmentation_phi_ranges[iseg][1] <= θ <= d.segmentation_phi_ranges[iseg][2])
+#             if (d.segmentation_phi_ranges[iseg][1] <= φ <= d.segmentation_phi_ranges[iseg][2])
 #                 if (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
 #                     rv = true
 #                 end
@@ -804,26 +813,26 @@ end
 #     end
 #     rv
 # end
-# function is_boundary_point(d::Coax, r::Real, θ::Real, z::Real, rs, θs, zs)
-#     is_boundary_point(d,r,θ,z)
+# function is_boundary_point(d::Coax, r::Real, φ::Real, z::Real, rs, φs, zs)
+#     is_boundary_point(d,r,φ,z)
 # end
-function is_boundary_point(d::SolidStateDetector, r::T, θ::T, z::T, rs::Vector{T}, θs::Vector{T}, zs::Vector{T}) where T <:AbstractFloat
+function is_boundary_point(d::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{T}, φs::Vector{T}, zs::Vector{T}) where T <:AbstractFloat
     rv::Bool = false
-    if θ < 0
-        θ += d.cyclic
+    if φ < 0
+        φ += d.cyclic
     end
     digits::Int=6
     if  d.borehole_modulation == true
-        idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs, d.borehole_radius + d.borehole_ModulationFunction(θ))
+        idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs, d.borehole_radius + d.borehole_ModulationFunction(φ))
         idx_r = findfirst(x->x==r,rs)
         bore_hole_r = rs[idx_r_closest_gridpoint_to_borehole]
     else
         nothing
     end
-    
+
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
-             # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)+ϵ,digits=digits))
+             # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(φ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(φ)+ϵ,digits=digits))
              x = (idx_r_closest_gridpoint_to_borehole == idx_r)
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
              x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(bore_hole_r))
@@ -835,12 +844,12 @@ function is_boundary_point(d::SolidStateDetector, r::T, θ::T, z::T, rs::Vector{
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
         end
         if x
-            if (d.segmentation_phi_ranges[iseg][1] <= θ <= d.segmentation_phi_ranges[iseg][2])
+            if (d.segmentation_phi_ranges[iseg][1] <= φ <= d.segmentation_phi_ranges[iseg][2])
                 if (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
                     if d.segmentation_types[iseg]=="Tubs"
                         rv = true
                     else
-                        if isapprox(rs[searchsortednearest(rs,analytical_taper_r_from_θz(θ,z,
+                        if isapprox(rs[searchsortednearest(rs,analytical_taper_r_from_φz(φ,z,
                             d.segmentation_types[iseg],
                             d.segmentation_r_ranges[iseg],
                             d.segmentation_phi_ranges[iseg],
@@ -857,39 +866,39 @@ function is_boundary_point(d::SolidStateDetector, r::T, θ::T, z::T, rs::Vector{
 end
 
 function point_type(d::SolidStateDetector, p::CylindricalPoint)
-    point_type(d, p.r, p.θ, p.z)
+    point_type(d, p.r, p.φ, p.z)
 end
-function point_type(d::SolidStateDetector{T}, r::T, θ::T, z::T) where { T<: AbstractFloat}
+function point_type(d::SolidStateDetector{T}, r::T, φ::T, z::T) where { T<: AbstractFloat}
     # T==Float32 ? atol = 0.000001 : atol = 0.000000000000001
     rv::Symbol = :bulk
-    !contains(d, CylindricalPoint{T}(r,θ,z)) ? rv = :outside : nothing
+    !contains(d, CylindricalPoint{T}(r,φ,z)) ? rv = :outside : nothing
     i=0
     digits::Int=5
     r = geom_round(r)
-    θ = geom_round(θ)
+    φ = geom_round(φ)
     z = geom_round(z)
 
-    while θ < 0 θ += (2π) end 
-    while θ >= T(2π) θ -= (2π) end 
+    while φ < 0 φ += (2π) end
+    while φ >= T(2π) φ -= (2π) end
     ############################# Electrode Definitions
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
-             x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
+             x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(φ)) <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(φ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
-             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
+             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(φ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_top_segment_idx
-            x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= d.segmentation_r_ranges[iseg][2])
+            x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(φ)) <= r <= d.segmentation_r_ranges[iseg][2])
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
         end
         if x
-            if (d.segmentation_phi_ranges[iseg][1] <= θ <= d.segmentation_phi_ranges[iseg][2])
+            if (d.segmentation_phi_ranges[iseg][1] <= φ <= d.segmentation_phi_ranges[iseg][2])
                 if (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
                     if d.segmentation_types[iseg]=="Tubs"
                         rv = :electrode
                         i=iseg
                     else
-                        analytic_r::T = geom_round(analytical_taper_r_from_θz(θ,z,
+                        analytic_r::T = geom_round(analytical_taper_r_from_φz(φ,z,
                             d.segmentation_types[iseg],
                             d.segmentation_r_ranges[iseg],
                             d.segmentation_phi_ranges[iseg],
@@ -909,13 +918,13 @@ function point_type(d::SolidStateDetector{T}, r::T, θ::T, z::T) where { T<: Abs
         ############################ Floating Boundary Definitions
         for iseg in 1:size(d.floating_boundary_r_ranges,1)
             if (d.floating_boundary_r_ranges[iseg][1] <= r <= d.floating_boundary_r_ranges[iseg][2])
-                if (d.floating_boundary_phi_ranges[iseg][1] <= θ <= d.floating_boundary_phi_ranges[iseg][2])
+                if (d.floating_boundary_phi_ranges[iseg][1] <= φ <= d.floating_boundary_phi_ranges[iseg][2])
                     if (d.floating_boundary_z_ranges[iseg][1] <= z <= d.floating_boundary_z_ranges[iseg][2])
                         if d.floating_boundary_types[iseg]=="Tubs"
                             rv = :floating_boundary
                             i=iseg
                         else
-                            analytic_r = geom_round(analytical_taper_r_from_θz(θ,z,
+                            analytic_r = geom_round(analytical_taper_r_from_φz(φ,z,
                                 d.floating_boundary_types[iseg],
                                 d.floating_boundary_r_ranges[iseg],
                                 d.floating_boundary_phi_ranges[iseg],
@@ -934,7 +943,7 @@ function point_type(d::SolidStateDetector{T}, r::T, θ::T, z::T) where { T<: Abs
     return rv, i
 end
 
-function analytical_taper_r_from_θz(θ,z,orientation,r_bounds,θ_bounds,z_bounds)
+function analytical_taper_r_from_φz(φ,z,orientation,r_bounds,φ_bounds,z_bounds)
     r=0
     angle = atan(abs(r_bounds[2]-r_bounds[1])/abs(z_bounds[2]-z_bounds[1]))
     if orientation == "c//"
@@ -947,19 +956,19 @@ end
 
 
 
-function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real)
+function get_segment_idx(d::SolidStateDetector,r::Real,φ::Real,z::Real)
     digits=6
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
-             x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
+             x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(φ)) <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(φ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
-             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)))
+             x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(φ)))
         elseif d.borehole_modulation == true && iseg == d.borehole_top_segment_idx
-            x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)) <= r <= d.segmentation_r_ranges[iseg][2])
+            x = (geom_round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(φ)) <= r <= d.segmentation_r_ranges[iseg][2])
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
         end
-        if x && (d.segmentation_phi_ranges[iseg][1] <= θ <= d.segmentation_phi_ranges[iseg][2]) && (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
+        if x && (d.segmentation_phi_ranges[iseg][1] <= φ <= d.segmentation_phi_ranges[iseg][2]) && (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
             return iseg
         else
             nothing
@@ -967,14 +976,14 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real)
     end
     return -1
 end
-function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real,rs::Vector{<:Real})
+function get_segment_idx(d::SolidStateDetector,r::Real,φ::Real,z::Real,rs::Vector{<:Real})
     digits=6
-    idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs, d.borehole_radius+d.borehole_ModulationFunction(θ))
+    idx_r_closest_gridpoint_to_borehole = searchsortednearest(rs, d.borehole_radius+d.borehole_ModulationFunction(φ))
     idx_r = findfirst(x->x==r,rs)
     bore_hole_r = rs[idx_r_closest_gridpoint_to_borehole]
     for iseg in 1:size(d.segment_bias_voltages,1)
         if d.borehole_modulation == true && iseg == d.borehole_segment_idx
-             # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(θ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(θ)+ϵ,digits=digits))
+             # x = (round(d.segmentation_r_ranges[iseg][1]+d.borehole_ModulationFunction(φ)-ϵ,digits=digits) <= r <= round(d.segmentation_r_ranges[iseg][2]+d.borehole_ModulationFunction(φ)+ϵ,digits=digits))
              x = (idx_r_closest_gridpoint_to_borehole == idx_r)
         elseif d.borehole_modulation == true && iseg == d.borehole_bot_segment_idx
              x = (d.segmentation_r_ranges[iseg][1] <= r <= geom_round(bore_hole_r))
@@ -985,7 +994,7 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real,rs::Vect
         else
             x = (d.segmentation_r_ranges[iseg][1] <= r <= d.segmentation_r_ranges[iseg][2])
         end
-        if x && (d.segmentation_phi_ranges[iseg][1] <= θ <= d.segmentation_phi_ranges[iseg][2]) && (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
+        if x && (d.segmentation_phi_ranges[iseg][1] <= φ <= d.segmentation_phi_ranges[iseg][2]) && (d.segmentation_z_ranges[iseg][1] <= z <= d.segmentation_z_ranges[iseg][2])
             return iseg
         else
             nothing
@@ -995,46 +1004,46 @@ function get_segment_idx(d::SolidStateDetector,r::Real,θ::Real,z::Real,rs::Vect
 end
 
 # get_potential
-function get_boundary_value(d::SolidStateDetector{T}, r::Real, θ::Real, z::Real, rs::Vector{<:Real})::T where {T <: AbstractFloat}
+function get_boundary_value(d::SolidStateDetector{T}, r::Real, φ::Real, z::Real, rs::Vector{<:Real})::T where {T <: AbstractFloat}
     if d.borehole_modulation==true
         res::get_precision_type(d)=0.0
         try
-            res = d.segment_bias_voltages[ get_segment_idx(d, r, θ, z, rs) ]
+            res = d.segment_bias_voltages[ get_segment_idx(d, r, φ, z, rs) ]
         catch
             println("kek")
-            @show r, θ, z
+            @show r, φ, z
             res = d.segment_bias_voltages[end]
         end
         return res
     else
-        return d.segment_bias_voltages[ get_segment_idx(d, r, θ, z) ]
+        return d.segment_bias_voltages[ get_segment_idx(d, r, φ, z) ]
     end
 end
 
 
-function get_charge_density(detector::SolidStateDetector{T}, r::Real, θ::Real, z::Real)::T where {T <: AbstractFloat}
+function get_charge_density(detector::SolidStateDetector{T}, r::Real, φ::Real, z::Real)::T where {T <: AbstractFloat}
     top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
     ρ::T = bot_net_charge_carrier_density + z * slope
-    return ρ 
+    return ρ
 end
 
 
 function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
     if in(pt, ssd)
-        ρ::T = get_charge_density(ssd, pt.r, pt.θ, pt.z) * elementary_charge
+        ρ::T = get_charge_density(ssd, pt.r, pt.φ, pt.z) * elementary_charge
         ϵ::T = ssd.material_detector.ϵ_r
         return ρ, ϵ
     else
         ρ = 0
-        ϵ = ssd.material_environment.ϵ_r 
+        ϵ = ssd.material_environment.ϵ_r
         return ρ, ϵ
     end
 end
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
+function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
-    
+
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         ssd.grouped_channels[weighting_potential_contact_id]
     else
@@ -1042,26 +1051,26 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
     end
 
     axr::Vector{T} = grid[:r].ticks
-    axθ::Vector{T} = grid[:θ].ticks
+    axφ::Vector{T} = grid[:φ].ticks
     axz::Vector{T} = grid[:z].ticks
     for iz in axes(potential, 3)
         z::T = axz[iz]
-        for iθ in axes(potential, 2)
-            θ::T = axθ[iθ]
+        for iφ in axes(potential, 2)
+            φ::T = axφ[iφ]
             for ir in axes(potential, 1)
                 r::T = axr[ir]
-                pt::CylindricalPoint{T} = CylindricalPoint{T}( r, θ, z )              
+                pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
 
-                if is_boundary_point(ssd, r, θ, z, axr, axθ, axz)
+                if is_boundary_point(ssd, r, φ, z, axr, axφ, axz)
                     pot::T = if ismissing(weighting_potential_contact_id)
-                        get_boundary_value( ssd, r, θ, z, axr)
+                        get_boundary_value( ssd, r, φ, z, axr)
                     else
-                        in(ssd.borehole_modulation ? get_segment_idx(ssd, r, θ, z, axr) : get_segment_idx(ssd, r, θ, z), channels) ? 1 : 0
+                        in(ssd.borehole_modulation ? get_segment_idx(ssd, r, φ, z, axr) : get_segment_idx(ssd, r, φ, z), channels) ? 1 : 0
                     end
-                    potential[ ir, iθ, iz ] = pot
-                    pointtypes[ ir, iθ, iz ] = zero(PointType)
+                    potential[ ir, iφ, iz ] = pot
+                    pointtypes[ ir, iφ, iz ] = zero(PointType)
                 elseif in(pt, ssd)
-                    pointtypes[ ir, iθ, iz ] += pn_junction_bit 
+                    pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
 
             end
@@ -1086,7 +1095,7 @@ function bounding_box(d::SolidStateDetector)
     T = get_precision_type(d)
     (
     r_range = ClosedInterval{T}(0.0,d.crystal_radius),
-    θ_range = ClosedInterval{T}(0.0,2π),
+    φ_range = ClosedInterval{T}(0.0,2π),
     z_range = ClosedInterval{T}(0.0,d.crystal_length)
     )
 end

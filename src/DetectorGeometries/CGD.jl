@@ -91,7 +91,7 @@ function Grid(  det::CGD{T};
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
     important_x_points::Vector{T} = T[] #uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
-    important_y_points::Vector{T} = T[] #!only_2d ? sort(get_important_θ_points(detector)) : T[]
+    important_y_points::Vector{T} = T[] #!only_2d ? sort(get_important_φ_points(detector)) : T[]
     important_z_points::Vector{T} = T[] #uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)

@@ -22,17 +22,17 @@ struct Tubs{T <: AbstractFloat} <: Volume{T}
     potential
     rStart::T
     rStop::T
-    θStart::T
-    θStop::T
+    φStart::T
+    φStop::T
     zStart::T
     zStop::T
-    function Tubs(name::String, hierarchy::Int, ϵ, behaviour::String, potential, rStart::T, rStop::T, θStart::T, θStop::T, zStart::T, zStop::T) where T<:AbstractFloat
-    return new{T}(name, hierarchy, ϵ, behaviour, potential, rStart, rStop, θStart, θStop, zStart, zStop)
+    function Tubs(name::String, hierarchy::Int, ϵ, behaviour::String, potential, rStart::T, rStop::T, φStart::T, φStop::T, zStart::T, zStop::T) where T<:AbstractFloat
+    return new{T}(name, hierarchy, ϵ, behaviour, potential, rStart, rStop, φStart, φStop, zStart, zStop)
     end
 end
 
-function Tubs(name, hierarchy, ϵ, behaviour, potential, rStart::T, rStop::T, θStart::T, θStop::T, zStart::T, zStop::T) where T<:AbstractFloat
-    return Tubs{typeof(zStop)}(name, hierarchy, ϵ, behaviour, potential, rStart, rStop, θStart, θStop, zStart, zStop)
+function Tubs(name, hierarchy, ϵ, behaviour, potential, rStart::T, rStop::T, φStart::T, φStop::T, zStart::T, zStop::T) where T<:AbstractFloat
+    return Tubs{typeof(zStop)}(name, hierarchy, ϵ, behaviour, potential, rStart, rStop, φStart, φStop, zStart, zStop)
 end
 
 

@@ -40,7 +40,6 @@ export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, Wei
 export calculate_electric_potential, calculate_weighting_potential, get_active_volume
 export generate_charge_signals!, generate_charge_signals
 
-include("GeometryRounding.jl")
 
 include("Axes/DiscreteAxis.jl")
 include("Grids/Grids.jl")
@@ -50,6 +49,7 @@ include("MaterialProperties/MaterialProperties.jl")
 include("Geometries/Geometries.jl")
 include("Config/Config.jl")
 include("DetectorGeometries/DetectorGeometries.jl")
+include("GeometryRounding.jl")
 
 include("Config/Config.jl")
 include("PotentialSimulation/PotentialSimulation.jl")

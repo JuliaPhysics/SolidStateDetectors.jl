@@ -85,18 +85,18 @@ function add_points_in_r_and_interpolate(potential::Array{T, 3}, grid::Cylindric
     return potential, grid
 end
 
-function add_points_in_θ_and_interpolate(potential::Array{T, 3}, grid::CylindricalGrid{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CylindricalGrid{T}} where {T}
-    axθ::Vector{T} = collect(grid.axes[2])
+function add_points_in_φ_and_interpolate(potential::Array{T, 3}, grid::CylindricalGrid{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CylindricalGrid{T}} where {T}
+    axφ::Vector{T} = collect(grid.axes[2])
     n = length(idcs)
     if n == 0 return potential, grid end
     cyclic::T = grid.axes[2].interval.right
 
-    if idcs[end] > length(axθ)
-        error("Can not append array in θ at index $(idcs[end]). (Cylcic: $(cyclic)°)")
+    if idcs[end] > length(axφ)
+        error("Can not append array in φ at index $(idcs[end]). (Cylcic: $(cyclic)°)")
     end
 
     append_after_last_index = false
-    if idcs[end] == length(axθ)
+    if idcs[end] == length(axφ)
         append_after_last_index = true
         idcs = idcs[1:end-1]
         n -= 1
@@ -108,26 +108,26 @@ function add_points_in_θ_and_interpolate(potential::Array{T, 3}, grid::Cylindri
         for i in (2:n)
             push!(ranges, idcs[i-1]+1:idcs[i])
         end
-        if idcs[end] < length(axθ)
-            push!(ranges, idcs[end]+1:length(axθ))
+        if idcs[end] < length(axφ)
+            push!(ranges, idcs[end]+1:length(axφ))
         end
     end
 
     if append_after_last_index
-        axθ = cat( axθ, zeros(T, n+1), dims=1)
+        axφ = cat( axφ, zeros(T, n+1), dims=1)
     else
-        axθ = cat( axθ, zeros(T, n), dims=1)
+        axφ = cat( axφ, zeros(T, n), dims=1)
     end
 
     for (i, range) in enumerate(reverse(ranges))
-        axθ[range .+ (n+1-i)] = axθ[range]
+        axφ[range .+ (n+1-i)] = axφ[range]
     end
     for (i, range) in enumerate(reverse(ranges[2:end]))
-        axθ[first(range .+ (n+1-i))-1] = 0.5*(axθ[first(range .+ (n+1-i))]+axθ[first(range .+ (n+1-i))-2])
+        axφ[first(range .+ (n+1-i))-1] = 0.5*(axφ[first(range .+ (n+1-i))]+axφ[first(range .+ (n+1-i))-2])
     end
 
     if append_after_last_index
-        axθ[end] = 0.5 * (cyclic + axθ[end-1])
+        axφ[end] = 0.5 * (cyclic + axφ[end-1])
     end
 
     # 1: extend arrays
@@ -150,18 +150,18 @@ function add_points_in_θ_and_interpolate(potential::Array{T, 3}, grid::Cylindri
 
     BL::Symbol = typeof(grid.axes[2]).parameters[2]
     BR::Symbol = typeof(grid.axes[2]).parameters[3]
-    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid.axes[2].interval, axθ )
+    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid.axes[2].interval, axφ )
     grid::CylindricalGrid{T} = CylindricalGrid{T}( (grid.axes[1], da, grid.axes[3]) )
 
     return potential, grid
 end
 
 
-function add_points_and_interpolate(potential::Array{T, 3}, grid::CylindricalGrid{T}, idcs_r::Vector{Int}, idcs_θ::Vector{Int}, idcs_z::Vector{Int})::Tuple{Array{T, 3}, CylindricalGrid{T}} where {T}
+function add_points_and_interpolate(potential::Array{T, 3}, grid::CylindricalGrid{T}, idcs_r::Vector{Int}, idcs_φ::Vector{Int}, idcs_z::Vector{Int})::Tuple{Array{T, 3}, CylindricalGrid{T}} where {T}
     potential::Array{T, 3}, grid::CylindricalGrid{T} = add_points_in_r_and_interpolate(potential, grid, idcs_r)
-    potential, grid = add_points_in_θ_and_interpolate(potential, grid, idcs_θ)
-    if isodd(length(grid[:θ])) && length(length(grid[:θ])) != 1
-        potential, grid = add_points_in_θ_and_interpolate(potential, grid, [1])
+    potential, grid = add_points_in_φ_and_interpolate(potential, grid, idcs_φ)
+    if isodd(length(grid[:φ])) && length(length(grid[:φ])) != 1
+        potential, grid = add_points_in_φ_and_interpolate(potential, grid, [1])
     end    
     potential, grid = add_points_in_z_and_interpolate(potential, grid, idcs_z)
     potential, grid

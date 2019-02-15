@@ -234,7 +234,7 @@ end
 function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
     if length(ticks) == 3 
         ticks[1] = ticks[2] - 2π
-        ticks[end] = ticks[2] + 2π # -> Δmidpoint_θ = 2π -> area of circle is 2π * 0.5*r^2   
+        ticks[end] = ticks[2] + 2π # -> Δmidpoint_φ = 2π -> area of circle is 2π * 0.5*r^2   
     else
         ticks[1] = ticks[2] - (ticks[3] - ticks[2])
         ticks[end] = ticks[end - 1] + (ticks[end - 1] - ticks[end - 2])

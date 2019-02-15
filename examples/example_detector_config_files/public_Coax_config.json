@@ -3,7 +3,7 @@
 	"class":"Coax",
 	"type": "n",
 	"cyclic": 60,
-	"mirror_symmetry_θ": "true",
+	"mirror_symmetry_φ": "true",
 	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"

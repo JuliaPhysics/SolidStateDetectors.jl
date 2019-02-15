@@ -48,45 +48,45 @@ all depleted cells.
 function get_active_volume(pts::PointTypes{T, 3, :Cylindrical}) where {T}
     active_volume::T = 0
 
-    only_2d::Bool = length(pts[:θ]) == 1
-    cyclic::T = pts[:θ].interval.right
+    only_2d::Bool = length(pts[:φ]) == 1
+    cyclic::T = pts[:φ].interval.right
 
     r_ext::Vector{T} = get_extended_ticks(pts[:r])
-    θ_ext::Vector{T} = get_extended_ticks(pts[:θ])
+    φ_ext::Vector{T} = get_extended_ticks(pts[:φ])
     z_ext::Vector{T} = get_extended_ticks(pts[:z])
     Δr_ext::Vector{T} = diff(r_ext)
-    Δθ_ext::Vector{T} = diff(θ_ext)
+    Δφ_ext::Vector{T} = diff(φ_ext)
     Δz_ext::Vector{T} = diff(z_ext)
 
     mpr::Vector{T} = midpoints(r_ext)
-    mpθ::Vector{T} = midpoints(θ_ext)
+    mpφ::Vector{T} = midpoints(φ_ext)
     mpz::Vector{T} = midpoints(z_ext)
-    Δmpθ::Vector{T} = diff(mpθ)
+    Δmpφ::Vector{T} = diff(mpφ)
     Δmpz::Vector{T} = diff(mpz)
     Δmpr_squared::Vector{T} = T(0.5) .* ((mpr[2:end].^2) .- (mpr[1:end-1].^2))
     if r_ext[2] == 0
         Δmpr_squared[1] = T(0.5) * (mpr[2]^2)
     end
 
-    isclosed::Bool = typeof(pts[:θ].interval).parameters[2] == :closed 
+    isclosed::Bool = typeof(pts[:φ].interval).parameters[2] == :closed 
     for iz in eachindex(pts[:z])
         if !isclosed || only_2d
-            for iθ in eachindex(pts[:θ])
+            for iφ in eachindex(pts[:φ])
                 for ir in eachindex(pts[:r])
-                    pt::PointType = pts[ir, iθ, iz]
+                    pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
-                        dV::T = Δmpz[iz] * Δmpθ[iθ] * Δmpr_squared[ir]
+                        dV::T = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
                         active_volume += dV
                     end
                 end
             end
         elseif isclosed && !only_2d
-            for iθ in eachindex(pts[:θ])
+            for iφ in eachindex(pts[:φ])
                 for ir in eachindex(pts[:r])
-                    pt::PointType = pts[ir, iθ, iz]
+                    pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
-                        dV = Δmpz[iz] * Δmpθ[iθ] * Δmpr_squared[ir]
-                        active_volume += if iθ == length(pts[:θ]) || iθ == 1
+                        dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
+                        active_volume += if iφ == length(pts[:φ]) || iφ == 1
                             dV / 2
                         else
                             dV
@@ -130,7 +130,7 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
 
 @recipe function f( pts::PointTypes{T, 3, :Cylindrical};
                     r = missing,
-                    θ = missing,
+                    φ = missing,
                     z = missing ) where {T}
     g::Grid{T, 3, :Cylindrical} = pts.grid
    
@@ -138,27 +138,27 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
     st --> :heatmap
     aspect_ratio --> 1
     
-    cross_section::Symbol, idx::Int = if ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, 1
-    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
-        θ_rad::T = T(deg2rad(θ))
-        while !(g[:θ].interval.left <= θ_rad <= g[:θ].interval.right)
-            if θ_rad > g[:θ].interval.right
-                θ_rad -= g[:θ].interval.right - g[:θ].interval.left
-            elseif θ_rad < g[:θ].interval.left
-                θ_rad += g[:θ].interval.right - g[:θ].interval.left
+    cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, 1
+    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
+        φ_rad::T = T(deg2rad(φ))
+        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
+            if φ_rad > g[:φ].interval.right
+                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
+            elseif φ_rad < g[:φ].interval.left
+                φ_rad += g[:φ].interval.right - g[:φ].interval.left
             end
         end
-        :θ, searchsortednearest(g[:θ], θ_rad)
-    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
+        :φ, searchsortednearest(g[:φ], φ_rad)
+    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, searchsortednearest(g[:r], T(r))
-    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
         :z, searchsortednearest(g[:z], T(z))
     else
-        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
-    value::T = if cross_section == :θ
-        g[:θ][idx]
+    value::T = if cross_section == :φ
+        g[:φ][idx]
     elseif cross_section == :r    
         g[:r][idx]
     elseif cross_section == :z
@@ -167,7 +167,7 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
     
     @series begin
         clims --> (0, max_pointtype_value)
-        if cross_section == :θ
+        if cross_section == :φ
             title --> "Point Type Map @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
@@ -175,11 +175,11 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
             g[:r], g[:z], pts.data[:, idx,:]'
         elseif cross_section == :r
             title --> "Point Type Map @$(cross_section) = $(round(value, sigdigits = 2))"
-            g[:θ], g[:z], pts.data[idx,:,:]'
+            g[:φ], g[:z], pts.data[idx,:,:]'
         elseif cross_section == :z
             title --> "Point Type Map @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
-            g[:θ], g[:r], pts.data[:,:,idx]
+            g[:φ], g[:r], pts.data[:,:,idx]
         end
     end
 end

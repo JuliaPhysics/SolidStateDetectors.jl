@@ -42,16 +42,16 @@ The electric potential can be extracted via the function [`ElectricPotential(::S
 
 ```@example electric_potential
 E_pot_setup = calculate_electric_potential(detector);
-E_pot = ElectricPotential(E_pot_setup, n_points_in_θ = 36);
+E_pot = ElectricPotential(E_pot_setup, n_points_in_φ = 36);
 ```
 
 A plot recipe for the struct [`ElectricPotential`](@ref) exists so the result can be visualized through
 
 ```@example electric_potential
-plot(E_pot, θ=0)
+plot(E_pot, φ=0)
 ```
 
-It can also be plotted in the r-θ plane:
+It can also be plotted in the r-φ plane:
 
 ```@example electric_potential
 plot(E_pot, z=0.04)

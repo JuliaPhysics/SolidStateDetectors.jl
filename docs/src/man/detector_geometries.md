@@ -16,9 +16,9 @@ Example minimum config file for an Inverted Coax detector (IVC) plus explanation
     "class":"InvertedCoax",  // either "Coax", "BEGe", "InvertedCoax"
     "type":"p", // either "p", "ptype", "p-type", "n", "ntype" or "n-type"
     "cyclic":0, // The periodicity of the detector in degree. 
-                // `0` means complete symmetric in θ -> 2D simulation. 
+                // `0` means complete symmetric in φ -> 2D simulation. 
                 // The condition "360 / `cyclic` = n; n = 1, 2, 3, ..." must be fulfilled.
-    "mirror_symmetry_θ": "true", // set to true, if a mirror symmetry exists within the periodicity specified via `cyclic`
+    "mirror_symmetry_φ": "true", // set to true, if a mirror symmetry exists within the periodicity specified via `cyclic`
     "materials":{
         "detector":"HPGe",  // Material of the detector 
         "environment":"Vacuum" // Material of the environment

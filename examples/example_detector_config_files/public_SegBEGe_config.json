@@ -3,7 +3,7 @@
 	"class":"BEGe",
 	"type":"n",
 	"cyclic": 120,
-	"mirror_symmetry_θ": "true",
+	"mirror_symmetry_φ": "true",
 	"materials":{
 		"detector":"HPGe",
 		"environment":"Vacuum"

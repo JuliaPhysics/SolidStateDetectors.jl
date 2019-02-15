@@ -3,7 +3,7 @@ mutable struct InvertedCoax{T<:AbstractFloat} <: SolidStateDetector{T}
     material_detector::NamedTuple
     material_environment::NamedTuple
     cyclic::T
-    mirror_symmetry_θ::Bool
+    mirror_symmetry_φ::Bool
     #### Importet Values from JSON file
     geometry_unit_factor
     bulk_type::Symbol
@@ -78,7 +78,7 @@ function InvertedCoax{T}(config_file::Dict)::InvertedCoax where T <: AbstractFlo
         "p" => :ptype  )
     ivc.bulk_type = bulk_types[ config_file["type"] ]
     ivc.cyclic = deg2rad(config_file["cyclic"])
-    ivc.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
+    ivc.mirror_symmetry_φ = config_file["mirror_symmetry_φ"] == "true"
     ivc.borehole_modulation=false
     ivc.crystal_length = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]))
     ivc.crystal_radius = geom_round(T(ivc.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]))
@@ -158,3 +158,90 @@ function InvertedCoax(mytype::Type{<:AbstractFloat},inputfilename::String)
     return InvertedCoax{mytype}(parsed_json_file)
 end
 
+
+function Grid(  detector::Union{Coax{T}, BEGe{T}, InvertedCoax{T}};
+                init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005],
+                for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
+
+    important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
+    important_φ_points::Vector{T} = T[]#!only_2d ? sort(get_important_φ_points(detector)) : T[]
+    important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
+
+    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
+
+    # r
+    int_r = Interval{:closed, :closed, T}(0, detector.crystal_radius + 3 * init_grid_spacing[1])
+    ax_r::DiscreteAxis{T, :r0, :infinite} = DiscreteAxis{:r0, :infinite}(int_r, step = init_grid_spacing[1])
+    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
+    ax_r = DiscreteAxis{T, :r0, :infinite}(int_r, rticks)
+
+    # φ
+    if !(0 <= detector.cyclic <= T(2π))
+        @warn "'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' is ∉ [0, 360] -> 'cyclic' set to 360°."
+        detector.cyclic = T(2π)
+    end
+    int_φ = if !for_weighting_potential
+        detector.mirror_symmetry_φ || detector.cyclic == 0 ? Interval{:closed, :closed, T}(0, detector.cyclic / 2) : Interval{:closed, :open, T}(0, detector.cyclic)
+    else
+        detector.cyclic == 0 ? Interval{:closed, :closed, T}(0, 0) : Interval{:closed, :open, T}(0, 2π)
+    end
+    nφ::Int = div(int_φ.right, deg2rad(init_grid_spacing[2])) # nφ must be even or equals to 1 ( 1 -> 2D special case)
+    if detector.cyclic > 0
+        try
+            nsym_φ::Int = Int(round(T(2π) / detector.cyclic, digits = 3))
+        catch err
+            error("360° divided by 'cyclic=$(round(rad2deg(detector.cyclic), digits = 0))°' does not give an integer -> Set 'cyclic' to 360°.")
+        end
+    end
+    ax_φ = if nφ >= 2
+        if detector.mirror_symmetry_φ && !for_weighting_potential
+            DiscreteAxis{:reflecting, :reflecting}(int_φ, length = iseven(nφ) ? nφ : nφ + 1)
+        else
+            DiscreteAxis{:periodic, :periodic}(int_φ, length = iseven(nφ) ? nφ : nφ + 1)
+        end
+    else
+        DiscreteAxis{T, :reflecting, :reflecting}(int_φ, T[0])
+    end
+    if length(ax_φ) > 1
+        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol=deg2rad(init_grid_spacing[2])/4)
+        ax_φ = typeof(ax_φ)(int_φ, φticks)
+    end
+
+    #z
+    int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], detector.crystal_length + 3 * init_grid_spacing[3])
+    ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3])
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
+    ax_z = typeof(ax_z)(int_z, zticks)
+    if isodd(length(ax_z)) # must be even
+        int_z = ax_z.interval
+        zticks = ax_z.ticks
+        push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
+        sort!(zticks)
+        ax_z = DiscreteAxis{T, :infinite, :infinite}(int_z, zticks) # must be even
+    end
+    @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
+
+    return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
+end
+
+
+function println(io::IO, d::Union{Coax{T}, BEGe{T}, InvertedCoax{T}}) where {T <: AbstractFloat}
+    println("________"*d.name*"________\n")
+    println("---General Properties---")
+    println("Detector Material: \t $(d.material_detector.name)")
+    println("Environment Material: \t $(d.material_environment.name)")
+    println("Bulk type: \t\t $(d.bulk_type)")
+    println("Core Bias Voltage: \t $(d.segment_bias_voltages[1]) V")
+    println("Mantle Bias Voltage: \t $(d.segment_bias_voltages[2]) V\n")
+    println("---Geometry---")
+    println("Outer Crystal Dimensions: ")
+    println("Crystal length: \t $(round(d.crystal_length * 1000, sigdigits=6)) mm")
+    println("Crystal diameter: \t $(round(2 * d.crystal_radius * 1000, sigdigits=6)) mm")
+end
+
+function show(io::IO, d::Union{Coax{T}, BEGe{T}, InvertedCoax{T}}) where {T <: AbstractFloat} println(d) end
+function print(io::IO, d::Union{Coax{T}, BEGe{T}, InvertedCoax{T}}) where {T <: AbstractFloat} println(d) end
+function display(io::IO, d::Union{Coax{T}, BEGe{T}, InvertedCoax{T}} ) where {T <: AbstractFloat} println(d) end
+function show(io::IO,::MIME"text/plain", d::Union{Coax{T}, BEGe{T}, InvertedCoax{T}}) where {T <: AbstractFloat}
+    show(io, d)
+end

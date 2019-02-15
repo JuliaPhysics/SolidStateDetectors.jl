@@ -16,7 +16,7 @@ end
 
 @recipe function f( ρ::ChargeDensity{T, 3, :Cylindrical};
                     r = missing,
-                    θ = missing,
+                    φ = missing,
                     z = missing ) where {T}
     g::Grid{T, 3, :Cylindrical} = ρ.grid
    
@@ -27,27 +27,27 @@ end
     tick_direction --> :out
        
        
-    cross_section::Symbol, idx::Int = if ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, 1
-    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
-        θ_rad::T = T(deg2rad(θ))
-        while !(g[:θ].interval.left <= θ_rad <= g[:θ].interval.right)
-            if θ_rad > g[:θ].interval.right
-                θ_rad -= g[:θ].interval.right - g[:θ].interval.left
-            elseif θ_rad < g[:θ].interval.left
-                θ_rad += g[:θ].interval.right - g[:θ].interval.left
+    cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, 1
+    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
+        φ_rad::T = T(deg2rad(φ))
+        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
+            if φ_rad > g[:φ].interval.right
+                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
+            elseif φ_rad < g[:φ].interval.left
+                φ_rad += g[:φ].interval.right - g[:φ].interval.left
             end
         end
-        :θ, searchsortednearest(g[:θ], θ_rad)
-    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
+        :φ, searchsortednearest(g[:φ], φ_rad)
+    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, searchsortednearest(g[:r], T(r))
-    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
         :z, searchsortednearest(g[:z], T(z))
     else
-        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
-    value::T = if cross_section == :θ
-        g[:θ][idx]
+    value::T = if cross_section == :φ
+        g[:φ][idx]
     elseif cross_section == :r    
         g[:r][idx]
     elseif cross_section == :z
@@ -55,7 +55,7 @@ end
     end
 
     @series begin
-        if cross_section == :θ
+        if cross_section == :φ
             title --> "Charge Density @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
@@ -63,11 +63,11 @@ end
             g[:r], g[:z], ρ.data[:, idx,:]'
         elseif cross_section == :r
             title --> "Charge Density @$(cross_section) = $(round(value, sigdigits = 2))"
-            g[:θ], g[:z], ρ.data[idx,:,:]'
+            g[:φ], g[:z], ρ.data[idx,:,:]'
         elseif cross_section == :z
             title --> "Charge Density @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
-            g[:θ], g[:r], ρ.data[:,:,idx]
+            g[:φ], g[:r], ρ.data[:,:,idx]
         end
     end
 end

@@ -3,7 +3,7 @@ mutable struct Coax{T<:AbstractFloat} <: SolidStateDetector{T}
     material_detector::NamedTuple
     material_environment::NamedTuple
     cyclic::T
-    mirror_symmetry_θ::Bool
+    mirror_symmetry_φ::Bool
     path_to_configfile::String
     #### Importet Values from JSON file
     ### Geometry
@@ -93,7 +93,7 @@ function Coax{T}(config_file::Dict)::Coax where T<:AbstractFloat
         "p" => :ptype  )
     c.bulk_type = bulk_types[ config_file["type"]  ]
     c.cyclic = deg2rad(config_file["cyclic"])
-    c.mirror_symmetry_θ = config_file["mirror_symmetry_θ"] == "true"
+    c.mirror_symmetry_φ = config_file["mirror_symmetry_φ"] == "true"
     c.borehole_modulation=false
     c.crystal_length = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["crystal"]["length"]))
     c.crystal_radius = geom_round(T(c.geometry_unit_factor * config_file["geometry"]["crystal"]["radius"]))
@@ -166,5 +166,3 @@ end
 function show(c::Coax)  println(c)   end
 function display(c::Coax)  println(c)   end
 function print(c::Coax)  println(c)   end
-
-

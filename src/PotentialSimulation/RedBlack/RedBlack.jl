@@ -58,19 +58,19 @@ end
 Returns a RedBlack array for the grid `g`. 
 """
 function RBArray( et::Type, g::Grid{T, N, :Cylindrical} )::Array{et, N + 1} where {T, N}
-    nr, nθ, nz = size(g)
-    # new ordering in memory: r, θ, z -> z, θ, r (so inner loop goes over z)
-    return zeros(T, div(nz, 2) + mod(nz, 2), nθ, nr, 2)
+    nr, nφ, nz = size(g)
+    # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
+    return zeros(T, div(nz, 2) + mod(nz, 2), nφ, nr, 2)
 end
 function RBArray( a::Array{T, N}, grid::Grid{TG, N, :Cylindrical} )::Array{T, N + 1} where {T, N, TG}
     rbarray::Array{T, N + 1} = RBArray(T, grid)
     for iz in axes(a, 3)
         irbz::Int = div(iz, 2) + mod(iz, 2) 
-        for iθ in axes(a, 2)
-            idxsum::Int = iz + iθ
+        for iφ in axes(a, 2)
+            idxsum::Int = iz + iφ
             for ir in axes(a, 1)
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                rbarray[ irbz, iθ, ir, rbi ] = a[ir, iθ, iz]
+                rbarray[ irbz, iφ, ir, rbi ] = a[ir, iφ, iz]
             end
         end
     end
@@ -83,21 +83,21 @@ end
 Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 """
 function RBExtBy2Array( et::Type, g::Grid{T, N, :Cylindrical} )::Array{et, N + 1} where {T, N}
-    nr, nθ, nz = size(g)
-    # new ordering in memory: r, θ, z -> z, θ, r (so inner loop goes over z)
-    return zeros(T, div(nz, 2) + mod(nz, 2) + 2, nθ + 2, nr + 2, 2)
+    nr, nφ, nz = size(g)
+    # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
+    return zeros(T, div(nz, 2) + mod(nz, 2) + 2, nφ + 2, nr + 2, 2)
 end
 function RBExtBy2Array( a::Array{T, N}, grid::Grid{TG, N, :Cylindrical} )::Array{T, N + 1} where {T, N, TG}
     rbarray::Array{T, N + 1} = RBExtBy2Array(T, grid)
     for iz in axes(a, 3)
         irbz::Int = rbidx(iz) 
-        for iθ in axes(a, 2)
-            irbθ::Int = iθ + 1
-            idxsum::Int = iz + iθ
+        for iφ in axes(a, 2)
+            irbφ::Int = iφ + 1
+            idxsum::Int = iz + iφ
             for ir in axes(a, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                rbarray[ irbz, irbθ, irbr, rbi ] = a[ir, iθ, iz]
+                rbarray[ irbz, irbφ, irbr, rbi ] = a[ir, iφ, iz]
             end
         end
     end
