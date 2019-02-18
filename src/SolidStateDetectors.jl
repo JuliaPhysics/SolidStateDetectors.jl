@@ -25,7 +25,7 @@ import Tables
 import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
-import Base: show, print, println, display, +
+import Base: show, print, println, display, +, -, &
 
 
 const SSD = SolidStateDetectors; export SSD
@@ -41,17 +41,18 @@ export calculate_electric_potential, calculate_weighting_potential, get_active_v
 export generate_charge_signals!, generate_charge_signals
 
 
+include("Geometries/Geometries.jl")
+
 include("Axes/DiscreteAxis.jl")
 include("Grids/Grids.jl")
+
 include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
-include("Geometries/Geometries.jl")
 include("Config/Config.jl")
 include("DetectorGeometries/DetectorGeometries.jl")
 include("GeometryRounding.jl")
 
-include("Config/Config.jl")
 include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")

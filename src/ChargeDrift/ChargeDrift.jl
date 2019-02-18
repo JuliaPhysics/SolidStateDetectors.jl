@@ -42,7 +42,8 @@ function drift_charge!(
                     @show crossing_pos_cyl,crossing_pos_type, boundary_index
                     @show typeof(crossing_pos_cyl)
                     @show typeof(pos_cyl)
-                    throw(ErrorException("Internal error"))
+                    # throw(ErrorException("Internal error"))
+                    @warn ("Internal error")
                 end
             end
         elseif done == true

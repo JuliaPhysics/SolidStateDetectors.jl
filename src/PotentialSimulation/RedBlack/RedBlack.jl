@@ -17,7 +17,7 @@ end
 """
     nidx( rbidx::Int, ::Val{true}, ::Val{true})::Int
 
-first type argument:  type of the original point (for even points -> `Val{true}()`, else `Val{false}()`)
+first type argument:  type of the orgal point (for even points -> `Val{true}()`, else `Val{false}()`)
 second type argument: is sum of other point indices even or odd -> (if sum is even -> `Val{true}()`, else `Val{false}()`)
 """
 @inline function nidx( rbidx::Int, ::Val{true}, ::Val{true})::Int
