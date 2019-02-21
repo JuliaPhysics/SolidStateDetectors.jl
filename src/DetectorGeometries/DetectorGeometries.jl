@@ -150,7 +150,7 @@ end
 
 function construct_segmentation_arrays_from_repetitive_segment(d::SolidStateDetector{T}, config_file::Dict)::Nothing where {T <: AbstractFloat}
     n_total_segments::Int = d.n_total_contacts
-    f = d.geometry_unit_factor
+    f::T = d.geometry_unit_factor
     segmentation_r_ranges::Array{Tuple{T,T},1}= []
     segmentation_phi_ranges::Array{Tuple{T,T},1} = []
     segmentation_z_ranges::Array{Tuple{T,T},1} = []
@@ -181,7 +181,7 @@ function construct_segmentation_arrays_from_repetitive_segment(d::SolidStateDete
     n_horizontal_repetitions = config_file["segmentation"]["repetitive_segment"]["repetitions"]["horizontal"]
     for v_rseg in 0 : n_vertical_repetitions-1
             for h_rseg in 0 : n_horizontal_repetitions-1
-                    push!(segmentation_r_ranges, (rStart,rStop))
+                    push!(segmentation_r_ranges, geom_round.(rStart, rStop))
                     h_offset::T = h_rseg*(phiStop-phiStart + boundaryWidth_horizontal)
                     push!(segmentation_phi_ranges,(phiStart+h_offset,phiStop+h_offset))
                     push!(segmentation_boundaryMidpoints_horizontal,phiStart+h_offset-boundaryWidth_horizontal/2)
@@ -272,7 +272,7 @@ function construct_segmentation_arrays_for_individual_segments(d::SolidStateDete
                     end
                 end
             else
-                push!(segmentation_r_ranges, (rStart,rStop))
+                push!(segmentation_r_ranges, (geom_round(T(rStart)),geom_round(T(rStop))))
                 push!(segmentation_phi_ranges,(phiStart,phiStop))
                 push!(segmentation_z_ranges,(zStart,zStop))
                 push!(segmentation_types,seg_type)
@@ -284,9 +284,9 @@ function construct_segmentation_arrays_for_individual_segments(d::SolidStateDete
             end
 
     end
-    d.segmentation_r_ranges   = segmentation_r_ranges
-    d.segmentation_phi_ranges = segmentation_phi_ranges
-    d.segmentation_z_ranges   = segmentation_z_ranges
+    d.segmentation_r_ranges   = [ (geom_round(T(rs[1])), geom_round(T(rs[2]))) for rs in segmentation_r_ranges ]
+    d.segmentation_phi_ranges = [ (geom_round(T(rs[1])), geom_round(T(rs[2]))) for rs in segmentation_phi_ranges ]
+    d.segmentation_z_ranges   = [ (geom_round(T(rs[1])), geom_round(T(rs[2]))) for rs in segmentation_z_ranges ]
     d.segmentation_types      = segmentation_types
     d.segment_bias_voltages = segment_bias_voltages
     d.segmentation_boundaryMidpoints_radial = segmentation_boundaryMidpoints_radial
@@ -818,6 +818,9 @@ end
 # end
 function is_boundary_point(d::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{T}, φs::Vector{T}, zs::Vector{T}) where T <:AbstractFloat
     rv::Bool = false
+    r = geom_round(r)
+    φ = geom_round(φ)
+    z = geom_round(z)
     if φ < 0
         φ += d.cyclic
     end
