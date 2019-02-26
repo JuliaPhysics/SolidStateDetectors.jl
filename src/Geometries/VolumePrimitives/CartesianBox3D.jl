@@ -15,14 +15,14 @@ end
 
 @inline in(pt::CylindricalPoint, g::CartesianBox3D)::Bool = in(CartesianPoint(pt), g)
 
-function CartesianBox3D{T}(dict::Dict{String, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: AbstractFloat}
+function CartesianBox3D{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: AbstractFloat}
     return CartesianBox3D{T}(
         (geom_round(ustrip(uconvert(u"m", T(dict["xStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["xStop"]) * inputunit)))),
         (geom_round(ustrip(uconvert(u"m", T(dict["yStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["yStop"]) * inputunit)))),
         (geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))))  )
 end
 
-function Geometry(T::DataType, t::Val{:CartesianBox3D}, dict::Dict{String, Any}, inputunit::Unitful.Units)
+function Geometry(T::DataType, t::Val{:CartesianBox3D}, dict::Dict{Any, Any}, inputunit::Unitful.Units)
     return CartesianBox3D{T}(dict, inputunit)
 end
 

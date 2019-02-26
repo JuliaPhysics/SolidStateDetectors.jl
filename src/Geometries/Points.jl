@@ -45,3 +45,28 @@ const AnyPoint{T} = Union{ # this should be removed -> AbstractCoordinatePoint{T
     CartesianPoint{T},
     CylindricalPoint{T}
 }
+
+
+function convert(type::Type{CylindricalPoint}, origin::SolidStateDetectors.CartesianPoint{T})::CylindricalPoint{T} where T
+    return CylindricalPoint(origin)
+end
+
+function convert(type::Type{CartesianPoint}, origin::SolidStateDetectors.CylindricalPoint{T})::CartesianPoint{T} where T
+    return CartesianPoint(origin)
+end
+
+@recipe function f(p::CylindricalPoint)
+    @series begin
+        CartesianPoint(p)
+    end
+end
+@recipe function f(p::CartesianPoint)
+    st -> :scatter
+    @series begin
+        [p.x], [p.y], [p.z]
+    end
+end
+
+##aliases for ease of use
+cyp = CylindricalPoint
+cap = CartesianPoint

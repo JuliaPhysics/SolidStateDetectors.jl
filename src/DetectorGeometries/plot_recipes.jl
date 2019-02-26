@@ -1,5 +1,5 @@
 
-@recipe function f( d::InvertedCoax, dim::Symbol;
+@recipe function f(::Val{:InvertedCoax}, dim::Symbol;
                     r=missing,
                     φ=missing,
                     z=missing,
@@ -45,7 +45,7 @@
     end
 end
 
-@recipe function f( d::BEGe, dim::Symbol;
+@recipe function f(::Val{:BEGe}, dim::Symbol;
                     r=missing,
                     φ=missing,
                     z=missing,
@@ -102,7 +102,7 @@ end
 function add_point!(points_to_connect::AbstractVector{<:SVector{2,T}},x::T,y::T) where T <: Real
     push!(points_to_connect,SVector{2,T}(x,y))
 end
-@recipe function f(c::Coax)
+@recipe function f(::Val{:Coax})
     size:=(800,800)
     linewidth:=2
     linecolor:=:black
@@ -168,7 +168,7 @@ function outer_taper(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
     return outer_taper{typeof(rStart)}(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
 end
 
-@recipe function f(b::InvertedCoax; coloring=[], labeling=[])
+@recipe function f(::Val{:InvertedCoax}; coloring=[], labeling=[])
     if b.name =="ExampleInvertedCoax"
         coloring = [:blue, :orange, :orange, :orange, :orange, :orange, :orange, :orange]
         labeling = ["Core", "Mantle", "", "", "", "", "", ""]
@@ -235,7 +235,7 @@ end
     end
 end
 
-@recipe function f(b::BEGe; coloring=[], labeling=[])
+@recipe function f(::Val{:BEGe}; coloring=[], labeling=[])
     if b.name =="ExampleSegmentedBEGe"
         coloring = [:blue, :red, :purple, :orange, :purple, :grey, :purple,
                             :red, :purple, :orange, :purple, :grey, :purple,
@@ -283,105 +283,105 @@ end
         end
     end
 end
-
-@recipe function f(Vol::Tubs{T}) where T<:AbstractFloat
-
-    @series begin
-        partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
-    end
-    @series begin
-        label:= ""
-        partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
-    end
-    @series begin
-        label:= ""
-        partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
-    end
-    @series begin
-        label:= ""
-        partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
-    end
-    ## Vertical Lines
-
-    if !iszero(Vol.rStart)
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStart,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
-        end
-    end
-    if !iszero(Vol.rStart)
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStart,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
-        end
-    end
-    @series begin
-        label:= ""
-        line_3d(Vol.rStop,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
-    end
-    @series begin
-        label:= ""
-        line_3d(Vol.rStop,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
-    end
-
-    ##Horizontal Lines
-
-    if !isapprox((Vol.φStop - Vol.φStart)%2π , 0.0,atol=0.00001)
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStart)
-        end
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStart)
-        end
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStop,Vol.zStop)
-        end
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStop,Vol.zStop)
-        end
-    end
-end
-
-@recipe function f(o::outer_taper,n_aux_lines =0)
-    if o.orientation=="c//"
-        @series begin
-            line_3d(o.rStop,o.rStart,o.φStart,o.φStart,o.zStart,o.zStop)
-        end
-        @series begin
-            line_3d(o.rStop,o.rStart,o.φStop,o.φStop,o.zStart,o.zStop)
-        end
-        for ia in 0:n_aux_lines
-            @series begin
-                line_3d(o.rStop,o.rStart,o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.zStart,o.zStop)
-            end
-        end
-    end
-end
-
-function connect_points()
-    nothing
-end
+#
+# @recipe function f(Vol::Tubs{T}) where T<:AbstractFloat
+#
+#     @series begin
+#         partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
+#     end
+#     @series begin
+#         label:= ""
+#         partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
+#     end
+#     @series begin
+#         label:= ""
+#         partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
+#     end
+#     @series begin
+#         label:= ""
+#         partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
+#     end
+#     ## Vertical Lines
+#
+#     if !iszero(Vol.rStart)
+#         @series begin
+#             label:= ""
+#             line_3d(Vol.rStart,Vol.rStart,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
+#         end
+#     end
+#     if !iszero(Vol.rStart)
+#         @series begin
+#             label:= ""
+#             line_3d(Vol.rStart,Vol.rStart,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
+#         end
+#     end
+#     @series begin
+#         label:= ""
+#         line_3d(Vol.rStop,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
+#     end
+#     @series begin
+#         label:= ""
+#         line_3d(Vol.rStop,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
+#     end
+#
+#     ##Horizontal Lines
+#
+#     if !isapprox((Vol.φStop - Vol.φStart)%2π , 0.0,atol=0.00001)
+#         @series begin
+#             label:= ""
+#             line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStart)
+#         end
+#         @series begin
+#             label:= ""
+#             line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStart)
+#         end
+#         @series begin
+#             label:= ""
+#             line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStop,Vol.zStop)
+#         end
+#         @series begin
+#             label:= ""
+#             line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStop,Vol.zStop)
+#         end
+#     end
+# end
+#
+# @recipe function f(o::outer_taper,n_aux_lines =0)
+#     if o.orientation=="c//"
+#         @series begin
+#             line_3d(o.rStop,o.rStart,o.φStart,o.φStart,o.zStart,o.zStop)
+#         end
+#         @series begin
+#             line_3d(o.rStop,o.rStart,o.φStop,o.φStop,o.zStart,o.zStop)
+#         end
+#         for ia in 0:n_aux_lines
+#             @series begin
+#                 line_3d(o.rStop,o.rStart,o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.zStart,o.zStop)
+#             end
+#         end
+#     end
+# end
+#
+# function connect_points()
+#     nothing
+# end
 
 function mylinspace(Start,Stop,nSteps)
     return collect(Start:(Stop-Start)/nSteps:Stop)
 end
 
-function partialcircle_3d(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
-    phirange = mylinspace(phiStart,phiStop,nSteps)
-
-    x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
-    y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
-    # z::Vector{AbstractFloat}=[Translate[3] for i in 1:nSteps]
-    z::Vector{AbstractFloat}=map(x->Translate[3],phirange)
-    x.+=Translate[1]
-    y.+=Translate[2]
-
-    return x,y,z
-end
+# function partialcircle_3d(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
+#     phirange = mylinspace(phiStart,phiStop,nSteps)
+#
+#     x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
+#     y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
+#     # z::Vector{AbstractFloat}=[Translate[3] for i in 1:nSteps]
+#     z::Vector{AbstractFloat}=map(x->Translate[3],phirange)
+#     x.+=Translate[1]
+#     y.+=Translate[2]
+#
+#     return x,y,z
+# end
 
 function partialcircle(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
     phirange = mylinspace(phiStart,phiStop,nSteps)
@@ -396,4 +396,21 @@ function line_3d(r1,r2,phi1,phi2,z1,z2)
     x1::Vector = [r1*cos(phi1),r1*sin(phi1),z1]
     x2::Vector = [r2*cos(phi2),r2*sin(phi2),z2]
     return [x1[1],x2[1]] , [x1[2],x2[2]], [x1[3],x2[3]]
+end
+
+@recipe function f(contact::AbstractContact{T}) where T
+    c-->:orange
+    for g in contact.geometry
+        @series begin
+            g
+        end
+    end
+end
+
+@recipe function f(c::SolidStateDetector{T}) where T
+    for contact in c.contacts
+        @series begin
+            contact
+        end
+    end
 end

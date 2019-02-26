@@ -12,6 +12,7 @@ using ArraysOfArrays
 using Interpolations
 using IntervalSets
 using JSON
+using YAML
 using LaTeXStrings
 using ParallelProcessingTools
 using ProgressMeter
@@ -26,6 +27,7 @@ import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
 import Base: show, print, println, display, +, -, &
+import Base.convert
 
 
 const SSD = SolidStateDetectors; export SSD
@@ -40,6 +42,10 @@ export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, Wei
 export calculate_electric_potential, calculate_weighting_potential, get_active_volume
 export generate_charge_signals!, generate_charge_signals
 
+## temporary exports for easier debugging
+export cyp,cap # CylindricalPoint, CartesianPoint
+export is_surface_point
+export point_type
 
 include("Geometries/Geometries.jl")
 

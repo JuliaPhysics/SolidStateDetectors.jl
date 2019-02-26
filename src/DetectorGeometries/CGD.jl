@@ -34,17 +34,11 @@ function CGD{T}(config_file::Dict)::CGD where {T <: AbstractFloat}
     config_file["class"] != "CGD" ? error() : nothing
     det::CGD = CGD{T}()
     det.name = config_file["name"]
-    unit_conversion = Dict{String, Unitful.Units}( "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m")
     det.geometry_unit = unit_conversion[config_file["unit"]]
     materials = Dict("HPGe" => :HPGe, "Vacuum" => :Vacuum)
     det.material_detector = material_properties[materials[config_file["materials"]["detector"]]]
     det.material_environment = material_properties[materials[config_file["materials"]["environment"]]]
-    bulk_types = Dict{Any, Symbol}( "n" => :ntype,
-        "n-type" => :ntype,
-        "ntype" => :ntype,
-        "p-type" => :ptype,
-        "ptype" => :ptype,
-        "p" => :ptype  )
+
     det.bulk_type = bulk_types[ config_file["crystal"]["type"] ]
 
     det.bulk_geometry = Geometry(T, config_file["crystal"]["geometry"], det.geometry_unit )

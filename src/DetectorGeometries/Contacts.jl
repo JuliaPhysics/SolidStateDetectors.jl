@@ -22,6 +22,18 @@ get_contact_type(c::Contact{T, D}) where {T <: AbstractFloat, D} = D
 end
 
 
-function Contact{T, D}(dict::Dict{String, Any}, inputunit::Unitful.Units)::Contact{T, D} where {T <: AbstractFloat, D}
-    return Contact{T, D}( dict["potential"], dict["id"], dict["name"], Geometry(T, dict["geometry"], inputunit ) )
+function Contact{T, D}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Contact{T, D} where {T <: AbstractFloat, D}
+    return Contact{T, D}( dict["potential"], dict["channel"], dict["name"], Geometry(T, dict["geometry"], inputunit ) )
+end
+
+function in(p::CylindricalPoint{T}, c::Contact{T}, rs::Vector{T}) where T
+    rv = false
+    for g in c.geometry
+        if typeof(g) == ConeMantle{T}
+            in(p, g, rs) ? rv = true : nothing
+        else
+            (p in g) ? rv = true : nothing
+        end
+    end
+    return rv
 end
