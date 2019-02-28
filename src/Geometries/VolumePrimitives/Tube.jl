@@ -43,21 +43,21 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Tube{T} where 
     Interval(geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))))  )
 end
 
-function Geometry(T::DataType, t::Val{:Tube}, dict::Dict{Any, Any}, inputunit::Unitful.Units)
-    return Tube{T}(dict, inputunit)
+function Geometry(T::DataType, t::Val{:Tube}, dict::Dict{Union{Any,String}, Any}, inputunit::Unitful.Units)
+    return Tube{T}(Dict{Any,Any}(dict), inputunit)
 end
 
 function in(point::CartesianPoint{T}, tube::Tube{T}) where T
     point = convert(CylindricalPoint,point)
     if point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
-        return true 
+        return true
     end
     return false
 end
 
 function in(point::CylindricalPoint{T}, tube::Tube{T}) where T
     if point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
-        return true 
+        return true
     end
     return false
 end
