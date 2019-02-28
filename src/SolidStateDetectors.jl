@@ -12,13 +12,13 @@ using ArraysOfArrays
 using Interpolations
 using IntervalSets
 using JSON
-using YAML
 using LaTeXStrings
 using ParallelProcessingTools
 using ProgressMeter
 using RecipesBase
 using StaticArrays
 using Unitful
+using YAML
 
 import Clustering
 import Distributions
