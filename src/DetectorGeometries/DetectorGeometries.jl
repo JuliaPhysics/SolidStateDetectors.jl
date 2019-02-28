@@ -31,7 +31,7 @@ get_precision_type(d::SolidStateDetector{T}) where {T} = T
 
 Reads in a config-JSON file and returns an Detector struct which holds all information specified in the config file.
 """
-function parse_config_file(filename::AbstractString)::Dict
+function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     if endswith(filename, ".toml")
         error("currently only .json and .yaml files are supported. We intend to add .toml support in the near future")
     elseif endswith(filename, ".json")
@@ -45,16 +45,20 @@ function parse_config_file(filename::AbstractString)::Dict
     parsed_dict
 end
 
-function yaml2json(filename)
+function yaml2json_convert(filename::String)
     data = YAML.load(open(filename))
     open(replace(filename, ".yaml" => ".json"),"w") do f
             JSON.print(f, data, 4)
     end
 end
-function yaml2json(directory)
-    yamlfiles = glob("*.yaml", "directory")
-    for filename in yamlfiles
-        yaml2json(filename)
+function yaml2json(directory::String)# or filename
+    if endswith(directory, ".yaml")
+        yaml2json_convert(directory)
+    else
+        yamlfiles = filter(x->endswith(x,".yaml"),readdir(directory))
+        for filename in yamlfiles
+            yaml2json_convert(filename)
+        end
     end
 end
 
@@ -240,8 +244,7 @@ function json_to_dict(inputfile::String)::Dict
     end
     return parsed_json_file
 end
-function bounding_box(d::SolidStateDetector)
-    T = get_precision_type(d)
+function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
     (
     r_range = ClosedInterval{T}(0.0,d.crystal_radius),
     φ_range = ClosedInterval{T}(0.0,2π),

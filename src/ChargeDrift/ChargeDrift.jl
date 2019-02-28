@@ -653,8 +653,7 @@ function find_intersection(sl1::StraightLine,sl2::StraightLine)
     end
 end
 
-function generate_random_startpositions(d::SolidStateDetector, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(),min_dist_from_boundary = 2e-3)
-    T=get_precision_type(d)
+function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = T(2e-3)) where T
     delta = T(min_dist_from_boundary)
     n_filled::Int = 0
     positions = Vector{CartesianPoint{T}}(undef,n)

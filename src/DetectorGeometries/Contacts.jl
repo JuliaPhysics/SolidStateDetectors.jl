@@ -9,21 +9,19 @@ D: `:N` for n- and `:P` for p-contacts.
 """
 mutable struct Contact{T, D} <: AbstractContact{T}
     potential::T
-    id::Int 
+    id::Int
     name::String
     geometry::Vector{AbstractGeometry{T}}
 end
 
-get_contact_type(c::Contact{T, D}) where {T <: AbstractFloat, D} = D 
+get_contact_type(c::Contact{T, D}) where {T <: AbstractFloat, D} = D
 
+function Contact{T, D}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, inputunit::Unitful.Units)::Contact{T, D} where {T <: AbstractFloat, D}
+    return Contact{T, D}( dict["potential"], dict["channel"], dict["name"], Geometry(T, dict["geometry"], inputunit ) )
+end
 
 @inline function in(pt::StaticVector{3, T}, c::Contact{T})::Bool where {T}
     return in(pt, c.geometry)
-end
-
-
-function Contact{T, D}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Contact{T, D} where {T <: AbstractFloat, D}
-    return Contact{T, D}( dict["potential"], dict["channel"], dict["name"], Geometry(T, dict["geometry"], inputunit ) )
 end
 
 function in(p::CylindricalPoint{T}, c::Contact{T}, rs::Vector{T}) where T
@@ -33,6 +31,16 @@ function in(p::CylindricalPoint{T}, c::Contact{T}, rs::Vector{T}) where T
             in(p, g, rs) ? rv = true : nothing
         else
             (p in g) ? rv = true : nothing
+        end
+    end
+    return rv
+end
+
+function in(p::CylindricalPoint{T}, v::AbstractVector{<:AbstractContact{T}}) where T
+    rv = false
+    for contact in v
+        if p in contact
+            rv = true
         end
     end
     return rv
