@@ -5,5 +5,5 @@
 
 
 function Geometry(T::DataType, geometries::Vector, inputunit::Unitful.Units)#::AbstractGeometry{T} where {T <: AbstractFloat}
-    return [Geometry(T, Val{Symbol(geometry["type"])}(), geometry, inputunit) for geometry in geometries]
+    return [Geometry(T, Val{Symbol(geometry["type"])}(), Dict{Any,Any}(geometry)::Union{Dict{String,Any},Dict{Any,Any}}, inputunit) for geometry in geometries]
 end
