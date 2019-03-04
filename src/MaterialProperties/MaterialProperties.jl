@@ -47,6 +47,6 @@ material_properties[:LAr] = (
 
 material_properties[:Co] = (
     name = "Copper",
-    ϵ_r = 9999999999,
+    ϵ_r = 20,
     ρ = 8.96Unitful.g / (Unitful.ml), # u"g/cm^3" throws warnings in precompilation
 )
