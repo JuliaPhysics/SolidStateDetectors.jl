@@ -55,11 +55,11 @@
                             "type": "Tube",
                             "name": "test external part",
                             "rStart": 0.0,
-                            "rStop": 60.0,
+                            "rStop": 20.0,
                             "phiStart": 0.0,
                             "phiStop": 360.0,
                             "zStart": 42.0,
-                            "zStop": 60.0
+                            "zStop": 43.0
                         }
                     ]
                 
