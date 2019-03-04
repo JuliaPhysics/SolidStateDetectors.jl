@@ -320,7 +320,7 @@ function Grid(  detector::SolidStateDetector{T};
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
     # r
-    int_r = Interval{:closed, :closed, T}(0, width(detector.world.r_interval) + 3 * init_grid_spacing[1])
+    int_r = Interval{:closed, :closed, T}(0, width(detector.world.r_interval) * init_grid_spacing[1])
     ax_r::DiscreteAxis{T, :r0, :infinite} = DiscreteAxis{:r0, :infinite}(int_r, step = init_grid_spacing[1])
     rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
     ax_r = DiscreteAxis{T, :r0, :infinite}(int_r, rticks)
@@ -358,7 +358,7 @@ function Grid(  detector::SolidStateDetector{T};
     end
 
     #z
-    int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], width(detector.world.z_interval) + 3 * init_grid_spacing[3])
+    int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], width(detector.world.z_interval) * init_grid_spacing[3])
     ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3])
     zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
     ax_z = typeof(ax_z)(int_z, zticks)
