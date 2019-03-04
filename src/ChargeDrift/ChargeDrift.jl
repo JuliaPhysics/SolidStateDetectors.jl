@@ -38,8 +38,8 @@ function drift_charge!(
                 elseif crossing_pos_type == :floating_boundary
                     # println("outch")
                     # println(crossing_pos_cyl)
-                    # stepvector = getvelocityvector(velocity_field, crossing_pos_cyl) * delta_t
-                    stepvector = getvelocityvector(velocity_field, CylindricalPoint{T}(drift_path[istep-2]...)) * delta_t
+                    stepvector = getvelocityvector(velocity_field, crossing_pos_cyl) * delta_t
+                    # stepvector = getvelocityvector(velocity_field, CylindricalPoint{T}(drift_path[istep-2]...)) * delta_t
                     # projected_vector = project_to_plane(stepvector, get_fb_plane(crossing_pos_cyl, drift_path[istep-2], drift_path[istep-1]).n⃗)
                     projected_vector = project_to_plane(stepvector, is_surface_point(det,crossing_pos_cyl)[2] )
                     # drift_path[istep-1] = CartesianPoint(crossing_pos_cyl)
