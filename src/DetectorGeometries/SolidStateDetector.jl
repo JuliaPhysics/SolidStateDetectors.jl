@@ -14,7 +14,7 @@ mutable struct SolidStateDetector{T<:AbstractFloat} <: AbstractConfig{T}
     charge_carrier_density_top::T
     charge_carrier_density_bot::T
 
-    world::Vector{AbstractGeometry{T}}
+    world::AbstractGeometry{T}
 
     external_parts::Vector{AbstractContact{T}}
 
@@ -49,7 +49,7 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T
     c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
 
     c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
-    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)
+    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[1]
 
     # c.external_parts = []
     # haskey(config_file["geometry"],"external") ? external_parts = config_file["geometry"]["external"] : external_parts = []

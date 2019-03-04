@@ -20,13 +20,12 @@
                     "type": "Tube",
                     "pol": "positive",
                     "rStart": 0.0,
-                    "rStop": 39.5,
+                    "rStop": 45.5,
                     "phiStart": 0.0,
                     "phiStop": 360.0,
-                    "zStart": 0.0,
-                    "zStop": 40.0
-                }
-            ]
+                    "zStart": -15.0,
+                    "zStop": 55.0
+                }]
 
         },
         "crystal": {
