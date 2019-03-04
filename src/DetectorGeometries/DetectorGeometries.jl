@@ -231,6 +231,14 @@ function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tup
         ρ::T = get_charge_density(ssd, pt.r, pt.φ, pt.z) * elementary_charge
         ϵ::T = ssd.material_detector.ϵ_r
         return ρ, ϵ
+    elseif in(pt,ssd.external_parts)
+        for ep in ssd.external_parts
+            if pt in ep
+                ρ = 0
+                ϵ = ep.material.ϵ_r
+            end
+        end
+        return ρ, ϵ
     else
         ρ = 0
         ϵ = ssd.material_environment.ϵ_r
@@ -312,7 +320,7 @@ function Grid(  detector::SolidStateDetector{T};
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
     # r
-    int_r = Interval{:closed, :closed, T}(0, detector.crystal_radius + 3 * init_grid_spacing[1])
+    int_r = Interval{:closed, :closed, T}(0, width(detector.world.r_interval) + 3 * init_grid_spacing[1])
     ax_r::DiscreteAxis{T, :r0, :infinite} = DiscreteAxis{:r0, :infinite}(int_r, step = init_grid_spacing[1])
     rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
     ax_r = DiscreteAxis{T, :r0, :infinite}(int_r, rticks)
@@ -350,7 +358,7 @@ function Grid(  detector::SolidStateDetector{T};
     end
 
     #z
-    int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], detector.crystal_length + 3 * init_grid_spacing[3])
+    int_z = Interval{:closed, :closed, T}( -3 * init_grid_spacing[3], width(detector.world.z_interval) + 3 * init_grid_spacing[3])
     ax_z = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3])
     zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
     ax_z = typeof(ax_z)(int_z, zticks)
