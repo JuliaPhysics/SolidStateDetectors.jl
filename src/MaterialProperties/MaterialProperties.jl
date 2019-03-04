@@ -6,6 +6,11 @@ const ϵ0  = Float64(8.8541878176e-12)
 
 const material_properties = Dict{Symbol, NamedTuple}()
 
+materials = Dict( "HPGe" => :HPGe,
+                  "Vacuum" => :Vacuum,
+                  "Copper" => :Co
+)
+
 material_properties[:Vacuum] = (
     E_ionisation = 0.0u"eV",
     f_fano = 0.0,

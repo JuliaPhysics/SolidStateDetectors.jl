@@ -6,8 +6,7 @@
 abstract type CGD{T <: AbstractFloat} <: AbstractConfig{T} end
 # abstract type SolidStateDetector{T <: AbstractFloat} <: AbstractConfig{T} end
 
-materials = Dict("HPGe" => :HPGe,
-    "Vacuum" => :Vacuum)
+
 
 bulk_types = Dict("n" => :ntype,
     "n-type" => :ntype,
