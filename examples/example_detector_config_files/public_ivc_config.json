@@ -47,10 +47,10 @@
                 "negative": [
                     {
                         "type": "Cone",
-                        "pol": "negative",
+                        "pol": "positive",
                         "orientation": "tr",
-                        "rStart": 24.4201,
-                        "rStop": 35.0001,
+                        "rStart": 24.420,
+                        "rStop": 35.000,
                         "phiStart": 0.0,
                         "phiStop": 360.0,
                         "zStart": 20.0001,
@@ -58,7 +58,7 @@
                     },
                     {
                         "type": "Tube",
-                        "pol": "negative",
+                        "pol": "positive",
                         "rStart": -0.0001,
                         "rStop": 5.0,
                         "phiStart": 0.0,

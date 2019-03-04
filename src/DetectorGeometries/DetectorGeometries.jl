@@ -147,12 +147,18 @@ end
 
 function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Symbol,Int} where T
     for contact in c.contacts
-        if geom_round(p) in contact
+        if p in contact || geom_round(p) in contact || in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs) 
             return :electrode, contact.id
         end
     end
-    if is_surface_point(c,p)
-        return :floating_boundary, 0
+    if is_surface_point(c,p)[1] 
+        for contact in c.contacts
+            if in(go_to_nearest_gridpoint(c,p), contact, c.rs) 
+                return :electrode, contact.id
+            else
+                return :floating_boundary, 0
+            end
+        end    
     elseif !(p in c)
         return :outside, -1
     else
@@ -160,19 +166,49 @@ function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Sym
     end
 end
 
-function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Bool where T
+function go_to_nearest_gridpoint(d::SolidStateDetector{T}, p::CylindricalPoint{T})::CylindricalPoint{T} where T
+    CylindricalPoint{T}(d.rs[searchsortednearest(d.rs,p.r)],d.φs[searchsortednearest(d.φs,p.φ)],d.zs[searchsortednearest(d.zs,p.z)])
+end
+
+# function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Bool where T
+#     if !(p in c)
+#         return false
+#     elseif !(
+#         CylindricalPoint{T}(prevfloat(p.r),p.φ,p.z) in c
+#         && CylindricalPoint{T}(nextfloat(p.r),p.φ,p.z) in c
+#         && CylindricalPoint{T}(p.r,prevfloat(p.φ),p.z) in c
+#         && CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c
+#         && CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c
+#         && CylindricalPoint{T}(p.r,p.φ,nextfloat(p.z)) in c)
+#         return true
+#     else
+#         return false
+#     end
+# end
+
+function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Bool,CartesianPoint{T}} where T
     if !(p in c)
-        return false
-    elseif !(
-        CylindricalPoint{T}(prevfloat(p.r),p.φ,p.z) in c
-        && CylindricalPoint{T}(nextfloat(p.r),p.φ,p.z) in c
-        && CylindricalPoint{T}(p.r,prevfloat(p.φ),p.z) in c
-        && CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c
-        && CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c
-        && CylindricalPoint{T}(p.r,p.φ,nextfloat(p.z)) in c)
-        return true
+        return false, CartesianPoint{T}(0.0,0.0,0.0)
+    end
+    n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
+    look_around::Vector{Bool} = [CylindricalPoint{T}(prevfloat(p.r),p.φ,p.z) in c,
+        CylindricalPoint{T}(nextfloat(p.r),p.φ,p.z) in c,
+        CylindricalPoint{T}(p.r,prevfloat(p.φ),p.z) in c,
+        CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c, 
+        CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c, 
+        CylindricalPoint{T}(p.r,p.φ,nextfloat(p.z)) in c]
+    if !(false in look_around)
+        return false , CartesianPoint{T}(n...)
     else
-        return false
+        look_around[1]==false ? n[1] -= 1 : nothing
+        look_around[2]==false ? n[1] += 1 : nothing
+        look_around[3]==false ? n[2] -= 1 : nothing
+        look_around[4]==false ? n[2] += 1 : nothing
+        look_around[5]==false ? n[3] -= 1 : nothing
+        look_around[6]==false ? n[3] += 1 : nothing 
+        # println(look_around , " " , n)
+        Rα::SMatrix{3,3,T} = @SArray([cos(p.φ) -1*sin(p.φ) 0;sin(p.φ) cos(p.φ) 0;0 0 1])
+        return true, geom_round(CartesianPoint((Rα * n)...))
     end
 end
 
@@ -196,11 +232,18 @@ function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tup
         return ρ, ϵ
     end
 end
+
+function write_grid_to_detector(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical}) where {T}
+    ssd.rs = grid[:r].ticks 
+    ssd.φs = grid[:φ].ticks
+    ssd.zs = grid[:z].ticks
+end
+
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
-        ssd.grouped_channels[weighting_potential_contact_id]
+        [weighting_potential_contact_id]
     else
         Int[]
     end
@@ -208,6 +251,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
     axr::Vector{T} = grid[:r].ticks
     axφ::Vector{T} = grid[:φ].ticks
     axz::Vector{T} = grid[:z].ticks
+
     for iz in axes(potential, 3)
         z::T = axz[iz]
         for iφ in axes(potential, 2)
@@ -220,7 +264,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                     pot::T = if ismissing(weighting_potential_contact_id)
                         boundary_potential
                     else
-                        in(contact_id == weighting_potential_contact_id) ? 1 : 0
+                        contact_id == weighting_potential_contact_id ? 1 : 0
                     end
                     potential[ ir, iφ, iz ] = pot
                     pointtypes[ ir, iφ, iz ] = zero(PointType)

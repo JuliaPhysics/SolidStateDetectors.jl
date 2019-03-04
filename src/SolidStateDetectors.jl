@@ -46,6 +46,11 @@ export generate_charge_signals!, generate_charge_signals
 export cyp,cap # CylindricalPoint, CartesianPoint
 export is_surface_point
 export point_type
+export geom_round
+export CylindricalPoint
+export CartesianPoint
+export getvelocityvector
+export get_crossing_pos
 
 include("Geometries/Geometries.jl")
 

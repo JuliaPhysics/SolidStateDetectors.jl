@@ -16,11 +16,12 @@ function drift_charge!(
     drift_path[1] = startpos
     for istep in eachindex(drift_path)[2:end]
         if done == false
-            pos_cyl = CylindricalPoint(CartesianPoint{T}(drift_path[istep-1])) # update pos_cyl
+            pos_cyl = geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]))) # update pos_cyl
             if pos_cyl in det
                 stepvector = getvelocityvector(velocity_field, pos_cyl) * delta_t
                 drift_path[istep] = drift_path[istep-1] + stepvector
                 stepvector == stepvector_ref ? done = true : nothing
+                stepvector == stepvector_ref ? drifttime = delta_t * (istep-1) : nothing
                 # stepvector == stepvector_ref ? println(pos_cyl) : nothing
             elseif istep < 3
                 done = true
@@ -35,15 +36,31 @@ function drift_charge!(
                     drift_path[istep-1] = CartesianPoint(crossing_pos_cyl)
                     drift_path[istep] = drift_path[istep-1]
                 elseif crossing_pos_type == :floating_boundary
-                    stepvector = getvelocityvector(velocity_field, crossing_pos_cyl) * delta_t
-                    projected_vector = project_to_plane(stepvector, get_fb_plane(crossing_pos_cyl, drift_path[istep-2], drift_path[istep-1]).n⃗)
-                    drift_path[istep-1] = CartesianPoint(crossing_pos_cyl)
-                    drift_path[istep] = drift_path[istep-1] + projected_vector
+                    # println("outch")
+                    # println(crossing_pos_cyl)
+                    # stepvector = getvelocityvector(velocity_field, crossing_pos_cyl) * delta_t
+                    stepvector = getvelocityvector(velocity_field, CylindricalPoint{T}(drift_path[istep-2]...)) * delta_t
+                    # projected_vector = project_to_plane(stepvector, get_fb_plane(crossing_pos_cyl, drift_path[istep-2], drift_path[istep-1]).n⃗)
+                    projected_vector = project_to_plane(stepvector, is_surface_point(det,crossing_pos_cyl)[2] )
+                    # drift_path[istep-1] = CartesianPoint(crossing_pos_cyl)
+                    # drift_path[istep] = drift_path[istep-1] + projected_vector
+
+                    drift_path[istep-1] = drift_path[istep-2]+ projected_vector
+                    increment::T=2.0
+                    while !(in(geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]...))), det)) && increment < 500
+                        # println(crossing_pos_cyl)
+                        drift_path[istep-1] = drift_path[istep-2]+ 1.0/increment * projected_vector                   
+                        # println(drift_path[istep-1])
+                        increment+=1
+                    end
+                    drift_path[istep] = drift_path[istep-1] + projected_vector 
                 else
                     @show crossing_pos_cyl,crossing_pos_type, boundary_index
                     @show typeof(crossing_pos_cyl)
                     @show typeof(pos_cyl)
-                    @warn ("Internal error")
+                    @warn ("Internal error for charge stating at $startpos")
+                    drift_path[istep] = drift_path[istep-1]
+                    done = true
                 end
             end
         elseif done == true
@@ -52,7 +69,6 @@ function drift_charge!(
     end
     drifttime
 end
-
 
 function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T}, point_out::SVector{3,T}; dig::Int=6, max_n_iter::Int=2000) where T <:Real
     T==Float64 ? dig = 13 : nothing
@@ -79,7 +95,7 @@ function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T},
     dig=6
     crossing_pos_type, boundary_index = point_type(detector,current_pos_cyl)
     if i_limit==max_n_iter
-        current_pos_cyl, crossing_pos_type, boundary_index = get_crossing_pos_w_rounding(detector, point_in, point_out, i_limit, max_n_iter = 4000)
+        current_pos_cyl, crossing_pos_type, boundary_index = get_crossing_pos_w_rounding(detector, point_in, point_out)
     end
     current_pos_cyl, crossing_pos_type, boundary_index
 end
@@ -168,8 +184,9 @@ function drift_charges(detector::SolidStateDetector{T}, starting_positions::Abst
     end
     drift_paths
 end
-function drift_charges(detector::SolidStateDetector, starting_positions::AbstractArray{SVector{3,T}}, velocity_field_e::Interpolations.Extrapolation{SVector{3,Float64},3}, velocity_field_h::Interpolations.Extrapolation{SVector{3,Float64},3},energy_depositions::AbstractVector{T},weighting_potentials::AbstractVector{<:Interpolations.Extrapolation{T,3}}; delta_t::T=T(1f-9), n_steps::Int = 2000) where T <: Real
-    drift_paths =  drift_charges(detector, starting_positions, velocity_field_e, velocity_field_h)
+
+function drift_charges(detector::SolidStateDetector, starting_positions::AbstractArray, velocity_field_e::Interpolations.Extrapolation{SVector{3,Float64},3}, velocity_field_h::Interpolations.Extrapolation{SVector{3,Float64},3},energy_depositions::AbstractVector{T},weighting_potentials::AbstractVector{<:Interpolations.Extrapolation{T,3}}; delta_t::T=T(1f-9), n_steps::Int = 2000) where T <: Real
+    drift_paths =  drift_charges(detector, starting_positions, velocity_field_e, velocity_field_h, delta_t, n_steps)
     signal=Vector{AbstractVector{T}}(undef,size(weighting_potentials,1))
     for i in eachindex(weighting_potentials)
         signal[i]=pulse_from_drift_paths(drift_paths, energy_depositions, weighting_potentials[i])
@@ -177,11 +194,11 @@ function drift_charges(detector::SolidStateDetector, starting_positions::Abstrac
     return ChargeDriftEvent(drift_paths,signal)
 end
 
-function get_crossing_pos_w_rounding(detector::SolidStateDetector, point_in::SVector{3,T}, point_out::SVector{3,T},i_limit::Int; max_n_iter::Int=4000) where T <:Real
+function get_crossing_pos_w_rounding(detector::SolidStateDetector, point_in::SVector{3,T}, point_out::SVector{3,T}; max_n_iter::Int=2000) where T <:Real
     current_pos_in = MVector{3,T}(point_in...)
     current_pos_out = MVector{3,T}(point_out...)
     current_pos_xyz::SVector{3,T} = 0.5 * (current_pos_in .+ current_pos_out)
-    current_pos_cyl::CylindricalPoint{T} = CylindricalPoint(CartesianPoint{T}(current_pos_xyz))
+    current_pos_cyl::CylindricalPoint{T} = geom_round(CylindricalPoint(CartesianPoint{T}(current_pos_xyz)))
     i_limit::Int=0
     println("intersection w rounding...")
     while (point_type(detector, current_pos_cyl)[2]==-1) && i_limit < max_n_iter
@@ -199,10 +216,10 @@ function get_crossing_pos_w_rounding(detector::SolidStateDetector, point_in::SVe
         i_limit +=1
     end
     if i_limit == max_n_iter
-        nothing
         @warn("charge cannot be collected, something is wrong...")
     end
     crossing_pos_type, boundary_index = point_type(detector,current_pos_cyl)
+    println(current_pos_xyz)
     current_pos_cyl, crossing_pos_type, boundary_index
 end
 
@@ -653,13 +670,13 @@ function find_intersection(sl1::StraightLine,sl2::StraightLine)
     end
 end
 
-function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = T(2e-3)) where T
+function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = 0.0001) where T
     delta = T(min_dist_from_boundary)
     n_filled::Int = 0
     positions = Vector{CartesianPoint{T}}(undef,n)
     while n_filled < n
         sample=CylindricalPoint{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:φ_range].left:0.00001:Volume[:φ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
-        if contains(d,sample) && contains(d,CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta))
+        if !(sample in d.contacts) && contains(d,sample) && contains(d,CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta))
             n_filled += 1
             positions[n_filled]=CartesianPoint(sample)
         end

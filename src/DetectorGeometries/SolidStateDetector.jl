@@ -102,26 +102,6 @@ function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::B
         return false
     end
 end
-# function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::Bool where T
-#     for v in c.geometry_positive
-#         if !(point in v)
-#             return false
-#         end
-#     end
-#     for contact in vcat(c.n_contacts, c.p_contacts)
-#         if point in contact
-#             return true
-#         end
-#     end
-#     if !isempty(c.geometry_negative)
-#         for v in c.geometry_negative
-#             if point in v
-#                 return false
-#             end
-#         end
-#     end
-#     return true
-# end
 
 function println(io::IO, d::SolidStateDetector{T}) where {T <: AbstractFloat}
     println("________"*d.name*"________\n")

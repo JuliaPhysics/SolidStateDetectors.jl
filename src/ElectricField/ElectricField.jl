@@ -19,6 +19,7 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindri
     axr::Vector{T} = collect(ep.grid[:r])
     axφ::Vector{T} = collect(ep.grid[:φ])
     axz::Vector{T} = collect(ep.grid[:z])
+
     cyclic::T = ep.grid[:φ].interval.right
     ef = Array{SVector{3, T}}(undef, size(p)...)
     for iz in 1:size(ef, 3)
@@ -205,3 +206,4 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
     end
     return ef
 end
+
