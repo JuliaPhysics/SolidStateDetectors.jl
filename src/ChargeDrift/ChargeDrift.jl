@@ -186,7 +186,7 @@ function drift_charges(detector::SolidStateDetector{T}, starting_positions::Abst
 end
 
 function drift_charges(detector::SolidStateDetector, starting_positions::AbstractArray, velocity_field_e::Interpolations.Extrapolation{SVector{3,Float64},3}, velocity_field_h::Interpolations.Extrapolation{SVector{3,Float64},3},energy_depositions::AbstractVector{T},weighting_potentials::AbstractVector{<:Interpolations.Extrapolation{T,3}}; delta_t::T=T(1f-9), n_steps::Int = 2000) where T <: Real
-    drift_paths =  drift_charges(detector, starting_positions, velocity_field_e, velocity_field_h, delta_t, n_steps)
+    drift_paths =  drift_charges(detector, starting_positions, velocity_field_e, velocity_field_h, delta_t=delta_t, n_steps=n_steps)
     signal=Vector{AbstractVector{T}}(undef,size(weighting_potentials,1))
     for i in eachindex(weighting_potentials)
         signal[i]=pulse_from_drift_paths(drift_paths, energy_depositions, weighting_potentials[i])

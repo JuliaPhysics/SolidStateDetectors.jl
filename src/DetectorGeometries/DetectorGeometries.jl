@@ -133,7 +133,7 @@ end
 
 function is_boundary_point(c::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{T}, φs::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
     p = CylindricalPoint{T}(r, φ, z)
-    if false#!(p in c)
+    if false #!(p in c)
         return false, 0.0, 0
     else
         for contact in c.contacts
@@ -141,6 +141,11 @@ function is_boundary_point(c::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{
                 return true, contact.potential, contact.id
             end
         end
+        for external_part in c.external_parts
+            if in(p, external_part, rs)
+                return true, external_part.potential, external_part.id
+            end
+        end 
         return false, 0.0, 0
     end
 end

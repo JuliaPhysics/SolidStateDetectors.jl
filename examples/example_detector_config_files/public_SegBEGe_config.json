@@ -50,20 +50,20 @@
             {
                 "name": "External Part 1",
                 "material": "HPGe",
-                "geometry": {
-                    "positive": [
+                "potential": 0.0,
+                "geometry": [
                         {
-                            "type": "CartesianBox3D",
+                            "type": "Tube",
                             "name": "test external part",
-                            "xStart": 0.0,
-                            "xStop": 60.0,
-                            "yStart": 0.0,
-                            "yStop": 60.0,
-                            "zStart": 0.0,
+                            "rStart": 0.0,
+                            "rStop": 60.0,
+                            "phiStart": 0.0,
+                            "phiStop": 360.0,
+                            "zStart": 42.0,
                             "zStop": 60.0
                         }
                     ]
-                }
+                
             }
         ]
     },

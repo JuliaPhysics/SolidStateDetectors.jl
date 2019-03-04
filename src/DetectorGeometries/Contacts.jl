@@ -9,6 +9,7 @@ D: `:N` for n- and `:P` for p-contacts.
 """
 mutable struct Contact{T, D} <: AbstractContact{T}
     potential::T
+    material::NamedTuple
     id::Int
     name::String
     geometry::Vector{AbstractGeometry{T}}
@@ -17,7 +18,9 @@ end
 get_contact_type(c::Contact{T, D}) where {T <: AbstractFloat, D} = D
 
 function Contact{T, D}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, inputunit::Unitful.Units)::Contact{T, D} where {T <: AbstractFloat, D}
-    return Contact{T, D}( dict["potential"], dict["channel"], dict["name"], Geometry(T, dict["geometry"], inputunit ) )
+    haskey(dict, "channel") ? channel = dict["channel"] : channel = -1
+    haskey(dict, "material") ? material = material_properties[materials[dict["material"]]] : material = material_properties[materials["HPGe"]]
+    return Contact{T, D}( dict["potential"], material, channel, dict["name"], Geometry(T, dict["geometry"], inputunit ) )
 end
 
 @inline function in(pt::StaticVector{3, T}, c::Contact{T})::Bool where {T}

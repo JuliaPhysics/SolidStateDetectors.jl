@@ -16,6 +16,8 @@ mutable struct SolidStateDetector{T<:AbstractFloat} <: AbstractConfig{T}
 
     world::Vector{AbstractGeometry{T}}
 
+    external_parts::Vector{AbstractContact{T}}
+
     crystal_geometry::AbstractGeometry{T}
 
     crystal_length::T
@@ -48,6 +50,21 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T
 
     c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
     c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)
+
+    # c.external_parts = []
+    # haskey(config_file["geometry"],"external") ? external_parts = config_file["geometry"]["external"] : external_parts = []
+    # for ep in external_parts
+    #     ep_positive = Geometry(T, ep["geometry"]["positive"], c.geometry_unit)
+    #     haskey(ep["geometry"],"negative") ? ep_negative = Geometry(T,ep["geometry"]["negative"], c.geometry_unit) : ep_negative = []
+    #     external_part = ep_positive[1]
+    #     for g in sort!(vcat(ep_positive,ep_negative))
+    #         g in ep_positive ? external_part += g : nothing
+    #         g in ep_negative ? external_part -= g : nothing
+    #     end
+    #     println(external_part)
+    #     push!(c.external_parts, external_part)
+    # end
+    haskey(config_file["geometry"],"external") ? c.external_parts = Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]] : c.external_parts = []
 
     geometry_positive = Geometry(T, config_file["geometry"]["crystal"]["geometry"]["positive"], c.geometry_unit)
     haskey(config_file["geometry"]["crystal"]["geometry"],"negative") ? geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"]["negative"], c.geometry_unit) : geometry_negative = []
