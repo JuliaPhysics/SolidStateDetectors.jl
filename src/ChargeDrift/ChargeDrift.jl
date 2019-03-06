@@ -428,7 +428,7 @@ function generate_charge_signals!(
         edep_vec = hit_edep[i_evt]
         start_positions = hit_pos[i_evt]
         for i_hit in eachindex(start_positions)
-            unitless_startpos = to_internal_units(u"m", startpos_vec[i_hit])
+            unitless_startpos = CartesianPoint{Float32}(to_internal_units(u"m", startpos_vec[i_hit]))
             edep = edep_vec[i_hit]
             n_charges = uconvert(NoUnits,edep / E_ionisation)
 
