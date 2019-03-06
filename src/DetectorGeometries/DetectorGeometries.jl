@@ -6,8 +6,7 @@
 abstract type CGD{T <: AbstractFloat} <: AbstractConfig{T} end
 # abstract type SolidStateDetector{T <: AbstractFloat} <: AbstractConfig{T} end
 
-materials = Dict("HPGe" => :HPGe,
-    "Vacuum" => :Vacuum)
+
 
 bulk_types = Dict("n" => :ntype,
     "n-type" => :ntype,
@@ -316,6 +315,16 @@ function Grid(  detector::SolidStateDetector{T};
     important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
     important_φ_points::Vector{T} = T[]#!only_2d ? sort(get_important_φ_points(detector)) : T[]
     important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
+
+    push!(important_r_points, detector.world.r_interval.right)
+    push!(important_r_points, detector.world.r_interval.left)
+    important_r_points = uniq(sort(important_r_points))
+    push!(important_z_points, detector.world.z_interval.right)
+    push!(important_z_points, detector.world.z_interval.left)
+    important_z_points = uniq(sort(important_z_points))
+    push!(important_φ_points, detector.world.φ_interval.right)
+    push!(important_φ_points, detector.world.φ_interval.left)
+    important_φ_points = uniq(sort(important_φ_points))
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 

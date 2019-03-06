@@ -78,7 +78,7 @@ end
 
 function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
     v::Vector{T} = T[]
-    for r in impticks push!(v, r) end
+    for r in impticks if in(r, ax.interval) push!(v, r) end end
     for r in ax push!(v, r) end
     sort!(v)
     v = uniq(v)
@@ -92,7 +92,7 @@ function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Ve
     delete_idcs = sort(uniq(delete_idcs))
     deleteat!(v, delete_idcs) 
     for impv in impticks
-        if !in(impv, v)
+        if !in(impv, v) && in(impv, ax.interval)
             error("Important ticks were removed.")
         end
     end
