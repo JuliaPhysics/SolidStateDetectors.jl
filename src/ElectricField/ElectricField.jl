@@ -180,7 +180,7 @@ end
 
 function get_interpolated_drift_field(velocity_field, grid::CylindricalGrid{T}) where {T}
     knots = grid.axes
-    i=interpolate(knots, velocity_field, Gridded(Linear()))
+    i = interpolate(knots, velocity_field, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, Periodic())
     return velocity_field_itp
 end
@@ -188,6 +188,8 @@ end
 include("plot_recipes.jl")
 
 function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat}
+    error("Not yet implemented.")
+    
     axr::Vector{T} = collect(ep.grid[:x])
     axφ::Vector{T} = collect(ep.grid[:y])
     axz::Vector{T} = collect(ep.grid[:z])
@@ -196,6 +198,7 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
     axz_ext::Vector{T} = get_extended_ticks(ep.grid[:z])
 
     ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(ep.data))
+
 
     for iz in eachindex(axz)
         for iz in eachindex(axz)
