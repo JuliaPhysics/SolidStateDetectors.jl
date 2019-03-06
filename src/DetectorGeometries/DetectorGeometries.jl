@@ -245,10 +245,11 @@ function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tup
     end
 end
 
-function write_grid_to_detector(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical}) where {T}
+function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical})::Nothing where {T}
     ssd.rs = grid[:r].ticks 
     ssd.φs = grid[:φ].ticks
     ssd.zs = grid[:z].ticks
+    nothing
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
