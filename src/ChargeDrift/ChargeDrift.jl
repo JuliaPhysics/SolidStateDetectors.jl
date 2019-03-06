@@ -16,6 +16,7 @@ function drift_charge!(
     drift_path[1] = startpos
     for istep in eachindex(drift_path)[2:end]
         if done == false
+            # pos_cyl = CylindricalPoint(CartesianPoint{T}(drift_path[istep-1])) # update pos_cyl
             pos_cyl = geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]))) # update pos_cyl
             if pos_cyl in det
                 stepvector = getvelocityvector(velocity_field, pos_cyl) * delta_t
@@ -47,13 +48,15 @@ function drift_charge!(
 
                     drift_path[istep-1] = drift_path[istep-2]+ projected_vector
                     increment::T=2.0
-                    while !(in(geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]...))), det)) && increment < 500
+                    while !(in(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]...)), det)) && increment < 500
                         # println(crossing_pos_cyl)
                         drift_path[istep-1] = drift_path[istep-2]+ 1.0/increment * projected_vector
                         # println(drift_path[istep-1])
                         increment+=1
                     end
-                    drift_path[istep] = drift_path[istep-1] + projected_vector 
+                    increment == 500 ? warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") : nothing
+                    println("lol")
+                    drift_path[istep] = drift_path[istep-1] + projected_vector
                 else
                     @show crossing_pos_cyl,crossing_pos_type, boundary_index
                     @show typeof(crossing_pos_cyl)
@@ -171,6 +174,21 @@ function pulse_from_drift_paths(drift_paths, energy_depositions::AbstractVector{
     end
 end
 
+function signal_contributions_from_drift_paths(drift_paths, energy_depositions::AbstractVector{T}, Wpot_interp::Interpolations.Extrapolation{T,3}) where T<:Real
+    charge_signal_e = zeros(T,size(drift_paths[1].e_path,1))
+    charge_signal_h = zeros(T,size(drift_paths[1].e_path,1))
+    @inbounds for i in eachindex(drift_paths[1].e_path)
+        for (idp, drift_path) in enumerate(drift_paths)
+            # charge_signal_e[i] = muladd(energy_depositions[idp] ,charge_signal_e[i], _get_wpot_at(Wpot_interp, drift_path.e_path[i]))
+            # charge_signal_h[i] = muladd(energy_depositions[idp] ,charge_signal_h[i], _get_wpot_at(Wpot_interp, drift_path.h_path[i]))
+            charge_signal_e[i] +=  _get_wpot_at(Wpot_interp, drift_path.e_path[i]) * energy_depositions[idp]
+            charge_signal_h[i] +=  _get_wpot_at(Wpot_interp, drift_path.h_path[i]) * energy_depositions[idp]
+        end
+    end
+    println(energy_depositions)
+    return charge_signal_e .* -1, charge_signal_h
+end
+
 function drift_charges(detector::SolidStateDetector{T}, starting_positions::AbstractArray, velocity_field_e::Interpolations.Extrapolation{SVector{3,Float64},3},
     velocity_field_h::Interpolations.Extrapolation{SVector{3,Float64},3}; delta_t::T=T(1f-9), n_steps::Int = 2000) where T <: Real
 
@@ -241,29 +259,29 @@ function lineplanecollision(planenorm::Vector, planepnt::Vector, raydir::Vector,
     return ψ
 end
 
-function get_cartesian_paths(a::Array{CylindricalPoint,1})
-    xpath = Array{eltype(a[1].r),1}(undef,size(a))
-    ypath = Array{eltype(a[1].r),1}(undef,size(a))
-    zpath = Array{eltype(a[1].r),1}(undef,size(a))
-    xyz = map(x->CartesianPoint(x),a)
-    for i in eachindex(xyz)
-        xpath[i]=xyz[i].x
-        ypath[i]=xyz[i].y
-        zpath[i]=xyz[i].z
-    end
-    xpath,ypath,zpath
-end
-function get_cartesian_paths(a::Array{SArray{Tuple{3},T,1,3},1};scaling::Real = 1) where T <:Real
-    xpath = Array{T,1}(undef,size(a))
-    ypath = Array{T,1}(undef,size(a))
-    zpath = Array{T,1}(undef,size(a))
-    for i in eachindex(a)
-        xpath[i]=a[i][1]*scaling
-        ypath[i]=a[i][2]*scaling
-        zpath[i]=a[i][3]*scaling
-    end
-    xpath,ypath,zpath
-end
+# function get_cartesian_paths(a::Array{CylindricalPoint,1})
+#     xpath = Array{eltype(a[1].r),1}(undef,size(a))
+#     ypath = Array{eltype(a[1].r),1}(undef,size(a))
+#     zpath = Array{eltype(a[1].r),1}(undef,size(a))
+#     xyz = map(x->CartesianPoint(x),a)
+#     for i in eachindex(xyz)
+#         xpath[i]=xyz[i].x
+#         ypath[i]=xyz[i].y
+#         zpath[i]=xyz[i].z
+#     end
+#     xpath,ypath,zpath
+# end
+# function get_cartesian_paths(a::Array{SArray{Tuple{3},T,1,3},1};scaling::Real = 1) where T <:Real
+#     xpath = Array{T,1}(undef,size(a))
+#     ypath = Array{T,1}(undef,size(a))
+#     zpath = Array{T,1}(undef,size(a))
+#     for i in eachindex(a)
+#         xpath[i]=a[i][1]*scaling
+#         ypath[i]=a[i][2]*scaling
+#         zpath[i]=a[i][3]*scaling
+#     end
+#     xpath,ypath,zpath
+# end
 function get_rφz_vector_from_xyz(vector::AbstractArray)::AbstractArray
   @fastmath begin
     x = vector[1]
@@ -394,6 +412,8 @@ function accumulate_charge!(charge_signal::AbstractVector{<:RealQuantity}, drift
     end
     charge_signal
 end
+
+
 
 function generate_charge_signals!(
     contact_charge_signals::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},

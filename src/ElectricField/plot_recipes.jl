@@ -164,7 +164,12 @@ end
 #     end
 # end
 
-
+@userplot myQuiver
+@recipe function f(gdd::myQuiver; edges=0:1:3000)
+    @series begin
+        [1,2], [2,3]
+    end
+end
 
 
 @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T};
