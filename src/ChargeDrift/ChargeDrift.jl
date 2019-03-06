@@ -49,7 +49,7 @@ function drift_charge!(
                     increment::T=2.0
                     while !(in(geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]...))), det)) && increment < 500
                         # println(crossing_pos_cyl)
-                        drift_path[istep-1] = drift_path[istep-2]+ 1.0/increment * projected_vector                   
+                        drift_path[istep-1] = drift_path[istep-2]+ 1.0/increment * projected_vector
                         # println(drift_path[istep-1])
                         increment+=1
                     end
@@ -60,6 +60,7 @@ function drift_charge!(
                     @show typeof(pos_cyl)
                     @warn ("Internal error for charge stating at $startpos")
                     drift_path[istep] = drift_path[istep-1]
+                    drifttime = delta_t * (istep-1)
                     done = true
                 end
             end

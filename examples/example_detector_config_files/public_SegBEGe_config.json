@@ -20,11 +20,11 @@
                     "type": "Tube",
                     "pol": "positive",
                     "rStart": 0.0,
-                    "rStop": 45.5,
+                    "rStop": 41.0,
                     "phiStart": 0.0,
                     "phiStop": 360.0,
-                    "zStart": -15.0,
-                    "zStop": 55.0
+                    "zStart": -3.0,
+                    "zStop": 43.0
                 }]
 
         },
@@ -43,28 +43,7 @@
                     }
                 ]
             }
-        },
-
-        "external": [
-            {
-                "name": "External Part 1",
-                "material": "HPGe",
-                "potential": 0.0,
-                "geometry": [
-                        {
-                            "type": "Tube",
-                            "name": "test external part",
-                            "rStart": 0.0,
-                            "rStop": 20.0,
-                            "phiStart": 0.0,
-                            "phiStop": 360.0,
-                            "zStart": 42.0,
-                            "zStop": 43.0
-                        }
-                    ]
-                
-            }
-        ]
+        }
     },
 
 

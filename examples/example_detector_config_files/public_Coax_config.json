@@ -22,11 +22,11 @@
                     "type": "Tube",
                     "pol": "positive",
                     "rStart": 0.0,
-                    "rStop": 37.5,
+                    "rStop": 39.5,
                     "phiStart": 0.0,
                     "phiStop": 360.0,
-                    "zStart": 0.0,
-                    "zStop": 70.0
+                    "zStart": -2.0,
+                    "zStop": 72.0
                 }
              ]
           },
@@ -81,28 +81,7 @@
                     }
                   ]
               }
-        },
-
-        "external": [
-            {
-                "name": "External Part 1",
-                "material": "HPGe",
-                "geometry": {
-                    "positive": [
-                        {
-                            "type": "CartesianBox3D",
-                            "name": "test external part",
-                            "xStart": 0.0,
-                            "xStop": 60.0,
-                            "yStart": 0.0,
-                            "yStop": 60.0,
-                            "zStart": 0.0,
-                            "zStop": 60.0
-                        }
-                    ]
-                }
-            }
-        ]
+        }
     },
 
 
