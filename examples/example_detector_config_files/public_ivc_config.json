@@ -68,13 +68,8 @@
                     }
                 ]
             }
-<<<<<<< HEAD
         }
-=======
-        }        
->>>>>>> 5e9f1e26bd984c7f81e5c73a232bbc02f90d9536
     },
-
     "contacts": {
         "n_channels": 2,
         "unit": "mm",
