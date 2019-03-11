@@ -151,7 +151,7 @@ end
 
 function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Symbol,Int} where T
     for contact in c.contacts
-        if p in contact || geom_round(p) in contact || in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs)
+        if p in contact #|| geom_round(p) in contact #|| in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs)
             return :electrode, contact.id
         end
     end
@@ -159,6 +159,7 @@ function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Sym
     if sp[1]
         for contact in c.contacts
             if in(go_to_nearest_gridpoint(c,p), contact, c.rs) && abs(sum(sp[2])) > 1
+                println("olo")
                 return :electrode, contact.id
             else
                 return :floating_boundary, 0
@@ -314,7 +315,7 @@ function Grid(  detector::SolidStateDetector{T};
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
     important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
-    important_φ_points::Vector{T} = T[]#!only_2d ? sort(get_important_φ_points(detector)) : T[]
+    important_φ_points::Vector{T} = get_important_φ_points(detector)
     important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
 
     push!(important_r_points, detector.world.r_interval.right)
@@ -366,6 +367,14 @@ function Grid(  detector::SolidStateDetector{T};
         φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol=deg2rad(init_grid_spacing[2])/4)
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
+    if isodd(length(ax_φ)) # must be even
+        int_φ = ax_φ.interval
+        φticks = ax_φ.ticks
+        push!(φticks, geom_round((φticks[end] + φticks[end-1]) * 0.5))
+        sort!(φticks)
+        ax_φ = typeof(ax_φ)(int_φ, φticks) # must be even
+    end
+    @assert iseven(length(ax_φ)) "CylindricalGrid must have even number of points in φ."
 
     #z
     int_z = Interval{:closed, :closed, T}( detector.world.z_interval)

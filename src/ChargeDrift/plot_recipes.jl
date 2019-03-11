@@ -97,7 +97,9 @@ end
         layout --> (1+size(cde.signal,1),1)
     end
     @series begin
+        aspect_ratio --> 1
         subplot --> 1
+        # xlabel --> "x / mm"
         d
     end
     @series begin
@@ -113,7 +115,7 @@ end
             lw --> 2
             label --> ""
             ylabel --> "Signal"
-            xlabel --> "time [ns]"
+            xlabel --> "time / ns"
             [j for j in 1:size(cde.signal[1],1)], cde.signal[i]
         end
     end
