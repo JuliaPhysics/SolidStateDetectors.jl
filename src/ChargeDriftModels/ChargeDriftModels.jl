@@ -1,4 +1,5 @@
 abstract type AbstractChargeDriftModels end
+abstract type TemperatureModels{T <: AbstractFloat} end     #FH: defined new type TemperatureModels
 
 
 """
@@ -29,6 +30,11 @@ struct CarrierParameters{T}
     axis100::VelocityParameters{T}
     axis111::VelocityParameters{T}
 end
+
+include("LinearModel.jl")
+include("BoltzmannModel.jl")
+include("PowerLawModel.jl")
+include("VacuumModel.jl")
 
 # Electron model parametrization from [3]
 function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
@@ -63,16 +69,18 @@ end
 - `phi110::T
 - `gammas::SVector{4, SMatrix{3,3,T}}`
 """
-struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels 
+struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
     phi110::T
     gammas::SVector{4, SMatrix{3,3,T}}
+    temperaturemodel::TemperatureModels{T}
 end
 
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float64)::ADLChargeDriftModel{T} 
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float64, temperature::Union{Missing, AbstractFloat}= missing)::ADLChargeDriftModel{T}
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
-    
+    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature if will be used, otherwise read in from config file
+
     config = JSON.parsefile(configfilename)
 
     #mu0 in m^2 / ( V * s )
@@ -106,7 +114,29 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
 
     gammas = setup_gamma_matrices(phi110)
 
-    return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
+    if "temperature_dependence" in keys(config)
+        if "model" in keys(config["temperature_dependence"])
+            model::String = config["temperature_dependence"]["model"]
+            if model == "Linear"
+                temperaturemodel = LinearModel{T}(config, temperature = temperature)
+            elseif model == "PowerLaw"
+                temperaturemodel = PowerLawModel{T}(config, temperature = temperature)
+            elseif model == "Boltzmann"
+                temperaturemodel = BoltzmannModel{T}(config, temperature = temperature)
+            else
+                temperaturemodel = VacuumModel{T}(config)
+                println("Config File does not suit any of the predefined temperature models. The drift velocity will not be rescaled.")
+            end
+        else
+            temperaturemodel = VacuumModel{T}(config)
+            println("No temperature model specified. The drift velocity will not be rescaled.")
+        end
+    else
+        temperaturemodel = VacuumModel{T}(config)
+        println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
+    end
+
+    return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
 end
 
 function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
@@ -119,10 +149,11 @@ function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::A
         h100 = VelocityParameters{T}(cdmf64.holes.axis100.mu0, cdmf64.holes.axis100.beta, cdmf64.holes.axis100.E0, cdmf64.holes.axis100.mun)
         h111 = VelocityParameters{T}(cdmf64.holes.axis111.mu0, cdmf64.holes.axis111.beta, cdmf64.holes.axis111.E0, cdmf64.holes.axis111.mun)
         electrons = CarrierParameters{T}(e100, e111)
-        holes     = CarrierParameters{T}(h100, h111)  
+        holes     = CarrierParameters{T}(h100, h111)
         phi110::T = cdmf64.phi110
         gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
-        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
+        temperaturemodel::TemperatureModels{T} = cdmf64.temperaturemodel
+        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
     end
 
     function getVe(fv::SVector{3,T}, gammas::SVector{4, SMatrix{3,3,T}})::SVector{3,T} where {T <: AbstractFloat}
@@ -141,8 +172,12 @@ function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::A
                 return SVector{3,T}(0, 0, 0)
             end
 
-            V100e::T = Vl(Emag, cdm.electrons.axis100)
-            V111e::T = Vl(Emag, cdm.electrons.axis111)
+            f = scale_to_given_temperature(temperaturemodel)
+            f100e::T = f[1]
+            f111e::T = f[2]
+
+            V100e::T = Vl(Emag, cdm.electrons.axis100) * f100e
+            V111e::T = Vl(Emag, cdm.electrons.axis111) * f111e
 
             AE::T = V100e / tmp0
             RE::T = tmp1 * V111e / AE + tmp2
@@ -203,10 +238,11 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
         h100 = VelocityParameters{T}(cdmf64.holes.axis100.mu0, cdmf64.holes.axis100.beta, cdmf64.holes.axis100.E0, cdmf64.holes.axis100.mun)
         h111 = VelocityParameters{T}(cdmf64.holes.axis111.mu0, cdmf64.holes.axis111.beta, cdmf64.holes.axis111.E0, cdmf64.holes.axis111.mun)
         electrons = CarrierParameters{T}(e100, e111)
-        holes     = CarrierParameters{T}(h100, h111)  
+        holes     = CarrierParameters{T}(h100, h111)
         phi110::T = cdmf64.phi110
         gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
-        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
+        temperaturemodel::TemperatureModels{T} = cdmf64.temperaturemodel
+        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
     end
 
     Emag_threshold::T = 1e-5
@@ -219,8 +255,13 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
             if Emag < Emag_threshold
                 return SVector{3,T}(0, 0, 0)
             end
-            V100h::T = Vl(Emag, cdm.holes.axis100)
-            V111h::T = Vl(Emag, cdm.holes.axis111)
+
+            f = scale_to_given_temperature(temperaturemodel)
+            f100h::T = f[3]
+            f111h::T = f[4]
+
+            V100h::T = Vl(Emag, cdm.holes.axis100) * f100h
+            V111h::T = Vl(Emag, cdm.holes.axis111) * f111h
 
             b::T = -π / 4 - cdm.phi110
             Rz = SMatrix{3, 3, T}(cos(b), sin(b), 0, -sin(b), cos(b), 0, 0, 0, 1)
@@ -255,6 +296,3 @@ end
 
 ### END: ADL Charge Drift Model
 ###############################
-
-
-
