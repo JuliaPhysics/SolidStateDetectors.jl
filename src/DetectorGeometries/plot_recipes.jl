@@ -283,105 +283,12 @@ end
         end
     end
 end
-#
-# @recipe function f(Vol::Tubs{T}) where T<:AbstractFloat
-#
-#     @series begin
-#         partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
-#     end
-#     @series begin
-#         label:= ""
-#         partialcircle_3d(Vol.rStop,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
-#     end
-#     @series begin
-#         label:= ""
-#         partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStart])
-#     end
-#     @series begin
-#         label:= ""
-#         partialcircle_3d(Vol.rStart,Vol.φStart,Vol.φStop,[0,0,Vol.zStop])
-#     end
-#     ## Vertical Lines
-#
-#     if !iszero(Vol.rStart)
-#         @series begin
-#             label:= ""
-#             line_3d(Vol.rStart,Vol.rStart,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
-#         end
-#     end
-#     if !iszero(Vol.rStart)
-#         @series begin
-#             label:= ""
-#             line_3d(Vol.rStart,Vol.rStart,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
-#         end
-#     end
-#     @series begin
-#         label:= ""
-#         line_3d(Vol.rStop,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStop)
-#     end
-#     @series begin
-#         label:= ""
-#         line_3d(Vol.rStop,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStop)
-#     end
-#
-#     ##Horizontal Lines
-#
-#     if !isapprox((Vol.φStop - Vol.φStart)%2π , 0.0,atol=0.00001)
-#         @series begin
-#             label:= ""
-#             line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStart,Vol.zStart)
-#         end
-#         @series begin
-#             label:= ""
-#             line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStart,Vol.zStart)
-#         end
-#         @series begin
-#             label:= ""
-#             line_3d(Vol.rStart,Vol.rStop,Vol.φStart,Vol.φStart,Vol.zStop,Vol.zStop)
-#         end
-#         @series begin
-#             label:= ""
-#             line_3d(Vol.rStart,Vol.rStop,Vol.φStop,Vol.φStop,Vol.zStop,Vol.zStop)
-#         end
-#     end
-# end
-#
-# @recipe function f(o::outer_taper,n_aux_lines =0)
-#     if o.orientation=="c//"
-#         @series begin
-#             line_3d(o.rStop,o.rStart,o.φStart,o.φStart,o.zStart,o.zStop)
-#         end
-#         @series begin
-#             line_3d(o.rStop,o.rStart,o.φStop,o.φStop,o.zStart,o.zStop)
-#         end
-#         for ia in 0:n_aux_lines
-#             @series begin
-#                 line_3d(o.rStop,o.rStart,o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.φStart+ia*(o.φStop-o.φStart)/(n_aux_lines+1),o.zStart,o.zStop)
-#             end
-#         end
-#     end
-# end
-#
-# function connect_points()
-#     nothing
-# end
 
 function mylinspace(Start,Stop,nSteps)
     return collect(Start:(Stop-Start)/nSteps:Stop)
 end
 
-# function partialcircle_3d(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
-#     phirange = mylinspace(phiStart,phiStop,nSteps)
-#
-#     x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
-#     y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
-#     # z::Vector{AbstractFloat}=[Translate[3] for i in 1:nSteps]
-#     z::Vector{AbstractFloat}=map(x->Translate[3],phirange)
-#     x.+=Translate[1]
-#     y.+=Translate[2]
-#
-#     return x,y,z
-# end
+
 
 function partialcircle(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
     phirange = mylinspace(phiStart,phiStop,nSteps)
@@ -400,17 +307,64 @@ end
 
 @recipe function f(contact::AbstractContact{T}) where T
     c-->:orange
-    for g in contact.geometry
+    for (i,g) in enumerate(contact.geometry)
         @series begin
+            i==1 ? label --> "$(contact.id)" : label := ""
             g
         end
     end
 end
 
 @recipe function f(c::SolidStateDetector{T}) where T
-    for contact in c.contacts
+    aspect_ratio --> 1
+    if c.name == "Public Segmented BEGe"
         @series begin
+            c, Val(:segBEGe)
+        end
+    else
+        for contact in c.contacts
+            @series begin
+                contact
+            end
+        end
+    end
+end
+@recipe function f(c,a::Val{:segBEGe})
+    coloring = [:red, :orange, :grey, :purple,:green]
+    labeling = ["Seg. 1", "Seg. 2", "Seg. 3", "Seg. 4","Core"]
+    lw --> 3
+    for (ic, contact) in enumerate(c.contacts)
+        @series begin
+            color --> coloring[ic]
+            label --> labeling[ic]
             contact
         end
     end
+end
+
+function quiver(x::Matrix{Float64},u::Matrix{Float64}; scale::Float64 = 1.0)
+    n = size(x,2)
+    s = 8
+    X = Matrix{Float64}(undef,2,s*n)
+    for i=1:n
+        k = s*(i-1)
+
+        r = x[:,i]
+        V = scale * u[:,i]
+
+        dist = norm(V)
+        arrow_h = 0.1dist     # height of arrowhead
+        arrow_w = 0.5arrow_h  # halfwidth of arrowhead
+        U1 = V ./ dist        # vector of arrowhead height
+        U2 = [-U1[2], U1[1]]  # vector of arrowhead halfwidth
+        U1 *= arrow_h
+        U2 *= arrow_w
+
+        X[:,k+1] = r
+        r += V
+        X[:,k+2:k+s] = [r-U1 [NaN, NaN] r r-U1+U2 r-U1-U2 r [NaN, NaN]]
+    end
+    trace = scatter(fill="toself")
+    trace[:x] = X[1,:]; trace[:y] = X[2,:]
+    return trace
 end

@@ -144,25 +144,26 @@ function is_boundary_point(c::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{
             if in(p, external_part, rs)
                 return true, external_part.potential, external_part.id
             end
-        end 
+        end
         return false, 0.0, 0
     end
 end
 
 function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Symbol,Int} where T
     for contact in c.contacts
-        if p in contact || geom_round(p) in contact || in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs) 
+        if p in contact || geom_round(p) in contact || in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs)
             return :electrode, contact.id
         end
     end
-    if is_surface_point(c,p)[1] 
+    sp = is_surface_point(c,p)
+    if sp[1]
         for contact in c.contacts
-            if in(go_to_nearest_gridpoint(c,p), contact, c.rs) 
+            if in(go_to_nearest_gridpoint(c,p), contact, c.rs) && abs(sum(sp[2])) > 1
                 return :electrode, contact.id
             else
                 return :floating_boundary, 0
             end
-        end    
+        end
     elseif !(p in c)
         return :outside, -1
     else
@@ -198,8 +199,8 @@ function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tup
     look_around::Vector{Bool} = [CylindricalPoint{T}(prevfloat(p.r),p.φ,p.z) in c,
         CylindricalPoint{T}(nextfloat(p.r),p.φ,p.z) in c,
         CylindricalPoint{T}(p.r,prevfloat(p.φ),p.z) in c,
-        CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c, 
-        CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c, 
+        CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c,
+        CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c,
         CylindricalPoint{T}(p.r,p.φ,nextfloat(p.z)) in c]
     if !(false in look_around)
         return false , CartesianPoint{T}(n...)
@@ -209,7 +210,7 @@ function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tup
         look_around[3]==false ? n[2] -= 1 : nothing
         look_around[4]==false ? n[2] += 1 : nothing
         look_around[5]==false ? n[3] -= 1 : nothing
-        look_around[6]==false ? n[3] += 1 : nothing 
+        look_around[6]==false ? n[3] += 1 : nothing
         # println(look_around , " " , n)
         Rα::SMatrix{3,3,T} = @SArray([cos(p.φ) -1*sin(p.φ) 0;sin(p.φ) cos(p.φ) 0;0 0 1])
         return true, geom_round(CartesianPoint((Rα * n)...))

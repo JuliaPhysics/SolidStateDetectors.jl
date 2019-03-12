@@ -70,7 +70,7 @@ struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     gammas::SVector{4, SMatrix{3,3,T}}
 end
 
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float64)::ADLChargeDriftModel{T} 
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type = Float64)::ADLChargeDriftModel{T} 
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
     
     config = JSON.parsefile(configfilename)
@@ -109,7 +109,7 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
     return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
 end
 
-function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
+function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
 
     cdm = begin
@@ -125,7 +125,7 @@ function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::A
         ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
     end
 
-    @fastmath function getVe(fv::SVector{3,T}, gammas::SVector{4, SMatrix{3,3,T}})::SVector{3,T} where {T <: AbstractFloat}
+    @fastmath function getVe(fv::SVector{3, T}, gammas::SVector{4, SMatrix{3,3,T}})::SVector{3, T} where {T <: AbstractFloat}
         @inbounds begin
             Emag::T = norm(fv)
             Emag_inv::T = inv(Emag)
