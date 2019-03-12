@@ -290,7 +290,7 @@ end
 
 
 
-function partialcircle(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
+function partialcircle(radius,phiStart,phiStop,Translate::Vector=[0.0,0.0,0.0];nSteps=400)
     phirange = mylinspace(phiStart,phiStop,nSteps)
     x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
     y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
@@ -315,24 +315,58 @@ end
     end
 end
 
-@recipe function f(c::SolidStateDetector{T}) where T
+@recipe function f(c::SolidStateDetector{T}; coloring = [], labeling = []) where T
     aspect_ratio --> 1
-    if c.name == "Public Segmented BEGe"
+    legendfont --> 16
+    aspect_ratio -->1
+    tickfontsize --> 9
+    guidefontsize --> 13
+    lw --> 2
+    xlabel --> "x / m"
+    ylabel --> "y / m"
+    zlabel --> "z / m"
+    camera --> (15,15)
+    coloring = coloring 
+    labeling = labeling
+        if c.name == "Public Segmented BEGe"
         @series begin
+            # zlims --> (-0.023,0.063)
+            aspect_ratio --> 0.5
             c, Val(:segBEGe)
         end
+    elseif c.name == "Public Inverted Coax"
+        @series begin
+            c, Val(:ivc)
+        end
+    elseif c.name == "Public Coax"
+        @series begin
+            c, Val(:coax)
+        end
     else
-        for contact in c.contacts
+        for (ic,contact) in enumerate(c.contacts)
             @series begin
+                !isempty(coloring) ? c --> coloring[ic] : nothing
+                !isempty(labeling) ? label --> labeling[ic] : nothing
                 contact
             end
         end
     end
 end
-@recipe function f(c,a::Val{:segBEGe})
-    coloring = [:red, :orange, :grey, :purple,:green]
-    labeling = ["Seg. 1", "Seg. 2", "Seg. 3", "Seg. 4","Core"]
-    lw --> 3
+
+@recipe function f(c,a::Val{:ivc})
+    labeling = ["Core","Mantle"]
+    coloring = [:blue,:orange]
+    for (ic, contact) in enumerate(c.contacts)
+        @series begin
+            color --> coloring[ic]
+            label --> labeling[ic]
+            contact
+        end
+    end
+end
+@recipe function f(c,a::Val{:coax})
+    labeling = ["" for i in 1:19]
+    coloring = vcat([:orange for i in 1:18], [:blue])
     for (ic, contact) in enumerate(c.contacts)
         @series begin
             color --> coloring[ic]
@@ -342,29 +376,14 @@ end
     end
 end
 
-function quiver(x::Matrix{Float64},u::Matrix{Float64}; scale::Float64 = 1.0)
-    n = size(x,2)
-    s = 8
-    X = Matrix{Float64}(undef,2,s*n)
-    for i=1:n
-        k = s*(i-1)
-
-        r = x[:,i]
-        V = scale * u[:,i]
-
-        dist = norm(V)
-        arrow_h = 0.1dist     # height of arrowhead
-        arrow_w = 0.5arrow_h  # halfwidth of arrowhead
-        U1 = V ./ dist        # vector of arrowhead height
-        U2 = [-U1[2], U1[1]]  # vector of arrowhead halfwidth
-        U1 *= arrow_h
-        U2 *= arrow_w
-
-        X[:,k+1] = r
-        r += V
-        X[:,k+2:k+s] = [r-U1 [NaN, NaN] r r-U1+U2 r-U1-U2 r [NaN, NaN]]
+@recipe function f(c,a::Val{:segBEGe}, coloring = [])
+    isempty(coloring) ? coloring = [:red, :orange, :grey, :purple,:blue] : nothing
+    labeling = ["Seg. 1", "Seg. 2", "Seg. 3", "Seg. 4","Core"]
+    for (ic, contact) in enumerate(c.contacts)
+        @series begin
+            color --> coloring[ic]
+            label --> labeling[ic]
+            contact
+        end
     end
-    trace = scatter(fill="toself")
-    trace[:x] = X[1,:]; trace[:y] = X[2,:]
-    return trace
 end

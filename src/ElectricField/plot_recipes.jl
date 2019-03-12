@@ -163,11 +163,87 @@ end
 #         end
 #     end
 # end
+using Base.Math
+@recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector; φ=missing, z = missing, scaling_factor=1.0, r_spacing = 20) where T
+    ismissing(φ) && !ismissing(z) ? iz = searchsortednearest(det.zs,T(z)) : nothing
+    !ismissing(φ) && ismissing(z) ? iφ = searchsortednearest(det.φs,T(φ)) : nothing
+    guidefontsize --> 15
+    tickfontsize -->15
+    # labelfontsize --> 13
+    if ismissing(φ)
+        xy = T[0, 0]
+        values = T[0, 0]
+        magnitudes_xy = []
+        for (iφ ,φ)  in enumerate(det.φs)
+            if iφ%2==0
+                for (ir, r) in enumerate(det.rs)
+                    if (ir+r_spacing-1)%r_spacing == 0
+                        xy = hcat(xy,[ r * cos(φ), r * sin(φ)])
+                        values = hcat(values, electric_field[ir, iφ, iz][1:2])
+                        push!(magnitudes_xy,sqrt(electric_field[ir, iφ, iz][1]^2 + electric_field[ir, iφ, iz][2]^2))
+                    end
+                end
+            end
+        end
+
+        num = mean(diff(det.rs))*r_spacing
+        nom = maximum(magnitudes_xy)
+        scaling = num/nom * scaling_factor
+        for i in 1:size(xy,2)
+            @series begin
+                title --> "z = $(round(det.zs[iz] .* 1000,digits=2)) mm"
+                xlabel --> "x / mm"
+                ylabel --> "y / mm"
+                aspect_ratio --> 1
+                label --> ""
+                color --> :red
+                arrow --> true
+                [xy[1,i] - 0.5*scaling*values[1,i], xy[1,i] + 0.5*scaling*values[1,i]] .* 1000, [xy[2,i] - 0.5*scaling*values[2,i], xy[2,i] + 0.5*scaling*values[2,i]] .* 1000
+            end
+        end
+
+    elseif ismissing(z)
+        rz = T[0, 0]
+        values = T[0, 0]
+        magnitudes_rz = []
+        for (iz ,z)  in enumerate(det.zs)
+            if (iz+6)%7==0
+                for (ir, r) in enumerate(det.rs)
+                    if (ir+r_spacing-1)%r_spacing == 0
+                        rz = hcat(rz,[ r, z])
+                        values = hcat(values, electric_field[ir, iφ, iz][1:2:3])
+                        push!(magnitudes_rz,sqrt(electric_field[ir, iφ, iz][1]^2 + electric_field[ir, iφ, iz][3]^2))
+                    end
+                end
+            end
+        end
+        num = mean(diff(det.rs))*r_spacing
+        nom = maximum(magnitudes_rz)
+        scaling = num/nom * scaling_factor
+        for i in 1:size(rz,2)
+            @series begin
+                title --> "φ = $(round(rad2deg(det.φs[iφ]) , digits=2)) deg"
+                xlabel --> "r [mm]"
+                ylabel --> "z [mm]"
+                aspect_ratio --> 1
+                label --> ""
+                color --> :red
+                arrow --> true
+                [rz[1,i] - 0.5*scaling*values[1,i], rz[1,i] + 0.5*scaling*values[1,i]] .* 1000, [rz[2,i] - 0.5*scaling*values[2,i], rz[2,i] + 0.5*scaling*values[2,i]] .* 1000
+            end
+        end
+    end
+end
 
 @userplot myQuiver
-@recipe function f(gdd::myQuiver; edges=0:1:3000)
-    @series begin
-        [1,2], [2,3]
+@recipe function f(gdd::myQuiver; scaling=1.0)
+    xy::Matrix = gdd.args[1]
+    values = gdd.args[2]
+    for i in 1:size(xy,2)
+        @series begin
+            arrow --> true
+            [xy[1,i] - 0.5*scaling*values[1,i], xy[1,i] + 0.5*scaling*values[1,i]], [xy[2,i] - 0.5*scaling*values[2,i], xy[2,i] + 0.5*scaling*values[2,i]]
+        end
     end
 end
 

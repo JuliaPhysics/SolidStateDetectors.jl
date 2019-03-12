@@ -16,8 +16,8 @@ function drift_charge!(
     drift_path[1] = startpos
     for istep in eachindex(drift_path)[2:end]
         if done == false
-            # pos_cyl = CylindricalPoint(CartesianPoint{T}(drift_path[istep-1])) # update pos_cyl
-            pos_cyl = geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]))) # update pos_cyl
+            pos_cyl = CylindricalPoint(CartesianPoint{T}(drift_path[istep-1])) # update pos_cyl
+            # pos_cyl = geom_round(CylindricalPoint(CartesianPoint{T}(drift_path[istep-1]))) # update pos_cyl
             if pos_cyl in det
                 stepvector = getvelocityvector(velocity_field, pos_cyl) * delta_t
                 drift_path[istep] = drift_path[istep-1] + stepvector
@@ -98,9 +98,11 @@ function get_crossing_pos( detector::SolidStateDetector, point_in::SVector{3,T},
     dig=6
     crossing_pos_type, boundary_index = point_type(detector,current_pos_cyl)
     if i_limit==max_n_iter
+        @warn "kek"
         current_pos_cyl, crossing_pos_type, boundary_index = get_crossing_pos_w_rounding(detector, point_in, point_out)
     end
-    current_pos_cyl, crossing_pos_type, boundary_index
+    # geom_round(current_pos_cyl), crossing_pos_type, boundary_index
+    return current_pos_cyl, crossing_pos_type, boundary_index
 end
 
 
