@@ -37,11 +37,11 @@ include("PowerLawModel.jl")
 include("VacuumModel.jl")
 
 # Electron model parametrization from [3]
-function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
+function γj(j::Integer, phi110::T, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
     tmp::T = 2 / 3
     a::T = acos(sqrt(tmp))
     Rx::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(1, 0, 0, 0, cos(a), sin(a), 0, -sin(a), cos(a))
-    b::T = (j - 1) * T(π) / 2
+    b::T = phi110 + (j - 1) * T(π) / 2
     Rzj::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(cos(b), sin(b), 0, -sin(b), cos(b), 0, 0, 0, 1)
     Rj = Rx * Rzj
     transpose(Rj) * γ0 * Rj
@@ -51,7 +51,7 @@ function setup_gamma_matrices(phi110::T)::SVector{4, SMatrix{3,3,T}} where {T <:
     ml::T = 1.64
     mt::T = 0.0819
     γ0 = SMatrix{3,3,T}(1 / mt, 0, 0, 0, 1 / ml, 0, 0, 0, 1 / mt)
-    SVector{4, SArray{Tuple{3,3},T,2,9}}(γj(1, γ0), γj(2, γ0), γj(3, γ0), γj(4, γ0))
+    SVector{4, SArray{Tuple{3,3},T,2,9}}(γj(1, phi110, γ0), γj(2, phi110, γ0), γj(3, phi110, γ0), γj(4, phi110, γ0))
 end
 
 # Longitudinal drift velocity formula
