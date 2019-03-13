@@ -77,7 +77,7 @@ struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     temperaturemodel::TemperatureModels{T}
 end
 
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float64, temperature::Union{Missing, AbstractFloat}= missing)::ADLChargeDriftModel{T}
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32, temperature::Union{Missing, AbstractFloat}= missing)::ADLChargeDriftModel{T}
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
     if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature if will be used, otherwise read in from config file
 
