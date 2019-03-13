@@ -1,5 +1,5 @@
 abstract type AbstractChargeDriftModels end
-abstract type TemperatureModels{T <: AbstractFloat} end     #FH: defined new type TemperatureModels
+abstract type TemperatureModels{T <: AbstractFloat} end
 
 
 """
@@ -68,7 +68,9 @@ end
 - `holes::CarrierParameters{T}`
 - `phi110::T
 - `gammas::SVector{4, SMatrix{3,3,T}}`
+- `temperaturemodel::TemperatureModels{T}`
 """
+
 struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
