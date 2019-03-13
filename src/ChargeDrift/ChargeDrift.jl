@@ -54,8 +54,7 @@ function drift_charge!(
                         # println(drift_path[istep-1])
                         increment+=1
                     end
-                    increment == 500 ? warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") : nothing
-                    println("lol")
+                    increment == 500 ? @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") : nothing
                     drift_path[istep] = drift_path[istep-1] + projected_vector
                 else
                     @show crossing_pos_cyl,crossing_pos_type, boundary_index
@@ -187,7 +186,6 @@ function signal_contributions_from_drift_paths(drift_paths, energy_depositions::
             charge_signal_h[i] +=  _get_wpot_at(Wpot_interp, drift_path.h_path[i]) * energy_depositions[idp]
         end
     end
-    println(energy_depositions)
     return charge_signal_e .* -1, charge_signal_h
 end
 
@@ -451,7 +449,7 @@ function generate_charge_signals!(
         edep_vec = hit_edep[i_evt]
         start_positions = hit_pos[i_evt]
         for i_hit in eachindex(start_positions)
-            unitless_startpos = to_internal_units(u"m", startpos_vec[i_hit])
+            unitless_startpos = CartesianPoint{Float32}(to_internal_units(u"m", startpos_vec[i_hit]))
             edep = edep_vec[i_hit]
             n_charges = uconvert(NoUnits,edep / E_ionisation)
 
@@ -478,7 +476,6 @@ function generate_charge_signals!(
 
         drift_times[i_evt] = t_drift_total
     end
-
     nothing
 end
 
