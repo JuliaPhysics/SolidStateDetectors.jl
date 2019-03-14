@@ -37,7 +37,7 @@ include("PowerLawModel.jl")
 include("VacuumModel.jl")
 
 # Electron model parametrization from [3]
-@fastmath function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
+@fastmath function γj(j::Integer, phi110::T, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
     tmp::T = 2 / 3
     a::T = acos(sqrt(tmp))
     Rx::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(1, 0, 0, 0, cos(a), sin(a), 0, -sin(a), cos(a))
