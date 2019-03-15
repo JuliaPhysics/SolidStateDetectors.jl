@@ -297,6 +297,58 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
     return df
 end
 
+function println(io::IO, tm::VacuumModel{T}) where {T <: AbstractFloat}
+    print("No temperature model defined")
+end
+
+function println(io::IO, tm::BoltzmannModel{T}) where {T <: AbstractFloat}
+    println("\n________BoltzmannModel________")
+    println("Fit function: p1 + p2 exp(-p3/T)\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:   \t $(tm.temperature)")
+    println("Reference temperature: \t $(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
+    println("p3 \t$(tm.p3e100)   \t$(tm.p3e111)   \t$(tm.p3h100)   \t$(tm.p3h111)")
+end
+
+function println(io::IO, tm::LinearModel{T}) where {T <: AbstractFloat}
+    println("\n________LinearModel________")
+    println("Fit function: p1 + p2 * T\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:  \t$(tm.temperature)")
+    println("Reference temperature:\t$(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
+end
+
+function println(io::IO, tm::PowerLawModel{T}) where {T <: AbstractFloat}
+    println("\n________PowerLawModel________")
+    println("Fit function: p1 * T^(3/2)\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:   \t $(tm.temperature)")
+    println("Reference temperature: \t $(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+end
+
+
+function show(io::IO, tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat} println(tm) end
+function print(io::IO, tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat} println(tm) end
+function display(io::IO, tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat} println(tm) end
+function show(io::IO,::MIME"text/plain", tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat}
+    show(io, tm)
+end
+
+
 
 ### END: ADL Charge Drift Model
 ###############################
