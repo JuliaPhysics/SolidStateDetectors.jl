@@ -79,9 +79,11 @@ struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     temperaturemodel::TemperatureModels{T}
 end
 
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32, temperature::Union{Missing, AbstractFloat}= missing)::ADLChargeDriftModel{T}
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32,
+                             temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
+
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
-    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature if will be used, otherwise read in from config file
+    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file
 
     config = JSON.parsefile(configfilename)
 
@@ -112,7 +114,7 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
     electrons = CarrierParameters{T}(e100, e111)
     holes     = CarrierParameters{T}(h100, h111)
 
-    phi110::T = config["phi110"]
+    ismissing(phi110) ? phi110 = config["phi110"] : phi110 = T(phi110)  #if you give the angle of the 110 axis it will be used, otherwise read from config file
 
     gammas = setup_gamma_matrices(phi110)
 
@@ -274,7 +276,7 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
 
             k0::T = k0func(V111h / V100h)
 
-            vtmp = MVector{3, T}(0, 0, 0)
+            vtmp = MVector{3, T}(0, 0, 0) ## from CITATION; The implementation here is correct, mistake in the CITATION
             vtmp[3] = V100h * ( 1 - lambda(k0) * (sin(theta0)^4 * sin(2 * phi0)^2 + sin(2 * theta0)^2) )
             vtmp[1] = V100h * omega(k0) * (2 * sin(theta0)^3 * cos(theta0) * sin(2 * phi0)^2 + sin(4 * theta0))
             vtmp[2] = V100h * omega(k0) * sin(theta0)^3 * sin(4 * phi0)
