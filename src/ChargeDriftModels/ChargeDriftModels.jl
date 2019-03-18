@@ -31,7 +31,7 @@ struct CarrierParameters{T}
 end
 
 # Electron model parametrization from [3]
-function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
+@fastmath function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
     tmp::T = 2 / 3
     a::T = acos(sqrt(tmp))
     Rx::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(1, 0, 0, 0, cos(a), sin(a), 0, -sin(a), cos(a))
@@ -41,7 +41,7 @@ function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9
     transpose(Rj) * γ0 * Rj
 end
 
-function setup_gamma_matrices(phi110::T)::SVector{4, SMatrix{3,3,T}} where {T <: AbstractFloat}
+@fastmath function setup_gamma_matrices(phi110::T)::SVector{4, SMatrix{3,3,T}} where {T <: AbstractFloat}
     ml::T = 1.64
     mt::T = 0.0819
     γ0 = SMatrix{3,3,T}(1 / mt, 0, 0, 0, 1 / ml, 0, 0, 0, 1 / mt)
@@ -70,7 +70,11 @@ struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     gammas::SVector{4, SMatrix{3,3,T}}
 end
 
+<<<<<<< HEAD
 function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32)::ADLChargeDriftModel{T} 
+=======
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type = Float64)::ADLChargeDriftModel{T} 
+>>>>>>> 78d10300e1e01851bb82f5923c3850cef30d8688
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
 
     config = JSON.parsefile(configfilename)
@@ -109,7 +113,7 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
     return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
 end
 
-function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
+function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
 
     cdm = begin
@@ -125,7 +129,7 @@ function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::A
         ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
     end
 
-    function getVe(fv::SVector{3,T}, gammas::SVector{4, SMatrix{3,3,T}})::SVector{3,T} where {T <: AbstractFloat}
+    @fastmath function getVe(fv::SVector{3, T}, gammas::SVector{4, SMatrix{3,3,T}})::SVector{3, T} where {T <: AbstractFloat}
         @inbounds begin
             Emag::T = norm(fv)
             Emag_inv::T = inv(Emag)
@@ -168,7 +172,7 @@ function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::A
 end
 
 # Hole model parametrization from [1] equations (22)-(26)
-function k0func(vrel::T)::T where {T <: AbstractFloat}
+@fastmath function k0func(vrel::T)::T where {T <: AbstractFloat}
     p0::T = 9.2652
     p1::T = 26.3467
     p2::T = 29.6137
@@ -211,7 +215,7 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
 
     Emag_threshold::T = 1e-5
 
-    function getVh(fv::SVector{3,T}, Emag_threshold::T)::SVector{3,T} where {T <: AbstractFloat}
+    @fastmath function getVh(fv::SVector{3,T}, Emag_threshold::T)::SVector{3,T} where {T <: AbstractFloat}
         @inbounds begin
             Emag::T = norm(fv)
             Emag_inv::T = inv(Emag)
@@ -255,3 +259,7 @@ end
 
 ### END: ADL Charge Drift Model
 ###############################
+<<<<<<< HEAD
+=======
+
+>>>>>>> 78d10300e1e01851bb82f5923c3850cef30d8688
