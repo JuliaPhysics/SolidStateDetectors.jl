@@ -7,7 +7,7 @@ through successive over relaxation. It returns a collection struct `PotentialSim
 the potential, the charge density, the dielectric distribution, pointtypes and the final grid.
 
 There are serveral `<keyword arguments>` which can be used to tune the computation:
-    
+
 # Keywords
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation. The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. Default of `convergence_limit` is `5e-6` (times bias voltage).
 - `max_refinements::Int`: number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
@@ -27,7 +27,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4], 
+                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
                                         min_grid_spacing::Vector{<:Real} = [1e-4, 1e-2, 1e-4],  # mm, degree, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
@@ -42,23 +42,23 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     check_grid(grid)
     cyclic::T = grid.axes[2].interval.right
-    n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3)) 
+    n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3))
     if use_nthreads > Base.Threads.nthreads()
         use_nthreads = Base.Threads.nthreads();
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
     str_mirror_sym::String = detector.mirror_symmetry_φ ? " and has mirror symmetry" : ""
     cyclic_print::T = detector.mirror_symmetry_φ ? (cyclic * 2) : cyclic
-    n_φ_sym_info_txt = if only_2d  
+    n_φ_sym_info_txt = if only_2d
         "φ symmetry: Detector is φ-symmetric -> 2D computation."
-    elseif n_φ_sym > 1 
+    elseif n_φ_sym > 1
         "φ symmetry: cyclic = $(round(rad2deg(cyclic_print), digits = 0))°$(str_mirror_sym) -> calculating just 1/$(n_φ_sym) in φ of the detector."
     else
         "φ symmetry: cyclic = $(round(rad2deg(cyclic_print), digits = 0))°$(str_mirror_sym) -> no symmetry -> calculating for 360°."
     end
-    
+
     fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB(detector, grid);
-    
+
     if verbose
         println("Electric Potential Calculation\n",
                 "Bulk type: $(detector.bulk_type)\n",
@@ -85,8 +85,8 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
     end
 
     n_iterations_between_checks::Int = 500
-    update_till_convergence!(   fssrb, convergence_limit, fssrb.bias_voltage, 
-                                depletion_handling = Val{depletion_handling}(), only2d = Val{only_2d}(), 
+    update_till_convergence!(   fssrb, convergence_limit, fssrb.bias_voltage,
+                                depletion_handling = Val{depletion_handling}(), only2d = Val{only_2d}(),
                                 use_nthreads=use_nthreads, max_n_iterations=max_n_iterations, n_iterations_between_checks = n_iterations_between_checks )
 
     potential::Array{T, 3} = ElectricPotentialArray(fssrb)
@@ -110,7 +110,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
             end
         end
     end
-    
+
     pointtypes::Array{PointType, 3} = PointTypeArray(fssrb)
     # min_or_max_potential_for_bubble_marking::T = fssrb.bulk_is_ptype ? fssrb.minimum_applied_potential + 10 : fssrb.maximum_applied_potential - 10
     @inbounds for i in eachindex(pointtypes)
@@ -118,7 +118,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
             pointtypes[i] = PointType(0)
         else
             # if (pointtypes[i] & undepleted_bit > 0) # Deactivated bubble feature for now
-            #     if fssrb.bulk_is_ptype 
+            #     if fssrb.bulk_is_ptype
             #         if (min_or_max_potential_for_bubble_marking < potential[i] < fssrb.maximum_applied_potential)
             #             pointtypes[i] += bubble_bit
             #         end
@@ -134,7 +134,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
             end
         end
     end
-    
+
     # Checks
     max::T = maximum(potential)
     min::T = minimum(potential)
@@ -144,7 +144,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
     if min < fssrb.minimum_applied_potential
         @warn "Detector not fully depleted at this bias voltage ($(fssrb.bias_voltage) V). At least on grid point has a smaller potential value ($(min) V) than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be. However, small overshoots might be due to over relaxation and/or not full convergence."
     end
-        
+
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
@@ -165,7 +165,7 @@ function calculate_electric_potential(  detector::CGD{T};
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4], 
+                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
                                         min_grid_spacing::Vector{<:Real} = [1e-4, 1e-4, 1e-4],  # mm, mm, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
@@ -182,9 +182,9 @@ function calculate_electric_potential(  detector::CGD{T};
         use_nthreads = Base.Threads.nthreads();
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
-    
+
     fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian} = PotentialSimulationSetupRB(detector, grid);
-    
+
     if verbose
         println("Electric Potential Calculation\n",
                 "Bulk type: $(detector.bulk_type)\n",
@@ -210,8 +210,8 @@ function calculate_electric_potential(  detector::CGD{T};
     end
 
     n_iterations_between_checks::Int = 500
-    update_till_convergence!(   fssrb, convergence_limit, fssrb.bias_voltage, 
-                                depletion_handling = Val{depletion_handling}(), 
+    update_till_convergence!(   fssrb, convergence_limit, fssrb.bias_voltage,
+                                depletion_handling = Val{depletion_handling}(),
                                 use_nthreads=use_nthreads, max_n_iterations=max_n_iterations, n_iterations_between_checks = n_iterations_between_checks )
 
     potential::Array{T, 3} = ElectricPotentialArray(fssrb)
@@ -235,7 +235,7 @@ function calculate_electric_potential(  detector::CGD{T};
             end
         end
     end
-    
+
     pointtypes::Array{PointType, 3} = PointTypeArray(fssrb)
     # min_or_max_potential_for_bubble_marking::T = fssrb.bulk_is_ptype ? fssrb.minimum_applied_potential + 10 : fssrb.maximum_applied_potential - 10
     @inbounds for i in eachindex(pointtypes)
@@ -243,7 +243,7 @@ function calculate_electric_potential(  detector::CGD{T};
             pointtypes[i] = PointType(0)
         else
             # if (pointtypes[i] & undepleted_bit > 0) # Deactivated bubble feature for now
-            #     if fssrb.bulk_is_ptype 
+            #     if fssrb.bulk_is_ptype
             #         if (min_or_max_potential_for_bubble_marking < potential[i] < fssrb.maximum_applied_potential)
             #             pointtypes[i] += bubble_bit
             #         end
@@ -259,7 +259,7 @@ function calculate_electric_potential(  detector::CGD{T};
             end
         end
     end
-    
+
     # Checks
     max::T = maximum(potential)
     min::T = minimum(potential)
@@ -269,6 +269,6 @@ function calculate_electric_potential(  detector::CGD{T};
     if min < fssrb.minimum_applied_potential
         @warn "Detector not fully depleted at this bias voltage ($(fssrb.bias_voltage) V). At least on grid point has a smaller potential value ($(min) V) than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be. However, small overshoots might be due to over relaxation and/or not full convergence."
     end
-        
+
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end

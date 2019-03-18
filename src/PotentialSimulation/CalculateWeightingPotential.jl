@@ -7,7 +7,7 @@ through successive over relaxation. It returns a collection struct `PotentialSim
 the potential, the charge density, the dielectric distribution, pointtypes and the final grid.
 
 There are serveral `<keyword arguments>` which can be used to tune the computation:
-    
+
 # Keywords
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation. The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. Default of `convergence_limit` is `5e-6` (times bias voltage).
 - `max_refinements::Int`: number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
@@ -27,7 +27,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T}, channel
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, for_weighting_potential = true),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4], 
+                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
                                         min_grid_spacing::Vector{<:Real} = [1e-4, 1e-2, 1e-4],  # mm, degree, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
@@ -42,21 +42,21 @@ function calculate_weighting_potential( detector::SolidStateDetector{T}, channel
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     check_grid(grid)
     cyclic::T = grid.axes[2].interval.right
-    n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3)) 
+    n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3))
     if use_nthreads > Base.Threads.nthreads()
         use_nthreads = Base.Threads.nthreads();
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
-    n_φ_sym_info_txt = if only_2d  
+    n_φ_sym_info_txt = if only_2d
         "φ symmetry: Detector is φ-symmetric -> 2D computation."
-    elseif n_φ_sym > 1 
+    elseif n_φ_sym > 1
         "φ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))° -> calculating just 1/$(n_φ_sym) in φ of the detector."
     else
         "φ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))° -> no symmetry -> calculating for 360°."
     end
-    
+
     fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);
-    
+
     if verbose
         println("Weighting Potential Calculation\n",
                 "$n_φ_sym_info_txt\n",
@@ -78,8 +78,8 @@ function calculate_weighting_potential( detector::SolidStateDetector{T}, channel
                 ""
         )
     end
-    
-    update_till_convergence!(   fssrb, convergence_limit, T(1), 
+
+    update_till_convergence!(   fssrb, convergence_limit, T(1),
                                 depletion_handling = Val{false}(), only2d = Val{only_2d}(), is_weighting_potential = Val{true}(),
                                 use_nthreads=use_nthreads, max_n_iterations=max_n_iterations    )
 
@@ -94,7 +94,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T}, channel
                 potential, grid = add_points_and_interpolate(potential, grid, new_inds...)
                 if verbose println("Refinement $refinement_counter:\tNew grid size: $(size(potential))") end
                 fssrb = PotentialSimulationSetupRB(detector, grid, potential, weighting_potential_contact_id = channel_id)
-                update_till_convergence!(   fssrb, convergence_limit, T(1), 
+                update_till_convergence!(   fssrb, convergence_limit, T(1),
                 depletion_handling = Val{false}(), only2d = Val{only_2d}(), is_weighting_potential = Val{true}(),
                 use_nthreads=use_nthreads, max_n_iterations=max_n_iterations)
                 potential = ElectricPotentialArray(fssrb)
@@ -104,7 +104,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T}, channel
             end
         end
     end
-           
+
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
@@ -125,7 +125,7 @@ function calculate_weighting_potential( detector::CGD{T}, channel_id::Int;
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4], 
+                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
                                         min_grid_spacing::Vector{<:Real} = [1e-4, 1e-4, 1e-4],  # mm, mm, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
@@ -142,9 +142,9 @@ function calculate_weighting_potential( detector::CGD{T}, channel_id::Int;
         use_nthreads = Base.Threads.nthreads();
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
-    
+
     fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);
-    
+
     if verbose
         println("WeightingPotential Potential Calculation\n",
                 "Precision: $T\n",
@@ -168,8 +168,8 @@ function calculate_weighting_potential( detector::CGD{T}, channel_id::Int;
     end
 
     n_iterations_between_checks::Int = 500
-    update_till_convergence!(   fssrb, convergence_limit, fssrb.bias_voltage, 
-                                depletion_handling = Val{depletion_handling}(), 
+    update_till_convergence!(   fssrb, convergence_limit, fssrb.bias_voltage,
+                                depletion_handling = Val{depletion_handling}(),
                                 use_nthreads=use_nthreads, max_n_iterations=max_n_iterations, n_iterations_between_checks = n_iterations_between_checks )
 
     potential::Array{T, 3} = ElectricPotentialArray(fssrb)
@@ -193,8 +193,8 @@ function calculate_weighting_potential( detector::CGD{T}, channel_id::Int;
             end
         end
     end
-    
+
     pointtypes::Array{PointType, 3} = PointTypeArray(fssrb)
-           
+
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end

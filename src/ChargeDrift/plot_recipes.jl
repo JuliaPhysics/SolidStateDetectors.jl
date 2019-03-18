@@ -78,7 +78,7 @@ end
     end
 end
 @recipe function f(cde::ChargeDriftEvent, d::SolidStateDetector, show_pulses=true)
-    size
+
     if size(cde.signal,1)==1
         height = 300
         mywidths = [1/3,2/3]
@@ -93,28 +93,30 @@ end
         for i in 1:n_wps
             push!(myheights,(width/2)/length)
         end
-        layout  -->  (1, 2) #grid(n_wps+1,1,heights=myheights)
-        # layout --> grid(1+size(cde.signal,1),1)
+        # layout  -->  (1, 2) #grid(n_wps+1,1,heights=myheights)
+        layout --> (1+size(cde.signal,1),1)
     end
     @series begin
+        aspect_ratio --> 1
         subplot --> 1
+        # xlabel --> "x / mm"
         d
     end
     @series begin
         subplot --> 1
-        scaling --> 1000
+        scaling --> 1
         cde.drift_paths
     end
 
     for i in eachindex(cde.signal)
-        subplot --> i+1
+        subplot := i+1
         @series begin
             c --> :black
             lw --> 2
             label --> ""
             ylabel --> "Signal"
-            xlabel --> "time [ns]"
-            [i for i in 1:size(cde.signal[1],1)], cde.signal[i]
+            xlabel --> "time / ns"
+            [j for j in 1:size(cde.signal[1],1)], cde.signal[i]
         end
     end
 end

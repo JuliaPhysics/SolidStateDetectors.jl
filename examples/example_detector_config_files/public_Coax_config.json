@@ -1,153 +1,401 @@
 {
-	"name":"ExampleCoax",
-	"class":"Coax",
-	"type": "n",
-	"cyclic": 60,
-	"mirror_symmetry_φ": "true",
-	"materials":{
-		"detector":"HPGe",
-		"environment":"Vacuum"
-	},
-	"geometry":
-	{
-		"unit": "mm",
-		"crystal":
-		{
-			"length": 70.00,
-			"radius": 37.5
-		},
-		"borehole":
-		{
-			"length": 70,
-			"radius": 5
-		},
-		"point_contact":
-		{
-			"depth": 0.0,
-			"radius": 0.0
-		},
-		"groove":
-		{
-			"endplate":"top",
-			"rInner": 0.0,
-			"width": 0.0,
-			"depth": 0.0
-		},
-		"taper":
-		{
-			"inner":
-			{
-				"top":
-				{
-					"rOuter": 10,
-					"length": 5
-				},
-				"bot":
-				{
-					"rOuter": 10,
-					"length": 5
-				}
-			},
-			"outer":
-			{
-				"top":
-				{
-					"rInner": 0,
-					"length": 0
-				},
-				"bot":
-				{
-					"rInner": 0,
-					"length": 0
-				}
-			}
-		}
-	},
-	"charge_carrier_density":
-	{
-		"unit": "cm-3",
-		"top": 0.61,
-		"bot": 1.35
-		},
-	"segmentation":
-	{
-		"n_contacts_total": 19,
-		"core":
-		{
-			"type": "Tubs",
-			"rStart": 5.0,
-			"rStop": 5.0,
-			"phiStart": 0,
-			"phiStop": 360,
-			"zStart": 5.0,
-			"zStop": 65.0,
-			"potential": 6000.0
-		},
-		"n_repetitive_segments":0,
-		"repetitive_segment":
-		{
-			"rStart": 37.5,
-			"rStop": 37.5,
-			"phiStart": 0,
-			"phiStop": 60,
-			"zStart": 0,
-			"zStop": 23.3333,
-			"potential": 0.0,
-			"boundaryWidth":
-			{
-				"vertical": 0.5,
-				"horizontal": 0.5
-			},
-			"repetitions":
-			{
-				"vertical": 3,
-				"horizontal": 6
-			}
-		},
-		"n_individual_segments": 1,
-		"S1":
-		{
-			"type":"Tubs",
-			"rStart": 37.5,
-			"rStop": 37.5,
-			"phiStart": 0,
-			"phiStop": 60,
-			"zStart": 0,
-			"zStop": 23.3333,
-			"potential": 0.0,
-			"boundaryWidth":
-			{
-				"radial":0.0,
-				"vertical": 0.5,
-				"horizontal": 0.5
-			},
-			"repetitive":true,
-			"repetitions":
-			{
-				"radial":0,
-				"vertical":2,
-				"horizontal":5
-			}
-		},
-		"custom_grouping":true,
-		"Chn1":"1",
-		"Chn2":"2",
-		"Chn3":"3",
-		"Chn4":"4",
-		"Chn5":"5",
-		"Chn6":"6",
-		"Chn7":"7",
-		"Chn8":"8",
-		"Chn9":"9",
-		"Chn10":"10",
-		"Chn11":"11",
-		"Chn12":"12",
-		"Chn13":"13",
-		"Chn14":"14",
-		"Chn15":"15",
-		"Chn16":"16",
-		"Chn17":"17",
-		"Chn18":"18",
-		"Chn19":"19"
-	}
+    "class": "CustomDetector",
+    "name": "Public Coax",
+    "cyclic": 60.0,
+
+    "mirror_symmetry_phi": "false",
+    "bulk_type": "n",
+
+    "charge_carrier_density": {
+        "unit": "cm-3",
+        "top": 0.61,
+        "bot": 1.35
+    },
+
+
+    "geometry": {
+        "unit": "mm",
+        "world": {
+            "material": "Vacuum",
+            "geometry": [
+                {
+                    "type": "Tube",
+                    "pol": "positive",
+                    "rStart": 0.0,
+                    "rStop": 39.5,
+                    "phiStart": 0.0,
+                    "phiStop": 360.0,
+                    "zStart": -2.0,
+                    "zStop": 72.0
+                }
+             ]
+          },
+
+
+        "crystal": {
+            "material": "HPGe",
+            "geometry": {
+                "positive": [
+                    {
+                        "type": "Tube",
+                        "rStart": 0.0,
+                        "rStop": 37.5,
+                        "phiStart": 0.0,
+                        "phiStop": 360.0,
+                        "zStart": 0.0,
+                        "zStop": 70.0
+                    }
+                ],
+                "negative": [
+                    {
+                        "type": "Tube",
+                        "pol": "negative",
+                        "rStart": 0.0,
+                        "rStop": 5.0,
+                        "phiStart": 0.0,
+                        "phiStop": 360.0,
+                        "zStart": 0.0,
+                        "zStop": 70.0
+                    },
+                    {
+                        "type": "Cone",
+                        "pol": "negative",
+                        "orientation": "bl",
+                        "rStart": 5.0,
+                        "rStop": 10.0,
+                        "phiStart": 0.0,
+                        "phiStop": 360.0,
+                        "zStart": -0.0001,
+                        "zStop": 4.99999
+                    },
+                    {
+                        "type": "Cone",
+                        "pol": "negative",
+                        "orientation": "tl",
+                        "rStart": 5.0,
+                        "rStop": 10.0,
+                        "phiStart": 0.0,
+                        "phiStop": 360.0,
+                        "zStart": 65.0001,
+                        "zStop": 70.0001
+                    }
+                  ]
+              }
+        }
+    },
+
+
+    "contacts": {
+        "n_channels": 19,
+        "unit": "mm",
+        "n": [
+            {
+                "name": "Core",
+                "potential": 6000.0,
+                "channel": 1,
+                "geometry": [
+                    {
+                      "type": "Tube",
+                      "rStart": 5.0,
+                      "rStop": 5.0,
+                      "phiStart": 0.0,
+                      "phiStop": 360.0,
+                      "zStart": 5.0,
+                      "zStop": 65.0
+                    }
+                ]
+            }
+        ],
+
+        "p": [
+            {
+                "name": "Segment 1",
+                "potential": 0.0,
+                "channel": 2,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 0.382,
+                        "phiStop": 59.618,
+                        "zStart": 0,
+                        "zStop": 23.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 2",
+                "potential": 0.0,
+                "channel": 3,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 60.382,
+                        "phiStop": 119.618,
+                        "zStart": 0,
+                        "zStop": 23.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 3",
+                "potential": 0.0,
+                "channel": 4,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 120.382,
+                        "phiStop": 179.618,
+                        "zStart": 0,
+                        "zStop": 23.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 4",
+                "potential": 0.0,
+                "channel": 5,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 180.382,
+                        "phiStop": 239.618,
+                        "zStart": 0,
+                        "zStop": 23.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 5",
+                "potential": 0.0,
+                "channel": 6,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 240.382,
+                        "phiStop": 299.618,
+                        "zStart": 0,
+                        "zStop": 23.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 6",
+                "potential": 0.0,
+                "channel": 7,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 300.382,
+                        "phiStop": 359.618,
+                        "zStart": 0,
+                        "zStop": 23.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 7",
+                "potential": 0.0,
+                "channel": 8,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 0.382,
+                        "phiStop": 59.618,
+                        "zStart": 23.5,
+                        "zStop": 46.5
+                    }
+                ]
+            },
+            {
+                "name": "Segment 8",
+                "potential": 0.0,
+                "channel": 9,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 60.382,
+                        "phiStop": 119.618,
+                        "zStart": 23.5,
+                        "zStop": 46.5
+                    }
+                ]
+            },
+            {
+                "name": "Segment 9",
+                "potential": 0.0,
+                "channel": 10,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 120.382,
+                        "phiStop": 179.618,
+                        "zStart": 23.5,
+                        "zStop": 46.5
+                    }
+                ]
+            },
+            {
+                "name": "Segment 10",
+                "potential": 0.0,
+                "channel": 11,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 180.382,
+                        "phiStop": 239.618,
+                        "zStart": 23.5,
+                        "zStop": 46.5
+                    }
+                ]
+            },
+            {
+                "name": "Segment 11",
+                "potential": 0.0,
+                "channel": 12,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 240.382,
+                        "phiStop": 299.618,
+                        "zStart": 23.5,
+                        "zStop": 46.5
+                    }
+                ]
+            },
+            {
+                "name": "Segment 12",
+                "potential": 0.0,
+                "channel": 13,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 300.382,
+                        "phiStop": 359.618,
+                        "zStart": 23.5,
+                        "zStop": 46.5
+                    }
+                ]
+            },
+            {
+                "name": "Segment 13",
+                "potential": 0.0,
+                "channel": 14,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 0.382,
+                        "phiStop": 59.618,
+                        "zStart": 47.0,
+                        "zStop": 70.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 14",
+                "potential": 0.0,
+                "channel": 15,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 60.382,
+                        "phiStop": 119.618,
+                        "zStart": 47.0,
+                        "zStop": 70.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 15",
+                "potential": 0.0,
+                "channel": 16,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 120.382,
+                        "phiStop": 179.618,
+                        "zStart": 47.0,
+                        "zStop": 70.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 16",
+                "potential": 0.0,
+                "channel": 17,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 180.382,
+                        "phiStop": 239.618,
+                        "zStart": 47.0,
+                        "zStop": 70.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 17",
+                "potential": 0.0,
+                "channel": 18,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 240.382,
+                        "phiStop": 299.618,
+                        "zStart": 47.0,
+                        "zStop": 70.0
+                    }
+                ]
+            },
+            {
+                "name": "Segment 18",
+                "potential": 0.0,
+                "channel": 19,
+                "geometry": [
+                    {
+                        "type": "Tube",
+                        "rStart": 37.5,
+                        "rStop": 37.5,
+                        "phiStart": 300.382,
+                        "phiStop": 359.618,
+                        "zStart": 47.0,
+                        "zStop": 70.0
+                    }
+                ]
+            }
+        ]
+    }
 }

@@ -1,15 +1,15 @@
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical} = Grid(ssd), 
+function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical} = Grid(ssd),
                 potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = [1.0, 1.0],
                 weighting_potential_contact_id::Union{Missing, Int} = missing
-                )::PotentialSimulationSetupRB{T} where {T} 
-    r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0 
+                )::PotentialSimulationSetupRB{T} where {T}
+    r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
 
     is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
     @inbounds begin
-        begin # Geometrical weights of the Axes 
+        begin # Geometrical weights of the Axes
             nr, nφ, nz = size(grid)
 
             # R-axis
@@ -25,19 +25,19 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
             Δmpr::Vector{T} = diff(mpr)
             Δmpr_inv::Vector{T} = inv.(Δmpr)
             Δmpr_squared::Vector{T} = T(0.5) .* ((mpr[2:end].^2) .- (mpr[1:end-1].^2))
-            if r0_handling 
+            if r0_handling
                 Δmpr_squared[1] = T(0.5) * (mpr[2]^2)
                 Δr_ext_inv[1] = 0 # -> left weight @r=0 becomes 0 through this
             end
             Δhmprr::Vector{T} = mpr[2:end] - axr # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
             Δhmprl::Vector{T} = axr - mpr[1:end - 1]
             wrr::Vector{T} = Δmpr_inv .* Δhmprr # weights for epislon_r adding
-            wrl::Vector{T} = Δmpr_inv .* Δhmprl 
+            wrl::Vector{T} = Δmpr_inv .* Δhmprl
             if r0_handling wrl[1]::T = 1 - wrr[1] end
             wr::Array{T, 2} = zeros(T, 6, length(wrr))
             wr[1, :] = wrr
             wr[2, :] = wrl
-            wr[3, :] = r_inv .* Δmpr 
+            wr[3, :] = r_inv .* Δmpr
             wr[4, :] = Δr_ext_inv[2:end] .* mpr[2:end]
             wr[5, :] = Δr_ext_inv[1:length(wrr)] .* mpr[1:length(wrr)]
             wr[6, :] = Δmpr_squared
@@ -45,7 +45,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
             r_ext_mid::T = (r_ext[end - 1] - r_ext[2]) / 2
             grid_boundary_factor_r_left::T = abs((r_ext[2] - r_ext_mid) / (r_ext[1] - r_ext_mid))
             grid_boundary_factor_r_right::T = r0_handling ? abs(r_ext[end - 1] / r_ext[end]) : abs((r_ext[end - 1] - r_ext_mid) / (r_ext[end] - r_ext_mid))
-            
+
             # φ-axis
             axφ::Vector{T} = collect(grid.axes[2]) # real grid points/ticks -> the potential at these ticks are going to be calculated
             cyclic::T = grid.axes[2].interval.right
@@ -75,7 +75,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
             φ_ext_mid::T = (φ_ext[end - 1] - φ_ext[2]) / 2
             grid_boundary_factor_φ_right::T = abs((φ_ext[end - 1] - φ_ext_mid) / (φ_ext[end] - φ_ext_mid))
             grid_boundary_factor_φ_left::T = abs((φ_ext[2] - φ_ext_mid) / (φ_ext[1] - φ_ext_mid))
-            
+
             # Z-axis
             axz::Vector{T} = collect(grid.axes[3]) # real grid points/ticks -> the potential at these ticks are going to be calculated
             Δz::Vector{T} = diff(axz) # difference between real ticks
@@ -95,7 +95,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
             wz[2, 1:length(wzr)] = wzl
             wz[3, 1:length(wzr)] = Δmpz
             wz[4, :] = Δz_ext_inv
-            gw_z::GeometricalCartesianAxisWeights{T} = GeometricalCartesianAxisWeights{T}( wz ) # Weights needed for Field Simulation loop       
+            gw_z::GeometricalCartesianAxisWeights{T} = GeometricalCartesianAxisWeights{T}( wz ) # Weights needed for Field Simulation loop
             z_ext_mid::T = (z_ext[end - 1] - z_ext[2]) / 2
             grid_boundary_factor_z_right::T = abs((z_ext[end - 1] - z_ext_mid) / (z_ext[end] - z_ext_mid))
             grid_boundary_factor_z_left::T = abs((z_ext[2] - z_ext_mid) / (z_ext[1] - z_ext_mid))
@@ -103,18 +103,19 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
             geom_weights::NTuple{3, AbstractGeometricalAxisWeights{T}} = (gw_r, gw_φ, gw_z) # Weights needed for Field Simulation loop
             grid_boundary_factors::NTuple{3, NTuple{2, T}} = ((grid_boundary_factor_r_left, grid_boundary_factor_r_right), (grid_boundary_factor_φ_left, grid_boundary_factor_φ_right), (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
-        
+
         detector_material_ϵ_r::T = ssd.material_detector.ϵ_r
         environment_material_ϵ_r::T = ssd.material_environment.ϵ_r
-        
+
         bulk_is_ptype::Bool = ssd.bulk_type == :ptype ? true : false
-        minimum_applied_potential::T = minimum(ssd.segment_bias_voltages) 
-        maximum_applied_potential::T = maximum(ssd.segment_bias_voltages) 
+        bias_voltages::Vector{T} = [i.potential for i in ssd.contacts]
+        minimum_applied_potential::T = minimum(bias_voltages)
+        maximum_applied_potential::T = maximum(bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
         depletion_handling_potential_limit::T = -bias_voltage
         sor_slope = (sor_consts[2] .- sor_consts[1]) / (nr - 1 )
         sor_const::Vector{T} = T[ sor_consts[1] + (i - 1) * sor_slope for i in 1:nr]
-        
+
         ϵ = Array{T, 3}(undef,    length(mpr), length(mpφ), length(mpz))
         ρ_tmp = Array{T, 3}(undef, length(mpr), length(mpφ), length(mpz))
         for iz in 1:size(ϵ, 3)
@@ -129,7 +130,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                 end
                 pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
                 ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
-                
+
                 for ir in 2:size(ϵ, 1)
                     pos_r = mpr[ir]
                     pt = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
@@ -214,7 +215,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                         volume_weight += wzl_eps * Δz_ext_inv[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
 
                         volume_weights[ irbz, iφ, ir, rbi ] = inv(volume_weight)
-                        
+
                         dV::T = Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                         ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
                     else
@@ -256,14 +257,14 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                         volume_weight += wzl_eps * Δz_ext_inv[inz] * 2π * Δmpr_squared[inr]
 
                         volume_weights[ irbz, iφ, ir, rbi ] = inv(volume_weight)
-                        
+
                         dV = Δmpz[inz] * 2π * Δmpr_squared[inr]
                         ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
                     end
                 end
             end
         end
-        
+
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
         set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id  )
@@ -272,9 +273,9 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         potential = clear(potential)
         pointtypes = clear(pointtypes)
     end # @inbounds
-        
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB{T, 3, 4, :Cylindrical}(  
-        grid, 
+
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB{T, 3, 4, :Cylindrical}(
+        grid,
         rbpotential,
         rbpointtypes,
         volume_weights,
@@ -291,7 +292,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
      )
 
     apply_boundary_conditions!(fssrb, Val{ true}(), only_2d ? Val{true}() : Val{false}()) # even points
-    apply_boundary_conditions!(fssrb, Val{false}(), only_2d ? Val{true}() : Val{false}()) # odd 
+    apply_boundary_conditions!(fssrb, Val{false}(), only_2d ? Val{true}() : Val{false}()) # odd
     return fssrb
 end
 
@@ -344,7 +345,7 @@ function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindri
     ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
-        Δmpz::T = fssrb.geom_weights[3].weights[3, iz] 
+        Δmpz::T = fssrb.geom_weights[3].weights[3, iz]
         for iφ in axes(ρ, 2)
             irbφ::Int = iφ + 1
             idxsum::Int = iz + iφ
@@ -366,6 +367,5 @@ end
 
 
 function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
-    return fssrb.ϵ 
+    return fssrb.ϵ
 end
-
