@@ -63,16 +63,16 @@ end
 - `phi110::T
 - `gammas::SVector{4, SMatrix{3,3,T}}`
 """
-struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels 
+struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
     phi110::T
     gammas::SVector{4, SMatrix{3,3,T}}
 end
 
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float64)::ADLChargeDriftModel{T} 
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32)::ADLChargeDriftModel{T} 
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
-    
+
     config = JSON.parsefile(configfilename)
 
     #mu0 in m^2 / ( V * s )
@@ -119,7 +119,7 @@ function get_electron_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::A
         h100 = VelocityParameters{T}(cdmf64.holes.axis100.mu0, cdmf64.holes.axis100.beta, cdmf64.holes.axis100.E0, cdmf64.holes.axis100.mun)
         h111 = VelocityParameters{T}(cdmf64.holes.axis111.mu0, cdmf64.holes.axis111.beta, cdmf64.holes.axis111.E0, cdmf64.holes.axis111.mun)
         electrons = CarrierParameters{T}(e100, e111)
-        holes     = CarrierParameters{T}(h100, h111)  
+        holes     = CarrierParameters{T}(h100, h111)
         phi110::T = cdmf64.phi110
         gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
         ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
@@ -203,7 +203,7 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
         h100 = VelocityParameters{T}(cdmf64.holes.axis100.mu0, cdmf64.holes.axis100.beta, cdmf64.holes.axis100.E0, cdmf64.holes.axis100.mun)
         h111 = VelocityParameters{T}(cdmf64.holes.axis111.mu0, cdmf64.holes.axis111.beta, cdmf64.holes.axis111.E0, cdmf64.holes.axis111.mun)
         electrons = CarrierParameters{T}(e100, e111)
-        holes     = CarrierParameters{T}(h100, h111)  
+        holes     = CarrierParameters{T}(h100, h111)
         phi110::T = cdmf64.phi110
         gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
         ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
@@ -255,6 +255,3 @@ end
 
 ### END: ADL Charge Drift Model
 ###############################
-
-
-
