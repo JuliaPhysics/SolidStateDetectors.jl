@@ -70,11 +70,9 @@ struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     gammas::SVector{4, SMatrix{3,3,T}}
 end
 
-<<<<<<< HEAD
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32)::ADLChargeDriftModel{T} 
-=======
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type = Float64)::ADLChargeDriftModel{T} 
->>>>>>> 78d10300e1e01851bb82f5923c3850cef30d8688
+
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32)::ADLChargeDriftModel{T}
+
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
 
     config = JSON.parsefile(configfilename)
@@ -255,11 +253,5 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
 
     return df
 end
-
-
 ### END: ADL Charge Drift Model
 ###############################
-<<<<<<< HEAD
-=======
-
->>>>>>> 78d10300e1e01851bb82f5923c3850cef30d8688
