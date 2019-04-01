@@ -322,9 +322,9 @@ end
     tickfontsize --> 9
     guidefontsize --> 13
     lw --> 2
-    xlabel --> "\n x / m"
-    ylabel --> "\n y / m"
-    zlabel --> "\n z / m"
+    # xlabel --> "\n x / m"
+    # ylabel --> "\n y / m"
+    # zlabel --> "\n z / m"
     camera --> (15,25)
     coloring = coloring
     labeling = labeling
