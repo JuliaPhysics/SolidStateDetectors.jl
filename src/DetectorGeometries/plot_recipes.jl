@@ -299,9 +299,9 @@ function partialcircle(radius,phiStart,phiStop,Translate::Vector=[0.0,0.0,0.0];n
     return x,y
 end
 
-function line_3d(r1,r2,phi1,phi2,z1,z2)
-    x1::Vector = [r1*cos(phi1),r1*sin(phi1),z1]
-    x2::Vector = [r2*cos(phi2),r2*sin(phi2),z2]
+function line_3d(r1::T, r2::T, phi1::T, phi2::T, z1::T, z2::T; translate::AbstractVector = SVector{3,T}(0.0,0.0,0.0)) where T <:Real
+    x1::SVector{3,T} = [r1*cos(phi1),r1*sin(phi1),z1]+translate
+    x2::SVector{3,T} = [r2*cos(phi2),r2*sin(phi2),z2]+translate
     return [x1[1],x2[1]] , [x1[2],x2[2]], [x1[3],x2[3]]
 end
 
@@ -387,3 +387,192 @@ end
         end
     end
 end
+
+
+## 2D from Felix
+
+
+function line_2d(r1,r2,z1,z2)
+   x1::Vector = [r1,z1]
+   x2::Vector = [r2,z2]
+   return [x1[1],x2[1]],[x1[2],x2[2]]
+end
+
+
+function polar_circle_2d(r::T, phiStart::T, phiStop::T;nSteps=360) where T<:AbstractFloat
+    if r == 0; return [],[]; end
+    phiRange = collect(phiStart:(phiStop-phiStart)/nSteps:phiStop)
+    rRange = [r for a in 1:length(phiRange)]
+    return phiRange, rRange
+end
+
+
+
+
+@recipe function f(d::SolidStateDetector{T}, dim::Symbol; φ = missing, z = missing) where T <: AbstractFloat
+    if ismissing(z) && ismissing(φ)
+        print("Please specify φ or z.")
+    elseif ismissing(z)
+        for c in d.contacts
+            for g in c.geometry
+                @series begin
+                    if d.name == "Public Inverted Coax"
+                        if typeof(c) == SSD.Contact{T,:N}; color --> :orange
+                        elseif typeof(c) == SSD.Contact{T,:P}; color --> :blue; end
+                    else color --> :black
+                    end
+                    lw --> 2
+                    label = ""
+                    g, :φ, T(deg2rad(mod(φ,2π)))
+                end
+            end
+        end
+    elseif ismissing(φ)
+        proj --> :polar
+        for c in d.contacts
+            for g in c.geometry
+                @series begin
+                    if d.name == "Public Inverted Coax"
+                        if typeof(c) == SSD.Contact{T,:N}; color --> :orange
+                        elseif typeof(c) == SSD.Contact{T,:P}; color --> :blue; end
+                    else color --> :black
+                    end
+                    lw --> 2
+                    label = ""
+                    g, :z, T(z)
+                end
+            end
+        end
+    else
+        print("Please specify only one of either φ or z.")
+    end
+end
+
+
+@recipe function f(Vol::SSD.Tube{T}, dim::Symbol, parameter::T) where T <: AbstractFloat
+    if dim == :φ
+        if parameter in Vol.φ_interval
+           rStart = Vol.r_interval.left
+           rStop = Vol.r_interval.right
+           zStart = Vol.z_interval.left
+           zStop = Vol.z_interval.right
+
+           @series begin
+                   label --> ""
+                   line_2d(rStop,rStop,zStart,zStop)
+               end
+
+            @series begin
+                   label --> ""
+                   line_2d(rStart,rStop,zStart,zStart)
+            end
+
+           if rStart != rStop
+                @series begin
+                   label --> ""
+                   line_2d(rStart,rStop,zStop,zStop)
+               end
+            end
+
+            if zStart != zStop && rStart != 0
+                @series begin
+                   label --> ""
+                   line_2d(rStart,rStart,zStart,zStop)
+               end
+            end
+        end
+
+    elseif dim == :z
+        if parameter in Vol.z_interval
+            rStart = Vol.r_interval.left
+            rStop = Vol.r_interval.right
+            phiStart = Vol.φ_interval.left
+            phiStop = Vol.φ_interval.right
+            zStart = Vol.z_interval.left
+            zStop = Vol.z_interval.right
+
+            if rStart != 0
+                @series begin
+                    label --> ""
+                    polar_circle_2d(rStart,phiStart,phiStop)
+                end
+            end
+            @series begin
+                label --> ""
+                polar_circle_2d(rStop,phiStart,phiStop)
+            end
+
+            if !isapprox(mod(phiStart,2π),mod(phiStop,2π),atol = 1e-5)
+                @series begin
+                    label --> ""
+                    line_2d(phiStart,phiStart,rStart,rStop)
+                end
+                @series begin
+                    label --> ""
+                    line_2d(phiStop,phiStop,rStart,rStop)
+                end
+            end
+        end
+    end
+end
+
+
+
+@recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where T <: AbstractFloat
+    newVol = Vol.cone
+    @series begin
+        newVol, dim, parameter
+    end
+end
+
+
+
+@recipe function f(Vol::SSD.Cone{T}, dim::Symbol, parameter::T) where T <: AbstractFloat
+    if dim == :φ
+        if parameter in Vol.φ_interval
+            rStart = Vol.r_interval.left
+            rStop = Vol.r_interval.right
+            zStart = Vol.z_interval.left
+            zStop = Vol.z_interval.right
+            orientation = Vol.orientation
+
+            if orientation in [:top_right, :bottom_left]
+                @series begin
+                    label --> ""
+                   line_2d(rStop,rStart,zStart,zStop)
+                end
+            else
+                @series begin
+                    label --> ""
+                   line_2d(rStart,rStop,zStart,zStop)
+                end
+            end
+        end
+
+    elseif dim == :z
+        if parameter in Vol.z_interval
+            rStart = Vol.r_interval.left
+            rStop = Vol.r_interval.right
+            phiStart = Vol.φ_interval.left
+            phiStop = Vol.φ_interval.right
+            zStart = Vol.z_interval.left
+            zStop = Vol.z_interval.right
+            orientation = Vol.orientation
+
+            if orientation in [:top_right, :bottom_left]
+                @series begin
+                    label --> ""
+                    r = (rStop-rStart)*(parameter-zStop)/(zStart-zStop) + rStart
+                    polar_circle_2d(r,phiStart,phiStop)
+                end
+            else
+                @series begin
+                    label --> ""
+                    r = (rStop-rStart)*(parameter-zStart)/(zStop-zStart) + rStart
+                    polar_circle_2d(r,phiStart,phiStop)
+                end
+            end
+        end
+
+    end
+end 

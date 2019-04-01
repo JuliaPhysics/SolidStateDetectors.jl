@@ -1,5 +1,7 @@
 function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical} = Grid(ssd),
-                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing)::PotentialSimulationSetupRB{T} where {T}
+                potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = [1.0, 1.0],
+                weighting_potential_contact_id::Union{Missing, Int} = missing
+                )::PotentialSimulationSetupRB{T} where {T}
     r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
@@ -111,7 +113,6 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         maximum_applied_potential::T = maximum(bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
         depletion_handling_potential_limit::T = -bias_voltage
-        sor_consts::Vector{T} = [1, 1]
         sor_slope = (sor_consts[2] .- sor_consts[1]) / (nr - 1 )
         sor_const::Vector{T} = T[ sor_consts[1] + (i - 1) * sor_slope for i in 1:nr]
 
@@ -247,14 +248,6 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                         wzl_eps   += ϵ[  ir, inφ,    inz ] * wrr[inr] * 0.5
                         wzl_eps   += ϵ[ inr,  iφ,    inz ] * wrl[inr] * 0.5
                         wzl_eps   += ϵ[ inr, inφ,    inz ] * wrl[inr] * 0.5
-
-                        # if inr == 1
-                        #     pwwφr = 0.5f0
-                        #     pwwφl = 0.5f0
-                        #     pwΔmpφ = 2π
-                        #     Δφ_ext_inv_r = 0.15915494f0
-                        #     Δφ_ext_inv_l = 0.15915494f0
-                        # end
 
                         volume_weight = wrr_eps * Δr_ext_inv[ ir] * mpr[ ir] * 2π * Δmpz[inz]
                         volume_weight += wrl_eps * Δr_ext_inv[inr] * mpr[inr] * Δmpφ[inφ] * Δmpz[inz]

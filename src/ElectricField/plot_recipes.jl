@@ -249,19 +249,18 @@ end
 
 
 @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T};
-            φ=missing, spacing=0.003, n_steps=3000, potential=true, contours_equal_potential=true) where {T <: AbstractFloat}
+            φ=missing, spacing=T(0.003), n_steps=3000, potential=true, contours_equal_potential=true, offset = T(5e-5)) where {T <: AbstractFloat}
     size --> (700,900)
     det.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electric_field, ep.grid) : nothing
     det.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x -> -1*x, electric_field), ep.grid) : nothing
-    aspect_ratio --> 1
-    title --> "Electric Field Lines @φ=$(φ)°"
-    xlabel --> L"$r$ / m"
-    ylabel --> L"$z$ / m"
-
     if ismissing(φ)
         φ = 0
     end
     φ_rad = deg2rad(φ)
+    aspect_ratio --> 1
+    title --> "Electric Field Lines @φ=$(φ)°"
+    xlabel --> L"$r$ / m"
+    ylabel --> L"$z$ / m"
 
     if potential==true
         @series begin
@@ -271,61 +270,43 @@ end
         end
     end
 
-    corner_offset = 5e-5
-    spawn_positions = []
+    spawn_positions_cyl::Vector{CylindricalPoint} = []
 
-    for (i,tuple) in enumerate(det.segmentation_r_ranges)
-        if tuple[1]==tuple[2]
-            for z in corner_offset + det.segmentation_z_ranges[i][1]:spacing:det.segmentation_z_ranges[i][2] - corner_offset
-                push!(spawn_positions, MVector{3,T}(tuple[1],φ_rad,z))
-            end
-        end
-    end
-
-    for (i,tuple) in enumerate(det.segmentation_z_ranges)
-        if tuple[1]==tuple[2]
-            for r in corner_offset+det.segmentation_r_ranges[i][1]:spacing:det.segmentation_r_ranges[i][2] - corner_offset
-                push!(spawn_positions, MVector{3,T}(r,φ_rad,tuple[1]))
-            end
-        end
-    end
-
-    for (i,orientation) in enumerate(det.segmentation_types)
-        if orientation != "Tubs"
-            if orientation[1]=='c' o=-1 else o=1 end
-            for z in det.segmentation_z_ranges[i][1]:spacing:det.segmentation_z_ranges[i][2]
-                push!(spawn_positions,MVector{3,T}(o * corner_offset+analytical_taper_r_from_φz(φ_rad, z, orientation, det.segmentation_r_ranges[i],
-                                                                                                            det.segmentation_phi_ranges[i],
-                                                                                                            det.segmentation_z_ranges[i]),
-                                                                                                            φ_rad, z))
-            end
-        end
-    end
-    if typeof(det) <: Union{BEGe, Coax, InvertedCoax}
-        for i in eachindex(spawn_positions)
-            if spawn_positions[i][3] == geom_round(det.crystal_length)
-                spawn_positions[i][3] -= 1e-5
-            end
-            if spawn_positions[i][1] == geom_round(det.crystal_radius)
-                spawn_positions[i][1] -= 1e-5
-            end
-            if spawn_positions[i][3] == 0
-                spawn_positions[i][3] += 1e-5
-            end
-            if typeof(det) <: Union{Coax, InvertedCoax}
-                if spawn_positions[i][1] == geom_round(det.borehole_radius) #&& spawn_positions[i][3] != det.borehole_length
-                    spawn_positions[i][1] += 1e-4
-                end
-                if spawn_positions[i][1] == geom_round(det.borehole_length )
-                    spawn_positions[i][1] -= 1e-4
+    for contact in det.contacts
+        if (typeof(contact) == SSD.Contact{T,:N} && det.bulk_type == :ntype) || (typeof(contact) == SSD.Contact{T,:P} && det.bulk_type == :ptype)
+            nothing
+        else
+            for g in contact.geometry
+                if typeof(g) == SSD.Tube{T}
+                    rStart,rStop = get_r(g)
+                    zStart,zStop = get_z(g)
+                    for r in rStart:spacing:rStop
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart+offset))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart-offset))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop+offset))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop-offset))
+                    end
+                    for z in zStart:spacing:zStop
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStart+offset,φ,z))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStart-offset,φ,z))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStop+offset,φ,z))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStop-offset,φ,z))
+                    end
+                elseif typeof(g) == SSD.ConeMantle{T}
+                    zStart,zStop = get_z(g)
+                    for z in zStart:spacing:zStop
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
+                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
+                    end
                 end
             end
         end
     end
-    spawn_positions_xyz::Vector{SVector{3, T}} = map(x -> CartesianPoint(CylindricalPoint(x[1],x[2],x[3])), spawn_positions)
-
-
-    for i in eachindex(spawn_positions[1:end])
+    filter!(x -> x in det && !in(x, det.contacts),spawn_positions_cyl)
+    spawn_positions_xyz::Vector{CartesianPoint{T}} = map(x -> CartesianPoint(CylindricalPoint{T}(x[1],x[2],x[3])), spawn_positions_cyl)
+    for i in eachindex(spawn_positions_cyl[1:end])
         path = [@SVector zeros(T,3) for i in 1:n_steps]
         drift_charge!(path, det, spawn_positions_xyz[i], T(1f-9), interpolated_efield)
         @series begin
@@ -334,5 +315,4 @@ end
             map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
         end
     end
-    # println(spawn_positions)
 end

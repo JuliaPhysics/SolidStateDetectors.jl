@@ -71,7 +71,7 @@ end
 end
 
 @recipe function f(Vol::SSD.Cone{T}, ::Val{:diag},n_aux_lines =0) where T
-    
+
     rStart = Vol.r_interval.left
     rStop = Vol.r_interval.right
     φStart = Vol.φ_interval.left
@@ -96,13 +96,75 @@ end
     end
 end
 
+@recipe function f(vol::SSD.SSDCone{T},n_aux_lines = 0) where T
 
-function partialcircle_3d(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
+    @series begin
+        partialcircle_3d(vol.rStop1,vol.φStart,vol.φStop,[0,0,vol.zStart]+vol.translate)
+    end
+    @series begin
+        label:= ""
+        partialcircle_3d(vol.rStop2,vol.φStart,vol.φStop,[0,0,vol.zStop]+vol.translate)
+    end
+    @series begin
+        label:= ""
+        partialcircle_3d(vol.rStart1,vol.φStart,vol.φStop,[0,0,vol.zStart]+vol.translate)
+    end
+    @series begin
+        label:= ""
+        partialcircle_3d(vol.rStart2,vol.φStart,vol.φStop,[0,0,vol.zStop]+vol.translate)
+    end
+
+    ## Vertical Lines
+
+
+    @series begin
+        label:= ""
+        line_3d(vol.rStart1,vol.rStart2,vol.φStart,vol.φStart,vol.zStart,vol.zStop, translate = vol.translate)
+    end
+
+    @series begin
+        label:= ""
+        line_3d(vol.rStart1,vol.rStart2,vol.φStop,vol.φStop,vol.zStart,vol.zStop, translate = vol.translate)
+    end
+
+
+    @series begin
+        label:= ""
+        line_3d(vol.rStop1,vol.rStop2,vol.φStart,vol.φStart,vol.zStart,vol.zStop, translate = vol.translate)
+    end
+    @series begin
+        label:= ""
+        line_3d(vol.rStop1,vol.rStop2,vol.φStop,vol.φStop,vol.zStart,vol.zStop, translate = vol.translate)
+    end
+
+    ##Horizontal Lines
+
+    if !isapprox((vol.φStop - vol.φStart)%2π , 0.0,atol=0.00001)
+        @series begin
+            label:= ""
+            line_3d(vol.rStart1,vol.rStop1,vol.φStart,vol.φStart,vol.zStart,vol.zStart, translate = vol.translate)
+        end
+        @series begin
+            label:= ""
+            line_3d(vol.rStart1,vol.rStop1,vol.φStop,vol.φStop,vol.zStart,vol.zStart, translate = vol.translate)
+        end
+        @series begin
+            label:= ""
+            line_3d(vol.rStart2,vol.rStop2,vol.φStart,vol.φStart,vol.zStop,vol.zStop, translate = vol.translate)
+        end
+        @series begin
+            label:= ""
+            line_3d(vol.rStart2,vol.rStop2,vol.φStop,vol.φStop,vol.zStop,vol.zStop, translate = vol.translate)
+        end
+    end
+
+end
+function partialcircle_3d(radius,phiStart,phiStop,Translate::AbstractVector;nSteps=400)
     phirange = mylinspace(phiStart,phiStop,nSteps)
 
-    x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
-    y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
-    z::Vector{AbstractFloat}=map(x->Translate[3],phirange)
+    x::Vector{AbstractFloat}=map(x->radius*cos.(x) , phirange)
+    y::Vector{AbstractFloat}=map(x->radius*sin.(x) , phirange)
+    z::Vector{AbstractFloat}=map(x->Translate[3], phirange)
     x.+=Translate[1]
     y.+=Translate[2]
 

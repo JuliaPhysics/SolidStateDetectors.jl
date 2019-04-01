@@ -248,7 +248,7 @@ function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tup
 end
 
 function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical})::Nothing where {T}
-    ssd.rs = grid[:r].ticks 
+    ssd.rs = grid[:r].ticks
     ssd.φs = grid[:φ].ticks
     ssd.zs = grid[:z].ticks
     nothing

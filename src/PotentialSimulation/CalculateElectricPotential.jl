@@ -99,7 +99,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T};
             if refinement_counter <= max_refinements
                 potential, grid = add_points_and_interpolate(potential, grid, new_inds...)
                 if verbose println("Refinement $refinement_counter:\tNew grid size: $(size(potential))") end
-                fssrb = PotentialSimulationSetupRB(detector, grid, potential)
+                fssrb = PotentialSimulationSetupRB(detector, grid, potential, sor_consts = refinement_counter == max_refinements ? T[1, 1] : sor_consts)
                 n_iterations_between_checks = div(n_iterations_between_checks, 2)
                 if n_iterations_between_checks < 50 n_iterations_between_checks = 50 end
                 update_till_convergence!(fssrb, convergence_limit, fssrb.bias_voltage, depletion_handling = Val{depletion_handling}(), only2d = Val{only_2d}(), use_nthreads=use_nthreads, max_n_iterations=max_n_iterations, n_iterations_between_checks = n_iterations_between_checks )
