@@ -164,7 +164,7 @@ end
 #     end
 # end
 using Base.Math
-@recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector; φ=missing, z = missing, scaling_factor=1.0, r_spacing = 20) where T
+@recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector; φ=missing, z = missing, scaling_factor=1.0, spacings = [3,20]) where T
     ismissing(φ) && !ismissing(z) ? iz = searchsortednearest(det.zs,T(z)) : nothing
     !ismissing(φ) && ismissing(z) ? iφ = searchsortednearest(det.φs,T(φ)) : nothing
     guidefontsize --> 15
@@ -175,9 +175,9 @@ using Base.Math
         values = T[0, 0]
         magnitudes_xy = []
         for (iφ ,φ)  in enumerate(det.φs)
-            if iφ%2==0
+            if (iφ+spacings[1]-1)%spacings[1]==0
                 for (ir, r) in enumerate(det.rs)
-                    if (ir+r_spacing-1)%r_spacing == 0
+                    if (ir+spacings[2]-1)%spacings[2] == 0
                         xy = hcat(xy,[ r * cos(φ), r * sin(φ)])
                         values = hcat(values, electric_field[ir, iφ, iz][1:2])
                         push!(magnitudes_xy,sqrt(electric_field[ir, iφ, iz][1]^2 + electric_field[ir, iφ, iz][2]^2))
@@ -186,7 +186,7 @@ using Base.Math
             end
         end
 
-        num = mean(diff(det.rs))*r_spacing
+        num = minimum([mean(diff(det.φs)*spacings[1]),mean(diff(det.rs))*spacings[2]])
         nom = maximum(magnitudes_xy)
         scaling = num/nom * scaling_factor
         for i in 1:size(xy,2)
@@ -207,9 +207,9 @@ using Base.Math
         values = T[0, 0]
         magnitudes_rz = []
         for (iz ,z)  in enumerate(det.zs)
-            if (iz+6)%7==0
+            if (iz+spacings[1])%spacings[1]==0
                 for (ir, r) in enumerate(det.rs)
-                    if (ir+r_spacing-1)%r_spacing == 0
+                    if (ir+spacings[2]-1)%spacings[2] == 0
                         rz = hcat(rz,[ r, z])
                         values = hcat(values, electric_field[ir, iφ, iz][1:2:3])
                         push!(magnitudes_rz,sqrt(electric_field[ir, iφ, iz][1]^2 + electric_field[ir, iφ, iz][3]^2))
@@ -217,7 +217,7 @@ using Base.Math
                 end
             end
         end
-        num = mean(diff(det.rs))*r_spacing
+        num = minimum([mean(diff(det.zs)*spacings[1]),mean(diff(det.rs))*spacings[2]])
         nom = maximum(magnitudes_rz)
         scaling = num/nom * scaling_factor
         for i in 1:size(rz,2)

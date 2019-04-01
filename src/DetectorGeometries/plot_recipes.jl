@@ -322,11 +322,11 @@ end
     tickfontsize --> 9
     guidefontsize --> 13
     lw --> 2
-    xlabel --> "x / m"
-    ylabel --> "y / m"
-    zlabel --> "z / m"
-    camera --> (15,15)
-    coloring = coloring 
+    xlabel --> "\n x / m"
+    ylabel --> "\n y / m"
+    zlabel --> "\n z / m"
+    camera --> (15,25)
+    coloring = coloring
     labeling = labeling
         if c.name == "Public Segmented BEGe"
         @series begin
