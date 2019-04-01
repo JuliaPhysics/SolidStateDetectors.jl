@@ -1,4 +1,5 @@
 abstract type AbstractChargeDriftModels end
+abstract type TemperatureModels{T <: AbstractFloat} end
 
 
 """
@@ -30,12 +31,17 @@ struct CarrierParameters{T}
     axis111::VelocityParameters{T}
 end
 
+include("LinearModel.jl")
+include("BoltzmannModel.jl")
+include("PowerLawModel.jl")
+include("VacuumModel.jl")
+
 # Electron model parametrization from [3]
-@fastmath function γj(j::Integer, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
+@fastmath function γj(j::Integer, phi110::T, γ0::SArray{Tuple{3,3},T,2,9})::SArray{Tuple{3,3},T,2,9} where {T <: AbstractFloat}
     tmp::T = 2 / 3
     a::T = acos(sqrt(tmp))
     Rx::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(1, 0, 0, 0, cos(a), sin(a), 0, -sin(a), cos(a))
-    b::T = (j - 1) * T(π) / 2
+    b::T = phi110 + (j - 1) * T(π) / 2
     Rzj::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(cos(b), sin(b), 0, -sin(b), cos(b), 0, 0, 0, 1)
     Rj = Rx * Rzj
     transpose(Rj) * γ0 * Rj
@@ -45,7 +51,7 @@ end
     ml::T = 1.64
     mt::T = 0.0819
     γ0 = SMatrix{3,3,T}(1 / mt, 0, 0, 0, 1 / ml, 0, 0, 0, 1 / mt)
-    SVector{4, SArray{Tuple{3,3},T,2,9}}(γj(1, γ0), γj(2, γ0), γj(3, γ0), γj(4, γ0))
+    SVector{4, SArray{Tuple{3,3},T,2,9}}(γj(1, phi110, γ0), γj(2, phi110, γ0), γj(3, phi110, γ0), γj(4, phi110, γ0))
 end
 
 # Longitudinal drift velocity formula
@@ -62,18 +68,24 @@ end
 - `holes::CarrierParameters{T}`
 - `phi110::T
 - `gammas::SVector{4, SMatrix{3,3,T}}`
+- `temperaturemodel::TemperatureModels{T}`
 """
+
 struct ADLChargeDriftModel{T <: AbstractFloat} <: AbstractChargeDriftModels
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
     phi110::T
     gammas::SVector{4, SMatrix{3,3,T}}
+    temperaturemodel::TemperatureModels{T}
 end
 
 
-function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32)::ADLChargeDriftModel{T}
+function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32,
+                             temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
 
     if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
+    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file
+
 
     config = JSON.parsefile(configfilename)
 
@@ -104,11 +116,33 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
     electrons = CarrierParameters{T}(e100, e111)
     holes     = CarrierParameters{T}(h100, h111)
 
-    phi110::T = config["phi110"]
+    ismissing(phi110) ? phi110 = config["phi110"] : phi110 = T(phi110)  #if you give the angle of the 110 axis it will be used, otherwise read from config file
 
     gammas = setup_gamma_matrices(phi110)
 
-    return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
+    if "temperature_dependence" in keys(config)
+        if "model" in keys(config["temperature_dependence"])
+            model::String = config["temperature_dependence"]["model"]
+            if model == "Linear"
+                temperaturemodel = LinearModel{T}(config, temperature = temperature)
+            elseif model == "PowerLaw"
+                temperaturemodel = PowerLawModel{T}(config, temperature = temperature)
+            elseif model == "Boltzmann"
+                temperaturemodel = BoltzmannModel{T}(config, temperature = temperature)
+            else
+                temperaturemodel = VacuumModel{T}(config)
+                println("Config File does not suit any of the predefined temperature models. The drift velocity will not be rescaled.")
+            end
+        else
+            temperaturemodel = VacuumModel{T}(config)
+            println("No temperature model specified. The drift velocity will not be rescaled.")
+        end
+    else
+        temperaturemodel = VacuumModel{T}(config)
+        println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
+    end
+
+    return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
 end
 
 function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
@@ -124,7 +158,8 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
         holes     = CarrierParameters{T}(h100, h111)
         phi110::T = cdmf64.phi110
         gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
-        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
+        temperaturemodel::TemperatureModels{T} = cdmf64.temperaturemodel
+        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
     end
 
     @fastmath function getVe(fv::SVector{3, T}, gammas::SVector{4, SMatrix{3,3,T}})::SVector{3, T} where {T <: AbstractFloat}
@@ -143,8 +178,12 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
                 return SVector{3,T}(0, 0, 0)
             end
 
-            V100e::T = Vl(Emag, cdm.electrons.axis100)
-            V111e::T = Vl(Emag, cdm.electrons.axis111)
+            f = scale_to_given_temperature(temperaturemodel)
+            f100e::T = f[1]
+            f111e::T = f[2]
+
+            V100e::T = Vl(Emag, cdm.electrons.axis100) * f100e
+            V111e::T = Vl(Emag, cdm.electrons.axis111) * f111e
 
             AE::T = V100e / tmp0
             RE::T = tmp1 * V111e / AE + tmp2
@@ -208,7 +247,8 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
         holes     = CarrierParameters{T}(h100, h111)
         phi110::T = cdmf64.phi110
         gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
-        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas)
+        temperaturemodel::TemperatureModels{T} = cdmf64.temperaturemodel
+        ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
     end
 
     Emag_threshold::T = 1e-5
@@ -221,8 +261,13 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
             if Emag < Emag_threshold
                 return SVector{3,T}(0, 0, 0)
             end
-            V100h::T = Vl(Emag, cdm.holes.axis100)
-            V111h::T = Vl(Emag, cdm.holes.axis111)
+
+            f = scale_to_given_temperature(temperaturemodel)
+            f100h::T = f[3]
+            f111h::T = f[4]
+
+            V100h::T = Vl(Emag, cdm.holes.axis100) * f100h
+            V111h::T = Vl(Emag, cdm.holes.axis111) * f111h
 
             b::T = -π / 4 - cdm.phi110
             Rz = SMatrix{3, 3, T}(cos(b), sin(b), 0, -sin(b), cos(b), 0, 0, 0, 1)
@@ -233,7 +278,7 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
 
             k0::T = k0func(V111h / V100h)
 
-            vtmp = MVector{3, T}(0, 0, 0)
+            vtmp = MVector{3, T}(0, 0, 0) ## from CITATION; The implementation here is correct, mistake in the CITATION
             vtmp[3] = V100h * ( 1 - lambda(k0) * (sin(theta0)^4 * sin(2 * phi0)^2 + sin(2 * theta0)^2) )
             vtmp[1] = V100h * omega(k0) * (2 * sin(theta0)^3 * cos(theta0) * sin(2 * phi0)^2 + sin(4 * theta0))
             vtmp[2] = V100h * omega(k0) * sin(theta0)^3 * sin(4 * phi0)
@@ -253,5 +298,59 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
 
     return df
 end
+
+function println(io::IO, tm::VacuumModel{T}) where {T <: AbstractFloat}
+    print("No temperature model defined")
+end
+
+function println(io::IO, tm::BoltzmannModel{T}) where {T <: AbstractFloat}
+    println("\n________BoltzmannModel________")
+    println("Fit function: p1 + p2 exp(-p3/T)\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:   \t $(tm.temperature)")
+    println("Reference temperature: \t $(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
+    println("p3 \t$(tm.p3e100)   \t$(tm.p3e111)   \t$(tm.p3h100)   \t$(tm.p3h111)")
+end
+
+function println(io::IO, tm::LinearModel{T}) where {T <: AbstractFloat}
+    println("\n________LinearModel________")
+    println("Fit function: p1 + p2 * T\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:  \t$(tm.temperature)")
+    println("Reference temperature:\t$(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
+end
+
+function println(io::IO, tm::PowerLawModel{T}) where {T <: AbstractFloat}
+    println("\n________PowerLawModel________")
+    println("Fit function: p1 * T^(3/2)\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:   \t $(tm.temperature)")
+    println("Reference temperature: \t $(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+end
+
+
+function show(io::IO, tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat} println(tm) end
+function print(io::IO, tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat} println(tm) end
+function display(io::IO, tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat} println(tm) end
+function show(io::IO,::MIME"text/plain", tm::SSD.TemperatureModels{T}) where {T <: AbstractFloat}
+    show(io, tm)
+end
+
+
+
 ### END: ADL Charge Drift Model
 ###############################

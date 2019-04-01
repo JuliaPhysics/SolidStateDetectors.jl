@@ -70,7 +70,6 @@
             }
         }
     },
-
     "contacts": {
         "n_channels": 2,
         "unit": "mm",
