@@ -22,7 +22,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 - `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
 """
-function calculate_weighting_potential( detector::SolidStateDetector{T}, channel_id::Int;
+function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindrical}, channel_id::Int;
                                         init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], # 2mm, 10 degree, 2 mm
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, for_weighting_potential = true),
                                         convergence_limit::Real = 5e-6,
@@ -120,7 +120,7 @@ end
 
 
 
-function calculate_weighting_potential( detector::CGD{T}, channel_id::Int;
+function calculate_weighting_potential( detector::SolidStateDetector{T, :Cartesian}, channel_id::Int;
                                         init_grid_spacing::Vector{<:Real} = [0.005, 0.005, 0.005], # 5mm each
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
