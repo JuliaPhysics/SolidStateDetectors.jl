@@ -21,8 +21,7 @@ include("Geometries/Geometries.jl")
 include("Contacts.jl")
 
 include("SolidStateDetector.jl")
-# Cartesian:
-# include("CGD.jl")
+
 get_precision_type(d::SolidStateDetector{T}) where {T} = T
 
 """
