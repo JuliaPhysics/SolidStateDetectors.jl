@@ -103,40 +103,24 @@ function get_important_points(c::SolidStateDetector{T})::NTuple{3, Vector{T}} wh
 end
 
 
-function is_boundary_point(c::SolidStateDetector, pt::CylindricalPoint{T}, rs::Vector{T}, φs::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
-    if false #!(p in c)
-        return false, T(0), 0
-    else
-        for contact in c.contacts
-            if in(pt, contact, rs)
-                return true, contact.potential, contact.id
-            end
+function is_boundary_point(c::SolidStateDetector, pt::AbstractCoordinatePoint{T}, ax1::Vector{T}, ax2::Vector{T}, ax3::Vector{T})::Tuple{Bool, Real, Int} where {T <:AbstractFloat}
+    # if false #!(p in c)
+    #     return false, T(0), 0
+    # else
+    for contact in c.contacts
+        if in(pt, contact, ax1)
+            return true, contact.potential, contact.id
         end
-        for external_part in c.external_parts
-            if in(pt, external_part, rs)
-                return true, external_part.potential, external_part.id
-            end
-        end
-        return false, 0.0, 0
     end
-end
-function is_boundary_point(c::SolidStateDetector, pt::CartesianPoint{T}, xs::Vector{T}, ys::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
-    if false #!(p in c)
-        return false, T(0), 0
-    else
-        for contact in c.contacts
-            if in(pt, contact, xs)
-                return true, contact.potential, contact.id
-            end
+    for external_part in c.external_parts
+        if in(pt, external_part, ax1)
+            return true, external_part.potential, external_part.id
         end
-        for external_part in c.external_parts
-            if in(pt, external_part, xs)
-                return true, external_part.potential, external_part.id
-            end
-        end
-        return false, 0.0, 0
     end
+    return false, 0.0, 0
+    # end
 end
+
 
 function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Symbol,Int} where T
     for contact in c.contacts
@@ -144,7 +128,7 @@ function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Sym
             return :electrode, contact.id
         end
     end
-    sp = is_surface_point(c,p)
+    sp = is_surface_point(c, p)
     if sp[1]
         for contact in c.contacts
             if in(go_to_nearest_gridpoint(c,p), contact, c.rs) && abs(sum(sp[2])) > 1
