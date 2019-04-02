@@ -103,14 +103,10 @@ function Geometry(T::DataType, t::Val{:SSDCone}, dict::Dict{Any, Any}, inputunit
     return SSDCone{T}(dict, inputunit)
 end
 
-function get_r(c::SSDCone)
-    return c.r_interval.left, c.r_interval.right
-end
 
-function get_φ(c::SSDCone)
-    return c.φ_interval.left, c.φ_interval.right
-end
-
-function get_z(c::SSDCone)
-    return c.z_interval.left, c.z_interval.right
+function get_important_points(c::SSDCone{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+    v1::Vector{T} = T[c.r_interval.left, c.r_interval.right] #[g.x[1], g.x[2]]
+    v2::Vector{T} = T[c.φ_interval.left, c.φ_interval.right]
+    v3::Vector{T} = T[c.z_interval.left, c.z_interval.right]
+    return v1, v2, v3
 end

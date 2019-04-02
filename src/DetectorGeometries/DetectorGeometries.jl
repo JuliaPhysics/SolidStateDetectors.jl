@@ -1,13 +1,3 @@
-# """
-#     abstract type SolidStateDetector{T} <: AbstractConfig{T}
-#
-# Supertype of all detector structs.
-# """
-abstract type CGD{T <: AbstractFloat} <: AbstractConfig{T} end
-# abstract type SolidStateDetector{T <: AbstractFloat} <: AbstractConfig{T} end
-
-
-
 bulk_types = Dict("n" => :ntype,
     "n-type" => :ntype,
     "ntype" => :ntype,
@@ -16,13 +6,11 @@ bulk_types = Dict("n" => :ntype,
     "p" => :ptype  )
 unit_conversion = Dict{String, Unitful.Units}( "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m")
 
-
 include("Geometries/Geometries.jl")
 include("Contacts.jl")
 
 include("SolidStateDetector.jl")
 
-get_precision_type(d::SolidStateDetector{T}) where {T} = T
 
 """
     SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: AbstractFloat}
@@ -99,35 +87,21 @@ end
 
 
 
-function get_important_r_points(c::SolidStateDetector{T}) where T
-    r::Vector{T}=[]
+function get_important_points(c::SolidStateDetector{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+    a1::Vector{T} = []
+    a2::Vector{T} = []
+    a3::Vector{T} = []
     for contact in c.contacts
         for g in contact.geometry
-            push!(r, get_r(g)...)
+            imps::NTuple{3, Vector{T}} = get_important_points(g)
+            push!(a1, imps[1]...)
+            push!(a2, imps[2]...)
+            push!(a3, imps[3]...)
         end
     end
-    sort!(unique!(r))
+    return uniq(sort(a1)), uniq(sort(a2)), uniq(sort(a2))
 end
 
-function get_important_φ_points(c::SolidStateDetector{T}) where T
-    φ::Vector{T}=[]
-    for contact in c.contacts
-        for g in contact.geometry
-            push!(φ, get_φ(g)...)
-        end
-    end
-    sort!(unique!(φ))
-end
-
-function get_important_z_points(c::SolidStateDetector{T}) where T
-    z::Vector{T}=[]
-    for contact in c.contacts
-        for g in contact.geometry
-            push!(z, get_z(g)...)
-        end
-    end
-    sort!(unique!(z))
-end
 
 function is_boundary_point(c::SolidStateDetector, pt::CylindricalPoint{T}, rs::Vector{T}, φs::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
     if false #!(p in c)
@@ -370,9 +344,11 @@ function Grid(  detector::SolidStateDetector{T, :Cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005],
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
-    important_r_points::Vector{T} = uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
-    important_φ_points::Vector{T} = get_important_φ_points(detector)
-    important_z_points::Vector{T} = uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
+    important_points = get_important_points(detector)
+
+    important_r_points::Vector{T} = important_points[1]
+    important_φ_points::Vector{T} = important_points[2]
+    important_z_points::Vector{T} = important_points[3]
 
     push!(important_r_points, detector.world.r_interval.right)
     push!(important_r_points, detector.world.r_interval.left)
@@ -456,9 +432,7 @@ function Grid(  det::SolidStateDetector{T, :Cartesian};
                 init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], 
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
-    important_x_points::Vector{T} = T[] #uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
-    important_y_points::Vector{T} = T[] #!only_2d ? sort(get_important_φ_points(detector)) : T[]
-    important_z_points::Vector{T} = T[] #uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
+    important_points = get_important_points(det)
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
     
@@ -468,6 +442,15 @@ function Grid(  det::SolidStateDetector{T, :Cartesian};
     ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1]) 
     ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2]) 
     ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
+
+    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_points[1], atol = init_grid_spacing[1] / 2)
+    ax_x = typeof(ax_x)(int_x, xticks)
+
+    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_points[2], atol = init_grid_spacing[2] / 2)
+    ax_y = typeof(ax_y)(int_y, yticks)
+
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_points[3], atol = init_grid_spacing[3] / 2)
+    ax_z = typeof(ax_z)(int_z, zticks)
 
     if isodd(length(ax_x)) # RedBlack dimension must be of even length
         xticks = ax_x.ticks

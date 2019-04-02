@@ -107,14 +107,10 @@ function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit::U
     return Cone{T}(dict, inputunit)
 end
 
-function get_r(c::Cone)
-    return c.r_interval.left, c.r_interval.right
-end
 
-function get_φ(c::Cone)
-    return c.φ_interval.left, c.φ_interval.right
-end
-
-function get_z(c::Cone)
-    return c.z_interval.left, c.z_interval.right
+function get_important_points(c::Cone{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+    v1::Vector{T} = T[c.r_interval.left, c.r_interval.right] #[g.x[1], g.x[2]]
+    v2::Vector{T} = T[c.φ_interval.left, c.φ_interval.right]
+    v3::Vector{T} = T[c.z_interval.left, c.z_interval.right]
+    return v1, v2, v3
 end

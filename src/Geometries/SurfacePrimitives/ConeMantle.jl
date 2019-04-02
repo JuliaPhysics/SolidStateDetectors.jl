@@ -32,14 +32,7 @@ function in(point::CylindricalPoint{T}, cm::ConeMantle{T}, rs::Vector{T})::Bool 
 end
 
 
-function get_r(cm::ConeMantle)
-    return cm.cone.r_interval.left, cm.cone.r_interval.right
-end
 
-function get_φ(cm::ConeMantle)
-    return cm.cone.φ_interval.left, cm.cone.φ_interval.right
-end
-
-function get_z(cm::ConeMantle)
-    return cm.cone.z_interval.left, cm.cone.z_interval.right
+function get_important_points(c::ConeMantle{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+    get_important_points(c.cone)
 end

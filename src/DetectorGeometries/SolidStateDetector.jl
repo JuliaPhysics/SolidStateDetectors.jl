@@ -43,6 +43,9 @@ mutable struct SolidStateDetector{T<:AbstractFloat, CS} <: AbstractConfig{T}
     SolidStateDetector{T, CS}() where {T<:AbstractFloat, CS} = new{T, CS}()
 end
 
+get_precision_type(d::SolidStateDetector{T}) where {T} = T
+get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
+
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T <: AbstractFloat
     c = if Symbol(config_file["class"]) == :CGD
         SolidStateDetector{T, :Cartesian}()

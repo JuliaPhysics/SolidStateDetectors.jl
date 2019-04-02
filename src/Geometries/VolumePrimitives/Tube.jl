@@ -62,14 +62,10 @@ function in(point::CylindricalPoint{T}, tube::Tube{T}) where T
     return false
 end
 
-function get_r(t::Tube)
-    return t.r_interval.left, t.r_interval.right
-end
 
-function get_φ(t::Tube)
-    return t.φ_interval.left, t.φ_interval.right
-end
-
-function get_z(t::Tube)
-    return t.z_interval.left, t.z_interval.right
+function get_important_points(t::Tube{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+    v1::Vector{T} = T[t.r_interval.left, t.r_interval.right] #[g.x[1], g.x[2]]
+    v2::Vector{T} = T[t.φ_interval.left, t.φ_interval.right]
+    v3::Vector{T} = T[t.z_interval.left, t.z_interval.right]
+    return v1, v2, v3
 end

@@ -26,3 +26,9 @@ function Geometry(T::DataType, t::Val{:CartesianBox3D}, dict::Dict{Any, Any}, in
     return CartesianBox3D{T}(dict, inputunit)
 end
 
+function get_important_points(g::CartesianBox3D{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+    v1::Vector{T} = T[g.x[1], g.x[2]] #[g.x[1], g.x[2]]
+    v2::Vector{T} = T[g.y[1], g.y[2]]
+    v3::Vector{T} = T[g.z[1], g.z[2]]
+    return v1, v2, v3
+end
