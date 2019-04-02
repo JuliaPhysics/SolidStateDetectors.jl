@@ -2,7 +2,7 @@
 function add_points_in_z_and_interpolate(potential::Array{T, 3}, grid::CylindricalGrid{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CylindricalGrid{T}} where {T}
     axz::Vector{T} = collect(grid.axes[3])
     n = length(idcs)
-    if n == 0 return nothing end
+    if n == 0 return potential, grid end
     if idcs[end] >= length(axz)
         error("Can not append point in z at the end. Only in between.")
     end
@@ -178,7 +178,7 @@ end
 function add_points_in_z_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
     ax::Vector{T} = collect(grid[:z])
     n = length(idcs)
-    if n == 0 return nothing end
+    if n == 0 return potential, grid end
     if idcs[end] >= length(ax)
         error("Can not append point in z at the end. Only in between.")
     end
@@ -220,7 +220,7 @@ end
 function add_points_in_x_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
     ax::Vector{T} = collect(grid[:x])
     n = length(idcs)
-    if n == 0 return nothing end
+    if n == 0 return potential, grid end
     if idcs[end] >= length(ax)
         error("Can not append point in z at the end. Only in between.")
     end
@@ -262,7 +262,7 @@ end
 function add_points_in_y_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
     ax::Vector{T} = collect(grid[:y])
     n = length(idcs)
-    if n == 0 return nothing end
+    if n == 0 return potential, grid end
     if idcs[end] >= length(ax)
         error("Can not append point in z at the end. Only in between.")
     end

@@ -1,42 +1,56 @@
 {
 	"name":"ExampleCuboid",
 	"class":"CGD",
-	"materials":{
-		"detector":"HPGe",
-		"environment":"Vacuum"
+	"bulk_type": "n",
+	
+	"charge_carrier_density": {
+		"unit": "cm-3",
+		"top": 0.94,
+		"bot": 1.10
 	},
-	"unit": "mm",	
-	"crystal":	{
-		"type": "n",
-		"geometry": [
-			{
-				"type": "CartesianBox3D",
-				"xStart": 0.0,
-				"xStop": 10.0,
-				"yStart": 0.0,
-				"yStop": 10.0,
-				"zStart": 0.0,
-				"zStop": 10.0
+
+	"geometry": {
+		"unit": "mm",
+		"world": {
+			"material": "Vacuum",
+			"geometry": [
+				{
+					"type": "CartesianBox3D",
+					"xStart": -2.0,
+					"xStop":  12.0,
+					"yStart": -2.0,
+					"yStop":  12.0,
+					"zStart": -2.0,
+					"zStop":  12.0
+				}
+			]
+		},
+		"crystal": {
+			"material": "HPGe",
+			"geometry": {
+				"positive": [
+					{
+						"type": "CartesianBox3D",
+						"xStart": 0.0,
+						"xStop": 10.0,
+						"yStart": 0.0,
+						"yStop": 10.0,
+						"zStart": 0.0,
+						"zStop": 10.0
+					}
+				]
 			}
-		],
-		"charge_carrier_density": {
-			"unit": "cm-3",
-			"top": 0.1,
-			"bot": 1.9
 		}
 	},
-	"symmetries": {
-		"mirror_axes":{
-			"y": 5.0,  
-			"z": 5.0
-		}
-	},
-	"contacts":	{
-		"n_contacts": [
+
+	"contacts": {
+		"n_channels": 2,
+		"unit": "mm",
+		"p": [
 			{
-				"name" : "Core",
-				"id": 1,
-				"potential": 500.0, 
+				"name": "N+ Contact",
+				"potential": 500.0,
+				"channel": 1,
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
@@ -50,20 +64,20 @@
 				]
 			}
 		],
-		"p_contacts": [
+		"n": [
 			{
-				"name": "Segment 1",
-				"id": 2,
+				"name": "P+ Contact",
 				"potential": 0.0,
+				"channel": 2,
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
-						"xStart":  9.9,
-						"xStop":  10.0,
-						"yStart":  0.0,
-						"yStop":  10.0,
-						"zStart":  0.0,
-						"zStop":  10.0
+						"xStart": 9.9,
+						"xStop": 10.0,
+						"yStart": 0.0,
+						"yStop": 10.0,
+						"zStart": 0.0,
+						"zStop": 10.0
 					}
 				]
 			}

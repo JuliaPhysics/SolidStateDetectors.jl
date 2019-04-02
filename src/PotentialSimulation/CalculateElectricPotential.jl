@@ -22,7 +22,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 - `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
 """
-function calculate_electric_potential(  detector::SolidStateDetector{T};
+function calculate_electric_potential(  detector::SolidStateDetector{T, :Cylindrical};
                                         init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], # 2mm, 10 degree, 2 mm
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
@@ -160,7 +160,7 @@ function ElectricPotential(detector::SolidStateDetector{T}; kwargs...) where {T}
 end
 
 
-function calculate_electric_potential(  detector::CGD{T};
+function calculate_electric_potential(  detector::SolidStateDetector{T, :Cartesian};
                                         init_grid_spacing::Vector{<:Real} = [0.005, 0.005, 0.005], # 5mm each
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,

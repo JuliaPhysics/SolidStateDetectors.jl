@@ -27,7 +27,7 @@ end
     return in(pt, c.geometry)
 end
 
-function in(p::CylindricalPoint{T}, c::Contact{T}, rs::Vector{T}) where T
+function in(p::AbstractCoordinatePoint{T}, c::Contact{T}, rs::Vector{T}) where T
     rv = false
     for g in c.geometry
         if typeof(g) == ConeMantle{T}
@@ -39,7 +39,7 @@ function in(p::CylindricalPoint{T}, c::Contact{T}, rs::Vector{T}) where T
     return rv
 end
 
-function in(p::CylindricalPoint{T}, v::AbstractVector{<:AbstractContact{T}}) where T
+function in(p::AbstractCoordinatePoint{T}, v::AbstractVector{<:AbstractContact{T}}) where T
     rv = false
     for contact in v
         if p in contact

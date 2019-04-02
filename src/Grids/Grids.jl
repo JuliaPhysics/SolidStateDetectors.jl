@@ -56,6 +56,12 @@ function check_grid(grid::CylindricalGrid{T})::Nothing where {T}
     return nothing
 end
 
+function check_grid(grid::CartesianGrid3D{T})::Nothing where {T}
+    nx::Int, ny::Int, nz::Int = size(grid)
+    @assert iseven(nx) "GridError: Field simulation algorithm in cartesian coordinates need an even number of grid points in x. This is not the case. #x-ticks = $(nx)."
+    return nothing
+end
+
 include("RefineGrid.jl")
 
 @recipe function f(grid::Grid{T, N, S}) where {T, N, S}

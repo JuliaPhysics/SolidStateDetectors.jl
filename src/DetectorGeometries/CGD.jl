@@ -80,7 +80,7 @@ function show(io::IO, ::MIME"text/plain",  c::CGD)
 end
 
 
-function Grid(  det::CGD{T}; 
+function Grid(  det::SolidStateDetector{T, :Cartesian}; 
                 init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], 
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
@@ -121,7 +121,7 @@ function get_charge_density(detector::SolidStateDetector{T}, pt::CartesianPoint{
     return ρ 
 end
 
-function get_boundary_value(det::CGD{T}, pt::CartesianPoint{T}, weighting_potential_contact_id::Union{Missing, Int} = missing)::Tuple{Bool, T} where {T}
+function get_boundary_value(det::SolidStateDetector{T}, pt::CartesianPoint{T}, weighting_potential_contact_id::Union{Missing, Int} = missing)::Tuple{Bool, T} where {T}
     is_boundary_point::Bool = false
     boundary_potential::T = 0
     contact_id::Int = -1
@@ -143,7 +143,7 @@ function get_boundary_value(det::CGD{T}, pt::CartesianPoint{T}, weighting_potent
     return is_boundary_point, boundary_potential
 end
 
-function get_ρ_and_ϵ(pt::CartesianPoint{T}, ssd::CGD{T})::Tuple{T, T} where {T <: AbstractFloat}
+function get_ρ_and_ϵ(pt::CartesianPoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
     if in(pt, ssd)
         ρ::T = get_charge_density(ssd, pt) * elementary_charge
         ϵ::T = ssd.material_detector.ϵ_r
@@ -156,7 +156,7 @@ function get_ρ_and_ϵ(pt::CartesianPoint{T}, ssd::CGD{T})::Tuple{T, T} where {T
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
-        grid::Grid{T, 3, :Cartesian}, ssd::CGD{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+        grid::Grid{T, 3, :Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
     
     is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 

@@ -90,7 +90,7 @@ end
     contains(detector, point)
 
 @inline in(point::StaticArray{Tuple{3}, <:Real}, detector::SolidStateDetector) =
-    convert(CylindricalPoint, point) in detector
+    convert(CartesianPoint, point) in detector
 
 @inline in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector) =
     to_internal_units(u"m", point) in detector
@@ -130,18 +130,34 @@ function get_important_z_points(c::SolidStateDetector{T}) where T
     sort!(unique!(z))
 end
 
-function is_boundary_point(c::SolidStateDetector, r::T, φ::T, z::T, rs::Vector{T}, φs::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
-    p = CylindricalPoint{T}(r, φ, z)
+function is_boundary_point(c::SolidStateDetector, pt::CylindricalPoint{T}, rs::Vector{T}, φs::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
     if false #!(p in c)
-        return false, 0.0, 0
+        return false, T(0), 0
     else
         for contact in c.contacts
-            if in(p, contact, rs)
+            if in(pt, contact, rs)
                 return true, contact.potential, contact.id
             end
         end
         for external_part in c.external_parts
-            if in(p, external_part, rs)
+            if in(pt, external_part, rs)
+                return true, external_part.potential, external_part.id
+            end
+        end
+        return false, 0.0, 0
+    end
+end
+function is_boundary_point(c::SolidStateDetector, pt::CartesianPoint{T}, xs::Vector{T}, ys::Vector{T}, zs::Vector{T})::Tuple{Bool,Real,Int} where T <:AbstractFloat
+    if false #!(p in c)
+        return false, T(0), 0
+    else
+        for contact in c.contacts
+            if in(pt, contact, xs)
+                return true, contact.potential, contact.id
+            end
+        end
+        for external_part in c.external_parts
+            if in(pt, external_part, xs)
                 return true, external_part.potential, external_part.id
             end
         end
@@ -218,18 +234,25 @@ function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tup
     end
 end
 
-function get_charge_density(detector::SolidStateDetector{T}, r::Real, φ::Real, z::Real)::T where {T <: AbstractFloat}
+function get_charge_density(detector::SolidStateDetector{T}, pt::CylindricalPoint)::T where {T <: AbstractFloat}
     top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
     slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
-    ρ::T = bot_net_charge_carrier_density + z * slope
+    ρ::T = bot_net_charge_carrier_density + pt.z * slope
+    return ρ
+end
+function get_charge_density(detector::SolidStateDetector{T}, pt::CartesianPoint)::T where {T <: AbstractFloat}
+    top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
+    bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
+    slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / (detector.crystal_geometry.a.z[2] - detector.crystal_geometry.a.z[1]) #
+    ρ::T = bot_net_charge_carrier_density + pt.z * slope
     return ρ
 end
 
 
-function get_ρ_and_ϵ(pt::CylindricalPoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
+function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
     if in(pt, ssd)
-        ρ::T = get_charge_density(ssd, pt.r, pt.φ, pt.z) * elementary_charge
+        ρ::T = get_charge_density(ssd, pt) * elementary_charge
         ϵ::T = ssd.material_detector.ϵ_r
         return ρ, ϵ
     elseif in(pt,ssd.external_parts)
@@ -274,7 +297,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             for ir in axes(potential, 1)
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
-                b, boundary_potential, contact_id = is_boundary_point(ssd, r, φ, z, axr, axφ, axz)
+                b, boundary_potential, contact_id = is_boundary_point(ssd, pt, axr, axφ, axz)
                 if b
                     pot::T = if ismissing(weighting_potential_contact_id)
                         boundary_potential
@@ -286,7 +309,40 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 elseif in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
+            end
+        end
+    end
+    nothing
+end
 
+
+function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
+        grid::Grid{T, 3, :Cartesian}, ssd::SolidStateDetector{T, :Cartesian}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+    
+    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
+
+    ax_x::Vector{T} = grid[:x].ticks
+    ax_y::Vector{T} = grid[:y].ticks
+    ax_z::Vector{T} = grid[:z].ticks
+    for iz in axes(potential, 3)
+        z::T = ax_z[iz]
+        for iy in axes(potential, 2)
+            y::T = ax_y[iy]
+            for ix in axes(potential, 1)
+                x::T = ax_x[ix]
+                pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )              
+                b, boundary_potential, contact_id = is_boundary_point(ssd, pt, ax_x, ax_y, ax_z)
+                if b
+                    pot::T = if ismissing(weighting_potential_contact_id)
+                        boundary_potential
+                    else
+                        contact_id == weighting_potential_contact_id ? 1 : 0
+                    end
+                    potential[ ix, iy, iz ] = pot
+                    pointtypes[ ix, iy, iz ] = zero(PointType)
+                elseif in(pt, ssd)
+                    pointtypes[ ix, iy, iz ] += pn_junction_bit
+                end
             end
         end
     end
@@ -311,7 +367,7 @@ function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
     )
 end
 
-function Grid(  detector::SolidStateDetector{T};
+function Grid(  detector::SolidStateDetector{T, :Cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005],
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
@@ -368,14 +424,16 @@ function Grid(  detector::SolidStateDetector{T};
         φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol=deg2rad(init_grid_spacing[2])/4)
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
-    if isodd(length(ax_φ)) # must be even
+    if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
         int_φ = ax_φ.interval
         φticks = ax_φ.ticks
         push!(φticks, geom_round((φticks[end] + φticks[end-1]) * 0.5))
         sort!(φticks)
         ax_φ = typeof(ax_φ)(int_φ, φticks) # must be even
     end
-    @assert iseven(length(ax_φ)) "CylindricalGrid must have even number of points in φ."
+    if length(ax_φ) > 1
+        @assert iseven(length(ax_φ)) "CylindricalGrid must have even number of points in φ."
+    end
 
     #z
     int_z = Interval{:closed, :closed, T}( detector.world.z_interval)
@@ -393,5 +451,35 @@ function Grid(  detector::SolidStateDetector{T};
 
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
+
+
+function Grid(  det::SolidStateDetector{T, :Cartesian}; 
+                init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], 
+                for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
+
+    important_x_points::Vector{T} = T[] #uniq(sort(round.(get_important_r_points(detector), sigdigits=6)))
+    important_y_points::Vector{T} = T[] #!only_2d ? sort(get_important_φ_points(detector)) : T[]
+    important_z_points::Vector{T} = T[] #uniq(sort(round.(get_important_z_points(detector), sigdigits=6))) #T[]
+
+    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
+    
+    int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.world.x[1], det.world.x[2] )
+    int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.world.y[1], det.world.y[2] )
+    int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.world.z[1], det.world.z[2] )
+    ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1]) 
+    ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2]) 
+    ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
+
+    if isodd(length(ax_x)) # RedBlack dimension must be of even length
+        xticks = ax_x.ticks
+        push!(xticks, geom_round((xticks[end] + xticks[end-1]) * 0.5))
+        sort!(xticks)
+        ax_x = DiscreteAxis{T, :infinite, :infinite}(int_x, xticks) # must be even
+    end
+    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
+    
+    return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) ) 
+end
+
 
 include("plot_recipes.jl")
