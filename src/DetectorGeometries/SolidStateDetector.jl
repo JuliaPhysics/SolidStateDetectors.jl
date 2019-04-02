@@ -1,4 +1,9 @@
-mutable struct SolidStateDetector{T<:AbstractFloat} <: AbstractConfig{T}
+"""
+    mutable struct SolidStateDetector{T<:AbstractFloat, CS} <: AbstractConfig{T}
+
+CS: Coordinate System: -> :Cartesian / :Cylindrical
+"""
+mutable struct SolidStateDetector{T<:AbstractFloat, CS} <: AbstractConfig{T}
     name::String
     class::Symbol
     material_detector::NamedTuple
@@ -35,19 +40,25 @@ mutable struct SolidStateDetector{T<:AbstractFloat} <: AbstractConfig{T}
     φs::Vector{T}
     zs::Vector{T}
 
-    SolidStateDetector{T}() where {T<:AbstractFloat} = new{T}()
+    SolidStateDetector{T, CS}() where {T<:AbstractFloat, CS} = new{T, CS}()
 end
 
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T <: AbstractFloat
-    c = SolidStateDetector{T}()
+    c = if Symbol(config_file["class"]) == :CGD
+        SolidStateDetector{T, :Cartesian}()
+    else
+        SolidStateDetector{T, :Cylindrical}()
+    end
     c.class = Symbol(config_file["class"])
     c.name = config_file["name"]
-    c.cyclic = T(deg2rad(config_file["cyclic"]))
-    c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
+    if c.class != :CGD 
+        c.cyclic = T(deg2rad(config_file["cyclic"]))
+        c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
+    end
 
     c.material_environment = material_properties[materials[config_file["geometry"]["world"]["material"]]]
     c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
-
+    
     c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
     c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[1]
 
@@ -74,8 +85,10 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T
         g in geometry_positive ? c.crystal_geometry += g : nothing
     end
 
-    c.crystal_length = geom_round(T(width(geometry_positive[1].z_interval)))
-    c.crystal_radius = geom_round(T(width(geometry_positive[1].r_interval)))
+    if c.class != :CGD 
+        c.crystal_length = geom_round(T(width(geometry_positive[1].z_interval)))
+        c.crystal_radius = geom_round(T(width(geometry_positive[1].r_interval)))
+    end
 
     c.bulk_type = bulk_types[config_file["bulk_type"]]
     c.charge_carrier_density_top = config_file["charge_carrier_density"]["top"]
