@@ -1,7 +1,7 @@
 function drift_charge!(
     drift_path::AbstractVector{<:SVector{3,T}},
     det::SolidStateDetector,
-    startpos::CartesianPoint{T},
+    startpos::Union{CartesianPoint{T}, <:SVector{3, T}},
     delta_t::Real,
     velocity_field::Interpolations.Extrapolation{<:SVector{3,<:Real},3}
 ) where T <:Real
