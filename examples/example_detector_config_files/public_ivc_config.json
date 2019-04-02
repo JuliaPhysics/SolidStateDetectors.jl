@@ -1,7 +1,7 @@
 {
     "class": "CustomDetector",
     "name": "Public Inverted Coax",
-    "cyclic": 360.0,
+    "cyclic": 0.0,
     "mirror_symmetry_phi": "false",
     "bulk_type": "p",
 
@@ -23,8 +23,8 @@
                 "rStop": 38.0,
                 "phiStart": 0.0,
                 "phiStop": 360.0,
-                "zStart": 0.0,
-                "zStop": 80.0
+                "zStart": -15.0,
+                "zStop": 85.0
               }
           ]
 
