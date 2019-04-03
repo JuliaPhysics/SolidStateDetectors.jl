@@ -16,12 +16,12 @@
 			"geometry": [
 				{
 					"type": "CartesianBox3D",
-					"xStart": -2.0,
-					"xStop":  12.0,
-					"yStart": -2.0,
-					"yStop":  12.0,
-					"zStart": -2.0,
-					"zStop":  12.0
+					"xStart": -6.0,
+					"xStop":   6.0,
+					"yStart": -6.0,
+					"yStop":   6.0,
+					"zStart": -6.0,
+					"zStop":   6.0
 				}
 			]
 		},
@@ -31,12 +31,12 @@
 				"positive": [
 					{
 						"type": "CartesianBox3D",
-						"xStart": 0.0,
-						"xStop": 10.0,
-						"yStart": 0.0,
-						"yStop": 10.0,
-						"zStart": 0.0,
-						"zStop": 10.0
+						"xStart": -5.0,
+						"xStop":   5.0,
+						"yStart": -5.0,
+						"yStop":   5.0,
+						"zStart": -5.0,
+						"zStop":   5.0
 					}
 				]
 			}
@@ -54,12 +54,12 @@
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
-						"xStart": 0.0,
-						"xStop":  0.1,
-						"yStart": 0.0,
-						"yStop": 10.0,
-						"zStart": 0.0,
-						"zStop": 10.0
+						"xStart": -5.0,
+						"xStop":  -4.9,
+						"yStart": -5.0,
+						"yStop":   5.0,
+						"zStart": -5.0,
+						"zStop":   5.0
 					}
 				]
 			}
@@ -72,12 +72,12 @@
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
-						"xStart": 9.9,
-						"xStop": 10.0,
-						"yStart": 0.0,
-						"yStop": 10.0,
-						"zStart": 0.0,
-						"zStop": 10.0
+						"xStart":  4.9,
+						"xStop":   5.0,
+						"yStart": -5.0,
+						"yStop":   5.0,
+						"zStart": -5.0,
+						"zStop":   5.0
 					}
 				]
 			}
