@@ -108,9 +108,24 @@ function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit::U
 end
 
 
-function get_important_points(c::Cone{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
-    v1::Vector{T} = T[c.r_interval.left, c.r_interval.right] #[g.x[1], g.x[2]]
-    v2::Vector{T} = T[c.φ_interval.left, c.φ_interval.right]
-    v3::Vector{T} = T[c.z_interval.left, c.z_interval.right]
-    return v1, v2, v3
+function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: AbstractFloat}
+    return T[c.r_interval.left, c.r_interval.right] 
 end
+
+function get_important_points(c::Cone{T}, ::Val{:φ})::Vector{T} where {T <: AbstractFloat}
+    return T[c.φ_interval.left, c.φ_interval.right]
+end
+
+function get_important_points(c::Cone{T}, ::Val{:z})::Vector{T} where {T <: AbstractFloat}
+    return T[c.z_interval.left, c.z_interval.right]
+end
+
+function get_important_points(c::Cone{T}, ::Val{:x})::Vector{T} where {T <: AbstractFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+function get_important_points(c::Cone{T}, ::Val{:y})::Vector{T} where {T <: AbstractFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+

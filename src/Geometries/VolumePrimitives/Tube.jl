@@ -63,9 +63,24 @@ function in(point::CylindricalPoint{T}, tube::Tube{T}) where T
 end
 
 
-function get_important_points(t::Tube{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
-    v1::Vector{T} = T[t.r_interval.left, t.r_interval.right] #[g.x[1], g.x[2]]
-    v2::Vector{T} = T[t.φ_interval.left, t.φ_interval.right]
-    v3::Vector{T} = T[t.z_interval.left, t.z_interval.right]
-    return v1, v2, v3
+function get_important_points(t::Tube{T}, ::Val{:r})::Vector{T} where {T <: AbstractFloat}
+    return T[t.r_interval.left, t.r_interval.right] 
 end
+
+function get_important_points(t::Tube{T}, ::Val{:φ})::Vector{T} where {T <: AbstractFloat}
+    return T[t.φ_interval.left, t.φ_interval.right]
+end
+
+function get_important_points(t::Tube{T}, ::Val{:z})::Vector{T} where {T <: AbstractFloat}
+    return T[t.z_interval.left, t.z_interval.right]
+end
+
+function get_important_points(t::Tube{T}, ::Val{:x})::Vector{T} where {T <: AbstractFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: AbstractFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+

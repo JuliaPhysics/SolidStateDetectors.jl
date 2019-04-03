@@ -32,3 +32,22 @@ function get_important_points(g::CartesianBox3D{T})::NTuple{3, Vector{T}} where 
     v3::Vector{T} = T[g.z[1], g.z[2]]
     return v1, v2, v3
 end
+
+function get_important_points(g::CartesianBox3D{T}, ::Val{:r})::Vector{T} where {T <: AbstractFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+function get_important_points(g::CartesianBox3D{T}, ::Val{:φ})::Vector{T} where {T <: AbstractFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+function get_important_points(g::CartesianBox3D{T}, ::Val{:z})::Vector{T} where {T <: AbstractFloat}
+    return T[g.z[1], g.z[2]]
+end
+function get_important_points(g::CartesianBox3D{T}, ::Val{:x})::Vector{T} where {T <: AbstractFloat}
+    return T[g.x[1], g.x[2]]
+end
+function get_important_points(g::CartesianBox3D{T}, ::Val{:y})::Vector{T} where {T <: AbstractFloat}
+    return T[g.y[1], g.y[2]]
+end
+

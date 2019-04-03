@@ -161,12 +161,12 @@ end
 
 
 function calculate_electric_potential(  detector::SolidStateDetector{T, :Cartesian};
-                                        init_grid_spacing::Vector{<:Real} = [0.005, 0.005, 0.005], # 5mm each
+                                        init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], # 5mm each
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
                                         refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
-                                        min_grid_spacing::Vector{<:Real} = [1e-4, 1e-4, 1e-4],  # mm, mm, mm
+                                        min_grid_spacing::Vector{<:Real} = [1e-5, 1e-5, 1e-5],  # mm, mm, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4],

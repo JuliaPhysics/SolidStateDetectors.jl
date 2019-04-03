@@ -33,6 +33,7 @@ end
 
 
 
-function get_important_points(c::ConeMantle{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
-    get_important_points(c.cone)
+function get_important_points(c::ConeMantle{T}, s)::Vector{T} where {T <: AbstractFloat}
+    get_important_points(c.cone, s)
 end
+

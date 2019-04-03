@@ -38,10 +38,10 @@ const SomeCylindricalPoint = Union{ # this should be removed
 }
 
 
-const AnyPoint{T} = Union{ # this should be removed -> AbstractCoordinatePoint{T}
-    CartesianPoint{T},
-    CylindricalPoint{T}
-}
+# const AnyPoint{T} = Union{ # this should be removed -> AbstractCoordinatePoint{T}
+#     CartesianPoint{T},
+#     CylindricalPoint{T}
+# }
 
 
 function convert(type::Type{CylindricalPoint}, origin::SolidStateDetectors.CartesianPoint{T})::CylindricalPoint{T} where T

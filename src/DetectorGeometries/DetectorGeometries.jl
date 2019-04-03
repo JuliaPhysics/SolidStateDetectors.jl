@@ -87,19 +87,14 @@ end
 
 
 
-function get_important_points(c::SolidStateDetector{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
-    a1::Vector{T} = []
-    a2::Vector{T} = []
-    a3::Vector{T} = []
+function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: AbstractFloat}
+    imp::Vector{T} = []
     for contact in c.contacts
         for g in contact.geometry
-            imps::NTuple{3, Vector{T}} = get_important_points(g)
-            push!(a1, imps[1]...)
-            push!(a2, imps[2]...)
-            push!(a3, imps[3]...)
+            append!(imp, get_important_points(g, Val{s}()))
         end
     end
-    return uniq(sort(a1)), uniq(sort(a2)), uniq(sort(a2))
+    return uniq(sort(imp))
 end
 
 
@@ -328,11 +323,11 @@ function Grid(  detector::SolidStateDetector{T, :Cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005],
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
-    important_points = get_important_points(detector)
+    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
-    important_r_points::Vector{T} = important_points[1]
-    important_φ_points::Vector{T} = important_points[2]
-    important_z_points::Vector{T} = important_points[3]
+    important_r_points::Vector{T} = get_important_points(detector, :r)
+    important_φ_points::Vector{T} = get_important_points(detector, :φ)
+    important_z_points::Vector{T} = get_important_points(detector, :z)
 
     push!(important_r_points, detector.world.r_interval.right)
     push!(important_r_points, detector.world.r_interval.left)
@@ -343,8 +338,6 @@ function Grid(  detector::SolidStateDetector{T, :Cylindrical};
     push!(important_φ_points, detector.world.φ_interval.right)
     push!(important_φ_points, detector.world.φ_interval.left)
     important_φ_points = uniq(sort(important_φ_points))
-
-    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
     # r
     int_r = Interval{:closed, :closed, T}(detector.world.r_interval)
@@ -412,28 +405,30 @@ function Grid(  detector::SolidStateDetector{T, :Cylindrical};
 end
 
 
-function Grid(  det::SolidStateDetector{T, :Cartesian}; 
+function Grid(  detector::SolidStateDetector{T, :Cartesian}; 
                 init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], 
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
-    important_points = get_important_points(det)
+    important_x_points::Vector{T} = get_important_points(detector, :x)
+    important_y_points::Vector{T} = get_important_points(detector, :y)
+    important_z_points::Vector{T} = get_important_points(detector, :z)
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
     
-    int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.world.x[1], det.world.x[2] )
-    int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.world.y[1], det.world.y[2] )
-    int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(det.world.z[1], det.world.z[2] )
+    int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.x[1], detector.world.x[2] )
+    int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.y[1], detector.world.y[2] )
+    int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.z[1], detector.world.z[2] )
     ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1]) 
     ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2]) 
     ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
 
-    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_points[1], atol = init_grid_spacing[1] / 2)
+    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = init_grid_spacing[1] / 2)
     ax_x = typeof(ax_x)(int_x, xticks)
 
-    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_points[2], atol = init_grid_spacing[2] / 2)
+    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = init_grid_spacing[2] / 2)
     ax_y = typeof(ax_y)(int_y, yticks)
 
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_points[3], atol = init_grid_spacing[3] / 2)
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = init_grid_spacing[3] / 2)
     ax_z = typeof(ax_z)(int_z, zticks)
 
     if isodd(length(ax_x)) # RedBlack dimension must be of even length
