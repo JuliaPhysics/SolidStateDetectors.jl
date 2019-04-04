@@ -1,3 +1,17 @@
+struct ElectricField{T, N, S} <: AbstractArray{T, N}
+    data::Array{<:SArray{Tuple{N}, T}, N}
+    grid::Grid{T, N, S}
+end
+
+@inline size(ep::ElectricField{T, N, S}) where {T, N, S} = size(ep.data)
+@inline length(ep::ElectricField{T, N, S}) where {T, N, S} = length(ep.data)
+@inline getindex(ep::ElectricField{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(ep.data, I...)
+@inline getindex(ep::ElectricField{T, N, S}, i::Int) where {T, N, S} = getindex(ep.data, i)
+@inline getindex(ep::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
+
+function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
+    return ElectricField{T, 3, S}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
+end
 
 
 function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
