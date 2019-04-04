@@ -14,7 +14,7 @@ abstract type AbstractLine{T, N, S} <: AbstractGeometry{T, N} end
 """
 struct Line{T, N, S} <: AbstractLine{T, N, S}
     org::AbstractCoordinatePoint{T, N, S}
-    dir::CoordinateVector{T, N, S}
+    dir::AbstractCoordinateVector{T, N, S}
 end
 
 function Line(p1::CartesianPoint{T}, p2::CartesianPoint{T})::Line{T, 3, :Cartesian} where {T}
@@ -31,7 +31,7 @@ end
 """
 struct Ray{T, N, S} <: AbstractLine{T, N, S}
     org::AbstractCoordinatePoint{T, N, S}
-    dir::CoordinateVector{T, N, S}
+    dir::AbstractCoordinateVector{T, N, S}
 end
 function Ray(p1::CartesianPoint{T}, p2::CartesianPoint{T})::Ray{T, 3, :Cartesian} where {T}
     return Ray{T, 3, :Cartesian}(p1, p2 - p1)
@@ -51,7 +51,7 @@ end
 """
 struct LineSegment{T, N, S} <: AbstractLine{T, N, S}
     org::AbstractCoordinatePoint{T, N, S}
-    dir::CoordinateVector{T, N, S}
+    dir::AbstractCoordinateVector{T, N, S}
 end
 
 function LineSegment(p1::CartesianPoint{T}, p2::CartesianPoint{T})::LineSegment{T, 3, :Cartesian} where {T}
@@ -85,4 +85,18 @@ end
     x::Vector{T} = [l.org.x, l.org.x + l.dir.x] 
     y::Vector{T} = [l.org.y, l.org.y + l.dir.y] 
     x, y
+end
+
+@recipe function f(ls::Array{<:AbstractLine{T, 3, :Cartesian}, 1}) where {T}
+    linecolor --> 1
+    for l in ls
+        @series begin
+            label := ""
+            l
+        end
+    end
+    @series begin
+        label --> ""
+        [], []
+    end
 end

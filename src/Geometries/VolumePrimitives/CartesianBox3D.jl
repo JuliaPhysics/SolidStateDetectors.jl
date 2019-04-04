@@ -51,3 +51,42 @@ function get_important_points(g::CartesianBox3D{T}, ::Val{:y})::Vector{T} where 
     return T[g.y[1], g.y[2]]
 end
 
+
+function vertices(cb::CartesianBox3D{T})::Vector{CartesianPoint{T}} where {T <: AbstractFloat}
+    v::Vector{CartesianPoint{T}} = CartesianPoint{T}[
+        CartesianPoint{T}(cb.x[1], cb.y[1], cb.z[1]),
+        CartesianPoint{T}(cb.x[2], cb.y[1], cb.z[1]),
+        CartesianPoint{T}(cb.x[2], cb.y[2], cb.z[1]),
+        CartesianPoint{T}(cb.x[1], cb.y[2], cb.z[1]),
+        CartesianPoint{T}(cb.x[1], cb.y[1], cb.z[2]),
+        CartesianPoint{T}(cb.x[2], cb.y[1], cb.z[2]),
+        CartesianPoint{T}(cb.x[2], cb.y[2], cb.z[2]),
+        CartesianPoint{T}(cb.x[1], cb.y[2], cb.z[2]),
+    ]    
+    return v
+end
+
+function LineSegments(cb::CartesianBox3D{T})::Vector{LineSegment{T, 3, :Cartesian}} where {T}
+    v::Vector{CartesianPoint{T}} = vertices(cb)
+    return LineSegment{T, 3, :Cartesian}[
+        LineSegment(v[1], v[2]),
+        LineSegment(v[2], v[3]),
+        LineSegment(v[3], v[4]),
+        LineSegment(v[4], v[1]),
+        LineSegment(v[1], v[5]),
+        LineSegment(v[2], v[6]),
+        LineSegment(v[3], v[7]),
+        LineSegment(v[4], v[8]),
+        LineSegment(v[5], v[6]),
+        LineSegment(v[6], v[7]),
+        LineSegment(v[7], v[8]),
+        LineSegment(v[8], v[5])
+    ]
+end
+
+@recipe function f(cb::CartesianBox3D{T}) where {T <: AbstractFloat}
+    ls = LineSegments(cb)
+    @series begin
+        ls
+    end
+end

@@ -145,6 +145,11 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
     return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
 end
 
+"""
+    get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
+
+Applies the charge drift model onto the electric field vectors. The field vectors have to be in cartesian coordinates.
+"""
 function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T<:AbstractFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
 
@@ -201,6 +206,7 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
             return g0 * -AE
         end
     end
+
     for i in eachindex(df)
         @inbounds df[i] = getVe(ef[i], cdm.gammas)
     end

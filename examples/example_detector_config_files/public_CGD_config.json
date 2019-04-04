@@ -5,8 +5,8 @@
 	
 	"charge_carrier_density": {
 		"unit": "cm-3",
-		"top": 0.94,
-		"bot": 1.10
+		"top": 0,
+		"bot": 0
 	},
 
 	"geometry": {
@@ -16,12 +16,12 @@
 			"geometry": [
 				{
 					"type": "CartesianBox3D",
-					"xStart": -6.0,
-					"xStop":   6.0,
-					"yStart": -6.0,
-					"yStop":   6.0,
-					"zStart": -6.0,
-					"zStop":   6.0
+					"xStart": -15.0,
+					"xStop":   15.0,
+					"yStart": -15.0,
+					"yStop":   15.0,
+					"zStart": -15.0,
+					"zStop":   15.0
 				}
 			]
 		},
@@ -31,12 +31,12 @@
 				"positive": [
 					{
 						"type": "CartesianBox3D",
-						"xStart": -5.0,
-						"xStop":   5.0,
-						"yStart": -5.0,
-						"yStop":   5.0,
-						"zStart": -5.0,
-						"zStop":   5.0
+						"xStart": -10.0,
+						"xStop":   10.0,
+						"yStart": -10.0,
+						"yStop":   10.0,
+						"zStart": -10.0,
+						"zStop":   10.0
 					}
 				]
 			}
@@ -49,17 +49,17 @@
 		"p": [
 			{
 				"name": "N+ Contact",
-				"potential": 500.0,
+				"potential": 2000.0,
 				"channel": 1,
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
-						"xStart": -5.0,
-						"xStop":  -4.9,
-						"yStart": -5.0,
-						"yStop":   5.0,
-						"zStart": -5.0,
-						"zStop":   5.0
+						"xStart": -10.0,
+						"xStop":  -9.9,
+						"yStart": -10.0,
+						"yStop":   10.0,
+						"zStart": -10.0,
+						"zStop":   10.0
 					}
 				]
 			}
@@ -72,12 +72,12 @@
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
-						"xStart":  4.9,
-						"xStop":   5.0,
-						"yStart": -5.0,
-						"yStop":   5.0,
-						"zStart": -5.0,
-						"zStop":   5.0
+						"xStart":  9.9,
+						"xStop":   10.0,
+						"yStart": -10.0,
+						"yStop":   10.0,
+						"zStart": -10.0,
+						"zStop":   10.0
 					}
 				]
 			}

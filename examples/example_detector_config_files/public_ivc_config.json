@@ -7,8 +7,8 @@
 
     "charge_carrier_density": {
       "unit": "cm-3",
-        "top": -0.94,
-        "bot": -1.10
+        "top": 0,
+        "bot": 0
     },
 
     "geometry": {

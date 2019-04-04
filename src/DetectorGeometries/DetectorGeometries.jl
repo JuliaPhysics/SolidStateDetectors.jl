@@ -6,7 +6,6 @@ bulk_types = Dict("n" => :ntype,
     "p" => :ptype  )
 unit_conversion = Dict{String, Unitful.Units}( "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m")
 
-include("Geometries/Geometries.jl")
 include("Contacts.jl")
 
 include("SolidStateDetector.jl")
@@ -223,8 +222,17 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
 end
 
 function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical})::Nothing where {T}
+    @info "This method should be removed. Solved differently..."
     ssd.rs = grid[:r].ticks
     ssd.φs = grid[:φ].ticks
+    ssd.zs = grid[:z].ticks
+    nothing
+end
+
+function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cartesian})::Nothing where {T}
+    @info "This method should be removed. Solved differently..."
+    ssd.rs = grid[:x].ticks
+    ssd.φs = grid[:y].ticks
     ssd.zs = grid[:z].ticks
     nothing
 end
