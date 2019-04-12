@@ -151,7 +151,7 @@ end
     end
 end
 
-struct outer_taper{T<:AbstractFloat}
+struct outer_taper{T <: SSDFloat}
     rStart::T
     rStop::T
     φStart::T
@@ -159,7 +159,7 @@ struct outer_taper{T<:AbstractFloat}
     zStart::T
     zStop::T
     orientation::String
-    function outer_taper(rStart::T, rStop::T, φStart::T, φStop::T, zStart::T, zStop::T, orientation) where T<:AbstractFloat
+    function outer_taper(rStart::T, rStop::T, φStart::T, φStop::T, zStart::T, zStop::T, orientation) where T <: SSDFloat
         return new{T}(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
     end
 end
@@ -399,7 +399,7 @@ function line_2d(r1,r2,z1,z2)
 end
 
 
-function polar_circle_2d(r::T, phiStart::T, phiStop::T;nSteps=360) where T<:AbstractFloat
+function polar_circle_2d(r::T, phiStart::T, phiStop::T;nSteps=360) where T <: SSDFloat
     if r == 0; return [],[]; end
     phiRange = collect(phiStart:(phiStop-phiStart)/nSteps:phiStop)
     rRange = [r for a in 1:length(phiRange)]
@@ -409,7 +409,7 @@ end
 
 
 
-@recipe function f(d::SolidStateDetector{T}, dim::Symbol; φ = missing, z = missing) where T <: AbstractFloat
+@recipe function f(d::SolidStateDetector{T}, dim::Symbol; φ = missing, z = missing) where{T <: SSDFloat}
     if ismissing(z) && ismissing(φ)
         print("Please specify φ or z.")
     elseif ismissing(z)
@@ -449,7 +449,7 @@ end
 end
 
 
-@recipe function f(Vol::SSD.Tube{T}, dim::Symbol, parameter::T) where T <: AbstractFloat
+@recipe function f(Vol::SSD.Tube{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
     if dim == :φ
         if parameter in Vol.φ_interval
            rStart = Vol.r_interval.left
@@ -518,7 +518,7 @@ end
 
 
 
-@recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where T <: AbstractFloat
+@recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
     newVol = Vol.cone
     @series begin
         newVol, dim, parameter
@@ -527,7 +527,7 @@ end
 
 
 
-@recipe function f(Vol::SSD.Cone{T}, dim::Symbol, parameter::T) where T <: AbstractFloat
+@recipe function f(Vol::SSD.Cone{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
     if dim == :φ
         if parameter in Vol.φ_interval
             rStart = Vol.r_interval.left

@@ -10,14 +10,17 @@ end
 @inline getindex(wp::WeightingPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(wp.grid, s)
 
 
-function WeightingPotential(fss::PotentialSimulationSetup{T, N, S}; kwargs...)::WeightingPotential{T, N, S} where {T, N, S}
-    return get_2π_potential(WeightingPotential{T, N, S}(fss.potential, fss.grid); kwargs...)
+function WeightingPotential(fss::PotentialSimulationSetup{T, 3, :Cylindrical}; kwargs...)::WeightingPotential{T, 3, :Cylindrical} where {T <: SSDFloat}
+    return get_2π_potential(WeightingPotential{T, 3, :Cylindrical}(fss.potential, fss.grid); kwargs...)
+end
+function WeightingPotential(fss::PotentialSimulationSetup{T, 3, :Cartesian})::WeightingPotential{T, 3, :Cartesian} where {T <: SSDFloat}
+    return WeightingPotential{T, 3, :Cartesian}(fss.potential, fss.grid)
 end
 
 @recipe function f( wp::WeightingPotential{T, 3, :Cylindrical};
                     r = missing,
                     φ = missing,
-                    z = missing ) where {T}
+                    z = missing ) where {T <: SSDFloat}
     g::Grid{T, 3, :Cylindrical} = wp.grid
    
     seriescolor --> :viridis

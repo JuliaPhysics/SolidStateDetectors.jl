@@ -92,7 +92,7 @@ function get_diagonal_r_from_z(cone::Cone{T}, z::T) where T
     end
 end
 
-function Cone{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Cone{T} where {T <: AbstractFloat}
+function Cone{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Cone{T} where {T <: SSDFloat}
     haskey(dict, "hierarchy") ? h = dict["hierarchy"] : h = 1
     haskey(dict, "pol") ? polarity = dict["pol"] : polarity = "positive"
     return Cone{T}(h,
@@ -108,23 +108,23 @@ function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit::U
 end
 
 
-function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
     return T[c.r_interval.left, c.r_interval.right] 
 end
 
-function get_important_points(c::Cone{T}, ::Val{:φ})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::Cone{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
     return T[c.φ_interval.left, c.φ_interval.right]
 end
 
-function get_important_points(c::Cone{T}, ::Val{:z})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::Cone{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
     return T[c.z_interval.left, c.z_interval.right]
 end
 
-function get_important_points(c::Cone{T}, ::Val{:x})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::Cone{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
     @warn "Not yet implemented"
     return T[]
 end
-function get_important_points(c::Cone{T}, ::Val{:y})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::Cone{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
     @warn "Not yet implemented"
     return T[]
 end

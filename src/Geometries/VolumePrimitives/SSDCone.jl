@@ -81,7 +81,7 @@ function get_diagonal_r_from_z(cone::SSDCone{T}, z::T) where T
     end
 end
 
-function SSDCone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit::Unitful.Units)::SSDCone{T} where {T <: AbstractFloat}
+function SSDCone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit::Unitful.Units)::SSDCone{T} where {T <: SSDFloat}
     haskey(dict, "hierarchy") ? h::Int = dict["hierarchy"] : h = 1
     haskey(dict, "translate") ? translate::SVector{3,T} = dict["translate"] : translate = SVector{3,T}(0,0,0)
     haskey(dict, "rotX") ? rotX::T = deg2rad(dict["rotX"]) : rotX = T(0.0)
@@ -104,7 +104,7 @@ function Geometry(T::DataType, t::Val{:SSDCone}, dict::Dict{Any, Any}, inputunit
 end
 
 
-function get_important_points(c::SSDCone{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+function get_important_points(c::SSDCone{T})::NTuple{3, Vector{T}} where {T <: SSDFloat}
     v1::Vector{T} = T[c.r_interval.left, c.r_interval.right] #[g.x[1], g.x[2]]
     v2::Vector{T} = T[c.φ_interval.left, c.φ_interval.right]
     v3::Vector{T} = T[c.z_interval.left, c.z_interval.right]

@@ -15,7 +15,7 @@ end
 
 @inline in(pt::CylindricalPoint, g::CartesianBox3D)::Bool = in(CartesianPoint(pt), g)
 
-function CartesianBox3D{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: AbstractFloat}
+function CartesianBox3D{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: SSDFloat}
     return CartesianBox3D{T}(
         (geom_round(ustrip(uconvert(u"m", T(dict["xStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["xStop"]) * inputunit)))),
         (geom_round(ustrip(uconvert(u"m", T(dict["yStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["yStop"]) * inputunit)))),
@@ -26,33 +26,33 @@ function Geometry(T::DataType, t::Val{:CartesianBox3D}, dict::Dict{Any, Any}, in
     return CartesianBox3D{T}(dict, inputunit)
 end
 
-function get_important_points(g::CartesianBox3D{T})::NTuple{3, Vector{T}} where {T <: AbstractFloat}
+function get_important_points(g::CartesianBox3D{T})::NTuple{3, Vector{T}} where {T <: SSDFloat}
     v1::Vector{T} = T[g.x[1], g.x[2]] #[g.x[1], g.x[2]]
     v2::Vector{T} = T[g.y[1], g.y[2]]
     v3::Vector{T} = T[g.z[1], g.z[2]]
     return v1, v2, v3
 end
 
-function get_important_points(g::CartesianBox3D{T}, ::Val{:r})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(g::CartesianBox3D{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
     @warn "Not yet implemented"
     return T[]
 end
-function get_important_points(g::CartesianBox3D{T}, ::Val{:φ})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(g::CartesianBox3D{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
     @warn "Not yet implemented"
     return T[]
 end
-function get_important_points(g::CartesianBox3D{T}, ::Val{:z})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(g::CartesianBox3D{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
     return T[g.z[1], g.z[2]]
 end
-function get_important_points(g::CartesianBox3D{T}, ::Val{:x})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(g::CartesianBox3D{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
     return T[g.x[1], g.x[2]]
 end
-function get_important_points(g::CartesianBox3D{T}, ::Val{:y})::Vector{T} where {T <: AbstractFloat}
+function get_important_points(g::CartesianBox3D{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
     return T[g.y[1], g.y[2]]
 end
 
 
-function vertices(cb::CartesianBox3D{T})::Vector{CartesianPoint{T}} where {T <: AbstractFloat}
+function vertices(cb::CartesianBox3D{T})::Vector{CartesianPoint{T}} where {T <: SSDFloat}
     v::Vector{CartesianPoint{T}} = CartesianPoint{T}[
         CartesianPoint{T}(cb.x[1], cb.y[1], cb.z[1]),
         CartesianPoint{T}(cb.x[2], cb.y[1], cb.z[1]),
@@ -84,7 +84,7 @@ function LineSegments(cb::CartesianBox3D{T})::Vector{LineSegment{T, 3, :Cartesia
     ]
 end
 
-@recipe function f(cb::CartesianBox3D{T}) where {T <: AbstractFloat}
+@recipe function f(cb::CartesianBox3D{T}) where {T <: SSDFloat}
     ls = LineSegments(cb)
     @series begin
         ls

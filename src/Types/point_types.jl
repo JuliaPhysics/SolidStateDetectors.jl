@@ -16,12 +16,16 @@ How to get information out of a PointType variable `pt`:
 4. `pt & pn_junction_bit > 0` -> this point belongs to the solid state detector. So it is in the volume of the n-type or p-type material.
 """
 const PointType       = UInt8
+
+# Point types for electric potential calculation
 const update_bit      = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
 const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleteded point
 const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is not inside a bubble; 1 -> point is inside a bubble
 # const bubble_bit      = 0x08 # parse(UInt8, "00000100", base=2) # 0 -> point is not inside a bubble; 1 -> point is inside a bubble
 
 const max_pointtype_value = update_bit + undepleted_bit + pn_junction_bit #+ bubble_bit
+
+
 
 """
     PointTypes{T, N, S} <: AbstractArray{T, N}

@@ -12,7 +12,7 @@ include("SolidStateDetector.jl")
 
 
 """
-    SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: AbstractFloat}
+    SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
 
 Reads in a config-JSON file and returns an Detector struct which holds all information specified in the config file.
 """
@@ -47,7 +47,7 @@ function yaml2json(directory::String)# or filename
     end
 end
 
-function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: AbstractFloat}
+function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
     parsed_dict = parse_config_file(filename)
     detector_class = parsed_dict["class"]
     global unit_conversions = Dict{String,T}( "nm"=>1e-9,"um"=>1e-6,"mm"=>1e-3,"cm"=>1e-2,"m"=>1.0 )
@@ -86,7 +86,7 @@ end
 
 
 
-function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: SSDFloat}
     imp::Vector{T} = []
     for contact in c.contacts
         for g in contact.geometry
@@ -97,7 +97,7 @@ function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} wh
 end
 
 
-function is_boundary_point(c::SolidStateDetector, pt::AbstractCoordinatePoint{T}, ax1::Vector{T}, ax2::Vector{T}, ax3::Vector{T})::Tuple{Bool, Real, Int} where {T <:AbstractFloat}
+function is_boundary_point(c::SolidStateDetector, pt::AbstractCoordinatePoint{T}, ax1::Vector{T}, ax2::Vector{T}, ax3::Vector{T})::Tuple{Bool, Real, Int} where {T <: SSDFloat}
     # if false #!(p in c)
     #     return false, T(0), 0
     # else
@@ -116,32 +116,103 @@ function is_boundary_point(c::SolidStateDetector, pt::AbstractCoordinatePoint{T}
 end
 
 
-function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Symbol,Int} where T
+# function point_type(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Symbol,Int} where T
+#     for contact in c.contacts
+#         if p in contact #|| geom_round(p) in contact #|| in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs)
+#             return :electrode, contact.id
+#         end
+#     end
+#     sp = is_surface_point(c, p)
+#     if sp[1]
+#         for contact in c.contacts
+#             if in(go_to_nearest_gridpoint(c,p), contact, c.rs) && abs(sum(sp[2])) > 1
+#                 println("olo")
+#                 return :electrode, contact.id
+#             else
+#                 return :floating_boundary, 0
+#             end
+#         end
+#     elseif !(p in c)
+#         return :outside, -1
+#     else
+#         return :bulk, -1
+#     end
+# end
+function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
+    surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
         if p in contact #|| geom_round(p) in contact #|| in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs)
-            return :electrode, contact.id
+            return CD_ELECTRODE::UInt8, contact.id, surface_normal
         end
     end
-    sp = is_surface_point(c, p)
-    if sp[1]
+    on_surface, surface_normal = is_surface_point_and_normal_vector(c, p)
+    if on_surface
         for contact in c.contacts
-            if in(go_to_nearest_gridpoint(c,p), contact, c.rs) && abs(sum(sp[2])) > 1
-                println("olo")
-                return :electrode, contact.id
+            if in(searchsortednearest(grid, p), contact, grid.axes[1].ticks) && abs(sum(sp[2])) > 1
+                return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
-                return :floating_boundary, 0
+                return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
             end
         end
     elseif !(p in c)
-        return :outside, -1
+        return CD_OUTSIDE::UInt8, -1, surface_normal
     else
-        return :bulk, -1
+        return CD_BULK::UInt8, -1, surface_normal
     end
 end
 
-function go_to_nearest_gridpoint(d::SolidStateDetector{T}, p::CylindricalPoint{T})::CylindricalPoint{T} where T
-    CylindricalPoint{T}(d.rs[searchsortednearest(d.rs,p.r)],d.φs[searchsortednearest(d.φs,p.φ)],d.zs[searchsortednearest(d.zs,p.z)])
+
+# Point types for charge drift
+const CD_ELECTRODE = 0x00
+const CD_OUTSIDE = 0x01
+const CD_BULK = 0x02
+const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
+
+"""
+    For charge drift...
+"""
+function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
+    surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
+    for contact in c.contacts
+        if p in contact #|| geom_round(p) in contact #|| in(go_to_nearest_gridpoint(c,p), contact, c.rs) || in(go_to_nearest_gridpoint(c,geom_round(p)), contact, c.rs)
+            return CD_ELECTRODE::UInt8, contact.id, surface_normal
+        end
+    end
+    on_surface, surface_normal = is_surface_point_and_normal_vector(c, p) # surface_normal::CartesianVector{T}
+    if on_surface
+        for contact in c.contacts
+            if in(searchsortednearest(grid, p), contact, grid.axes[1].ticks) && abs(sum(sp[2])) > 1
+                return CD_ELECTRODE::UInt8, contact.id, surface_normal
+            else
+                return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
+            end
+        end
+    elseif !(p in c)
+        return CD_OUTSIDE::UInt8, -1, surface_normal
+    else
+        return CD_BULK::UInt8, -1, surface_normal
+    end
 end
+
+# go_to_nearest_gridpoint
+function searchsortednearest(grid::Grid{T, 3, :Cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
+    idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.r)
+    idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.φ)
+    idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
+    CylindricalPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
+end
+function searchsortednearest(grid::Grid{T, 3, :CartesianPoint}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+    idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.x)
+    idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.y)
+    idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
+    CartesianPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
+end
+# """
+#     ToDo: remove this
+# """
+# function go_to_nearest_gridpoint(d::SolidStateDetector{T}, p::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+#     CylindricalPoint{T}(d.rs[searchsortednearest(d.rs, p.x)], d.φs[searchsortednearest(d.φs,p.y)], d.zs[searchsortednearest(d.zs,p.z)])
+# end
 
 # function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Bool where T
 #     if !(p in c)
@@ -158,50 +229,91 @@ end
 #         return false
 #     end
 # end
-
-function is_surface_point(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Bool,CartesianPoint{T}} where T
+"""
+    ToDo: like is_surface_point_and_normal_vector()
+"""
+# function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Bool,CartesianPoint{T}} where T
+#     if !(p in c)
+#         return false, CartesianPoint{T}(0.0,0.0,0.0)
+#     end
+#     n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
+#     look_around::Vector{Bool} = [CylindricalPoint{T}(prevfloat(p.r),p.φ,p.z) in c,
+#         CylindricalPoint{T}(nextfloat(p.r),p.φ,p.z) in c,
+#         CylindricalPoint{T}(p.r,prevfloat(p.φ),p.z) in c,
+#         CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c,
+#         CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c,
+#         CylindricalPoint{T}(p.r,p.φ,nextfloat(p.z)) in c]
+#     if !(false in look_around)
+#         return false , CartesianPoint{T}(n...)
+#     else
+#         look_around[1]==false ? n[1] -= 1 : nothing
+#         look_around[2]==false ? n[1] += 1 : nothing
+#         look_around[3]==false ? n[2] -= 1 : nothing
+#         look_around[4]==false ? n[2] += 1 : nothing
+#         look_around[5]==false ? n[3] -= 1 : nothing
+#         look_around[6]==false ? n[3] += 1 : nothing
+#         # println(look_around , " " , n)
+#         Rα::SMatrix{3,3,T} = @SArray([cos(p.φ) -1*sin(p.φ) 0;sin(p.φ) cos(p.φ) 0;0 0 1])
+#         return true, geom_round(CartesianPoint((Rα * n)...))
+#     end
+# end
+function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Bool, CartesianVector{T}} where {T <: SSDFloat}
     if !(p in c)
-        return false, CartesianPoint{T}(0.0,0.0,0.0)
+        return false, CartesianPoint{T}(0, 0, 0)
     end
-    n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
-    look_around::Vector{Bool} = [CylindricalPoint{T}(prevfloat(p.r),p.φ,p.z) in c,
-        CylindricalPoint{T}(nextfloat(p.r),p.φ,p.z) in c,
-        CylindricalPoint{T}(p.r,prevfloat(p.φ),p.z) in c,
-        CylindricalPoint{T}(p.r,nextfloat(p.φ),p.z) in c,
-        CylindricalPoint{T}(p.r,p.φ,prevfloat(p.z)) in c,
-        CylindricalPoint{T}(p.r,p.φ,nextfloat(p.z)) in c]
+    n::MVector{3,T} = @MVector T[0, 0, 0]
+    look_around::Vector{Bool} = [   CylindricalPoint{T}(prevfloat(p.r), p.φ, p.z) in c,
+                                    CylindricalPoint{T}(nextfloat(p.r), p.φ, p.z) in c,
+                                    CylindricalPoint{T}(p.r, prevfloat(p.φ), p.z) in c,
+                                    CylindricalPoint{T}(p.r, nextfloat(p.φ), p.z) in c,
+                                    CylindricalPoint{T}(p.r, p.φ, prevfloat(p.z)) in c,
+                                    CylindricalPoint{T}(p.r, p.φ, nextfloat(p.z)) in c]
     if !(false in look_around)
         return false , CartesianPoint{T}(n...)
     else
-        look_around[1]==false ? n[1] -= 1 : nothing
-        look_around[2]==false ? n[1] += 1 : nothing
-        look_around[3]==false ? n[2] -= 1 : nothing
-        look_around[4]==false ? n[2] += 1 : nothing
-        look_around[5]==false ? n[3] -= 1 : nothing
-        look_around[6]==false ? n[3] += 1 : nothing
+        if (look_around[1]==false) n[1] -= 1 end
+        if (look_around[2]==false) n[1] += 1 end
+        if (look_around[3]==false) n[2] -= 1 end
+        if (look_around[4]==false) n[2] += 1 end
+        if (look_around[5]==false) n[3] -= 1 end
+        if (look_around[6]==false) n[3] += 1 end
         # println(look_around , " " , n)
         Rα::SMatrix{3,3,T} = @SArray([cos(p.φ) -1*sin(p.φ) 0;sin(p.φ) cos(p.φ) 0;0 0 1])
-        return true, geom_round(CartesianPoint((Rα * n)...))
+        # return true, geom_round(CartesianVector{T}((Rα * n)...))
+        return true, CartesianVector{T}((Rα * n)...)
+    end
+end
+function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::CartesianPoint{T})::Tuple{Bool, CartesianVector{T}} where T
+    if !(p in c) # is this necessary?
+        return false, CartesianVector{T}(0, 0, 0) 
+    end
+    n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
+    look_around::Vector{Bool} = [   CartesianPoint{T}(prevfloat(p.x), p.y, p.z) in c,
+                                    CartesianPoint{T}(nextfloat(p.x), p.y, p.z) in c,
+                                    CartesianPoint{T}(p.x, prevfloat(p.y), p.z) in c,
+                                    CartesianPoint{T}(p.x, nextfloat(p.y), p.z) in c,
+                                    CartesianPoint{T}(p.x, p.y, prevfloat(p.z)) in c,
+                                    CartesianPoint{T}(p.x, p.y, nextfloat(p.z)) in c]
+    if !(false in look_around)
+        return false, n
+    else
+        if (look_around[1] == false) n[1] -= 1 end
+        if (look_around[2] == false) n[1] += 1 end
+        if (look_around[3] == false) n[2] -= 1 end
+        if (look_around[4] == false) n[2] += 1 end
+        if (look_around[5] == false) n[3] -= 1 end
+        if (look_around[6] == false) n[3] += 1 end
+        # println(look_around , " " , n)
+        return true, n
     end
 end
 
-function get_charge_density(detector::SolidStateDetector{T}, pt::CylindricalPoint)::T where {T <: AbstractFloat}
-    top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
-    bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
-    slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / detector.crystal_length
-    ρ::T = bot_net_charge_carrier_density + pt.z * slope
-    return ρ
-end
-function get_charge_density(detector::SolidStateDetector{T}, pt::CartesianPoint)::T where {T <: AbstractFloat}
-    top_net_charge_carrier_density::T = detector.charge_carrier_density_top * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
-    bot_net_charge_carrier_density::T = detector.charge_carrier_density_bot * 1e10 * 1e6  #  1/cm^3 -> 1/m^3
-    slope::T = (top_net_charge_carrier_density - bot_net_charge_carrier_density) / (detector.crystal_geometry.a.z[2] - detector.crystal_geometry.a.z[1]) #
-    ρ::T = bot_net_charge_carrier_density + pt.z * slope
-    return ρ
+
+function get_charge_density(detector::SolidStateDetector{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+    get_charge_density(detector.charge_density_model, pt)
 end
 
-
-function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: AbstractFloat}
+function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: SSDFloat}
     if in(pt, ssd)
         ρ::T = get_charge_density(ssd, pt) * elementary_charge
         ϵ::T = ssd.material_detector.ϵ_r
@@ -221,24 +333,8 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     end
 end
 
-function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical})::Nothing where {T}
-    @info "This method should be removed. Solved differently..."
-    ssd.rs = grid[:r].ticks
-    ssd.φs = grid[:φ].ticks
-    ssd.zs = grid[:z].ticks
-    nothing
-end
-
-function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cartesian})::Nothing where {T}
-    @info "This method should be removed. Solved differently..."
-    ssd.rs = grid[:x].ticks
-    ssd.φs = grid[:y].ticks
-    ssd.zs = grid[:z].ticks
-    nothing
-end
-
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+        grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -277,7 +373,7 @@ end
 
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
-        grid::Grid{T, 3, :Cartesian}, ssd::SolidStateDetector{T, :Cartesian}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+        grid::Grid{T, 3, :Cartesian}, ssd::SolidStateDetector{T, :Cartesian}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
     
     is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 

@@ -33,7 +33,7 @@ end
 
 
 
-function get_important_points(c::ConeMantle{T}, s)::Vector{T} where {T <: AbstractFloat}
+function get_important_points(c::ConeMantle{T}, s)::Vector{T} where {T <: SSDFloat}
     get_important_points(c.cone, s)
 end
 

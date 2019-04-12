@@ -1,5 +1,5 @@
 struct ElectricField{T, N, S} <: AbstractArray{T, N}
-    data::Array{<:SArray{Tuple{N}, T}, N}
+    data::Array{<:StaticArray{Tuple{N}, T}, N}
     grid::Grid{T, N, S}
 end
 
@@ -30,7 +30,7 @@ function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, :Cylindrical} where {T <: SSDFloat}
     p = ep.data
     axr::Vector{T} = collect(ep.grid[:r])
     axφ::Vector{T} = collect(ep.grid[:φ])
@@ -124,7 +124,7 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindri
     if fieldvector_coordinates == :xyz
         ef = convert_field_vectors_to_xyz(ef, axφ)
     end
-    return ef
+    return ElectricField(ef, pointtypes.grid)
 end
 
 function get_component_field(ef,component=:r,cutoff=NaN)
@@ -195,13 +195,13 @@ function setup_interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) w
 end
 
 function get_interpolated_drift_field(velocity_field, grid::CylindricalGrid{T}) where {T}
-    knots = grid.axes
+    knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks 
     i = interpolate(knots, velocity_field, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, Periodic())
     return velocity_field_itp
 end
 function get_interpolated_drift_field(velocity_field, grid::CartesianGrid{T}) where {T}
-    knots = grid.axes
+    knots = grid.axes[:1].ticks, grid.axes[:2].ticks, grid.axes[:3].ticks 
     i = interpolate(knots, velocity_field, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, Interpolations.Line())
     return velocity_field_itp
@@ -209,7 +209,7 @@ end
 
 include("plot_recipes.jl")
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :Cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(ep.grid[:x])
     axy::Vector{T} = collect(ep.grid[:y])
     axz::Vector{T} = collect(ep.grid[:z])
@@ -269,8 +269,7 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
                     d_z_2::T = axz[iz] - axz[iz - 1]
                     ez = (Δp_z_1 / d_z_1 + Δp_z_2 / d_z_2) / 2
                 end
-                # ey::T = 0
-                # ez::T = 0
+
                 if pointtypes[ix, iy, iz] & update_bit == 0 # boundary points
                     if (1 < ix < size(pointtypes, 1))
                         if (pointtypes[ix - 1, iy, iz] & update_bit > 0) && (pointtypes[ix + 1, iy, iz] & update_bit > 0)
@@ -298,13 +297,13 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
             end
         end
     end
-    return ef
+    return ElectricField(ef, pointtypes.grid)
 end
 
-function get_electric_field_strength(ef::Array{SVector{3, T},3}) where {T <: AbstractFloat}
-    efs::Array{T, 3} = Array{T, 3}(undef, size(ef)) 
-    @inbounds for i in eachindex(ef)
-        efs[i] = norm(ef[i])
+function get_electric_field_strength(ef::ElectricField{T}) where {T <: SSDFloat}
+    efs::Array{T, 3} = Array{T, 3}(undef, size(ef.data)) 
+    @inbounds for i in eachindex(ef.data)
+        efs[i] = norm(ef.data[i])
     end
     return efs
 end
