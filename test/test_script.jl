@@ -19,110 +19,65 @@ cgd = SolidStateDetector(SSD_examples[:CGD])
 
 T = Float32
 @info "Testing now for Float32:"
-sleep(2)
 
 plot() # creates a plot so that the plots during the following loop pop up.
 
-for key in keys(SSD_examples)
+for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
+# for key in keys(SSD_examples)
     @info "Now test detector type: $key"
-    det = SolidStateDetector{T}(SSD_examples[key])
-
-    g = Grid(det)
-
-    Init_setup = SolidStateDetectors.PotentialSimulationSetup(det);
-    plot(Init_setup, size = (1200, 1200))
-    savefig(joinpath(outputdir, "$(key)_init_setup"))
     
+    det = SolidStateDetector{T}(SSD_examples[key])
+    S = SSD.get_coordinate_system(det)
+    
+    setup = SSDSetup(det);
+   
+    SSD.apply_initial_state!(setup)
+    plot(setup.electric_potential)
+    savefig(joinpath(outputdir, "$(key)_0_init_setup"))
+
     for nrefs in [0, 1, 2]
-        setup = calculate_electric_potential(det, max_refinements = nrefs)
-        plot(setup, size = (1200, 1200))
-        savefig(joinpath(outputdir, "$(key)_setup_$(nrefs)_refinements"))
+        SSD.calculate_electric_potential!(setup, max_refinements = nrefs)
+        plot(setup.electric_potential, size = (1200, 1200))
+        savefig(joinpath(outputdir, "$(key)_1_setup_$(nrefs)_refinements"))
     end    
+    SSD.calculate_electric_potential!(setup, max_refinements = 3)
+    plot(setup.electric_potential)
+    savefig(joinpath(outputdir, "$(key)_1_setup_$(3)_refinements"))
 
-    setup = calculate_electric_potential(det, max_refinements = 3 );
-    plot(setup, size = (1200, 1200))
-    savefig(joinpath(outputdir, "$(key)_setup_$(1)_refinements"))
+    n_contacts = length(setup.detector.contacts)
+    for contact in setup.detector.contacts
+        SSD.calculate_weighting_potential!(setup, contact.id, max_refinements = 1)
+    end
 
-    E_pot, point_types = if typeof(det) <: SolidStateDetector{<:AbstractFloat, :Cylindrical} && length(setup.grid[:φ]) == 1 # 2D 
-        ElectricPotential(setup, n_points_in_φ = 36),
-        PointTypes(setup,  n_points_in_φ = 36);
-    else
-        ElectricPotential(setup),
-        PointTypes(setup);
-    end;
-    plot(E_pot, y = 0)
+    # plot( # does not work for :Cartesian yet
+    #     plot(setup.weighting_potentials[1]),
+    #     plot(setup.weighting_potentials[2]),
+    #     size = (1000, 1000), layout = (1, 2)
+    # )
 
-    E_field = SolidStateDetectors.get_electric_field_from_potential(E_pot, point_types);
-    SSD.write_grid_to_detector!(det, E_pot.grid);
+    SSD.calculate_electric_field!(setup)
 
-    # drift_model = ADLChargeDriftModel();
-    drift_model = VacuumChargeDriftModel();
-    electron_drift_field = get_electron_drift_field(E_field, drift_model);
-    hole_drift_field = get_hole_drift_field(E_field, drift_model);
+    plot( setup.electric_field.grid[1], setup.electric_field.grid[3], SSD.get_electric_field_strength(setup.electric_field)[:, div(length(setup.electric_field.grid[2].ticks), 2), :]', 
+          st=:heatmap, clims = (0, 200000), title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
+    savefig(joinpath(outputdir, "$(key)_2_Electric_Field_strength"))
 
-    electron_drift_field_interpolated = SolidStateDetectors.get_interpolated_drift_field(electron_drift_field, E_pot.grid);
-    hole_drift_field_interpolated = SolidStateDetectors.get_interpolated_drift_field(hole_drift_field, E_pot.grid);
+    SSD.set_charge_drift_model!(setup, ADLChargeDriftModel())
 
-    pos = CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.000, 0.005  ) ] # this point should be inside all test detectors
-    @assert in(pos[1], det) "Test point $(pos[1]) not inside the detector $(key)."
+    SSD.apply_charge_drift_model!(setup)
 
-    drift_paths = SSD.drift_charges(det, pos, electron_drift_field_interpolated, hole_drift_field_interpolated);
-
+    pos = if S == :Cartesian
+        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.00, 0.005  ) ] # this point should be inside all test detectors
+    elseif S == :Cylindrical
+        CylindricalPoint{T}[ CylindricalPoint{T}( 0.006, 0.0, 0.005  ) ] # this point should be inside all test detectors
+    end
+    @assert in(pos[1], setup.detector) "Test point $(pos[1]) not inside the detector $(key)."
+    begin
+        drift_paths = SSD.drift_charges(setup, CartesianPoint.(pos));
+        plot(setup.detector)
+        plot!(drift_paths)
+    end
+    savefig(joinpath(outputdir, "$(key)_3_charge_drift"))
 end
 
 @info "Finished testing."
 @info "Test output saved in: $outputdir"
-
-
-key = :CGD
-det = SolidStateDetector{T}(SSD_examples[key])
-
-setup = calculate_electric_potential(det, max_refinements = 3 );
-plot(setup, size = (1200, 1200))
-savefig(joinpath(outputdir, "$(key)_setup_$(1)_refinements"))
-
-E_pot, point_types = if typeof(det) <: SolidStateDetector{<:AbstractFloat, :Cylindrical} && length(setup.grid[:φ]) == 1 # 2D 
-    ElectricPotential(setup, n_points_in_φ = 36),
-    PointTypes(setup,  n_points_in_φ = 36);
-else
-    ElectricPotential(setup),
-    PointTypes(setup);
-end;
-plot(E_pot, y = 0)
-
-plot(E_pot.grid[:x], E_pot.data[:, 120, 120])
-
-
-E_field = SolidStateDetectors.get_electric_field_from_potential(E_pot, point_types);
-SSD.write_grid_to_detector!(det, E_pot.grid);
-
-# drift_model = ADLChargeDriftModel();
-drift_model = VacuumChargeDriftModel();
-electron_drift_field = get_electron_drift_field(E_field, drift_model);
-hole_drift_field = get_hole_drift_field(E_field, drift_model);
-
-electron_drift_field_interpolated = SolidStateDetectors.get_interpolated_drift_field(electron_drift_field, E_pot.grid);
-hole_drift_field_interpolated = SolidStateDetectors.get_interpolated_drift_field(hole_drift_field, E_pot.grid);
-
-pos = CartesianPoint{T}[ CartesianPoint{T}( 0,0,0)]#0.006, 0.000, 0.005  ) ] # this point should be inside all test detectors
-@assert in(pos[1], det) "Test point $(pos[1]) not inside the detector $(key)."
-
-drift_paths = SSD.drift_charges(det, pos, electron_drift_field_interpolated, hole_drift_field_interpolated);
-
-plot(det.crystal_geometry.a, lc=:black, lw = 2, label="N-type bulk")
-
-plot!(drift_paths)
-
-plot!(drift_paths[1].e_path[1:2], lw= 2)
-plot!(drift_paths[1].e_path[1:220], lw= 2)
-
-
-plot!(det.contacts[1].geometry[1], lc=:orange, lw = 2, label="N+")
-plot!(det.contacts[2].geometry[1], lc=:blue, lw = 2, label="P+")
-plot!(drift_paths, xlabel = "x", ylabel = "y", zlabel = "z")
-
-efs = SSD.get_electric_field_strength(E_field) 
-
-plot(efs[:, 100, 100])
-
-plot(efs[:, 95, :]', st=:heatmap, clims = (0, 2000 / 0.02 * 2))
