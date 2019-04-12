@@ -26,3 +26,13 @@ struct CylindricalVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, 
 end
 
 
+
+function (+)(p::CylindricalPoint{T}, v::CylindricalVector{T})::CylindricalPoint{T} where {T <: Real} 
+    error("Not yet defined")
+end
+function (-)(p::CylindricalPoint{T}, v::CylindricalVector{T})::CylindricalPoint{T} where {T <: Real} 
+    error("Not yet defined")
+end
+function (-)(p1::CylindricalPoint{T}, p2::CylindricalPoint{T})::CylindricalPoint{T} where {T <: Real} 
+    error("Not yet defined")
+end

@@ -25,25 +25,6 @@ function CartesianPoint( pt::CylindricalPoint{T} )::CartesianPoint{T} where {T <
     return CartesianPoint{T}(pt.r * cφ, pt.r * sφ, pt.z)
 end
 
-
-
-const SomeCartesianPoint{T} = Union{ # this should be removed
-    CartesianPoint{T},
-    StaticArray{Tuple{3},T},
-}
-
-
-const SomeCylindricalPoint = Union{ # this should be removed
-    CylindricalPoint,
-}
-
-
-# const AnyPoint{T} = Union{ # this should be removed -> AbstractCoordinatePoint{T}
-#     CartesianPoint{T},
-#     CylindricalPoint{T}
-# }
-
-
 function convert(type::Type{CylindricalPoint}, origin::SolidStateDetectors.CartesianPoint{T})::CylindricalPoint{T} where T
     return CylindricalPoint(origin)
 end
@@ -70,5 +51,5 @@ end
     end
 end
  ##aliases for ease of use
-cyp = CylindricalPoint
-cap = CartesianPoint
+const cyp = CylindricalPoint
+const cap = CartesianPoint
