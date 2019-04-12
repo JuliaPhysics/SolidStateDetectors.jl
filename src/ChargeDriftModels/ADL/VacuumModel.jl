@@ -8,6 +8,6 @@ function VacuumModel{T}(config_file::Dict; temperature::Union{Missing, T} = miss
     m = VacuumModel{T}()
 end
 
-function scale_to_given_temperature(m::VacuumModel{T})::NTuple{4, T} where {T <: SSDFloat}
+function scale_to_given_temperature(m::VacuumModel{T})::NTuple{4,T} where {T <: SSDFloat}
     return T(1), T(1), T(1), T(1)
 end

@@ -1,4 +1,4 @@
-mutable struct BoltzmannModel{T<:AbstractFloat} <: TemperatureModels{T}
+mutable struct BoltzmannModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
 
     #temperatures needed for the drift velocity rescaling
     temperature::T      # actual temperature of the crystal
@@ -26,7 +26,7 @@ function BoltzmannModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::
     return BoltzmannModel{T}(config_file::Dict)
 end
 
-function BoltzmannModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::BoltzmannModel where T<:AbstractFloat
+function BoltzmannModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::BoltzmannModel where T <: SSDFloat
     config_file["temperature_dependence"]["model"] != "Boltzmann" ? error() : nothing
     ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = BoltzmannModel{T}(
@@ -51,9 +51,9 @@ function BoltzmannModel{T}(config_file::Dict; temperature::Union{Missing, T} = m
     )
 end
 
-function scale_to_given_temperature(m::BoltzmannModel{T})::NTuple{4,T} where T<:AbstractFloat
+function scale_to_given_temperature(m::BoltzmannModel{T})::NTuple{4,T} where T <: SSDFloat
 
-    function f(p1::T, p2::T, p3::T)::T where T<:AbstractFloat
+    function f(p1::T, p2::T, p3::T)::T where T <: SSDFloat
         return (p1+ p2*exp(-p3/m.reftemperature))/(p1 + p2*exp(-p3/m.temperature))
     end
 

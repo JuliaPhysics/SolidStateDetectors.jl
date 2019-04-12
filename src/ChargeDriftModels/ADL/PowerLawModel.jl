@@ -1,4 +1,4 @@
-mutable struct PowerLawModel{T<:AbstractFloat} <: TemperatureModels{T}
+mutable struct PowerLawModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
 
     #temperatures needed for the drift velocity rescaling
     temperature::T      # actual temperature of the crystal
@@ -15,7 +15,7 @@ function PowerLawModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::P
     return PowerLawModel{T}(config_file::Dict)
 end
 
-function PowerLawModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::PowerLawModel where T<:AbstractFloat
+function PowerLawModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::PowerLawModel where {T <: SSDFloat}
     config_file["temperature_dependence"]["model"] != "PowerLaw" ? error() : nothing
     ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = PowerLawModel{T}(
@@ -28,9 +28,9 @@ function PowerLawModel{T}(config_file::Dict; temperature::Union{Missing, T} = mi
     )
 end
 
-function scale_to_given_temperature(m::PowerLawModel{T})::NTuple{4,T} where T<:AbstractFloat
+function scale_to_given_temperature(m::PowerLawModel{T})::NTuple{4,T} where {T <: SSDFloat}
 
-    function f(p1::T = 0.0)::T where T<:AbstractFloat
+    function f(p1::T = 0.0)::T where {T <: SSDFloat}
         return (m.reftemperature/m.temperature)^1.5
     end
 

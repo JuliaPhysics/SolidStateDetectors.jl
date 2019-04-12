@@ -1,4 +1,4 @@
-mutable struct LinearModel{T<:AbstractFloat} <: TemperatureModels{T}
+mutable struct LinearModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
 
     #temperatures needed for the drift velocity rescaling
     temperature::T      # actual temperature of the crystal
@@ -22,7 +22,7 @@ function LinearModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::Lin
     return LinearModel{T}(config_file::Dict)
 end
 
-function LinearModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::LinearModel where T<:AbstractFloat
+function LinearModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::LinearModel where T <: SSDFloat
     config_file["temperature_dependence"]["model"] != "Linear" ? error() : nothing
     ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = LinearModel{T}(
@@ -43,9 +43,9 @@ function LinearModel{T}(config_file::Dict; temperature::Union{Missing, T} = miss
     )
 end
 
-function scale_to_given_temperature(m::LinearModel{T})::NTuple{4,T} where T<:AbstractFloat
+function scale_to_given_temperature(m::LinearModel{T})::NTuple{4,T} where T <: SSDFloat
 
-    function f(p1::T, p2::T)::T where T<:AbstractFloat
+    function f(p1::T, p2::T)::T where T <: SSDFloat
         return (p1 + p2 * m.reftemperature)/(p1 + p2 * m.temperature)
     end
 
