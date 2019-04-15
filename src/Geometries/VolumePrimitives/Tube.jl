@@ -73,3 +73,15 @@ end
 function get_z(t::Tube)
     return t.z_interval.left, t.z_interval.right
 end
+
+function sample(c::Tube{T}, stepsize::Vector{T}) where T
+    samples = CylindricalPoint[]
+    for r in get_r(c)[1]:stepsize[1]:get_r(c)[2]
+        for φ in get_φ(c)[1]:stepsize[2]:get_φ(c)[2]
+            for z in get_z(c)[1]:stepsize[3]:get_z(c)[2]
+                push!(samples, CylindricalPoint{T}(r,φ,z))
+            end
+        end
+    end
+    return samples
+end

@@ -103,7 +103,7 @@ end
 function get_important_r_points(c::SolidStateDetector{T}) where T
     r::Vector{T}=[]
     for contact in c.contacts
-        for g in contact.geometry
+        for g in sort!(vcat(contact.geometry_positive,contact.geometry_negative))
             push!(r, get_r(g)...)
         end
     end
@@ -113,7 +113,7 @@ end
 function get_important_φ_points(c::SolidStateDetector{T}) where T
     φ::Vector{T}=[]
     for contact in c.contacts
-        for g in contact.geometry
+        for g in sort!(vcat(contact.geometry_positive,contact.geometry_negative))
             push!(φ, get_φ(g)...)
         end
     end
@@ -123,7 +123,7 @@ end
 function get_important_z_points(c::SolidStateDetector{T}) where T
     z::Vector{T}=[]
     for contact in c.contacts
-        for g in contact.geometry
+        for g in sort!(vcat(contact.geometry_positive,contact.geometry_negative))
             push!(z, get_z(g)...)
         end
     end
@@ -254,6 +254,45 @@ function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :C
     nothing
 end
 
+# function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
+#         grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+#
+#     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
+#         [weighting_potential_contact_id]
+#     else
+#         Int[]
+#     end
+#
+#     axr::Vector{T} = grid[:r].ticks
+#     axφ::Vector{T} = grid[:φ].ticks
+#     axz::Vector{T} = grid[:z].ticks
+#
+#     for iz in axes(potential, 3)
+#         z::T = axz[iz]
+#         for iφ in axes(potential, 2)
+#             φ::T = axφ[iφ]
+#             for ir in axes(potential, 1)
+#                 r::T = axr[ir]
+#                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
+#                 b, boundary_potential, contact_id = is_boundary_point(ssd, r, φ, z, axr, axφ, axz)
+#                 if b
+#                     pot::T = if ismissing(weighting_potential_contact_id)
+#                         boundary_potential
+#                     else
+#                         contact_id == weighting_potential_contact_id ? 1 : 0
+#                     end
+#                     potential[ ir, iφ, iz ] = pot
+#                     pointtypes[ ir, iφ, iz ] = zero(PointType)
+#                 elseif in(pt, ssd)
+#                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
+#                 end
+#
+#             end
+#         end
+#     end
+#     nothing
+# end
+
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
 
@@ -274,20 +313,22 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             for ir in axes(potential, 1)
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
-                b, boundary_potential, contact_id = is_boundary_point(ssd, r, φ, z, axr, axφ, axz)
-                if b
-                    pot::T = if ismissing(weighting_potential_contact_id)
-                        boundary_potential
-                    else
-                        contact_id == weighting_potential_contact_id ? 1 : 0
-                    end
-                    potential[ ir, iφ, iz ] = pot
-                    pointtypes[ ir, iφ, iz ] = zero(PointType)
-                elseif in(pt, ssd)
+                if in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
-
             end
+        end
+    end
+    for contact in ssd.contacts
+        pot::T = if ismissing(weighting_potential_contact_id)
+            contact.potential
+        else
+            contact_id == weighting_potential_contact_id ? 1 : 0
+        end
+        contact_gridpoints = paint_contact(contact,grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
