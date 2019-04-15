@@ -5,12 +5,6 @@
     "mirror_symmetry_phi": "false",
     "bulk_type": "n",
 
-    "charge_carrier_density": {
-        "unit": "cm-3",
-        "top": 0.61,
-        "bot": 1.35
-    },
-
     "geometry": {
         "unit": "mm",
         "world": {
@@ -46,6 +40,15 @@
         }
     },
 
+    "charge_density_model": {
+        "name": "Linear",
+        "r_0": 0.2,
+        "r_gradient": 0.00071,
+        "phi_0": 0.0,
+        "phi_gradient": 0.0,
+        "z_0": 0.2,
+        "z_gradient": 0.00071
+    },
 
     "contacts": {
         "n_channels": 5,

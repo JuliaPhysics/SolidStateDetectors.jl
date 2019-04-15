@@ -1,13 +1,16 @@
 abstract type AbstractChargeDensityModel{T <: SSDFloat} end
 
+@inline function ChargeDensityModel(T::DataType, dict::Dict{String, Any})
+    return ChargeDensityModel(T, Val{Symbol(dict["name"])}(), dict)
+end
+
+
 """
     struct LinearChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T}
 
 Simple charge density model which assumes a linear gradient in charge density in each dimension.
 `offsets::NTuple{3, T}` are the charge densities at 0 and `gradients::NTuple{3, T}` are the linear
 slopes in each dimension. 
-
-The units should be... `TO BE WRITTEN`
 """
 struct LinearChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T}
     offsets::NTuple{3, T}
@@ -21,3 +24,18 @@ function get_charge_density(lcdm::LinearChargeDensityModel{T}, pt::AbstractCoord
     end
     return ρ
 end
+
+
+function ChargeDensityModel(T::DataType, t::Val{:Linear}, dict::Dict{String, Any})
+    return LinearChargeDensityModel{T}( dict )
+end
+
+function LinearChargeDensityModel{T}(dict::Dict{String, Any})::LinearChargeDensityModel{T} where {T <: SSDFloat}
+    offsets, gradients = if "r_0" in keys(dict) # :Cylindrical
+        (dict["r_0"], dict["phi_0"], dict["z_0"]), (dict["r_gradient"], dict["phi_gradient"], dict["z_gradient"])
+    else # :Cartesian
+        (dict["x_0"], dict["y_0"], dict["z_0"]), (dict["x_gradient"], dict["y_gradient"], dict["z_gradient"])
+    end
+    LinearChargeDensityModel{T}( offsets, gradients )
+end
+

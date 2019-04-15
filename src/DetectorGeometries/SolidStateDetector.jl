@@ -54,19 +54,6 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
     c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[1]
 
-    # c.external_parts = []
-    # haskey(config_file["geometry"],"external") ? external_parts = config_file["geometry"]["external"] : external_parts = []
-    # for ep in external_parts
-    #     ep_positive = Geometry(T, ep["geometry"]["positive"], c.geometry_unit)
-    #     haskey(ep["geometry"],"negative") ? ep_negative = Geometry(T,ep["geometry"]["negative"], c.geometry_unit) : ep_negative = []
-    #     external_part = ep_positive[1]
-    #     for g in sort!(vcat(ep_positive,ep_negative))
-    #         g in ep_positive ? external_part += g : nothing
-    #         g in ep_negative ? external_part -= g : nothing
-    #     end
-    #     println(external_part)
-    #     push!(c.external_parts, external_part)
-    # end
     c.external_parts = if haskey(config_file["geometry"],"external")
         Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]]
     else
@@ -82,13 +69,8 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     end
 
     c.bulk_type = bulk_types[config_file["bulk_type"]]
-    c.charge_density_model = if c.bulk_type == :ptype
-        @info "ToDo: Readin function from config file for LinearChargeDensityModel"
-        LinearChargeDensityModel{T}( (T(0), T(0), T(-0.2)), (T(0), T(0), T(-0.0071)) )
-    else
-        @info "ToDo: Readin function from config file for LinearChargeDensityModel"
-        LinearChargeDensityModel{T}( (T(0), T(0), T(0.2)), (T(0), T(0), T(0.0071)) )
-    end        
+
+    c.charge_density_model = ChargeDensityModel(T, config_file["charge_density_model"])
 
     c.contacts_geometry_unit = unit_conversion[config_file["contacts"]["unit"]]
     haskey(config_file["contacts"], "p") ? p_contacts = Contact{T, :P}[ Contact{T, :P}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["p"] ] : nothing
