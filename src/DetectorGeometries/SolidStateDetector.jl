@@ -49,30 +49,11 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T
     c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
 
     c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
-    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[1]
+    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[2][1]
 
-    # c.external_parts = []
-    # haskey(config_file["geometry"],"external") ? external_parts = config_file["geometry"]["external"] : external_parts = []
-    # for ep in external_parts
-    #     ep_positive = Geometry(T, ep["geometry"]["positive"], c.geometry_unit)
-    #     haskey(ep["geometry"],"negative") ? ep_negative = Geometry(T,ep["geometry"]["negative"], c.geometry_unit) : ep_negative = []
-    #     external_part = ep_positive[1]
-    #     for g in sort!(vcat(ep_positive,ep_negative))
-    #         g in ep_positive ? external_part += g : nothing
-    #         g in ep_negative ? external_part -= g : nothing
-    #     end
-    #     println(external_part)
-    #     push!(c.external_parts, external_part)
-    # end
     haskey(config_file["geometry"],"external") ? c.external_parts = Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]] : c.external_parts = []
 
-    geometry_positive = Geometry(T, config_file["geometry"]["crystal"]["geometry"]["positive"], c.geometry_unit)
-    haskey(config_file["geometry"]["crystal"]["geometry"],"negative") ? geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"]["negative"], c.geometry_unit) : geometry_negative = []
-    c.crystal_geometry = geometry_positive[1]
-    for g in sort!(vcat(geometry_positive,geometry_negative))
-        g in geometry_negative ? c.crystal_geometry -= g : nothing
-        g in geometry_positive ? c.crystal_geometry += g : nothing
-    end
+    c.crystal_geometry , geometry_positive, geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"], c.geometry_unit)
 
     c.crystal_length = geom_round(T(width(geometry_positive[1].z_interval)))
     c.crystal_radius = geom_round(T(width(geometry_positive[1].r_interval)))

@@ -4,6 +4,6 @@
 
 
 
-function Geometry(T::DataType, geometries::Vector, inputunit::Unitful.Units)#::AbstractGeometry{T} where {T <: AbstractFloat}
+function Geometries(T::DataType, geometries::Vector, inputunit::Unitful.Units)::Vector{AbstractGeometry}
     return [Geometry(T, Val{Symbol(geometry["type"])}(), Dict{Any,Any}(geometry)::Union{Dict{String,Any},Dict{Any,Any}}, inputunit) for geometry in geometries]
 end
