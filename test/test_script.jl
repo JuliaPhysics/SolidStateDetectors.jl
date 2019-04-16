@@ -22,6 +22,8 @@ T = Float32
 
 plot() # creates a plot so that the plots during the following loop pop up.
 
+key = :InvertedCoax
+
 for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
 # for key in keys(SSD_examples)
     @info "Now test detector type: $key"

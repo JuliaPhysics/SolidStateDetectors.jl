@@ -6,7 +6,7 @@ mutable struct SSDSetup{T <: SSDFloat} <: AbstractSSDSetup{T}
     ϵ::DielectricDistribution{T}
     point_types::PointTypes{T}
     electric_potential::ElectricPotential{T}  
-    weighting_potentials::Vector{WeightingPotential{T}}
+    weighting_potentials::Vector{Interpolations.Extrapolation{T,3,ITPT,IT,ET} where ET where IT where ITPT}
     electric_field::ElectricField{T}
 
     charge_drift_model::AbstractChargeDriftModel{T}
@@ -20,7 +20,7 @@ end
 function SSDSetup(detector::SolidStateDetector{T})::SSDSetup{T} where {T <: SSDFloat}
     setup::SSDSetup{T} = SSDSetup{T}()
     setup.detector = detector
-    setup.weighting_potentials = Vector{WeightingPotential{T}}(undef, length(setup.detector.contacts))
+    setup.weighting_potentials = Vector{Interpolations.Extrapolation{T,3,ITPT,IT,ET} where ET where IT where ITPT}(undef, length(setup.detector.contacts))
     return setup
 end
 
@@ -69,7 +69,7 @@ function calculate_weighting_potential!(setup::SSDSetup{T}, contact_id::Int, arg
     else
         wp = WeightingPotential(wps)
     end
-    setup.weighting_potentials[contact_id] = wp
+    setup.weighting_potentials[contact_id] = interpolated_scalarfield(wp)
     nothing
 end
 
