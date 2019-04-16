@@ -59,7 +59,7 @@ function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1,
     return s
 end
 
-function PotentialSimulationSetup(ssd::SolidStateDetector{T}, grid::Grid{T, N, S} = Grid(ssd), potential_array::Union{Missing, Array{T, N}} = missing)::PotentialSimulationSetup{T, N, S} where {T, N, S}   
+function PotentialSimulationSetup(ssd::SolidStateDetector{T, S}, grid::Grid{T, N, S} = Grid(ssd), potential_array::Union{Missing, Array{T, N}} = missing)::PotentialSimulationSetup{T, N, S} where {T, N, S}   
     fssrb::PotentialSimulationSetupRB{T, N, N + 1, S} = PotentialSimulationSetupRB(ssd, grid, potential_array)
     return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end

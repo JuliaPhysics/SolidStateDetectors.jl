@@ -1,4 +1,4 @@
-@recipe function f(Vol::SSD.Tube{T}) where T<:AbstractFloat
+@recipe function f(Vol::SSD.Tube{T}) where T <: SSDFloat
     rStart = Vol.r_interval.left
     rStop = Vol.r_interval.right
     φStart = Vol.φ_interval.left

@@ -32,15 +32,15 @@ function Geometry(T, geom_sub_dict::Vector, geom_unit)
     return geometry, geometry_positive, geometry_negative
 end
 
-function in(pt::AnyPoint{T}, vg::Vector{AbstractGeometry{T}})::Bool where {T <: AbstractFloat}
-    is_inside::Bool = false
+function in(pt::AbstractCoordinatePoint{T}, vg::Vector{AbstractGeometry{T}})::Bool where {T <: SSDFloat}
+    inside::Bool = false
     for g in vg
         if in(pt, g)
-            is_inside = true
+            inside = true
             break
         end
     end
-    return is_inside
+    return inside
 end
 
 include("VolumePrimitives/VolumePrimitives.jl")

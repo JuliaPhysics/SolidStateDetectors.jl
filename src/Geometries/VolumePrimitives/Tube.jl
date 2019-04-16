@@ -33,7 +33,7 @@ function Tube{T}(
     return Tube{T}(hierarchy, polarity, r_interval.left, r_interval.right, φ_interval.left, φ_interval.right, z_interval.left, z_interval.right)
 end
 
-function Tube{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Tube{T} where {T <: AbstractFloat}
+function Tube{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Tube{T} where {T <: SSDFloat}
     haskey(dict, "hierarchy") ? h = dict["hierarchy"] : h = 1
     haskey(dict, "pol") ? polarity = dict["pol"] : polarity = "positive"
     return Tube{T}(h,
@@ -62,23 +62,34 @@ function in(point::CylindricalPoint{T}, tube::Tube{T}) where T
     return false
 end
 
-function get_r(t::Tube)
-    return t.r_interval.left, t.r_interval.right
+
+function get_important_points(t::Tube{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
+    return T[t.r_interval.left, t.r_interval.right]
 end
 
-function get_φ(t::Tube)
-    return t.φ_interval.left, t.φ_interval.right
+function get_important_points(t::Tube{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
+    return T[t.φ_interval.left, t.φ_interval.right]
 end
 
-function get_z(t::Tube)
-    return t.z_interval.left, t.z_interval.right
+function get_important_points(t::Tube{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
+    return T[t.z_interval.left, t.z_interval.right]
+end
+
+function get_important_points(t::Tube{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
+    @warn "Not yet implemented"
+    return T[]
+end
+
+function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
+    @warn "Not yet implemented"
+    return T[]
 end
 
 function sample(c::Tube{T}, stepsize::Vector{T}) where T
     samples = CylindricalPoint[]
-    for r in get_r(c)[1]:stepsize[1]:get_r(c)[2]
-        for φ in get_φ(c)[1]:stepsize[2]:get_φ(c)[2]
-            for z in get_z(c)[1]:stepsize[3]:get_z(c)[2]
+    for r in c.r_interval.left:stepsize[1]: c.r_interval.right
+        for φ in c.φ_interval.left:stepsize[2]: c.φ_interval.right
+            for z in c.z_interval.left:stepsize[3]: c.z_interval.right
                 push!(samples, CylindricalPoint{T}(r,φ,z))
             end
         end

@@ -1,3 +1,19 @@
+struct ElectricField{T, N, S} <: AbstractArray{T, N}
+    data::Array{<:StaticArray{Tuple{N}, T}, N}
+    grid::Grid{T, N, S}
+end
+
+@inline size(ep::ElectricField{T, N, S}) where {T, N, S} = size(ep.data)
+@inline length(ep::ElectricField{T, N, S}) where {T, N, S} = length(ep.data)
+@inline getindex(ep::ElectricField{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(ep.data, I...)
+@inline getindex(ep::ElectricField{T, N, S}, i::Int) where {T, N, S} = getindex(ep.data, i)
+@inline getindex(ep::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
+
+function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
+    return ElectricField{T, 3, S}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
+end
+
+
 function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
     magn=0
     magn+=(vector[1])^2
@@ -14,7 +30,7 @@ function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, :Cylindrical} where {T <: SSDFloat}
     p = ep.data
     axr::Vector{T} = collect(ep.grid[:r])
     axφ::Vector{T} = collect(ep.grid[:φ])
@@ -108,7 +124,7 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindri
     if fieldvector_coordinates == :xyz
         ef = convert_field_vectors_to_xyz(ef, axφ)
     end
-    return ef
+    return ElectricField(ef, pointtypes.grid)
 end
 
 function get_component_field(ef,component=:r,cutoff=NaN)
@@ -179,34 +195,115 @@ function setup_interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) w
 end
 
 function get_interpolated_drift_field(velocity_field, grid::CylindricalGrid{T}) where {T}
-    knots = grid.axes
+    knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks 
     i = interpolate(knots, velocity_field, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, Periodic())
+    return velocity_field_itp
+end
+function get_interpolated_drift_field(velocity_field, grid::CartesianGrid{T}) where {T}
+    knots = grid.axes[:1].ticks, grid.axes[:2].ticks, grid.axes[:3].ticks 
+    i = interpolate(knots, velocity_field, Gridded(Linear()))
+    velocity_field_itp = extrapolate(i, Interpolations.Line())
     return velocity_field_itp
 end
 
 include("plot_recipes.jl")
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::Array{SArray{Tuple{3},T,1,3}, 3} where {T <: AbstractFloat}
-    error("Not yet implemented.")
-    
-    axr::Vector{T} = collect(ep.grid[:x])
-    axφ::Vector{T} = collect(ep.grid[:y])
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :Cartesian} where {T <: SSDFloat}
+    axx::Vector{T} = collect(ep.grid[:x])
+    axy::Vector{T} = collect(ep.grid[:y])
     axz::Vector{T} = collect(ep.grid[:z])
-    axr_ext::Vector{T} = get_extended_ticks(ep.grid[:x])
-    axφ_ext::Vector{T} = get_extended_ticks(ep.grid[:y])
+    axx_ext::Vector{T} = get_extended_ticks(ep.grid[:x])
+    axy_ext::Vector{T} = get_extended_ticks(ep.grid[:y])
     axz_ext::Vector{T} = get_extended_ticks(ep.grid[:z])
 
     ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(ep.data))
 
-
-    for iz in eachindex(axz)
-        for iz in eachindex(axz)
+    for ix in eachindex(axx)
+        for iy in eachindex(axy)
             for iz in eachindex(axz)
+                if ix - 1 < 1
+                    Δp_x_1::T = ep.data[ix + 1, iy, iz] - ep.data[ix, iy, iz]
+                    d_x_1::T = axx[ix + 1] - axx[ix]
+                    ex::T =  Δp_x_1 / d_x_1 
+                elseif ix + 1 > size(ef, 1)
+                    Δp_x_1 = ep.data[ix, iy, iz] - ep.data[ix - 1, iy, iz]
+                    d_x_1 = axx[ix] - axx[ix - 1]
+                    ex = Δp_x_1 / d_x_1 
+                else
+                    Δp_x_1 = ep.data[ix + 1, iy, iz] - ep.data[ix ,iy, iz]
+                    Δp_x_2::T = ep.data[ix, iy, iz] - ep.data[ix - 1, iy, iz]
+                    d_x_1 = axx[ix + 1] - axx[ix]
+                    d_x_2::T = axx[ix] - axx[ix - 1]
+                    ex = (Δp_x_1 / d_x_1 + Δp_x_2 / d_x_2) / 2
+                end
 
+                if iy - 1 < 1
+                    Δp_y_1::T = ep.data[ix, iy + 1, iz] - ep.data[ix ,iy, iz]
+                    d_y_1::T = axy[iy + 1] - axy[iy]
+                    ey::T =  Δp_y_1 / d_y_1 
+                elseif iy + 1 > size(ef, 2)
+                    Δp_y_1 = ep.data[ix, iy, iz] - ep.data[ix, iy - 1, iz]
+                    d_y_1 = axy[iy] - axy[iy - 1]
+                    ey = Δp_y_1 / d_y_1 
+                else
+                    Δp_y_1 = ep.data[ix, iy + 1, iz] - ep.data[ix ,iy, iz]
+                    Δp_y_2::T = ep.data[ix, iy, iz] - ep.data[ix, iy - 1, iz]
+                    d_y_1 = axy[iy + 1] - axy[iy]
+                    d_y_2::T = axy[iy] - axy[iy - 1]
+                    ey = (Δp_y_1 / d_y_1 + Δp_y_2 / d_y_2) / 2
+                end
+
+                if iz - 1 < 1
+                    Δp_z_1::T = ep.data[ix, iy, iz + 1] - ep.data[ix, iy, iz]
+                    d_z_1::T = axz[iz + 1] - axz[iz]
+                    ez::T =  Δp_z_1 / d_z_1 
+                elseif iz + 1 > size(ef, 3)
+                    Δp_z_1 = ep.data[ix, iy, iz] - ep.data[ix, iy, iz - 1]
+                    d_z_1 = axz[iz] - axz[iz - 1]
+                    ez = Δp_z_1 / d_z_1 
+                else
+                    Δp_z_1 = ep.data[ix, iy, iz + 1] - ep.data[ix ,iy, iz]
+                    Δp_z_2::T = ep.data[ix, iy, iz] - ep.data[ix, iy, iz - 1]
+                    d_z_1 = axz[iz + 1] - axz[iz]
+                    d_z_2::T = axz[iz] - axz[iz - 1]
+                    ez = (Δp_z_1 / d_z_1 + Δp_z_2 / d_z_2) / 2
+                end
+
+                if pointtypes[ix, iy, iz] & update_bit == 0 # boundary points
+                    if (1 < ix < size(pointtypes, 1))
+                        if (pointtypes[ix - 1, iy, iz] & update_bit > 0) && (pointtypes[ix + 1, iy, iz] & update_bit > 0)
+                            ex = 0
+                        elseif (pointtypes[ix - 1, iy, iz] & update_bit > 0) || (pointtypes[ix + 1, iy, iz] & update_bit > 0)
+                            ex *= 2
+                        end
+                    end
+                    if (1 < iy < size(pointtypes, 2))
+                        if (pointtypes[ix, iy - 1, iz] & update_bit > 0) && (pointtypes[ix, iy + 1, iz] & update_bit > 0)
+                            ey = 0
+                        elseif (pointtypes[ix, iy - 1, iz] & update_bit > 0) || (pointtypes[ix, iy + 1, iz] & update_bit > 0)
+                            ey *= 2
+                        end
+                    end
+                    if (1 < iz < size(pointtypes, 3))
+                        if (pointtypes[ix, iy, iz - 1] & update_bit > 0) && (pointtypes[ix, iy, iz + 1] & update_bit > 0)
+                            ez = 0
+                        elseif (pointtypes[ix, iy, iz - 1] & update_bit > 0) || (pointtypes[ix, iy, iz + 1] & update_bit > 0)
+                            ez *= 2
+                        end
+                    end
+                end
+                ef[ix, iy, iz] = @SVector [-ex, -ey, -ez]
             end
         end
     end
-    return ef
+    return ElectricField(ef, pointtypes.grid)
 end
 
+function get_electric_field_strength(ef::ElectricField{T}) where {T <: SSDFloat}
+    efs::Array{T, 3} = Array{T, 3}(undef, size(ef.data)) 
+    @inbounds for i in eachindex(ef.data)
+        efs[i] = norm(ef.data[i])
+    end
+    return efs
+end

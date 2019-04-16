@@ -19,7 +19,7 @@ function get_xy_magnitude(xyz_vector::AbstractArray)
     sqrt(xyz_vector[1]^2+xyz_vector[2]^2)
 end
 
-@recipe function f(electrical_field::Array{SVector{3,T},3}, grid::CylindricalGrid{T}; view=:Components, plane=:rz, i_fixed=3, spacing = 8, vectorscale = 0.0018, SI_factor=1/1000.) where T <: AbstractFloat
+@recipe function f(electrical_field::Array{SVector{3,T},3}, grid::CylindricalGrid{T}; view=:Components, plane=:rz, i_fixed=3, spacing = 8, vectorscale = 0.0018, SI_factor=1/1000.) where{T <: SSDFloat}
 
     vectorfield = electrical_field.*SI_factor
     units = Dict(1e-3=>"mm",1e-2=>"cm",1e-1=>"dm",1=>"m",1.0=>"m")
@@ -105,7 +105,7 @@ end
     end
 end
 #
-# @recipe function f(electrical_field::Array{SVector{3,T},3}, d::SolidStateDetector, grid::CylindricalGrid; φ_value=deg2rad(0), spacing=0.003, steps=1000, myscale=1, potential=true) where T <: AbstractFloat
+# @recipe function f(electrical_field::Array{SVector{3,T},3}, d::SolidStateDetector, grid::CylindricalGrid; φ_value=deg2rad(0), spacing=0.003, steps=1000, myscale=1, potential=true) where{T <: SSDFloat}
 #     size --> (900,1100)
 #     d.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electrical_field, grid) : nothing
 #     d.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x->-1*x,electrical_field), grid) : nothing
@@ -249,7 +249,7 @@ end
 
 
 @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T};
-            φ=missing, spacing=T(0.003), n_steps=3000, potential=true, contours_equal_potential=true, offset = T(5e-5)) where {T <: AbstractFloat}
+            φ=missing, spacing=T(0.003), n_steps=3000, potential=true, contours_equal_potential=true, offset = T(5e-5)) where {T <: SSDFloat}
     size --> (700,900)
     det.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electric_field, ep.grid) : nothing
     det.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x -> -1*x, electric_field), ep.grid) : nothing

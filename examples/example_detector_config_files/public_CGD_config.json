@@ -1,69 +1,87 @@
 {
 	"name":"ExampleCuboid",
 	"class":"CGD",
-	"materials":{
-		"detector":"HPGe",
-		"environment":"Vacuum"
-	},
-	"unit": "mm",	
-	"crystal":	{
-		"type": "n",
-		"geometry": [
-			{
-				"type": "CartesianBox3D",
-				"xStart": 0.0,
-				"xStop": 10.0,
-				"yStart": 0.0,
-				"yStop": 10.0,
-				"zStart": 0.0,
-				"zStop": 10.0
+	"bulk_type": "n",
+	
+	"geometry": {
+		"unit": "mm",
+		"world": {
+			"material": "Vacuum",
+			"geometry": [
+				{
+					"type": "CartesianBox3D",
+					"xStart": -15.0,
+					"xStop":   15.0,
+					"yStart": -15.0,
+					"yStop":   15.0,
+					"zStart": -15.0,
+					"zStop":   15.0
+				}
+			]
+		},
+		"crystal": {
+			"material": "HPGe",
+			"geometry": {
+				"positive": [
+					{
+						"type": "CartesianBox3D",
+						"xStart": -10.0,
+						"xStop":   10.0,
+						"yStart": -10.0,
+						"yStop":   10.0,
+						"zStart": -10.0,
+						"zStop":   10.0
+					}
+				]
 			}
-		],
-		"charge_carrier_density": {
-			"unit": "cm-3",
-			"top": 0.1,
-			"bot": 1.9
 		}
 	},
-	"symmetries": {
-		"mirror_axes":{
-			"y": 5.0,  
-			"z": 5.0
-		}
+
+	"charge_density_model": {
+		"name": "Linear",
+		"x_0": 0.2,
+		"x_gradient": 0.00071,
+		"y_0": 0.2,
+		"y_gradient": 0.00071,
+		"z_0": 0.2,
+		"z_gradient": 0.00071
 	},
-	"contacts":	{
-		"n_contacts": [
+
+	"contacts": {
+		"n_channels": 3,
+		"unit": "mm",
+		"p": [
 			{
-				"name" : "Core",
-				"id": 1,
-				"potential": 500.0, 
+				"name": "N+ Contact",
+				"potential": 2000.0,
+				"channel": 1,
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
-						"xStart": 0.0,
-						"xStop":  0.1,
-						"yStart": 0.0,
-						"yStop": 10.0,
-						"zStart": 0.0,
-						"zStop": 10.0
+						"xStart": -10.0,
+						"xStop":  -9.9,
+						"yStart": -10.0,
+						"yStop":   10.0,
+						"zStart": -10.0,
+						"zStop":   10.0
 					}
 				]
 			}
 		],
-		"p_contacts": [
+		"n": [
 			{
-				"name": "Segment 1",
-				"id": 2,
+				"name": "P+ Contact",
 				"potential": 0.0,
+				"channel": 2,
 				"geometry": [
 					{
 						"type": "CartesianBox3D",
 						"xStart":  9.9,
-						"xStop":  10.0,
-						"yStart":  0.0,
-						"yStop":  10.0,
-						"zStart":  0.0,
-						"zStop":  10.0
+						"xStop":   10.0,
+						"yStart": -10.0,
+						"yStop":   10.0,
+						"zStart": -10.0,
+						"zStop":   10.0
 					}
 				]
 			}

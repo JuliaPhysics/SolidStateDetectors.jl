@@ -1,49 +1,52 @@
-mutable struct SolidStateDetector{T<:AbstractFloat} <: AbstractConfig{T}
-    name::String
-    class::Symbol
+"""
+    mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
+
+CS: Coordinate System: -> :Cartesian / :Cylindrical
+"""
+mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
+    name::String  # optional
+    class::Symbol # optional
+
     material_detector::NamedTuple
     material_environment::NamedTuple
-    cyclic::T
-    mirror_symmetry_φ::Bool
+    cyclic::T # optional
+    mirror_symmetry_φ::Bool # optional
 
-    geometry_unit_factor::Real
     geometry_unit::Unitful.Units
-
-    bulk_type::Symbol
-    charge_carrier_density_unit_factor::T
-    charge_carrier_density_top::T
-    charge_carrier_density_bot::T
+    geometry_unit_factor::Real # optional, geometry_unit is enough
+    contacts_geometry_unit::Unitful.Units # optional, why not geometry_unit
 
     world::AbstractGeometry{T}
 
-    external_parts::Vector{AbstractContact{T}}
-
     crystal_geometry::AbstractGeometry{T}
 
-    crystal_length::T
-    crystal_radius::T
+    bulk_type::Symbol
+    charge_density_model::AbstractChargeDensityModel{T}
 
-    geometry_external_positive::Vector{AbstractGeometry{T}}
-    geometry_external_negative::Vector{AbstractGeometry{T}}
-
-    contacts_geometry_unit::Unitful.Units
-
-    n_total_contacts::Int
     contacts::Vector{AbstractContact{T}}
 
-    rs::Vector{T}
-    φs::Vector{T}
-    zs::Vector{T}
+    external_parts::Vector{AbstractContact{T}}
+    geometry_external_positive::Vector{AbstractGeometry{T}} # ?
+    geometry_external_negative::Vector{AbstractGeometry{T}} # ?
 
-    SolidStateDetector{T}() where {T<:AbstractFloat} = new{T}()
+    SolidStateDetector{T, CS}() where {T <: SSDFloat, CS} = new{T, CS}()
 end
 
-function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T <: AbstractFloat
-    c = SolidStateDetector{T}()
+get_precision_type(d::SolidStateDetector{T}) where {T} = T
+get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
+
+function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
+    c = if Symbol(config_file["class"]) == :CGD
+        SolidStateDetector{T, :Cartesian}()
+    else
+        SolidStateDetector{T, :Cylindrical}()
+    end
     c.class = Symbol(config_file["class"])
     c.name = config_file["name"]
-    c.cyclic = T(deg2rad(config_file["cyclic"]))
-    c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
+    if c.class != :CGD
+        c.cyclic = T(deg2rad(config_file["cyclic"]))
+        c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
+    end
 
     c.material_environment = material_properties[materials[config_file["geometry"]["world"]["material"]]]
     c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
@@ -55,18 +58,14 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where T
 
     c.crystal_geometry , geometry_positive, geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"], c.geometry_unit)
 
-    c.crystal_length = geom_round(T(width(geometry_positive[1].z_interval)))
-    c.crystal_radius = geom_round(T(width(geometry_positive[1].r_interval)))
-
     c.bulk_type = bulk_types[config_file["bulk_type"]]
-    c.charge_carrier_density_top = config_file["charge_carrier_density"]["top"]
-    c.charge_carrier_density_bot = config_file["charge_carrier_density"]["bot"]
+
+    c.charge_density_model = ChargeDensityModel(T, config_file["charge_density_model"])
 
     c.contacts_geometry_unit = unit_conversion[config_file["contacts"]["unit"]]
     haskey(config_file["contacts"], "p") ? p_contacts = Contact{T, :P}[ Contact{T, :P}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["p"] ] : nothing
     haskey(config_file["contacts"], "n") ? n_contacts = Contact{T, :N}[ Contact{T, :N}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["n"] ] : nothing
-    c.contacts = vcat(p_contacts,n_contacts)
-    c.n_total_contacts = size(c.contacts,1)
+    c.contacts = vcat(p_contacts, n_contacts)
 
     return c
 end
@@ -101,7 +100,7 @@ function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::B
     end
 end
 
-function println(io::IO, d::SolidStateDetector{T}) where {T <: AbstractFloat}
+function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
     println("________"*d.name*"________\n")
     println("Class: ",d.class)
     println("---General Properties---")
@@ -110,15 +109,11 @@ function println(io::IO, d::SolidStateDetector{T}) where {T <: AbstractFloat}
     println("Bulk type: \t\t $(d.bulk_type)")
     # println("Core Bias Voltage: \t $(d.segment_bias_voltages[1]) V")
     # println("Mantle Bias Voltage: \t $(d.segment_bias_voltages[2]) V\n")
-    println("---Geometry---")
-    println("Outer Crystal Dimensions: ")
-    println("Crystal length: \t $(round(d.crystal_length * 1000, sigdigits=6)) mm")
-    println("Crystal diameter: \t $(round(2 * d.crystal_radius * 1000, sigdigits=6)) mm")
 end
 
-function show(io::IO, d::SolidStateDetector{T}) where {T <: AbstractFloat} println(d) end
-function print(io::IO, d::SolidStateDetector{T}) where {T <: AbstractFloat} println(d) end
-function display(io::IO, d::SolidStateDetector{T} ) where {T <: AbstractFloat} println(d) end
-function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: AbstractFloat}
+function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(d) end
+function print(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(d) end
+function display(io::IO, d::SolidStateDetector{T} ) where {T <: SSDFloat} println(d) end
+function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDFloat}
     show(io, d)
 end

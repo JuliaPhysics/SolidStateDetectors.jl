@@ -35,8 +35,9 @@ const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
+export SSDSetup
 
-export AbstractChargeDriftModels, get_electron_drift_field, get_hole_drift_field
+export AbstractChargeDriftModel, get_electron_drift_field, get_hole_drift_field
 export VacuumChargeDriftModel, ADLChargeDriftModel
 export Grid
 export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential
@@ -50,8 +51,10 @@ export point_type
 export geom_round
 export CylindricalPoint
 export CartesianPoint
-export getvelocityvector
+export get_velocity_vector
 export get_crossing_pos
+
+const SSDFloat = Union{Float16, Float32, Float64}
 
 include("Geometries/Geometries.jl")
 
@@ -62,16 +65,21 @@ include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
+include("ChargeDensityModels/ChargeDensityModels.jl")
 include("DetectorGeometries/DetectorGeometries.jl")
 include("GeometryRounding.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
+
 include("ChargeDriftModels/ChargeDriftModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
+
 include("ChargeStatistics/ChargeStatistics.jl")
 include("ChargeClustering/ChargeClustering.jl")
+
+include("SSDSetup/SSDSetup.jl")
 
 include("IO/IO.jl")
 

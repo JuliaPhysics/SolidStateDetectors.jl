@@ -1,7 +1,7 @@
 
 @recipe function f( pss::PotentialSimulationSetup{T, 3, :Cylindrical};
                     r = missing,
-                    φ = missing,
+                    φ = 0,
                     z = missing,
                     n_points_in_φ = 36 ) where {T}
     g::Grid{T, 3, :Cylindrical} = pss.grid
@@ -35,11 +35,11 @@
     end
 
     if cross_section == :φ
-        φ --> φ
+        φ --> value
     elseif cross_section == :z
-        z --> z
+        z --> value
     elseif cross_section == :r
-        r --> r
+        r --> value
     end
 
     @series begin
@@ -63,7 +63,7 @@ end
 
 @recipe function f( pss::PotentialSimulationSetup{T, 3, :Cartesian};
                     x = missing,
-                    y = missing,
+                    y = 0,
                     z = missing ) where {T}
     g::Grid{T, 3, :Cartesian} = pss.grid
     layout --> (2, 2) 
@@ -71,7 +71,7 @@ end
     size --> (1000, 1000)
 
     cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
-        :x, 1
+        :x, searchsortednearest(g[:x], T(0))
     elseif !ismissing(x) && ismissing(y) && ismissing(z)
         :x, searchsortednearest(g[:x], T(x))
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
@@ -81,20 +81,15 @@ end
     else
         error(ArgumentError, ": Only one of the keywords `x, y, z` is allowed.")
     end
-    value::T = if cross_section == :x
-        g[:x][idx]
-    elseif cross_section == :y    
-        g[:y][idx]
-    elseif cross_section == :z
-        g[:z][idx]
-    end
+
     if cross_section == :x
-        x --> x
+        x --> g[:x][idx]
     elseif cross_section == :y
-        y --> y
+        y --> g[:y][idx]
     elseif cross_section == :z
-        z --> z
+        z --> g[:z][idx]
     end
+
 
     @series begin
         subplot := 1

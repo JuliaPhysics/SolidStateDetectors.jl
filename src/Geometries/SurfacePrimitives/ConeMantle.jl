@@ -32,15 +32,10 @@ function in(point::CylindricalPoint{T}, cm::ConeMantle{T}, rs::Vector{T})::Bool 
     end
 end
 
-
-function get_r(cm::ConeMantle)
-    return cm.cone.r_interval.left, cm.cone.r_interval.right
+function sample(c::ConeMantle{T}, stepsize::Vector{T}) where {T <: SSDFloat}
+    return sample(c.cone, stepsize)
 end
 
-function get_φ(cm::ConeMantle)
-    return cm.cone.φ_interval.left, cm.cone.φ_interval.right
-end
-
-function get_z(cm::ConeMantle)
-    return cm.cone.z_interval.left, cm.cone.z_interval.right
+function get_important_points(c::ConeMantle{T}, s)::Vector{T} where {T <: SSDFloat}
+    get_important_points(c.cone, s)
 end

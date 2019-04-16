@@ -1,8 +1,8 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
-abstract type CoordinateVector{T, N, S} <: StaticArrays.FieldVector{N, T} end
+abstract type AbstractCoordinateVector{T, N, S} <: StaticArrays.FieldVector{N, T} end
 
-struct CartesianVector{ T <: RealQuantity } <: CoordinateVector{T, 3, :Cartesian}
+struct CartesianVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, :Cartesian}
     x::T
     y::T
     z::T
@@ -19,10 +19,20 @@ function (-)(p1::CartesianPoint{T}, p2::CartesianPoint{T})::CartesianVector{T} w
 end
 
 
-struct CylindricalVector{ T <: RealQuantity } <: CoordinateVector{T, 3, :Cylindrical}
+struct CylindricalVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, :Cylindrical}
     r::T
     φ::T # in radian
     z::T
 end
 
 
+
+function (+)(p::CylindricalPoint{T}, v::CylindricalVector{T})::CylindricalPoint{T} where {T <: Real} 
+    error("Not yet defined")
+end
+function (-)(p::CylindricalPoint{T}, v::CylindricalVector{T})::CylindricalPoint{T} where {T <: Real} 
+    error("Not yet defined")
+end
+function (-)(p1::CylindricalPoint{T}, p2::CylindricalPoint{T})::CylindricalPoint{T} where {T <: Real} 
+    error("Not yet defined")
+end

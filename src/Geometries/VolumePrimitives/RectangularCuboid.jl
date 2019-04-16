@@ -35,7 +35,7 @@ function vertices(rc::RectangularCuboid{T})::Vector{CartesianPoint{T}} where {T}
     return v
 end
 
-function edges(rc::RectangularCuboid{T})::Vector{LineSegment{T, 3, :Cartesian}} where {T}
+function LineSegments(rc::RectangularCuboid{T})::Vector{LineSegment{T, 3, :Cartesian}} where {T}
     return LineSegment{T, 3, :Cartesian}[
         LineSegment{T, 3, :Cartesian}( rc.org, rc.e1),
         LineSegment{T, 3, :Cartesian}( rc.org + rc.e1,  rc.e2),
