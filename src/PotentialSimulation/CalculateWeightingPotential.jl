@@ -27,7 +27,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindr
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, for_weighting_potential = true),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
+                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-3, 1e-4],
                                         min_grid_spacing::Vector{<:Real} = [1e-4, 1e-2, 1e-4],  # mm, degree, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
@@ -125,8 +125,8 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cartesi
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
-                                        min_grid_spacing::Vector{<:Real} = [1e-4, 1e-4, 1e-4],  # mm, mm, mm
+                                        refinement_limits::Vector{<:Real} = [1e-5, 1e-5, 1e-5],
+                                        min_grid_spacing::Vector{<:Real} = [1e-6, 1e-6, 1e-6],  
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4],

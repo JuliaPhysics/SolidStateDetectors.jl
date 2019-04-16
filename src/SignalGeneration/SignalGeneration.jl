@@ -1,22 +1,26 @@
-@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
+@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, S::Val{:Cartesian})::T where {T <: SSDFloat}
     return wp(pt.x, pt.y, pt.z)::T
+end
+@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, S::Val{:Cylindrical})::T where {T <: SSDFloat}
+    p::CylindricalPoint{T} = CylindricalPoint(pt)
+    return wp(p.r, p.φ, p.z)::T
 end
 
 
-function add_signal!(signal::Vector{T}, path::Vector{CartesianPoint{T}}, charge::T, wp::Interpolations.Extrapolation{T, 3})::Nothing where {T <: SSDFloat}
+function add_signal!(signal::Vector{T}, path::Vector{CartesianPoint{T}}, charge::T, wp::Interpolations.Extrapolation{T, 3}, S::Union{Val{:Cylindrical}, Val{:Cartesian}})::Nothing where {T <: SSDFloat}
     @inbounds for i in eachindex(signal)
-        signal[i] += get_interpolation(wp, path[i])::T * charge
+        signal[i] += get_interpolation(wp, path[i], S)::T * charge
     end
     nothing
 end
-function add_signal!(signal::Vector{T}, path::DriftPath{T}, charge::T, wp::Interpolations.Extrapolation{T, 3})::Nothing where {T <: SSDFloat}
-    add_signal!(signal, path.e_path, -charge, wp) # electrons induce negative charge
-    add_signal!(signal, path.h_path,  charge, wp)
+function add_signal!(signal::Vector{T}, path::DriftPath{T}, charge::T, wp::Interpolations.Extrapolation{T, 3}, S::Union{Val{:Cylindrical}, Val{:Cartesian}})::Nothing where {T <: SSDFloat}
+    add_signal!(signal, path.e_path, -charge, wp, S) # electrons induce negative charge
+    add_signal!(signal, path.h_path,  charge, wp, S)
     nothing
 end
-function add_signal!(signal::Vector{T}, paths::Vector{DriftPath{T}}, energies::Vector{T}, wp::Interpolations.Extrapolation{T, 3})::Nothing where {T <: SSDFloat}
+function add_signal!(signal::Vector{T}, paths::Vector{DriftPath{T}}, charges::Vector{T}, wp::Interpolations.Extrapolation{T, 3}, S::Union{Val{:Cylindrical}, Val{:Cartesian}})::Nothing where {T <: SSDFloat}
     for ipath in eachindex(paths)
-        add_signal!(signal, paths[ipath], energies[ipath], wp)
+        add_signal!(signal, paths[ipath], charges[ipath], wp, S)
     end
     nothing
 end

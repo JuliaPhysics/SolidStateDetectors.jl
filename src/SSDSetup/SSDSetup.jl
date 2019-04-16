@@ -54,12 +54,12 @@ function calculate_weighting_potential!(setup::SSDSetup{T}, contact_id::Int, arg
     S = SSD.get_coordinate_system(setup.detector)
     if S == :Cylindrical && setup.detector.cyclic == T(0)
         if ismissing(n_points_in_φ)
-            @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 18`. 2D field will be extended to 18 points in φ."
-            n_points_in_φ = 18
+            @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
+            n_points_in_φ = 36
         else
             if !(n_points_in_φ > 1 && iseven(n_points_in_φ))
-                @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` is $(n_points_in_φ) but must be even and larger than 1.\n\t\t`n_points_in_φ` is now set to 18. 2D field will be extended to 18 points in φ."
-                n_points_in_φ = 18
+                @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` is $(n_points_in_φ) but must be even and larger than 1.\n\t\t`n_points_in_φ` is now set to 36. 2D field will be extended to 36 points in φ."
+                n_points_in_φ = 36
             end
         end
     end
@@ -78,12 +78,12 @@ function calculate_electric_field!(setup::SSDSetup{T}, args...; n_points_in_φ::
     S = SSD.get_coordinate_system(setup.detector)
     e_pot, point_types = if S == :Cylindrical && setup.detector.cyclic == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
-            @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 18`. 2D field will be extended to 18 points in φ."
-            n_points_in_φ = 18
+            @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
+            n_points_in_φ = 36
         else
             if !(n_points_in_φ > 1 && iseven(n_points_in_φ))
-                @info "\tIn electric field calculation: Keyword `n_points_in_φ` is $(n_points_in_φ) but must be even and larger than 1.\n\t\t`n_points_in_φ` is now set to 18. 2D field will be extended to 18 points in φ."
-                n_points_in_φ = 18
+                @info "\tIn electric field calculation: Keyword `n_points_in_φ` is $(n_points_in_φ) but must be even and larger than 1.\n\t\t`n_points_in_φ` is now set to 36. 2D field will be extended to 36 points in φ."
+                n_points_in_φ = 36
             end
         end
         get_2π_potential(setup.electric_potential, n_points_in_φ = n_points_in_φ),
@@ -118,10 +118,26 @@ end
                             Δt = Δt, n_steps = n_steps)::Vector{DriftPath{T}}
 end
 
-function get_signal(setup::SSDSetup{T}, contact_id::Int, drift_path::Vector{CartesianPoint{T}}, energy_deposition::T)::Vector{T} where {T <: SSDFloat}
-    signal::Vector{T} = Vector{T}(undef, length(drift_path))
-    for i in eachindex(drift_path)
-        signal[i] = pulse_from_drift_paths(drift_paths, energy_depositions, weighting_potentials[i])
+# User friendly functions for looking at single events. They are not ment to be used for large sets of events
+function get_signal(setup::SSDSetup{T}, drift_paths::Vector{DriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int)::Vector{T} where {T <: SSDFloat}
+    signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
+    wp::Interpolations.Extrapolation{T, 3} = setup.weighting_potentials[contact_id]
+    for ipath in eachindex(drift_paths)
+        add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, Val(get_coordinate_system(setup.detector)))
     end
     return signal
+end
+function get_signals(setup::SSDSetup{T}, drift_paths::Vector{DriftPath{T}}, energy_depositions::Vector{T})::Array{T, 2} where {T <: SSDFloat}
+    n_contacts::Int = length(setup.detector.contacts)
+    signals::Array{T, 2} = zeros(T, length(drift_paths[1].e_path), n_contacts)
+    S = Val(get_coordinate_system(setup.detector))
+    for c in setup.detector.contacts
+        wp::Interpolations.Extrapolation{T, 3} = setup.weighting_potentials[c.id]
+        signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
+        for ipath in eachindex(drift_paths)
+            add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, S)
+        end
+        signals[:, c.id] = signal
+    end
+    return signals
 end
