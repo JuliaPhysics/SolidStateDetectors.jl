@@ -33,7 +33,7 @@ end
 function in(p::AbstractCoordinatePoint{T}, c::Contact{T}, rs::Vector{T}) where T
     rv = false
     for g in c.geometry_positive
-        if typeof(g) in [ConeMantle{T}]
+        if typeof(g) in []#[ConeMantle{T}]
             in(p, g, rs) ? rv = true : nothing
         else
             (p in g) ? rv = true : nothing

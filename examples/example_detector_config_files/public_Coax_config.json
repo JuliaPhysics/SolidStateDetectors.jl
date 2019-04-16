@@ -52,25 +52,26 @@
                     },
                     {
                         "type": "Cone",
-                        "pol": "positive",
-                        "orientation": "bl",
-                        "rStart": 5.0,
-                        "rStop": 10.0,
+
+                        "rStart1": 0.0,
+                        "rStop1": 10.0,
+                        "rStart2": 0.0,
+                        "rStop2": 5.0,
                         "phiStart": 0.0,
                         "phiStop": 360.0,
-                        "zStart": -0.0001,
-                        "zStop": 4.99999
+                        "zStart": 0.0,
+                        "zStop": 5.0
                     },
                     {
                         "type": "Cone",
-                        "pol": "negative",
-                        "orientation": "tl",
-                        "rStart": 5.0,
-                        "rStop": 10.0,
+                        "rStart1": 0.0,
+                        "rStop1": 5.0,
+                        "rStart2": 0.0,
+                        "rStop2": 10.0,
                         "phiStart": 0.0,
                         "phiStop": 360.0,
-                        "zStart": 65.0001,
-                        "zStop": 70.0001
+                        "zStart": 65.0,
+                        "zStop": 70.0
                     }
                   ]
               }

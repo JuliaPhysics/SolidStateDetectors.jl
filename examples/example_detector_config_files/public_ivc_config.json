@@ -41,24 +41,23 @@
                 "negative": [
                     {
                         "type": "Cone",
-                        "pol": "positive",
-                        "orientation": "tr",
-                        "rStart": 24.420,
-                        "rStop": 35.000,
+                        "rStart1": 35.0,
+                        "rStop1": 36.0,
+                        "rStart2": 24.42,
+                        "rStop2": 36.0,
                         "phiStart": 0.0,
                         "phiStop": 360.0,
-                        "zStart": 20.0001,
-                        "zStop": 80.0001
+                        "zStart": 20.0,
+                        "zStop": 80.0
                     },
                     {
                         "type": "Tube",
-                        "pol": "positive",
-                        "rStart": -0.0001,
+                        "rStart": 0.0,
                         "rStop": 5.0,
                         "phiStart": 0.0,
                         "phiStop": 360.0,
                         "zStart": 25.0,
-                        "zStop": 80.0001
+                        "zStop": 80.00
                     }
                 ]
             }
@@ -122,11 +121,11 @@
                         "zStop": 20.0
                     },
                     {
-                        "type": "ConeMantle",
-                        "pol": "positive",
-                        "orientation": "bl",
-                        "rStart": 24.42,
-                        "rStop": 35.0,
+                        "type": "Cone",
+                        "rStart1": 35.0,
+                        "rStop1": 35.0,
+                        "rStart2": 24.42,
+                        "rStop2": 24.42,
                         "phiStart": 0.0,
                         "phiStop": 360.0,
                         "zStart": 20.0,

@@ -518,12 +518,12 @@ end
 
 
 
-@recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
-    newVol = Vol.cone
-    @series begin
-        newVol, dim, parameter
-    end
-end
+# @recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+#     newVol = Vol.cone
+#     @series begin
+#         newVol, dim, parameter
+#     end
+# end
 
 
 

@@ -66,37 +66,37 @@
     end
 end
 
-@recipe function f(Vol::SSD.Cone{T}, s::Symbol=:diag, n_aux_lines =0) where T
-    Vol, Val(s)
-end
+# @recipe function f(Vol::SSD.Cone{T}, s::Symbol=:diag, n_aux_lines =0) where T
+#     Vol, Val(s)
+# end
+#
+# @recipe function f(Vol::SSD.Cone{T}, ::Val{:diag},n_aux_lines =0) where T
+#
+#     rStart = Vol.r_interval.left
+#     rStop = Vol.r_interval.right
+#     φStart = Vol.φ_interval.left
+#     φStop = Vol.φ_interval.right
+#     zStart = Vol.z_interval.left
+#     zStop = Vol.z_interval.right
+#
+#     orientation = Vol.orientation
+#
+#     if orientation == :bottom_left || orientation == :top_right
+#         @series begin
+#             line_3d(rStop,rStart,φStart,φStart,zStart,zStop)
+#         end
+#         @series begin
+#             line_3d(rStop,rStart,φStop,φStop,zStart,zStop)
+#         end
+#         for ia in 0:n_aux_lines
+#             @series begin
+#                 line_3d(rStop,rStart,φStart+ia*(φStop-φStart)/(n_aux_lines+1),φStart+ia*(φStop-φStart)/(n_aux_lines+1),zStart,zStop)
+#             end
+#         end
+#     end
+# end
 
-@recipe function f(Vol::SSD.Cone{T}, ::Val{:diag},n_aux_lines =0) where T
-
-    rStart = Vol.r_interval.left
-    rStop = Vol.r_interval.right
-    φStart = Vol.φ_interval.left
-    φStop = Vol.φ_interval.right
-    zStart = Vol.z_interval.left
-    zStop = Vol.z_interval.right
-
-    orientation = Vol.orientation
-
-    if orientation == :bottom_left || orientation == :top_right
-        @series begin
-            line_3d(rStop,rStart,φStart,φStart,zStart,zStop)
-        end
-        @series begin
-            line_3d(rStop,rStart,φStop,φStop,zStart,zStop)
-        end
-        for ia in 0:n_aux_lines
-            @series begin
-                line_3d(rStop,rStart,φStart+ia*(φStop-φStart)/(n_aux_lines+1),φStart+ia*(φStop-φStart)/(n_aux_lines+1),zStart,zStop)
-            end
-        end
-    end
-end
-
-@recipe function f(vol::SSD.SSDCone{T},n_aux_lines = 0) where T
+@recipe function f(vol::SSD.Cone{T},n_aux_lines = 0) where T
 
     @series begin
         partialcircle_3d(vol.rStop1,vol.φStart,vol.φStop,[0,0,vol.zStart]+vol.translate)
