@@ -75,6 +75,7 @@ include("ElectricField/ElectricField.jl")
 
 include("ChargeDriftModels/ChargeDriftModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
+include("SignalGeneration/SignalGeneration.jl")
 
 include("ChargeStatistics/ChargeStatistics.jl")
 include("ChargeClustering/ChargeClustering.jl")
