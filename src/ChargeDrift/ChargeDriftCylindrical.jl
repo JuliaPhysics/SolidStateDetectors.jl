@@ -248,20 +248,6 @@ function pulse_from_drift_paths(drift_paths, energy_depositions::AbstractVector{
     end
 end
 
-function signal_contributions_from_drift_paths(drift_paths, energy_depositions::AbstractVector{T}, Wpot_interp::Interpolations.Extrapolation{T,3}) where T<:Real
-    charge_signal_e = zeros(T,size(drift_paths[1].e_path,1))
-    charge_signal_h = zeros(T,size(drift_paths[1].e_path,1))
-    @inbounds for i in eachindex(drift_paths[1].e_path)
-        for (idp, drift_path) in enumerate(drift_paths)
-            # charge_signal_e[i] = muladd(energy_depositions[idp] ,charge_signal_e[i], _get_wpot_at(Wpot_interp, drift_path.e_path[i]))
-            # charge_signal_h[i] = muladd(energy_depositions[idp] ,charge_signal_h[i], _get_wpot_at(Wpot_interp, drift_path.h_path[i]))
-            charge_signal_e[i] +=  _get_wpot_at(Wpot_interp, drift_path.e_path[i]) * energy_depositions[idp]
-            charge_signal_h[i] +=  _get_wpot_at(Wpot_interp, drift_path.h_path[i]) * energy_depositions[idp]
-        end
-    end
-    return charge_signal_e .* -1, charge_signal_h
-end
-
 
 # function drift_charges( detector::SolidStateDetector{T}, starting_positions::Vector{CylindricalPoint{T}}, 
 #                         velocity_field_e::Interpolations.Extrapolation{SVector{3, Float64}, 3},

@@ -34,21 +34,21 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
     setup = SSDSetup(det);
    
     SSD.apply_initial_state!(setup)
-    plot(setup.electric_potential)
-    savefig(joinpath(outputdir, "$(key)_0_init_setup"))
+    # plot(setup.electric_potential)
+    # savefig(joinpath(outputdir, "$(key)_0_init_setup"))
 
-    for nrefs in [0, 1, 2]
-        SSD.calculate_electric_potential!(setup, max_refinements = nrefs)
-        plot(setup.electric_potential, size = (1200, 1200))
-        savefig(joinpath(outputdir, "$(key)_1_setup_$(nrefs)_refinements"))
-    end    
+    # for nrefs in [0, 1, 2]
+    #     SSD.calculate_electric_potential!(setup, max_refinements = nrefs)
+    #     plot(setup.electric_potential, size = (1200, 1200))
+    #     savefig(joinpath(outputdir, "$(key)_1_setup_$(nrefs)_refinements"))
+    # end    
     SSD.calculate_electric_potential!(setup, max_refinements = 3)
-    plot(setup.electric_potential)
-    savefig(joinpath(outputdir, "$(key)_1_setup_$(3)_refinements"))
+    # plot(setup.electric_potential)
+    # savefig(joinpath(outputdir, "$(key)_1_setup_$(3)_refinements"))
 
     n_contacts = length(setup.detector.contacts)
     for contact in setup.detector.contacts
-        SSD.calculate_weighting_potential!(setup, contact.id, max_refinements = 1)
+        SSD.calculate_weighting_potential!(setup, contact.id, max_refinements = 2)
     end
 
     # plot( # does not work for :Cartesian yet
@@ -59,9 +59,9 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
 
     SSD.calculate_electric_field!(setup)
 
-    plot( setup.electric_field.grid[1], setup.electric_field.grid[3], SSD.get_electric_field_strength(setup.electric_field)[:, div(length(setup.electric_field.grid[2].ticks), 2), :]', 
-          st=:heatmap, clims = (0, 200000), title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
-    savefig(joinpath(outputdir, "$(key)_2_Electric_Field_strength"))
+    # plot( setup.electric_field.grid[1], setup.electric_field.grid[3], SSD.get_electric_field_strength(setup.electric_field)[:, div(length(setup.electric_field.grid[2].ticks), 2), :]', 
+    #       st=:heatmap, clims = (0, 200000), title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
+    # savefig(joinpath(outputdir, "$(key)_2_Electric_Field_strength"))
 
     SSD.set_charge_drift_model!(setup, ADLChargeDriftModel())
 
@@ -72,6 +72,7 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
     elseif S == :Cylindrical
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.006, 0.0, 0.005  ) ] # this point should be inside all test detectors
     end
+    energy_depos = T[1460]
     @assert in(pos[1], setup.detector) "Test point $(pos[1]) not inside the detector $(key)."
     begin
         drift_paths = SSD.drift_charges(setup, CartesianPoint.(pos));
@@ -79,6 +80,16 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
         plot!(drift_paths)
     end
     savefig(joinpath(outputdir, "$(key)_3_charge_drift"))
+
+    signals = zeros(T, length(drift_paths[1].e_path), n_contacts)
+    for i in eachindex(setup.detector.contacts)
+        signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
+        SSD.add_signal!(signal, drift_paths, energy_depos, setup.weighting_potentials[i] ) 
+        signals[:, i] = signal
+    end
+    labels = ["Chn $i" for i in 1:n_contacts]
+    plot(signals)
+
 end
 
 @info "Finished testing."
