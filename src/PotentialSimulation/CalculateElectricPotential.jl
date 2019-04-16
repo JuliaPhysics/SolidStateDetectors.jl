@@ -27,7 +27,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :Cylindr
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
+                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-3, 1e-4],
                                         min_grid_spacing::Vector{<:Real} = [1e-4, 1e-2, 1e-4],  # mm, degree, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
