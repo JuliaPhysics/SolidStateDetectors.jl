@@ -1,15 +1,16 @@
 
-struct ConeMantle{T} <: AbstractGeometry{T, 3} ## Only upright Cones at the moment, Convention: counterclockwise \alpha \beta γ; γ is the 90 deg angle, 
+struct ConeMantle{T} <: AbstractGeometry{T, 3} ## Only upright Cones at the moment, Convention: counterclockwise \alpha \beta γ; γ is the 90 deg angle,
+    hierarchy::Int
     cone::Cone{T}
 end
 
 function Geometry(T::DataType, t::Val{:ConeMantle}, dict::Dict{Any, Any}, inputunit::Unitful.Units)
-    return ConeMantle{T}(Cone{T}(dict, inputunit))
+    return ConeMantle{T}( Cone{T}(dict, inputunit).hierarchy, Cone{T}(dict, inputunit) )
 end
 
 function in(point::CartesianPoint{T}, cm::ConeMantle)::Bool where T
     convert(CylindricalPoint{T}, point)
-    point in cm 
+    point in cm
 end
 
 function in(point::CylindricalPoint{T}, cm::ConeMantle{T})::Bool where T
@@ -31,9 +32,10 @@ function in(point::CylindricalPoint{T}, cm::ConeMantle{T}, rs::Vector{T})::Bool 
     end
 end
 
-
+function sample(c::ConeMantle{T}, stepsize::Vector{T}) where {T <: SSDFloat}
+    return sample(c.cone, stepsize)
+end
 
 function get_important_points(c::ConeMantle{T}, s)::Vector{T} where {T <: SSDFloat}
     get_important_points(c.cone, s)
 end
-

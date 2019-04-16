@@ -3,7 +3,8 @@
 
 Very simple rectengular box in cartesian coordinates.
 """
-mutable struct CartesianBox3D{T} <: AbstractGeometry{T, 3} # should be immutable, mutable right now just for testing.
+struct CartesianBox3D{T} <: AbstractGeometry{T, 3} # should be immutable, mutable right now just for testing.
+    hierarchy::T
     x::Tuple{T, T}
     y::Tuple{T, T}
     z::Tuple{T, T}
@@ -16,7 +17,9 @@ end
 @inline in(pt::CylindricalPoint, g::CartesianBox3D)::Bool = in(CartesianPoint(pt), g)
 
 function CartesianBox3D{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: SSDFloat}
+    haskey(dict, "hierarchy") ? h::Int = dict["hierarchy"] : h = 1
     return CartesianBox3D{T}(
+        h,
         (geom_round(ustrip(uconvert(u"m", T(dict["xStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["xStop"]) * inputunit)))),
         (geom_round(ustrip(uconvert(u"m", T(dict["yStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["yStop"]) * inputunit)))),
         (geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))))  )
@@ -62,7 +65,7 @@ function vertices(cb::CartesianBox3D{T})::Vector{CartesianPoint{T}} where {T <: 
         CartesianPoint{T}(cb.x[2], cb.y[1], cb.z[2]),
         CartesianPoint{T}(cb.x[2], cb.y[2], cb.z[2]),
         CartesianPoint{T}(cb.x[1], cb.y[2], cb.z[2]),
-    ]    
+    ]
     return v
 end
 
@@ -89,4 +92,16 @@ end
     @series begin
         ls
     end
+end
+
+function sample(cb::CartesianBox3D{T}, stepsize::Vector{T})  where {T <: SSDFloat}
+    samples  = CartesianPoint{T}[]
+    for x in cb.x[1] : stepsize[1] : cb.x[2]
+        for y in cb.y[1] :stepsize[2] : cb.y[2]
+            for z in cb.z[1] : stepsize[3] : cb.z[2]
+                push!(samples,CartesianPoint{T}(x, y, z))
+            end
+        end
+    end
+    return samples
 end

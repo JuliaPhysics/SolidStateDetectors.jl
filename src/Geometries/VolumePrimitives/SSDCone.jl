@@ -29,12 +29,6 @@ function SSDCone{T}(hierarchy::Int, rStart1::T, rStop1::T, rStart2::T, rStop2::T
                                      SMatrix{3,3,T}([cos(rotZ) -sin(rotZ) 0;
                                                     sin(rotZ) cos(rotZ) 0;
                                                     0 0 1])
-    # a⃗1::SVector{2,T} = [rStop1 - rStart1, 0.0]
-    # b⃗1::SVector{2,T} =  [rStart2, zStop] - [rStart1,zStart]
-    # a⃗2::SVector{2,T} = -a⃗1
-    # b⃗2::SVector{2,T} =  [rStop2, zStop] - [rStop1,zStart]
-    # α1::T = acos( dot(a⃗1,b⃗1) / ( norm(a⃗1) * norm(b⃗1) ) )
-    # α2::T = acos( dot(a⃗2,b⃗2) / ( norm(a⃗2) * norm(b⃗2) ) )
 
     SSDCone{T}(hierarchy, rStart1, rStop1, rStart2, rStop2, φStart, φStop, zStart, zStop, translate, rotationMatrix)
 end
@@ -103,10 +97,27 @@ function Geometry(T::DataType, t::Val{:SSDCone}, dict::Dict{Any, Any}, inputunit
     return SSDCone{T}(dict, inputunit)
 end
 
+function get_important_points(c::SSDCone{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
+    return T[c.rStart1, c.rStop1, c.rStart2, c.rStop2]
+end
 
-function get_important_points(c::SSDCone{T})::NTuple{3, Vector{T}} where {T <: SSDFloat}
-    v1::Vector{T} = T[c.r_interval.left, c.r_interval.right] #[g.x[1], g.x[2]]
-    v2::Vector{T} = T[c.φ_interval.left, c.φ_interval.right]
-    v3::Vector{T} = T[c.z_interval.left, c.z_interval.right]
-    return v1, v2, v3
+function get_important_points(c::SSDCone{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
+    return T[c.φStart, c.φStop]
+end
+
+function get_important_points(c::SSDCone{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
+    return T[c.zStart, c.zStop]
+end
+
+
+function sample(c::SSDCone{T}, stepsize::Vector{T}) where T
+    samples = CylindricalPoint[]
+    for z in c.zStart:stepsize[3]:c.zStop
+        for φ in c.φStart:stepsize[2]:c.φStop
+            for r in get_intersection_rs_for_given_z(z,c)[1]:stepsize[1]:get_intersection_rs_for_given_z(z,c)[2]
+                push!(samples, CylindricalPoint{T}(r,φ,z))
+            end
+        end
+    end
+    return samples
 end

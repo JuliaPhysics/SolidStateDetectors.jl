@@ -64,7 +64,7 @@ end
 
 
 function get_important_points(t::Tube{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return T[t.r_interval.left, t.r_interval.right] 
+    return T[t.r_interval.left, t.r_interval.right]
 end
 
 function get_important_points(t::Tube{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
@@ -79,8 +79,20 @@ function get_important_points(t::Tube{T}, ::Val{:x})::Vector{T} where {T <: SSDF
     @warn "Not yet implemented"
     return T[]
 end
+
 function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
     @warn "Not yet implemented"
     return T[]
 end
 
+function sample(c::Tube{T}, stepsize::Vector{T}) where T
+    samples = CylindricalPoint[]
+    for r in c.r_interval.left:stepsize[1]: c.r_interval.right
+        for φ in c.φ_interval.left:stepsize[2]: c.φ_interval.right
+            for z in c.z_interval.left:stepsize[3]: c.z_interval.right
+                push!(samples, CylindricalPoint{T}(r,φ,z))
+            end
+        end
+    end
+    return samples
+end

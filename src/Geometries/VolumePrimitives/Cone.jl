@@ -18,7 +18,7 @@ orientations = Dict("tl" => :top_left,
 
 
 
-struct Cone{T} <: AbstractGeometry{T, 3} ## Only upright Cones at the moment, Convention: counterclockwise \alpha \beta γ; γ is the 90 deg angle, 
+struct Cone{T} <: AbstractGeometry{T, 3} ## Only upright Cones at the moment, Convention: counterclockwise \alpha \beta γ; γ is the 90 deg angle,
     org::AbstractCoordinatePoint{T}
     hierarchy::Int
     polarity::Symbol
@@ -60,12 +60,12 @@ function in(point::CylindricalPoint{T}, cone::Cone{T}) where T
     if cone.orientation == :top_right || cone.orientation == :bottom_right
         cone.polarity == :neg ? x = (point.r > get_diagonal_r_from_z(cone, point.z) && point.r < cone.r_interval.right) : x = (point.r >= get_diagonal_r_from_z(cone, point.z) && point.r <= cone.r_interval.right)
         if x && point.φ in cone.φ_interval && point.z in cone.z_interval
-            return true 
+            return true
         end
     elseif cone.orientation == :top_left || cone.orientation == :bottom_left
         cone.polarity == :neg ? x = (point.r >  cone.r_interval.left && point.r < get_diagonal_r_from_z(cone, point.z)) : x = (point.r >=  cone.r_interval.left && point.r <= get_diagonal_r_from_z(cone, point.z))
         if x  && point.φ in cone.φ_interval && point.z in cone.z_interval
-            return true 
+            return true
         end
     end
     return false
@@ -107,9 +107,23 @@ function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit::U
     return Cone{T}(dict, inputunit)
 end
 
+function sample(c::Cone{T}, stepsize::Vector{T}) where {T <: SSDFloat}
+    samples = CylindricalPoint[]
+    for z in c.z_interval.left:stepsize[3]: c.z_interval.right
+        for φ in c.φ_interval.left:stepsize[2]: c.φ_interval.right
+            for r in get_diagonal_r_from_z(c,z):stepsize[1]:get_diagonal_r_from_z(c,z)
+                push!(samples, CylindricalPoint{T}(r,φ,z))
+            end
+            for r in c.r_interval.left:stepsize[1]: c.r_interval.right
+                push!(samples, CylindricalPoint{T}(r,φ,z))
+            end
+        end
+    end
+    return samples
+end
 
 function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return T[c.r_interval.left, c.r_interval.right] 
+    return T[c.r_interval.left, c.r_interval.right]
 end
 
 function get_important_points(c::Cone{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
@@ -128,4 +142,3 @@ function get_important_points(c::Cone{T}, ::Val{:y})::Vector{T} where {T <: SSDF
     @warn "Not yet implemented"
     return T[]
 end
-

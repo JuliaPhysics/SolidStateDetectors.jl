@@ -15,19 +15,19 @@ mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     geometry_unit::Unitful.Units
     geometry_unit_factor::Real # optional, geometry_unit is enough
     contacts_geometry_unit::Unitful.Units # optional, why not geometry_unit
-    
+
     world::AbstractGeometry{T}
 
-    crystal_geometry::AbstractGeometry{T} 
-    
+    crystal_geometry::AbstractGeometry{T}
+
     bulk_type::Symbol
     charge_density_model::AbstractChargeDensityModel{T}
-    
+
     contacts::Vector{AbstractContact{T}}
-    
+
     external_parts::Vector{AbstractContact{T}}
-    geometry_external_positive::Vector{AbstractGeometry{T}} # ? 
-    geometry_external_negative::Vector{AbstractGeometry{T}} # ? 
+    geometry_external_positive::Vector{AbstractGeometry{T}} # ?
+    geometry_external_negative::Vector{AbstractGeometry{T}} # ?
 
     SolidStateDetector{T, CS}() where {T <: SSDFloat, CS} = new{T, CS}()
 end
@@ -43,30 +43,20 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     end
     c.class = Symbol(config_file["class"])
     c.name = config_file["name"]
-    if c.class != :CGD 
+    if c.class != :CGD
         c.cyclic = T(deg2rad(config_file["cyclic"]))
         c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
     end
 
     c.material_environment = material_properties[materials[config_file["geometry"]["world"]["material"]]]
     c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
-    
+
     c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
-    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[1]
+    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[2][1]
 
-    c.external_parts = if haskey(config_file["geometry"],"external")
-        Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]]
-    else
-        []
-    end
+    haskey(config_file["geometry"],"external") ? c.external_parts = Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]] : c.external_parts = []
 
-    geometry_positive = Geometry(T, config_file["geometry"]["crystal"]["geometry"]["positive"], c.geometry_unit)
-    haskey(config_file["geometry"]["crystal"]["geometry"],"negative") ? geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"]["negative"], c.geometry_unit) : geometry_negative = []
-    c.crystal_geometry = geometry_positive[1]
-    for g in sort!(vcat(geometry_positive,geometry_negative))
-        g in geometry_negative ? c.crystal_geometry -= g : nothing
-        g in geometry_positive ? c.crystal_geometry += g : nothing
-    end
+    c.crystal_geometry , geometry_positive, geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"], c.geometry_unit)
 
     c.bulk_type = bulk_types[config_file["bulk_type"]]
 

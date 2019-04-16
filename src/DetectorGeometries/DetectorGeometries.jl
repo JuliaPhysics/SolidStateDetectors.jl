@@ -89,7 +89,7 @@ end
 function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: SSDFloat}
     imp::Vector{T} = []
     for contact in c.contacts
-        for g in contact.geometry
+        for g in sort!(vcat(contact.geometry_positive,contact.geometry_negative))
             append!(imp, get_important_points(g, Val{s}()))
         end
     end
@@ -285,7 +285,7 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cylindr
 end
 function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::CartesianPoint{T})::Tuple{Bool, CartesianVector{T}} where T
     if !(p in c) # is this necessary?
-        return false, CartesianVector{T}(0, 0, 0) 
+        return false, CartesianVector{T}(0, 0, 0)
     end
     n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
     look_around::Vector{Bool} = [   CartesianPoint{T}(prevfloat(p.x), p.y, p.z) in c,
@@ -333,6 +333,53 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     end
 end
 
+
+function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical})::Nothing where {T}
+    ssd.rs = grid[:r].ticks
+    ssd.φs = grid[:φ].ticks
+    ssd.zs = grid[:z].ticks
+    nothing
+end
+
+# function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
+#         grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: AbstractFloat, N}
+#
+#     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
+#         [weighting_potential_contact_id]
+#     else
+#         Int[]
+#     end
+#
+#     axr::Vector{T} = grid[:r].ticks
+#     axφ::Vector{T} = grid[:φ].ticks
+#     axz::Vector{T} = grid[:z].ticks
+#
+#     for iz in axes(potential, 3)
+#         z::T = axz[iz]
+#         for iφ in axes(potential, 2)
+#             φ::T = axφ[iφ]
+#             for ir in axes(potential, 1)
+#                 r::T = axr[ir]
+#                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
+#                 b, boundary_potential, contact_id = is_boundary_point(ssd, r, φ, z, axr, axφ, axz)
+#                 if b
+#                     pot::T = if ismissing(weighting_potential_contact_id)
+#                         boundary_potential
+#                     else
+#                         contact_id == weighting_potential_contact_id ? 1 : 0
+#                     end
+#                     potential[ ir, iφ, iz ] = pot
+#                     pointtypes[ ir, iφ, iz ] = zero(PointType)
+#                 elseif in(pt, ssd)
+#                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
+#                 end
+#
+#             end
+#         end
+#     end
+#     nothing
+# end
+
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
@@ -353,58 +400,71 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             for ir in axes(potential, 1)
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
-                b, boundary_potential, contact_id = is_boundary_point(ssd, pt, axr, axφ, axz)
-                if b
-                    pot::T = if ismissing(weighting_potential_contact_id)
-                        boundary_potential
-                    else
-                        contact_id == weighting_potential_contact_id ? 1 : 0
-                    end
-                    potential[ ir, iφ, iz ] = pot
-                    pointtypes[ ir, iφ, iz ] = zero(PointType)
-                elseif in(pt, ssd)
+
+                if in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
+
             end
+        end
+    end
+    for contact in ssd.contacts
+        pot::T = if ismissing(weighting_potential_contact_id)
+            contact.potential
+        else
+            contact.id == weighting_potential_contact_id ? 1 : 0
+        end
+        contact_gridpoints = paint_contact(contact,grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
 end
 
+function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
+        grid::Grid{T, N, :Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N}, 
-        grid::Grid{T, 3, :Cartesian}, ssd::SolidStateDetector{T, :Cartesian}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
-    
-    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
+    channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
+        [weighting_potential_contact_id]
+    else
+        Int[]
+    end
 
-    ax_x::Vector{T} = grid[:x].ticks
-    ax_y::Vector{T} = grid[:y].ticks
-    ax_z::Vector{T} = grid[:z].ticks
+    axx::Vector{T} = grid[:x].ticks
+    axy::Vector{T} = grid[:y].ticks
+    axz::Vector{T} = grid[:z].ticks
+
     for iz in axes(potential, 3)
-        z::T = ax_z[iz]
+        z::T = axz[iz]
         for iy in axes(potential, 2)
-            y::T = ax_y[iy]
+            y::T = axy[iy]
             for ix in axes(potential, 1)
-                x::T = ax_x[ix]
-                pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )              
-                b, boundary_potential, contact_id = is_boundary_point(ssd, pt, ax_x, ax_y, ax_z)
-                if b
-                    pot::T = if ismissing(weighting_potential_contact_id)
-                        boundary_potential
-                    else
-                        contact_id == weighting_potential_contact_id ? 1 : 0
-                    end
-                    potential[ ix, iy, iz ] = pot
-                    pointtypes[ ix, iy, iz ] = zero(PointType)
-                elseif in(pt, ssd)
+                x::T = axx[ix]
+                pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
+
+                if in(pt, ssd)
                     pointtypes[ ix, iy, iz ] += pn_junction_bit
                 end
+
             end
+        end
+    end
+    for contact in ssd.contacts
+        pot::T = if ismissing(weighting_potential_contact_id)
+            contact.potential
+        else
+            contact.id == weighting_potential_contact_id ? 1 : 0
+        end
+        contact_gridpoints = paint_contact(contact,grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
 end
-
 
 function json_to_dict(inputfile::String)::Dict
     parsed_json_file = Dict()
@@ -509,8 +569,8 @@ function Grid(  detector::SolidStateDetector{T, :Cylindrical};
 end
 
 
-function Grid(  detector::SolidStateDetector{T, :Cartesian}; 
-                init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], 
+function Grid(  detector::SolidStateDetector{T, :Cartesian};
+                init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001],
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
     important_x_points::Vector{T} = get_important_points(detector, :x)
@@ -518,13 +578,13 @@ function Grid(  detector::SolidStateDetector{T, :Cartesian};
     important_z_points::Vector{T} = get_important_points(detector, :z)
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
-    
+
     int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.x[1], detector.world.x[2] )
     int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.y[1], detector.world.y[2] )
     int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.z[1], detector.world.z[2] )
-    ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1]) 
-    ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2]) 
-    ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3]) 
+    ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1])
+    ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2])
+    ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3])
 
     xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = init_grid_spacing[1] / 2)
     ax_x = typeof(ax_x)(int_x, xticks)
@@ -542,8 +602,8 @@ function Grid(  detector::SolidStateDetector{T, :Cartesian};
         ax_x = DiscreteAxis{T, :infinite, :infinite}(int_x, xticks) # must be even
     end
     @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
-    
-    return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) ) 
+
+    return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end
 
 

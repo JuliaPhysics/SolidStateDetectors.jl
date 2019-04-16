@@ -307,7 +307,7 @@ end
 
 @recipe function f(contact::AbstractContact{T}) where T
     c-->:orange
-    for (i,g) in enumerate(contact.geometry)
+    for (i,g) in enumerate(sort!(vcat(contact.geometry_positive, contact.geometry_negative)))
         @series begin
             i==1 ? label --> "$(contact.id)" : label := ""
             g
@@ -414,7 +414,7 @@ end
         print("Please specify φ or z.")
     elseif ismissing(z)
         for c in d.contacts
-            for g in c.geometry
+            for g in c.geometry_positive
                 @series begin
                     if d.name == "Public Inverted Coax"
                         if typeof(c) == SSD.Contact{T,:N}; color --> :orange
@@ -430,7 +430,7 @@ end
     elseif ismissing(φ)
         proj --> :polar
         for c in d.contacts
-            for g in c.geometry
+            for g in c.geometry_positive
                 @series begin
                     if d.name == "Public Inverted Coax"
                         if typeof(c) == SSD.Contact{T,:N}; color --> :orange
@@ -575,4 +575,4 @@ end
         end
 
     end
-end 
+end

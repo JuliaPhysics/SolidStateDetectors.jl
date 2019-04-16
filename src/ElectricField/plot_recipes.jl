@@ -276,7 +276,7 @@ end
         if (typeof(contact) == SSD.Contact{T,:N} && det.bulk_type == :ntype) || (typeof(contact) == SSD.Contact{T,:P} && det.bulk_type == :ptype)
             nothing
         else
-            for g in contact.geometry
+            for g in contact.geometry_positive
                 if typeof(g) == SSD.Tube{T}
                     rStart,rStop = get_r(g)
                     zStart,zStop = get_z(g)
