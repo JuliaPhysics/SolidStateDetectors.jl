@@ -91,7 +91,6 @@ function drift_charge!(
     done::Bool = false
     drift_path[1] = startpos
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
-    println("-----------------")
     for istep in eachindex(drift_path)[2:end] #end] 
         if done == false
             current_pos::CartesianPoint{T} = drift_path[istep - 1]

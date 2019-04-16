@@ -6,7 +6,7 @@ mutable struct SSDSetup{T <: SSDFloat} <: AbstractSSDSetup{T}
     ϵ::DielectricDistribution{T}
     point_types::PointTypes{T}
     electric_potential::ElectricPotential{T}  
-    weighting_potentials::Dict{Int, WeightingPotential{T}}
+    weighting_potentials::Vector{WeightingPotential{T}}
     electric_field::ElectricField{T}
 
     charge_drift_model::AbstractChargeDriftModel{T}
@@ -20,7 +20,7 @@ end
 function SSDSetup(detector::SolidStateDetector{T})::SSDSetup{T} where {T <: SSDFloat}
     setup::SSDSetup{T} = SSDSetup{T}()
     setup.detector = detector
-    setup.weighting_potentials = Dict{Int, WeightingPotential{T}}()
+    setup.weighting_potentials = Vector{WeightingPotential{T}}(undef, length(setup.detector.contacts))
     return setup
 end
 
@@ -69,7 +69,7 @@ function calculate_weighting_potential!(setup::SSDSetup{T}, contact_id::Int, arg
     else
         wp = WeightingPotential(wps)
     end
-    push!(setup.weighting_potentials, (contact_id => wp))
+    setup.weighting_potentials[contact_id] = wp
     nothing
 end
 
@@ -112,9 +112,16 @@ function apply_charge_drift_model!(setup::SSDSetup{T})::Nothing where {T <: SSDF
 end
 
 @inline function drift_charges( setup::SSDSetup{T}, starting_positions::Vector{CartesianPoint{T}}, 
-                                Δt::T = T(1f-9), n_steps::Int = 2000 )::DriftPath{T} where {T <: SSDFloat}
+                                Δt::T = T(1f-9), n_steps::Int = 2000 )::Vector{DriftPath{T}} where {T <: SSDFloat}
     return drift_charges(   setup.detector, setup.electric_potential.grid, starting_positions, 
                             setup.interpolated_electron_drift_field, setup.interpolated_hole_drift_field,
-                            Δt = Δt, n_steps = n_steps)::DriftPath{T}
+                            Δt = Δt, n_steps = n_steps)::Vector{DriftPath{T}}
 end
 
+function get_signal(setup::SSDSetup{T}, contact_id::Int, drift_path::Vector{CartesianPoint{T}}, energy_deposition::T)::Vector{T} where {T <: SSDFloat}
+    signal::Vector{T} = Vector{T}(undef, length(drift_path))
+    for i in eachindex(drift_path)
+        signal[i] = pulse_from_drift_paths(drift_paths, energy_depositions, weighting_potentials[i])
+    end
+    return signal
+end
