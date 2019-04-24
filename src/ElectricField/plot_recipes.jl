@@ -8,12 +8,6 @@ function get_xyz_vector_from_rφz_field_vector_at_rφz(field,r,φ,z,ir,iφ,iz)::
     xyz_vector
 end
 
-function get_rφz_vector_from_xyz_vector(v)
-    r = sqrt(v[1]^2 + v[2]^2)
-    φ = atan(v[2],v[1])
-    z = v[3]
-    [r,φ,z]
-end
 
 function get_xy_magnitude(xyz_vector::AbstractArray)
     sqrt(xyz_vector[1]^2+xyz_vector[2]^2)

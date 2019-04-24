@@ -9,7 +9,8 @@ function drift_charge!(
                             grid::Grid{T, 3, :Cartesian},
                             startpos::CartesianPoint{T},
                             Δt::T,
-                            velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}
+                            velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3};
+                            verbose::Bool = true
                         )::Nothing where {T <: SSDFloat}
     done::Bool = false
     drift_path[1] = startpos
@@ -37,10 +38,15 @@ function drift_charge!(
                         next_pos -= small_projected_vector
                         i += 1
                     end
-                    if i == 1000 @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
+                    if i == 1000 && verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
                     drift_path[istep] = next_pos
-                else 
-                    @warn ("Internal error for charge stating at $startpos")
+                elseif cd_point_type == CD_BULK
+                    if verbose @warn ("Internal error for charge stating at $startpos") end
+                    drift_path[istep] = current_pos
+                    done = true
+                else # elseif cd_point_type == CD_OUTSIDE      
+                    if verbose @warn ("Internal error for charge stating at $startpos") end
+                    drift_path[istep] = current_pos
                     done = true
                 end
             end

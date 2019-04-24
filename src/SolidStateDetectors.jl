@@ -81,6 +81,7 @@ include("ChargeStatistics/ChargeStatistics.jl")
 include("ChargeClustering/ChargeClustering.jl")
 
 include("SSDSetup/SSDSetup.jl")
+include("Event/Event.jl")
 
 include("IO/IO.jl")
 
