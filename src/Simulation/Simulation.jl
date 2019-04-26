@@ -62,7 +62,7 @@ end
 # Functions
 
 function apply_initial_state!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
-    init_sim = SolidStateDetectors.PotentialSimulationsim(sim.detector);
+    init_sim = SolidStateDetectors.PotentialSimulationSetup(sim.detector);
 
     sim.ρ = ChargeDensity(init_sim.ρ, init_sim.grid)
     sim.ϵ = DielectricDistribution(init_sim.ϵ, init_sim.grid)
@@ -84,9 +84,12 @@ function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::
 end
 
 
+
+
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     S = SSD.get_coordinate_system(sim.detector)
-    if S == :Cylindrical && sim.detector.cyclic == T(0)
+    periodicity::T = get_periodicity(sim.detector.world.intervals[2])
+    if S == :Cylindrical && periodicity == T(0)
         if ismissing(n_points_in_φ)
             @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36
@@ -110,7 +113,8 @@ end
 
 function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     S = SSD.get_coordinate_system(sim.detector)
-    e_pot, point_types = if S == :Cylindrical && sim.detector.cyclic == T(0) # 2D, only one point in φ
+    periodicity::T = get_periodicity(sim.detector.world.intervals[2])
+    e_pot, point_types = if S == :Cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
             @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36

@@ -41,7 +41,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindr
     refine::Bool = max_refinements > 0 ? true : false
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     check_grid(grid)
-    cyclic::T = grid.axes[2].interval.right
+    cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
     n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3))
     if use_nthreads > Base.Threads.nthreads()
         use_nthreads = Base.Threads.nthreads();
@@ -49,10 +49,8 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindr
     end
     n_φ_sym_info_txt = if only_2d
         "φ symmetry: Detector is φ-symmetric -> 2D computation."
-    elseif n_φ_sym > 1
-        "φ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))° -> calculating just 1/$(n_φ_sym) in φ of the detector."
     else
-        "φ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))° -> no symmetry -> calculating for 360°."
+        "φ symmetry: calculating just 1/$(n_φ_sym) in φ of the detector."
     end
 
     fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);

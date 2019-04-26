@@ -56,9 +56,15 @@ export get_crossing_pos
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
+struct ConfigFileError <: Exception 
+    msg::AbstractString
+end
+Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
+
 include("Geometries/Geometries.jl")
 
 include("Axes/DiscreteAxis.jl")
+include("World/World.jl")
 include("Grids/Grids.jl")
 
 include("Types/Types.jl")
