@@ -35,7 +35,7 @@ const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
-export SSDSetup
+export Simulation
 
 export AbstractChargeDriftModel, get_electron_drift_field, get_hole_drift_field
 export VacuumChargeDriftModel, ADLChargeDriftModel
@@ -80,7 +80,7 @@ include("SignalGeneration/SignalGeneration.jl")
 include("ChargeStatistics/ChargeStatistics.jl")
 include("ChargeClustering/ChargeClustering.jl")
 
-include("SSDSetup/SSDSetup.jl")
+include("Simulation/Simulation.jl")
 include("Event/Event.jl")
 
 include("IO/IO.jl")

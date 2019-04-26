@@ -160,7 +160,7 @@ end
 
 Base.convert(T::Type{WeightingPotential}, x::NamedTuple) = T(x)
 
-function NamedTuple(ep::WeightingPotential{T, 3, :Cylindrical}) where {T}
+function NamedTuple(ep::WeightingPotential{T, 3}) where {T}
     return (
         grid = NamedTuple(ep.grid),
         values = ep.data,
@@ -168,6 +168,7 @@ function NamedTuple(ep::WeightingPotential{T, 3, :Cylindrical}) where {T}
 end
 
 Base.convert(T::Type{NamedTuple}, x::WeightingPotential) = T(x)
+
 
 
 

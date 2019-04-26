@@ -42,7 +42,7 @@ end
 
 Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
 
-function NamedTuple(ep::ElectricPotential{T, 3, :Cylindrical}) where {T}
+function NamedTuple(ep::ElectricPotential{T, 3}) where {T}
     return (
         grid = NamedTuple(ep.grid),
         values = ep.data * u"V",

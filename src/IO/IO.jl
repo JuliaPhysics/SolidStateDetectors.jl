@@ -9,3 +9,7 @@ function StructFromNamedTuple(nt::NamedTuple)
     return NamedTupleTools.structfromnt(nt.nt_type, nt.nt_struct)
 end
 
+function NamedTuple(::Missing)
+    return (object = missing,)
+end
+

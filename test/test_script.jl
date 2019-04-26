@@ -31,7 +31,7 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
     det = SolidStateDetector{T}(SSD_examples[key])
     S = SSD.get_coordinate_system(det)
     
-    setup = SSDSetup(det);
+    setup = Simulation(det);
    
     SSD.apply_initial_state!(setup)
     plot(setup.electric_potential)

@@ -9,10 +9,29 @@ end
 @inline getindex(ep::ElectricField{T, N, S}, i::Int) where {T, N, S} = getindex(ep.data, i)
 @inline getindex(ep::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
 
+
+function ElectricField(nt::NamedTuple)
+    grid = Grid(nt.grid)
+    T = typeof(ustrip(nt.values[1]))
+    S = get_coordinate_type(grid)
+    N = get_number_of_dimensions(grid)
+    ElectricField{T, N, S}( ustrip.(uconvert.(u"V / m", nt.values)), grid)
+end
+
+Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
+
+function NamedTuple(ep::ElectricField{T, 3}) where {T}
+    return (
+        grid = NamedTuple(ep.grid),
+        values = ep.data * u"V / m",
+    )
+end
+
+
+
 function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
     return ElectricField{T, 3, S}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
 end
-
 
 function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
     magn=0

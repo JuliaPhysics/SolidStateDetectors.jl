@@ -38,12 +38,12 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
     return evt
 end
 
-function drift_charges!(event::Event{T}, setup::SSDSetup{T}; n_steps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+function drift_charges!(event::Event{T}, setup::Simulation{T}; n_steps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     event.drift_paths = drift_charges(setup, CartesianPoint.(event.locations), Δt = Δt, n_steps = n_steps, verbose = verbose)
     nothing
 end
-function get_signal!(event::Event{T}, setup::SSDSetup{T}, contact_id::Int)::Nothing where {T <: SSDFloat}
-    @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, setup::SSDSetup` first."
+function get_signal!(event::Event{T}, setup::Simulation{T}, contact_id::Int)::Nothing where {T <: SSDFloat}
+    @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, setup::Simulation` first."
     @assert !ismissing(setup.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(setup, contact_id)` first."
     if ismissing(event.signals)
         event.signals = Any[missing for i in eachindex(setup.detector.contacts)]
@@ -51,8 +51,8 @@ function get_signal!(event::Event{T}, setup::SSDSetup{T}, contact_id::Int)::Noth
     event.signals[contact_id] = get_signal(setup, event.drift_paths, event.energies, contact_id)
     nothing
 end
-function get_signals!(event::Event{T}, setup::SSDSetup{T})::Nothing where {T <: SSDFloat}
-    @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, setup::SSDSetup` first."
+function get_signals!(event::Event{T}, setup::Simulation{T})::Nothing where {T <: SSDFloat}
+    @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, setup::Simulation` first."
     if ismissing(event.signals)
         event.signals = Any[missing for i in eachindex(setup.detector.contacts)]
     end
@@ -63,7 +63,7 @@ function get_signals!(event::Event{T}, setup::SSDSetup{T})::Nothing where {T <: 
     nothing
 end
 
-function simulate!(event::Event{T}, setup::SSDSetup{T}; n_steps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+function simulate!(event::Event{T}, setup::Simulation{T}; n_steps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     drift_charges!(event, setup, n_steps = n_steps, Δt = Δt, verbose = verbose)
     get_signals!(event, setup)
     nothing
