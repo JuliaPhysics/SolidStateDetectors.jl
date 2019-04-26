@@ -4,10 +4,16 @@ bulk_types = Dict("n" => :ntype,
     "p-type" => :ptype,
     "ptype" => :ptype,
     "p" => :ptype  )
-unit_conversion = Dict{String, Unitful.Units}( "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m")
+unit_conversion = Dict{String, Unitful.Units}(
+    "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
+    "deg" => u"°","rad" => u"rad", #angle
+    "V" => u"V", "kV" => u"kV", #Potential
+    "K" => u"K", "Kelvic" => u"K", "C" => u"C")
 
+include("Object.jl")
+include("Passive.jl")
 include("Contacts.jl")
-
+include("Semiconductor.jl")
 include("SolidStateDetector.jl")
 
 
@@ -46,25 +52,11 @@ function yaml2json(directory::String)# or filename
         end
     end
 end
-
 function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
     parsed_dict = parse_config_file(filename)
-    detector_class = parsed_dict["class"]
-    global unit_conversions = Dict{String,T}( "nm"=>1e-9,"um"=>1e-6,"mm"=>1e-3,"cm"=>1e-2,"m"=>1.0 )
-    if detector_class == "Coax"
-        return SolidStateDetector{T}(parsed_dict)
-    elseif detector_class == "BEGe"
-        return SolidStateDetector{T}(parsed_dict)
-    elseif detector_class == "InvertedCoax"
-        return SolidStateDetector{T}(parsed_dict)
-    elseif detector_class == "CGD"
-        return SolidStateDetector{T}(parsed_dict)
-    elseif detector_class == "CustomDetector"
-        return SolidStateDetector{T}(parsed_dict)
-    else
-        error("Config File does not suit any of the predefined detector geometries. You may want to implement your own 'class'")
-    end
+    return SolidStateDetector{T}(parsed_dict)
 end
+
 function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
     SolidStateDetector{T}(filename)
 end
@@ -89,7 +81,7 @@ end
 function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: SSDFloat}
     imp::Vector{T} = []
     for contact in c.contacts
-        for g in sort!(vcat(contact.geometry_positive,contact.geometry_negative))
+        for g in vcat(contact.geometry_positive,contact.geometry_negative)
             append!(imp, get_important_points(g, Val{s}()))
         end
     end
@@ -309,17 +301,21 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cartesi
 end
 
 
-function get_charge_density(detector::SolidStateDetector{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
-    get_charge_density(detector.charge_density_model, pt)
+function get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+    get_charge_density(sc.charge_density_model, pt)
 end
 
 function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: SSDFloat}
-    if in(pt, ssd)
-        ρ::T = get_charge_density(ssd, pt) * elementary_charge
-        ϵ::T = ssd.material_detector.ϵ_r
-        return ρ, ϵ
-    elseif in(pt,ssd.external_parts)
-        for ep in ssd.external_parts
+    if in(pt,ssd.semiconductors)
+        for sc in ssd.semiconductors
+            if in(pt, sc)
+                ρ::T = get_charge_density(sc, pt) * elementary_charge
+                ϵ::T = sc.material.ϵ_r
+                return ρ, ϵ
+            end
+        end
+    elseif in(pt,ssd.passives)
+        for ep in ssd.passives
             if pt in ep
                 ρ = 0
                 ϵ = ep.material.ϵ_r
@@ -328,7 +324,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
         return ρ, ϵ
     else
         ρ = 0
-        ϵ = ssd.material_environment.ϵ_r
+        ϵ = ssd.medium.ϵ_r
         return ρ, ϵ
     end
 end
@@ -414,7 +410,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        contact_gridpoints = paint_contact(contact,grid)
+        contact_gridpoints = paint_object(contact,grid)
         for gridpoint in contact_gridpoints
             potential[ gridpoint... ] = pot
             pointtypes[ gridpoint... ] = zero(PointType)
@@ -424,7 +420,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, :Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+    grid::Grid{T, N, :Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]

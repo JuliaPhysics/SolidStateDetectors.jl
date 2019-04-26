@@ -61,7 +61,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :Cylindr
 
     if verbose
         println("Electric Potential Calculation\n",
-                "Bulk type: $(detector.bulk_type)\n",
+                #"Bulk type: $(detector.bulk_type)\n",
                 "Bias voltage: $(fssrb.bias_voltage) V\n",
                 "$n_φ_sym_info_txt\n",
                 "Precision: $T\n",
@@ -187,7 +187,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :Cartesi
 
     if verbose
         println("Electric Potential Calculation\n",
-                "Bulk type: $(detector.bulk_type)\n",
+                #"Bulk type: $(detector.bulk_type)\n",
                 "Bias voltage: $(fssrb.bias_voltage) V\n",
                 "Precision: $T\n",
                 "Convergence limit: $convergence_limit => $(round(abs(fssrb.bias_voltage * convergence_limit), sigdigits=2)) V\n",

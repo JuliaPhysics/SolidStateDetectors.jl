@@ -21,6 +21,10 @@ function in(pt::StaticVector{N, T}, set::GeometryUnion{T, N})::Bool where {T <: 
     return inside
 end
 
+function Geometry(T::DataType, t::Val{:Union}, dict::Dict{Union{Any,String}, Any}, inputunit_dict::Dict{String,Unitful.Units})
+    return sum( map(x-> Geometry(T, x, inputunit_dict), dict["parts"]) )
+end
+
 """
     struct Intersection{T, N, A, B} <: AbstractSet{T, N}
 
@@ -61,6 +65,11 @@ function in(pt::StaticVector{N, T}, set::Difference{T, N})::Bool where {T <: Rea
     return inside
 end
 
+function Geometry(T::DataType, t::Val{:Difference}, dict::Dict{Union{Any,String}, Any}, inputunit_dict::Dict{String,Unitful.Units})
+    return Geometry(T, dict["parts"][1], inputunit_dict) - sum( map(x-> Geometry(T, x, inputunit_dict), dict["parts"][2:end]) )
+end
+
+###
 
 function (+)(a::A, b::B)::AbstractSet{T, N} where {T, N, A <: AbstractGeometry{T, N}, B <: AbstractGeometry{T, N}}
     return GeometryUnion{T, N}(a, b)

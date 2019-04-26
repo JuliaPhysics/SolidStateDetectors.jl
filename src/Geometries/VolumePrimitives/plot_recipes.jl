@@ -6,20 +6,22 @@
     zStart = Vol.z_interval.left
     zStop = Vol.z_interval.right
 
+    ismissing(Vol.translate) ? translate = [0.0,0.0,0.0] : translate = Vol.translate
+
     @series begin
-        partialcircle_3d(rStop,φStart,φStop,[0,0,zStart])
+        partialcircle_3d(rStop,φStart,φStop,[0,0,zStart] .+ translate)
     end
     @series begin
         label:= ""
-        partialcircle_3d(rStop,φStart,φStop,[0,0,zStop])
+        partialcircle_3d(rStop,φStart,φStop,[0,0,zStop] .+ translate)
     end
     @series begin
         label:= ""
-        partialcircle_3d(rStart,φStart,φStop,[0,0,zStart])
+        partialcircle_3d(rStart,φStart,φStop,[0,0,zStart] .+ translate)
     end
     @series begin
         label:= ""
-        partialcircle_3d(rStart,φStart,φStop,[0,0,zStop])
+        partialcircle_3d(rStart,φStart,φStop,[0,0,zStop] .+ translate)
     end
     ## Vertical Lines
 
@@ -97,21 +99,21 @@ end
 # end
 
 @recipe function f(vol::SSD.Cone{T},n_aux_lines = 0) where T
-
+    ismissing(vol.translate) ? translate = [0.0,0.0,0.0] : translate = vol.translate
     @series begin
-        partialcircle_3d(vol.rStop1,vol.φStart,vol.φStop,[0,0,vol.zStart]+vol.translate)
+        partialcircle_3d(vol.rStop1,vol.φStart,vol.φStop,[0,0,vol.zStart]+translate)
     end
     @series begin
         label:= ""
-        partialcircle_3d(vol.rStop2,vol.φStart,vol.φStop,[0,0,vol.zStop]+vol.translate)
+        partialcircle_3d(vol.rStop2,vol.φStart,vol.φStop,[0,0,vol.zStop]+translate)
     end
     @series begin
         label:= ""
-        partialcircle_3d(vol.rStart1,vol.φStart,vol.φStop,[0,0,vol.zStart]+vol.translate)
+        partialcircle_3d(vol.rStart1,vol.φStart,vol.φStop,[0,0,vol.zStart]+translate)
     end
     @series begin
         label:= ""
-        partialcircle_3d(vol.rStart2,vol.φStart,vol.φStop,[0,0,vol.zStop]+vol.translate)
+        partialcircle_3d(vol.rStart2,vol.φStart,vol.φStop,[0,0,vol.zStop]+translate)
     end
 
     ## Vertical Lines
@@ -119,22 +121,22 @@ end
 
     @series begin
         label:= ""
-        line_3d(vol.rStart1,vol.rStart2,vol.φStart,vol.φStart,vol.zStart,vol.zStop, translate = vol.translate)
+        line_3d(vol.rStart1,vol.rStart2,vol.φStart,vol.φStart,vol.zStart,vol.zStop, translate = translate)
     end
 
     @series begin
         label:= ""
-        line_3d(vol.rStart1,vol.rStart2,vol.φStop,vol.φStop,vol.zStart,vol.zStop, translate = vol.translate)
+        line_3d(vol.rStart1,vol.rStart2,vol.φStop,vol.φStop,vol.zStart,vol.zStop, translate = translate)
     end
 
 
     @series begin
         label:= ""
-        line_3d(vol.rStop1,vol.rStop2,vol.φStart,vol.φStart,vol.zStart,vol.zStop, translate = vol.translate)
+        line_3d(vol.rStop1,vol.rStop2,vol.φStart,vol.φStart,vol.zStart,vol.zStop, translate = translate)
     end
     @series begin
         label:= ""
-        line_3d(vol.rStop1,vol.rStop2,vol.φStop,vol.φStop,vol.zStart,vol.zStop, translate = vol.translate)
+        line_3d(vol.rStop1,vol.rStop2,vol.φStop,vol.φStop,vol.zStart,vol.zStop, translate = translate)
     end
 
     ##Horizontal Lines
@@ -142,19 +144,19 @@ end
     if !isapprox((vol.φStop - vol.φStart)%2π , 0.0,atol=0.00001)
         @series begin
             label:= ""
-            line_3d(vol.rStart1,vol.rStop1,vol.φStart,vol.φStart,vol.zStart,vol.zStart, translate = vol.translate)
+            line_3d(vol.rStart1,vol.rStop1,vol.φStart,vol.φStart,vol.zStart,vol.zStart, translate = translate)
         end
         @series begin
             label:= ""
-            line_3d(vol.rStart1,vol.rStop1,vol.φStop,vol.φStop,vol.zStart,vol.zStart, translate = vol.translate)
+            line_3d(vol.rStart1,vol.rStop1,vol.φStop,vol.φStop,vol.zStart,vol.zStart, translate = translate)
         end
         @series begin
             label:= ""
-            line_3d(vol.rStart2,vol.rStop2,vol.φStart,vol.φStart,vol.zStop,vol.zStop, translate = vol.translate)
+            line_3d(vol.rStart2,vol.rStop2,vol.φStart,vol.φStart,vol.zStop,vol.zStop, translate = translate)
         end
         @series begin
             label:= ""
-            line_3d(vol.rStart2,vol.rStop2,vol.φStop,vol.φStop,vol.zStop,vol.zStop, translate = vol.translate)
+            line_3d(vol.rStart2,vol.rStop2,vol.φStop,vol.φStop,vol.zStop,vol.zStop, translate = translate)
         end
     end
 
