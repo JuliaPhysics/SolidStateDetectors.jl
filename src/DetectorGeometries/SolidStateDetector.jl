@@ -5,29 +5,16 @@ CS: Coordinate System: -> :Cartesian / :Cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     name::String  # optional
-    class::Symbol # optional
-
-    material_detector::NamedTuple
-    material_environment::NamedTuple
-    cyclic::T # optional
+    inputunits::Dict{String,Unitful.Units}
+    world::AbstractVolumePrimitive
+    grid_type::Symbol
     mirror_symmetry_φ::Bool # optional
+    cyclic::T
+    medium::NamedTuple
 
-    geometry_unit::Unitful.Units
-    geometry_unit_factor::Real # optional, geometry_unit is enough
-    contacts_geometry_unit::Unitful.Units # optional, why not geometry_unit
-
-    world::AbstractGeometry{T}
-
-    crystal_geometry::AbstractGeometry{T}
-
-    bulk_type::Symbol
-    charge_density_model::AbstractChargeDensityModel{T}
-
-    contacts::Vector{AbstractContact{T}}
-
-    external_parts::Vector{AbstractContact{T}}
-    geometry_external_positive::Vector{AbstractGeometry{T}} # ?
-    geometry_external_negative::Vector{AbstractGeometry{T}} # ?
+    semiconductors::Vector{Semiconductor{T}}
+    contacts::Vector{Contact{T}}
+    passives::Vector{Passive{T}}
 
     SolidStateDetector{T, CS}() where {T <: SSDFloat, CS} = new{T, CS}()
 end
@@ -35,37 +22,100 @@ end
 get_precision_type(d::SolidStateDetector{T}) where {T} = T
 get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
 
-function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
-    c = if Symbol(config_file["class"]) == :CGD
-        SolidStateDetector{T, :Cartesian}()
+function construct_units(dict::Dict)::Dict{String,Unitful.Units}
+    result_dict::Dict{String,Unitful.Units} = Dict()
+    haskey(dict,"length") ? result_dict["length"] = unit_conversion[dict["length"]] : result_dict["length"] = u"mm"
+    haskey(dict,"angle") ? result_dict["angle"] = unit_conversion[dict["angle"]] : result_dict["angle"] = u"rad"
+    haskey(dict,"potential") ? result_dict["potential"] = unit_conversion[dict["potential"]] : result_dict["potential"] = u"V"
+    haskey(dict,"temperature") ? result_dict["temperature"] = unit_conversion[dict["temperature"]] : result_dict["temperature"] = u"K"
+    result_dict
+end
+
+function construct_world(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::Tuple{Symbol,AbstractVolumePrimitive}
+    if dict["coordinates"] == "Cylindrical"
+        vol = Tube{T}(
+        Interval(geom_round(ustrip(uconvert(u"m", T(0.0) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["dimensions"]["r"]) * inputunit_dict["length"])))),
+        Interval(geom_round(ustrip(uconvert(u"rad",T(0.0) * inputunit_dict["angle"] ))),geom_round(ustrip(uconvert(u"rad",T(360.0) * inputunit_dict["angle"]))) ),
+        Interval(geom_round(ustrip(uconvert(u"m", T(dict["dimensions"]["z"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["dimensions"]["z"]["to"]) * inputunit_dict["length"])))),
+        missing
+        )
+    elseif dict["coordinates"] == "Cartesian"
+        nothing
     else
-        SolidStateDetector{T, :Cylindrical}()
+        @warn "Gridtype must be 'Cylindrical' or 'Cartesian'"
     end
-    c.class = Symbol(config_file["class"])
+    return Symbol(dict["coordinates"]), vol
+end
+
+function construct_semiconductor(T, sc::Dict, inputunit_dict::Dict{String, Unitful.Units})
+    Semiconductor{T}(sc, inputunit_dict)
+end
+
+function construct_passive(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units})
+    Passive{T}(pass, inputunit_dict)
+end
+
+function construct_contact(T, contact::Dict, inputunit_dict::Dict{String, Unitful.Units})
+    Contact{T}(contact, inputunit_dict)
+end
+
+function construct_objects(T, objects::Vector, semiconductors, contacts, passives, inputunit_dict)::Nothing
+    for obj in objects
+        if obj["class"] == "Semiconductor"
+            push!(semiconductors, construct_semiconductor(T, obj, inputunit_dict))
+        elseif obj["class"] == "Contact"
+            push!(contacts, construct_contact(T, obj, inputunit_dict))
+        elseif obj["class"] == "Passive"
+            push!(passives, construct_passive(T, obj, inputunit_dict))
+        else
+            @warn "please spcify the calss to bei either a 'Semiconductor', a 'Contact', or 'Passive'"
+        end
+    end
+    nothing
+end
+
+function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
+    grid_type = Symbol(config_file["world"]["grid"]["coordinates"])
+    c = SolidStateDetector{T, grid_type}()
     c.name = config_file["name"]
-    if c.class != :CGD
-        c.cyclic = T(deg2rad(config_file["cyclic"]))
-        c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
-    end
+    c.inputunits = construct_units(config_file["world"]["units"])
+    c.grid_type, c.world = construct_world(T, config_file["world"]["grid"], c.inputunits)
+    c.medium = material_properties[materials[config_file["world"]["medium"]]]
+    c.semiconductors, c.contacts, c.passives = [], [], []
+    c.cyclic = geom_round(T(ustrip(uconvert(u"rad",config_file["world"]["grid"]["symmetries"]["periodic"]["phi"] * c.inputunits["angle"]))))
+    c.mirror_symmetry_φ = false
+    construct_objects(T, config_file["world"]["objects"], c.semiconductors, c.contacts, c.passives, c.inputunits)
 
-    c.material_environment = material_properties[materials[config_file["geometry"]["world"]["material"]]]
-    c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
-
-    c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
-    c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[2][1]
-
-    haskey(config_file["geometry"],"external") ? c.external_parts = Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]] : c.external_parts = []
-
-    c.crystal_geometry , geometry_positive, geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"], c.geometry_unit)
-
-    c.bulk_type = bulk_types[config_file["bulk_type"]]
-
-    c.charge_density_model = ChargeDensityModel(T, config_file["charge_density_model"])
-
-    c.contacts_geometry_unit = unit_conversion[config_file["contacts"]["unit"]]
-    haskey(config_file["contacts"], "p") ? p_contacts = Contact{T, :P}[ Contact{T, :P}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["p"] ] : nothing
-    haskey(config_file["contacts"], "n") ? n_contacts = Contact{T, :N}[ Contact{T, :N}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["n"] ] : nothing
-    c.contacts = vcat(p_contacts, n_contacts)
+    # c = if Symbol(config_file["class"]) == :CGD
+    #     SolidStateDetector{T, :Cartesian}()
+    # else
+    #     SolidStateDetector{T, :Cylindrical}()
+    # end
+    # c.class = Symbol(config_file["class"])
+    # c.name = config_file["name"]
+    # if c.class != :CGD
+    #     c.cyclic = T(deg2rad(config_file["cyclic"]))
+    #     c.mirror_symmetry_φ = config_file["mirror_symmetry_phi"] == "true"
+    # end
+    #
+    # c.material_environment = material_properties[materials[config_file["geometry"]["world"]["material"]]]
+    # c.material_detector = material_properties[materials[config_file["geometry"]["crystal"]["material"]]]
+    #
+    # c.geometry_unit = unit_conversion[config_file["geometry"]["unit"]]
+    # c.world = Geometry(T, config_file["geometry"]["world"]["geometry"], c.geometry_unit)[2][1]
+    #
+    # haskey(config_file["geometry"],"external") ? c.external_parts = Contact{T,:E}[ Contact{T,:E}( ep_dict, c.geometry_unit) for ep_dict in config_file["geometry"]["external"]] : c.external_parts = []
+    #
+    # c.crystal_geometry , geometry_positive, geometry_negative = Geometry(T, config_file["geometry"]["crystal"]["geometry"], c.geometry_unit)
+    #
+    # c.bulk_type = bulk_types[config_file["bulk_type"]]
+    #
+    # c.charge_density_model = ChargeDensityModel(T, config_file["charge_density_model"])
+    #
+    # c.contacts_geometry_unit = unit_conversion[config_file["contacts"]["unit"]]
+    # haskey(config_file["contacts"], "p") ? p_contacts = Contact{T, :P}[ Contact{T, :P}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["p"] ] : nothing
+    # haskey(config_file["contacts"], "n") ? n_contacts = Contact{T, :N}[ Contact{T, :N}( contact_dict, c.geometry_unit ) for contact_dict in config_file["contacts"]["n"] ] : nothing
+    # c.contacts = vcat(p_contacts, n_contacts)
 
     return c
 end
@@ -93,20 +143,24 @@ function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::B
             return true
         end
     end
-    if point in c.crystal_geometry
-        return true
-    else
-        return false
+    for sc in c.semiconductors
+        if point in sc
+            return true
+        end
     end
+    return false
 end
 
 function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
     println("________"*d.name*"________\n")
-    println("Class: ",d.class)
+    # println("Class: ",d.class)
     println("---General Properties---")
-    println("Detector Material: \t $(d.material_detector.name)")
-    println("Environment Material: \t $(d.material_environment.name)")
-    println("Bulk type: \t\t $(d.bulk_type)")
+    # for d in semiconductors
+    #     println("Detector Material: \t $(d.material_detector.name)")
+    #     println("Environment Material: \t $(d.material_environment.name)")
+    #     println("Bulk type: \t\t $(d.bulk_type)")
+    # end
+
     # println("Core Bias Voltage: \t $(d.segment_bias_voltages[1]) V")
     # println("Mantle Bias Voltage: \t $(d.segment_bias_voltages[2]) V\n")
 end

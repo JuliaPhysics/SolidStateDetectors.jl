@@ -307,7 +307,7 @@ end
 
 @recipe function f(contact::AbstractContact{T}) where T
     c-->:orange
-    for (i,g) in enumerate(sort!(vcat(contact.geometry_positive, contact.geometry_negative)))
+    for (i,g) in enumerate(vcat(contact.geometry_positive, contact.geometry_negative))
         @series begin
             i==1 ? label --> "$(contact.id)" : label := ""
             g
@@ -377,8 +377,8 @@ end
 end
 
 @recipe function f(c,a::Val{:segBEGe}, coloring = [])
-    isempty(coloring) ? coloring = [:red, :orange, :grey, :purple,:blue] : nothing
-    labeling = ["Seg. 1", "Seg. 2", "Seg. 3", "Seg. 4","Core"]
+    isempty(coloring) ? coloring = [:blue, :red, :orange, :grey, :purple] : nothing
+    labeling = [ "Core", "Seg. 1", "Seg. 2", "Seg. 3", "Seg. 4"]
     for (ic, contact) in enumerate(c.contacts)
         @series begin
             color --> coloring[ic]
@@ -388,6 +388,19 @@ end
     end
 end
 
+@recipe function f(geometry::AbstractGeometry)
+    pos, neg = get_decomposed_volumes(geometry)
+    for g in pos
+        @series begin
+            g
+        end
+    end
+end
+@recipe function f(object::AbstractObject)
+    @series begin
+        object.geometry
+    end
+end
 
 ## 2D from Felix
 

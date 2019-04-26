@@ -1,5 +1,4 @@
-struct Cone{T} <: AbstractGeometry{T, 3} ## Only upright Cones at the moment, Convention: counterclockwise \alpha \beta γ; γ is the 90 deg angle,
-    hierarchy::Int
+struct Cone{T} <: AbstractVolumePrimitive{T, 3} ## Only upright Cones at the moment, Convention: counterclockwise \alpha \beta γ; γ is the 90 deg angle,
     rStart1::T
     rStop1::T
     rStart2::T
@@ -8,18 +7,13 @@ struct Cone{T} <: AbstractGeometry{T, 3} ## Only upright Cones at the moment, Co
     φStop::T
     zStart::T
     zStop::T
-
-    translate::SVector{3,T}
+    translate::Union{CartesianVector{T},Missing}
     rotate::SMatrix{3,3,T}
-    # α1::T
-    # α2::T
-    # α::T  #Convention: counterclockwise α β γ; γ is the 90 deg angle
-    # β::T
 end
 
 
 
-function Cone{T}(hierarchy::Int, rStart1::T, rStop1::T, rStart2::T, rStop2::T, φStart::T, φStop::T, zStart::T, zStop::T, translate::SVector{3,T}, rotX::T, rotY::T, rotZ::T) where {T}
+function Cone{T}( rStart1::T, rStop1::T, rStart2::T, rStop2::T, φStart::T, φStop::T, zStart::T, zStop::T, translate::Union{CartesianVector{T},Missing}, rotX::T, rotY::T, rotZ::T) where {T}
     rotationMatrix::SMatrix{3,3,T} = SMatrix{3,3,T}([1 0 0;
                                                     0 cos(rotX) -sin(rotX);
                                                     0 sin(rotX) cos(rotX)]) *
@@ -30,7 +24,7 @@ function Cone{T}(hierarchy::Int, rStart1::T, rStop1::T, rStart2::T, rStop2::T, �
                                                     sin(rotZ) cos(rotZ) 0;
                                                     0 0 1])
 
-    Cone{T}(hierarchy, rStart1, rStop1, rStart2, rStop2, φStart, φStop, zStart, zStop, translate, rotationMatrix)
+    Cone{T}(rStart1, rStop1, rStart2, rStop2, φStart, φStop, zStart, zStop, translate, rotationMatrix)
 end
 
 function in(point::CylindricalPoint{T}, cone::Cone{T}) where T
@@ -59,42 +53,66 @@ function in(point::CartesianPoint{T}, cone::Cone{T}) where T
     point in cone
 end
 
-function get_diagonal_r_from_z(cone::Cone{T}, z::T) where T
-    if cone.orientation == :top_right
-        r = tan(cone.β)*(z-cone.z_interval.left)
-        return geom_round(T(cone.r_interval.right - r))
-    elseif cone.orientation == :top_left
-        r = tan(cone.α)*(z-cone.z_interval.left)
-        return geom_round(T(cone.r_interval.left + r))
-    elseif cone.orientation == :bottom_right
-        r = tan(cone.α)*(z-cone.z_interval.left)
-        return geom_round(T(cone.r_interval.left + r))
-    elseif cone.orientation == :bottom_left
-        r =  tan(cone.β)*(cone.z_interval.right -z)
-        return geom_round(T(cone.r_interval.left + r))
-    end
-end
+# function get_diagonal_r_from_z(cone::Cone{T}, z::T) where T
+#     if cone.orientation == :top_right
+#         r = tan(cone.β)*(z-cone.z_interval.left)
+#         return geom_round(T(cone.r_interval.right - r))
+#     elseif cone.orientation == :top_left
+#         r = tan(cone.α)*(z-cone.z_interval.left)
+#         return geom_round(T(cone.r_interval.left + r))
+#     elseif cone.orientation == :bottom_right
+#         r = tan(cone.α)*(z-cone.z_interval.left)
+#         return geom_round(T(cone.r_interval.left + r))
+#     elseif cone.orientation == :bottom_left
+#         r =  tan(cone.β)*(cone.z_interval.right -z)
+#         return geom_round(T(cone.r_interval.left + r))
+#     end
+# end
 
-function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit::Unitful.Units)::Cone{T} where {T <: SSDFloat}
-    haskey(dict, "hierarchy") ? h::Int = dict["hierarchy"] : h = 1
-    haskey(dict, "translate") ? translate::SVector{3,T} = dict["translate"] : translate = SVector{3,T}(0,0,0)
+function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit_dict::Dict{String,Unitful.Units})::Cone{T} where {T <: SSDFloat}
+
     haskey(dict, "rotX") ? rotX::T = deg2rad(dict["rotX"]) : rotX = T(0.0)
     haskey(dict, "rotY") ? rotY::T = deg2rad(dict["rotY"]) : rotY = T(0.0)
     haskey(dict, "rotZ") ? rotZ::T = deg2rad(dict["rotZ"]) : rotZ = T(0.0)
-    return Cone{T}(h,
-        geom_round(ustrip(uconvert(u"m", T(dict["rStart1"]) * inputunit ))),
-        geom_round(ustrip(uconvert(u"m", T(dict["rStop1"]) * inputunit))),
-        geom_round(ustrip(uconvert(u"m", T(dict["rStart2"]) * inputunit ))),
-        geom_round(ustrip(uconvert(u"m", T(dict["rStop2"]) * inputunit))),
-        geom_round(T(deg2rad(dict["phiStart"]))),
-        geom_round(T(deg2rad(dict["phiStop"]))),
-        geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))),
-        geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))),
+
+    z_offset::T = 0.0
+
+    if haskey(dict, "translate")
+        translate = CartesianVector{T}( haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : 0.0,
+                                        haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : 0.0,
+                                        haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : 0.0)
+        if translate[1] == T(0.0) && translate[2] == T(0.0) && translate[3] == T(0.0)
+            translate = missing
+        elseif translate[1] == T(0.0) && translate[2] == T(0.0)
+            translate = missing
+            z_offset = geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] )))
+
+        end
+    else
+        translate = missing
+    end
+
+    if haskey(dict,"h")
+        zStart, zStop = z_offset, geom_round(z_offset + ustrip(uconvert(u"m", T(dict["h"]) * inputunit_dict["length"] )))
+    elseif haskey(dict,"z")
+        zStart, zStop = geom_round(z_offset + ustrip(uconvert(u"m", T(dict["z"]["from"]) * inputunit_dict["length"] ))), geom_round(z_offset + ustrip(uconvert(u"m", T(dict["z"]["to"]) * inputunit_dict["length"])))
+    end
+
+
+    return Cone{T}(
+        geom_round(ustrip(uconvert(u"m", T(dict["r"]["bottom"]["from"]) * inputunit_dict["length"] ))),
+        geom_round(ustrip(uconvert(u"m", T(dict["r"]["bottom"]["to"]) * inputunit_dict["length"]))),
+        geom_round(ustrip(uconvert(u"m", T(dict["r"]["top"]["from"]) * inputunit_dict["length"] ))),
+        geom_round(ustrip(uconvert(u"m", T(dict["r"]["top"]["to"]) * inputunit_dict["length"]))),
+        geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["from"]) * inputunit_dict["angle"])))),
+        geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["to"]) * inputunit_dict["angle"])))),
+        zStart,
+        zStop,
         translate, rotX, rotY, rotZ)
 end
 
-function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit::Unitful.Units)
-    return Cone{T}(dict, inputunit)
+function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
+    return Cone{T}(dict, inputunit_dict)
 end
 
 function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
@@ -108,7 +126,6 @@ end
 function get_important_points(c::Cone{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
     return T[c.zStart, c.zStop]
 end
-
 
 function sample(c::Cone{T}, stepsize::Vector{T}) where T
     samples = CylindricalPoint[]

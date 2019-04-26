@@ -1,53 +1,75 @@
-struct Tube{T} <: AbstractGeometry{T, 3} ## Only upright Tubes at the moment
-    org::CartesianPoint{T}
-    hierarchy::Int
-    polarity::Symbol
+struct Tube{T} <: AbstractVolumePrimitive{T, 3} ## Only upright Tubes at the moment
     r_interval::AbstractInterval{T}
     φ_interval::AbstractInterval{T}
     z_interval::AbstractInterval{T}
+    translate::Union{CartesianVector{T},Missing}
 end
 
-function Tube{T}(org::CartesianPoint{T}, hierarchy::Int, polarity::String, rStart::T,rStop::T,φStart::T,φStop::T,zStart::T,zStop::T) where {T}
-    pol = pols[polarity]
-    if pol == :neg
-        if deg2rad(φStop)%T(2π) == deg2rad(φStart)
-            Tube{T}(org, hierarchy, pol, OpenInterval{T}(rStart, rStop), ClosedInterval{T}(deg2rad(φStart) ,deg2rad(φStop)),OpenInterval{T}(zStart ,zStop))
-        else
-            Tube{T}(org, hierarchy, pol, OpenInterval{T}(rStart, rStop), OpenInterval{T}(deg2rad(φStart) ,deg2rad(φStop)),OpenInterval{T}(zStart ,zStop))
+function Tube{T}(hierarchy::Int, rStart::T,rStop::T,φStart::T,φStop::T,zStart::T,zStop::T,translate::Union{CartesianVector{T},Missing}=missing) where {T}
+    Tube{T}(hierarchy,ClosedInterval{T}(rStart, rStop), ClosedInterval{T}(deg2rad(φStart) ,deg2rad(φStop)),ClosedInterval{T}(zStart ,zStop), translate)
+end
+
+# function Tube{T}(
+#     hierarchy::Int,
+#     r_interval::AbstractInterval{T},
+#     φ_interval::AbstractInterval{T},
+#     z_interval::AbstractInterval{T},
+#     translate::Union{CartesianVector{T},Missing} = missing) where T
+#     return Tube{T}(hierarchy,r_interval.left, r_interval.right, φ_interval.left, φ_interval.right, z_interval.left, z_interval.right, translate)
+# end
+
+function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})::Tube{T} where {T <: SSDFloat}
+
+    z_offset::T = 0.0
+    if haskey(dict, "translate")
+        translate = CartesianVector{T}( haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : 0.0,
+                                        haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : 0.0,
+                                        haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : 0.0)
+        if translate[1] == T(0.0) && translate[2] == T(0.0) && translate[3] == T(0.0)
+            translate = missing
+        elseif translate[1] == T(0.0) && translate[2] == T(0.0)
+            translate = missing
+            z_offset = geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] )))
         end
     else
-        Tube{T}(org, hierarchy, pol, ClosedInterval{T}(rStart, rStop), ClosedInterval{T}(deg2rad(φStart) ,deg2rad(φStop)),ClosedInterval{T}(zStart ,zStop))
+        translate = missing
     end
-end
 
-function Tube{T}(hierarchy::Int, polarity::String, rStart::T,rStop::T,φStart::T,φStop::T,zStart::T,zStop::T) where {T}
-    Tube{T}(CartesianPoint{T}(0.0,0.0,0.0), hierarchy, polarity, rStart,rStop,φStart,φStop,zStart,zStop)
+    if haskey(dict,"h")
+         zStart, zStop = z_offset, geom_round(z_offset + ustrip(uconvert(u"m", T(dict["h"]) * inputunit_dict["length"] )))
+    elseif haskey(dict,"z")
+         zStart, zStop =  geom_round(z_offset + ustrip(uconvert(u"m", T(dict["z"]["from"]) * inputunit_dict["length"] ))),  geom_round( z_offset + ustrip(uconvert(u"m", T(dict["z"]["to"]) * inputunit_dict["length"])))
+    else
+        @warn "please specify a height of the Tube 'h'"
+    end
+    return Tube{T}(
+    Interval(geom_round(ustrip(uconvert(u"m", T(dict["r"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["r"]["to"]) * inputunit_dict["length"])))),
+    Interval(geom_round(T(deg2rad(dict["phi"]["from"]))), geom_round(T(deg2rad(dict["phi"]["to"])))),
+    Interval(zStart,zStop),
+    translate  )
 end
+# function Tube{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Tube{T} where {T <: SSDFloat}
+#     haskey(dict, "hierarchy") ? h = dict["hierarchy"] : h = 1 #DEPR
+#     if haskey(dict, "translate")
+#         translate = CartesianVector{T}[ haskey(dict["translate"],"x") ? dict["translate"]["x"] : 0.0,
+#                                         haskey(dict["translate"],"x") ? dict["translate"]["y"] : 0.0,
+#                                         haskey(dict["translate"],"x") ? dict["translate"]["z"] : 0.0]
+#     else
+#         translate = missing
+#     end
+#     return Tube{T}(h,
+#     Interval(geom_round(ustrip(uconvert(u"m", T(dict["rStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["rStop"]) * inputunit)))),
+#     Interval(geom_round(T(deg2rad(dict["phiStart"]))), geom_round(T(deg2rad(dict["phiStop"])))),
+#     Interval(geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit)))),
+#     translate  )
+# end
 
-function Tube{T}(
-    hierarchy::Int,
-    polarity::String,
-    r_interval::AbstractInterval{T},
-    φ_interval::AbstractInterval{T},
-    z_interval::AbstractInterval{T}) where T
-    return Tube{T}(hierarchy, polarity, r_interval.left, r_interval.right, φ_interval.left, φ_interval.right, z_interval.left, z_interval.right)
-end
-
-function Tube{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Tube{T} where {T <: SSDFloat}
-    haskey(dict, "hierarchy") ? h = dict["hierarchy"] : h = 1
-    haskey(dict, "pol") ? polarity = dict["pol"] : polarity = "positive"
-    return Tube{T}(h,
-    polarity,
-    Interval(geom_round(ustrip(uconvert(u"m", T(dict["rStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["rStop"]) * inputunit)))),
-    Interval(geom_round(T(dict["phiStart"])), geom_round(T(dict["phiStop"]))),
-    Interval(geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))))  )
-end
-
-function Geometry(T::DataType, t::Val{:Tube}, dict::Dict{Union{Any,String}, Any}, inputunit::Unitful.Units)
-    return Tube{T}(Dict{Any,Any}(dict), inputunit)
+function Geometry(T::DataType, t::Val{:Tube}, dict::Dict{Union{Any,String}, Any},inputunit_dict::Dict{String,Unitful.Units})
+    return Tube{T}(Dict{Any,Any}(dict), inputunit_dict)
 end
 
 function in(point::CartesianPoint{T}, tube::Tube{T}) where T
+    ismissing(tube.translate) ? nothing : point -= tube.translate
     point = convert(CylindricalPoint,point)
     if point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
         return true
@@ -56,6 +78,7 @@ function in(point::CartesianPoint{T}, tube::Tube{T}) where T
 end
 
 function in(point::CylindricalPoint{T}, tube::Tube{T}) where T
+    ismissing(tube.translate) ? nothing  : point = CylindricalPoint(CartesianPoint(point)-tube.translate)
     if point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
         return true
     end
@@ -94,5 +117,6 @@ function sample(c::Tube{T}, stepsize::Vector{T}) where T
             end
         end
     end
+    ismissing(c.translate) ? nothing : samples = map(x -> CylindricalPoint(CartesianPoint(x) + c.translate), samples)
     return samples
 end
