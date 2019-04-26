@@ -1,26 +1,26 @@
 abstract type AbstractSSDSetup{T <: SSDFloat} end
 
 mutable struct SSDSetup{T <: SSDFloat} <: AbstractSSDSetup{T}
-    detector::SolidStateDetector{T}
-    ρ::ChargeDensity{T}
-    ϵ::DielectricDistribution{T}
-    point_types::PointTypes{T}
-    electric_potential::ElectricPotential{T}  
-    weighting_potentials::Vector{Interpolations.Extrapolation{T,3,ITPT,IT,ET} where ET where IT where ITPT}
-    electric_field::ElectricField{T}
+    detector::Union{SolidStateDetector{T}, Missing}
+    ρ::Union{ChargeDensity{T}, Missing}
+    ϵ::Union{DielectricDistribution{T}, Missing}
+    point_types::Union{PointTypes{T}, Missing}
+    electric_potential::Union{ElectricPotential{T}, Missing}
+    weighting_potentials::Vector{Any}
+    electric_field::Union{ElectricField{T}, Missing}
 
-    charge_drift_model::AbstractChargeDriftModel{T}
+    charge_drift_model::Union{AbstractChargeDriftModel{T}, Missing}
 
-    interpolated_electron_drift_field
-    interpolated_hole_drift_field
+    interpolated_electron_drift_field::Any
+    interpolated_hole_drift_field::Any
 
-    SSDSetup{T}() where {T <: SSDFloat} = new{T}()
+    SSDSetup{T}() where {T <: SSDFloat} = new{T}(missing, missing, missing, missing, missing, [missing], missing, missing, missing, missing )
 end
 
 function SSDSetup(detector::SolidStateDetector{T})::SSDSetup{T} where {T <: SSDFloat}
     setup::SSDSetup{T} = SSDSetup{T}()
     setup.detector = detector
-    setup.weighting_potentials = Vector{Interpolations.Extrapolation{T,3,ITPT,IT,ET} where ET where IT where ITPT}(undef, length(setup.detector.contacts))
+    setup.weighting_potentials = Missing[ missing for i in 1:length(setup.detector.contacts)]
     return setup
 end
 
@@ -111,11 +111,11 @@ function apply_charge_drift_model!(setup::SSDSetup{T})::Nothing where {T <: SSDF
     nothing
 end
 
-@inline function drift_charges( setup::SSDSetup{T}, starting_positions::Vector{CartesianPoint{T}}, 
-                                Δt::T = T(1f-9), n_steps::Int = 2000 )::Vector{DriftPath{T}} where {T <: SSDFloat}
-    return drift_charges(   setup.detector, setup.electric_potential.grid, starting_positions, 
-                            setup.interpolated_electron_drift_field, setup.interpolated_hole_drift_field,
-                            Δt = Δt, n_steps = n_steps)::Vector{DriftPath{T}}
+function drift_charges( setup::SSDSetup{T}, starting_positions::Vector{CartesianPoint{T}}; 
+                        Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{DriftPath{T}} where {T <: SSDFloat}
+    return _drift_charges(   setup.detector, setup.electric_potential.grid, starting_positions, 
+                             setup.interpolated_electron_drift_field, setup.interpolated_hole_drift_field,
+                             Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{DriftPath{T}}
 end
 
 # User friendly functions for looking at single events. They are not ment to be used for large sets of events
@@ -140,4 +140,64 @@ function get_signals(setup::SSDSetup{T}, drift_paths::Vector{DriftPath{T}}, ener
         signals[:, c.id] = signal
     end
     return signals
+end
+
+
+
+function generate_charge_signals!(
+    contact_charge_signals::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
+    setup::SSDSetup{T},
+    hit_pos::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
+    hit_edep::AbstractVector{<:AbstractVector{<:RealQuantity}},
+    n_steps::Integer,
+    Δt::RealQuantity;
+    verbose::Bool = true
+)::Nothing where {T <: SSDFloat}
+    E_ionisation = setup.detector.material_detector.E_ionisation
+
+    unitless_delta_t::T = to_internal_units(u"s", Δt)
+    S = Val(get_coordinate_system(setup.detector))
+    n_contacts::Int = length(setup.detector.contacts)
+    
+    prog = Progress(length(hit_pos), 0.005, "Generating charge signals...")
+    @inbounds for i_evt in eachindex(hit_pos)
+        startpos_vec::Vector{CartesianPoint{T}} = CartesianPoint{T}[ CartesianPoint{T}( to_internal_units(u"m", hit_pos[i_evt][idep]) ) for idep in eachindex(hit_pos[i_evt]) ]
+        edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
+        n_charges_vec::Vector{T} = edep_vec / ustrip(uconvert(u"eV", E_ionisation))
+        
+        drift_paths::Vector{DriftPath{T}} = drift_charges( setup, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
+
+        for contact in setup.detector.contacts
+            signal::Vector{T} = zeros(T, n_steps)
+            add_signal!(signal, drift_paths, n_charges_vec, setup.weighting_potentials[contact.id], S)
+            contact_charge_signals[contact.id][i_evt] = signal
+        end
+        ProgressMeter.next!(prog)
+    end
+    ProgressMeter.finish!(prog)
+    nothing
+end
+
+
+function generate_charge_signals(   setup::SSDSetup{T}, 
+                                    events::DetectorHitEvents;
+                                    n_steps::Integer = 1000,
+                                    Δt::RealQuantity = 5u"ns", 
+                                    verbose::Bool = true
+                                ) where {T <: SSDFloat}    
+    hit_pos = events.pos
+    hit_edep = events.edep
+
+    # contact_charge_signals = [nestedview(Array{T, 2}(undef, n_steps, size(hit_pos, 1))) for i in eachindex(setup.detector.contacts)]
+    contact_charge_signals = [nestedview(zeros(T, n_steps, size(hit_pos, 1))) for i in eachindex(setup.detector.contacts)]
+
+    generate_charge_signals!(
+        contact_charge_signals, 
+        setup,
+        hit_pos, hit_edep,
+        n_steps, Δt,
+        verbose = verbose
+    )
+
+    contact_charge_signals
 end

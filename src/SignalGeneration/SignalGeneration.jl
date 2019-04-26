@@ -25,9 +25,6 @@ function add_signal!(signal::Vector{T}, paths::Vector{DriftPath{T}}, charges::Ve
     nothing
 end
 
-
-
-
 function signal_contributions_from_drift_paths(drift_paths, energy_depositions::AbstractVector{T}, Wpot_interp::Interpolations.Extrapolation{T,3}) where T<:Real
     charge_signal_e = zeros(T,size(drift_paths[1].e_path,1))
     charge_signal_h = zeros(T,size(drift_paths[1].e_path,1))
@@ -41,5 +38,4 @@ function signal_contributions_from_drift_paths(drift_paths, energy_depositions::
     end
     return charge_signal_e .* -1, charge_signal_h
 end
-
 @deprecate signal_contributions_from_drift_paths(drift_paths, energy_depositions::AbstractVector{T}, Wpot_interp::Interpolations.Extrapolation{T,3}) where {T <: SSDFloat} get_signal(dp::DriftPath{T}, energy::T, wp::Interpolations.Extrapolation{T,3,ITPT,IT,ET} where ET where IT where ITPT) where {T <: SSDFloat}

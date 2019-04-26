@@ -21,3 +21,20 @@
 #         return true, int_p
 #     end
 # end
+
+# ToDo: use AbstractCoordinatePoint/Vector....
+struct Plane
+    reference_point::AbstractArray
+    n⃗::AbstractArray
+
+    function Plane(n⃗, reference_point)
+        return new(n⃗, reference_point)
+    end
+end
+
+function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
+    # solve (v⃗+λ*n⃗) ⋅ n⃗ = 0
+    # n⃗ = n⃗ ./ norm(n⃗)
+    λ = -1 * dot(v⃗, n⃗) / dot(n⃗, n⃗)
+    SVector{3,eltype(v⃗)}(v⃗[1] + λ * n⃗[1], v⃗[2] + λ * n⃗[2], v⃗[3] + λ * n⃗[3])
+end
