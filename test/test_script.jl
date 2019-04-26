@@ -30,9 +30,9 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
 
     det = SolidStateDetector{T}(SSD_examples[key])
     S = SSD.get_coordinate_system(det)
-    
-    setup = Simulation(det);
-   
+
+    setup = SSD.Simulation(det);
+
     SSD.apply_initial_state!(setup)
     plot(setup.electric_potential)
     savefig(joinpath(outputdir, "$(key)_0_init_setup"))
@@ -48,7 +48,7 @@ for key in [:InvertedCoax, :Coax, :BEGe, :CGD]
 
     n_contacts = length(setup.detector.contacts)
     for contact in setup.detector.contacts
-        SSD.calculate_weighting_potential!(setup, contact.id, max_refinements = key == :Coax ? 0 : 1)
+        SSD.calculate_weighting_potential!(setup, contact.id, max_refinements = key == :Coax ? 0 : 2)
     end
 
     plot( # does not work for :Cartesian yet

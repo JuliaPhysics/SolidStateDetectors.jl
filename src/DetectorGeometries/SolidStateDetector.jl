@@ -40,7 +40,28 @@ function construct_world(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Uni
         missing
         )
     elseif dict["coordinates"] == "Cartesian"
-        nothing
+        # if typeof(dict["dimensions"]["x"]) <: SSDFloat
+        #     xStart, xStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["x"]) * inputunit_dict["length"])))
+        # else
+        #     xStart, xStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["x"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["x"]["to"]) * inputunit_dict["length"])))
+        # end
+        # if typeof(dict["dimensions"]["y"]) <: SSDFloat
+        #     yStart, yStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["y"]) * inputunit_dict["length"])))
+        # else
+        #     yStart, yStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["y"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["y"]["to"]) * inputunit_dict["length"])))
+        # end
+        # if typeof(dict["dimensions"]["z"]) <: SSDFloat
+        #     zStart, zStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["z"]) * inputunit_dict["length"])))
+        # else
+        #     zStart, zStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["z"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["dimensions"]["z"]["to"]) * inputunit_dict["length"])))
+        # end
+        # translate = missing
+        # vol= CartesianBox3D{T}(
+        #     (xStart, xStop),
+        #     (yStart, yStop),
+        #     (zStart, zStop),
+        #     translate )
+        vol = CartesianBox3D{T}(dict["dimensions"], inputunit_dict)
     else
         @warn "Gridtype must be 'Cylindrical' or 'Cartesian'"
     end
@@ -173,7 +194,7 @@ function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDF
 end
 
 
-# ToDo: Test it 
+# ToDo: Test it
 function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = 0.0001) where T
     delta = T(min_dist_from_boundary)
     n_filled::Int = 0

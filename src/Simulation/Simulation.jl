@@ -30,7 +30,7 @@ end
 
 
 # function Simulation(nt::NamedTuple)
-    
+
 # end
 
 # Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -62,7 +62,7 @@ end
 # Functions
 
 function apply_initial_state!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
-    init_sim = SolidStateDetectors.PotentialSimulationsim(sim.detector);
+    init_sim = SolidStateDetectors.PotentialSimulationSetup(sim.detector);
 
     sim.ρ = ChargeDensity(init_sim.ρ, init_sim.grid)
     sim.ϵ = DielectricDistribution(init_sim.ϵ, init_sim.grid)
@@ -145,9 +145,9 @@ function apply_charge_drift_model!(sim::Simulation{T})::Nothing where {T <: SSDF
     nothing
 end
 
-function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}}; 
+function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
                         Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{DriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(   sim.detector, sim.electric_potential.grid, starting_positions, 
+    return _drift_charges(   sim.detector, sim.electric_potential.grid, starting_positions,
                              sim.interpolated_electron_drift_field, sim.interpolated_hole_drift_field,
                              Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{DriftPath{T}}
 end
@@ -192,13 +192,13 @@ function generate_charge_signals!(
     unitless_delta_t::T = to_internal_units(u"s", Δt)
     S = Val(get_coordinate_system(sim.detector))
     n_contacts::Int = length(sim.detector.contacts)
-    
+
     prog = Progress(length(hit_pos), 0.005, "Generating charge signals...")
     @inbounds for i_evt in eachindex(hit_pos)
         startpos_vec::Vector{CartesianPoint{T}} = CartesianPoint{T}[ CartesianPoint{T}( to_internal_units(u"m", hit_pos[i_evt][idep]) ) for idep in eachindex(hit_pos[i_evt]) ]
         edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
         n_charges_vec::Vector{T} = edep_vec / ustrip(uconvert(u"eV", E_ionisation))
-        
+
         drift_paths::Vector{DriftPath{T}} = drift_charges( sim, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
 
         for contact in sim.detector.contacts
@@ -213,12 +213,12 @@ function generate_charge_signals!(
 end
 
 
-function generate_charge_signals(   sim::Simulation{T}, 
+function generate_charge_signals(   sim::Simulation{T},
                                     events::DetectorHitEvents;
                                     n_steps::Integer = 1000,
-                                    Δt::RealQuantity = 5u"ns", 
+                                    Δt::RealQuantity = 5u"ns",
                                     verbose::Bool = true
-                                ) where {T <: SSDFloat}    
+                                ) where {T <: SSDFloat}
     hit_pos = events.pos
     hit_edep = events.edep
 
@@ -226,7 +226,7 @@ function generate_charge_signals(   sim::Simulation{T},
     contact_charge_signals = [nestedview(zeros(T, n_steps, size(hit_pos, 1))) for i in eachindex(sim.detector.contacts)]
 
     generate_charge_signals!(
-        contact_charge_signals, 
+        contact_charge_signals,
         sim,
         hit_pos, hit_edep,
         n_steps, Δt,
@@ -235,4 +235,3 @@ function generate_charge_signals(   sim::Simulation{T},
 
     contact_charge_signals
 end
-
