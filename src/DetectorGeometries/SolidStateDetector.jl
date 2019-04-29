@@ -112,7 +112,7 @@ function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDF
 end
 
 
-# ToDo: Test it 
+# ToDo: Test it
 function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = 0.0001) where T
     delta = T(min_dist_from_boundary)
     n_filled::Int = 0

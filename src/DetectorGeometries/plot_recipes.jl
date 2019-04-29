@@ -366,7 +366,7 @@ end
 end
 @recipe function f(c,a::Val{:coax})
     labeling = ["" for i in 1:19]
-    coloring = vcat([:orange for i in 1:18], [:blue])
+    coloring = vcat([:blue], [:orange for i in 1:18])
     for (ic, contact) in enumerate(c.contacts)
         @series begin
             color --> coloring[ic]

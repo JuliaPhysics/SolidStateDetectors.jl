@@ -84,10 +84,10 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :Cartesian}, grid
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-        detector_material_ϵ_r::T = ssd.material_detector.ϵ_r
-        environment_material_ϵ_r::T = ssd.material_environment.ϵ_r
+        # detector_material_ϵ_r::T = ssd.material_detector.ϵ_r
+        # environment_material_ϵ_r::T = ssd.material_environment.ϵ_r
 
-        bulk_is_ptype::Bool = ssd.bulk_type == :ptype ? true : false
+        bulk_is_ptype::Bool = ssd.semiconductors[1].bulk_type == :ptype ? true : false
         contact_bias_voltages::Vector{T} = T[contact.potential for contact in ssd.contacts]
         minimum_applied_potential::T = minimum(contact_bias_voltages)
         maximum_applied_potential::T = maximum(contact_bias_voltages)

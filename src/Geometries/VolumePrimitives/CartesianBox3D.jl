@@ -3,11 +3,11 @@
 
 Very simple rectengular box in cartesian coordinates.
 """
-struct CartesianBox3D{T} <: AbstractGeometry{T, 3} # should be immutable, mutable right now just for testing.
-    hierarchy::T
+struct CartesianBox3D{T} <: AbstractVolumePrimitive{T, 3} # should be immutable, mutable right now just for testing.
     x::Tuple{T, T}
     y::Tuple{T, T}
     z::Tuple{T, T}
+    translate::Union{CartesianVector{T}, Missing}
 end
 
 function in(pt::CartesianPoint{T}, g::CartesianBox3D{T})::Bool where {T}
@@ -16,17 +16,42 @@ end
 
 @inline in(pt::CylindricalPoint, g::CartesianBox3D)::Bool = in(CartesianPoint(pt), g)
 
-function CartesianBox3D{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::CartesianBox3D{T} where {T <: SSDFloat}
-    haskey(dict, "hierarchy") ? h::Int = dict["hierarchy"] : h = 1
+function CartesianBox3D{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, inputunit_dict::Dict{String,Unitful.Units})::CartesianBox3D{T} where {T <: SSDFloat}
+
+    if haskey(dict, "translate")
+        translate = CartesianVector{T}(
+            haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : 0.0,
+            haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : 0.0,
+            haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : 0.0)
+    else
+        translate = CartesianVector{T}(0.0, 0.0, 0.0)
+    end
+
+    if typeof(dict["x"]) <: SSDFloat
+        xStart, xStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["x"]) * inputunit_dict["length"])))
+    else
+        xStart, xStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["x"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["x"]["to"]) * inputunit_dict["length"])))
+    end
+    if typeof(dict["y"]) <: SSDFloat
+        yStart, yStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["y"]) * inputunit_dict["length"])))
+    else
+        yStart, yStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["y"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["y"]["to"]) * inputunit_dict["length"])))
+    end
+    if typeof(dict["z"]) <: SSDFloat
+        zStart, zStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["z"]) * inputunit_dict["length"])))
+    else
+        zStart, zStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["z"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["z"]["to"]) * inputunit_dict["length"])))
+    end
+    translate = missing
     return CartesianBox3D{T}(
-        h,
-        (geom_round(ustrip(uconvert(u"m", T(dict["xStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["xStop"]) * inputunit)))),
-        (geom_round(ustrip(uconvert(u"m", T(dict["yStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["yStop"]) * inputunit)))),
-        (geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit))))  )
+        (xStart, xStop),
+        (yStart, yStop),
+        (zStart, zStop),
+        translate )
 end
 
-function Geometry(T::DataType, t::Val{:CartesianBox3D}, dict::Dict{Any, Any}, inputunit::Unitful.Units)
-    return CartesianBox3D{T}(dict, inputunit)
+function Geometry(T::DataType, t::Val{:CartesianBox3D}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
+    return CartesianBox3D{T}(dict, inputunit_dict)
 end
 
 function get_important_points(g::CartesianBox3D{T})::NTuple{3, Vector{T}} where {T <: SSDFloat}
