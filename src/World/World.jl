@@ -11,7 +11,8 @@ end
 
 const boundary_condition_mapping = Dict{String, Symbol}(
     "r0" => :r0,
-    "Inf" => :infinite,
+    "inf" => :infinite,
+    "infinite" => :infinite,
     "nothing" => :nothing,
     "reflecting" => :reflecting,
     "periodic" => :periodic,
@@ -27,12 +28,12 @@ end
 
 
 function World(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::World
-    if dict["coordinates"] == "Cylindrical"
+    if dict["coordinates"] == "cylindrical"
         CylindricalWorld(T, dict["axes"], inputunit_dict)
-    elseif dict["coordinates"] == "Cartesian"
+    elseif dict["coordinates"] == "cartesian"
         CartesianWorld(T, dict["axes"], inputunit_dict)
     else
-        error("Gridtype must be 'Cylindrical' or 'Cartesian'")
+        error("Gridtype must be \"cylindrical\" or \"cartesian\"")
     end
 end
 
@@ -113,7 +114,7 @@ function CylindricalWorld(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Un
     r_int = get_r_SSDInterval(T, dict["r"], inputunit_dict)
     φ_int = get_φ_SSDInterval(T, dict, inputunit_dict)
     z_int = get_cartesian_SSDInterval(T, dict["z"], inputunit_dict)
-    return World{T, 3, :Cylindrical}( r_int, φ_int, z_int )
+    return World{T, 3, :cylindrical}( r_int, φ_int, z_int )
 end
 
 
@@ -121,6 +122,6 @@ function CartesianWorld(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Unit
     x_int = get_cartesian_SSDInterval(T, dict["x"], inputunit_dict)
     y_int = get_cartesian_SSDInterval(T, dict["y"], inputunit_dict)
     z_int = get_cartesian_SSDInterval(T, dict["z"], inputunit_dict)
-    return World{T, 3, :Cartesian}( x_int, y_int, z_int )
+    return World{T, 3, :cartesian}( x_int, y_int, z_int )
 end
 

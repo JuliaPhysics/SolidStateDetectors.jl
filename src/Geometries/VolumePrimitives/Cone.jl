@@ -111,7 +111,7 @@ function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit_dict::D
         translate, rotX, rotY, rotZ)
 end
 
-function Geometry(T::DataType, t::Val{:Cone}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
+function Geometry(T::DataType, t::Val{:cone}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
     return Cone{T}(dict, inputunit_dict)
 end
 

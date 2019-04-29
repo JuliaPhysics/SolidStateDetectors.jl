@@ -7,8 +7,10 @@ const ϵ0  = Float64(8.8541878176e-12)
 const material_properties = Dict{Symbol, NamedTuple}()
 
 materials = Dict( "HPGe" => :HPGe,
+                  "vacuum" => :Vacuum,
                   "Vacuum" => :Vacuum,
                   "Copper" => :Co,
+                  "copper" => :Co,
                   "Al"  => :Al
 )
 

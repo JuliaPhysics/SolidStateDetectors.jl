@@ -49,7 +49,7 @@ end
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
 all depleted cells.
 """
-function get_active_volume(pts::PointTypes{T, 3, :Cylindrical}) where {T}
+function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
     active_volume::T = 0
 
     only_2d::Bool = length(pts[:φ]) == 1
@@ -120,7 +120,7 @@ end
 
 Base.convert(T::Type{PointTypes}, x::NamedTuple) = T(x)
 
-function NamedTuple(pts::PointTypes{T, 3, :Cylindrical}) where {T}
+function NamedTuple(pts::PointTypes{T, 3, :cylindrical}) where {T}
     return (
         grid = NamedTuple(pts.grid),
         values = pts.data,
@@ -132,11 +132,11 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
 
 
 
-@recipe function f( pts::PointTypes{T, 3, :Cylindrical};
+@recipe function f( pts::PointTypes{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cylindrical} = pts.grid
+    g::Grid{T, 3, :cylindrical} = pts.grid
    
     seriescolor --> :viridis
     st --> :heatmap
@@ -190,11 +190,11 @@ end
 
 
 
-@recipe function f( pts::PointTypes{T, 3, :Cartesian};
+@recipe function f( pts::PointTypes{T, 3, :cartesian};
                     x = missing,
                     y = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cartesian} = pts.grid
+    g::Grid{T, 3, :cartesian} = pts.grid
    
     seriescolor --> :viridis
     st --> :heatmap

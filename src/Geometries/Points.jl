@@ -2,13 +2,13 @@
 
 abstract type AbstractCoordinatePoint{T, N, S} <: StaticArrays.FieldVector{N, T} end
 
-struct CartesianPoint{ T <: RealQuantity } <: AbstractCoordinatePoint{T, 3, :Cartesian}
+struct CartesianPoint{ T <: RealQuantity } <: AbstractCoordinatePoint{T, 3, :cartesian}
     x::T
     y::T
     z::T
 end
 
-struct CylindricalPoint{ T <: RealQuantity } <: AbstractCoordinatePoint{T, 3, :Cylindrical}
+struct CylindricalPoint{ T <: RealQuantity } <: AbstractCoordinatePoint{T, 3, :cylindrical}
     r::T
     φ::T # in radian
     z::T

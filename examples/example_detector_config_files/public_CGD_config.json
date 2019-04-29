@@ -1,6 +1,6 @@
 {
 	"name":"ExampleCuboid",
-	"world": {
+	"setup": {
         "units": {
             "length": "mm",
             "angle": "deg",
@@ -8,52 +8,41 @@
             "temperature": "K"
         },
         "grid": {
-            "coordinates": "Cartesian",
-            "dimensions": {
-                "x":{
-					"from": -15.0,
-					"to": 15.0
+			"coordinates": "cartesian",
+			"axes": {
+				"x": {
+					"from": -5,
+					"to": 15,
+					"boundaries": "inf"
 				},
-                "y": {
-                    "from": -15.0,
-                    "to":    15.0
-                },
+				"y": {
+					"from": -5,
+					"to": 15,
+					"boundaries": "inf"
+				},
 				"z": {
-					"from": -15.0,
-					"to": 15.0
+					"from": -5,
+					"to": 15,
+					"boundaries": "inf"
 				}
-            },
-            "boundary_conditions": {
-                "r": {
-                    "left": "r0",
-                    "right": "Inf"
-                }
-            },
-            "symmetries": {
-                "periodic": {
-                    "phi": 360.0
-                },
-                "mirror": {
-                    "phi": 30.0
-                }
-            }
-        },
-        "medium": "Vacuum",
+			}
+		},
+        "medium": "vacuum",
         "objects": [
 			{
-				"class": "Semiconductor",
+				"type": "semiconductor",
 				"material": "HPGe",
 				"bulk_type": "n",
 				"temperature": 77,
 				"charge_density_model": {
-                    "name": "Linear",
-                    "r": {
-                        "init": 0.2,
-                        "gradient": -0.00071
-                    },
-                    "phi": {
+                    "name": "linear",
+                    "x": {
                         "init": 0.2,
                         "gradient": 0.00071
+                    },
+                    "y": {
+                        "init": 0.0,
+                        "gradient": 0.0
                     },
                     "z": {
                         "init": 0.2,
@@ -61,61 +50,61 @@
                     }
                 },
 				"geometry": {
-					"type": "CartesianBox3D",
+					"type": "box",
 					"x": {
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					},
 					"y":{
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					},
 					"z": {
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					}
 				}
 			},
 			{
-				"class": "Contact",
+				"type": "contact",
 				"material": "HPGe",
-				"name": "N+ Contact",
+				"name": "n+ contact",
 				"potential": 2000.0,
 				"channel": 1,
 				"geometry": {
-					"type": "CartesianBox3D",
+					"type": "box",
 					"x": {
-						"from": -10.0,
-						"to": -9.9
+						"from": 0,
+						"to": 0.1
 					},
 					"y":{
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					},
 					"z": {
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					}
 				}
 			},
 			{
-				"class": "Contact",
+				"type": "contact",
 				"material": "HPGe",
-				"name": "P+ Contact",
+				"name": "p+ contact",
 				"potential": 0.0,
 				"channel": 2,
 				"geometry": {
-					"type": "CartesianBox3D",
+					"type": "box",
 					"x": {
 						"from": 9.9,
 						"to": 10.0
 					},
 					"y":{
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					},
 					"z": {
-						"from": -10.0,
+						"from": 0.0,
 						"to": 10.0
 					}
 				}

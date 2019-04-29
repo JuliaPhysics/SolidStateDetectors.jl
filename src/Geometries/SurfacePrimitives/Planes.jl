@@ -11,7 +11,7 @@
 #     return -atol <= d ⋅ f.normal <= atol
 # end
 
-# function intersection(l::AbstractLine{T, 3, :Cartesian}, f::Plane3D{T}; atol::Real = T(0)) where {T}
+# function intersection(l::AbstractLine{T, 3, :cartesian}, f::Plane3D{T}; atol::Real = T(0)) where {T}
 #     denom::T = f.normal ⋅ l.dir
 #     if isapprox(denom, 0, atol = atol)
 #         return false, CartesianPoint{T}(0, 0, 0)

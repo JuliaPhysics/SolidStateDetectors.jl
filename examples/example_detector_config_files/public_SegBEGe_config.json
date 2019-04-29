@@ -1,18 +1,18 @@
 {
     "name": "Public Segmented BEGe",
-    "world": {
+    "setup": {
         "units": {
             "length": "mm",
             "angle": "deg",
             "potential": "V",
             "temperature": "K"
         },
-         "grid": {
-            "coordinates": "Cylindrical",
+        "grid": {
+            "coordinates": "cylindrical",
             "axes": {
                 "r": {
                     "to": 50.0,
-                    "boundaries": "Inf"
+                    "boundaries": "inf"
                 },
                 "phi": {
                     "from": 0,
@@ -20,27 +20,27 @@
                     "boundaries": {
                         "left": "periodic", 
                         "right": "mirror"
-                    },
+                    }
                 },
                 "z": {
                     "from": -10,
                     "to": 60.0,
                     "boundaries": {
-                        "left": "Inf",
-                        "right": "Inf"
+                        "left": "inf",
+                        "right": "inf"
                     }
                 }
             }
         },
-        "medium": "Vacuum",
+        "medium": "vacuum",
         "objects": [
             {
-                "class": "Semiconductor",
+                "type": "semiconductor",
                 "material": "HPGe",
                 "bulk_type": "n",
                 "temperature": 77.0,
                 "charge_density_model": {
-                    "name": "Linear",
+                    "name": "linear",
                     "r": {
                         "init": 0.0,
                         "gradient": 0.000
@@ -56,7 +56,7 @@
                 },
                 "geometry": {
                     "name": "Initial Cylinder",
-                    "type": "Tube",
+                    "type": "tube",
                     "r": {
                         "from": 0.0,
                         "to": 39.5
@@ -72,12 +72,12 @@
                 }
             },
             {
-                "class": "Contact",
+                "type": "contact",
                 "material": "HPGe",
                 "channel": 1,
                 "potential": 4500.0,
                 "geometry": {
-                    "type": "Tube",
+                    "type": "tube",
                     "r": {
                         "from": 0.0,
                         "to": 7.5
@@ -93,17 +93,17 @@
                 }
             },
             {
-                "class": "Contact",
+                "type": "contact",
                 "name": "Seg. 1",
                 "material": "HPGe",
                 "channel": 2,
                 "potential": 0.0,
                 "geometry": {
-                    "type": "Union",
+                    "type": "union",
                     "parts": [
                         {
                             "name":"Seg1 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 13.5,
                                 "to": 39.5
@@ -116,7 +116,7 @@
                         },
                         {
                             "name": "Seg1 side",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 39.5,
                                 "to": 39.5
@@ -129,7 +129,7 @@
                         },
                         {
                             "name": "Seg1 top",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 17.0,
                                 "to": 39.5
@@ -147,17 +147,17 @@
                 }
             },
             {
-                "class": "Contact",
+                "type": "contact",
                 "name": "Seg. 2",
                 "material": "HPGe",
                 "channel": 3,
                 "potential": 0.0,
                 "geometry": {
-                    "type": "Union",
+                    "type": "union",
                     "parts": [
                         {
                             "name": "Seg2 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 13.5,
                                 "to": 39.5
@@ -170,7 +170,7 @@
                         },
                         {
                             "name": "Seg2 side",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 39.5,
                                 "to": 39.5
@@ -183,7 +183,7 @@
                         },
                         {
                             "name": "Seg2 top",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 17.0,
                                 "to": 39.5
@@ -201,17 +201,17 @@
                 }
             },
             {
-                "class": "Contact",
+                "type": "contact",
                 "name": "Seg. 3",
                 "material": "HPGe",
                 "channel": 4,
                 "potential": 0.0,
                 "geometry": {
-                    "type": "Union",
+                    "type": "union",
                     "parts": [
                         {
                             "name": "Seg3 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 13.5,
                                 "to": 39.5
@@ -224,7 +224,7 @@
                         },
                         {
                             "name": "Seg3 side",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 39.5,
                                 "to": 39.5
@@ -237,7 +237,7 @@
                         },
                         {
                             "name": "Seg3 top",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 17.0,
                                 "to": 39.5
@@ -255,18 +255,18 @@
                 }
             },
             {
-                "class": "Contact",
+                "type": "contact",
                 "name": "Seg. 4",
                 "material": "HPGe",
                 "channel": 5,
                 "potential": 0.0,
                 "geometry": {
-                    "type": "Union",
+                    "type": "union",
                     "parts": [
 
                         {
                             "name": "Seg. 4 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 13.0,
                                 "to": 39.5
@@ -279,7 +279,7 @@
                         },
                         {
                             "name": "Seg. 4 side",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 39.5,
                                 "to": 39.5
@@ -292,7 +292,7 @@
                         },
                         {
                             "name": "Seg. 4 top",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 17.0,
                                 "to": 39.5
@@ -308,7 +308,7 @@
                         },
                         {
                             "name": "Seg. 4 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 13.0,
                                 "to": 39.5
@@ -321,7 +321,7 @@
                         },
                         {
                             "name": "Seg. 4 side",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 39.5,
                                 "to": 39.5
@@ -334,7 +334,7 @@
                         },
                         {
                             "name": "Seg. 4 top",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 17.0,
                                 "to": 39.5
@@ -350,7 +350,7 @@
                         },
                         {
                             "name": "Seg. 4 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 13.0,
                                 "to": 39.5
@@ -363,7 +363,7 @@
                         },
                         {
                             "name": "Seg. 4 side",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 39.5,
                                 "to": 39.5
@@ -376,7 +376,7 @@
                         },
                         {
                             "name": "Seg. 4 top",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 17.0,
                                 "to": 39.5
@@ -392,7 +392,7 @@
                         },
                         {
                             "name": "Seg. 4 bottom",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 0.0,
                                 "to": 13.0

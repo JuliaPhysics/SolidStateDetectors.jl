@@ -1,7 +1,7 @@
 """
     mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
 
-CS: Coordinate System: -> :Cartesian / :Cylindrical
+CS: Coordinate System: -> :cartesian / :cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     name::String  # optional
@@ -44,28 +44,28 @@ end
 
 function construct_objects(T, objects::Vector, semiconductors, contacts, passives, inputunit_dict)::Nothing
     for obj in objects
-        if obj["class"] == "Semiconductor"
+        if obj["type"] == "semiconductor"
             push!(semiconductors, construct_semiconductor(T, obj, inputunit_dict))
-        elseif obj["class"] == "Contact"
+        elseif obj["type"] == "contact"
             push!(contacts, construct_contact(T, obj, inputunit_dict))
-        elseif obj["class"] == "Passive"
+        elseif obj["type"] == "passive"
             push!(passives, construct_passive(T, obj, inputunit_dict))
         else
-            @warn "please spcify the calss to bei either a 'Semiconductor', a 'Contact', or 'Passive'"
+            @warn "please spcify the calss to bei either a \"semiconductor\", a \"contact\", or \"passive\""
         end
     end
     nothing
 end
 
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
-    grid_type = Symbol(config_file["world"]["grid"]["coordinates"])
+    grid_type = Symbol(config_file["setup"]["grid"]["coordinates"])
     c = SolidStateDetector{T, grid_type}()
     c.name = config_file["name"]
-    c.inputunits = construct_units(config_file["world"]["units"])
-    c.world = World(T, config_file["world"]["grid"], c.inputunits)
-    c.medium = material_properties[materials[config_file["world"]["medium"]]]
+    c.inputunits = construct_units(config_file["setup"]["units"])
+    c.world = World(T, config_file["setup"]["grid"], c.inputunits)
+    c.medium = material_properties[materials[config_file["setup"]["medium"]]]
     c.semiconductors, c.contacts, c.passives = [], [], []
-    construct_objects(T, config_file["world"]["objects"], c.semiconductors, c.contacts, c.passives, c.inputunits)
+    construct_objects(T, config_file["setup"]["objects"], c.semiconductors, c.contacts, c.passives, c.inputunits)
     return c
 end
 

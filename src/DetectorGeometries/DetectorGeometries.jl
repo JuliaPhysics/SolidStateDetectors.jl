@@ -173,7 +173,7 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
     on_surface, surface_normal = is_surface_point_and_normal_vector(c, p) # surface_normal::CartesianVector{T}
     if on_surface
         for contact in c.contacts
-            if in(searchsortednearest(grid, p), contact, grid.axes[1].ticks) && abs(sum(sp[2])) > 1
+            if in(searchsortednearest(grid, p), contact) #&& abs(sum(sp[2])) > 1
                 return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
                 return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
@@ -187,13 +187,13 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
 end
 
 # go_to_nearest_gridpoint
-function searchsortednearest(grid::Grid{T, 3, :Cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::Grid{T, 3, :cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.r)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.φ)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
     CylindricalPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
 end
-function searchsortednearest(grid::Grid{T, 3, :CartesianPoint}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::Grid{T, 3, :cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.x)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.y)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
@@ -281,7 +281,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
 end
 
 
-function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :Cylindrical})::Nothing where {T}
+function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :cylindrical})::Nothing where {T}
     ssd.rs = grid[:r].ticks
     ssd.φs = grid[:φ].ticks
     ssd.zs = grid[:z].ticks
@@ -290,7 +290,7 @@ end
 
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, :Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+        grid::Grid{T, N, :cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -333,7 +333,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-    grid::Grid{T, N, :Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+    grid::Grid{T, N, :cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -392,7 +392,7 @@ function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
     )
 end
 
-function Grid(  detector::SolidStateDetector{T, :Cylindrical};
+function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005],
                 for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
 
@@ -461,7 +461,7 @@ function Grid(  detector::SolidStateDetector{T, :Cylindrical};
 end
 
 
-function Grid(  detector::SolidStateDetector{T, :Cartesian};
+function Grid(  detector::SolidStateDetector{T, :cartesian};
                 init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001],
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
@@ -471,19 +471,22 @@ function Grid(  detector::SolidStateDetector{T, :Cartesian};
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
-    int_x::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.x[1], detector.world.x[2] )
-    int_y::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.y[1], detector.world.y[2] )
-    int_z::Interval{:closed, :closed, T} = Interval{:closed, :closed, T}(detector.world.z[1], detector.world.z[2] )
-    ax_x::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[1])
-    ax_y::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[2])
-    ax_z::DiscreteAxis{T, :infinite, :infinite} = DiscreteAxis{:infinite, :infinite}(int_z, step = init_grid_spacing[3])
-
+    # x
+    L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
+    int_x = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
+    ax_x::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
     xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = init_grid_spacing[1] / 2)
     ax_x = typeof(ax_x)(int_x, xticks)
-
+    # y
+    L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
+    int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
+    ax_y::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
     yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = init_grid_spacing[2] / 2)
     ax_y = typeof(ax_y)(int_y, yticks)
-
+    # z
+    L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
+    int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
+    ax_z::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
     zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = init_grid_spacing[3] / 2)
     ax_z = typeof(ax_z)(int_z, zticks)
 

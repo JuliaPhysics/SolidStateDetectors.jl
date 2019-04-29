@@ -49,7 +49,7 @@ function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, :Cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, :cylindrical} where {T <: SSDFloat}
     p = ep.data
     axr::Vector{T} = collect(ep.grid[:r])
     axφ::Vector{T} = collect(ep.grid[:φ])
@@ -228,7 +228,7 @@ end
 
 include("plot_recipes.jl")
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :Cartesian} where {T <: SSDFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(ep.grid[:x])
     axy::Vector{T} = collect(ep.grid[:y])
     axz::Vector{T} = collect(ep.grid[:z])

@@ -14,11 +14,11 @@ function DielectricDistribution(fss::PotentialSimulationSetup{T, N, S})::Dielect
     return DielectricDistribution{T, N, S}( fss.ϵ, fss.grid )
 end
 
-@recipe function f( ϵ::DielectricDistribution{T, 3, :Cylindrical};
+@recipe function f( ϵ::DielectricDistribution{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cylindrical} = ϵ.grid
+    g::Grid{T, 3, :cylindrical} = ϵ.grid
    
     # seriescolor --> :viridis
     st --> :heatmap
@@ -72,11 +72,11 @@ end
 end
 
 
-@recipe function f( ϵ::DielectricDistribution{T, 3, :Cartesian};
+@recipe function f( ϵ::DielectricDistribution{T, 3, :cartesian};
                     x = missing,
                     y = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cartesian} = ϵ.grid
+    g::Grid{T, 3, :cartesian} = ϵ.grid
    
     seriescolor --> :viridis
     st --> :heatmap

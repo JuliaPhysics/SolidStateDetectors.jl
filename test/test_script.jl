@@ -19,7 +19,7 @@ plot() # creates a plot so that the plots during the following loop pop up.
 
 key = :InvertedCoax
 
-for key in [:InvertedCoax, :BEGe ]#, :Coax, :CGD]
+for key in [:InvertedCoax, :BEGe, :Coax, :CGD]
 # for key in keys(SSD_examples)
     @info "Now test detector type: $key"
 
@@ -71,7 +71,7 @@ for key in [:InvertedCoax, :BEGe ]#, :Coax, :CGD]
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
     elseif key == :CGD
-        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.00, 0.005  ) ] # this point should be inside all test detectors
+        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.005, 0.005  ) ] # this point should be inside all test detectors
     elseif key == :BEGe
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.015  ) ] # this point should be inside all test detectors
     elseif key == :Coax

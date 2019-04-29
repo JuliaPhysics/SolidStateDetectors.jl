@@ -22,8 +22,8 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 - `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
 """
-function calculate_electric_potential(  detector::SolidStateDetector{T, :Cylindrical};
-                                        init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], # 2mm, 10 degree, 2 mm
+function calculate_electric_potential(  detector::SolidStateDetector{T, :cylindrical};
+                                        init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005], # 2mm, 10 degree, 2 mm
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
@@ -54,7 +54,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :Cylindr
         "φ symmetry: calculating just 1/$(n_φ_sym) in φ of the detector."
     end
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB(detector, grid);
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical} = PotentialSimulationSetupRB(detector, grid);
 
     if verbose
         println("Electric Potential Calculation\n",
@@ -157,7 +157,7 @@ function ElectricPotential(detector::SolidStateDetector{T}; kwargs...) where {T}
 end
 
 
-function calculate_electric_potential(  detector::SolidStateDetector{T, :Cartesian};
+function calculate_electric_potential(  detector::SolidStateDetector{T, :cartesian};
                                         init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], # 5mm each
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
@@ -180,7 +180,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :Cartesi
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian} = PotentialSimulationSetupRB(detector, grid);
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian} = PotentialSimulationSetupRB(detector, grid);
 
     if verbose
         println("Electric Potential Calculation\n",

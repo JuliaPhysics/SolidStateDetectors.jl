@@ -5,8 +5,8 @@
 """
 function drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
-                            det::SolidStateDetector{T, :Cartesian},
-                            grid::Grid{T, 3, :Cartesian},
+                            det::SolidStateDetector{T, :cartesian},
+                            grid::Grid{T, 3, :cartesian},
                             startpos::CartesianPoint{T},
                             Δt::T,
                             velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3};
@@ -63,7 +63,7 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  detector::SolidStateDetector{T, :Cartesian}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T}; 
+function get_crossing_pos(  detector::SolidStateDetector{T, :cartesian}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T}; 
                             max_n_iter::Int = 2000)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
     cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, point_mid)

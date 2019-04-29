@@ -2,7 +2,7 @@
 
 abstract type AbstractCoordinateVector{T, N, S} <: StaticArrays.FieldVector{N, T} end
 
-struct CartesianVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, :Cartesian}
+struct CartesianVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, :cartesian}
     x::T
     y::T
     z::T
@@ -19,7 +19,7 @@ function (-)(p1::CartesianPoint{T}, p2::CartesianPoint{T})::CartesianVector{T} w
 end
 
 
-struct CylindricalVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, :Cylindrical}
+struct CylindricalVector{ T <: RealQuantity } <: AbstractCoordinateVector{T, 3, :cylindrical}
     r::T
     φ::T # in radian
     z::T
