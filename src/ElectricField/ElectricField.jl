@@ -200,7 +200,7 @@ function interpolated_scalarfield(ep::ScalarPotential{T}) where {T}
 end
 
 function interpolated_vectorfield(vectorfield::AbstractArray{<:SVector{3, T},3}, ep::ElectricPotential{T}) where {T}
-    knots = ep.grid.axes#(grid.r, grid.φ, grid.z)
+    knots = ep.grid.axes
     i = interpolate(knots, vectorfield, Gridded(Linear()))
     vectorfield_itp = extrapolate(i, Periodic())
     return vectorfield_itp

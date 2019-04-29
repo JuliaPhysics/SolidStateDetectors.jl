@@ -7,27 +7,28 @@
             "potential": "V",
             "temperature": "K"
         },
-        "grid": {
+         "grid": {
             "coordinates": "Cylindrical",
-            "dimensions": {
-                "r": 40.0,
-                "z": {
-                    "from": -10.0,
-                    "to": 50.0
-                }
-            },
-            "boundary_conditions": {
+            "axes": {
                 "r": {
-                    "left": "r0",
-                    "right": "Inf"
-                }
-            },
-            "symmetries": {
-                "periodic": {
-                    "phi": 360.0
+                    "to": 50.0,
+                    "boundaries": "Inf"
                 },
-                "mirror": {
-                    "phi": 30.0
+                "phi": {
+                    "from": 0,
+                    "to": 60,
+                    "boundaries": {
+                        "left": "periodic", 
+                        "right": "mirror"
+                    },
+                },
+                "z": {
+                    "from": -10,
+                    "to": 60.0,
+                    "boundaries": {
+                        "left": "Inf",
+                        "right": "Inf"
+                    }
                 }
             }
         },

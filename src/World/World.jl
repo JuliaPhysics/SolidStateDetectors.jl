@@ -14,7 +14,7 @@ const boundary_condition_mapping = Dict{String, Symbol}(
     "Inf" => :infinite,
     "nothing" => :nothing,
     "reflecting" => :reflecting,
-    "periodic" => :periodic
+    "periodic" => :periodic,
 )
 
 struct World{T <: SSDFloat, ND, S} <: AbstractWorld{T, ND} 
@@ -40,6 +40,32 @@ function get_periodicity(int::SSDInterval{T, L, R, BL, BR}) where {T <:SSDFloat,
     return int.right - int.left
 end
 
+# function get_mirror_axis(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})
+#     mirror_axis = missing
+#     if "mirror_axis" in keys(dict)
+#         mirror_axis = geom_round(ustrip(uconvert(internal_angle_unit, T(dict["mirror_axis"]) * inputunit_dict["angle"]))) 
+#     end
+#     return mirror_axis
+# end
+function get_interval_boundary_types(dict::Dict)
+    BL, BR = missing, missing
+    if "boundaries" in keys(dict)
+        if typeof(dict["boundaries"]) == String
+            BL = boundary_condition_mapping[dict["boundaries"]]
+            BR = boundary_condition_mapping[dict["boundaries"]]
+        else
+            BL = boundary_condition_mapping[dict["boundaries"]["left"]]
+            BR = boundary_condition_mapping[dict["boundaries"]["right"]]
+        end
+    end
+    if !ismissing(BL)
+        if (BL == :periodic && BR != :periodic) || (BL != :periodic && BR == :periodic) || (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic)
+            throw(ConfigFileError("both or none endings must be \"periodic\" for an interval. Or, \"periodic\" and \"reflecting\" (for periodic behaviour plus mirror symmetry)."))
+        end
+    end
+    return BL, BR
+end
+
 function get_r_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})
     from::T = 0 
     if "from" in keys(dict) @warn "ConfigFileWarning: \"from\" is not used in r-axis. It is fixed to 0." end
@@ -62,23 +88,11 @@ function get_φ_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.
     R = :open
     BL = :periodic
     BR = :periodic
-    if "boundaries" in keys(dp)
-        if typeof(dp["boundaries"]) == String
-            BL = boundary_condition_mapping[dp["boundaries"]]
-            BR = boundary_condition_mapping[dp["boundaries"]]
-        else
-            BL = boundary_condition_mapping[dp["boundaries"]["left"]]
-            BR = boundary_condition_mapping[dp["boundaries"]["right"]]
-        end
-    end
-    if (BL == :periodic && BR != :periodic) || (BL != :periodic && BR == :periodic)
-        throw(ConfigFileError("both or none endings must be \"periodic\" for an interval."))
-    end
+    cfBL, cfBR = get_interval_boundary_types(dict)
+    if !ismissing(cfBL) BL = cfBL; BR = cfBR; end
     if from == to # 2D
-        L = :closed
-        R = :closed
-        BL = :reflecting
-        BR = :reflecting
+        L = :closed; R = :closed;
+        BL = :reflecting; BR = :reflecting
     end
     return SSDInterval{T, L, R, BL, BR}(from, to)
 end
@@ -89,18 +103,8 @@ function get_cartesian_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, U
     L = :closed
     R = :closed
     BL, BR = :infinite, :infinite
-    if "boundaries" in keys(dict)
-        if typeof(dict["boundaries"]) == String
-            BL = boundary_condition_mapping[dict["boundaries"]]
-            BR = boundary_condition_mapping[dict["boundaries"]]
-        else
-            BL = boundary_condition_mapping[dict["boundaries"]["left"]]
-            BR = boundary_condition_mapping[dict["boundaries"]["right"]]
-        end
-    end
-    if (BL == :periodic && BR != :periodic) || (BL != :periodic && BR == :periodic)
-        throw(ConfigFileError("both or none endings must be \"periodic\" for an interval."))
-    end
+    cfBL, cfBR = get_interval_boundary_types(dict)
+    if !ismissing(cfBL) BL = cfBL; BR = cfBR; end
     return SSDInterval{T, L, R, BL, BR}(from, to)
 end
 
