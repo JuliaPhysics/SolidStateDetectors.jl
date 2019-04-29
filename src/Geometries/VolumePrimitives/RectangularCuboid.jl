@@ -35,19 +35,19 @@ function vertices(rc::RectangularCuboid{T})::Vector{CartesianPoint{T}} where {T}
     return v
 end
 
-function LineSegments(rc::RectangularCuboid{T})::Vector{LineSegment{T, 3, :Cartesian}} where {T}
-    return LineSegment{T, 3, :Cartesian}[
-        LineSegment{T, 3, :Cartesian}( rc.org, rc.e1),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e1,  rc.e2),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e1 + rc.e2, -rc.e1),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e2, -rc.e2),
-        LineSegment{T, 3, :Cartesian}( rc.org, rc.e3),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e1,  rc.e3),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e1 + rc.e2, rc.e3),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e2, rc.e3),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e3, rc.e1),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e3 + rc.e1,  rc.e2),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e3 + rc.e1 + rc.e2, - rc.e1),
-        LineSegment{T, 3, :Cartesian}( rc.org + rc.e3 + rc.e2, -rc.e2)
+function LineSegments(rc::RectangularCuboid{T})::Vector{LineSegment{T, 3, :cartesian}} where {T}
+    return LineSegment{T, 3, :cartesian}[
+        LineSegment{T, 3, :cartesian}( rc.org, rc.e1),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e1,  rc.e2),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e1 + rc.e2, -rc.e1),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e2, -rc.e2),
+        LineSegment{T, 3, :cartesian}( rc.org, rc.e3),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e1,  rc.e3),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e1 + rc.e2, rc.e3),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e2, rc.e3),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e3, rc.e1),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e3 + rc.e1,  rc.e2),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e3 + rc.e1 + rc.e2, - rc.e1),
+        LineSegment{T, 3, :cartesian}( rc.org + rc.e3 + rc.e2, -rc.e2)
     ]
 end

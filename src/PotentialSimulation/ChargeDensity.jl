@@ -14,11 +14,11 @@ function ChargeDensity(fss::PotentialSimulationSetup{T, N, S})::ChargeDensity{T,
     return ChargeDensity{T, N, S}( fss.ρ, fss.grid )
 end
 
-@recipe function f( ρ::ChargeDensity{T, 3, :Cylindrical};
+@recipe function f( ρ::ChargeDensity{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cylindrical} = ρ.grid
+    g::Grid{T, 3, :cylindrical} = ρ.grid
    
     # seriescolor --> :viridis
     st --> :heatmap
@@ -73,11 +73,11 @@ end
 end
 
 
-@recipe function f( ρ::ChargeDensity{T, 3, :Cartesian};
+@recipe function f( ρ::ChargeDensity{T, 3, :cartesian};
                     x = missing,
                     y = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cartesian} = ρ.grid
+    g::Grid{T, 3, :cartesian} = ρ.grid
    
     # seriescolor --> :viridis
     st --> :heatmap

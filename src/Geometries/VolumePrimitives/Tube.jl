@@ -64,7 +64,7 @@ end
 #     translate  )
 # end
 
-function Geometry(T::DataType, t::Val{:Tube}, dict::Dict{Union{Any,String}, Any},inputunit_dict::Dict{String,Unitful.Units})
+function Geometry(T::DataType, t::Val{:tube}, dict::Dict{Union{Any,String}, Any},inputunit_dict::Dict{String,Unitful.Units})
     return Tube{T}(Dict{Any,Any}(dict), inputunit_dict)
 end
 

@@ -1,4 +1,4 @@
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :Cartesian}, grid::Grid{T, 3, :Cartesian} = Grid(ssd),
+function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid::Grid{T, 3, :cartesian} = Grid(ssd),
                 potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing) where {T}#::PotentialSimulationSetupRB{T} where {T}
     is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
@@ -194,7 +194,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :Cartesian}, grid
         pointtypes = clear(pointtypes)
     end # @inbounds
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian} = PotentialSimulationSetupRB{T, 3, 4, :Cartesian}(
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian} = PotentialSimulationSetupRB{T, 3, 4, :cartesian}(
         grid,
         rbpotential,
         rbpointtypes,
@@ -214,7 +214,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :Cartesian}, grid
 end
 
 
-function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian})::Array{T, 3} where {T}
+function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T, 3} where {T}
     pot::Array{T, 3} = Array{T, 3}(undef, size(fssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = iz + 1
@@ -232,7 +232,7 @@ function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cart
 end
 
 
-function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian})::Array{PointType, 3} where {T}
+function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{PointType, 3} where {T}
     pointtypes::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
     for iz in axes(pointtypes, 3)
         irbz::Int = iz + 1
@@ -251,7 +251,7 @@ end
 
 
 
-function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian})::Array{T} where {T}
+function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1

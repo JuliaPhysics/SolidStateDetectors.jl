@@ -7,7 +7,7 @@ pols = Dict("neg" =>        :neg,
             "positive" =>   :pos,
             "+" =>          :pos)
 
-include("CartesianBox3D.jl")
+include("Box.jl")
 include("RectangularCuboid.jl")
 include("Tube.jl")
 include("Cone.jl")

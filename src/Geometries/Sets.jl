@@ -21,7 +21,7 @@ function in(pt::StaticVector{N, T}, set::GeometryUnion{T, N})::Bool where {T <: 
     return inside
 end
 
-function Geometry(T::DataType, t::Val{:Union}, dict::Dict{Union{Any,String}, Any}, inputunit_dict::Dict{String,Unitful.Units})
+function Geometry(T::DataType, t::Val{:union}, dict::Dict{Union{Any,String}, Any}, inputunit_dict::Dict{String,Unitful.Units})
     return sum( map(x-> Geometry(T, x, inputunit_dict), dict["parts"]) )
 end
 
@@ -65,7 +65,7 @@ function in(pt::StaticVector{N, T}, set::Difference{T, N})::Bool where {T <: Rea
     return inside
 end
 
-function Geometry(T::DataType, t::Val{:Difference}, dict::Dict{Union{Any,String}, Any}, inputunit_dict::Dict{String,Unitful.Units})
+function Geometry(T::DataType, t::Val{:difference}, dict::Dict{Union{Any,String}, Any}, inputunit_dict::Dict{String,Unitful.Units})
     return Geometry(T, dict["parts"][1], inputunit_dict) - sum( map(x-> Geometry(T, x, inputunit_dict), dict["parts"][2:end]) )
 end
 

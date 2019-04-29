@@ -25,14 +25,14 @@ Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ])
 end
 
 """
-    innerloops!(  ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical},
+    innerloops!(  ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
                                 bulk_is_ptype::Val{_bulk_is_ptype}  )::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype}
 
 (Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the field calculation.                            
 """
-@fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical},
+@fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
                                 bulk_is_ptype::Val{_bulk_is_ptype}, 

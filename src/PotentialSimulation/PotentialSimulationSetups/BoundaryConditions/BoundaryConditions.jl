@@ -45,7 +45,7 @@ function apply_boundary_conditions_on_cyl_z_axis!(  rbpot::Array{T, 4}, ir::Int,
 end
 
 
-function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
+function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
     if only_2d
         iφ::Int = 2

@@ -1,10 +1,10 @@
 
-@recipe function f( pss::PotentialSimulationSetup{T, 3, :Cylindrical};
+@recipe function f( pss::PotentialSimulationSetup{T, 3, :cylindrical};
                     r = missing,
                     φ = 0,
                     z = missing,
                     n_points_in_φ = 36 ) where {T}
-    g::Grid{T, 3, :Cylindrical} = pss.grid
+    g::Grid{T, 3, :cylindrical} = pss.grid
     layout --> (2, 2) 
 
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
@@ -61,11 +61,11 @@
 end
 
 
-@recipe function f( pss::PotentialSimulationSetup{T, 3, :Cartesian};
+@recipe function f( pss::PotentialSimulationSetup{T, 3, :cartesian};
                     x = missing,
                     y = 0,
                     z = missing ) where {T}
-    g::Grid{T, 3, :Cartesian} = pss.grid
+    g::Grid{T, 3, :cartesian} = pss.grid
     layout --> (2, 2) 
 
     size --> (1000, 1000)

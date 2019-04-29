@@ -35,7 +35,7 @@ end
 
 
 
-function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :Cylindrical}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
+function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindrical}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
     inds_r::Vector{Int} = Int[]
     inds_φ::Vector{Int} = Int[]
     inds_z::Vector{Int} = Int[]
@@ -191,7 +191,7 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :Cylindr
 end
 
 
-function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :Cartesian}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
+function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cartesian}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
     inds_x::Vector{Int} = Int[]
     inds_y::Vector{Int} = Int[]
     inds_z::Vector{Int} = Int[]

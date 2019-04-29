@@ -53,16 +53,16 @@ end
 
 
 """
-    RBExtBy2Array( et::Type, g::Grid{T, N, :Cylindrical} )::Array{et, N + 1} where {T, N}
+    RBExtBy2Array( et::Type, g::Grid{T, N, :cylindrical} )::Array{et, N + 1} where {T, N}
 
 Returns a RedBlack array for the grid `g`. 
 """
-function RBArray( et::Type, g::Grid{T, N, :Cylindrical} )::Array{et, N + 1} where {T, N}
+function RBArray( et::Type, g::Grid{T, N, :cylindrical} )::Array{et, N + 1} where {T, N}
     nr, nφ, nz = size(g)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
     return zeros(T, div(nz, 2) + mod(nz, 2), nφ, nr, 2)
 end
-function RBArray( a::Array{T, N}, grid::Grid{TG, N, :Cylindrical} )::Array{T, N + 1} where {T, N, TG}
+function RBArray( a::Array{T, N}, grid::Grid{TG, N, :cylindrical} )::Array{T, N + 1} where {T, N, TG}
     rbarray::Array{T, N + 1} = RBArray(T, grid)
     for iz in axes(a, 3)
         irbz::Int = div(iz, 2) + mod(iz, 2) 
@@ -78,16 +78,16 @@ function RBArray( a::Array{T, N}, grid::Grid{TG, N, :Cylindrical} )::Array{T, N 
 end
 
 """
-    RBExtBy2Array( et::Type, g::Grid{T, N, :Cylindrical} )::Array{et, N + 1} where {T, N}
+    RBExtBy2Array( et::Type, g::Grid{T, N, :cylindrical} )::Array{et, N + 1} where {T, N}
 
 Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 """
-function RBExtBy2Array( et::Type, g::Grid{T, N, :Cylindrical} )::Array{et, N + 1} where {T, N}
+function RBExtBy2Array( et::Type, g::Grid{T, N, :cylindrical} )::Array{et, N + 1} where {T, N}
     nr, nφ, nz = size(g)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
     return zeros(T, div(nz, 2) + mod(nz, 2) + 2, nφ + 2, nr + 2, 2)
 end
-function RBExtBy2Array( a::Array{T, N}, grid::Grid{TG, N, :Cylindrical} )::Array{T, N + 1} where {T, N, TG}
+function RBExtBy2Array( a::Array{T, N}, grid::Grid{TG, N, :cylindrical} )::Array{T, N + 1} where {T, N, TG}
     rbarray::Array{T, N + 1} = RBExtBy2Array(T, grid)
     for iz in axes(a, 3)
         irbz::Int = rbidx(iz) 
@@ -106,15 +106,15 @@ end
 
 
 """
-    RBExtBy2Array( et::Type, g::Grid{T, 3, :Cartesian} )::Array{et, 4} where {T}
+    RBExtBy2Array( et::Type, g::Grid{T, 3, :cartesian} )::Array{et, 4} where {T}
 
 Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 """
-function RBExtBy2Array( et::Type, g::Grid{T, 3, :Cartesian} )::Array{et, 4} where {T}
+function RBExtBy2Array( et::Type, g::Grid{T, 3, :cartesian} )::Array{et, 4} where {T}
     nx, ny, nz = size(g)
     return zeros(T, div(nx, 2) + mod(nx, 2) + 2, ny + 2, nz + 2, 2)
 end
-function RBExtBy2Array( a::Array{T, 3}, grid::Grid{TG, 3, :Cartesian} )::Array{T, 4} where {T, TG}
+function RBExtBy2Array( a::Array{T, 3}, grid::Grid{TG, 3, :cartesian} )::Array{T, 4} where {T, TG}
     rbarray::Array{T, 4} = RBExtBy2Array(T, grid)
     for iz in axes(a, 3)
         irbz::Int = iz + 1

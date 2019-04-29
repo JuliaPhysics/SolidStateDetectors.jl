@@ -2,7 +2,7 @@
 abstract type AbstractObject{T} end
 
 
-@inline function in(pt::StaticVector{3, T}, c::AbstractObject{T})::Bool where {T}
+@inline function in(pt::AbstractCoordinatePoint{T}, c::AbstractObject{T})::Bool where {T}
     return in(pt, c.geometry)
 end
 

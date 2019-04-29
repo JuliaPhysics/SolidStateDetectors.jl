@@ -1,6 +1,6 @@
 {
     "name": "Public Inverted Coax",
-    "world": {
+    "setup": {
         "units": {
             "length": "mm",
             "angle": "deg",
@@ -8,39 +8,36 @@
             "temperature": "K"
         },
         "grid": {
-            "coordinates": "Cylindrical",
-            "dimensions": {
-                "r": 40.0,
-                "z": {
-                    "from": -20.0,
-                    "to": 100.0
-                }
-            },
-            "boundary_conditions": {
+            "coordinates": "cylindrical",
+            "axes": {
                 "r": {
-                    "left": "r0",
-                    "right": "Inf"
-                }
-
-            },
-            "symmetries": {
-                "periodic": {
-                    "phi": 60.0
+                    "to": 40.0,
+                    "boundaries": "inf"
                 },
-                "mirror": {
-                    "phi": 30.0
+                "phi": {
+                    "from": 0,
+                    "to": 0,
+                    "boundaries": "periodic"
+                },
+                "z": {
+                    "from": -10,
+                    "to": 90.0,
+                    "boundaries": {
+                        "left": "inf",
+                        "right": "inf"
+                    }
                 }
             }
         },
-        "medium": "Vacuum",
+        "medium": "vacuum",
         "objects": [
             {
-                "class": "Semiconductor",
+                "type": "semiconductor",
                 "material": "HPGe",
                 "bulk_type": "p",
                 "temperature": 77.0,
                 "charge_density_model": {
-                    "name": "Linear",
+                    "name": "linear",
                     "r": {
                         "init": -0.0,
                         "gradient": -0.000
@@ -55,14 +52,14 @@
                     }
                 },
                 "geometry": {
-                    "type": "Difference",
+                    "type": "difference",
                     "parts": [
                         {
-                            "type": "Difference",
+                            "type": "difference",
                             "parts": [
                                 {
                                     "name": "Initial Cylinder",
-                                    "type": "Tube",
+                                    "type": "tube",
                                     "r": {
                                         "from": 0.0,
                                         "to": 35.0
@@ -77,8 +74,8 @@
                                     }
                                 },
                                 {
-                                    "name": "Upper Cone",
-                                    "type": "Cone",
+                                    "name": "Upper cone",
+                                    "type": "cone",
                                     "r": {
                                         "bottom": {
                                             "from": 35.0,
@@ -102,7 +99,7 @@
                         },
                         {
                             "name": "borehole",
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 0.0,
                                 "to": 5.0
@@ -121,12 +118,12 @@
             },
 
             {
-                "class": "Contact",
+                "type": "contact",
                 "material": "HPGe",
                 "channel": 1,
                 "potential": 0.0,
                 "geometry": {
-                    "type": "Tube",
+                    "type": "tube",
                     "r": {
                         "from": 0.0,
                         "to": 3.0
@@ -139,15 +136,15 @@
                 }
             },
             {
-                "class": "Contact",
+                "type": "contact",
                 "material": "HPGe",
                 "channel": 2,
                 "potential": 3500.0,
                 "geometry": {
-                    "type": "Union",
+                    "type": "union",
                     "parts":  [
                         {
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 15.0,
                                 "to": 35.0
@@ -159,7 +156,7 @@
                             "h": 0.0
                         },
                         {
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 35.0,
                                 "to": 35.0
@@ -171,8 +168,8 @@
                             "h": 20.0
                         },
                         {
-                            "name": "Upper Cone",
-                            "type": "Cone",
+                            "name": "Upper cone",
+                            "type": "cone",
                             "r": {
                                 "bottom": {
                                     "from": 35.0,
@@ -193,7 +190,7 @@
                             }
                         },
                         {
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 5.0,
                                 "to": 24.42
@@ -208,7 +205,7 @@
                             }
                         },
                         {
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 5.0,
                                 "to": 5.0
@@ -223,7 +220,7 @@
                             }
                         },
                         {
-                            "type": "Tube",
+                            "type": "tube",
                             "r": {
                                 "from": 0.0,
                                 "to": 5.0

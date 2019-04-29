@@ -9,13 +9,13 @@ struct Grid{T, N, S} <: AbstractGrid{T, N}
     axes::NTuple{N, DiscreteAxis{T}} 
 end
 
-const CartesianGrid{T, N} = Grid{T, N, :Cartesian} 
+const CartesianGrid{T, N} = Grid{T, N, :cartesian} 
 const CartesianGrid1D{T} = CartesianGrid{T, 1}
 const CartesianGrid2D{T} = CartesianGrid{T, 2}
 const CartesianGrid3D{T} = CartesianGrid{T, 3}
 const RadialGrid{T} = Grid{T, 1, :Radial} 
 const PolarGrid{T} = Grid{T, 2, :Polar} 
-const CylindricalGrid{T} = Grid{T, 3, :Cylindrical} 
+const CylindricalGrid{T} = Grid{T, 3, :cylindrical} 
 const SphericalGrid{T} = Grid{T, 3, :Spherical} 
 
 @inline size(g::Grid{T, N, S}) where {T, N, S} = size.(g.axes, 1)
@@ -101,7 +101,7 @@ function Grid(nt::NamedTuple)
         axφ::DiscreteAxis = DiscreteAxis(nt.axes.phi, unit=u"rad")
         axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axr.ticks[1])
-        return Grid{T, 3, :Cylindrical}( (axr, axφ, axz) )
+        return Grid{T, 3, :cylindrical}( (axr, axφ, axz) )
     else
         error("`coordtype` = $(nt.coordtype) is not valid.")
     end
@@ -109,7 +109,7 @@ end
 
 Base.convert(T::Type{Grid}, x::NamedTuple) = T(x)
 
-function NamedTuple(grid::Grid{T, 3, :Cylindrical}) where {T}
+function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
     axr::DiscreteAxis{T} = grid[:r]
     axφ::DiscreteAxis{T} = grid[:φ]
     axz::DiscreteAxis{T} = grid[:z]

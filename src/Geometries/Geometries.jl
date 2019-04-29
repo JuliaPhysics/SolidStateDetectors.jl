@@ -66,18 +66,18 @@ end
 #     nothing
 # end
 #
-function decompose_volume(vol ::Difference, pos, neg, flag = 1)::Nothing
+function decompose_volume(vol::Difference, pos, neg, flag = 1)::Nothing
     decompose_volume(vol.a, pos, neg, flag)
     decompose_volume(vol.b, pos, neg, flag *= -1)
     nothing
 end
-function decompose_volume(vol ::GeometryUnion, pos, neg, flag = 1)::Nothing
+function decompose_volume(vol::GeometryUnion, pos, neg, flag = 1)::Nothing
     decompose_volume(vol.a ,pos, neg, flag)
     decompose_volume(vol.b, pos, neg, flag)
     nothing
 end
 
-function decompose_volume(vol ::AbstractVolumePrimitive, pos=[], neg=[], flag = 1)::Nothing
+function decompose_volume(vol::AbstractVolumePrimitive, pos=[], neg=[], flag = 1)::Nothing
     flag == 1 ? push!(pos, vol) : push!(neg, vol)
     nothing
 end

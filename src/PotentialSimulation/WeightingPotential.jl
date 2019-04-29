@@ -10,18 +10,18 @@ end
 @inline getindex(wp::WeightingPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(wp.grid, s)
 
 
-function WeightingPotential(fss::PotentialSimulationSetup{T, 3, :Cylindrical}; kwargs...)::WeightingPotential{T, 3, :Cylindrical} where {T <: SSDFloat}
-    return get_2π_potential(WeightingPotential{T, 3, :Cylindrical}(fss.potential, fss.grid); kwargs...)
+function WeightingPotential(fss::PotentialSimulationSetup{T, 3, :cylindrical}; kwargs...)::WeightingPotential{T, 3, :cylindrical} where {T <: SSDFloat}
+    return get_2π_potential(WeightingPotential{T, 3, :cylindrical}(fss.potential, fss.grid); kwargs...)
 end
-function WeightingPotential(fss::PotentialSimulationSetup{T, 3, :Cartesian})::WeightingPotential{T, 3, :Cartesian} where {T <: SSDFloat}
-    return WeightingPotential{T, 3, :Cartesian}(fss.potential, fss.grid)
+function WeightingPotential(fss::PotentialSimulationSetup{T, 3, :cartesian})::WeightingPotential{T, 3, :cartesian} where {T <: SSDFloat}
+    return WeightingPotential{T, 3, :cartesian}(fss.potential, fss.grid)
 end
 
-@recipe function f( wp::WeightingPotential{T, 3, :Cylindrical};
+@recipe function f( wp::WeightingPotential{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,
                     z = missing ) where {T <: SSDFloat}
-    g::Grid{T, 3, :Cylindrical} = wp.grid
+    g::Grid{T, 3, :cylindrical} = wp.grid
    
     seriescolor --> :viridis
     st --> :heatmap
@@ -76,7 +76,7 @@ end
 
 const ScalarPotential{T, N, S} = Union{ElectricPotential{T, N, S}, WeightingPotential{T, N, S}, PointTypes{T, N, S}, ChargeDensity{T, N, S}}
 
-function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axφ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T}) where {T}
+function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T}) where {T}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     Potential::Type = typeof(wp)
     l::Int = length( axφ )
@@ -93,12 +93,12 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axφ::Discre
         end
     end
     new_axφ::DiscreteAxis{T, :periodic, :periodic} = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
-    new_grid::Grid{T, 3, :Cylindrical} = Grid{T, 3, :Cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
+    new_grid::Grid{T, 3, :cylindrical} = Grid{T, 3, :cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
     new_wp::Potential = Potential( new_pot, new_grid )
     return new_wp
 end
 
-function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axφ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T}) where {T}
+function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T}) where {T}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     Potential::Type = typeof(wp)
     l::Int = 2 * length( axφ ) - 2
@@ -113,13 +113,13 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}, axφ::Discre
         new_pot[:, length(axφ) + i, :] = wp[:, length(axφ) - i, :]
     end
     new_axφ::DiscreteAxis{T, :periodic, :periodic} = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
-    new_grid::Grid{T, 3, :Cylindrical} = Grid{T, 3, :Cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
+    new_grid::Grid{T, 3, :cylindrical} = Grid{T, 3, :cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
     new_wp::Potential = Potential( new_pot, new_grid )
     return get_2π_potential(new_wp, new_axφ, new_int)
     # return new_wp
 end
 
-function extend_2D_to_3D_by_n_points(wp::ScalarPotential{T, 3, :Cylindrical}, axφ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
+function extend_2D_to_3D_by_n_points(wp::ScalarPotential{T, 3, :cylindrical}, axφ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
         n_points_in_φ::Int ) where {T}
     Potential::Type = typeof(wp)
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
@@ -131,12 +131,12 @@ function extend_2D_to_3D_by_n_points(wp::ScalarPotential{T, 3, :Cylindrical}, ax
         new_pot[:, i, :] = wp[:, 1, :]
     end
     new_axφ::DiscreteAxis{T, :periodic, :periodic} = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
-    new_grid::Grid{T, 3, :Cylindrical} = Grid{T, 3, :Cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
+    new_grid::Grid{T, 3, :cylindrical} = Grid{T, 3, :cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
     new_wp::Potential = Potential( new_pot, new_grid )
     return new_wp
 end
 
-function get_2π_potential(wp::ScalarPotential{T, 3, :Cylindrical}; n_points_in_φ::Union{Missing, Int} = missing) where {T}
+function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}; n_points_in_φ::Union{Missing, Int} = missing) where {T}
     axφ::DiscreteAxis{T} = wp.grid[2]
     int::Interval = axφ.interval
     if int.right == 0 && length(axφ) == 1 # 2D
@@ -173,12 +173,12 @@ Base.convert(T::Type{NamedTuple}, x::WeightingPotential) = T(x)
 
 
 """
-    PointTypes(setup::PotentialSimulationSetup{T, 3, :Cylindrical} ; kwargs...)::PointTypes{T, 3, :Cylindrical}
+    PointTypes(setup::PotentialSimulationSetup{T, 3, :cylindrical} ; kwargs...)::PointTypes{T, 3, :cylindrical}
 
 Extracts the electric potential from `setup` and extrapolate it to an 2π grid.
 
 For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
 """
-function PointTypes(setup::PotentialSimulationSetup{T, 3, :Cylindrical} ; kwargs...)::PointTypes{T, 3, :Cylindrical} where {T}
-    return get_2π_potential(PointTypes{T, 3, :Cylindrical}(setup.pointtypes, setup.grid); kwargs...)
+function PointTypes(setup::PotentialSimulationSetup{T, 3, :cylindrical} ; kwargs...)::PointTypes{T, 3, :cylindrical} where {T}
+    return get_2π_potential(PointTypes{T, 3, :cylindrical}(setup.pointtypes, setup.grid); kwargs...)
 end

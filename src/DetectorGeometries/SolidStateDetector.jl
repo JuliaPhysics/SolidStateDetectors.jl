@@ -1,16 +1,14 @@
 """
     mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
 
-CS: Coordinate System: -> :Cartesian / :Cylindrical
+CS: Coordinate System: -> :cartesian / :cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     name::String  # optional
-    inputunits::Dict{String,Unitful.Units}
-    world::AbstractVolumePrimitive
-    grid_type::Symbol
-    mirror_symmetry_φ::Bool # optional
-    cyclic::T
-    medium::NamedTuple
+    inputunits::Dict{String, Unitful.Units}
+    world::World{T, 3}
+
+    medium::NamedTuple # this should become a struct at some point
 
     semiconductors::Vector{Semiconductor{T}}
     contacts::Vector{Contact{T}}
@@ -31,6 +29,7 @@ function construct_units(dict::Dict)::Dict{String,Unitful.Units}
     result_dict
 end
 
+<<<<<<< HEAD
 function construct_world(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::Tuple{Symbol,AbstractVolumePrimitive}
     if dict["coordinates"] == "Cylindrical"
         vol = Tube{T}(
@@ -46,6 +45,8 @@ function construct_world(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Uni
     end
     return Symbol(dict["coordinates"]), vol
 end
+=======
+>>>>>>> d711c174326d802c8afa8019530bd43f8225ce00
 
 function construct_semiconductor(T, sc::Dict, inputunit_dict::Dict{String, Unitful.Units})
     Semiconductor{T}(sc, inputunit_dict)
@@ -61,31 +62,28 @@ end
 
 function construct_objects(T, objects::Vector, semiconductors, contacts, passives, inputunit_dict)::Nothing
     for obj in objects
-        if obj["class"] == "Semiconductor"
+        if obj["type"] == "semiconductor"
             push!(semiconductors, construct_semiconductor(T, obj, inputunit_dict))
-        elseif obj["class"] == "Contact"
+        elseif obj["type"] == "contact"
             push!(contacts, construct_contact(T, obj, inputunit_dict))
-        elseif obj["class"] == "Passive"
+        elseif obj["type"] == "passive"
             push!(passives, construct_passive(T, obj, inputunit_dict))
         else
-            @warn "please spcify the calss to bei either a 'Semiconductor', a 'Contact', or 'Passive'"
+            @warn "please spcify the calss to bei either a \"semiconductor\", a \"contact\", or \"passive\""
         end
     end
     nothing
 end
 
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
-    grid_type = Symbol(config_file["world"]["grid"]["coordinates"])
+    grid_type = Symbol(config_file["setup"]["grid"]["coordinates"])
     c = SolidStateDetector{T, grid_type}()
     c.name = config_file["name"]
-    c.inputunits = construct_units(config_file["world"]["units"])
-    c.grid_type, c.world = construct_world(T, config_file["world"]["grid"], c.inputunits)
-    c.medium = material_properties[materials[config_file["world"]["medium"]]]
+    c.inputunits = construct_units(config_file["setup"]["units"])
+    c.world = World(T, config_file["setup"]["grid"], c.inputunits)
+    c.medium = material_properties[materials[config_file["setup"]["medium"]]]
     c.semiconductors, c.contacts, c.passives = [], [], []
-    c.cyclic = geom_round(T(ustrip(uconvert(u"rad",config_file["world"]["grid"]["symmetries"]["periodic"]["phi"] * c.inputunits["angle"]))))
-    c.mirror_symmetry_φ = false
-    construct_objects(T, config_file["world"]["objects"], c.semiconductors, c.contacts, c.passives, c.inputunits)
-
+    construct_objects(T, config_file["setup"]["objects"], c.semiconductors, c.contacts, c.passives, c.inputunits)
     return c
 end
 
@@ -121,6 +119,7 @@ function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::B
 end
 
 function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
+<<<<<<< HEAD
     println("________"*d.name*"________\n")
     # println("Class: ",d.class)
     println("---General Properties---")
@@ -146,6 +145,9 @@ function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
             # println(c)
         end
     end
+=======
+    println(d.name)
+>>>>>>> d711c174326d802c8afa8019530bd43f8225ce00
 end
 
 function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(d) end

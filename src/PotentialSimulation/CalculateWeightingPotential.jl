@@ -22,8 +22,8 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 - `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
 """
-function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindrical}, channel_id::Int;
-                                        init_grid_spacing::Vector{<:Real} = [0.005, 5.0, 0.005], # 2mm, 10 degree, 2 mm
+function calculate_weighting_potential( detector::SolidStateDetector{T, :cylindrical}, channel_id::Int;
+                                        init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005], # 2mm, 10 degree, 2 mm
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, for_weighting_potential = true),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
@@ -41,7 +41,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindr
     refine::Bool = max_refinements > 0 ? true : false
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     check_grid(grid)
-    cyclic::T = grid.axes[2].interval.right
+    cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
     n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3))
     if use_nthreads > Base.Threads.nthreads()
         use_nthreads = Base.Threads.nthreads();
@@ -49,13 +49,11 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cylindr
     end
     n_φ_sym_info_txt = if only_2d
         "φ symmetry: Detector is φ-symmetric -> 2D computation."
-    elseif n_φ_sym > 1
-        "φ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))° -> calculating just 1/$(n_φ_sym) in φ of the detector."
     else
-        "φ symmetry: cyclic = $(round(rad2deg(cyclic), digits = 0))° -> no symmetry -> calculating for 360°."
+        "φ symmetry: calculating just 1/$(n_φ_sym) in φ of the detector."
     end
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cylindrical} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);
 
     if verbose
         println("Weighting Potential Calculation\n",
@@ -120,7 +118,7 @@ end
 
 
 
-function calculate_weighting_potential( detector::SolidStateDetector{T, :Cartesian}, channel_id::Int;
+function calculate_weighting_potential( detector::SolidStateDetector{T, :cartesian}, channel_id::Int;
                                         init_grid_spacing::Vector{<:Real} = [0.005, 0.005, 0.005], # 5mm each
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
@@ -143,7 +141,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :Cartesi
         @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
     end
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :Cartesian} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian} = PotentialSimulationSetupRB(detector, grid, weighting_potential_contact_id = channel_id);
 
     if verbose
         println("WeightingPotential Potential Calculation\n",

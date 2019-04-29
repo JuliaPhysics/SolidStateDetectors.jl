@@ -6,6 +6,7 @@
 
 # Internal units should be SI units
 const internal_length_unit  = u"m"
+const internal_angle_unit   = u"rad"
 const internal_time_unit    = u"s"
 const internal_voltage_unit = u"V"
 const internal_energy_unit  = u"eV"

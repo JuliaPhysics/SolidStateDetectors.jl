@@ -84,9 +84,12 @@ function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::
 end
 
 
+
+
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     S = SSD.get_coordinate_system(sim.detector)
-    if S == :Cylindrical && sim.detector.cyclic == T(0)
+    periodicity::T = get_periodicity(sim.detector.world.intervals[2])
+    if S == :cylindrical && periodicity == T(0)
         if ismissing(n_points_in_φ)
             @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36
@@ -98,7 +101,7 @@ function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, arg
         end
     end
     wps = calculate_weighting_potential(sim.detector, contact_id, args...; kwargs...)
-    if S == :Cylindrical && size(wps.potential, 2) == 1 && !ismissing(n_points_in_φ)
+    if S == :cylindrical && size(wps.potential, 2) == 1 && !ismissing(n_points_in_φ)
         wp = WeightingPotential(wps, n_points_in_φ = n_points_in_φ)
     else
         wp = WeightingPotential(wps)
@@ -110,7 +113,8 @@ end
 
 function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     S = SSD.get_coordinate_system(sim.detector)
-    e_pot, point_types = if S == :Cylindrical && sim.detector.cyclic == T(0) # 2D, only one point in φ
+    periodicity::T = get_periodicity(sim.detector.world.intervals[2])
+    e_pot, point_types = if S == :cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
             @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36
