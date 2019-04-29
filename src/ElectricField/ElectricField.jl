@@ -192,37 +192,45 @@ end
 #         result = Rα*vector
 #         result
 # end
-function interpolated_scalarfield(ep::ScalarPotential{T}) where {T}
-    knots = ep.grid.axes#(grid.r, grid.φ, grid.z)
+function interpolated_scalarfield(ep::ScalarPotential{T, 3, :Cylindrical}) where {T}
+    knots = ep.grid.axes[1].ticks, cat(ep.grid.axes[2].ticks,T(2π),dims=1), ep.grid.axes[3].ticks#(grid.r, grid.φ, grid.z)
+    ext_data = cat(ep.data, ep.data[:,1:1,:], dims=2)
+    i = interpolate(knots, ext_data, Gridded(Linear()))
+    vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
+    return vector_field_itp
+end
+function interpolated_scalarfield(ep::ScalarPotential{T, 3, :Cartesian}) where {T}
+    knots = ep.grid.axes#(grid.x, grid.y, grid.z)
     i = interpolate(knots, ep.data, Gridded(Linear()))
-    vector_field_itp = extrapolate(i, Periodic())
+    vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return vector_field_itp
 end
+#
+# function interpolated_vectorfield(vectorfield::AbstractArray{<:SVector{3, T},3}, ep::ElectricPotential{T}) where {T}
+#     knots = ep.grid.axes#(grid.r, grid.φ, grid.z)
+#     i = interpolate(knots, vectorfield, Gridded(Linear()))
+#     vectorfield_itp = extrapolate(i, Periodic())
+#     return vectorfield_itp
+# end
+#
+# function setup_interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
+#     knots = grid.axes #(grid.r, grid.φ, grid.z)
+#     i = interpolate(knots, vectorfield, Gridded(Linear()))
+#     vector_field_itp = extrapolate(i, Periodic())
+#     return vector_field_itp
+# end
 
-function interpolated_vectorfield(vectorfield::AbstractArray{<:SVector{3, T},3}, ep::ElectricPotential{T}) where {T}
-    knots = ep.grid.axes#(grid.r, grid.φ, grid.z)
-    i = interpolate(knots, vectorfield, Gridded(Linear()))
-    vectorfield_itp = extrapolate(i, Periodic())
-    return vectorfield_itp
-end
-
-function setup_interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
-    knots = grid.axes #(grid.r, grid.φ, grid.z)
-    i = interpolate(knots, vectorfield, Gridded(Linear()))
-    vector_field_itp = extrapolate(i, Periodic())
-    return vector_field_itp
-end
-
-function get_interpolated_drift_field(velocity_field, grid::CylindricalGrid{T}) where {T}
-    knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks 
-    i = interpolate(knots, velocity_field, Gridded(Linear()))
-    velocity_field_itp = extrapolate(i, Periodic())
+function get_interpolated_drift_field(velocityfield, grid::CylindricalGrid{T}) where {T}
+    extended_velocityfield = cat(velocityfield, velocityfield[:,1:1,:], dims=2)
+    knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
+    i = interpolate(knots, extended_velocityfield, Gridded(Linear()))
+    velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
 end
-function get_interpolated_drift_field(velocity_field, grid::CartesianGrid{T}) where {T}
-    knots = grid.axes[:1].ticks, grid.axes[:2].ticks, grid.axes[:3].ticks 
-    i = interpolate(knots, velocity_field, Gridded(Linear()))
-    velocity_field_itp = extrapolate(i, Interpolations.Line())
+function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) where {T}
+    knots = grid.axes[:1].ticks, grid.axes[:2].ticks, grid.axes[:3].ticks
+    i = interpolate(knots, velocityfield, Gridded(Linear()))
+    velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return velocity_field_itp
 end
 
@@ -244,11 +252,11 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
                 if ix - 1 < 1
                     Δp_x_1::T = ep.data[ix + 1, iy, iz] - ep.data[ix, iy, iz]
                     d_x_1::T = axx[ix + 1] - axx[ix]
-                    ex::T =  Δp_x_1 / d_x_1 
+                    ex::T =  Δp_x_1 / d_x_1
                 elseif ix + 1 > size(ef, 1)
                     Δp_x_1 = ep.data[ix, iy, iz] - ep.data[ix - 1, iy, iz]
                     d_x_1 = axx[ix] - axx[ix - 1]
-                    ex = Δp_x_1 / d_x_1 
+                    ex = Δp_x_1 / d_x_1
                 else
                     Δp_x_1 = ep.data[ix + 1, iy, iz] - ep.data[ix ,iy, iz]
                     Δp_x_2::T = ep.data[ix, iy, iz] - ep.data[ix - 1, iy, iz]
@@ -260,11 +268,11 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
                 if iy - 1 < 1
                     Δp_y_1::T = ep.data[ix, iy + 1, iz] - ep.data[ix ,iy, iz]
                     d_y_1::T = axy[iy + 1] - axy[iy]
-                    ey::T =  Δp_y_1 / d_y_1 
+                    ey::T =  Δp_y_1 / d_y_1
                 elseif iy + 1 > size(ef, 2)
                     Δp_y_1 = ep.data[ix, iy, iz] - ep.data[ix, iy - 1, iz]
                     d_y_1 = axy[iy] - axy[iy - 1]
-                    ey = Δp_y_1 / d_y_1 
+                    ey = Δp_y_1 / d_y_1
                 else
                     Δp_y_1 = ep.data[ix, iy + 1, iz] - ep.data[ix ,iy, iz]
                     Δp_y_2::T = ep.data[ix, iy, iz] - ep.data[ix, iy - 1, iz]
@@ -276,11 +284,11 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
                 if iz - 1 < 1
                     Δp_z_1::T = ep.data[ix, iy, iz + 1] - ep.data[ix, iy, iz]
                     d_z_1::T = axz[iz + 1] - axz[iz]
-                    ez::T =  Δp_z_1 / d_z_1 
+                    ez::T =  Δp_z_1 / d_z_1
                 elseif iz + 1 > size(ef, 3)
                     Δp_z_1 = ep.data[ix, iy, iz] - ep.data[ix, iy, iz - 1]
                     d_z_1 = axz[iz] - axz[iz - 1]
-                    ez = Δp_z_1 / d_z_1 
+                    ez = Δp_z_1 / d_z_1
                 else
                     Δp_z_1 = ep.data[ix, iy, iz + 1] - ep.data[ix ,iy, iz]
                     Δp_z_2::T = ep.data[ix, iy, iz] - ep.data[ix, iy, iz - 1]
@@ -320,7 +328,7 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :Cartesia
 end
 
 function get_electric_field_strength(ef::ElectricField{T}) where {T <: SSDFloat}
-    efs::Array{T, 3} = Array{T, 3}(undef, size(ef.data)) 
+    efs::Array{T, 3} = Array{T, 3}(undef, size(ef.data))
     @inbounds for i in eachindex(ef.data)
         efs[i] = norm(ef.data[i])
     end
