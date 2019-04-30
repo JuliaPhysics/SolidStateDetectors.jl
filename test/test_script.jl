@@ -54,7 +54,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
         SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 3)
     end
 
-    plot( # does not work for :Cartesian yet
+    plot( # does not work for :cartesian yet
         [
             plot(   simulation.weighting_potentials[i].itp.knots[1],
                     simulation.weighting_potentials[i].itp.knots[3],
@@ -104,17 +104,3 @@ end
 
 @info "Finished testing."
 @info "Test output saved in: $outputdir"
-
-
-
-using SolidStateDetectors
-using Plots; pyplot(); 
-
-det = SolidStateDetector{Float32}(SSD_examples[:CGD]);
-simulation = Simulation(det);
-SSD.calculate_electric_potential!(simulation, max_refinements = 2, init_grid_spacing = Float32[1f-3, 1f-3, 1f-4])
-
-plot(
-    plot(simulation.electric_potential.grid[3], simulation.electric_potential[80, 40, :], y = 0),
-    plot(simulation.electric_potential, y = 0), size = (1200, 900)
-)

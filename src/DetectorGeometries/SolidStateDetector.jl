@@ -100,12 +100,12 @@ function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::B
     return false
 end
 
-function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
+function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
     println("________"*d.name*"________\n")
     # println("Class: ",d.class)
     println("---General Properties---")
     println("-Environment Material: \t $(d.medium.name)")
-    println("-Grid Type: \t $(d.grid_type)")
+    println("-Grid Type: \t $(CS)")
     println()
     println("# Semiconductors: $(length(d.semiconductors))")
     for (isc, sc)  in enumerate(d.semiconductors)

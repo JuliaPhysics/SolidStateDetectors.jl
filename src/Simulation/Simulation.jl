@@ -17,6 +17,31 @@ mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     Simulation{T}() where {T <: SSDFloat} = new{T}(missing, missing, missing, missing, missing, [missing], missing, missing, missing, missing )
 end
 
+function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
+    println(typeof(sim))
+    println("  Electric potential: ", !ismissing(sim.electric_potential) ? size(sim.electric_potential) : missing)
+    println("  Charge density: ", !ismissing(sim.ρ) ? size(sim.ρ) : missing)
+    println("  Dielectric distribution: ", !ismissing(sim.ϵ) ? size(sim.ϵ) : missing)
+    println("  Point types: ", !ismissing(sim.point_types) ? size(sim.point_types) : missing)
+    println("  Electric field: ", !ismissing(sim.electric_field) ? size(sim.electric_field) : missing)
+    println("  Weighting potentials: ")
+    for contact in sim.detector.contacts
+        print("    Contact $(contact.id): ")
+        println(!ismissing(sim.weighting_potentials[contact.id]) ? size(sim.weighting_potentials[contact.id]) : missing)
+    end
+    println("  Charge drift model: ", !ismissing(sim.electric_field) ? typeof(sim.charge_drift_model) : missing)
+    println("  Electron drift field: ", !ismissing(sim.interpolated_electron_drift_field) ? size(sim.interpolated_electron_drift_field) : missing)
+    println("  Hole drift field: ", !ismissing(sim.interpolated_hole_drift_field) ? size(sim.interpolated_hole_drift_field) : missing)
+end
+
+function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
+function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
+function display(io::IO, sim::Simulation{T} ) where {T <: SSDFloat} println(sim) end
+function show(io::IO,::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
+    show(io, sim)
+end
+
+
 function Simulation(detector::SolidStateDetector{T})::Simulation{T} where {T <: SSDFloat}
     sim::Simulation{T} = Simulation{T}()
     sim.detector = detector
@@ -27,37 +52,9 @@ end
 function Simulation{T}(config_file::AbstractString)::Simulation{T} where{T <: SSDFloat}
     return Simulation( SolidStateDetector{T}(config_file) )
 end
-
-
-# function Simulation(nt::NamedTuple)
-
-# end
-
-# Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
-
-# function NamedTuple(sim::Simulation{T}, wps::Vector) where {T <: SSDFloat}
-#     n::Int = length(sim.detector.contacts)
-#     ids = NTuple{n, Symbol}([Symbol("contact_$(contact.id)") for contact in sim.detector.contacts])
-#     return NamedTuple{ids, NTuple{n, Any}}(sim.weighting_potentials)
-# end
-
-# function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
-#     return (
-#         electric_potential = NamedTuple(sim.electric_potential),
-#         point_types = NamedTuple(sim.point_types),
-#         ρ = NamedTuple(sim.ρ),
-#         ϵ = NamedTuple(sim.ϵ),
-#         electric_field = NamedTuple(sim.electric_field),
-#         weighting_potentials = NamedTuple(sim, sim.weighting_potentials),
-#         charge_drift_model = NamedTupleFromStruct(sim.charge_drift_model),
-#         interpolated_electron_drift_field = NamedTupleFromStruct(sim.interpolated_electron_drift_field),
-#         interpolated_hole_drift_field = NamedTupleFromStruct(sim.interpolated_hole_drift_field)
-#     )
-# end
-
-# Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
-
-
+function Simulation(config_file::AbstractString)::Simulation{Float32}
+    return Simulation{Float32}( config_file )
+end
 
 # Functions
 
@@ -82,8 +79,6 @@ function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::
 
     nothing
 end
-
-
 
 
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
@@ -181,7 +176,6 @@ function get_signals(sim::Simulation{T}, drift_paths::Vector{DriftPath{T}}, ener
 end
 
 
-
 function generate_charge_signals!(
     contact_charge_signals::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
     sim::Simulation{T},
@@ -239,3 +233,15 @@ function generate_charge_signals(   sim::Simulation{T},
 
     contact_charge_signals
 end
+
+function simulate!(sim::Simulation{T}; cdm::AbstractChargeDriftModel = ADLChargeDriftModel(), max_refinements = 1) where {T <: SSDFloat}
+    calculate_electric_potential!(sim, max_refinements = max_refinements)
+    for contact in sim.detector.contacts
+        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements)
+    end
+    calculate_electric_field!(sim)
+    SSD.set_charge_drift_model!(sim, cdm)
+    SSD.apply_charge_drift_model!(sim)
+    @info "Detector simulation done"
+end
+
