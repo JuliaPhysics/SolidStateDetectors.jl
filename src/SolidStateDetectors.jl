@@ -35,7 +35,7 @@ const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
-export Simulation
+export Simulation, simulate!
 
 export AbstractChargeDriftModel, get_electron_drift_field, get_hole_drift_field
 export VacuumChargeDriftModel, ADLChargeDriftModel
@@ -53,6 +53,7 @@ export CylindricalPoint
 export CartesianPoint
 export get_velocity_vector
 export get_crossing_pos
+
 
 const SSDFloat = Union{Float16, Float32, Float64}
 

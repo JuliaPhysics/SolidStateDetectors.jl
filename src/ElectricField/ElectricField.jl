@@ -192,14 +192,14 @@ end
 #         result = Rα*vector
 #         result
 # end
-function interpolated_scalarfield(ep::ScalarPotential{T, 3, :Cylindrical}) where {T}
+function interpolated_scalarfield(ep::ScalarPotential{T, 3, :cylindrical}) where {T}
     knots = ep.grid.axes[1].ticks, cat(ep.grid.axes[2].ticks,T(2π),dims=1), ep.grid.axes[3].ticks#(grid.r, grid.φ, grid.z)
     ext_data = cat(ep.data, ep.data[:,1:1,:], dims=2)
     i = interpolate(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
 end
-function interpolated_scalarfield(ep::ScalarPotential{T, 3, :Cartesian}) where {T}
+function interpolated_scalarfield(ep::ScalarPotential{T, 3, :cartesian}) where {T}
     knots = ep.grid.axes#(grid.x, grid.y, grid.z)
     i = interpolate(knots, ep.data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))

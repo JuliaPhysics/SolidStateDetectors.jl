@@ -215,6 +215,7 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cartesi
     ax_y::Vector{T} = collect(grid.axes[2])
     ax_z::Vector{T} = collect(grid.axes[3])
 
+    
     for iz in 1:size(potential, 3)
         z = ax_z[iz]
         for iy in 1:size(potential, 2)

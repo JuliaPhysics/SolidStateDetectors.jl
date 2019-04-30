@@ -19,7 +19,7 @@ plot() # creates a plot so that the plots during the following loop pop up.
 
 key = :InvertedCoax
 
-for key in [:InvertedCoax, :BEGe, :Coax, :CGD]
+for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
 # for key in keys(SSD_examples)
     @info "Now test detector type: $key"
 
@@ -34,24 +34,32 @@ for key in [:InvertedCoax, :BEGe, :Coax, :CGD]
 
     for nrefs in [0, 1, 2]
         SSD.calculate_electric_potential!(simulation, max_refinements = nrefs)
-        plot(simulation.electric_potential, size = (1200, 1200))
+        p = if key == :CGD
+            plot(simulation.electric_potential, y = 0.002)
+        else
+            plot(simulation.electric_potential)
+        end
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nrefs)_refinements"))
     end
     SSD.calculate_electric_potential!(simulation, max_refinements = 3)
-    plot(simulation.electric_potential)
+    p = if key == :CGD
+        plot(simulation.electric_potential, y = 0.002)
+    else
+        plot(simulation.electric_potential)
+    end
     savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(3)_refinements"))
 
     n_contacts = length(simulation.detector.contacts)
     for contact in simulation.detector.contacts
-        SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 1)
+        SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 3)
     end
 
-    plot( # does not work for :Cartesian yet
+    plot( # does not work for :cartesian yet
         [
             plot(   simulation.weighting_potentials[i].itp.knots[1],
                     simulation.weighting_potentials[i].itp.knots[3],
                     simulation.weighting_potentials[i].itp.coefs[:,div(size(simulation.weighting_potentials[i].itp.coefs, 2), 2),:]',
-                    st = :heatmap, aspect_ratio = 1 , clims=(0, 1))
+                    st = :heatmap, aspect_ratio = 1, clims=(0, 1))
                     for i in eachindex(simulation.detector.contacts)
         ]...,
         size = (1000, 1000)
