@@ -54,17 +54,17 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
         SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 3)
     end
 
-    plot( # does not work for :cartesian yet
-        [
-            plot(   simulation.weighting_potentials[i].itp.knots[1],
-                    simulation.weighting_potentials[i].itp.knots[3],
-                    simulation.weighting_potentials[i].itp.coefs[:,div(size(simulation.weighting_potentials[i].itp.coefs, 2), 2),:]',
-                    st = :heatmap, aspect_ratio = 1, clims=(0, 1))
-                    for i in eachindex(simulation.detector.contacts)
-        ]...,
-        size = (1000, 1000)
-    )
-    savefig(joinpath(outputdir, "$(key)_2_Weighting_Potentials"))
+    # plot( # does not work for :cartesian yet
+    #     [
+    #         plot(   simulation.weighting_potentials[i].itp.knots[1],
+    #                 simulation.weighting_potentials[i].itp.knots[3],
+    #                 simulation.weighting_potentials[i].itp.coefs[:,div(size(simulation.weighting_potentials[i].itp.coefs, 2), 2),:]',
+    #                 st = :heatmap, aspect_ratio = 1, clims=(0, 1))
+    #                 for i in eachindex(simulation.detector.contacts)
+    #     ]...,
+    #     size = (1000, 1000)
+    # )
+    # savefig(joinpath(outputdir, "$(key)_2_Weighting_Potentials"))
 
     SSD.calculate_electric_field!(simulation)
 

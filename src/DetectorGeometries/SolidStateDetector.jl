@@ -8,6 +8,8 @@ mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     inputunits::Dict{String, Unitful.Units}
     world::World{T, 3}
 
+    config_dict::Dict
+
     medium::NamedTuple # this should become a struct at some point
 
     semiconductors::Vector{Semiconductor{T}}
@@ -61,6 +63,7 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     grid_type = Symbol(config_file["setup"]["grid"]["coordinates"])
     c = SolidStateDetector{T, grid_type}()
     c.name = config_file["name"]
+    c.config_dict = config_file
     c.inputunits = construct_units(config_file["setup"]["units"])
     c.world = World(T, config_file["setup"]["grid"], c.inputunits)
     c.medium = material_properties[materials[config_file["setup"]["medium"]]]
