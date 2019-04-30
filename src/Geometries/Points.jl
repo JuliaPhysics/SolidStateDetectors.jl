@@ -50,6 +50,12 @@ end
         [v[i].x for i in eachindex(v) ], [v[i].y for i in eachindex(v) ], [v[i].z for i in eachindex(v) ]
     end
 end
+@recipe function f(v::AbstractVector{<:CylindricalPoint})
+    st -> :scatter
+    @series begin
+        map(x->CartesianPoint(x),v)
+    end
+end
  ##aliases for ease of use
 const cyp = CylindricalPoint
 const cap = CartesianPoint
