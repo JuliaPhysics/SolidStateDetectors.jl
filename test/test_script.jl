@@ -47,7 +47,6 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     else
         plot(simulation.electric_potential)
     end
-
     savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(3)_refinements"))
 
     n_contacts = length(simulation.detector.contacts)

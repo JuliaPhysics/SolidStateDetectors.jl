@@ -29,24 +29,6 @@ function construct_units(dict::Dict)::Dict{String,Unitful.Units}
     result_dict
 end
 
-<<<<<<< HEAD
-function construct_world(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::Tuple{Symbol,AbstractVolumePrimitive}
-    if dict["coordinates"] == "Cylindrical"
-        vol = Tube{T}(
-        Interval(geom_round(ustrip(uconvert(u"m", T(0.0) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["dimensions"]["r"]) * inputunit_dict["length"])))),
-        Interval(geom_round(ustrip(uconvert(u"rad",T(0.0) * inputunit_dict["angle"] ))),geom_round(ustrip(uconvert(u"rad",T(360.0) * inputunit_dict["angle"]))) ),
-        Interval(geom_round(ustrip(uconvert(u"m", T(dict["dimensions"]["z"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["dimensions"]["z"]["to"]) * inputunit_dict["length"])))),
-        missing
-        )
-    elseif dict["coordinates"] == "Cartesian"
-        vol = CartesianBox3D{T}(dict["dimensions"], inputunit_dict)
-    else
-        @warn "Gridtype must be 'Cylindrical' or 'Cartesian'"
-    end
-    return Symbol(dict["coordinates"]), vol
-end
-=======
->>>>>>> d711c174326d802c8afa8019530bd43f8225ce00
 
 function construct_semiconductor(T, sc::Dict, inputunit_dict::Dict{String, Unitful.Units})
     Semiconductor{T}(sc, inputunit_dict)
@@ -119,7 +101,6 @@ function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::B
 end
 
 function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
-<<<<<<< HEAD
     println("________"*d.name*"________\n")
     # println("Class: ",d.class)
     println("---General Properties---")
@@ -145,9 +126,6 @@ function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
             # println(c)
         end
     end
-=======
-    println(d.name)
->>>>>>> d711c174326d802c8afa8019530bd43f8225ce00
 end
 
 function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(d) end
