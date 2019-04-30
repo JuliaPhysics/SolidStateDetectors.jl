@@ -5,18 +5,6 @@ struct Tube{T} <: AbstractVolumePrimitive{T, 3} ## Only upright Tubes at the mom
     translate::Union{CartesianVector{T},Missing}
 end
 
-function Tube{T}(hierarchy::Int, rStart::T,rStop::T,φStart::T,φStop::T,zStart::T,zStop::T,translate::Union{CartesianVector{T},Missing}=missing) where {T}
-    Tube{T}(hierarchy,ClosedInterval{T}(rStart, rStop), ClosedInterval{T}(deg2rad(φStart) ,deg2rad(φStop)),ClosedInterval{T}(zStart ,zStop), translate)
-end
-
-# function Tube{T}(
-#     hierarchy::Int,
-#     r_interval::AbstractInterval{T},
-#     φ_interval::AbstractInterval{T},
-#     z_interval::AbstractInterval{T},
-#     translate::Union{CartesianVector{T},Missing} = missing) where T
-#     return Tube{T}(hierarchy,r_interval.left, r_interval.right, φ_interval.left, φ_interval.right, z_interval.left, z_interval.right, translate)
-# end
 
 function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})::Tube{T} where {T <: SSDFloat}
 
@@ -48,21 +36,6 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
     Interval(zStart,zStop),
     translate  )
 end
-# function Tube{T}(dict::Dict{Any, Any}, inputunit::Unitful.Units)::Tube{T} where {T <: SSDFloat}
-#     haskey(dict, "hierarchy") ? h = dict["hierarchy"] : h = 1 #DEPR
-#     if haskey(dict, "translate")
-#         translate = CartesianVector{T}[ haskey(dict["translate"],"x") ? dict["translate"]["x"] : 0.0,
-#                                         haskey(dict["translate"],"x") ? dict["translate"]["y"] : 0.0,
-#                                         haskey(dict["translate"],"x") ? dict["translate"]["z"] : 0.0]
-#     else
-#         translate = missing
-#     end
-#     return Tube{T}(h,
-#     Interval(geom_round(ustrip(uconvert(u"m", T(dict["rStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["rStop"]) * inputunit)))),
-#     Interval(geom_round(T(deg2rad(dict["phiStart"]))), geom_round(T(deg2rad(dict["phiStop"])))),
-#     Interval(geom_round(ustrip(uconvert(u"m", T(dict["zStart"]) * inputunit ))), geom_round(ustrip(uconvert(u"m", T(dict["zStop"]) * inputunit)))),
-#     translate  )
-# end
 
 function Geometry(T::DataType, t::Val{:tube}, dict::Dict{Union{Any,String}, Any},inputunit_dict::Dict{String,Unitful.Units})
     return Tube{T}(Dict{Any,Any}(dict), inputunit_dict)
@@ -120,3 +93,13 @@ function sample(c::Tube{T}, stepsize::Vector{T}) where T
     ismissing(c.translate) ? nothing : samples = map(x -> CylindricalPoint(CartesianPoint(x) + c.translate), samples)
     return samples
 end
+
+function (+)(t::Tube{T}, translate::Union{CartesianVector{T},Missing})::Tube{T} where {T <: SSDFloat}
+    if ismissing(translate)
+        return t
+    elseif ismissing(t.translate)
+        return Tube(t.r_interval, t.φ_interval, t.z_interval, translate)
+    else
+        return Tube(t.r_interval, t.φ_interval, t.z_interval, t.translate + translate)
+    end
+ end

@@ -28,22 +28,22 @@
     if !iszero(rStart)
         @series begin
             label:= ""
-            line_3d(rStart,rStart,φStart,φStart,zStart,zStop)
+            line_3d(rStart, rStart, φStart, φStart, zStart, zStop, translate = translate)
         end
     end
     if !iszero(rStart)
         @series begin
             label:= ""
-            line_3d(rStart,rStart,φStop,φStop,zStart,zStop)
+            line_3d(rStart, rStart, φStop, φStop, zStart, zStop, translate = translate)
         end
     end
     @series begin
         label:= ""
-        line_3d(rStop,rStop,φStart,φStart,zStart,zStop)
+        line_3d(rStop, rStop, φStart, φStart, zStart, zStop, translate = translate)
     end
     @series begin
         label:= ""
-        line_3d(rStop,rStop,φStop,φStop,zStart,zStop)
+        line_3d(rStop, rStop, φStop, φStop, zStart, zStop, translate = translate)
     end
 
     ##Horizontal Lines
@@ -51,19 +51,19 @@
     if !isapprox((φStop - φStart)%2π , 0.0,atol=0.00001)
         @series begin
             label:= ""
-            line_3d(rStart,rStop,φStart,φStart,zStart,zStart)
+            line_3d(rStart, rStop, φStart, φStart, zStart, zStart, translate = translate)
         end
         @series begin
             label:= ""
-            line_3d(rStart,rStop,φStop,φStop,zStart,zStart)
+            line_3d(rStart, rStop, φStop, φStop, zStart, zStart, translate = translate)
         end
         @series begin
             label:= ""
-            line_3d(rStart,rStop,φStart,φStart,zStop,zStop)
+            line_3d(rStart, rStop, φStart, φStart, zStop, zStop, translate = translate)
         end
         @series begin
             label:= ""
-            line_3d(rStart,rStop,φStop,φStop,zStop,zStop)
+            line_3d(rStart, rStop, φStop, φStop, zStop, zStop, translate = translate)
         end
     end
 end

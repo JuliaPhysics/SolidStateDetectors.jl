@@ -138,3 +138,13 @@ function sample(c::Cone{T}, stepsize::Vector{T}) where T
     end
     return samples
 end
+
+function (+)(c::Cone{T}, translate::Union{CartesianVector{T},Missing})::Cone{T} where {T <: SSDFloat}
+    if ismissing(translate)
+        return c
+    elseif ismissing(c.translate)
+        return Cone(c.rStart1, c.rStop1, c.rStart2, c.rStop2, c.φStart, c.φStop, c.zStart, c.zStop, translate, c.rotationMatrix)
+    else
+        return Cone(c.rStart1, c.rStop1, c.rStart2, c.rStop2, c.φStart, c.φStop, c.zStart, c.zStop, c.translate + translate, c.rotationMatrix)
+    end
+ end

@@ -11,6 +11,7 @@ struct Box{T} <: AbstractVolumePrimitive{T, 3}
 end
 
 function in(pt::CartesianPoint{T}, g::Box{T})::Bool where {T}
+    ismissing(g.translate) ? nothing : pt -= g.translate
     return (g.x[1] <= pt[1] <= g.x[2]) && (g.y[1] <= pt[2] <= g.y[2]) && (g.z[1] <= pt[3] <= g.z[2])
 end
 
@@ -33,14 +34,14 @@ function Box{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, inputunit_dict::
         xStart, xStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["x"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["x"]["to"]) * inputunit_dict["length"])))
     end
     if typeof(dict["y"]) <: SSDFloat
-        yStart, yStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["y"]) * inputunit_dict["length"])))
+        yStart, yStop = geom_round(translate[2] + T(0.0)), geom_round(translate[2] + ustrip(uconvert(u"m", T(dict["y"]) * inputunit_dict["length"])))
     else
-        yStart, yStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["y"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["y"]["to"]) * inputunit_dict["length"])))
+        yStart, yStop = geom_round(translate[2] + ustrip(uconvert(u"m", T(dict["y"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[2] + ustrip(uconvert(u"m", T(dict["y"]["to"]) * inputunit_dict["length"])))
     end
     if typeof(dict["z"]) <: SSDFloat
-        zStart, zStop = geom_round(translate[1] + T(0.0)), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["z"]) * inputunit_dict["length"])))
+        zStart, zStop = geom_round(translate[3] + T(0.0)), geom_round(translate[3] + ustrip(uconvert(u"m", T(dict["z"]) * inputunit_dict["length"])))
     else
-        zStart, zStop = geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["z"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[1] + ustrip(uconvert(u"m", T(dict["z"]["to"]) * inputunit_dict["length"])))
+        zStart, zStop = geom_round(translate[3] + ustrip(uconvert(u"m", T(dict["z"]["from"]) * inputunit_dict["length"] ))), geom_round(translate[3] + ustrip(uconvert(u"m", T(dict["z"]["to"]) * inputunit_dict["length"])))
     end
     translate = missing
     return Box{T}(
@@ -91,6 +92,7 @@ function vertices(cb::Box{T})::Vector{CartesianPoint{T}} where {T <: SSDFloat}
         CartesianPoint{T}(cb.x[2], cb.y[2], cb.z[2]),
         CartesianPoint{T}(cb.x[1], cb.y[2], cb.z[2]),
     ]
+    ismissing(cb.translate) ? nothing : v = map(x -> x + cb.translate, v)
     return v
 end
 
@@ -130,3 +132,13 @@ function sample(cb::Box{T}, stepsize::Vector{T})  where {T <: SSDFloat}
     end
     return samples
 end
+
+function (+)(b::Box{T}, translate::Union{CartesianVector{T},Missing})::Box{T} where {T <: SSDFloat}
+    if ismissing(translate)
+        return b
+    elseif ismissing(b.translate)
+        return Box(b.x, b.y, b.z, translate)
+    else
+        return Box(b.x, b.y, b.z, b.translate + translate)
+    end
+ end
