@@ -19,7 +19,7 @@
                     "to": 30,
                     "boundaries": {
                         "left": "periodic",
-                        "right": "mirror"
+                        "right": "reflecting"
                     }
                 },
                 "z": {

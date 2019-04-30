@@ -13,7 +13,8 @@ const boundary_condition_mapping = Dict{String, Symbol}(
     "r0" => :r0,
     "inf" => :infinite,
     "infinite" => :infinite,
-    "nothing" => :nothing,
+    "fixed" => :fixed,
+    "fix" => :fixed,
     "reflecting" => :reflecting,
     "periodic" => :periodic,
 )
@@ -50,7 +51,7 @@ end
 # end
 function get_interval_boundary_types(dict::Dict)
     BL, BR = missing, missing
-    if "boundaries" in keys(dict)
+    if haskey(dict, "boundaries")
         if typeof(dict["boundaries"]) == String
             BL = boundary_condition_mapping[dict["boundaries"]]
             BR = boundary_condition_mapping[dict["boundaries"]]
@@ -60,11 +61,17 @@ function get_interval_boundary_types(dict::Dict)
         end
     end
     if !ismissing(BL)
-        if (BL == :periodic && BR != :periodic) || (BL != :periodic && BR == :periodic) || (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic)
-            throw(ConfigFileError("both or none endings must be \"periodic\" for an interval. Or, \"periodic\" and \"reflecting\" (for periodic behaviour plus mirror symmetry)."))
+        if BL == :periodic || BR == :periodic
+            if !(BL == :periodic && BR == :periodic) && !((BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic))
+                throw(ConfigFileError("both or none endings must be \"periodic\" for an interval. Or, \"periodic\" and \"reflecting\" (for periodic behaviour plus mirror symmetry)."))
+            end
         end
     end
     return BL, BR
+end
+
+function is_periodic_plus_mirror_symmetric(BL::Symbol, BR::Symbol)::Bool
+    return (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic)
 end
 
 function get_r_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})
@@ -89,8 +96,12 @@ function get_φ_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.
     R = :open
     BL = :periodic
     BR = :periodic
-    cfBL, cfBR = get_interval_boundary_types(dict)
+    cfBL, cfBR = get_interval_boundary_types(dp)
     if !ismissing(cfBL) BL = cfBL; BR = cfBR; end
+    if is_periodic_plus_mirror_symmetric(BL, BR) 
+        L = :closed; R = :closed;
+        BL = :reflecting; BR = :reflecting
+    end
     if from == to # 2D
         L = :closed; R = :closed;
         BL = :reflecting; BR = :reflecting
@@ -106,6 +117,9 @@ function get_cartesian_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, U
     BL, BR = :infinite, :infinite
     cfBL, cfBR = get_interval_boundary_types(dict)
     if !ismissing(cfBL) BL = cfBL; BR = cfBR; end
+    if BL == BR == :periodic
+        L = :closed; R = :open
+    end
     return SSDInterval{T, L, R, BL, BR}(from, to)
 end
 

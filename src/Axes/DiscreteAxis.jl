@@ -24,7 +24,7 @@ end
     DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :zero} 
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
 * L, R {:closed, :open} 
 * ticks: Ticks of the axis
 """
@@ -123,7 +123,7 @@ function range(interval::Interval{:closed, :open, T}; step::Union{Missing, T} = 
         range(interval.left, stop = stop, length=length)
     elseif ismissing(length)
         # stop = interval.right - interval.right % step
-        stop = interval.right - step
+        stop = geom_round(interval.right - step)
         range(interval.left, stop = stop, step=step)
     else
         error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
@@ -187,8 +187,18 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    # ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
-    # ticks_ext[end] = ticks_ext[end - 1] + (ticks_ext[end - 1] - ticks_ext[end - 2])
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :reflecting} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :fixed} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
     set_periodic_bondary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
@@ -210,6 +220,53 @@ function get_extended_ticks( ax::DiscreteAxis{T, :r0, :infinite} )::Vector{T} wh
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
     ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
+    Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
+    ticks_ext[end] = ticks_ext[end - 1] + Δ
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :r0, :fixed} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
+    Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
+    ticks_ext[end] = ticks_ext[end - 1] + Δ
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :fixed} )::Vector{T} where {T}
+    # same as get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :fixed} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
+    ticks_ext[1] = ticks_ext[2] - Δ
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :reflecting} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
+    ticks_ext[1] = ticks_ext[2] - Δ
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :infinite} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
+    ticks_ext[end] = ticks_ext[end - 1] + Δ
+    return ticks_ext
+end
+function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :infinite} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[end] = ticks_ext[end - 1] + Δ
     return ticks_ext

@@ -453,7 +453,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
         zticks = ax_z.ticks
         push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
         sort!(zticks)
-        ax_z = DiscreteAxis{T, :infinite, :infinite}(int_z, zticks) # must be even
+        ax_z = typeof(ax_z)(int_z, zticks) # must be even
     end
     @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
 
@@ -477,26 +477,27 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
     ax_x::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
     xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = init_grid_spacing[1] / 2)
     ax_x = typeof(ax_x)(int_x, xticks)
+    if isodd(length(ax_x)) # RedBlack dimension must be of even length
+        xticks = ax_x.ticks
+        push!(xticks, geom_round((xticks[end] + xticks[end-1]) * 0.5))
+        sort!(xticks)
+        ax_x = DiscreteAxis{T, BL, BR}(int_x, xticks) # must be even
+    end
+    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
+    
     # y
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
     ax_y::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
     yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = init_grid_spacing[2] / 2)
     ax_y = typeof(ax_y)(int_y, yticks)
+    
     # z
     L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
     int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
     ax_z::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
     zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = init_grid_spacing[3] / 2)
     ax_z = typeof(ax_z)(int_z, zticks)
-
-    if isodd(length(ax_x)) # RedBlack dimension must be of even length
-        xticks = ax_x.ticks
-        push!(xticks, geom_round((xticks[end] + xticks[end-1]) * 0.5))
-        sort!(xticks)
-        ax_x = DiscreteAxis{T, :infinite, :infinite}(int_x, xticks) # must be even
-    end
-    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end

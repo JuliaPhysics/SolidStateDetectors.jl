@@ -16,10 +16,10 @@
                 },
                 "phi": {
                     "from": 0,
-                    "to": 60,
+                    "to": 120,
                     "boundaries": {
                         "left": "periodic", 
-                        "right": "mirror"
+                        "right": "periodic"
                     }
                 },
                 "z": {

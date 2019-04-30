@@ -23,7 +23,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
 """
 function calculate_weighting_potential( detector::SolidStateDetector{T, :cylindrical}, channel_id::Int;
-                                        init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005], # 2mm, 10 degree, 2 mm
+                                        init_grid_spacing::Vector{<:Real} = [0.002, deg2rad(5.0), 0.002], # 2mm, 10 degree, 2 mm
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, for_weighting_potential = true),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
@@ -119,7 +119,7 @@ end
 
 
 function calculate_weighting_potential( detector::SolidStateDetector{T, :cartesian}, channel_id::Int;
-                                        init_grid_spacing::Vector{<:Real} = [0.005, 0.005, 0.005], # 5mm each
+                                        init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], # 5mm each
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,

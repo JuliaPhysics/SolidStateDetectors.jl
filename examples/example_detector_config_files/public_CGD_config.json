@@ -37,16 +37,16 @@
 				"charge_density_model": {
                     "name": "linear",
                     "x": {
-                        "init": 0.2,
-                        "gradient": 0.00071
+                        "init": 0.0,
+                        "gradient": 0.000
                     },
                     "y": {
                         "init": 0.0,
                         "gradient": 0.0
                     },
                     "z": {
-                        "init": 0.2,
-                        "gradient": 0.00071
+                        "init": 0.0,
+                        "gradient": 0.000
                     }
                 },
 				"geometry": {
