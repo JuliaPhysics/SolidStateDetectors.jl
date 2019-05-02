@@ -120,7 +120,7 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
         end
     else
         temperaturemodel = VacuumModel{T}(config)
-        println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
+        # println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
     end
 
     return ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)

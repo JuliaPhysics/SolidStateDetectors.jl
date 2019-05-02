@@ -298,10 +298,10 @@ function generate_charge_signals(   sim::Simulation{T},
     contact_charge_signals
 end
 
-function simulate!(sim::Simulation{T}; cdm::AbstractChargeDriftModel = ADLChargeDriftModel(T = T), max_refinements = 1) where {T <: SSDFloat}
-    calculate_electric_potential!(sim, max_refinements = max_refinements)
+function simulate!(sim::Simulation{T}; cdm::AbstractChargeDriftModel = ADLChargeDriftModel(T = T), max_refinements = 1, verbose = false) where {T <: SSDFloat}
+    calculate_electric_potential!(sim, max_refinements = max_refinements, verbose = verbose)
     for contact in sim.detector.contacts
-        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements)
+        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, verbose = verbose)
     end
     calculate_electric_field!(sim)
     SSD.set_charge_drift_model!(sim, cdm)

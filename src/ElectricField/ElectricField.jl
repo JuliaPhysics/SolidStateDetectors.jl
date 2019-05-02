@@ -13,7 +13,7 @@ end
 function NamedTuple(ep::ElectricField{T, 3}) where {T}
     return (
         grid = NamedTuple(ep.grid),
-        values = ep.data * internal_efield_unit,
+        values = ep.data #* internal_efield_unit,
     )
 end
 Base.convert(T::Type{NamedTuple}, x::ElectricField) = T(x)
@@ -25,7 +25,8 @@ function ElectricField(nt::NamedTuple)
     N = get_number_of_dimensions(grid)
     ef = Array{SVector{3, T}}(undef, size(grid)...)
     @inbounds for i in eachindex(ef)
-        ef[i] = ustrip.(uconvert.(internal_efield_unit, nt.values[i]))
+        # ef[i] = ustrip.(uconvert.(internal_efield_unit, nt.values[i]))
+        ef[i] = nt.values[i]
     end
     ElectricField{T, N, S}( ef, grid)
 end
