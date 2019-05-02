@@ -235,7 +235,7 @@ function generate_charge_signals!(
     Δt::RealQuantity;
     verbose::Bool = true
 )::Nothing where {T <: SSDFloat}
-    E_ionisation = sim.detector.material_detector.E_ionisation
+    E_ionisation = sim.detector.medium.E_ionisation
 
     unitless_delta_t::T = to_internal_units(u"s", Δt)
     S = Val(get_coordinate_system(sim.detector))

@@ -16,7 +16,6 @@ mutable struct Contact{T} <: AbstractContact{T}
     geometry_negative::Vector{AbstractGeometry{T}}
 end
 
-# get_contact_type(c::Contact{T}) where {T <: SSDFloat}
 
 function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, inputunit_dict::Dict{String,Unitful.Units})::Contact{T} where {T <: SSDFloat}
     haskey(dict, "channel") ? channel = dict["channel"] : channel = -1

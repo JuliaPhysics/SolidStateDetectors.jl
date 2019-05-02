@@ -87,6 +87,9 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     end
     energy_depos = T[1460]
     @assert in(pos[1], simulation.detector) "Test point $(pos[1]) not inside the detector $(key)."
+
+    evt = Event(pos, energy_depos)
+
     begin
         drift_paths = SSD.drift_charges(simulation, CartesianPoint.(pos));
         plot(simulation.detector)
