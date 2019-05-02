@@ -29,7 +29,11 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     simulation = Simulation(det);
    
     SSD.apply_initial_state!(simulation)
-    plot(simulation.electric_potential)
+    p = if key == :CGD
+        plot(simulation.electric_potential, y = 0.002)
+    else
+        plot(simulation.electric_potential)
+    end
     savefig(joinpath(outputdir, "$(key)_0_init_setup"))
 
     for nrefs in [0, 1, 2]
@@ -51,7 +55,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
 
     n_contacts = length(simulation.detector.contacts)
     for contact in simulation.detector.contacts
-        SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 3)
+        SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
     end
 
     # plot( # does not work for :cartesian yet
@@ -88,19 +92,15 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     energy_depos = T[1460]
     @assert in(pos[1], simulation.detector) "Test point $(pos[1]) not inside the detector $(key)."
 
-    evt = Event(pos, energy_depos)
-
-    begin
-        drift_paths = SSD.drift_charges(simulation, CartesianPoint.(pos));
-        plot(simulation.detector)
-        plot!(drift_paths)
-    end
+    event = SSD.Event(pos, energy_depos)
+    SSD.simulate!(event, simulation) 
+    
+    plot(simulation.detector)
+    plot!(event.drift_paths)
     savefig(joinpath(outputdir, "$(key)_4_charge_drift"))
 
-    signals = SSD.get_signals(simulation, drift_paths, energy_depos)
-
     # signals[:, 2] *= -1
-    plot(signals, size = (1200, 600), lw = 1.5)
+    plot(event.signals, size = (1200, 600), lw = 1.5)
     savefig(joinpath(outputdir, "$(key)_5_induced_signals"))
 
 end

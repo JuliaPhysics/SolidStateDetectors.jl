@@ -166,8 +166,8 @@ function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::
         get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
         get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ);
     else
-        sim.electric_potential,
-        sim.point_types
+        get_2π_potential(sim.electric_potential),
+        get_2π_potential(sim.point_types)
     end
     sim.electric_field = get_electric_field_from_potential(e_pot, point_types);
     nothing
@@ -233,25 +233,38 @@ function generate_charge_signals!(
     hit_edep::AbstractVector{<:AbstractVector{<:RealQuantity}},
     n_steps::Integer,
     Δt::RealQuantity;
+    channels::Union{Missing, Vector{Int}} = missing,
     verbose::Bool = true
 )::Nothing where {T <: SSDFloat}
-    E_ionisation = sim.detector.medium.E_ionisation
+    E_ionisation = sim.detector.semiconductors[1].material.E_ionisation
+    E_conversion_factor::T = 1 / ustrip(uconvert(internal_energy_unit, E_ionisation))
 
-    unitless_delta_t::T = to_internal_units(u"s", Δt)
+    unitless_delta_t::T = to_internal_units(internal_time_unit, Δt)
     S = Val(get_coordinate_system(sim.detector))
-    n_contacts::Int = length(sim.detector.contacts)
+    
+    contacts::Vector{Contact{T}} = []
+    if ismissing(channels) 
+        contacts = sim.detector.contacts
+    else
+        for contact in sim.detector.contacts 
+            if contact.id in channels push!(contacts, contact) end
+        end
+    end
+    @info length(contacts)
+    wps_interpolated::Vector{<:Interpolations.Extrapolation{T, 3}} = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ]
 
-    prog = Progress(length(hit_pos), 0.005, "Generating charge signals...")
+    prog = Progress(length(hit_pos), 0.2, "Generating charge signals...")
     @inbounds for i_evt in eachindex(hit_pos)
         startpos_vec::Vector{CartesianPoint{T}} = CartesianPoint{T}[ CartesianPoint{T}( to_internal_units(u"m", hit_pos[i_evt][idep]) ) for idep in eachindex(hit_pos[i_evt]) ]
         edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
-        n_charges_vec::Vector{T} = edep_vec / ustrip(uconvert(u"eV", E_ionisation))
+        n_charges_vec::Vector{T} = edep_vec * E_conversion_factor
 
         drift_paths::Vector{DriftPath{T}} = drift_charges( sim, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
 
-        for contact in sim.detector.contacts
+        for i in eachindex(contacts)
+            contact::Contact{T} = contacts[i]
             signal::Vector{T} = zeros(T, n_steps)
-            add_signal!(signal, drift_paths, n_charges_vec, interpolated_scalarfield(sim.weighting_potentials[contact.id]), S)
+            add_signal!(signal, drift_paths, n_charges_vec, wps_interpolated[contact.id], S)
             contact_charge_signals[contact.id][i_evt] = signal
         end
         ProgressMeter.next!(prog)
@@ -265,6 +278,7 @@ function generate_charge_signals(   sim::Simulation{T},
                                     events::DetectorHitEvents;
                                     n_steps::Integer = 1000,
                                     Δt::RealQuantity = 5u"ns",
+                                    channels::Union{Missing, Vector{Int}} = missing,
                                     verbose::Bool = true
                                 ) where {T <: SSDFloat}
     hit_pos = events.pos
@@ -278,6 +292,7 @@ function generate_charge_signals(   sim::Simulation{T},
         sim,
         hit_pos, hit_edep,
         n_steps, Δt,
+        channels = channels,
         verbose = verbose
     )
 
