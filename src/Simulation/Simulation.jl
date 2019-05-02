@@ -250,7 +250,6 @@ function generate_charge_signals!(
             if contact.id in channels push!(contacts, contact) end
         end
     end
-    @info length(contacts)
     wps_interpolated::Vector{<:Interpolations.Extrapolation{T, 3}} = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ]
 
     prog = Progress(length(hit_pos), 0.2, "Generating charge signals...")
