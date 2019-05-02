@@ -11,8 +11,8 @@ mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
 
     charge_drift_model::Union{AbstractChargeDriftModel{T}, Missing}
 
-    interpolated_electron_drift_field::Union{ElectricField{T}, Missing}
-    interpolated_hole_drift_field::Union{ElectricField{T}, Missing}
+    electron_drift_field::Union{ElectricField{T}, Missing}
+    hole_drift_field::Union{ElectricField{T}, Missing}
 
     Simulation{T}() where {T <: SSDFloat} = new{T}(missing, missing, missing, missing, missing, [missing], missing, missing, missing, missing )
 end
@@ -28,8 +28,8 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
         weighting_potentials = NamedTuple{Tuple(wps_syms)}( NamedTuple.( sim.weighting_potentials )),
-        interpolated_electron_drift_field = NamedTuple(sim.interpolated_electron_drift_field),
-        interpolated_hole_drift_field = NamedTuple(sim.interpolated_hole_drift_field)
+        electron_drift_field = NamedTuple(sim.electron_drift_field),
+        hole_drift_field = NamedTuple(sim.hole_drift_field)
     )
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
@@ -50,8 +50,8 @@ function Simulation(nt::NamedTuple)
             sim.weighting_potentials[contact.id] = WeightingPotential(nt.weighting_potentials[contact.id])
         end
     end
-    sim.interpolated_electron_drift_field = ElectricField(nt.interpolated_electron_drift_field)
-    sim.interpolated_hole_drift_field = ElectricField(nt.interpolated_hole_drift_field)
+    sim.electron_drift_field = ElectricField(nt.electron_drift_field)
+    sim.hole_drift_field = ElectricField(nt.hole_drift_field)
     sim.charge_drift_model = ADLChargeDriftModel(T = T)
     @info "I/O of charge drift model not yet supported. Loading default: ADLChargeDriftModel"
     return sim
@@ -74,8 +74,8 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
         println(!ismissing(sim.weighting_potentials[contact.id]) ? size(sim.weighting_potentials[contact.id]) : missing)
     end
     println("  Charge drift model: ", !ismissing(sim.electric_field) ? typeof(sim.charge_drift_model) : missing)
-    println("  Electron drift field: ", !ismissing(sim.interpolated_electron_drift_field) ? size(sim.interpolated_electron_drift_field) : missing)
-    println("  Hole drift field: ", !ismissing(sim.interpolated_hole_drift_field) ? size(sim.interpolated_hole_drift_field) : missing)
+    println("  Electron drift field: ", !ismissing(sim.electron_drift_field) ? size(sim.electron_drift_field) : missing)
+    println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
 
 function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
@@ -183,12 +183,12 @@ function get_interpolated_drift_field(ef::ElectricField)
 end
 
 function apply_charge_drift_model!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
-    sim.interpolated_electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
-    sim.interpolated_hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
-    # sim.interpolated_electron_drift_field = get_interpolated_drift_field(
+    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
+    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
+    # sim.electron_drift_field = get_interpolated_drift_field(
     #     get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid
     # )
-    # sim.interpolated_hole_drift_field = get_interpolated_drift_field(
+    # sim.hole_drift_field = get_interpolated_drift_field(
     #     get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid
     # )
     nothing
@@ -197,7 +197,7 @@ end
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
                         Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{DriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.electric_potential.grid, starting_positions,
-                             get_interpolated_drift_field(sim.interpolated_electron_drift_field), get_interpolated_drift_field(sim.interpolated_hole_drift_field),
+                             get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
                              Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{DriftPath{T}}
 end
 
