@@ -136,6 +136,7 @@ function sample(c::Cone{T}, stepsize::Vector{T}) where T
             end
         end
     end
+    ismissing(c.translate) ? nothing : samples = map(x -> CylindricalPoint(CartesianPoint(x) + c.translate), samples)
     return samples
 end
 

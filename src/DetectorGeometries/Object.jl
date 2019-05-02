@@ -1,5 +1,5 @@
 
-abstract type AbstractObject{T} end
+abstract type AbstractObject{T <: SSDFloat} end
 
 
 @inline function in(pt::AbstractCoordinatePoint{T}, c::AbstractObject{T})::Bool where {T}
@@ -43,13 +43,21 @@ function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{
 end
 
 function paint_object(object::AbstractObject, grid::CylindricalGrid{T}) where T
+    println(T)
     stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
     samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
     object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
     return object_gridpoints
 end
+function paint_object(object::AbstractObject{T}, grid::CylindricalGrid{T}, φ::T) where T
+    closest_φ_idx=searchsortednearest(grid[:φ].ticks, φ)
+    stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
+    samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
+    object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
+    return filter(x -> x[2]==closest_φ_idx, object_gridpoints)
+end
 
-function paint_object(object::AbstractObject, grid::CartesianGrid{T}) where T
+function paint_object(object::AbstractObject{T}, grid::CartesianGrid{T}) where T
     stepsize::Vector{T}= [minimum(diff(grid[:x].ticks)), minimum(diff(grid[:y].ticks)), minimum(diff(grid[:z].ticks))]
     samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
     object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])

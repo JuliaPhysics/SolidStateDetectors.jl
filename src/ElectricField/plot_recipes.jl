@@ -310,3 +310,60 @@ end
         end
     end
 end
+
+
+
+@userplot plot_electric_field
+@recipe function f(gdd::plot_electric_field; φ=missing, spacing = 10, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
+    setup = gdd.args[1]
+    T = Float32
+    ismissing(φ) ? φ = T(0.0) : φ=T(φ)
+    aspect_ratio --> 1
+    title --> "Electric Field Lines @φ=$(geom_round(φ))°"
+    xlabel --> L"$r$ / m"
+    ylabel --> L"$z$ / m"
+
+    if potential==true
+        @series begin
+            contours_equal_potential --> contours_equal_potential
+            φ --> φ
+            setup.electric_potential
+        end
+    end
+
+    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in setup.detector.contacts])
+    spawn_positions = CylindricalPoint{T}[]
+    grid = Grid(setup.detector, init_grid_spacing = grid_spacing,full_grid=true)
+    pt_offset = T[offset,0.0,offset]
+
+    for c in contacts_to_spawn_charges_for
+        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c,grid,φ ))
+        for position in ongrid_positions
+            push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
+            push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
+        end
+    end
+
+
+    filter!(x -> x in setup.detector && !in(x, setup.detector.contacts), spawn_positions)
+
+
+    el_field_itp = get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
+    el_field_itp_inv = get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
+    for pos in spawn_positions[1:spacing:end]
+        path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
+        drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field_itp, verbose = false )
+        @series begin
+            c --> :white
+            label --> ""
+            map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+        end
+        path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
+        drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field_itp_inv, verbose = false )
+        @series begin
+            c --> :white
+            label --> ""
+            map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+        end
+    end
+end
