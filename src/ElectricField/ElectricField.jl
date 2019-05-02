@@ -10,22 +10,26 @@ end
 @inline getindex(ep::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
 
 
-function ElectricField(nt::NamedTuple)
-    grid = Grid(nt.grid)
-    T = typeof(ustrip(nt.values[1]))
-    S = get_coordinate_type(grid)
-    N = get_number_of_dimensions(grid)
-    ElectricField{T, N, S}( ustrip.(uconvert.(u"V / m", nt.values)), grid)
-end
-
-Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
-
 function NamedTuple(ep::ElectricField{T, 3}) where {T}
     return (
         grid = NamedTuple(ep.grid),
-        values = ep.data * u"V / m",
+        values = ep.data * internal_efield_unit,
     )
 end
+Base.convert(T::Type{NamedTuple}, x::ElectricField) = T(x)
+
+function ElectricField(nt::NamedTuple)
+    grid = Grid(nt.grid)
+    T = eltype(ustrip.(nt.values[1]))
+    S = get_coordinate_type(grid)
+    N = get_number_of_dimensions(grid)
+    ef = Array{SVector{3, T}}(undef, size(grid)...)
+    @inbounds for i in eachindex(ef)
+        ef[i] = ustrip.(uconvert.(internal_efield_unit, nt.values[i]))
+    end
+    ElectricField{T, N, S}( ef, grid)
+end
+Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 
 

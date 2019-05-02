@@ -140,7 +140,7 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPo
     on_surface, surface_normal = is_surface_point_and_normal_vector(c, p)
     if on_surface
         for contact in c.contacts
-            if in(searchsortednearest(grid, p), contact) && abs(sum(sp[2])) > 1
+            if in(searchsortednearest(grid, p), contact) #&& abs(sum(sp[2])) > 1
                 return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
                 return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
@@ -173,7 +173,7 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
     on_surface, surface_normal = is_surface_point_and_normal_vector(c, p) # surface_normal::CartesianVector{T}
     if on_surface
         for contact in c.contacts
-            if in(searchsortednearest(grid, p), contact) #&& abs(sum(sp[2])) > 1
+            if in(searchsortednearest(grid, p), contact)
                 return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
                 return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal

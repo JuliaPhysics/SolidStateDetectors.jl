@@ -42,13 +42,7 @@ function get_periodicity(int::SSDInterval{T, L, R, BL, BR}) where {T <:SSDFloat,
     return int.right - int.left
 end
 
-# function get_mirror_axis(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})
-#     mirror_axis = missing
-#     if "mirror_axis" in keys(dict)
-#         mirror_axis = geom_round(ustrip(uconvert(internal_angle_unit, T(dict["mirror_axis"]) * inputunit_dict["angle"]))) 
-#     end
-#     return mirror_axis
-# end
+
 function get_interval_boundary_types(dict::Dict)
     BL, BR = missing, missing
     if haskey(dict, "boundaries")

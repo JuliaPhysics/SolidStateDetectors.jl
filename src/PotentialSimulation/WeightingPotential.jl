@@ -157,7 +157,6 @@ function WeightingPotential(nt::NamedTuple)
     N = get_number_of_dimensions(grid)
     WeightingPotential{T, N, S}( nt.values, grid)
 end
-
 Base.convert(T::Type{WeightingPotential}, x::NamedTuple) = T(x)
 
 function NamedTuple(ep::WeightingPotential{T, 3}) where {T}
@@ -166,8 +165,8 @@ function NamedTuple(ep::WeightingPotential{T, 3}) where {T}
         values = ep.data,
     )
 end
-
 Base.convert(T::Type{NamedTuple}, x::WeightingPotential) = T(x)
+
 
 
 

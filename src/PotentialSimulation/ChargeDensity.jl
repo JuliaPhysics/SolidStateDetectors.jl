@@ -14,6 +14,26 @@ function ChargeDensity(fss::PotentialSimulationSetup{T, N, S})::ChargeDensity{T,
     return ChargeDensity{T, N, S}( fss.ρ, fss.grid )
 end
 
+
+function NamedTuple(ρ::ChargeDensity{T}) where {T <: SSDFloat}
+    return (
+        grid = NamedTuple(ρ.grid),
+        values = ρ.data * internal_voltage_unit,
+    )
+end
+Base.convert(T::Type{NamedTuple}, x::ChargeDensity) = T(x)
+    
+function ChargeDensity(nt::NamedTuple)
+    grid = Grid(nt.grid)
+    T = typeof(ustrip(nt.values[1]))
+    S = get_coordinate_type(grid)
+    N = get_number_of_dimensions(grid)
+    ChargeDensity{T, N, S}( ustrip.(uconvert.(internal_voltage_unit, nt.values)), grid)
+end
+Base.convert(T::Type{ChargeDensity}, x::NamedTuple) = T(x)
+
+
+
 @recipe function f( ρ::ChargeDensity{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,

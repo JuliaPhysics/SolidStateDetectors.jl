@@ -144,8 +144,8 @@ function (+)(c::Cone{T}, translate::Union{CartesianVector{T},Missing})::Cone{T} 
     if ismissing(translate)
         return c
     elseif ismissing(c.translate)
-        return Cone(c.rStart1, c.rStop1, c.rStart2, c.rStop2, c.φStart, c.φStop, c.zStart, c.zStop, translate, c.rotationMatrix)
+        return Cone(c.rStart1, c.rStop1, c.rStart2, c.rStop2, c.φStart, c.φStop, c.zStart, c.zStop, translate, c.rotate)
     else
-        return Cone(c.rStart1, c.rStop1, c.rStart2, c.rStop2, c.φStart, c.φStop, c.zStart, c.zStop, c.translate + translate, c.rotationMatrix)
+        return Cone(c.rStart1, c.rStop1, c.rStart2, c.rStop2, c.φStart, c.φStop, c.zStart, c.zStop, c.translate + translate, c.rotate)
     end
  end
