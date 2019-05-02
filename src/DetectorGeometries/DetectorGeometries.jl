@@ -140,7 +140,7 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPo
     on_surface, surface_normal = is_surface_point_and_normal_vector(c, p)
     if on_surface
         for contact in c.contacts
-            if in(searchsortednearest(grid, p), contact) 
+            if in(searchsortednearest(grid, p), contact) #&& abs(sum(sp[2])) > 1
                 return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
                 return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
@@ -394,7 +394,7 @@ end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005],
-                for_weighting_potential::Bool = false)::CylindricalGrid{T} where {T}
+                for_weighting_potential::Bool = false, full_grid = false)::CylindricalGrid{T} where {T}
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
@@ -422,6 +422,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     # φ
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
+    if full_grid == true int_φ = Interval{L, R, T}(0.0, 2π) end
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
@@ -484,14 +485,14 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
         ax_x = DiscreteAxis{T, BL, BR}(int_x, xticks) # must be even
     end
     @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
-    
+
     # y
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
     ax_y::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
     yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = init_grid_spacing[2] / 2)
     ax_y = typeof(ax_y)(int_y, yticks)
-    
+
     # z
     L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
     int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
