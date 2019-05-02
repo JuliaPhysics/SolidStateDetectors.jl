@@ -58,9 +58,9 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
         SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
     end
     wp_plots = if key != :CGD
-        [ plot(wp.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
+        [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
     else
-        [ plot(wp.weighting_potentials[contact.id], y = 0.002) for contact in simulation.detector.contacts ]
+        [ plot(simulation.weighting_potentials[contact.id], y = 0.002) for contact in simulation.detector.contacts ]
     end
     plot( wp_plots..., size = (1000, 1000))
     savefig(joinpath(outputdir, "$(key)_2_Weighting_Potentials"))

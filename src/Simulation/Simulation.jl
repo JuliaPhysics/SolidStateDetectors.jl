@@ -165,9 +165,12 @@ function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::
         end
         get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
         get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ);
-    else
+    elseif S == :cylindrical
         get_2π_potential(sim.electric_potential),
         get_2π_potential(sim.point_types)
+    else
+        sim.electric_potential,
+        sim.point_types
     end
     sim.electric_field = get_electric_field_from_potential(e_pot, point_types);
     nothing
