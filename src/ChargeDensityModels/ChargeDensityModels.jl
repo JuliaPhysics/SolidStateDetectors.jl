@@ -1,6 +1,6 @@
 abstract type AbstractChargeDensityModel{T <: SSDFloat} end
 
-@inline function ChargeDensityModel(T::DataType, dict::Dict{String, Any})
+@inline function ChargeDensityModel(T::DataType, dict::Union{Dict{String, Any}, Dict{Any, Any}})
     return ChargeDensityModel(T, Val{Symbol(dict["name"])}(), dict)
 end
 
@@ -26,11 +26,11 @@ function get_charge_density(lcdm::LinearChargeDensityModel{T}, pt::AbstractCoord
 end
 
 
-function ChargeDensityModel(T::DataType, t::Val{:linear}, dict::Dict{String, Any})
+function ChargeDensityModel(T::DataType, t::Val{:linear}, dict::Union{Dict{String, Any}, Dict{Any, Any}})
     return LinearChargeDensityModel{T}( dict )
 end
 
-function LinearChargeDensityModel{T}(dict::Dict{String, Any})::LinearChargeDensityModel{T} where {T <: SSDFloat}
+function LinearChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}})::LinearChargeDensityModel{T} where {T <: SSDFloat}
     offsets, gradients = zeros(T,3), zeros(T,3)
     if haskey(dict, "r")     offsets[1] = dict["r"]["init"];     gradients[1] = dict["r"]["gradient"]    end
     if haskey(dict, "phi")   offsets[2] = dict["phi"]["init"];   gradients[2] = dict["phi"]["gradient"]  end

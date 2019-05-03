@@ -1,6 +1,6 @@
 # Use
 #
-#     DOCUMENTER_DEBUG=true julia --color=yes make.jl local [fixdoctests]
+# DOCUMENTER_DEBUG=true julia --color=yes make.jl local [fixdoctests]
 #
 # for local builds.
 
