@@ -2,59 +2,54 @@
 using SolidStateDetectors
 using Test
 
+T = Float32
+max_refinements = 0
+
 @testset "Package SolidStateDetectors" begin
 
-    @testset "Load Config Files" begin
-        @test begin
-            global det_coax
-            det_coax = SolidStateDetector(SSD_examples[:Coax])
-            true
+    @testset "Simulate example detector: Inverted Coax" begin
+        sim = Simulation(SSD_examples[:InvertedCoax])
+        simulate!(sim, max_refinements = max_refinements)
+        evt = SSD.Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
+        simulate!(evt, sim)
+        signalsum::T = 0
+        for i in 1:length(evt.signals)
+            signalsum += abs(evt.signals[i][end])
         end
-        @test begin
-            global det_bege
-            det_bege = SolidStateDetector(SSD_examples[:BEGe])
-            true
-        end
-        @test begin 
-            global det_ivc
-            det_ivc = SolidStateDetector(SSD_examples[:InvertedCoax])
-            true
-        end
-    end 
-
-    @testset "Electric Potential Simulation" begin
-        @test begin
-            global eps_coax
-            eps_coax = calculate_electric_potential(det_coax, max_refinements = 1, convergence_limit=5e-5);
-            !(any(isnan, eps_coax.potential) || any(isinf, eps_coax.potential)) 
-        end
-        @test begin
-            global eps_bege
-            eps_bege = calculate_electric_potential(det_bege, max_refinements = 1, convergence_limit=5e-5);
-            !(any(isnan, eps_bege.potential) || any(isinf, eps_bege.potential)) 
-        end
-        @test begin
-            global eps_ivc
-            eps_ivc = calculate_electric_potential(det_ivc, max_refinements = 1, convergence_limit=5e-5);
-            !(any(isnan, eps_ivc.potential) || any(isinf, eps_ivc.potential)) 
-        end
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
-    @testset "Weighting Potential Simulation" begin
-        @test begin
-            global wps_coax
-            wps_coax = calculate_weighting_potential(det_coax, 1, max_refinements = 1, convergence_limit=5e-5);
-            !(any(isnan, wps_coax.potential) || any(isinf, wps_coax.potential))
+    @testset "Simulate example detector: Coax" begin
+        sim = Simulation(SSD_examples[:Coax])
+        simulate!(sim, max_refinements = max_refinements)
+        evt = SSD.Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
+        simulate!(evt, sim)
+        signalsum::T = 0
+        for i in 1:length(evt.signals)
+            signalsum += abs(evt.signals[i][end])
         end
-        @test begin
-            global wps_bege
-            wps_bege = calculate_weighting_potential(det_bege, 1, max_refinements = 1, convergence_limit=5e-5);
-            !(any(isnan, wps_bege.potential) || any(isinf, wps_bege.potential)) 
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
+    end
+    @testset "Simulate example detector: BEGe" begin
+        sim = Simulation(SSD_examples[:BEGe])
+        simulate!(sim, max_refinements = max_refinements)
+        evt = SSD.Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
+        simulate!(evt, sim)
+        signalsum::T = 0
+        for i in 1:length(evt.signals)
+            signalsum += abs(evt.signals[i][end])
         end
-        @test begin
-            global wps_ivc
-            wps_ivc = calculate_weighting_potential(det_ivc, 1, max_refinements = 1, convergence_limit=5e-5);
-            !(any(isnan, wps_ivc.potential) || any(isinf, wps_ivc.potential)) 
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
+    end
+    @testset "Simulate example detector: CGD" begin
+        sim = Simulation(SSD_examples[:CGD])
+        simulate!(sim, max_refinements = max_refinements)
+        evt = SSD.Event([CartesianPoint{T}(5e-3, 5e-3, 5e-3)])
+        simulate!(evt, sim)
+        signalsum::T = 0
+        for i in 1:length(evt.signals)
+            signalsum += abs(evt.signals[i][end])
         end
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
 
 end

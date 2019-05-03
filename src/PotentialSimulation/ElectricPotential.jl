@@ -127,7 +127,6 @@ end
     aspect_ratio --> 1
     foreground_color_border --> nothing
     tick_direction --> :out
-
        
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         :φ, 1
