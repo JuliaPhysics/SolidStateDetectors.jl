@@ -255,7 +255,7 @@ function generate_charge_signals!(
     end
     wps_interpolated::Vector{<:Interpolations.Extrapolation{T, 3}} = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ]
 
-    prog = Progress(length(hit_pos), 0.2, "Generating charge signals...")
+    prog = Progress(length(hit_pos), 0.1, "Generating charge signals...")
     @inbounds for i_evt in eachindex(hit_pos)
         startpos_vec::Vector{CartesianPoint{T}} = CartesianPoint{T}[ CartesianPoint{T}( to_internal_units(u"m", hit_pos[i_evt][idep]) ) for idep in eachindex(hit_pos[i_evt]) ]
         edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
