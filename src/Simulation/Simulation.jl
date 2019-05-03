@@ -188,12 +188,6 @@ end
 function apply_charge_drift_model!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
     sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
     sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
-    # sim.electron_drift_field = get_interpolated_drift_field(
-    #     get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid
-    # )
-    # sim.hole_drift_field = get_interpolated_drift_field(
-    #     get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid
-    # )
     nothing
 end
 

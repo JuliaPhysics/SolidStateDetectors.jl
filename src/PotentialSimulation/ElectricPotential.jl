@@ -127,12 +127,13 @@ end
     aspect_ratio --> 1
     foreground_color_border --> nothing
     tick_direction --> :out
+
        
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
+        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right) && g[:φ].interval.right != g[:φ].interval.left
             if φ_rad > g[:φ].interval.right
                 φ_rad -= g[:φ].interval.right - g[:φ].interval.left
             elseif φ_rad < g[:φ].interval.left
@@ -154,6 +155,8 @@ end
     elseif cross_section == :z
         g[:z][idx]
     end
+
+
 
     @series begin
         if cross_section == :φ
