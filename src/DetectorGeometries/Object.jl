@@ -43,7 +43,6 @@ function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{
 end
 
 function paint_object(object::AbstractObject, grid::CylindricalGrid{T}) where T
-    println(T)
     stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
     samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
     object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
