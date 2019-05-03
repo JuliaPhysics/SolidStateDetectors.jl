@@ -394,6 +394,7 @@ end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005],
+                for_weighting_potential::Bool = false,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
@@ -422,7 +423,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     # φ
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    if full_2π == true 
+    if full_2π == true || (for_weighting_potential && (detector.world.intervals[2].left != detector.world.intervals[2].right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
         int_φ = Interval{L, R, T}(0, 2π) 
     end

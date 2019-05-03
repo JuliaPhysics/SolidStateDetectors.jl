@@ -311,11 +311,11 @@ end
     end
 end
 
-@userplot plot_electric_field
-@recipe function f(gdd::plot_electric_field; φ=missing, spacing = 10, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
+@userplot Plot_electric_field
+@recipe function f(gdd::Plot_electric_field; φ = missing, spacing = 10, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
     setup = gdd.args[1]
     T = Float32
-    ismissing(φ) ? φ = T(0.0) : φ=T(φ)
+    φ = ismissing(φ) ? T(0) : T(φ)
     aspect_ratio --> 1
     title --> "Electric Field Lines @φ=$(geom_round(φ))°"
     xlabel --> L"$r$ / m"
