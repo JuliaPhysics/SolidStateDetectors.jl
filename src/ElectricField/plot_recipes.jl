@@ -311,8 +311,6 @@ end
     end
 end
 
-
-
 @userplot plot_electric_field
 @recipe function f(gdd::plot_electric_field; φ=missing, spacing = 10, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
     setup = gdd.args[1]
@@ -331,9 +329,11 @@ end
         end
     end
 
+\pi
+
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in setup.detector.contacts])
     spawn_positions = CylindricalPoint{T}[]
-    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π=true)
+    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true) 
     pt_offset = T[offset,0.0,offset]
 
     for c in contacts_to_spawn_charges_for
