@@ -333,7 +333,7 @@ end
 
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in setup.detector.contacts])
     spawn_positions = CylindricalPoint{T}[]
-    grid = Grid(setup.detector, init_grid_spacing = grid_spacing,full_grid=true)
+    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π=true)
     pt_offset = T[offset,0.0,offset]
 
     for c in contacts_to_spawn_charges_for

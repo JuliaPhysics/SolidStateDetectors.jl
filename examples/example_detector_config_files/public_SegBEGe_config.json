@@ -50,7 +50,7 @@
                         "gradient": 0.0
                     },
                     "z": {
-                        "init": 0.2,
+                        "init": 1.0,
                         "gradient": 0.00071
                     }
                 },

@@ -24,7 +24,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 """
 function calculate_weighting_potential( detector::SolidStateDetector{T, :cylindrical}, channel_id::Int;
                                         init_grid_spacing::Vector{<:Real} = [0.002, deg2rad(5.0), 0.002], # 2mm, 10 degree, 2 mm
-                                        grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, for_weighting_potential = true),
+                                        grid::Grid{T, N, S} = Grid(detector, init_grid_spacing = init_grid_spacing, full_2π = true),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
                                         refinement_limits::Vector{<:Real} = [1e-4, 1e-3, 1e-4],
