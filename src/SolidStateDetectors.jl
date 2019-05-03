@@ -30,27 +30,24 @@ import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, each
 import Base: show, print, println, display, +, -, &
 import Base.convert
 
-
 const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
+export Grid, CylindricalPoint, CartesianPoint
+
+export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
+export calculate_electric_potential!, calculate_weighting_potential!, get_active_volume
+export generate_charge_signals, generate_charge_signals!
+export AbstractChargeDriftModel
+export VacuumChargeDriftModel, ADLChargeDriftModel
 export Simulation, simulate!
 
-export AbstractChargeDriftModel, get_electron_drift_field, get_hole_drift_field
-export VacuumChargeDriftModel, ADLChargeDriftModel
-export Grid
-export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential
-export calculate_electric_potential, calculate_weighting_potential, get_active_volume
-export generate_charge_signals!, generate_charge_signals
-
 ## temporary exports for easier debugging
-export cyp,cap # CylindricalPoint, CartesianPoint
+export cyp, cap # CylindricalPoint, CartesianPoint
 export is_surface_point
 export point_type
 export geom_round
-export CylindricalPoint
-export CartesianPoint
 export get_velocity_vector
 export get_crossing_pos
 

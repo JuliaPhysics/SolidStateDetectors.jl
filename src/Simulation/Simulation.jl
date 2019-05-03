@@ -165,9 +165,12 @@ function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::
         end
         get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
         get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ);
-    else
+    elseif S == :cylindrical
         get_2π_potential(sim.electric_potential),
         get_2π_potential(sim.point_types)
+    else
+        sim.electric_potential,
+        sim.point_types
     end
     sim.electric_field = get_electric_field_from_potential(e_pot, point_types);
     nothing
@@ -250,7 +253,6 @@ function generate_charge_signals!(
             if contact.id in channels push!(contacts, contact) end
         end
     end
-    @info length(contacts)
     wps_interpolated::Vector{<:Interpolations.Extrapolation{T, 3}} = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ]
 
     prog = Progress(length(hit_pos), 0.2, "Generating charge signals...")
@@ -299,10 +301,10 @@ function generate_charge_signals(   sim::Simulation{T},
     contact_charge_signals
 end
 
-function simulate!(sim::Simulation{T}; cdm::AbstractChargeDriftModel = ADLChargeDriftModel(T = T), max_refinements = 1) where {T <: SSDFloat}
-    calculate_electric_potential!(sim, max_refinements = max_refinements)
+function simulate!(sim::Simulation{T}; cdm::AbstractChargeDriftModel = ADLChargeDriftModel(T = T), max_refinements = 1, verbose = false) where {T <: SSDFloat}
+    calculate_electric_potential!(sim, max_refinements = max_refinements, verbose = verbose)
     for contact in sim.detector.contacts
-        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements)
+        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, verbose = verbose)
     end
     calculate_electric_field!(sim)
     SSD.set_charge_drift_model!(sim, cdm)

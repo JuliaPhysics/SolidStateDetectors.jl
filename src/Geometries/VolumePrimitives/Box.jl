@@ -131,7 +131,7 @@ function sample(cb::Box{T}, stepsize::Vector{T})  where {T <: SSDFloat}
             end
         end
     end
-    ismissing(cb.translate) ? nothing : samples = map(x -> x + c.translate, samples)
+    ismissing(cb.translate) ? nothing : samples = map(x -> x + cb.translate, samples)
     return samples
 end
 

@@ -16,6 +16,7 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
     evt = Event{T}()
     evt.locations = locations
     evt.energies = to_internal_units(internal_energy_unit, energies)
+    @show energies
     evt.signals = missing
     return evt
 end
@@ -30,12 +31,12 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
         }}, T = missing)
     if ismissing(T) T = eltype(to_internal_units(internal_energy_unit, evt[:edep][:])) end
 
-    evt = Event( 
+    event = Event( 
         CartesianPoint{T}.(to_internal_units.(internal_length_unit, evt[:pos][:])),
         T.(to_internal_units.(internal_energy_unit, evt[:edep][:]))
     )
 
-    return evt
+    return event
 end
 
 function drift_charges!(event::Event{T}, sim::Simulation{T}; n_steps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}

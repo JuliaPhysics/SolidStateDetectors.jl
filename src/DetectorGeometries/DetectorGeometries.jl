@@ -394,7 +394,7 @@ end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005],
-                for_weighting_potential::Bool = false, full_grid = false)::CylindricalGrid{T} where {T}
+                full_2π::Bool = false)::CylindricalGrid{T} where {T}
 
     init_grid_spacing::Vector{T} = T.(init_grid_spacing)
 
@@ -422,7 +422,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     # φ
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    if full_grid == true int_φ = Interval{L, R, T}(0.0, 2π) end
+    if full_2π == true int_φ = Interval{L, R, T}(0, 2π) end
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
@@ -463,8 +463,7 @@ end
 
 
 function Grid(  detector::SolidStateDetector{T, :cartesian};
-                init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001],
-                for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
+                init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001])::CartesianGrid3D{T} where {T}
 
     important_x_points::Vector{T} = get_important_points(detector, :x)
     important_y_points::Vector{T} = get_important_points(detector, :y)

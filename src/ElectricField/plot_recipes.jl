@@ -330,12 +330,13 @@ end
             setup.electric_potential
         end
     end
+    println("1")
 
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in setup.detector.contacts])
     spawn_positions = CylindricalPoint{T}[]
-    grid = Grid(setup.detector, init_grid_spacing = grid_spacing,full_grid=true)
-    pt_offset = T[5*offset,0.0,offset]
-
+    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π=true)
+    pt_offset = T[offset,0.0,offset]
+    println("2")
     for c in contacts_to_spawn_charges_for
         ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c, grid, φ))
         for position in ongrid_positions
@@ -345,18 +346,22 @@ end
     end
 
     filter!(x -> x in setup.detector && !in(x, setup.detector.contacts), spawn_positions)
+    println(spawn_positions[1:spacing:end])
+    println(size(spawn_positions[1:spacing:end],1))
 
-
+    println("3")
     el_field_itp = SSD.get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
     el_field_itp_inv = SSD.get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
-    for pos in spawn_positions[1:spacing:end]
+    for (ipos, pos) in enumerate(spawn_positions[1:spacing:end])
         path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
         SSD.drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
         @series begin
+                println("4")
             c --> :white
             label --> ""
             map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
         end
+        println("5")
         path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
         SSD.drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
         @series begin
@@ -364,5 +369,8 @@ end
             label --> ""
             map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
         end
+        println("current position $pos")
+        println("idx position $ipos")
     end
+    println("done 6")
 end
