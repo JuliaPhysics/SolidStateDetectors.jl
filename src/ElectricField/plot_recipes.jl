@@ -316,7 +316,7 @@ end
     setup = gdd.args[1]
     T = Float32
     φ = ismissing(φ) ? T(0) : T(φ)
-    φ_rad = deg2rad(φ_rad)
+    φ_rad = deg2rad(φ)
     aspect_ratio --> 1
     title --> "Electric Field Lines @φ=$(round(φ, digits=2))°"
     xlabel --> L"$r$ / m"
