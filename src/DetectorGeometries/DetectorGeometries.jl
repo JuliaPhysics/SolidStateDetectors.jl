@@ -422,7 +422,10 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     # φ
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    if full_2π == true int_φ = Interval{L, R, T}(0, 2π) end
+    if full_2π == true 
+        L, R, BL, BR = :closed, :open, :periodic, :periodic
+        int_φ = Interval{L, R, T}(0, 2π) 
+    end
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else

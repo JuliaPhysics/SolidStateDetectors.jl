@@ -329,8 +329,6 @@ end
         end
     end
 
-\pi
-
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in setup.detector.contacts])
     spawn_positions = CylindricalPoint{T}[]
     grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true) 
