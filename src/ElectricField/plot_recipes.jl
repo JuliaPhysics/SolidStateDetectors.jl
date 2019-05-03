@@ -229,8 +229,8 @@ using Base.Math
     end
 end
 
-@userplot myQuiver
-@recipe function f(gdd::myQuiver; scaling=1.0)
+@userplot MyQuiver
+@recipe function f(gdd::MyQuiver; scaling=1.0)
     xy::Matrix = gdd.args[1]
     values = gdd.args[2]
     for i in 1:size(xy,2)
@@ -242,82 +242,83 @@ end
 end
 
 
-@recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T};
-            φ=missing, spacing=T(0.003), n_steps=3000, potential=true, contours_equal_potential=true, offset = T(5e-5)) where {T <: SSDFloat}
-    size --> (700,900)
-    det.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electric_field, ep.grid) : nothing
-    det.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x -> -1*x, electric_field), ep.grid) : nothing
-    if ismissing(φ)
-        φ = 0
-    end
-    φ_rad = deg2rad(φ)
-    aspect_ratio --> 1
-    title --> "Electric Field Lines @φ=$(φ)°"
-    xlabel --> L"$r$ / m"
-    ylabel --> L"$z$ / m"
-
-    if potential==true
-        @series begin
-            contours_equal_potential --> contours_equal_potential
-            φ --> φ
-            ep
-        end
-    end
-
-    spawn_positions_cyl::Vector{CylindricalPoint} = []
-
-    for contact in det.contacts
-        if (typeof(contact) == SSD.Contact{T,:N} && det.bulk_type == :ntype) || (typeof(contact) == SSD.Contact{T,:P} && det.bulk_type == :ptype)
-            nothing
-        else
-            for g in contact.geometry_positive
-                if typeof(g) == SSD.Tube{T}
-                    rStart,rStop = get_r(g)
-                    zStart,zStop = get_z(g)
-                    for r in rStart:spacing:rStop
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart+offset))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart-offset))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop+offset))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop-offset))
-                    end
-                    for z in zStart:spacing:zStop
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStart+offset,φ,z))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStart-offset,φ,z))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStop+offset,φ,z))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(rStop-offset,φ,z))
-                    end
-                elseif typeof(g) == SSD.ConeMantle{T}
-                    zStart,zStop = get_z(g)
-                    for z in zStart:spacing:zStop
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
-                        push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
-                    end
-                end
-            end
-        end
-    end
-    filter!(x -> x in det && !in(x, det.contacts),spawn_positions_cyl)
-    spawn_positions_xyz::Vector{CartesianPoint{T}} = map(x -> CartesianPoint(CylindricalPoint{T}(x[1],x[2],x[3])), spawn_positions_cyl)
-    for i in eachindex(spawn_positions_cyl[1:end])
-        path = [@SVector zeros(T,3) for i in 1:n_steps]
-        drift_charge!(path, det, spawn_positions_xyz[i], T(1f-9), interpolated_efield)
-        @series begin
-            c --> :white
-            label --> ""
-            map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
-        end
-    end
-end
+# @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T};
+#             φ=missing, spacing=T(0.003), n_steps=3000, potential=true, contours_equal_potential=true, offset = T(5e-5)) where {T <: SSDFloat}
+#     size --> (700,900)
+#     det.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electric_field, ep.grid) : nothing
+#     det.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x -> -1*x, electric_field), ep.grid) : nothing
+#     if ismissing(φ)
+#         φ = 0
+#     end
+#     φ_rad = deg2rad(φ)
+#     aspect_ratio --> 1
+#     title --> "Electric Field Lines @φ=$(φ)°"
+#     xlabel --> L"$r$ / m"
+#     ylabel --> L"$z$ / m"
+#
+#     if potential==true
+#         @series begin
+#             contours_equal_potential --> contours_equal_potential
+#             φ --> φ
+#             ep
+#         end
+#     end
+#
+#     spawn_positions_cyl::Vector{CylindricalPoint} = []
+#
+#     for contact in det.contacts
+#         if (typeof(contact) == SSD.Contact{T,:N} && det.bulk_type == :ntype) || (typeof(contact) == SSD.Contact{T,:P} && det.bulk_type == :ptype)
+#             nothing
+#         else
+#             for g in contact.geometry_positive
+#                 if typeof(g) == SSD.Tube{T}
+#                     rStart,rStop = get_r(g)
+#                     zStart,zStop = get_z(g)
+#                     for r in rStart:spacing:rStop
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart+offset))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart-offset))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop+offset))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop-offset))
+#                     end
+#                     for z in zStart:spacing:zStop
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStart+offset,φ,z))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStart-offset,φ,z))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStop+offset,φ,z))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStop-offset,φ,z))
+#                     end
+#                 elseif typeof(g) == SSD.ConeMantle{T}
+#                     zStart,zStop = get_z(g)
+#                     for z in zStart:spacing:zStop
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
+#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
+#                     end
+#                 end
+#             end
+#         end
+#     end
+#     filter!(x -> x in det && !in(x, det.contacts),spawn_positions_cyl)
+#     spawn_positions_xyz::Vector{CartesianPoint{T}} = map(x -> CartesianPoint(CylindricalPoint{T}(x[1],x[2],x[3])), spawn_positions_cyl)
+#     for i in eachindex(spawn_positions_cyl[1:end])
+#         path = [@SVector zeros(T,3) for i in 1:n_steps]
+#         drift_charge!(path, det, spawn_positions_xyz[i], T(1f-9), interpolated_efield)
+#         @series begin
+#             c --> :white
+#             label --> ""
+#             map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+#         end
+#     end
+# end
 
 @userplot Plot_electric_field
 @recipe function f(gdd::Plot_electric_field; φ = missing, spacing = 10, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
     setup = gdd.args[1]
     T = Float32
     φ = ismissing(φ) ? T(0) : T(φ)
+    φ_rad = deg2rad(φ_rad)
     aspect_ratio --> 1
-    title --> "Electric Field Lines @φ=$(geom_round(φ))°"
+    title --> "Electric Field Lines @φ=$(round(φ, digits=2))°"
     xlabel --> L"$r$ / m"
     ylabel --> L"$z$ / m"
 
@@ -329,39 +330,42 @@ end
         end
     end
 
-    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in setup.detector.contacts])
+
+    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in setup.detector.contacts])
     spawn_positions = CylindricalPoint{T}[]
-    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true) 
+    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
 
     for c in contacts_to_spawn_charges_for
-        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c,grid,φ ))
+        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c, grid, φ_rad))
         for position in ongrid_positions
             push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
             push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
         end
     end
 
-
     filter!(x -> x in setup.detector && !in(x, setup.detector.contacts), spawn_positions)
 
+    el_field_itp = SSD.get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
+    el_field_itp_inv = SSD.get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
+    for (ipos, pos) in enumerate(spawn_positions)
+        if ((spacing-1)+ipos)%spacing == 0
+            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
+            SSD.drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            @series begin
+                c --> :white
+                label --> ""
+                map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+            end
 
-    el_field_itp = get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
-    el_field_itp_inv = get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
-    for pos in spawn_positions[1:spacing:end]
-        path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-        drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field_itp, verbose = false )
-        @series begin
-            c --> :white
-            label --> ""
-            map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
-        end
-        path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-        drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field_itp_inv, verbose = false )
-        @series begin
-            c --> :white
-            label --> ""
-            map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
+            SSD.drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            @series begin
+                c --> :white
+                label --> ""
+                map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+            end
+
         end
     end
 end

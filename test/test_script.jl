@@ -25,9 +25,9 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
 
     det = SolidStateDetector{T}(SSD_examples[key])
     S = SSD.get_coordinate_system(det)
-    
+
     simulation = Simulation(det);
-   
+
     SSD.apply_initial_state!(simulation)
     p = if key == :CGD
         plot(simulation.electric_potential, y = 0.002)
@@ -71,6 +71,11 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
           st=:heatmap, title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
     savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
+    if S == :cylindrical
+        plot_electric_field(simulation, φ=deg2rad(30), spacing = 8)
+        savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
+    end
+
     SSD.set_charge_drift_model!(simulation, ADLChargeDriftModel())
 
     SSD.apply_charge_drift_model!(simulation)
@@ -88,8 +93,8 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     @assert in(pos[1], simulation.detector) "Test point $(pos[1]) not inside the detector $(key)."
 
     event = SSD.Event(pos, energy_depos)
-    SSD.simulate!(event, simulation) 
-    
+    SSD.simulate!(event, simulation)
+
     plot(simulation.detector)
     plot!(event.drift_paths)
     savefig(joinpath(outputdir, "$(key)_4_charge_drift"))
