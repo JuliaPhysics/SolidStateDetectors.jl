@@ -1,24 +1,24 @@
 
-@recipe function f( d::InvertedCoax, dim::Symbol;
+@recipe function f(::Val{:InvertedCoax}, dim::Symbol;
                     r=missing,
-                    θ=missing,
+                    φ=missing,
                     z=missing,
                     half=true)
     T = typeof(d.crystal_radius)
 
-    cross_section::Symbol, value::T = if ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, 0
-    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, θ
-    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
+    cross_section::Symbol, value::T = if ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, 0
+    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, φ
+    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, r
-    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
         :z, z
     else
-        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
 
-    if cross_section == :θ
+    if cross_section == :φ
         points_to_connect::AbstractVector = [SVector{2,T}(0.0,0.0)]
         add_point!(points_to_connect, d.groove_rInner,T(0.0))
         add_point!(points_to_connect, d.groove_rInner,d.groove_depth)
@@ -45,26 +45,26 @@
     end
 end
 
-@recipe function f( d::BEGe, dim::Symbol;
+@recipe function f(::Val{:BEGe}, dim::Symbol;
                     r=missing,
-                    θ=missing,
+                    φ=missing,
                     z=missing,
                     half=true)
     T = typeof(d.crystal_radius)
 
-    cross_section::Symbol, value::T = if ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, 0
-    elseif !ismissing(θ) && ismissing(r) && ismissing(z)
-        :θ, θ
-    elseif ismissing(θ) && !ismissing(r) && ismissing(z)
+    cross_section::Symbol, value::T = if ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, 0
+    elseif !ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, φ
+    elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, r
-    elseif ismissing(θ) && ismissing(r) && !ismissing(z)
+    elseif ismissing(φ) && ismissing(r) && !ismissing(z)
         :z, z
     else
-        error(ArgumentError, ": Only one of the keywords `r, θ, z` is allowed.")
+        error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
 
-    if cross_section == :θ
+    if cross_section == :φ
         points_to_connect::AbstractVector = [SVector{2,T}(0.0,0.0)]
         add_point!(points_to_connect, d.groove_rInner,T(0.0))
         if d.groove_endplate == "bot"
@@ -102,12 +102,12 @@ end
 function add_point!(points_to_connect::AbstractVector{<:SVector{2,T}},x::T,y::T) where T <: Real
     push!(points_to_connect,SVector{2,T}(x,y))
 end
-@recipe function f(c::Coax)
+@recipe function f(::Val{:Coax})
     size:=(800,800)
     linewidth:=2
     linecolor:=:black
     label-->""
-    aspect_ratio --> 1
+    # aspect_ratio := equal
     f=1/c.geometry_unit_factor
     @series begin
         partialcircle_3d(f*c.crystal_radius,0,2π,[0,0,0])
@@ -151,35 +151,35 @@ end
     end
 end
 
-struct outer_taper{T<:AbstractFloat}
+struct outer_taper{T <: SSDFloat}
     rStart::T
     rStop::T
-    θStart::T
-    θStop::T
+    φStart::T
+    φStop::T
     zStart::T
     zStop::T
     orientation::String
-    function outer_taper(rStart::T, rStop::T, θStart::T, θStop::T, zStart::T, zStop::T, orientation) where T<:AbstractFloat
-        return new{T}(rStart, rStop, θStart, θStop, zStart, zStop, orientation)
+    function outer_taper(rStart::T, rStop::T, φStart::T, φStop::T, zStart::T, zStop::T, orientation) where T <: SSDFloat
+        return new{T}(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
     end
 end
 
-function outer_taper(rStart, rStop, θStart, θStop, zStart, zStop, orientation)
-    return outer_taper{typeof(rStart)}(rStart, rStop, θStart, θStop, zStart, zStop, orientation)
+function outer_taper(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
+    return outer_taper{typeof(rStart)}(rStart, rStop, φStart, φStop, zStart, zStop, orientation)
 end
 
-@recipe function f(b::InvertedCoax; coloring=[], labeling=[])
+@recipe function f(::Val{:InvertedCoax}; coloring=[], labeling=[])
     if b.name =="ExampleInvertedCoax"
         coloring = [:blue, :orange, :orange, :orange, :orange, :orange, :orange, :orange]
         labeling = ["Core", "Mantle", "", "", "", "", "", ""]
     end
-    aspect_ratio --> 1
+    # aspect_ratio := equal
     f=1/b.geometry_unit_factor
     for i_part in 1:size(b.segmentation_r_ranges,1)
         rStart = f*b.segmentation_r_ranges[i_part][1]
         rStop = f*b.segmentation_r_ranges[i_part][2]
-        θStart = b.segmentation_phi_ranges[i_part][1]
-        θStop = b.segmentation_phi_ranges[i_part][2]
+        ΘStart = b.segmentation_phi_ranges[i_part][1]
+        ΘStop = b.segmentation_phi_ranges[i_part][2]
         zStart = f*b.segmentation_z_ranges[i_part][1]
         zStop = f*b.segmentation_z_ranges[i_part][2]
         if !isempty(coloring)
@@ -188,13 +188,38 @@ end
             color := :black
         end
         if b.segmentation_types[i_part]=="Tubs"
-            @series begin
-                if !isempty(labeling)
-                    label := labeling[i_part]
-                else
-                    label := ""
+            if !isempty(labeling)
+                label := labeling[i_part]
+            else
+                label := ""
+            end
+            if b.borehole_modulation == true && i_part in [b.borehole_segment_idx,b.borehole_bot_segment_idx]
+                @series begin
+                    phirange = [i for i in 0:0.05:2π+0.5]
+                    xs = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius) * cos(phirange[i]) for i in eachindex(phirange)] .* f
+                    ys = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius)* sin(phirange[i]) for i in eachindex(phirange)] .* f
+                    zs = [zStart for i in eachindex(phirange)]
+                    xs, ys, zs
                 end
-                Tubs("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop)
+            elseif b.borehole_modulation == true && i_part == b.borehole_top_segment_idx
+                @series begin
+                    phirange = [i for i in 0:0.05:2π+0.5]
+                    xs = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius) * cos(phirange[i]) for i in eachindex(phirange)] .* f
+                    ys = [(b.borehole_ModulationFunction(phirange[i])+b.borehole_radius)* sin(phirange[i]) for i in eachindex(phirange)] .* f
+                    zs = [zStart for i in eachindex(phirange)]
+                    xs, ys, zs
+                end
+                @series begin
+                    phirange = [i for i in 0:0.05:2π+0.5]
+                    xs = [rStop * cos(phirange[i]) for i in eachindex(phirange)]
+                    ys = [rStop * sin(phirange[i]) for i in eachindex(phirange)]
+                    zs = [zStart for i in eachindex(phirange)]
+                    xs, ys, zs
+                end
+            else
+                @series begin
+                    Tubs("",1,1.,"",0.0,rStart,rStop,ΘStart,ΘStop,zStart,zStop)
+                end
             end
         else
             @series begin
@@ -203,14 +228,14 @@ end
                 else
                     label := ""
                 end
-                # Taper("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop,"bl")
-                outer_taper(rStart,rStop,θStart,θStop,zStart,zStop,"c//")
+                # Taper("",1,1.,"",0.0,rStart,rStop,ΘStart,ΘStop,zStart,zStop,"bl")
+                outer_taper(rStart,rStop,ΘStart,ΘStop,zStart,zStop,"c//")
             end
         end
     end
 end
 
-@recipe function f(b::BEGe; coloring=[], labeling=[])
+@recipe function f(::Val{:BEGe}; coloring=[], labeling=[])
     if b.name =="ExampleSegmentedBEGe"
         coloring = [:blue, :red, :purple, :orange, :purple, :grey, :purple,
                             :red, :purple, :orange, :purple, :grey, :purple,
@@ -222,13 +247,13 @@ end
         ylims --> (-45,45)
         zlims --> (-25,65)
     end
-    aspect_ratio --> 1
+    # aspect_ratio := equal
     f=1/b.geometry_unit_factor
     for i_part in 1:size(b.segmentation_r_ranges,1)
         rStart = f*b.segmentation_r_ranges[i_part][1]
         rStop = f*b.segmentation_r_ranges[i_part][2]
-        θStart = b.segmentation_phi_ranges[i_part][1]
-        θStop = b.segmentation_phi_ranges[i_part][2]
+        φStart = b.segmentation_phi_ranges[i_part][1]
+        φStop = b.segmentation_phi_ranges[i_part][2]
         zStart = f*b.segmentation_z_ranges[i_part][1]
         zStop = f*b.segmentation_z_ranges[i_part][2]
         if !isempty(coloring)
@@ -243,7 +268,7 @@ end
                 else
                     label := ""
                 end
-                Tubs("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop)
+                Tubs("",1,1.,"",0.0,rStart,rStop,φStart,φStop,zStart,zStop)
             end
         else
             @series begin
@@ -252,113 +277,20 @@ end
                 else
                     label := ""
                 end
-                # Taper("",1,1.,"",0.0,rStart,rStop,θStart,θStop,zStart,zStop,"bl")
-                outer_taper(rStart,rStop,θStart,θStop,zStart,zStop,"c//")
+                # Taper("",1,1.,"",0.0,rStart,rStop,φStart,φStop,zStart,zStop,"bl")
+                outer_taper(rStart,rStop,φStart,φStop,zStart,zStop,"c//")
             end
         end
     end
-end
-
-@recipe function f(Vol::Tubs{T}) where T<:AbstractFloat
-
-    @series begin
-        partialcircle_3d(Vol.rStop,Vol.θStart,Vol.θStop,[0,0,Vol.zStart])
-    end
-    @series begin
-        label:= ""
-        partialcircle_3d(Vol.rStop,Vol.θStart,Vol.θStop,[0,0,Vol.zStop])
-    end
-    @series begin
-        label:= ""
-        partialcircle_3d(Vol.rStart,Vol.θStart,Vol.θStop,[0,0,Vol.zStart])
-    end
-    @series begin
-        label:= ""
-        partialcircle_3d(Vol.rStart,Vol.θStart,Vol.θStop,[0,0,Vol.zStop])
-    end
-    ## Vertical Lines
-
-    if !iszero(Vol.rStart)
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStart,Vol.θStart,Vol.θStart,Vol.zStart,Vol.zStop)
-        end
-    end
-    if !iszero(Vol.rStart)
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStart,Vol.θStop,Vol.θStop,Vol.zStart,Vol.zStop)
-        end
-    end
-    @series begin
-        label:= ""
-        line_3d(Vol.rStop,Vol.rStop,Vol.θStart,Vol.θStart,Vol.zStart,Vol.zStop)
-    end
-    @series begin
-        label:= ""
-        line_3d(Vol.rStop,Vol.rStop,Vol.θStop,Vol.θStop,Vol.zStart,Vol.zStop)
-    end
-
-    ##Horizontal Lines
-
-    if !isapprox((Vol.θStop - Vol.θStart)%2π , 0.0,atol=0.00001)
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.θStart,Vol.θStart,Vol.zStart,Vol.zStart)
-        end
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.θStop,Vol.θStop,Vol.zStart,Vol.zStart)
-        end
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.θStart,Vol.θStart,Vol.zStop,Vol.zStop)
-        end
-        @series begin
-            label:= ""
-            line_3d(Vol.rStart,Vol.rStop,Vol.θStop,Vol.θStop,Vol.zStop,Vol.zStop)
-        end
-    end
-end
-
-@recipe function f(o::outer_taper,n_aux_lines =0)
-    if o.orientation=="c//"
-        @series begin
-            line_3d(o.rStop,o.rStart,o.θStart,o.θStart,o.zStart,o.zStop)
-        end
-        @series begin
-            line_3d(o.rStop,o.rStart,o.θStop,o.θStop,o.zStart,o.zStop)
-        end
-        for ia in 0:n_aux_lines
-            @series begin
-                line_3d(o.rStop,o.rStart,o.θStart+ia*(o.θStop-o.θStart)/(n_aux_lines+1),o.θStart+ia*(o.θStop-o.θStart)/(n_aux_lines+1),o.zStart,o.zStop)
-            end
-        end
-    end
-end
-
-function connect_points()
-    nothing
 end
 
 function mylinspace(Start,Stop,nSteps)
     return collect(Start:(Stop-Start)/nSteps:Stop)
 end
 
-function partialcircle_3d(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
-    phirange = mylinspace(phiStart,phiStop,nSteps)
 
-    x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
-    y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
-    # z::Vector{AbstractFloat}=[Translate[3] for i in 1:nSteps]
-    z::Vector{AbstractFloat}=map(x->Translate[3],phirange)
-    x.+=Translate[1]
-    y.+=Translate[2]
 
-    return x,y,z
-end
-
-function partialcircle(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
+function partialcircle(radius,phiStart,phiStop,Translate::Vector=[0.0,0.0,0.0];nSteps=400)
     phirange = mylinspace(phiStart,phiStop,nSteps)
     x::Vector{AbstractFloat}=map(x->radius*cos.(x),phirange)
     y::Vector{AbstractFloat}=map(x->radius*sin.(x),phirange)
@@ -367,8 +299,292 @@ function partialcircle(radius,phiStart,phiStop,Translate::Vector;nSteps=400)
     return x,y
 end
 
-function line_3d(r1,r2,phi1,phi2,z1,z2)
-    x1::Vector = [r1*cos(phi1),r1*sin(phi1),z1]
-    x2::Vector = [r2*cos(phi2),r2*sin(phi2),z2]
+function line_3d(r1::T, r2::T, phi1::T, phi2::T, z1::T, z2::T; translate::AbstractVector = SVector{3,T}(0.0,0.0,0.0)) where T <:Real
+    x1::SVector{3,T} = [r1*cos(phi1),r1*sin(phi1),z1]+translate
+    x2::SVector{3,T} = [r2*cos(phi2),r2*sin(phi2),z2]+translate
     return [x1[1],x2[1]] , [x1[2],x2[2]], [x1[3],x2[3]]
+end
+
+@recipe function f(contact::AbstractContact{T}) where T
+    c-->:orange
+    for (i,g) in enumerate(vcat(contact.geometry_positive, contact.geometry_negative))
+        @series begin
+            i==1 ? label --> "$(contact.id)" : label := ""
+            g
+        end
+    end
+end
+
+@recipe function f(c::SolidStateDetector{T}; coloring = [], labeling = []) where T
+    legendfont --> 16
+    # aspect_ratio := 1
+    tickfontsize --> 9
+    guidefontsize --> 13
+    lw --> 2
+    # xlabel --> "\n x / m"
+    # ylabel --> "\n y / m"
+    # zlabel --> "\n z / m"
+    camera --> (15,25)
+    coloring = coloring
+    labeling = labeling
+        if c.name == "Public Segmented BEGe"
+        @series begin
+            # zlims --> (-0.023,0.063)
+            # aspect_ratio --> 0.5
+            c, Val(:segBEGe)
+        end
+    elseif c.name == "Public Inverted Coax"
+        @series begin
+            c, Val(:ivc)
+        end
+    elseif c.name == "Public Coax"
+        @series begin
+            c, Val(:coax)
+        end
+    else
+        for (ic,contact) in enumerate(c.contacts)
+            @series begin
+                !isempty(coloring) ? c --> coloring[ic] : nothing
+                !isempty(labeling) ? label --> labeling[ic] : nothing
+                contact
+            end
+        end
+    end
+end
+
+@recipe function f(c,a::Val{:ivc})
+    labeling = ["Core","Mantle"]
+    coloring = [:blue,:orange]
+    for (ic, contact) in enumerate(c.contacts)
+        @series begin
+            color --> coloring[ic]
+            label --> labeling[ic]
+            contact
+        end
+    end
+end
+@recipe function f(c,a::Val{:coax})
+    labeling = ["" for i in 1:19]
+    coloring = vcat([:blue], [:orange for i in 1:18])
+    for (ic, contact) in enumerate(c.contacts)
+        @series begin
+            color --> coloring[ic]
+            label --> labeling[ic]
+            contact
+        end
+    end
+end
+
+@recipe function f(c,a::Val{:segBEGe}, coloring = [])
+    isempty(coloring) ? coloring = [:blue, :red, :orange, :grey, :purple] : nothing
+    labeling = [ "Core", "Seg. 1", "Seg. 2", "Seg. 3", "Seg. 4"]
+    for (ic, contact) in enumerate(c.contacts)
+        @series begin
+            color --> coloring[ic]
+            label --> labeling[ic]
+            contact
+        end
+    end
+end
+
+@recipe function f(geometry::AbstractGeometry)
+    pos, neg = get_decomposed_volumes(geometry)
+    for g in pos
+        @series begin
+            g
+        end
+    end
+end
+@recipe function f(object::AbstractObject)
+    @series begin
+        object.geometry
+    end
+end
+
+## 2D from Felix
+
+
+function line_2d(r1,r2,z1,z2)
+   x1::Vector = [r1,z1]
+   x2::Vector = [r2,z2]
+   return [x1[1],x2[1]],[x1[2],x2[2]]
+end
+
+
+function polar_circle_2d(r::T, phiStart::T, phiStop::T;nSteps=360) where T <: SSDFloat
+    if r == 0; return [],[]; end
+    phiRange = collect(phiStart:(phiStop-phiStart)/nSteps:phiStop)
+    rRange = [r for a in 1:length(phiRange)]
+    return phiRange, rRange
+end
+
+
+
+
+@recipe function f(d::SolidStateDetector{T}, dim::Symbol; φ = missing, z = missing) where{T <: SSDFloat}
+    if ismissing(z) && ismissing(φ)
+        print("Please specify φ or z.")
+    elseif ismissing(z)
+        for c in d.contacts
+            for g in c.geometry_positive
+                @series begin
+                    if d.name == "Public Inverted Coax"
+                        if typeof(c) == SSD.Contact{T,:N}; color --> :orange
+                        elseif typeof(c) == SSD.Contact{T,:P}; color --> :blue; end
+                    else color --> :black
+                    end
+                    lw --> 2
+                    label = ""
+                    g, :φ, T(deg2rad(mod(φ,2π)))
+                end
+            end
+        end
+    elseif ismissing(φ)
+        proj --> :polar
+        for c in d.contacts
+            for g in c.geometry_positive
+                @series begin
+                    if d.name == "Public Inverted Coax"
+                        if typeof(c) == SSD.Contact{T,:N}; color --> :orange
+                        elseif typeof(c) == SSD.Contact{T,:P}; color --> :blue; end
+                    else color --> :black
+                    end
+                    lw --> 2
+                    label = ""
+                    g, :z, T(z)
+                end
+            end
+        end
+    else
+        print("Please specify only one of either φ or z.")
+    end
+end
+
+
+@recipe function f(Vol::SSD.Tube{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+    if dim == :φ
+        if parameter in Vol.φ_interval
+           rStart = Vol.r_interval.left
+           rStop = Vol.r_interval.right
+           zStart = Vol.z_interval.left
+           zStop = Vol.z_interval.right
+
+           @series begin
+                   label --> ""
+                   line_2d(rStop,rStop,zStart,zStop)
+               end
+
+            @series begin
+                   label --> ""
+                   line_2d(rStart,rStop,zStart,zStart)
+            end
+
+           if rStart != rStop
+                @series begin
+                   label --> ""
+                   line_2d(rStart,rStop,zStop,zStop)
+               end
+            end
+
+            if zStart != zStop && rStart != 0
+                @series begin
+                   label --> ""
+                   line_2d(rStart,rStart,zStart,zStop)
+               end
+            end
+        end
+
+    elseif dim == :z
+        if parameter in Vol.z_interval
+            rStart = Vol.r_interval.left
+            rStop = Vol.r_interval.right
+            phiStart = Vol.φ_interval.left
+            phiStop = Vol.φ_interval.right
+            zStart = Vol.z_interval.left
+            zStop = Vol.z_interval.right
+
+            if rStart != 0
+                @series begin
+                    label --> ""
+                    polar_circle_2d(rStart,phiStart,phiStop)
+                end
+            end
+            @series begin
+                label --> ""
+                polar_circle_2d(rStop,phiStart,phiStop)
+            end
+
+            if !isapprox(mod(phiStart,2π),mod(phiStop,2π),atol = 1e-5)
+                @series begin
+                    label --> ""
+                    line_2d(phiStart,phiStart,rStart,rStop)
+                end
+                @series begin
+                    label --> ""
+                    line_2d(phiStop,phiStop,rStart,rStop)
+                end
+            end
+        end
+    end
+end
+
+
+
+# @recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+#     newVol = Vol.cone
+#     @series begin
+#         newVol, dim, parameter
+#     end
+# end
+
+
+
+@recipe function f(Vol::SSD.Cone{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+    if dim == :φ
+        if parameter in Vol.φ_interval
+            rStart = Vol.r_interval.left
+            rStop = Vol.r_interval.right
+            zStart = Vol.z_interval.left
+            zStop = Vol.z_interval.right
+            orientation = Vol.orientation
+
+            if orientation in [:top_right, :bottom_left]
+                @series begin
+                    label --> ""
+                   line_2d(rStop,rStart,zStart,zStop)
+                end
+            else
+                @series begin
+                    label --> ""
+                   line_2d(rStart,rStop,zStart,zStop)
+                end
+            end
+        end
+
+    elseif dim == :z
+        if parameter in Vol.z_interval
+            rStart = Vol.r_interval.left
+            rStop = Vol.r_interval.right
+            phiStart = Vol.φ_interval.left
+            phiStop = Vol.φ_interval.right
+            zStart = Vol.z_interval.left
+            zStop = Vol.z_interval.right
+            orientation = Vol.orientation
+
+            if orientation in [:top_right, :bottom_left]
+                @series begin
+                    label --> ""
+                    r = (rStop-rStart)*(parameter-zStop)/(zStart-zStop) + rStart
+                    polar_circle_2d(r,phiStart,phiStop)
+                end
+            else
+                @series begin
+                    label --> ""
+                    r = (rStop-rStart)*(parameter-zStart)/(zStop-zStart) + rStart
+                    polar_circle_2d(r,phiStart,phiStop)
+                end
+            end
+        end
+
+    end
 end

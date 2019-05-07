@@ -9,58 +9,83 @@ using Random
 using Statistics
 
 using ArraysOfArrays
-using CoordinateTransformations
 using Interpolations
 using IntervalSets
 using JSON
 using LaTeXStrings
+using NamedTupleTools
 using ParallelProcessingTools
 using ProgressMeter
 using RecipesBase
 using StaticArrays
 using Unitful
+using YAML
 
 import Clustering
 import Distributions
 import Tables
 import TypedTables
 
-import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype
-import Base: show, print, println, display, +
+import Base: size, sizeof, length, getindex, setindex!, axes, range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
+import Base: show, print, println, display, +, -, &
+import Base.convert
 
+const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
-const SSD = SolidStateDetectors
-export SSD
+export Grid, CylindricalPoint, CartesianPoint
 
-export calculate_electric_potential, calculate_weighting_potential
-
-export AbstractChargeDriftModels, get_electron_drift_field, get_hole_drift_field
+export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
+export calculate_electric_potential!, calculate_weighting_potential!, get_active_volume
+export generate_charge_signals, generate_charge_signals!
+export AbstractChargeDriftModel
 export VacuumChargeDriftModel, ADLChargeDriftModel
-export get_active_volume
-export Grid
-export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential
-export generate_charge_signals!, generate_charge_signals    
+export Simulation, simulate!
 
-include("GeometryRounding.jl")
+## temporary exports for easier debugging
+export cyp, cap # CylindricalPoint, CartesianPoint
+export is_surface_point
+export point_type
+export geom_round
+export get_velocity_vector
+export get_crossing_pos
+
+
+const SSDFloat = Union{Float16, Float32, Float64}
+
+struct ConfigFileError <: Exception 
+    msg::AbstractString
+end
+Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
+
+include("Geometries/Geometries.jl")
 
 include("Axes/DiscreteAxis.jl")
+include("World/World.jl")
 include("Grids/Grids.jl")
+
 include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
-include("Geometries/Geometries.jl")
-include("DetectorGeometries/DetectorGeometries.jl")
-
 include("Config/Config.jl")
+include("ChargeDensityModels/ChargeDensityModels.jl")
+include("DetectorGeometries/DetectorGeometries.jl")
+include("GeometryRounding.jl")
+
 include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
+
 include("ChargeDriftModels/ChargeDriftModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
+include("SignalGeneration/SignalGeneration.jl")
+
 include("ChargeStatistics/ChargeStatistics.jl")
 include("ChargeClustering/ChargeClustering.jl")
+
+include("Simulation/Simulation.jl")
+include("Event/Event.jl")
 
 include("IO/IO.jl")
 

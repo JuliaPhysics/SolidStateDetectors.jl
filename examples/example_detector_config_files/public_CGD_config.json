@@ -1,0 +1,114 @@
+{
+	"name":"ExampleCuboid",
+	"setup": {
+        "units": {
+            "length": "mm",
+            "angle": "deg",
+            "potential": "V",
+            "temperature": "K"
+        },
+        "grid": {
+			"coordinates": "cartesian",
+			"axes": {
+				"x": {
+					"from": -5,
+					"to": 15,
+					"boundaries": "inf"
+				},
+				"y": {
+					"from": -5,
+					"to": 15,
+					"boundaries": "inf"
+				},
+				"z": {
+					"from": -5,
+					"to": 15,
+					"boundaries": "inf"
+				}
+			}
+		},
+        "medium": "vacuum",
+        "objects": [
+			{
+				"type": "semiconductor",
+				"material": "HPGe",
+				"bulk_type": "n",
+				"temperature": 77,
+				"charge_density_model": {
+                    "name": "linear",
+                    "x": {
+                        "init": 0.0,
+                        "gradient": 0.000
+                    },
+                    "y": {
+                        "init": 0.0,
+                        "gradient": 0.0
+                    },
+                    "z": {
+                        "init": 0.0,
+                        "gradient": 0.000
+                    }
+                },
+				"geometry": {
+					"type": "box",
+					"x": {
+						"from": 0.0,
+						"to": 10.0
+					},
+					"y":{
+						"from": 0.0,
+						"to": 10.0
+					},
+					"z": {
+						"from": 0.0,
+						"to": 10.0
+					}
+				}
+			},
+			{
+				"type": "contact",
+				"material": "HPGe",
+				"name": "n+ contact",
+				"potential": 2000.0,
+				"channel": 1,
+				"geometry": {
+					"type": "box",
+					"x": {
+						"from": 0,
+						"to": 0.1
+					},
+					"y":{
+						"from": 0.0,
+						"to": 10.0
+					},
+					"z": {
+						"from": 0.0,
+						"to": 10.0
+					}
+				}
+			},
+			{
+				"type": "contact",
+				"material": "HPGe",
+				"name": "p+ contact",
+				"potential": 0.0,
+				"channel": 2,
+				"geometry": {
+					"type": "box",
+					"x": {
+						"from": 9.9,
+						"to": 10.0
+					},
+					"y":{
+						"from": 0.0,
+						"to": 10.0
+					},
+					"z": {
+						"from": 0.0,
+						"to": 10.0
+					}
+				}
+			}
+		]
+	}
+}

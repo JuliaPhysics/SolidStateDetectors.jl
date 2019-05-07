@@ -1,169 +1,414 @@
 {
-	"name":"ExampleSegmentedBEGe",
-	"class":"BEGe",
-	"type":"n",
-	"cyclic": 120,
-	"mirror_symmetry_θ": "true",
-	"materials":{
-		"detector":"HPGe",
-		"environment":"Vacuum"
-	},
-	"geometry":
-	{
-		"unit": "mm",
-		"crystal":
-		{
-			"length": 40.0,
-			"radius": 40.0
-		},
-		"point_contact":
-		{
-			"depth":0.3,
-			"radius":7.5
-		},
-		"groove":
-		{
-			"endplate":"top",
-			"rInner":9.5,
-			"width":2.0,
-			"depth":0.0
-		},
-		"taper":
-		{
-			"top":
-			{
-				"rInner":33,
-				"length":0
-			},
-			"bot":
-			{
-				"rInner":36,
-				"length":0
-			}
-		}
-	},
-	"charge_carrier_density":
-	{
-		"unit": "cm-3",
-		"top": 0.61,
-		"bot": 1.35
-	},
-	"segmentation":
-	{
-		"n_contacts_total": 5,
-		"core":
-		{
-			"type": "Tubs",
-			"rStart": 0.0,
-			"rStop": 7.5,
-			"phiStart": 0,
-			"phiStop": 360,
-			"zStart": 39.7,
-			"zStop": 40.0,
-			"potential": 4500.0
-		},
-		"n_individual_segments": 4,
-		"S1":
-		{
-			"type": "Tubs",
-			"rStart": 40.0,
-			"rStop": 40.0,
-			"phiStart": 0,
-			"phiStop": 60,
-			"zStart": 0.0,
-			"zStop": 40.0,
-			"potential": 0.0,
-			"boundaryWidth":
-			{
-				"radial":0.0,
-				"vertical": 0.0,
-				"horizontal": 0.5
-			},
-			"repetitive":true,
-			"repetitions":
-			{
-				"radial":0,
-				"vertical": 0,
-				"horizontal": 5
-			}
-		},
-		"S2":
-		{
-			"type": "Tubs",
-			"rStart": 17.0,
-			"rStop": 40.0,
-			"phiStart": 0,
-			"phiStop": 60,
-			"zStart": 40.0,
-			"zStop": 40.0,
-			"potential": 0.0,
-			"boundaryWidth":
-			{
-				"radial":0.0,
-				"vertical": 0.0,
-				"horizontal": 0.5
-			},
-			"repetitive":true,
-			"repetitions":
-			{
-				"radial": 0,
-				"vertical": 0,
-				"horizontal": 5
-			}
-		},
-		"S3":
-		{
-			"type": "Tubs",
-			"rStart": 12.5,
-			"rStop": 40.0,
-			"phiStart": 0,
-			"phiStop": 60,
-			"zStart": 0.0,
-			"zStop": 0.0,
-			"potential": 0.0,
-			"boundaryWidth":
-			{
-				"radial":0.0,
-				"vertical": 0.0,
-				"horizontal": 0.5
-			},
-			"repetitive":true,
-			"repetitions":
-			{
-				"radial": 0,
-				"vertical": 0,
-				"horizontal": 5
-			}
-		},
-		"S4":
-		{
-			"type": "Tubs",
-			"rStart": 0.0,
-			"rStop": 12.5,
-			"phiStart": 0,
-			"phiStop": 360,
-			"zStart": 0.0,
-			"zStop": 0.0,
-			"potential": 0.0,
-			"boundaryWidth":
-			{
-				"radial":0.0,
-				"vertical": 0.0,
-				"horizontal": 0.0
-			},
-			"repetitive":false,
-			"repetitions":
-			{
-				"radial": 0,
-				"vertical": 0,
-				"horizontal": 0
-			}
-		},
-		"custom_grouping":true,
-		"Chn1":"1",
-		"Chn2":"2-8-14",
-		"Chn3":"4-10-16",
-		"Chn4":"6-12-18",
-		"Chn5":"3-5-7-9-11-13-15-17-19-20"
-	}
+    "name": "Public Segmented BEGe",
+    "setup": {
+        "units": {
+            "length": "mm",
+            "angle": "deg",
+            "potential": "V",
+            "temperature": "K"
+        },
+        "grid": {
+            "coordinates": "cylindrical",
+            "axes": {
+                "r": {
+                    "to": 50.0,
+                    "boundaries": "inf"
+                },
+                "phi": {
+                    "from": 0,
+                    "to": 120,
+                    "boundaries": {
+                        "left": "periodic",
+                        "right": "periodic"
+                    }
+                },
+                "z": {
+                    "from": -10,
+                    "to": 60.0,
+                    "boundaries": {
+                        "left": "inf",
+                        "right": "inf"
+                    }
+                }
+            }
+        },
+        "medium": "vacuum",
+        "objects": [
+            {
+                "type": "semiconductor",
+                "material": "HPGe",
+                "bulk_type": "n",
+                "temperature": 77.0,
+                "charge_density_model": {
+                    "name": "linear",
+                    "r": {
+                        "init": 0.0,
+                        "gradient": 0.000
+                    },
+                    "phi": {
+                        "init": 0.0,
+                        "gradient": 0.0
+                    },
+                    "z": {
+                        "init": 1.0,
+                        "gradient": 0.00071
+                    }
+                },
+                "geometry": {
+                    "name": "Initial Cylinder",
+                    "type": "tube",
+                    "r": {
+                        "from": 0.0,
+                        "to": 39.5
+                    },
+                    "phi": {
+                        "from": 0.0,
+                        "to": 360.0
+                    },
+                    "h": 40.0,
+                    "translate": {
+                        "z": 0.0
+                    }
+                }
+            },
+            {
+                "type": "contact",
+                "material": "HPGe",
+                "channel": 1,
+                "potential": 4500.0,
+                "geometry": {
+                    "type": "tube",
+                    "r": {
+                        "from": 0.0,
+                        "to": 7.5
+                    },
+                    "phi": {
+                        "from": 0.0,
+                        "to": 360.0
+                    },
+                    "h": 0.3,
+                    "translate":{
+                        "z": 39.7
+                    }
+                }
+            },
+            {
+                "type": "contact",
+                "name": "Seg. 1",
+                "material": "HPGe",
+                "channel": 2,
+                "potential": 0.0,
+                "geometry": {
+                    "type": "union",
+                    "parts": [
+                        {
+                            "name":"Seg1 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 13.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 0.3582,
+                                "to": 59.6419
+                            },
+                            "h": 0.0
+                        },
+                        {
+                            "name": "Seg1 side",
+                            "type": "tube",
+                            "r": {
+                                "from": 39.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 0.3582,
+                                "to": 59.6419
+                            },
+                            "h": 40.0
+                        },
+                        {
+                            "name": "Seg1 top",
+                            "type": "tube",
+                            "r": {
+                                "from": 17.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 0.3582,
+                                "to": 59.6419
+                            },
+                            "h": 0.0,
+                            "translate":{
+                                "z": 40.0
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "contact",
+                "name": "Seg. 2",
+                "material": "HPGe",
+                "channel": 3,
+                "potential": 0.0,
+                "geometry": {
+                    "type": "union",
+                    "parts": [
+                        {
+                            "name": "Seg2 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 13.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 120.3581,
+                                "to": 179.6419
+                            },
+                            "h": 0.0
+                        },
+                        {
+                            "name": "Seg2 side",
+                            "type": "tube",
+                            "r": {
+                                "from": 39.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 120.3581,
+                                "to": 179.6419
+                            },
+                            "h": 40.0
+                        },
+                        {
+                            "name": "Seg2 top",
+                            "type": "tube",
+                            "r": {
+                                "from": 17.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 120.3581,
+                                "to": 179.6419
+                            },
+                            "h": 0.0,
+                            "translate": {
+                                "z": 40.0
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "contact",
+                "name": "Seg. 3",
+                "material": "HPGe",
+                "channel": 4,
+                "potential": 0.0,
+                "geometry": {
+                    "type": "union",
+                    "parts": [
+                        {
+                            "name": "Seg3 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 13.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 240.3581,
+                                "to": 299.6419
+                            },
+                            "h": 0.0
+                        },
+                        {
+                            "name": "Seg3 side",
+                            "type": "tube",
+                            "r": {
+                                "from": 39.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 240.3581,
+                                "to": 299.6419
+                            },
+                            "h": 40.0
+                        },
+                        {
+                            "name": "Seg3 top",
+                            "type": "tube",
+                            "r": {
+                                "from": 17.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 240.3581,
+                                "to": 299.6419
+                            },
+                            "h": 0.0,
+                            "translate": {
+                                "z": 40.0
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "contact",
+                "name": "Seg. 4",
+                "material": "HPGe",
+                "channel": 5,
+                "potential": 0.0,
+                "geometry": {
+                    "type": "union",
+                    "parts": [
+
+                        {
+                            "name": "Seg. 4 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 13.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 60.3581,
+                                "to": 119.6419
+                            },
+                            "h": 0.0
+                        },
+                        {
+                            "name": "Seg. 4 side",
+                            "type": "tube",
+                            "r": {
+                                "from": 39.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 60.3581,
+                                "to": 119.6419
+                            },
+                            "h": 40.0
+                        },
+                        {
+                            "name": "Seg. 4 top",
+                            "type": "tube",
+                            "r": {
+                                "from": 17.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 60.3581,
+                                "to": 119.6419
+                            },
+                            "h": 0.0,
+                            "translate": {
+                                "z": 40.0
+                            }
+                        },
+                        {
+                            "name": "Seg. 4 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 13.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 180.3581,
+                                "to": 239.6419
+                            },
+                            "h": 0.0
+                        },
+                        {
+                            "name": "Seg. 4 side",
+                            "type": "tube",
+                            "r": {
+                                "from": 39.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 180.3581,
+                                "to": 239.6419
+                            },
+                            "h": 40.0
+                        },
+                        {
+                            "name": "Seg. 4 top",
+                            "type": "tube",
+                            "r": {
+                                "from": 17.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 180.3581,
+                                "to": 239.6419
+                            },
+                            "h": 0.0,
+                            "translate": {
+                                "z": 40.0
+                            }
+                        },
+                        {
+                            "name": "Seg. 4 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 13.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 300.3581,
+                                "to": 359.6419
+                            },
+                            "h": 0.0
+                        },
+                        {
+                            "name": "Seg. 4 side",
+                            "type": "tube",
+                            "r": {
+                                "from": 39.5,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 300.3581,
+                                "to": 359.6419
+                            },
+                            "h": 40.0
+                        },
+                        {
+                            "name": "Seg. 4 top",
+                            "type": "tube",
+                            "r": {
+                                "from": 17.0,
+                                "to": 39.5
+                            },
+                            "phi": {
+                                "from": 300.3581,
+                                "to": 359.6419
+                            },
+                            "h": 0.0,
+                            "translate": {
+                                "z": 40.0
+                            }
+                        },
+                        {
+                            "name": "Seg. 4 bottom",
+                            "type": "tube",
+                            "r": {
+                                "from": 0.0,
+                                "to": 13.0
+                            },
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "h": 0.0,
+                            "translate": {
+                                "z": 0.0
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
 }

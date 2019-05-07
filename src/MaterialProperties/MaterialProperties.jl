@@ -6,6 +6,14 @@ const ϵ0  = Float64(8.8541878176e-12)
 
 const material_properties = Dict{Symbol, NamedTuple}()
 
+materials = Dict( "HPGe" => :HPGe,
+                  "vacuum" => :Vacuum,
+                  "Vacuum" => :Vacuum,
+                  "Copper" => :Co,
+                  "copper" => :Co,
+                  "Al"  => :Al
+)
+
 material_properties[:Vacuum] = (
     E_ionisation = 0.0u"eV",
     f_fano = 0.0,
@@ -31,11 +39,22 @@ material_properties[:Si] = (
     ρ = 2.3290Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
     name = "Silicon"
 )
+material_properties[:Al] = (
+    name = "Aluminium",
+    ϵ_r = 10.8, # Aluminium Foil
+    ρ = 2.6989Unitful.g / (Unitful.cm^3) # u"g/cm^3" throws warnings in precompilation
+)
 
 material_properties[:LAr] = (
-    name = "Silicon",
+    name = "liquid Argon",
     E_ionisation = 0u"eV",
     f_fano = 0.107,
     ϵ_r = 1.505,
-    ρ = 1.396Unitful.g / (Unitful.ml), # u"g/cm^3" throws warnings in precompilation
+    ρ = 1.396Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
+)
+
+material_properties[:Co] = (
+    name = "Copper",
+    ϵ_r = 20,
+    ρ = 8.96Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
 )
