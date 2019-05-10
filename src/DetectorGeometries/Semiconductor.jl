@@ -16,7 +16,11 @@ end
 
 function Semiconductor{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
     sc = Semiconductor{T}()
-    sc.charge_density_model = ChargeDensityModel(T, dict["charge_density_model"])
+    sc.charge_density_model = if haskey(dict, "charge_density_model") 
+        ChargeDensityModel(T, dict["charge_density_model"])
+    else
+        ZeroChargeDensityModel{T}()
+    end
     sc.material = material_properties[materials[dict["material"]]]
     sc.bulk_type = bulk_types[dict["bulk_type"]]
     sc.geometry = Geometry(T, dict["geometry"], inputunit_dict)

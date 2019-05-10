@@ -1,3 +1,29 @@
 {
-    
+    "name": "Simple True Coax",
+    "setup": {
+        "objects": [
+            {
+                "type": "semiconductor",
+                "material": "HPGe",
+                "bulk_type": "p",
+                "geometry": {
+                    "type": "difference",
+                    "parts": [
+                        {
+                            "name": "Initial Cylinder",
+                            "type": "tube",
+                            "r": 0.04,
+                            "h": 0.06
+                        },
+                        {
+                            "name": "Initial Cylinder",
+                            "type": "tube",
+                            "r": 0.005,
+                            "h": 0.06
+                        }
+                    ]
+                }
+            }
+        ] 
+    }
 }
