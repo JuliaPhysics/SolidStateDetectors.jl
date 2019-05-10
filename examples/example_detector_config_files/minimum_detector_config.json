@@ -1,6 +1,20 @@
 {
     "name": "Simple True Coax",
     "setup": {
+        "units": {
+            "length": "mm",
+            "angle": "deg"
+        },
+        "grid": {
+            "coordinates": "cylindrical",
+            "axes": {
+                "r": 45,
+                "z": {
+                    "from": -10,
+                    "to": 70.0
+                }
+            }
+        },
         "objects": [
             {
                 "type": "semiconductor",
@@ -10,16 +24,14 @@
                     "type": "difference",
                     "parts": [
                         {
-                            "name": "Initial Cylinder",
                             "type": "tube",
-                            "r": 0.04,
-                            "h": 0.06
+                            "r": 40,
+                            "h": 60
                         },
                         {
-                            "name": "Initial Cylinder",
                             "type": "tube",
-                            "r": 0.005,
-                            "h": 0.06
+                            "r": 5,
+                            "h": 60
                         }
                     ]
                 }
