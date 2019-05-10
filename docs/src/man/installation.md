@@ -1,11 +1,11 @@
 # Installation
 
-This package is not a registered package (yet).
+This package is a registered package.
 
 Install via
 
 ```julia
-using Pkg; pkg"add https://github.com/JuliaHEP/SolidStateDetectors.jl.git"
+using Pkg; pkg"add SolidStateDetectors"
 ```
 
 ## Vizualization / Plotting (Optional)
