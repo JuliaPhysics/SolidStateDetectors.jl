@@ -105,7 +105,7 @@ function Grid(nt::NamedTuple)
     elseif nt.coordtype == "cartesian"
         axx::DiscreteAxis = DiscreteAxis(nt.axes.x, unit=u"m")
         axy::DiscreteAxis = DiscreteAxis(nt.axes.y, unit=u"m")
-        axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
+        axz = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axx.ticks[1])
         return Grid{T, 3, :cartesian}( (axx, axy, axz) )
     else
