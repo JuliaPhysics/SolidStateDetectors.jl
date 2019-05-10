@@ -102,12 +102,7 @@ function Grid(nt::NamedTuple)
         axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axr.ticks[1])
         return Grid{T, 3, :cylindrical}( (axr, axφ, axz) )
-    else
-        error("`coordtype` = $(nt.coordtype) is not valid.")
-    end
-end
-function Grid(nt::NamedTuple)
-    if nt.coordtype == "cartesian"
+    elseif nt.coordtype == "cartesian"
         axx::DiscreteAxis = DiscreteAxis(nt.axes.x, unit=u"m")
         axy::DiscreteAxis = DiscreteAxis(nt.axes.y, unit=u"m")
         axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
