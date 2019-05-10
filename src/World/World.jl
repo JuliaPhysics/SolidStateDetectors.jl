@@ -133,3 +133,27 @@ function CartesianWorld(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Unit
     return World{T, 3, :cartesian}( x_int, y_int, z_int )
 end
 
+function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T)::World where {T <: SSDFloat}
+    Δx::T = (xr - xl) / 10
+    Δy::T = (yr - yl) / 10
+    Δz::T = (zr - zl) / 10
+    x_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(xl - Δx, xr + Δx)
+    y_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(yl - Δy, yr + Δy)
+    z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - Δz, zr + Δz)
+    return World{T, 3, :cartesian}( x_int, y_int, z_int )
+end
+
+function CylindricalWorld(r_max::T, zl::T, zr::T)::World where {T <: SSDFloat}
+    r_int = SSDInterval{T, :closed, :closed, :r0, :infinite}(T(0), abs(r_max * T(1.1)))
+    φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(T(0), T(2π))
+    Δz::T = zr - zl
+    z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - (Δz / 10), zr + (Δz / 10))
+    return World{T, 3, :cylindrical}( r_int, φ_int, z_int )
+end
+
+function World(S::Val{:cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}
+    return CylindricalWorld(limits[2], limits[5], limits[6])
+end
+function World(S::Val{:cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
+    return CartesianWorld(limits...)
+end

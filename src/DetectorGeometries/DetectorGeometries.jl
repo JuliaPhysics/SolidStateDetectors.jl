@@ -393,11 +393,16 @@ function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
 end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
-                init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005],
+                init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
                 for_weighting_potential::Bool = false,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
 
-    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
+    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing) 
+        T.(init_grid_spacing), true
+    else
+        missing, false
+    end
 
     important_r_points::Vector{T} = get_important_points(detector, :r)
     important_φ_points::Vector{T} = get_important_points(detector, :φ)
@@ -416,8 +421,12 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     # r
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
     int_r = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
-    ax_r::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
-    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol=init_grid_spacing[1]/4)
+    ax_r::DiscreteAxis{T, BL, BR} = if use_spacing 
+        DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
+    else
+        DiscreteAxis{BL, BR}(int_r, length = init_grid_size[1])
+    end
+    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
     ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
 
     # φ
@@ -430,10 +439,14 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
-        DiscreteAxis{BL, BR}(int_φ, step = init_grid_spacing[2])
+        if use_spacing 
+            DiscreteAxis{BL, BR}(int_φ, step = init_grid_spacing[2])
+        else
+            DiscreteAxis{BL, BR}(int_φ, length = init_grid_size[2])
+        end
     end
     if length(ax_φ) > 1
-        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol=deg2rad(init_grid_spacing[2])/4)
+        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol=deg2rad(minimum(diff(ax_φ.ticks)))/4)
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
     if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
@@ -450,8 +463,12 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     #z
     L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
     int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
-    ax_z::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=init_grid_spacing[3]/2)
+    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
+    else
+        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
+    end
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=minimum(diff(ax_z.ticks))/2)
     ax_z = typeof(ax_z)(int_z, zticks)
     if isodd(length(ax_z)) # must be even
         int_z = ax_z.interval
@@ -467,19 +484,28 @@ end
 
 
 function Grid(  detector::SolidStateDetector{T, :cartesian};
-                init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001])::CartesianGrid3D{T} where {T}
+                init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                init_grid_spacing::Union{Missing, Vector{<:Real}} = missing)::CartesianGrid3D{T} where {T}
 
     important_x_points::Vector{T} = get_important_points(detector, :x)
     important_y_points::Vector{T} = get_important_points(detector, :y)
     important_z_points::Vector{T} = get_important_points(detector, :z)
 
-    init_grid_spacing::Vector{T} = T.(init_grid_spacing)
+    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing) 
+        T.(init_grid_spacing), true
+    else
+        missing, false
+    end
 
     # x
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
     int_x = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
-    ax_x::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
-    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = init_grid_spacing[1] / 2)
+    ax_x::DiscreteAxis{T, BL, BR} = if use_spacing 
+        DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
+    else
+        DiscreteAxis{BL, BR}(int_x, length = init_grid_size[1])
+    end
+    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = minimum(diff(ax_x.ticks)) / 2)
     ax_x = typeof(ax_x)(int_x, xticks)
     if isodd(length(ax_x)) # RedBlack dimension must be of even length
         xticks = ax_x.ticks
@@ -492,15 +518,23 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
     # y
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    ax_y::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
-    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = init_grid_spacing[2] / 2)
+    ax_y::DiscreteAxis{T, BL, BR} = if use_spacing 
+        DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
+    else
+        DiscreteAxis{BL, BR}(int_y, length = init_grid_size[2])
+    end
+    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = minimum(diff(ax_y.ticks)) / 2)
     ax_y = typeof(ax_y)(int_y, yticks)
 
     # z
     L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
     int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
-    ax_z::DiscreteAxis{T, BL, BR} = DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = init_grid_spacing[3] / 2)
+    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
+    else
+        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
+    end
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = minimum(diff(ax_z.ticks)) / 2)
     ax_z = typeof(ax_z)(int_z, zticks)
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
