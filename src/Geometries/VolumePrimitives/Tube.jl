@@ -86,11 +86,11 @@ function get_important_points(t::Tube{T}, ::Val{:z})::Vector{T} where {T <: SSDF
 end
 
 function get_important_points(t::Tube{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return T[t.r_interval.left, t.r_interval.right]
+    return T[-t.r_interval.left, -t.r_interval.right, t.r_interval.left, t.r_interval.right]
 end
 
 function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return T[t.r_interval.left, t.r_interval.right]
+    return T[-t.r_interval.right, -t.r_interval.left, t.r_interval.left, t.r_interval.right]
 end
 
 function sample(c::Tube{T}, stepsize::Vector{T}) where T

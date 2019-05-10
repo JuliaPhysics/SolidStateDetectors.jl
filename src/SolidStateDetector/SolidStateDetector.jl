@@ -29,14 +29,12 @@ function construct_units(config_file_dict::Dict)
         "angle" => u"°", 
         "temperature" => u"K"
     )
-    if haskey(config_file_dict, "setup")
-        if haskey(config_file_dict["setup"], "units")
-            d = config_file_dict["setup"]["units"]
-            if haskey(d, "length") dunits["length"] = unit_conversion[d["length"]] end
-            if haskey(d, "angle") dunits["angle"] = unit_conversion[d["angle"]] end
-            if haskey(d, "potential") dunits["potential"] = unit_conversion[d["potential"]] end
-            if haskey(d, "temperature") dunits["temperature"] = unit_conversion[d["temperature"]] end
-        end
+    if haskey(config_file_dict, "units")
+        d = config_file_dict["units"]
+        if haskey(d, "length") dunits["length"] = unit_conversion[d["length"]] end
+        if haskey(d, "angle") dunits["angle"] = unit_conversion[d["angle"]] end
+        if haskey(d, "potential") dunits["potential"] = unit_conversion[d["potential"]] end
+        if haskey(d, "temperature") dunits["temperature"] = unit_conversion[d["temperature"]] end
     end
     dunits
 end
@@ -150,27 +148,22 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
         "angle" => u"°", 
         "temperature" => u"K"
     )
-    world = if haskey(config_file, "setup")
-        inputunits = construct_units(config_file)
-        if haskey(config_file["setup"], "medium")
-            medium = material_properties[materials[config_file["setup"]["medium"]]]
-        end
+    inputunits = construct_units(config_file)
+    if haskey(config_file, "medium")
+        medium = material_properties[materials[config_file["medium"]]]
+    end
 
-        if haskey(config_file["setup"], "objects")
-            construct_objects(T, config_file["setup"]["objects"], semiconductors, contacts, passives, inputunits)
-        end
+    if haskey(config_file, "objects")
+        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, inputunits)
+    end
 
-        if haskey(config_file["setup"], "grid")
-            if isa(config_file["setup"]["grid"], Dict)
-                grid_type = Symbol(config_file["setup"]["grid"]["coordinates"])
-                World(T, config_file["setup"]["grid"], inputunits)
-            elseif isa(config_file["setup"]["grid"], String)
-                grid_type = Symbol(config_file["setup"]["grid"])
-                world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives)
-                World(Val(grid_type), world_limits)
-            end
-        else
-            world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives )
+    world = if haskey(config_file, "grid")
+        if isa(config_file["grid"], Dict)
+            grid_type = Symbol(config_file["grid"]["coordinates"])
+            World(T, config_file["grid"], inputunits)
+        elseif isa(config_file["grid"], String)
+            grid_type = Symbol(config_file["grid"])
+            world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives)
             World(Val(grid_type), world_limits)
         end
     else

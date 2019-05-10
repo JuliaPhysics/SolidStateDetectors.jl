@@ -119,10 +119,10 @@ function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: SSDF
     return T[c.rStart1, c.rStop1, c.rStart2, c.rStop2]
 end
 function get_important_points(c::Cone{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return T[c.rStart1, c.rStop1, c.rStart2, c.rStop2]
+    return T[-c.rStart1, -c.rStop1, -c.rStart2, -c.rStop2, c.rStart1, c.rStop1, c.rStart2, c.rStop2]
 end
 function get_important_points(c::Cone{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return T[c.rStart1, c.rStop1, c.rStart2, c.rStop2]
+    return T[-c.rStart1, -c.rStop1, -c.rStart2, -c.rStop2, c.rStart1, c.rStop1, c.rStart2, c.rStop2]
 end
 
 function get_important_points(c::Cone{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
