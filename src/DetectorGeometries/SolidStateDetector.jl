@@ -152,11 +152,9 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     )
     world = if haskey(config_file, "setup")
         inputunits = construct_units(config_file)
-        @show inputunits
         if haskey(config_file["setup"], "medium")
             medium = material_properties[materials[config_file["setup"]["medium"]]]
         end
-        @show medium.name
 
         if haskey(config_file["setup"], "objects")
             construct_objects(T, config_file["setup"]["objects"], semiconductors, contacts, passives, inputunits)
