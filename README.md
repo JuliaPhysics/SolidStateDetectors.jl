@@ -11,7 +11,7 @@ SolidStateDetectors.jl is a Julia package for fast 2D and 3D simulation of Solid
 
 ## Documentation
 
-* [Documentation for stable version](https://JuliaHEP.github.io/SolidStateDetectors.jl/stable)
-* [Documentation for development version](https://JuliaHEP.github.io/SolidStateDetectors.jl/dev)
+* [Documentation for stable version](https://JuliaHEP.github.io/SolidStateDetectors.jl/stable) (latest release)
+* [Documentation for development version](https://JuliaHEP.github.io/SolidStateDetectors.jl/dev) (master branch)
 
 
