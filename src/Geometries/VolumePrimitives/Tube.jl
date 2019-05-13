@@ -10,9 +10,9 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
 
     z_offset::T = 0.0
     if haskey(dict, "translate")
-        translate = CartesianVector{T}( haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : 0.0,
-                                        haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : 0.0,
-                                        haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : 0.0)
+        translate = CartesianVector{T}( haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : T(0),
+                                        haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : T(0),
+                                        haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : T(0))
         if translate[1] == T(0.0) && translate[2] == T(0.0) && translate[3] == T(0.0)
             translate = missing
         elseif translate[1] == T(0.0) && translate[2] == T(0.0)
@@ -46,7 +46,7 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
     return Tube{T}(
         r_interval,
         phi_interval,
-        Interval(zStart,zStop),
+        Interval(zStart, zStop),
         translate  
     )
 end
