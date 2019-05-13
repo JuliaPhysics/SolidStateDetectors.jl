@@ -1,4 +1,4 @@
-# # Example 1: Iverted Coax Detector 
+# # Example 1: Inverted Coax Detector 
 
 # ToDo... explanation
 
