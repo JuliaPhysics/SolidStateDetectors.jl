@@ -1,14 +1,22 @@
 # Use
 #
-# DOCUMENTER_DEBUG=true julia --color=yes make.jl local [fixdoctests]
+# DOCUMENTER_DEBUG=true julia --color=yes make.jl local [linkcheck] [fixdoctests]
 #
 # for local builds.
 
 using Documenter
-using Pkg
+using Literate
 using Plots
 pyplot(fmt=:svg)
 using SolidStateDetectors
+
+gen_content_dir = joinpath(@__DIR__, "src")
+tutorial_src = joinpath(@__DIR__, "src", "tutorial_lit.jl")
+Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", documenter = true, credit = true)
+#Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", codefence = "```@repl tutorial" => "```", documenter = true, credit = true)
+Literate.notebook(tutorial_src, gen_content_dir, execute = false, name = "ssd_tutorial", documenter = true, credit = true)
+Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ssd_tutorial", documenter = true, credit = false)
+
 
 makedocs(
     sitename = "SolidStateDetectors.jl",
@@ -24,15 +32,19 @@ makedocs(
             "Drift Fields" => "man/drift_fields.md",
             "IO" => "man/IO.md",
         ],
+        "Tutorial" => "tutorial.md",
         "API" => "api.md",
         "LICENSE" => "LICENSE.md",
     ],
     doctest = ("fixdoctests" in ARGS) ? :fix : true,
-    format = Documenter.HTML(canonical = "https://JuliaHEP.github.io/SolidStateDetectors.jl/stable/", prettyurls = !("local" in ARGS))
+    format = Documenter.HTML(canonical = "https://JuliaHEP.github.io/SolidStateDetectors.jl/stable/", prettyurls = !("local" in ARGS)),
+    linkcheck = ("linkcheck" in ARGS),
+    strict = !("local" in ARGS),
 )
 
 deploydocs(
     repo = "github.com/JuliaHEP/SolidStateDetectors.jl.git",
     devbranch = "master",
     devurl = "master",
+    forcepush = true
 )
