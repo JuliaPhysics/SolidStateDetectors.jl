@@ -230,7 +230,7 @@ end
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"
-            g[:x], g[:y], wp.data[:,:,idx]
+            g[:x], g[:y], wp.data[:,:,idx]'
         end
     end
     if contours_equal_potential

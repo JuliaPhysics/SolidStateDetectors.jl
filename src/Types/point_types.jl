@@ -233,7 +233,7 @@ end
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"
-            g[:x], g[:y], pts.data[:,:,idx]
+            g[:x], g[:y], pts.data[:,:,idx]'
         end
     end
 end

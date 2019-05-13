@@ -96,7 +96,7 @@ Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"
-            g[:x], g[:y], ep.data[:,:,idx]
+            g[:x], g[:y], ep.data[:,:,idx]'
         end
     end
     if contours_equal_potential
