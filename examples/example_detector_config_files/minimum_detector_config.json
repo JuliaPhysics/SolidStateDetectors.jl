@@ -1,0 +1,39 @@
+{
+    "name": "Simple True Coax",
+    "units": {
+        "length": "mm",
+        "angle": "deg"
+    },
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "r": 45,
+            "z": {
+                "from": -10,
+                "to": 70.0
+            }
+        }
+    },
+    "objects": [
+        {
+            "type": "semiconductor",
+            "material": "HPGe",
+            "bulk_type": "p",
+            "geometry": {
+                "type": "difference",
+                "parts": [
+                    {
+                        "type": "tube",
+                        "r": 40,
+                        "h": 60
+                    },
+                    {
+                        "type": "tube",
+                        "r": 5,
+                        "h": 60
+                    }
+                ]
+            }
+        }
+    ] 
+}

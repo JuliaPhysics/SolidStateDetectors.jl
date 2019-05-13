@@ -23,8 +23,9 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
 """
 function calculate_electric_potential(  detector::SolidStateDetector{T, :cylindrical};
-                                        init_grid_spacing::Vector{<:Real} = [0.005, deg2rad(5.0), 0.005], # 2mm, 10 degree, 2 mm
-                                        grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
+                                        init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                                        init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
+                                        grid::Grid{T, N, S} = Grid(detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
                                         refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
@@ -158,8 +159,9 @@ end
 
 
 function calculate_electric_potential(  detector::SolidStateDetector{T, :cartesian};
-                                        init_grid_spacing::Vector{<:Real} = [0.001, 0.001, 0.001], # 5mm each
-                                        grid::Grid{T, N, S} = Grid(detector, init_grid_spacing=init_grid_spacing),
+                                        init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                                        init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
+                                        grid::Grid{T, N, S} = Grid(detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing),
                                         convergence_limit::Real = 5e-6,
                                         max_refinements::Int = 3,
                                         refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],

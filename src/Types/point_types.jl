@@ -120,7 +120,7 @@ end
 
 Base.convert(T::Type{PointTypes}, x::NamedTuple) = T(x)
 
-function NamedTuple(pts::PointTypes{T, 3, :cylindrical}) where {T}
+function NamedTuple(pts::PointTypes{T, 3}) where {T}
     return (
         grid = NamedTuple(pts.grid),
         values = pts.data,

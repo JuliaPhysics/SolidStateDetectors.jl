@@ -22,13 +22,21 @@ end
 get_precision_type(d::SolidStateDetector{T}) where {T} = T
 get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
 
-function construct_units(dict::Dict)::Dict{String,Unitful.Units}
-    result_dict::Dict{String,Unitful.Units} = Dict()
-    haskey(dict,"length") ? result_dict["length"] = unit_conversion[dict["length"]] : result_dict["length"] = u"mm"
-    haskey(dict,"angle") ? result_dict["angle"] = unit_conversion[dict["angle"]] : result_dict["angle"] = u"rad"
-    haskey(dict,"potential") ? result_dict["potential"] = unit_conversion[dict["potential"]] : result_dict["potential"] = u"V"
-    haskey(dict,"temperature") ? result_dict["temperature"] = unit_conversion[dict["temperature"]] : result_dict["temperature"] = u"K"
-    result_dict
+function construct_units(config_file_dict::Dict)
+    dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(  
+        "length" => u"m", # change this to u"m" ? SI Units
+        "potential" => u"V", 
+        "angle" => u"°", 
+        "temperature" => u"K"
+    )
+    if haskey(config_file_dict, "units")
+        d = config_file_dict["units"]
+        if haskey(d, "length") dunits["length"] = unit_conversion[d["length"]] end
+        if haskey(d, "angle") dunits["angle"] = unit_conversion[d["angle"]] end
+        if haskey(d, "potential") dunits["potential"] = unit_conversion[d["potential"]] end
+        if haskey(d, "temperature") dunits["temperature"] = unit_conversion[d["temperature"]] end
+    end
+    dunits
 end
 
 
@@ -59,16 +67,119 @@ function construct_objects(T, objects::Vector, semiconductors, contacts, passive
     nothing
 end
 
+function get_world_limits_from_objects(S::Val{:cylindrical}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+    ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
+    imps_1::Vector{T} = []
+    imps_3::Vector{T} = []
+    for objects in [s, c, p]
+        for object in objects
+            for posgeo in object.geometry_positive
+                append!(imps_1, get_important_points( posgeo, Val{:r}()))
+                append!(imps_3, get_important_points( posgeo, Val{:z}()))
+            end
+        end
+    end
+    imps_1 = uniq(sort(imps_1))
+    imps_3 = uniq(sort(imps_3))
+    if length(imps_1) > 1
+        ax1l = minimum(imps_1)
+        ax1r = maximum(imps_1)
+    elseif length(imps_1) == 1
+        ax1l = minimum(imps_1)
+        ax1r = maximum(imps_1) + 1
+    end
+    if length(imps_3) > 1
+        ax3l = minimum(imps_3)
+        ax3r = maximum(imps_3)
+    elseif length(imps_3) == 1
+        ax3l = minimum(imps_3)
+        ax3r = maximum(imps_3) + 1
+    end
+    return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
+end
+function get_world_limits_from_objects(S::Val{:cartesian}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+    ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
+    imps_1::Vector{T} = []
+    imps_2::Vector{T} = []
+    imps_3::Vector{T} = []
+    for objects in [s, c, p]
+        for object in objects
+            for posgeo in object.geometry_positive
+                append!(imps_1, get_important_points( posgeo, Val{:x}()))
+                append!(imps_2, get_important_points( posgeo, Val{:y}()))
+                append!(imps_3, get_important_points( posgeo, Val{:z}()))
+            end
+        end
+    end
+    imps_1 = uniq(sort(imps_1))
+    imps_2 = uniq(sort(imps_2))
+    imps_3 = uniq(sort(imps_3))
+    if length(imps_1) > 1
+        ax1l = minimum(imps_1)
+        ax1r = maximum(imps_1)
+    elseif length(imps_1) == 1
+        ax1l = minimum(imps_1)
+        ax1r = maximum(imps_1) + 1
+    end
+    if length(imps_2) > 1
+        ax2l = minimum(imps_2)
+        ax2r = maximum(imps_2)
+    elseif length(imps_2) == 1
+        ax2l = minimum(imps_2)
+        ax2r = maximum(imps_2) + 1
+    end
+    if length(imps_3) > 1
+        ax3l = minimum(imps_3)
+        ax3r = maximum(imps_3)
+    elseif length(imps_3) == 1
+        ax3l = minimum(imps_3)
+        ax3r = maximum(imps_3) + 1
+    end
+    return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
+end
+
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
-    grid_type = Symbol(config_file["setup"]["grid"]["coordinates"])
+    grid_type::Symbol = :cartesian
+    semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    medium::NamedTuple = material_properties[materials["vacuum"]]
+    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(  
+        "length" => u"m", # change this to u"m" ? SI Units
+        "potential" => u"V", 
+        "angle" => u"°", 
+        "temperature" => u"K"
+    )
+    inputunits = construct_units(config_file)
+    if haskey(config_file, "medium")
+        medium = material_properties[materials[config_file["medium"]]]
+    end
+
+    if haskey(config_file, "objects")
+        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, inputunits)
+    end
+
+    world = if haskey(config_file, "grid")
+        if isa(config_file["grid"], Dict)
+            grid_type = Symbol(config_file["grid"]["coordinates"])
+            World(T, config_file["grid"], inputunits)
+        elseif isa(config_file["grid"], String)
+            grid_type = Symbol(config_file["grid"])
+            world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives)
+            World(Val(grid_type), world_limits)
+        end
+    else
+        world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives )
+        World(Val(grid_type), world_limits)
+    end
+
     c = SolidStateDetector{T, grid_type}()
-    c.name = config_file["name"]
+    c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
     c.config_dict = config_file
-    c.inputunits = construct_units(config_file["setup"]["units"])
-    c.world = World(T, config_file["setup"]["grid"], c.inputunits)
-    c.medium = material_properties[materials[config_file["setup"]["medium"]]]
-    c.semiconductors, c.contacts, c.passives = [], [], []
-    construct_objects(T, config_file["setup"]["objects"], c.semiconductors, c.contacts, c.passives, c.inputunits)
+    c.semiconductors = semiconductors
+    c.contacts = contacts
+    c.passives = passives
+    c.inputunits = inputunits
+    c.medium = medium
+    c.world = world
     return c
 end
 

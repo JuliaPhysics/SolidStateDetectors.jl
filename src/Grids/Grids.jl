@@ -96,12 +96,18 @@ end
 
 
 function Grid(nt::NamedTuple)
-    if nt.coordtype == "Cylindrical"
+    if nt.coordtype == "cylindrical"
         axr::DiscreteAxis = DiscreteAxis(nt.axes.r, unit=u"m")
         axφ::DiscreteAxis = DiscreteAxis(nt.axes.phi, unit=u"rad")
         axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axr.ticks[1])
         return Grid{T, 3, :cylindrical}( (axr, axφ, axz) )
+    elseif nt.coordtype == "cartesian"
+        axx::DiscreteAxis = DiscreteAxis(nt.axes.x, unit=u"m")
+        axy::DiscreteAxis = DiscreteAxis(nt.axes.y, unit=u"m")
+        axz = DiscreteAxis(nt.axes.z, unit=u"m")
+        T = typeof(axx.ticks[1])
+        return Grid{T, 3, :cartesian}( (axx, axy, axz) )
     else
         error("`coordtype` = $(nt.coordtype) is not valid.")
     end
@@ -114,12 +120,26 @@ function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
     axφ::DiscreteAxis{T} = grid[:φ]
     axz::DiscreteAxis{T} = grid[:z]
     return (
-        coordtype = "Cylindrical",
+        coordtype = "cartesian",
         ndims = 3,
         axes = (
-            r = NamedTuple(axr, unit=u"m"),
+            r   = NamedTuple(axr, unit=u"m"),
             phi = NamedTuple(axφ, unit=u"rad"),
-            z = NamedTuple(axz, unit=u"m"),
+            z   = NamedTuple(axz, unit=u"m"),
+        )
+    )
+end
+function NamedTuple(grid::Grid{T, 3, :cartesian}) where {T}
+    axx::DiscreteAxis{T} = grid[:x]
+    axy::DiscreteAxis{T} = grid[:y]
+    axz::DiscreteAxis{T} = grid[:z]
+    return (
+        coordtype = "cartesian",
+        ndims = 3,
+        axes = (
+            x =   NamedTuple(axx, unit=u"m"),
+            y = NamedTuple(axy, unit=u"m"),
+            z =   NamedTuple(axz, unit=u"m"),
         )
     )
 end

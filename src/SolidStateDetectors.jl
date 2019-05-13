@@ -45,7 +45,6 @@ export Simulation, simulate!
 
 ## temporary exports for easier debugging
 export cyp, cap # CylindricalPoint, CartesianPoint
-export is_surface_point
 export point_type
 export geom_round
 export get_velocity_vector
@@ -70,7 +69,7 @@ include("Types/Types.jl")
 include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
 include("ChargeDensityModels/ChargeDensityModels.jl")
-include("DetectorGeometries/DetectorGeometries.jl")
+include("SolidStateDetector/DetectorGeometries.jl")
 include("GeometryRounding.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")

@@ -30,11 +30,25 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
     else
         @warn "please specify a height of the Tube 'h'"
     end
+    
+    phi_interval =  if haskey(dict, "phi") 
+        Interval(geom_round(T(deg2rad(dict["phi"]["from"]))), geom_round(T(deg2rad(dict["phi"]["to"]))))
+    else
+        Interval(geom_round(T(deg2rad(0))), geom_round(T(deg2rad(360))))
+    end
+
+    r_interval = if haskey(dict["r"], "from") 
+        Interval(geom_round(ustrip(uconvert(u"m", T(dict["r"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["r"]["to"]) * inputunit_dict["length"]))))
+    else
+        Interval(geom_round(0), geom_round(ustrip(uconvert(u"m", T(dict["r"]) * inputunit_dict["length"]))))
+    end
+
     return Tube{T}(
-    Interval(geom_round(ustrip(uconvert(u"m", T(dict["r"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["r"]["to"]) * inputunit_dict["length"])))),
-    Interval(geom_round(T(deg2rad(dict["phi"]["from"]))), geom_round(T(deg2rad(dict["phi"]["to"])))),
-    Interval(zStart,zStop),
-    translate  )
+        r_interval,
+        phi_interval,
+        Interval(zStart,zStop),
+        translate  
+    )
 end
 
 function Geometry(T::DataType, t::Val{:tube}, dict::Dict{Union{Any,String}, Any},inputunit_dict::Dict{String,Unitful.Units})
@@ -72,13 +86,11 @@ function get_important_points(t::Tube{T}, ::Val{:z})::Vector{T} where {T <: SSDF
 end
 
 function get_important_points(t::Tube{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    @warn "Not yet implemented"
-    return T[]
+    return T[-t.r_interval.left, -t.r_interval.right, t.r_interval.left, t.r_interval.right]
 end
 
 function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    @warn "Not yet implemented"
-    return T[]
+    return T[-t.r_interval.right, -t.r_interval.left, t.r_interval.left, t.r_interval.right]
 end
 
 function sample(c::Tube{T}, stepsize::Vector{T}) where T

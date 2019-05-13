@@ -25,6 +25,20 @@ function get_charge_density(lcdm::LinearChargeDensityModel{T}, pt::AbstractCoord
     return ρ
 end
 
+"""
+    struct ZeroChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T}
+
+Returns always 0.
+"""
+struct ZeroChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T} end
+
+function get_charge_density(lcdm::ZeroChargeDensityModel{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+    ρ::T = 0
+    return ρ
+end
+
+
+
 
 function ChargeDensityModel(T::DataType, t::Val{:linear}, dict::Union{Dict{String, Any}, Dict{Any, Any}})
     return LinearChargeDensityModel{T}( dict )
