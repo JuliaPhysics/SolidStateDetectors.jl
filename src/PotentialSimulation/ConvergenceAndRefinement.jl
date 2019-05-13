@@ -60,8 +60,7 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
     axr::Vector{T} = collect(grid.axes[1])
     axφ::Vector{T} = collect(grid.axes[2])
     axz::Vector{T} = collect(grid.axes[3])
-    cyclic::T = grid.axes[2].interval.right
-
+    cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
 
     for iz in 1:size(potential, 3)
         z = axz[iz]
@@ -163,12 +162,13 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
             end
         end
     end
-    if isodd(length(inds_z))
+    if isodd(length(inds_z)) && ((length(inds_z) + 1) < length(axz))
         b = true
         diffs = diff(axz)
         while b
             if length(diffs) > 0
                 idx = findmax(diffs)[2]
+                @show idx
                 if !in(idx, inds_z)
                     append!(inds_z, idx)
                     b = false
@@ -183,9 +183,21 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
             end
         end
     end
+    if isodd(length(inds_z)) && (length(inds_z) > 1)
+        b = true
+        diffs = diff(axz)
+        while b && length(diffs) > 1
+            idx = findmin(diffs)[2]
+            if in(idx, inds_z)
+                deleteat!(inds_z, findfirst(i -> i == idx, inds_z))
+                b = false
+            else
+                deleteat!(diffs, idx)
+            end
+        end
+    end
     if isodd(length(inds_z)) inds_z = inds_z[1:end-1] end
     @assert iseven(length(inds_z)) "Refinement would result in uneven grid in z."
-    
 
     return sort(inds_r), sort(inds_φ), sort(inds_z)
 end
