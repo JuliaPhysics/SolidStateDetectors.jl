@@ -309,8 +309,8 @@ function generate_charge_signals(   sim::Simulation{T},
     contact_charge_signals
 end
 
-function simulate!(sim::Simulation{T}; max_refinements = 1, verbose = false) where {T <: SSDFloat}
-    calculate_electric_potential!(sim, max_refinements = max_refinements, verbose = verbose)
+function simulate!(sim::Simulation{T}; max_refinements::Int = 1, verbose::Bool = false, depletion_handling::Bool = false) where {T <: SSDFloat}
+    calculate_electric_potential!(sim, max_refinements = max_refinements, verbose = verbose, depletion_handling = depletion_handling)
     for contact in sim.detector.contacts
         SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, verbose = verbose)
     end
