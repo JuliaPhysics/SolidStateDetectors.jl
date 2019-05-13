@@ -15,20 +15,48 @@ mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     semiconductors::Vector{Semiconductor{T}}
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
-
-    SolidStateDetector{T, CS}() where {T <: SSDFloat, CS} = new{T, CS}()
 end
 
 get_precision_type(d::SolidStateDetector{T}) where {T} = T
 get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
 
-function construct_units(config_file_dict::Dict)
-    dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(  
+function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat, S}
+    semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    world_limits = get_world_limits_from_objects(Val(S), semiconductors, contacts, passives )
+    world = World(Val(S), world_limits)
+
+    return SolidStateDetector{T, S}(
+        "EmptyDetector", 
+        default_unit_dict(),
+        world,
+        Dict(), 
+        material_properties[materials["vacuum"]],
+        semiconductors,
+        contacts,
+        passives
+    )
+end
+
+function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
+    S::Symbol = :cartesian
+    return SolidStateDetector{T, S}()
+end
+function SolidStateDetector()::SolidStateDetector{Float32, :cartesian} 
+    return SolidStateDetector{Float32, :cartesian}()
+end
+
+function default_unit_dict()::Dict{String, Unitful.Units}
+    return Dict{String, Unitful.Units}(  
         "length" => u"m", # change this to u"m" ? SI Units
         "potential" => u"V", 
         "angle" => u"°", 
         "temperature" => u"K"
     )
+end
+
+
+function construct_units(config_file_dict::Dict)
+    dunits::Dict{String, Unitful.Units} = default_unit_dict()
     if haskey(config_file_dict, "units")
         d = config_file_dict["units"]
         if haskey(d, "length") dunits["length"] = unit_conversion[d["length"]] end
@@ -218,8 +246,9 @@ function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
     println("________"*d.name*"________\n")
     # println("Class: ",d.class)
     println("---General Properties---")
-    println("-Environment Material: \t $(d.medium.name)")
-    println("-Grid Type: \t $(CS)")
+    println("- Precision type: $(T)")
+    println("- Environment Material: $(d.medium.name)")
+    println("- Grid Type: $(CS)")
     println()
     println("# Semiconductors: $(length(d.semiconductors))")
     for (isc, sc)  in enumerate(d.semiconductors)

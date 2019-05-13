@@ -57,9 +57,10 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} 
     return SolidStateDetector{T}(parsed_dict)
 end
 
-function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
-    SolidStateDetector{T}(filename)
-end
+# function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
+#     SolidStateDetector{T}(filename)
+# end
+
 function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float32}
     SolidStateDetector{Float32}(filename)
 end
