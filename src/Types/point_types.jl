@@ -25,8 +25,6 @@ const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is 
 
 const max_pointtype_value = update_bit + undepleted_bit + pn_junction_bit #+ bubble_bit
 
-
-
 """
     PointTypes{T, N, S} <: AbstractArray{T, N}
 
@@ -43,6 +41,10 @@ end
 @inline getindex(pts::PointTypes{T, N, S}, i::Int) where {T, N, S} = getindex(pts.data, i)
 @inline getindex(pts::PointTypes{T, N, S}, s::Symbol) where {T, N, S} = getindex(pts.grid, s)
 
+function in(pt::AbstractCoordinatePoint{T}, pts::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
+    i1::Int, i2::Int, i3::Int = searchsortednearest(pt, pts.grid)
+    return pts.data[i1, i2, i3] & pn_junction_bit > 0
+end
 
 """
     get_active_volume(pts::PointTypes{T}) where {T}
@@ -233,7 +235,7 @@ end
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"
-            g[:x], g[:y], pts.data[:,:,idx]
+            g[:x], g[:y], pts.data[:,:,idx]'
         end
     end
 end

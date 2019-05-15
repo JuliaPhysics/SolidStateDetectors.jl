@@ -57,9 +57,10 @@ function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} 
     return SolidStateDetector{T}(parsed_dict)
 end
 
-function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
-    SolidStateDetector{T}(filename)
-end
+# function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
+#     SolidStateDetector{T}(filename)
+# end
+
 function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float32}
     SolidStateDetector{Float32}(filename)
 end
@@ -291,7 +292,12 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 if in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
-
+                for contact in ssd.contacts
+                    if pt in contact
+                        potential[ ir, iφ, iz ] = contact.potential
+                        pointtypes[ ir, iφ, iz ] = zero(PointType)
+                    end
+                end
             end
         end
     end
@@ -301,7 +307,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        contact_gridpoints = paint_object(contact,grid)
+        contact_gridpoints = paint_object(contact, grid)
         for gridpoint in contact_gridpoints
             potential[ gridpoint... ] = pot
             pointtypes[ gridpoint... ] = zero(PointType)

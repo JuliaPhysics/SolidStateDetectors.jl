@@ -9,12 +9,25 @@ mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     weighting_potentials::Vector{Any}
     electric_field::Union{ElectricField{T}, Missing}
 
-    charge_drift_model::Union{AbstractChargeDriftModel{T}, Missing}
+    charge_drift_model::Union{<:AbstractChargeDriftModel{T}, Missing}
 
     electron_drift_field::Union{ElectricField{T}, Missing}
     hole_drift_field::Union{ElectricField{T}, Missing}
+end
 
-    Simulation{T}() where {T <: SSDFloat} = new{T}(missing, missing, missing, missing, missing, [missing], missing, missing, missing, missing )
+function Simulation{T}() where {T <: SSDFloat}
+    Simulation{T}(
+        SolidStateDetector{T}(), 
+        missing, 
+        missing, 
+        missing, 
+        missing, 
+        [missing], 
+        missing, 
+        VacuumChargeDriftModel{T}(), 
+        missing, 
+        missing
+    )
 end
 
 
@@ -52,7 +65,7 @@ function Simulation(nt::NamedTuple)
     end
     sim.electron_drift_field = ElectricField(nt.electron_drift_field)
     sim.hole_drift_field = ElectricField(nt.hole_drift_field)
-    sim.charge_drift_model = ADLChargeDriftModel(T = T)
+    sim.charge_drift_model = VacuumChargeDriftModel{T}()
     @info "I/O of charge drift model not yet supported. Loading default: ADLChargeDriftModel"
     return sim
 end
@@ -62,7 +75,8 @@ Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
 
 
 function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
-    println(typeof(sim), ": $(sim.detector.name)")
+    println(typeof(sim), " - Coordinate system: ", get_coordinate_system(sim.detector))
+    println("  Detector: $(sim.detector.name)")
     println("  Electric potential: ", !ismissing(sim.electric_potential) ? size(sim.electric_potential) : missing)
     println("  Charge density: ", !ismissing(sim.ρ) ? size(sim.ρ) : missing)
     println("  Dielectric distribution: ", !ismissing(sim.ϵ) ? size(sim.ϵ) : missing)
@@ -193,7 +207,7 @@ end
 
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
                         Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{DriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(   sim.detector, sim.electric_potential.grid, starting_positions,
+    return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
                              Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{DriftPath{T}}
 end
@@ -295,13 +309,21 @@ function generate_charge_signals(   sim::Simulation{T},
     contact_charge_signals
 end
 
-function simulate!(sim::Simulation{T}; cdm::AbstractChargeDriftModel = ADLChargeDriftModel(T = T), max_refinements = 1, verbose = false) where {T <: SSDFloat}
-    calculate_electric_potential!(sim, max_refinements = max_refinements, verbose = verbose)
+"""
+    function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false, 
+                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
+
+ToDo...
+"""
+function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false, 
+                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
+    calculate_electric_potential!(sim, max_refinements = max_refinements, verbose = verbose, depletion_handling = depletion_handling,
+                                        convergence_limit = convergence_limit)
     for contact in sim.detector.contacts
-        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, verbose = verbose)
+        SSD.calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
-    SSD.set_charge_drift_model!(sim, cdm)
+    SSD.set_charge_drift_model!(sim, sim.charge_drift_model)
     SSD.apply_charge_drift_model!(sim)
     @info "Detector simulation done"
 end

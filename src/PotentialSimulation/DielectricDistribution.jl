@@ -140,7 +140,7 @@ end
             ylabel --> "y / m"
             xlims --> (g[:x][1], g[:x][end])
             ylims --> (g[:y][1], g[:y][end])
-            g[:x], g[:y], ϵ.data[:, :, idx]
+            g[:x], g[:y], ϵ.data[:, :, idx]'
         end
     end
 end
