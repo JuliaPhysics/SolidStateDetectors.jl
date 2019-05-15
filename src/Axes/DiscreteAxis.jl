@@ -311,8 +311,25 @@ function searchsortednearest(a::AbstractVector{T}, x::T)::Int where {T <: Real}
         return idx - 1
     end
 end
+@inline function searchsortednearest(ax::DiscreteAxis{T}, x::T)::Int where {T <: Real}
+    return searchsortednearest(ax.ticks, x)
+end
+function searchsortednearest(ax::DiscreteAxis{T, :periodic, :periodic}, x::T)::Int where {T <: Real}
+    if x in ax.interval
+        return searchsortednearest(ax.ticks, x)
+    else
+        period::T = ax.interval.right - ax.interval.left
+        v::T = x
+        while v >= ax.interval.right
+            v -= period
+        end
+        while v < ax.interval.left
+            v += period
+        end
+        return searchsortednearest(ax.ticks, v)
+    end    
 
-
+end
 
 function DiscreteAxis(nt::NamedTuple; unit = u"m/m")
     T = typeof(ustrip(nt.knots[1]))

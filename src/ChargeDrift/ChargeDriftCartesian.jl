@@ -6,6 +6,7 @@
 function drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
                             det::SolidStateDetector{T, :cartesian},
+                            point_types::PointTypes{T, 3, :cartesian},
                             grid::Grid{T, 3, :cartesian},
                             startpos::CartesianPoint{T},
                             Δt::T,
@@ -21,7 +22,9 @@ function drift_charge!(
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, current_pos) * Δt
             if stepvector == null_step done = true end 
             next_pos::CartesianPoint{T} = current_pos + stepvector
-            if next_pos in det
+            if next_pos in point_types
+                drift_path[istep] = next_pos
+            elseif next_pos in det
                 drift_path[istep] = next_pos
             else
                 crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, boundary_index::Int, surface_normal::CartesianVector{T} = get_crossing_pos(det, grid, current_pos, next_pos)
@@ -34,7 +37,7 @@ function drift_charge!(
                     # ToDo: We actually need a time array as well to do this properly...
                     small_projected_vector = projected_vector * T(0.001)
                     i::Int = 0
-                    while !(next_pos in det) && i < 1000
+                    while i < 1000 && (next_pos in point_types || !(next_pos in det)) 
                         next_pos -= small_projected_vector
                         i += 1
                     end

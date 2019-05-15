@@ -351,7 +351,7 @@ end
     for (ipos, pos) in enumerate(spawn_positions)
         if ((spacing-1)+ipos)%spacing == 0
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            SSD.drift_charge!(path, setup.detector, setup.point_types, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
             @series begin
                 c --> :white
                 label --> ""
@@ -359,7 +359,7 @@ end
             end
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, setup.detector, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            SSD.drift_charge!(path, setup.detector, setup.point_types, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
             @series begin
                 c --> :white
                 label --> ""
