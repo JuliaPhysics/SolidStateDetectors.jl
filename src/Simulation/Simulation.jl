@@ -52,19 +52,21 @@ function Simulation(nt::NamedTuple)
     T = eltype(ep.data)
     det = SolidStateDetector{T}( Dict(nt.detector_json_string) )
     sim = Simulation( det )
-    sim.electric_potential = ep
-    sim.ρ = ChargeDensity(nt.ρ)
-    sim.ϵ = DielectricDistribution(nt.ϵ)
-    sim.point_types = PointTypes(nt.point_types)
-    sim.electric_field = ElectricField(nt.electric_field)
+    if !ismissing(nt.electric_potential) sim.electric_potential = ep end 
+    if !ismissing(nt.ρ) sim.ρ = ChargeDensity(nt.ρ) end
+    if !ismissing(nt.ϵ) sim.ϵ = DielectricDistribution(nt.ϵ) end
+    if !ismissing(nt.point_types) sim.point_types = PointTypes(nt.point_types) end
+    if !ismissing(nt.electric_field) sim.electric_field = ElectricField(nt.electric_field) end
     sim.weighting_potentials = [missing for contact in sim.detector.contacts]
-    for contact in sim.detector.contacts
-        if !ismissing(nt.weighting_potentials[contact.id])
-            sim.weighting_potentials[contact.id] = WeightingPotential(nt.weighting_potentials[contact.id])
+    if !ismissing(nt.weighting_potentials)
+        for contact in sim.detector.contacts
+            if !ismissing(values(nt.weighting_potentials[contact.id])[1])
+                sim.weighting_potentials[contact.id] = WeightingPotential(nt.weighting_potentials[contact.id])
+            end
         end
     end
-    sim.electron_drift_field = ElectricField(nt.electron_drift_field)
-    sim.hole_drift_field = ElectricField(nt.hole_drift_field)
+    if !ismissing(nt.electron_drift_field) sim.electron_drift_field = ElectricField(nt.electron_drift_field) end
+    if !ismissing(nt.hole_drift_field) sim.hole_drift_field = ElectricField(nt.hole_drift_field) end
     sim.charge_drift_model = VacuumChargeDriftModel{T}()
     @info "I/O of charge drift model not yet supported. Loading default: ADLChargeDriftModel"
     return sim

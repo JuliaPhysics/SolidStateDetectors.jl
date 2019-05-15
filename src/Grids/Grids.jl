@@ -141,7 +141,7 @@ function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
     axφ::DiscreteAxis{T} = grid[:φ]
     axz::DiscreteAxis{T} = grid[:z]
     return (
-        coordtype = "cartesian",
+        coordtype = "cylindrical",
         ndims = 3,
         axes = (
             r   = NamedTuple(axr, unit=u"m"),
@@ -158,9 +158,9 @@ function NamedTuple(grid::Grid{T, 3, :cartesian}) where {T}
         coordtype = "cartesian",
         ndims = 3,
         axes = (
-            x =   NamedTuple(axx, unit=u"m"),
+            x = NamedTuple(axx, unit=u"m"),
             y = NamedTuple(axy, unit=u"m"),
-            z =   NamedTuple(axz, unit=u"m"),
+            z = NamedTuple(axz, unit=u"m"),
         )
     )
 end
