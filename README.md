@@ -1,7 +1,7 @@
 # SolidStateDetectors.jl
 
 [![Documentation for stable version](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaHEP.github.io/SolidStateDetectors.jl/stable)
-[![Documentation for development version](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaHEP.github.io/SolidStateDetectors.jl/master)
+[![Documentation for development version](https://img.shields.io/badge/docs-master-blue.svg)](https://JuliaHEP.github.io/SolidStateDetectors.jl/master)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
 [![Travis Build Status](https://travis-ci.com/JuliaHEP/SolidStateDetectors.jl.svg?branch=master)](https://travis-ci.com/JuliaHEP/SolidStateDetectors.jl)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/github/JuliaHEP/SolidStateDetectors.jl?branch=master&svg=true)](https://ci.appveyor.com/project/JuliaHEP/SolidStateDetectors-jl)
