@@ -44,8 +44,8 @@
 					"gradient": 0.0
 				},
 				"z": {
-					"init": 0.0,
-					"gradient": 0.000
+					"init": 1e7,
+					"gradient": 5E4
 				}
 			},
 			"geometry": {

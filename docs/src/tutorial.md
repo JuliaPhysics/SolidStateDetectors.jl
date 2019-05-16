@@ -2,7 +2,7 @@
 EditURL = "https://github.com/TRAVIS_REPO_SLUG/blob/master/"
 ```
 
-# Example 1: Iverted Coax Detector
+# Example 1: Inverted Coax Detector
 
 ToDo... explanation
 
@@ -15,7 +15,7 @@ detector = SolidStateDetector{T}(SSD_examples[:InvertedCoax])
 
 simulation = Simulation(detector)
 
-simulate!(simulation)
+simulate!(simulation, max_refinements = 3)
 
 p_ep = plot(simulation.electric_potential)
 ```

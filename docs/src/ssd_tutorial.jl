@@ -6,7 +6,7 @@ detector = SolidStateDetector{T}(SSD_examples[:InvertedCoax])
 
 simulation = Simulation(detector)
 
-simulate!(simulation)
+simulate!(simulation, max_refinements = 3)
 
 p_ep = plot(simulation.electric_potential)
 
