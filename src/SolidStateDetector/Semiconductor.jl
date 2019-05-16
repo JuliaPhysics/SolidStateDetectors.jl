@@ -17,7 +17,7 @@ end
 function Semiconductor{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
     sc = Semiconductor{T}()
     sc.charge_density_model = if haskey(dict, "charge_density_model") 
-        ChargeDensityModel(T, dict["charge_density_model"])
+        ChargeDensityModel(T, dict["charge_density_model"], inputunit_dict)
     else
         ZeroChargeDensityModel{T}()
     end
