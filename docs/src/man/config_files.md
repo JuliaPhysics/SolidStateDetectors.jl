@@ -1,6 +1,6 @@
-# Detector Geometries
+# Config Files
 
-## Predefined Detectors
+## Example Detector Config Files
 
 Currently, there are four predefined example detectors. 
 
