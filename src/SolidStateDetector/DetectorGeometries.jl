@@ -392,15 +392,15 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     important_φ_points::Vector{T} = get_important_points(detector, :φ)
     important_z_points::Vector{T} = get_important_points(detector, :z)
 
-    push!(important_r_points, detector.world.intervals[1].right)
     push!(important_r_points, detector.world.intervals[1].left)
+    push!(important_r_points, detector.world.intervals[1].right)
     important_r_points = uniq(sort(important_r_points))
-    push!(important_z_points, detector.world.intervals[3].right)
     push!(important_z_points, detector.world.intervals[3].left)
+    push!(important_z_points, detector.world.intervals[3].right)
     important_z_points = uniq(sort(important_z_points))
-    push!(important_φ_points, detector.world.intervals[2].right)
     push!(important_φ_points, detector.world.intervals[2].left)
-    important_φ_points = uniq(sort(important_φ_points))
+    push!(important_φ_points, detector.world.intervals[2].right)
+    important_φ_points = uniq(sort(important_φ_points)) 
 
     # r
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
@@ -413,6 +413,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
     ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
 
+    
     # φ
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
@@ -430,7 +431,8 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
         end
     end
     if length(ax_φ) > 1
-        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol=deg2rad(minimum(diff(ax_φ.ticks)))/4)
+        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
+        @show 
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
     if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
