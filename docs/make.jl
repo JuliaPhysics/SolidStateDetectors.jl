@@ -25,7 +25,13 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Installation" => "man/installation.md",
-            "Detectors" => "man/detector_geometries.md",
+            "Detectors" => Any[
+                "Config Files" => "man/config_files.md",
+            ],
+            "Geometries (CSG)" => Any[
+                "CSG" => "man/csg.md",
+                "Primitives" => "man/primitives.md",
+            ],
             "Electric Potentials" => "man/electric_potentials.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
             "Electric Fields" => "man/electric_fields.md",

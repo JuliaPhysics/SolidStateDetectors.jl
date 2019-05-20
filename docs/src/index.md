@@ -6,7 +6,13 @@ SolidStateDetectors.jl is a Julia package for fast 2D and 3D simulation of Solid
 Pages = ["man/installation.md"]
 ```
 ```@contents
-Pages = ["man/detector_geometries.md"]
+Pages = ["man/config_files.md"]
+```
+```@contents
+Pages = ["man/csg.md"]
+```
+```@contents
+Pages = ["man/primitives.md"]
 ```
 ```@contents
 Pages = ["man/electric_potentials.md"]
