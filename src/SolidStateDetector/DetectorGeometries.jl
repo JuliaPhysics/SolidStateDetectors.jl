@@ -294,7 +294,11 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 end
                 for contact in ssd.contacts
                     if pt in contact
-                        potential[ ir, iφ, iz ] = contact.potential
+                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                            contact.potential
+                        else
+                            contact.id == weighting_potential_contact_id ? 1 : 0
+                        end
                         pointtypes[ ir, iφ, iz ] = zero(PointType)
                     end
                 end
@@ -340,7 +344,16 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 if in(pt, ssd)
                     pointtypes[ ix, iy, iz ] += pn_junction_bit
                 end
-
+                for contact in ssd.contacts
+                    if pt in contact
+                        potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
+                            contact.potential
+                        else
+                            contact.id == weighting_potential_contact_id ? 1 : 0
+                        end
+                        pointtypes[ ix, iy, iz ] = zero(PointType)
+                    end
+                end
             end
         end
     end
