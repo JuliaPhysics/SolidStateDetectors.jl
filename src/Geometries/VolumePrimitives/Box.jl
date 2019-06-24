@@ -63,7 +63,7 @@ function get_important_points(g::Box{T})::NTuple{3, Vector{T}} where {T <: SSDFl
 end
 
 function get_important_points(g::Box{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return T.(abs.([g.x[1], g.x[2]], g.y[1], g.y[2]))
+    return T.(abs.([g.x[1], g.x[2], g.y[1], g.y[2]]))
 end
 function get_important_points(g::Box{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
     return T[]
