@@ -232,6 +232,14 @@ function get_extended_ticks( ax::DiscreteAxis{T, :r0, :fixed} )::Vector{T} where
     ticks_ext[end] = ticks_ext[end - 1] + Δ
     return ticks_ext
 end
+function get_extended_ticks( ax::DiscreteAxis{T, :r0, :reflecting} )::Vector{T} where {T}
+    ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
+    ticks_ext[2:end-1] = ax.ticks
+    ticks_ext[1] = ticks_ext[2] - (ticks_ext[3] - ticks_ext[2])
+    Δ::T = ticks_ext[end-1] - ticks_ext[end - 2]
+    ticks_ext[end] = ticks_ext[end - 1] + Δ
+    return ticks_ext
+end
 function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :fixed} )::Vector{T} where {T}
     # same as get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
