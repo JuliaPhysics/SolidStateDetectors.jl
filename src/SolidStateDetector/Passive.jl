@@ -17,8 +17,8 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     pass = Passive{T}()
     haskey(dict, "name") ? pass.name = dict["name"] : name = "external part"
     haskey(dict, "id") ? pass.id = dict["id"] : id = -1
-    haskey(dict,"potential") ? pass.potential = dict["potential"] : potential = :floating
-    haskey(dict, "temperature") ? pass.temperature = dict["temperature"] : pass.temperature = missing
+    haskey(dict,"potential") ? pass.potential = T(dict["potential"]) : potential = :floating
+    haskey(dict, "temperature") ? pass.temperature = T(dict["temperature"]) : pass.temperature = missing
     pass.material = material_properties[materials[dict["material"]]]
     pass.geometry = Geometry(T, dict["geometry"], inputunit_dict)
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
