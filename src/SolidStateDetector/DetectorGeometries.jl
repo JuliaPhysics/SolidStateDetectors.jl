@@ -289,6 +289,16 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
 
+                for passive in ssd.passives
+                    if pt in passive
+                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                            passive.potential
+                        else
+                            0
+                        end
+                        pointtypes[ ir, iφ, iz ] = zero(PointType)
+                    end
+                end
                 if in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
@@ -341,6 +351,16 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 x::T = axx[ix]
                 pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
 
+                for passive in ssd.passives
+                    if pt in passive
+                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                            passive.potential
+                        else
+                            0
+                        end
+                        pointtypes[ ir, iφ, iz ] = zero(PointType)
+                    end
+                end
                 if in(pt, ssd)
                     pointtypes[ ix, iy, iz ] += pn_junction_bit
                 end
@@ -445,7 +465,6 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     end
     if length(ax_φ) > 1
         φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
-        @show 
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
     if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
