@@ -5,6 +5,23 @@ include("Units.jl")
 include("Points.jl")
 include("Vectors.jl")
 
+
+function _get_translate_vector(T::DataType, d::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
+    if haskey(d, "translate")
+        td = d["translate"]
+        if haskey(td, "x") && haskey(td, "y") && haskey(td, "z")
+            x::T = ustrip(uconvert(u"m", td["x"] * inputunit_dict["length"]))
+            y::T = ustrip(uconvert(u"m", td["y"] * inputunit_dict["length"]))
+            z::T = ustrip(uconvert(u"m", td["z"] * inputunit_dict["length"]))
+            return CartesianPoint{T}(geom_round(x), geom_round(y), geom_round(z))
+        else
+            throw(ConfigFileError("Translate vector for primitives need values for x, y, and z."))
+        end
+    else
+        return missing
+    end
+end
+
 abstract type AbstractGeometry{T, N} end
 abstract type AbstractVolumePrimitive{T, N} <: AbstractGeometry{T, N} end
 abstract type AbstractSurfacePrimitive{T, N} <: AbstractGeometry{T, N} end
@@ -52,8 +69,8 @@ include("LinePrimitives/LinePrimitives.jl")
 
 include("Sets.jl")
 
-
 include("IO.jl")
+
 function get_decomposed_volumes(vol::AbstractGeometry{T})::Tuple{Vector{<:AbstractGeometry},Vector{<:AbstractGeometry}} where T
     positive_volumes = AbstractVolumePrimitive[]
     negative_volumes = AbstractVolumePrimitive[]
