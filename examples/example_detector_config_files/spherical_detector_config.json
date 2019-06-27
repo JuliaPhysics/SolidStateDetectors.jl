@@ -1,0 +1,151 @@
+{
+    "name": "Spherical Detector",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "r": {
+                "to": 50.0,
+                "boundaries": "inf"
+            },
+            "phi": {
+                "from": 0,
+                "to": 0,
+                "boundaries": "periodic"
+            },
+            "z": {
+                "from": -50,
+                "to": 50.0,
+                "boundaries": {
+                    "left": "inf",
+                    "right": "inf"
+                }
+            }
+        }
+    },
+    "medium": "vacuum",
+    "objects": [
+        {
+            "type": "semiconductor",
+            "material": "HPGe",
+            "bulk_type": "p",
+            "temperature": 77.0,
+            "charge_density_model": {
+                "name": "linear",
+                "r": {
+                    "init": 0,
+                    "gradient": 0
+                },
+                "phi": {
+                    "init": 0,
+                    "gradient": 0
+                },
+                "z": {
+                    "init": 0,
+                    "gradient": 0
+                }
+            },
+            "geometry": {
+                "type": "difference",
+                "parts": [
+                    {
+                        "name": "Initial Bulk",
+                        "type": "sphere",
+                        "r": 30,
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "name": "Contact Area Top",
+                        "type": "box",
+                        "x": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "y": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "z": {
+                            "from": 29.8,
+                            "to": 30.0
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 1,
+            "potential": 0.0,
+            "geometry": {
+                "type": "tube",
+                "r": {
+                    "from": 0.0,
+                    "to": 5.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "z": {
+                    "from": 29.8,
+                    "to": 30.0
+                }
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 2,
+            "potential": 2000.0,
+            "geometry": {
+                "type": "difference",
+                "parts": [
+                    {
+                        "type": "sphere",
+                        "r": 30,
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "type": "sphere",
+                        "r": 30,
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 1
+                        }      
+                    },
+                    {
+                        "type": "box",
+                        "x": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "y": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "z": {
+                            "from": 0.0,
+                            "to": 30.0
+                        }
+                    }                
+                ]
+            }
+        }
+    ]
+}

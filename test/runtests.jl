@@ -51,5 +51,16 @@ max_refinements = 0
         end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
+    @testset "Simulate example detector: Spherical" begin
+        sim = Simulation(SSD_examples[:Spherical])
+        simulate!(sim, max_refinements = 3)
+        evt = SSD.Event([CartesianPoint{T}(0,0,0)])
+        simulate!(evt, sim)
+        signalsum::T = 0
+        for i in 1:length(evt.signals)
+            signalsum += abs(evt.signals[i][end])
+        end
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
+    end
 
 end
