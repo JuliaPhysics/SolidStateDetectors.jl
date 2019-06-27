@@ -98,65 +98,7 @@ end
         end
     end
 end
-#
-# @recipe function f(electrical_field::Array{SVector{3,T},3}, d::SolidStateDetector, grid::CylindricalGrid; φ_value=deg2rad(0), spacing=0.003, steps=1000, myscale=1, potential=true) where{T <: SSDFloat}
-#     size --> (900,1100)
-#     d.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electrical_field, grid) : nothing
-#     d.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x->-1*x,electrical_field), grid) : nothing
-#     if potential==true
-#         @series begin
-#             φ --> φ_value
-#             grid
-#         end
-#     end
-#
-#     corner_offset = 5e-5
-#     spawn_positions::Array{Array{T,1},1}=[]
-#
-#     for (i,tuple) in enumerate(d.segmentation_r_ranges)
-#         if tuple[1]==tuple[2]
-#             for z in corner_offset + d.segmentation_z_ranges[i][1]:spacing:d.segmentation_z_ranges[i][2] - corner_offset
-#                 push!(spawn_positions,[tuple[1],φ_value,z])
-#             end
-#         end
-#     end
-#
-#     for (i,tuple) in enumerate(d.segmentation_z_ranges)
-#         if tuple[1]==tuple[2]
-#             for r in corner_offset+d.segmentation_r_ranges[i][1]:spacing:d.segmentation_r_ranges[i][2] - corner_offset
-#                 push!(spawn_positions,[r,φ_value,tuple[1]])
-#             end
-#         end
-#     end
-#
-#     for (i,orientation) in enumerate(d.segmentation_types)
-#         if orientation != "Tubs"
-#             if orientation[1]=='c' o=-1 else o=1 end
-#             for z in d.segmentation_z_ranges[i][1]:spacing:d.segmentation_z_ranges[i][2]
-#                 push!(spawn_positions,[o * corner_offset+analytical_taper_r_from_φz(φ_value, z, orientation, d.segmentation_r_ranges[i],
-#                                                                                                             d.segmentation_phi_ranges[i],
-#                                                                                                             d.segmentation_z_ranges[i]),
-#                                                                                                             φ_value, z])
-#             end
-#         end
-#     end
-#
-#     for i in eachindex(spawn_positions[1:end-1])
-#
-#         xpath, ypath, zpath = driftonecharge(d, get_xyz_vector_from_rφz_vector(spawn_positions[i]), steps, myscale*1e-9, :e, interpolated_efield, interpolated_efield)
-#         rpath=[]
-#
-#         for ir in eachindex(xpath)
-#             push!(rpath, sqrt(xpath[ir]^2+ypath[ir]^2))
-#         end
-#
-#         @series begin
-#             c --> :white
-#             label --> ""
-#             rpath, zpath
-#         end
-#     end
-# end
+
 using Base.Math
 @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector; φ=missing, z = missing, scaling_factor=1.0, spacings = [3,20]) where T
     ismissing(φ) && !ismissing(z) ? iz = searchsortednearest(det.zs,T(z)) : nothing
@@ -242,77 +184,8 @@ end
 end
 
 
-# @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector, ep::ElectricPotential{T};
-#             φ=missing, spacing=T(0.003), n_steps=3000, potential=true, contours_equal_potential=true, offset = T(5e-5)) where {T <: SSDFloat}
-#     size --> (700,900)
-#     det.bulk_type == :ptype ? interpolated_efield = setup_interpolated_vectorfield(electric_field, ep.grid) : nothing
-#     det.bulk_type == :ntype ? interpolated_efield = setup_interpolated_vectorfield(map(x -> -1*x, electric_field), ep.grid) : nothing
-#     if ismissing(φ)
-#         φ = 0
-#     end
-#     φ_rad = deg2rad(φ)
-#     aspect_ratio --> 1
-#     title --> "Electric Field Lines @φ=$(φ)°"
-#     xlabel --> L"$r$ / m"
-#     ylabel --> L"$z$ / m"
-#
-#     if potential==true
-#         @series begin
-#             contours_equal_potential --> contours_equal_potential
-#             φ --> φ
-#             ep
-#         end
-#     end
-#
-#     spawn_positions_cyl::Vector{CylindricalPoint} = []
-#
-#     for contact in det.contacts
-#         if (typeof(contact) == SSD.Contact{T,:N} && det.bulk_type == :ntype) || (typeof(contact) == SSD.Contact{T,:P} && det.bulk_type == :ptype)
-#             nothing
-#         else
-#             for g in contact.geometry_positive
-#                 if typeof(g) == SSD.Tube{T}
-#                     rStart,rStop = get_r(g)
-#                     zStart,zStop = get_z(g)
-#                     for r in rStart:spacing:rStop
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart+offset))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStart-offset))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop+offset))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(r,φ,zStop-offset))
-#                     end
-#                     for z in zStart:spacing:zStop
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStart+offset,φ,z))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStart-offset,φ,z))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStop+offset,φ,z))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(rStop-offset,φ,z))
-#                     end
-#                 elseif typeof(g) == SSD.ConeMantle{T}
-#                     zStart,zStop = get_z(g)
-#                     for z in zStart:spacing:zStop
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)+offset,φ,z))
-#                         push!(spawn_positions_cyl,CylindricalPoint{T}(get_diagonal_r_from_z(g.cone, z)-offset,φ,z))
-#                     end
-#                 end
-#             end
-#         end
-#     end
-#     filter!(x -> x in det && !in(x, det.contacts),spawn_positions_cyl)
-#     spawn_positions_xyz::Vector{CartesianPoint{T}} = map(x -> CartesianPoint(CylindricalPoint{T}(x[1],x[2],x[3])), spawn_positions_cyl)
-#     for i in eachindex(spawn_positions_cyl[1:end])
-#         path = [@SVector zeros(T,3) for i in 1:n_steps]
-#         drift_charge!(path, det, spawn_positions_xyz[i], T(1f-9), interpolated_efield)
-#         @series begin
-#             c --> :white
-#             label --> ""
-#             map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
-#         end
-#     end
-# end
-
 @userplot Plot_electric_field
-@recipe function f(gdd::Plot_electric_field; φ = missing, spacing = 10, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
+@recipe function f(gdd::Plot_electric_field; φ = missing, spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
     setup = gdd.args[1]
     T = Float32
     φ = ismissing(φ) ? T(0) : T(φ)
@@ -329,22 +202,40 @@ end
             setup.electric_potential
         end
     end
-
+    S::Symbol = get_coordinate_system(setup.detector)
+    PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
 
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in setup.detector.contacts])
-    spawn_positions = CylindricalPoint{T}[]
+    spawn_positions = PT[]
     grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
 
-    for c in contacts_to_spawn_charges_for
-        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c, grid, φ_rad))
-        for position in ongrid_positions
-            push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
-            push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
+    # for c in contacts_to_spawn_charges_for
+    #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c, grid, φ_rad))
+    #     for position in ongrid_positions
+    #         push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
+    #         push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
+    #     end
+    # end
+    ax1 = unique(range(setup.electric_field.grid[1][1], stop = setup.electric_field.grid[1][end], step = spacing * 0.001))
+    ax2 = unique(range(setup.electric_field.grid[2][1], stop = setup.electric_field.grid[2][end], step = spacing * 0.001))
+    if ismissing(φ) && S == :cylindrical
+        ax2 = T[0]
+    elseif !ismissing(φ)
+        ax2 = T[φ]
+    end
+    ax3 = unique(range(setup.electric_field.grid[3][1], stop = setup.electric_field.grid[3][end], step = spacing * 0.001))
+    for x1 in ax1
+        for x2 in ax2
+            for x3 in ax3 
+                pt::PT = PT(x1, x2, x3)
+                push!(spawn_positions, pt)
+            end
         end
     end
-
     filter!(x -> x in setup.detector && !in(x, setup.detector.contacts), spawn_positions)
+
+    @info "$(length(spawn_positions)) drifts are now being simulated..."
 
     el_field_itp = SSD.get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
     el_field_itp_inv = SSD.get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
