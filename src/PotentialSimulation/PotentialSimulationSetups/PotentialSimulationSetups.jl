@@ -10,6 +10,7 @@ struct PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, 
     potential::Array{T, N}
     pointtypes::Array{PointType, N}
     ρ::Array{T, N}
+    ρ_fix::Array{T, N}
     ϵ::Array{T, N}
 end
 
@@ -19,6 +20,7 @@ struct PotentialSimulationSetupRB{T, N1, N2, S} <: AbstractPotentialSimulationSe
     pointtypes::Array{PointType, N2}
     volume_weights::Array{T, N2}
     ρ::Array{T, N2}
+    ρ_fix::Array{T, N2}
     ϵ::Array{T, N1}
     geom_weights::NTuple{N1, AbstractGeometricalAxisWeights{T}}        
     sor_const::Array{T, 1}
@@ -36,6 +38,7 @@ function sizeof(fssrb::PotentialSimulationSetup{T, N})::Int where {T, N}
     s += sizeof(fssrb.potential)
     s += sizeof(fssrb.ϵ)
     s += sizeof(fssrb.ρ)
+    s += sizeof(fssrb.ρ_fix)
     return s
 end
 
@@ -46,6 +49,7 @@ function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1,
     s += sizeof(fssrb.volume_weights)
     s += sizeof(fssrb.ϵ)
     s += sizeof(fssrb.ρ)
+    s += sizeof(fssrb.ρ_fix)
     for idim in 1:N1
         s += sizeof(fssrb.geom_weights[idim].weights)
     end
@@ -61,7 +65,7 @@ end
 
 function PotentialSimulationSetup(ssd::SolidStateDetector{T, S}, grid::Grid{T, N, S} = Grid(ssd), potential_array::Union{Missing, Array{T, N}} = missing)::PotentialSimulationSetup{T, N, S} where {T, N, S}   
     fssrb::PotentialSimulationSetupRB{T, N, N + 1, S} = PotentialSimulationSetupRB(ssd, grid, potential_array)
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
 include("BoundaryConditions/BoundaryConditions.jl")

@@ -72,7 +72,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
     if S == :cylindrical
-        plot_electric_field(simulation, φ=deg2rad(30), spacing = 3.0)
+        plot_electric_field(simulation, φ=deg2rad(0), spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 

@@ -105,7 +105,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :cylindr
         end
     end
 
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, PointTypeArray(fssrb), ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
 """
@@ -197,5 +197,5 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :cartesi
 
     pointtypes::Array{PointType, 3} = PointTypeArray(fssrb)
 
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end

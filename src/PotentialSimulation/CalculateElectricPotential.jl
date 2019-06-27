@@ -143,7 +143,7 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :cylindr
         @warn "Detector not fully depleted at this bias voltage ($(fssrb.bias_voltage) V). At least on grid point has a smaller potential value ($(min) V) than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be. However, small overshoots might be due to over relaxation and/or not full convergence."
     end
 
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
 
@@ -269,5 +269,5 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :cartesi
         @warn "Detector not fully depleted at this bias voltage ($(fssrb.bias_voltage) V). At least on grid point has a smaller potential value ($(min) V) than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be. However, small overshoots might be due to over relaxation and/or not full convergence."
     end
 
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end

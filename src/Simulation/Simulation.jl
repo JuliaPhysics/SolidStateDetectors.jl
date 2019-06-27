@@ -3,6 +3,7 @@ abstract type AbstractSimulation{T <: SSDFloat} end
 mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     detector::Union{SolidStateDetector{T}, Missing}
     ρ::Union{ChargeDensity{T}, Missing}
+    ρ_fix::Union{ChargeDensity{T}, Missing}
     ϵ::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
     electric_potential::Union{ElectricPotential{T}, Missing}
@@ -22,6 +23,7 @@ function Simulation{T}() where {T <: SSDFloat}
         missing, 
         missing, 
         missing, 
+        missing, 
         [missing], 
         missing, 
         VacuumChargeDriftModel{T}(), 
@@ -37,6 +39,7 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         detector_json_string = NamedTuple(sim.detector.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
         ρ = NamedTuple(sim.ρ),
+        ρ_fix = NamedTuple(sim.ρ_fix),
         ϵ = NamedTuple(sim.ϵ),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
@@ -54,6 +57,7 @@ function Simulation(nt::NamedTuple)
     sim = Simulation( det )
     if !ismissing(nt.electric_potential) sim.electric_potential = ep end 
     if !ismissing(nt.ρ) sim.ρ = ChargeDensity(nt.ρ) end
+    if !ismissing(nt.ρ_fix) sim.ρ_fix = ChargeDensity(nt.ρ_fix) end
     if !ismissing(nt.ϵ) sim.ϵ = DielectricDistribution(nt.ϵ) end
     if !ismissing(nt.point_types) sim.point_types = PointTypes(nt.point_types) end
     if !ismissing(nt.electric_field) sim.electric_field = ElectricField(nt.electric_field) end
@@ -81,6 +85,7 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println("  Detector: $(sim.detector.name)")
     println("  Electric potential: ", !ismissing(sim.electric_potential) ? size(sim.electric_potential) : missing)
     println("  Charge density: ", !ismissing(sim.ρ) ? size(sim.ρ) : missing)
+    println("  Fix Charge density: ", !ismissing(sim.ρ_fix) ? size(sim.ρ_fix) : missing)
     println("  Dielectric distribution: ", !ismissing(sim.ϵ) ? size(sim.ϵ) : missing)
     println("  Point types: ", !ismissing(sim.point_types) ? size(sim.point_types) : missing)
     println("  Electric field: ", !ismissing(sim.electric_field) ? size(sim.electric_field) : missing)

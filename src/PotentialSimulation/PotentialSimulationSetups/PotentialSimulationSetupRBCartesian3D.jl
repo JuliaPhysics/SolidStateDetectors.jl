@@ -105,6 +105,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
 
         ϵ = Array{T, 3}(undef, length(mpx), length(mpy), length(mpz))
         ρ_tmp = Array{T, 3}(undef, length(mpx), length(mpy), length(mpz))
+        ρ_fix_tmp = Array{T, 3}(undef, length(mpx), length(mpy), length(mpz))
         for iz in 1:size(ϵ, 3)
             pos_z::T = mpz[iz]
             for iy in 1:size(ϵ, 2)
@@ -113,14 +114,17 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
                     pos_x = mpx[ix]
                     pt::CartesianPoint{T} = CartesianPoint{T}(pos_x, pos_y, pos_z)
                     ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd)
+                    ρ_fix_tmp[ix, iy, iz]::T = T(0)
                 end
             end
         end
         ϵ0_inv::T = inv(ϵ0)
         ρ_tmp *= ϵ0_inv
+        ρ_fix_tmp *= ϵ0_inv
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
         ρ::Array{T, 4} = RBExtBy2Array(T, grid)
+        ρ_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
             pos_z::T = z_ext[iz]
@@ -135,6 +139,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
                     rbi::Int = iseven(inx + iny + inz) ? rb_even::Int : rb_odd::Int
 
                     ρ_cell::T = 0
+                    ρ_fix_cell::T = 0
                     if !is_weighting_potential
                         ρ_cell += ρ_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
                         ρ_cell += ρ_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
@@ -145,6 +150,16 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
                         ρ_cell += ρ_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
                         ρ_cell += ρ_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
                         ρ_cell += ρ_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
+
+                        ρ_fix_cell += ρ_fix_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
+                        ρ_fix_cell += ρ_fix_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
+                        ρ_fix_cell += ρ_fix_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
+                        ρ_fix_cell += ρ_fix_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
+
+                        ρ_fix_cell += ρ_fix_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
+                        ρ_fix_cell += ρ_fix_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
+                        ρ_fix_cell += ρ_fix_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
+                        ρ_fix_cell += ρ_fix_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
                     end
 
                     # right weight in x: wxr
@@ -189,6 +204,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
 
                     dV::T = Δmpx[inx] * Δmpy[iny] * Δmpz[inz]
                     ρ[ irbx, iy, iz, rbi ] = dV * ρ_cell
+                    ρ_fix[ irbx, iy, iz, rbi ] = dV * ρ_fix_cell
                 end
             end
         end
@@ -208,6 +224,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
         rbpointtypes,
         volume_weights,
         ρ,
+        ρ_fix,
         ϵ,
         geom_weights,
         sor_consts,
@@ -275,6 +292,27 @@ function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesia
                 dV::T =  Δmpzy * fssrb.geom_weights[1].weights[3, ix]
 
                 ρ[ix, iy, iz] = fssrb.ρ[irbx, irby, irbz, rbi ] / dV
+            end
+        end
+    end
+    return ρ
+end
+function FixedChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
+    for iz in axes(ρ, 3)
+        irbz::Int = iz + 1
+        Δmpz::T = fssrb.geom_weights[3].weights[3, iz]
+        for iy in axes(ρ, 2)
+            irby::Int = iy + 1
+            idxsum::Int = iz + iy
+            Δmpy::T = fssrb.geom_weights[2].weights[3, iy]
+            Δmpzy::T = Δmpz * Δmpy
+            for ix in axes(ρ, 1)
+                irbx::Int = rbidx(ix)
+                rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
+                dV::T =  Δmpzy * fssrb.geom_weights[1].weights[3, ix]
+
+                ρ[ix, iy, iz] = fssrb.ρ_fix[irbx, irby, irbz, rbi ] / dV
             end
         end
     end

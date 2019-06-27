@@ -113,7 +113,7 @@
                 vzr::T = fssrb.potential[     ix,     iy, iz + 1, rb_src_idx]
                 vzl::T = fssrb.potential[     ix,     iy,    inz, rb_src_idx]
 
-                new_potential::T = _is_weighting_potential ? 0 : fssrb.ρ[ix, iy, iz, rb_tar_idx]
+                new_potential::T = _is_weighting_potential ? 0 : (fssrb.ρ[ix, iy, iz, rb_tar_idx] + fssrb.ρ_fix[ix, iy, iz, rb_tar_idx])
                 new_potential = muladd( wxr, vxr, new_potential)
                 new_potential = muladd( wxl, vxl, new_potential)
                 new_potential = muladd( wyr, vyr, new_potential)
