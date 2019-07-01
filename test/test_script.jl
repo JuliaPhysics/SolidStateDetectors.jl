@@ -29,7 +29,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     simulation = Simulation(det);
 
     SSD.apply_initial_state!(simulation)
-    p = if key == :CGD
+    p = if S == :cartesian
         plot(simulation.electric_potential, y = 0.002)
     else
         plot(simulation.electric_potential)
@@ -38,7 +38,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     for nrefs in [0, 1, 2]
         SSD.calculate_electric_potential!(simulation, max_refinements = nrefs)
-        p = if key == :CGD
+        p = if S == :cartesian
             plot(simulation.electric_potential, y = 0.002)
         else
             plot(simulation.electric_potential)
@@ -46,10 +46,20 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nrefs)_refinements"))
     end
     SSD.calculate_electric_potential!(simulation, max_refinements = 3)
-    p = if key == :CGD
-        plot(simulation.electric_potential, y = 0.002)
+    p = if S == :cartesian
+        plot(
+            plot(simulation.electric_potential, y = 0.002),
+            plot(simulation.ρ, y = 0.002),
+            plot(simulation.point_types, y = 0.002),
+            size = (1000, 600), layout= (1, 3)
+        )
     else
-        plot(simulation.electric_potential)
+        plot(
+            plot(simulation.electric_potential),
+            plot(simulation.ρ),
+            plot(simulation.point_types),
+            size = (1000, 600), layout= (1, 3)
+        )
     end
     savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(3)_refinements"))
 
