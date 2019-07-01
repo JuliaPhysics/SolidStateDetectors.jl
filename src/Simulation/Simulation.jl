@@ -127,6 +127,7 @@ function apply_initial_state!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
     init_sim = SolidStateDetectors.PotentialSimulationSetup(sim.detector);
 
     sim.ρ = ChargeDensity(init_sim.ρ, init_sim.grid)
+    sim.ρ_fix = ChargeDensity(init_sim.ρ_fix, init_sim.grid)
     sim.ϵ = DielectricDistribution(init_sim.ϵ, init_sim.grid)
     sim.point_types = PointTypes(init_sim.pointtypes, init_sim.grid)
     sim.electric_potential = ElectricPotential(init_sim.potential, init_sim.grid)
@@ -161,6 +162,7 @@ function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::
     ep = calculate_electric_potential(sim.detector, args...; kwargs...)
 
     sim.ρ = ChargeDensity(ep.ρ, ep.grid)
+    sim.ρ_fix = ChargeDensity(ep.ρ_fix, ep.grid)
     sim.ϵ = DielectricDistribution(ep.ϵ, ep.grid)
     sim.point_types = PointTypes(ep.pointtypes, ep.grid)
     sim.electric_potential = ElectricPotential(ep.potential, ep.grid)

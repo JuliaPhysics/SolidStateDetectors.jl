@@ -137,14 +137,12 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
                     pos_r = axr[2] * 0.5
                 end
                 pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
-                ρ_fix_tmp[ir, iφ, iz]::T = T(0)
+                ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
 
                 for ir in 2:size(ϵ, 1)
                     pos_r = mpr[ir]
                     pt = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                    ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
-                    ρ_fix_tmp[ir, iφ, iz] = T(0)
+                    ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 end
             end
         end
@@ -246,6 +244,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
 
                         dV::T = Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                         ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
+                        ρ_fix[ irbz, iφ, ir, rbi ] = dV * ρ_fix_cell
                     else
                         wrr_eps = ϵ[  ir,  iφ, inz + 1] * 0.5 * wzr[inz]
                         wrr_eps   += ϵ[  ir, inφ, inz + 1] * 0.5 * wzr[inz]

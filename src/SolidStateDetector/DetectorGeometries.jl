@@ -86,6 +86,11 @@ function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} wh
             append!(imp, get_important_points(g, Val{s}()))
         end
     end
+    for passive in c.passives
+        for g in vcat(passive.geometry_positive, passive.geometry_negative)
+            append!(imp, get_important_points(g, Val{s}()))
+        end
+    end
     return uniq(sort(imp))
 end
 
@@ -234,28 +239,32 @@ end
 function get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
     get_charge_density(sc.charge_density_model, pt)
 end
+function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+    get_charge_density(p.charge_density_model, pt)
+end
 
-function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: SSDFloat}
+function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T, T} where {T <: SSDFloat}
     if in(pt,ssd.semiconductors)
         for sc in ssd.semiconductors
             if in(pt, sc)
                 ρ::T = get_charge_density(sc, pt) * elementary_charge
                 ϵ::T = sc.material.ϵ_r
-                return ρ, ϵ
+                return ρ, ϵ, 0
             end
         end
     elseif in(pt,ssd.passives)
+        ρ_fix::T = 0
         for ep in ssd.passives
             if pt in ep
-                ρ = 0
+                ρ_fix = get_charge_density(ep, pt) * elementary_charge
                 ϵ = ep.material.ϵ_r
             end
         end
-        return ρ, ϵ
+        return 0, ϵ, ρ_fix
     else
         ρ = 0
         ϵ = ssd.medium.ϵ_r
-        return ρ, ϵ
+        return ρ, ϵ, 0
     end
 end
 
@@ -290,13 +299,15 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
 
                 for passive in ssd.passives
-                    if pt in passive
-                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
-                            passive.potential
-                        else
-                            0
+                    if passive.potential != :floating
+                        if pt in passive
+                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                                passive.potential
+                            else
+                                0
+                            end
+                            pointtypes[ ir, iφ, iz ] = zero(PointType)
                         end
-                        pointtypes[ ir, iφ, iz ] = zero(PointType)
                     end
                 end
                 if in(pt, ssd)
@@ -352,13 +363,15 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
 
                 for passive in ssd.passives
-                    if pt in passive
-                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
-                            passive.potential
-                        else
-                            0
+                    if passive.potential != :floating
+                        if pt in passive
+                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                                passive.potential
+                            else
+                                0
+                            end
+                            pointtypes[ ir, iφ, iz ] = zero(PointType)
                         end
-                        pointtypes[ ir, iφ, iz ] = zero(PointType)
                     end
                 end
                 if in(pt, ssd)
