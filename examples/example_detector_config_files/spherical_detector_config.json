@@ -6,28 +6,7 @@
         "potential": "V",
         "temperature": "K"
     },
-    "grid": {
-        "coordinates": "cylindrical",
-        "axes": {
-            "r": {
-                "to": 50.0,
-                "boundaries": "inf"
-            },
-            "phi": {
-                "from": 0,
-                "to": 0,
-                "boundaries": "periodic"
-            },
-            "z": {
-                "from": -50,
-                "to": 50.0,
-                "boundaries": {
-                    "left": "inf",
-                    "right": "inf"
-                }
-            }
-        }
-    },
+    "grid": "cartesian",
     "medium": "vacuum",
     "objects": [
         {
@@ -36,19 +15,8 @@
             "bulk_type": "p",
             "temperature": 77.0,
             "charge_density_model": {
-                "name": "linear",
-                "r": {
-                    "init": 0,
-                    "gradient": 0
-                },
-                "phi": {
-                    "init": 0,
-                    "gradient": 0
-                },
-                "z": {
-                    "init": 0,
-                    "gradient": 0
-                }
+                "name": "constant",
+                "charge_density": 1e7
             },
             "geometry": {
                 "type": "difference",
@@ -122,11 +90,11 @@
                     },
                     {
                         "type": "sphere",
-                        "r": 30,
+                        "r": 29.8,
                         "translate": {
                             "x": 0,
                             "y": 0,
-                            "z": 1
+                            "z": 0
                         }      
                     },
                     {
