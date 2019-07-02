@@ -66,14 +66,14 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cylindri
         for iφ in 1:size(ef, 2)
             for ir in 1:size(ef, 1)
                 ### r ###
-                if ir-1<1
+                if ir == 1
                     Δp_r_1 = p[ir+1 ,iφ, iz] - p[ir ,iφ, iz]
-                    d_r_1 = axr[ir+1]-axr[ir]
-                    er = ( Δp_r_1 / d_r_1 )
-                elseif  ir+1 > size(ef,1)
-                    Δp_r_1 = p[ir ,iφ, iz]-p[ir-1 ,iφ, iz]
-                    d_r_1 = axr[ir]-axr[ir-1]
-                    er = ( Δp_r_1/d_r_1 )
+                    d_r_1 = axr[ir+1] - axr[ir]
+                    er = Δp_r_1 / d_r_1 
+                elseif ir == size(ef,1)
+                    Δp_r_1 = p[ir ,iφ, iz] - p[ir-1 ,iφ, iz]
+                    d_r_1 = axr[ir] - axr[ir-1]
+                    er = Δp_r_1 / d_r_1 
                 else
                     Δp_r_1 = p[ir+1 ,iφ, iz]-p[ir ,iφ, iz]
                     Δp_r_2 = p[ir ,iφ, iz]-p[ir-1 ,iφ, iz]
