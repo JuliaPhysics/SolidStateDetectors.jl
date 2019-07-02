@@ -244,28 +244,25 @@ function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T wh
 end
 
 function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T, T} where {T <: SSDFloat}
+    ρ_semiconductor::T = 0
+    ρ_fix::T = 0
+    ϵ::T = ssd.medium.ϵ_r
     if in(pt,ssd.semiconductors)
         for sc in ssd.semiconductors
             if in(pt, sc)
-                ρ::T = get_charge_density(sc, pt) * elementary_charge
-                ϵ::T = sc.material.ϵ_r
-                return ρ, ϵ, 0
+                ρ_semiconductor = get_charge_density(sc, pt) * elementary_charge
+                ϵ = sc.material.ϵ_r
             end
         end
-    elseif in(pt,ssd.passives)
-        ρ_fix::T = 0
+    elseif in(pt, ssd.passives)
         for ep in ssd.passives
             if pt in ep
                 ρ_fix = get_charge_density(ep, pt) * elementary_charge
                 ϵ = ep.material.ϵ_r
             end
         end
-        return 0, ϵ, ρ_fix
-    else
-        ρ = 0
-        ϵ = ssd.medium.ϵ_r
-        return ρ, ϵ, 0
     end
+    return ρ_semiconductor, ϵ, ρ_fix
 end
 
 
@@ -326,6 +323,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             end
         end
     end
+    
     for contact in ssd.contacts
         pot::T = if ismissing(weighting_potential_contact_id)
             contact.potential

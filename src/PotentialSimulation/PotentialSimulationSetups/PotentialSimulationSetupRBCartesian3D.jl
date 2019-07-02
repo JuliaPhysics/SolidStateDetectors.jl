@@ -113,8 +113,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
                 for ix in 1:size(ϵ, 1)
                     pos_x = mpx[ix]
                     pt::CartesianPoint{T} = CartesianPoint{T}(pos_x, pos_y, pos_z)
-                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd)
-                    ρ_fix_tmp[ix, iy, iz]::T = T(0)
+                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, ρ_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 end
             end
         end

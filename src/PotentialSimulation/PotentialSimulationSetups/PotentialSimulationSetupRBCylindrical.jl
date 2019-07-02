@@ -149,6 +149,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
         ϵ0_inv::T = inv(ϵ0)
         ρ_tmp *= ϵ0_inv
         ρ_fix_tmp *= ϵ0_inv
+    
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
         ρ::Array{T, 4} = RBExtBy2Array(T, grid)
