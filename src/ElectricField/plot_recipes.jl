@@ -210,36 +210,36 @@ end
     grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
 
-    # for c in contacts_to_spawn_charges_for
-    #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]),SSD.paint_object(c, grid, φ_rad))
-    #     for position in ongrid_positions
-    #         push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
-    #         push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
-    #     end
-    # end
-    ax1 = unique(range(setup.electric_field.grid[1][1], stop = setup.electric_field.grid[1][end], step = spacing * 0.001))
-    ax2 = unique(range(setup.electric_field.grid[2][1], stop = setup.electric_field.grid[2][end], step = spacing * 0.001))
-    if ismissing(φ) && S == :cylindrical
-        ax2 = T[0]
-    elseif !ismissing(φ)
-        ax2 = T[φ]
-    end
-    ax3 = unique(range(setup.electric_field.grid[3][1], stop = setup.electric_field.grid[3][end], step = spacing * 0.001))
-    for x1 in ax1
-        for x2 in ax2
-            for x3 in ax3 
-                pt::PT = PT(x1, x2, x3)
-                push!(spawn_positions, pt)
-            end
+    for c in contacts_to_spawn_charges_for
+        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(c, grid, φ_rad))
+        for position in ongrid_positions
+            push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
+            push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
         end
     end
+    # ax1 = unique(range(setup.electric_field.grid[1][1], stop = setup.electric_field.grid[1][end], step = spacing * 0.001))
+    # ax2 = unique(range(setup.electric_field.grid[2][1], stop = setup.electric_field.grid[2][end], step = spacing * 0.001))
+    # if ismissing(φ) && S == :cylindrical
+    #     ax2 = T[0]
+    # elseif !ismissing(φ)
+    #     ax2 = T[φ]
+    # end
+    # ax3 = unique(range(setup.electric_field.grid[3][1], stop = setup.electric_field.grid[3][end], step = spacing * 0.001))
+    # for x1 in ax1
+    #     for x2 in ax2
+    #         for x3 in ax3 
+    #             pt::PT = PT(x1, x2, x3)
+    #             push!(spawn_positions, pt)
+    #         end
+    #     end
+    # end
     filter!(x -> x in setup.detector && !in(x, setup.detector.contacts), spawn_positions)
 
     @info "$(length(spawn_positions)) drifts are now being simulated..."
 
     el_field_itp = SSD.get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
     el_field_itp_inv = SSD.get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
-    for (ipos, pos) in enumerate(spawn_positions)
+    @showprogress for (ipos, pos) in enumerate(spawn_positions)
         if ((spacing-1)+ipos)%spacing == 0
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
             SSD.drift_charge!(path, setup.detector, setup.point_types, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
