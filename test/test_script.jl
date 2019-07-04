@@ -67,7 +67,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     for contact in simulation.detector.contacts
         SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
     end
-    wp_plots = if key != :CGD
+    wp_plots = if S != :cartesian
         [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
     else
         [ plot(simulation.weighting_potentials[contact.id], y = 0.002) for contact in simulation.detector.contacts ]
@@ -83,6 +83,9 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     if S == :cylindrical
         plot_electric_field(simulation, φ=deg2rad(0), spacing = 3.0)
+        savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
+    else
+        plot_electric_field(simulation, y = 0, spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 

@@ -185,78 +185,146 @@ end
 
 
 @userplot Plot_electric_field
-@recipe function f(gdd::Plot_electric_field; φ = missing, spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, potential=true, contours_equal_potential=true, offset = (5e-5))
-    setup = gdd.args[1]
+@recipe function f(gdd::Plot_electric_field; φ = missing, r = missing, x = missing, y = missing, z = missing,
+                    spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, 
+                    potential=true, contours_equal_potential=true, offset = (5e-5))
+    sim = gdd.args[1]
+    S = get_coordinate_type(sim.electric_field.grid)
     T = Float32
-    φ = ismissing(φ) ? T(0) : T(φ)
-    φ_rad = deg2rad(φ)
-    aspect_ratio --> 1
-    title --> "Electric Field Lines @φ=$(round(φ, digits=2))°"
-    xlabel --> L"$r$ / m"
-    ylabel --> L"$z$ / m"
+    
+    dim_array = [φ, r, x, y, z]
+    dim_symbols_array = [:φ, :r, :x, :y, :z]
+    if isempty(skipmissing(dim_array))
+        if S == :cylindrical
+            v::T = 0
+            dim_number = 2 
+            dim_symbol = :φ
+        elseif S == :cartesian
+            dim_number = 1
+            dim_symbol = :x
+            v = sim.electric_field.grid[dim_number][ div(length(sim.electric_field.grid[dim_number]), 2) ]
+        end
+    elseif sum(ismissing.(dim_array)) == 4
+        dim_number = findfirst(x -> !ismissing(x), dim_array)
+        dim_symbol = dim_symbols_array[dim_number]
+        v = dim_array[dim_number]
+        if dim_symbol == :φ v = deg2rad(v) end
+    else
+        throw(ArgumentError("Only one keyword for a certain dimension is allowed. One of 'φ', 'r', 'x', 'y', 'z'"))
+    end
 
-    if potential==true
+    S::Symbol = get_coordinate_system(sim.detector)
+    aspect_ratio --> 1
+    title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))"
+    xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
+    ylabel --> L"$z$ / m"
+    
+    if potential == true
         @series begin
-            contours_equal_potential --> contours_equal_potential
-            φ --> φ
-            setup.electric_potential
+            # contours_equal_potential --> contours_equal_potential
+            if dim_symbol == :φ
+                φ --> v
+            elseif dim_symbol == :z
+                if S == :cylindrical error("Electric field plot not yet implemented for z in cylindrical coordinates") end
+                z --> v
+                if S == :cylindrical
+                    proj --> :polar
+                end
+            elseif dim_symbol == :r
+                error("Electric field plot not yet implemented for r")
+                r --> v
+            elseif dim_symbol == :x
+                x --> v
+            elseif dim_symbol == :y
+                y --> v
+            end
+            sim.electric_potential
         end
     end
-    S::Symbol = get_coordinate_system(setup.detector)
     PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
-
-    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in setup.detector.contacts])
+    
+    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = PT[]
-    grid = Grid(setup.detector, init_grid_spacing = grid_spacing, full_2π = true)
+    grid = sim.electric_field.grid# Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
-
+    
     for c in contacts_to_spawn_charges_for
-        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(setup.detector, c, grid, φ_rad))
+        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(sim.detector, c, grid, Val(dim_symbol), v))
         for position in ongrid_positions
             push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
             push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
         end
     end
-    # ax1 = unique(range(setup.electric_field.grid[1][1], stop = setup.electric_field.grid[1][end], step = spacing * 0.001))
-    # ax2 = unique(range(setup.electric_field.grid[2][1], stop = setup.electric_field.grid[2][end], step = spacing * 0.001))
-    # if ismissing(φ) && S == :cylindrical
-    #     ax2 = T[0]
-    # elseif !ismissing(φ)
-    #     ax2 = T[φ]
-    # end
-    # ax3 = unique(range(setup.electric_field.grid[3][1], stop = setup.electric_field.grid[3][end], step = spacing * 0.001))
-    # for x1 in ax1
-    #     for x2 in ax2
-    #         for x3 in ax3 
-    #             pt::PT = PT(x1, x2, x3)
-    #             push!(spawn_positions, pt)
-    #         end
-    #     end
-    # end
-    filter!(x -> x in setup.detector && !in(x, setup.detector.contacts), spawn_positions)
 
+    ax1 = unique(range(sim.electric_field.grid[1][1], stop = sim.electric_field.grid[1][end], step = spacing * 0.001))
+    ax2 = unique(range(sim.electric_field.grid[2][1], stop = sim.electric_field.grid[2][end], step = spacing * 0.001))
+    if ismissing(φ) && S == :cylindrical
+        ax2 = T[0]
+    elseif !ismissing(φ)
+        ax2 = T[φ]
+    end
+    ax3 = unique(range(sim.electric_field.grid[3][1], stop = sim.electric_field.grid[3][end], step = spacing * 0.001))
+    for x1 in ax1
+        for x2 in ax2
+            for x3 in ax3 
+                pt::PT = PT(x1, x2, x3)
+                push!(spawn_positions, pt)
+            end
+        end
+    end
+    filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions)
+    
     @info "$(length(spawn_positions)) drifts are now being simulated..."
-
-    el_field_itp = SSD.get_interpolated_drift_field(setup.electric_field.data, setup.electric_field.grid)
-    el_field_itp_inv = SSD.get_interpolated_drift_field(setup.electric_field.data .* -1, setup.electric_field.grid)
+    
+    el_field_itp     = SSD.get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
+    el_field_itp_inv = SSD.get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
     @showprogress for (ipos, pos) in enumerate(spawn_positions)
         if ((spacing-1)+ipos)%spacing == 0
-            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, setup.detector, setup.point_types, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
-            @series begin
-                c --> :white
-                label --> ""
-                map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
-            end
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, setup.detector, setup.point_types, setup.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            SSD.drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
             @series begin
                 c --> :white
+                if dim_symbol == :z && S == :cylindrical proj --> :polar end
                 label --> ""
-                map(x->sqrt(x[1]^2+x[2]^2),path), map(x->x[3],path)
+                x, y = if dim_symbol == :φ
+                    map(x -> sqrt(x[1]^2+x[2]^2), path),
+                    map(x -> x[3], path)
+                elseif dim_symbol == :x
+                    map(x -> x[2], path),
+                    map(x -> x[3], path)
+                elseif dim_symbol == :y
+                    map(x -> x[1], path),
+                    map(x -> x[3], path)
+                elseif dim_symbol == :z
+                    map(x -> x[1], path),
+                    map(x -> x[2], path)
+                end
+                x, y
             end
-
+            
+            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
+            SSD.drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            @series begin
+                c --> :white
+                if dim_symbol == :z && S == :cylindrical proj --> :polar end
+                label --> ""
+                x, y = if dim_symbol == :φ
+                    map(x -> sqrt(x[1]^2+x[2]^2), path),
+                    map(x -> x[3], path)
+                elseif dim_symbol == :x
+                    map(x -> x[2], path),
+                    map(x -> x[3], path)
+                elseif dim_symbol == :y
+                    map(x -> x[1], path),
+                    map(x -> x[3], path)
+                elseif dim_symbol == :z
+                    map(x -> x[1], path),
+                    map(x -> x[2], path)
+                end
+                x, y
+            end
+            
         end
     end
 end
