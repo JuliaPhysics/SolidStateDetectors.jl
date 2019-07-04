@@ -21,12 +21,10 @@ function drift_charge!(
         if done == false
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, CylindricalPoint(current_pos)) * Δt
-            @show stepvector
 
             if stepvector == null_step done = true end 
             next_pos::CartesianPoint{T} = current_pos + stepvector
             next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
-
             if next_pos_cyl in point_types 
                 drift_path[istep] = next_pos
             elseif (next_pos_cyl in det)
