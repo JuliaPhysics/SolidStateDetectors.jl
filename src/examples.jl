@@ -23,7 +23,7 @@ SSD_examples[:CGD] = (
 )
 
 SSD_examples[:Spherical] = (
-    joinpath(@__DIR__, "../examples/example_detector_config_files/spherical_detector_config.json")
+    joinpath(@__DIR__, "../examples/example_detector_config_files/public_spherical_detector_config.json")
 )
 
 
