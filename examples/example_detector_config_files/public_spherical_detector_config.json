@@ -16,7 +16,7 @@
             "temperature": 77.0,
             "charge_density_model": {
                 "name": "constant",
-                "charge_density": 1e7
+                "charge_density": -1e6
             },
             "geometry": {
                 "type": "difference",
@@ -75,7 +75,7 @@
             "type": "contact",
             "material": "HPGe",
             "channel": 2,
-            "potential": 2000.0,
+            "potential": 3500.0,
             "geometry": {
                 "type": "difference",
                 "parts": [
@@ -90,7 +90,7 @@
                     },
                     {
                         "type": "sphere",
-                        "r": 29.8,
+                        "r": 28,
                         "translate": {
                             "x": 0,
                             "y": 0,
