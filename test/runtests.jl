@@ -53,7 +53,7 @@ max_refinements = 0
     end
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation(SSD_examples[:Spherical])
-        simulate!(sim, max_refinements = 3)
+        simulate!(sim, max_refinements = 2)
         evt = SSD.Event([CartesianPoint{T}(0,0,0)])
         simulate!(evt, sim)
         signalsum::T = 0
