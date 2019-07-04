@@ -1,15 +1,15 @@
 function calculate_electric_potential(  detector::SolidStateDetector{T, :cylindrical};
-                                        init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                                        init_grid_size::NTuple{3, Int} = (12, 12, 12),
                                         init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing),
-                                        convergence_limit::Real = 5e-6,
+                                        convergence_limit::Real = 2e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
-                                        min_grid_spacing::Vector{<:Real} = [1e-4, 1e-2, 1e-4],  # mm, degree, mm
+                                        refinement_limits::Vector{<:Real} = [1e-5, 1e-3, 1e-5],
+                                        min_grid_spacing::Vector{<:Real} = [1e-6, 1e-5, 1e-6],  # 0.01 mm, 0.0001 degree, 0.01 mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4, 1.85],
-                                        max_n_iterations::Int=10000,
+                                        max_n_iterations::Int=50000,
                                         verbose::Bool=true,
                                         ) where {T, N, S}
     refinement_limits::Vector{T} = T.(refinement_limits)
@@ -138,14 +138,14 @@ function calculate_electric_potential(  detector::SolidStateDetector{T, :cartesi
                                         init_grid_size::NTuple{3, Int} = (10, 10, 10),
                                         init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing),
-                                        convergence_limit::Real = 5e-6,
+                                        convergence_limit::Real = 2e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-4, 1e-4],
-                                        min_grid_spacing::Vector{<:Real} = [1e-5, 1e-5, 1e-5],  # mm, mm, mm
+                                        refinement_limits::Vector{<:Real} = [1e-5, 1e-5, 1e-5],
+                                        min_grid_spacing::Vector{<:Real} = [1e-6, 1e-6, 1e-6],  # mm, mm, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4],
-                                        max_n_iterations::Int=10000,
+                                        max_n_iterations::Int=50000,
                                         verbose::Bool=true,
                                         ) where {T, N, S}
     refinement_limits::Vector{T} = T.(refinement_limits)
