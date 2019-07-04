@@ -330,7 +330,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        contact_gridpoints = paint_object(contact, grid)
+        contact_gridpoints = paint_object(ssd, contact, grid)
         for gridpoint in contact_gridpoints
             potential[ gridpoint... ] = pot
             pointtypes[ gridpoint... ] = zero(PointType)
@@ -363,12 +363,12 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 for passive in ssd.passives
                     if passive.potential != :floating
                         if pt in passive
-                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                            potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
                                 passive.potential
                             else
                                 0
                             end
-                            pointtypes[ ir, iφ, iz ] = zero(PointType)
+                            pointtypes[ ix, iy, iz ] = zero(PointType)
                         end
                     end
                 end
@@ -394,7 +394,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        contact_gridpoints = paint_object(contact,grid)
+        contact_gridpoints = paint_object(ssd, contact,grid)
         for gridpoint in contact_gridpoints
             potential[ gridpoint... ] = pot
             pointtypes[ gridpoint... ] = zero(PointType)

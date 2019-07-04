@@ -42,32 +42,5 @@ function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{
     find_closest_gridpoint(CartesianPoint(point),grid)
 end
 
-function paint_object(object::AbstractObject, grid::CylindricalGrid{T}; limits::NTuple{3, T} = (T(1e-5), T(1e-4), T(1e-5)) ) where {T <: SSDFloat}
-    stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
-    if stepsize[1] < limits[1] stepsize[1] = limits[1] end
-    if stepsize[2] < limits[2] stepsize[2] = limits[2] end
-    if stepsize[3] < limits[3] stepsize[3] = limits[3] end
-    samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
-    object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
-    return object_gridpoints
-end
-function paint_object(object::AbstractObject{T}, grid::CylindricalGrid{T}, φ::T; limits::NTuple{3, T} = (T(1e-5), T(1e-4), T(1e-5)) )  where {T <: SSDFloat}
-    closest_φ_idx=searchsortednearest(grid[:φ].ticks, φ)
-    stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
-    if stepsize[1] < limits[1] stepsize[1] = limits[1] end
-    if stepsize[2] < limits[2] stepsize[2] = limits[2] end
-    if stepsize[3] < limits[3] stepsize[3] = limits[3] end
-    samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
-    object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
-    return filter(x -> x[2]==closest_φ_idx, object_gridpoints)
-end
 
-function paint_object(object::AbstractObject{T}, grid::CartesianGrid{T}; limits::NTuple{3, T} = (T(1e-5), T(1e-4), T(1e-5)) ) where {T <: SSDFloat}
-    stepsize::Vector{T}= [minimum(diff(grid[:x].ticks)), minimum(diff(grid[:y].ticks)), minimum(diff(grid[:z].ticks))]
-    if stepsize[1] < limits[1] stepsize[1] = limits[1] end
-    if stepsize[2] < limits[2] stepsize[2] = limits[2] end
-    if stepsize[3] < limits[3] stepsize[3] = limits[3] end
-    samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
-    object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
-    return object_gridpoints
-end
+

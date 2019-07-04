@@ -211,7 +211,7 @@ end
     pt_offset = T[offset,0.0,offset]
 
     for c in contacts_to_spawn_charges_for
-        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(c, grid, φ_rad))
+        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(setup.detector, c, grid, φ_rad))
         for position in ongrid_positions
             push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
             push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
