@@ -168,7 +168,6 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
         while b
             if length(diffs) > 0
                 idx = findmax(diffs)[2]
-                @show idx
                 if !in(idx, inds_z)
                     append!(inds_z, idx)
                     b = false

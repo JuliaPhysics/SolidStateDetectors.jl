@@ -25,7 +25,6 @@ function drift_charge!(
             if stepvector == null_step done = true end 
             next_pos::CartesianPoint{T} = current_pos + stepvector
             next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
-
             if next_pos_cyl in point_types 
                 drift_path[istep] = next_pos
             elseif (next_pos_cyl in det)
@@ -41,7 +40,7 @@ function drift_charge!(
                     # ToDo: We actually need a time array as well to do this properly...
                     small_projected_vector = projected_vector * T(0.001)
                     i::Int = 0
-                    while i < 1000 && (CylindricalPoint(next_pos) in point_types || !(CylindricalPoint(next_pos) in det) )
+                    while i < 1000 && !(next_pos in det) 
                         next_pos -= small_projected_vector
                         i += 1
                     end

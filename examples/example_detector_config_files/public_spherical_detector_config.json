@@ -1,0 +1,119 @@
+{
+    "name": "Spherical Detector",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+    "grid": "cartesian",
+    "medium": "vacuum",
+    "objects": [
+        {
+            "type": "semiconductor",
+            "material": "HPGe",
+            "bulk_type": "p",
+            "temperature": 77.0,
+            "charge_density_model": {
+                "name": "constant",
+                "charge_density": -1e6
+            },
+            "geometry": {
+                "type": "difference",
+                "parts": [
+                    {
+                        "name": "Initial Bulk",
+                        "type": "sphere",
+                        "r": 30,
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "name": "Contact Area Top",
+                        "type": "box",
+                        "x": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "y": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "z": {
+                            "from": 29.8,
+                            "to": 30.0
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 1,
+            "potential": 0.0,
+            "geometry": {
+                "type": "tube",
+                "r": {
+                    "from": 0.0,
+                    "to": 5.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "z": {
+                    "from": 29.8,
+                    "to": 30.0
+                }
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 2,
+            "potential": 3500.0,
+            "geometry": {
+                "type": "difference",
+                "parts": [
+                    {
+                        "type": "sphere",
+                        "r": 30,
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }
+                    },
+                    {
+                        "type": "sphere",
+                        "r": 28,
+                        "translate": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 0
+                        }      
+                    },
+                    {
+                        "type": "box",
+                        "x": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "y": {
+                            "from": -30.0,
+                            "to": 30.0
+                        },
+                        "z": {
+                            "from": 0.0,
+                            "to": 30.0
+                        }
+                    }                
+                ]
+            }
+        }
+    ]
+}

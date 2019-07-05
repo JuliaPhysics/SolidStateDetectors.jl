@@ -4,7 +4,6 @@ abstract type AbstractChargeDensityModel{T <: SSDFloat} end
     return ChargeDensityModel(T, Val{Symbol(dict["name"])}(), dict, inputunit_dict)
 end
 
-
 """
     struct LinearChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T}
 
@@ -37,6 +36,19 @@ function get_charge_density(lcdm::ZeroChargeDensityModel{T}, pt::AbstractCoordin
     return ρ
 end
 
+"""
+    struct ConstantChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T}
+
+Returns always a fixed charge density.
+"""
+struct ConstantChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T} 
+    ρ::T
+end
+
+function get_charge_density(cdm::ConstantChargeDensityModel{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+    return cdm.ρ
+end
+
 
 function ChargeDensityModel(T::DataType, t::Val{:linear}, dict::Union{Dict{String, Any}, Dict{Any, Any}}, inputunit_dict::Dict)
     unit_factor::T = 1
@@ -55,4 +67,22 @@ function LinearChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, An
     if haskey(dict, "x")     offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]));     gradients[1] = geom_round(unit_factor * T(dict["x"]["gradient"]))    end
     if haskey(dict, "y")     offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]));     gradients[2] = geom_round(unit_factor * T(dict["y"]["gradient"]))    end
     LinearChargeDensityModel{T}( NTuple{3, T}(offsets), NTuple{3, T}(gradients) )
+end
+
+
+function ChargeDensityModel(T::DataType, t::Val{:constant}, dict::Union{Dict{String, Any}, Dict{Any, Any}}, inputunit_dict::Dict)
+    unit_factor::T = 1
+    if haskey(inputunit_dict, "length") 
+        lunit = inputunit_dict["length"]
+        unit_factor = inv(ustrip(uconvert( internal_length_unit^3, 1 * lunit^3 )))
+    end
+    return ConstantChargeDensityModel{T}( dict, unit_factor )
+end
+function ConstantChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T)::ConstantChargeDensityModel{T} where {T <: SSDFloat}
+    ρ::T = if haskey(dict, "charge_density")   
+        geom_round(unit_factor * T(dict["charge_density"]))
+    else
+        T(0)
+    end
+    ConstantChargeDensityModel{T}( ρ )
 end

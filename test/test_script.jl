@@ -19,7 +19,7 @@ plot() # creates a plot so that the plots during the following loop pop up.
 
 key = :InvertedCoax
 
-for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
+for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 # for key in keys(SSD_examples)
     @info "Now test detector type: $key"
 
@@ -29,7 +29,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     simulation = Simulation(det);
 
     SSD.apply_initial_state!(simulation)
-    p = if key == :CGD
+    p = if S == :cartesian
         plot(simulation.electric_potential, y = 0.002)
     else
         plot(simulation.electric_potential)
@@ -38,7 +38,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
 
     for nrefs in [0, 1, 2]
         SSD.calculate_electric_potential!(simulation, max_refinements = nrefs)
-        p = if key == :CGD
+        p = if S == :cartesian
             plot(simulation.electric_potential, y = 0.002)
         else
             plot(simulation.electric_potential)
@@ -46,10 +46,20 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nrefs)_refinements"))
     end
     SSD.calculate_electric_potential!(simulation, max_refinements = 3)
-    p = if key == :CGD
-        plot(simulation.electric_potential, y = 0.002)
+    p = if S == :cartesian
+        plot(
+            plot(simulation.electric_potential, y = 0.002),
+            plot(simulation.ρ, y = 0.002),
+            plot(simulation.point_types, y = 0.002),
+            size = (1000, 600), layout= (1, 3)
+        )
     else
-        plot(simulation.electric_potential)
+        plot(
+            plot(simulation.electric_potential),
+            plot(simulation.ρ),
+            plot(simulation.point_types),
+            size = (1000, 600), layout= (1, 3)
+        )
     end
     savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(3)_refinements"))
 
@@ -57,7 +67,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     for contact in simulation.detector.contacts
         SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
     end
-    wp_plots = if key != :CGD
+    wp_plots = if S != :cartesian
         [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
     else
         [ plot(simulation.weighting_potentials[contact.id], y = 0.002) for contact in simulation.detector.contacts ]
@@ -72,7 +82,10 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
     if S == :cylindrical
-        plot_electric_field(simulation, φ=deg2rad(30), spacing = 8)
+        plot_electric_field(simulation, φ=deg2rad(0), spacing = 3.0)
+        savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
+    else
+        plot_electric_field(simulation, y = 0, spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 
@@ -83,11 +96,13 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD]
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
     elseif key == :CGD
-        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.005, 0.005  ) ] # this point should be inside all test detectors
+        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.005, 0.005  ) ] 
     elseif key == :BEGe
-        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.015  ) ] # this point should be inside all test detectors
+        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.015  ) ] 
     elseif key == :Coax
-        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.005  ) ] # this point should be inside all test detectors
+        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.005  ) ] 
+    elseif key == :Spherical
+        CylindricalPoint{T}[ CylindricalPoint{T}( 0.00, deg2rad(0), 0.0  ) ]
     end
     energy_depos = T[1460]
     @assert in(pos[1], simulation.detector) "Test point $(pos[1]) not inside the detector $(key)."

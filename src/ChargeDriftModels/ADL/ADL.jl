@@ -188,7 +188,7 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
         end
     end
 
-    for i in eachindex(df)
+    @showprogress for i in eachindex(df)
         @inbounds df[i] = getVe(ef[i], cdm.gammas)
     end
 
@@ -279,7 +279,7 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
         end
     end
 
-    for i in eachindex(df)
+    @showprogress for i in eachindex(df)
         @inbounds df[i] = getVh(ef[i], Emag_threshold)
     end
 

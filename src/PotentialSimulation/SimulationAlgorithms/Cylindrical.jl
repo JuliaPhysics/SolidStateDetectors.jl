@@ -153,7 +153,7 @@ end
                 wzr *= Δz_ext_inv_r * pwΔmpφ_Δmpr_squared
                 wzl *= Δz_ext_inv_l * pwΔmpφ_Δmpr_squared
             
-                new_potential::T = _is_weighting_potential ? 0 : fssrb.ρ[iz, iφ, ir, rb_tar_idx]
+                new_potential::T = _is_weighting_potential ? 0 : (fssrb.ρ[iz, iφ, ir, rb_tar_idx] + fssrb.ρ_fix[iz, iφ, ir, rb_tar_idx])
                 new_potential = muladd( wrr, vrr, new_potential)
                 new_potential = muladd( wrl, vrl, new_potential)
                 new_potential = muladd( wφr, vφr, new_potential)

@@ -7,9 +7,9 @@ function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<
     return CartesianVector{T}(interpolation_field(point.x, point.y, point.z))
 end
 
-@inline get_velocity_vector(interpolated_vectorfield, point::CylindricalPoint{T}) where {T <: SSDFloat} =
-    CartesianVector{T}(interpolated_vectorfield(point.r, point.φ, point.z))
-
+@inline function get_velocity_vector(interpolated_vectorfield, point::CylindricalPoint{T}) where {T <: SSDFloat}
+    return CartesianVector{T}(interpolated_vectorfield(point.r, point.φ, point.z))
+end
 
 include("ChargeDriftCylindrical.jl")
 include("ChargeDriftCartesian.jl")

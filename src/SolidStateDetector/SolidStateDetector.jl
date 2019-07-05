@@ -293,3 +293,68 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
     end
     positions
 end
+
+
+
+function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::Grid{T, 3, S}) where {T <: SSDFloat, S}
+    samples = []
+    axes_syms = S == :cylindrical ? [:r, :φ, :z] : [:x, :y, :z]
+    all_imps = [get_important_points(det, s) for s in axes_syms]
+    for g in object.geometry_positive
+        stepsizes = T[]
+        for (iax, sax) in enumerate(axes_syms)
+            imps_ax = all_imps[iax]
+            ax::Vector{T} = grid[sax].ticks
+            imin::Int = searchsortednearest(ax, minimum(imps_ax))
+            imax::Int = searchsortednearest(ax, maximum(imps_ax))
+
+            ax = ax[imin:imax]
+            delete_inds::Vector{Int} = Int[]
+            for imp in imps_ax
+                push!(delete_inds, searchsortednearest(ax, imp))
+            end
+            unique!(sort!(delete_inds))
+            deleteat!(ax, delete_inds)
+            stepsize::T = if length(ax) <= 1
+                T(1)
+            else
+                minimum(diff(ax)) / 4
+            end
+            imps_g = get_important_points(g, Val(sax))
+            unique!(sort!(imps_g))
+            if length(imps_g) > 1
+                min_imps_g::T = minimum(diff(imps_g)) / 4
+                if min_imps_g < stepsize
+                    stepsize = min_imps_g
+                end
+            end
+            if iszero(stepsize) stepsize = 1 end
+            push!(stepsizes, stepsize)
+        end
+        append!(samples, filter( x-> x in object.geometry, sample(g, stepsizes)) )
+    end
+    object_gridpoints = unique!([find_closest_gridpoint(sample_point, grid) for sample_point in samples])
+    return object_gridpoints
+end
+
+
+function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:φ}, φ::T )  where {T <: SSDFloat}
+    closest_φ_idx=searchsortednearest(grid[:φ].ticks, φ)
+    stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
+    stepsize /= 2
+    samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
+    object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
+    return filter(x -> x[2]==closest_φ_idx, object_gridpoints)
+end
+function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:r}, r::T )  where {T <: SSDFloat}
+    return CartesianPoint{T}[]
+end
+function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::Grid{T}, ::Val{:z}, z::T )  where {T <: SSDFloat}
+    return CartesianPoint{T}[]
+end
+function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CartesianGrid{T}, ::Val{:x}, x::T )  where {T <: SSDFloat}
+    return CartesianPoint{T}[]
+end
+function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CartesianGrid{T}, ::Val{:y}, y::T )  where {T <: SSDFloat}
+    return CartesianPoint{T}[]
+end

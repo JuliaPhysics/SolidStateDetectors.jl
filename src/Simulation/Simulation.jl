@@ -3,6 +3,7 @@ abstract type AbstractSimulation{T <: SSDFloat} end
 mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     detector::Union{SolidStateDetector{T}, Missing}
     ρ::Union{ChargeDensity{T}, Missing}
+    ρ_fix::Union{ChargeDensity{T}, Missing}
     ϵ::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
     electric_potential::Union{ElectricPotential{T}, Missing}
@@ -22,6 +23,7 @@ function Simulation{T}() where {T <: SSDFloat}
         missing, 
         missing, 
         missing, 
+        missing, 
         [missing], 
         missing, 
         VacuumChargeDriftModel{T}(), 
@@ -37,6 +39,7 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         detector_json_string = NamedTuple(sim.detector.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
         ρ = NamedTuple(sim.ρ),
+        ρ_fix = NamedTuple(sim.ρ_fix),
         ϵ = NamedTuple(sim.ϵ),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
@@ -54,6 +57,7 @@ function Simulation(nt::NamedTuple)
     sim = Simulation( det )
     if !ismissing(nt.electric_potential) sim.electric_potential = ep end 
     if !ismissing(nt.ρ) sim.ρ = ChargeDensity(nt.ρ) end
+    if !ismissing(nt.ρ_fix) sim.ρ_fix = ChargeDensity(nt.ρ_fix) end
     if !ismissing(nt.ϵ) sim.ϵ = DielectricDistribution(nt.ϵ) end
     if !ismissing(nt.point_types) sim.point_types = PointTypes(nt.point_types) end
     if !ismissing(nt.electric_field) sim.electric_field = ElectricField(nt.electric_field) end
@@ -81,6 +85,7 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println("  Detector: $(sim.detector.name)")
     println("  Electric potential: ", !ismissing(sim.electric_potential) ? size(sim.electric_potential) : missing)
     println("  Charge density: ", !ismissing(sim.ρ) ? size(sim.ρ) : missing)
+    println("  Fix Charge density: ", !ismissing(sim.ρ_fix) ? size(sim.ρ_fix) : missing)
     println("  Dielectric distribution: ", !ismissing(sim.ϵ) ? size(sim.ϵ) : missing)
     println("  Point types: ", !ismissing(sim.point_types) ? size(sim.point_types) : missing)
     println("  Electric field: ", !ismissing(sim.electric_field) ? size(sim.electric_field) : missing)
@@ -122,6 +127,7 @@ function apply_initial_state!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
     init_sim = SolidStateDetectors.PotentialSimulationSetup(sim.detector);
 
     sim.ρ = ChargeDensity(init_sim.ρ, init_sim.grid)
+    sim.ρ_fix = ChargeDensity(init_sim.ρ_fix, init_sim.grid)
     sim.ϵ = DielectricDistribution(init_sim.ϵ, init_sim.grid)
     sim.point_types = PointTypes(init_sim.pointtypes, init_sim.grid)
     sim.electric_potential = ElectricPotential(init_sim.potential, init_sim.grid)
@@ -129,10 +135,34 @@ function apply_initial_state!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
     nothing
 end
 
+"""
+    calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::Nothing where {T <: SSDFloat}
+
+
+Compute the electric potential for the given Detector `sim.detector` on an adaptive grid
+through successive over relaxation. 
+
+There are serveral `<keyword arguments>` which can be used to tune the computation:
+
+# Keywords
+- `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation. The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. Default of `convergence_limit` is `5e-6` (times bias voltage).
+- `max_refinements::Int`: number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
+- `refinement_limits::Vector{Real}`: vector of refinement limits for each dimension (in case of cylindrical coordinates the order is `r`, `φ`, `z`). A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the maximum allowed voltage difference between two neighbouring grid points in the respective dimension. When the difference is larger, new points are created inbetween. Default is `[1e-4, 1e-4, 1e-4]`.
+- `init_grid_spacing::Vector{Real}`: vector of the initial distances between two grid points for each dimension. For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
+- `min_grid_spacing::Vector{Real}`: vector of the mimimum allowed distance between two grid points for each dimension. For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. It prevents the refinement to make the grid to fine. Default is [`1e-4`, `1e-2`, `1e-4`].
+- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
+- `depletion_handling::Bool`: enables the handling of undepleted regions. Default is false.
+- `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+- `sor_consts::Vector{<:Real}`: Two element array. First element contains the SOR constant for `r` = 0. Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between. First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
+- `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement. Default is `10000`. If set to `-1` there will be no limit.
+- `verbose::Bool=true`: Boolean whether info output is produced or not.
+- `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
+"""
 function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::Nothing where {T <: SSDFloat}
     ep = calculate_electric_potential(sim.detector, args...; kwargs...)
 
     sim.ρ = ChargeDensity(ep.ρ, ep.grid)
+    sim.ρ_fix = ChargeDensity(ep.ρ_fix, ep.grid)
     sim.ϵ = DielectricDistribution(ep.ϵ, ep.grid)
     sim.point_types = PointTypes(ep.pointtypes, ep.grid)
     sim.electric_potential = ElectricPotential(ep.potential, ep.grid)
@@ -140,7 +170,28 @@ function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::
     nothing
 end
 
+"""
+    calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
 
+Compute the weighting potential for the given Detector `sim.detector` on an adaptive grid
+through successive over relaxation. 
+
+There are serveral `<keyword arguments>` which can be used to tune the computation:
+
+# Keywords
+- `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation. The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. Default of `convergence_limit` is `5e-6` (times bias voltage).
+- `max_refinements::Int`: number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
+- `refinement_limits::Vector{Real}`: vector of refinement limits for each dimension (in case of cylindrical coordinates the order is `r`, `φ`, `z`). A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the maximum allowed voltage difference between two neighbouring grid points in the respective dimension. When the difference is larger, new points are created inbetween. Default is `[1e-4, 1e-4, 1e-4]`.
+- `init_grid_spacing::Vector{Real}`: vector of the initial distances between two grid points for each dimension. For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
+- `min_grid_spacing::Vector{Real}`: vector of the mimimum allowed distance between two grid points for each dimension. For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. It prevents the refinement to make the grid to fine. Default is [`1e-4`, `1e-2`, `1e-4`].
+- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
+- `depletion_handling::Bool`: enables the handling of undepleted regions. Default is false.
+- `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+- `sor_consts::Vector{<:Real}`: Two element array. First element contains the SOR constant for `r` = 0. Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between. First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
+- `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement. Default is `10000`. If set to `-1` there will be no limit.
+- `verbose::Bool=true`: Boolean whether info output is produced or not.
+- `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
+"""
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     S = SSD.get_coordinate_system(sim.detector)
     periodicity::T = get_periodicity(sim.detector.world.intervals[2])

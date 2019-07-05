@@ -86,6 +86,11 @@ function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} wh
             append!(imp, get_important_points(g, Val{s}()))
         end
     end
+    for passive in c.passives
+        for g in vcat(passive.geometry_positive, passive.geometry_negative)
+            append!(imp, get_important_points(g, Val{s}()))
+        end
+    end
     return uniq(sort(imp))
 end
 
@@ -234,29 +239,30 @@ end
 function get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
     get_charge_density(sc.charge_density_model, pt)
 end
+function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+    get_charge_density(p.charge_density_model, pt)
+end
 
-function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T} where {T <: SSDFloat}
+function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T, T} where {T <: SSDFloat}
+    ρ_semiconductor::T = 0
+    ρ_fix::T = 0
+    ϵ::T = ssd.medium.ϵ_r
     if in(pt,ssd.semiconductors)
         for sc in ssd.semiconductors
             if in(pt, sc)
-                ρ::T = get_charge_density(sc, pt) * elementary_charge
-                ϵ::T = sc.material.ϵ_r
-                return ρ, ϵ
+                ρ_semiconductor = get_charge_density(sc, pt) * elementary_charge
+                ϵ = sc.material.ϵ_r
             end
         end
-    elseif in(pt,ssd.passives)
+    elseif in(pt, ssd.passives)
         for ep in ssd.passives
             if pt in ep
-                ρ = 0
+                ρ_fix = get_charge_density(ep, pt) * elementary_charge
                 ϵ = ep.material.ϵ_r
             end
         end
-        return ρ, ϵ
-    else
-        ρ = 0
-        ϵ = ssd.medium.ϵ_r
-        return ρ, ϵ
     end
+    return ρ_semiconductor, ϵ, ρ_fix
 end
 
 
@@ -289,6 +295,18 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
 
+                for passive in ssd.passives
+                    if passive.potential != :floating
+                        if pt in passive
+                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                                passive.potential
+                            else
+                                0
+                            end
+                            pointtypes[ ir, iφ, iz ] = zero(PointType)
+                        end
+                    end
+                end
                 if in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
@@ -305,13 +323,14 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             end
         end
     end
+    
     for contact in ssd.contacts
         pot::T = if ismissing(weighting_potential_contact_id)
             contact.potential
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        contact_gridpoints = paint_object(contact, grid)
+        contact_gridpoints = paint_object(ssd, contact, grid)
         for gridpoint in contact_gridpoints
             potential[ gridpoint... ] = pot
             pointtypes[ gridpoint... ] = zero(PointType)
@@ -341,6 +360,18 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 x::T = axx[ix]
                 pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
 
+                for passive in ssd.passives
+                    if passive.potential != :floating
+                        if pt in passive
+                            potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
+                                passive.potential
+                            else
+                                0
+                            end
+                            pointtypes[ ix, iy, iz ] = zero(PointType)
+                        end
+                    end
+                end
                 if in(pt, ssd)
                     pointtypes[ ix, iy, iz ] += pn_junction_bit
                 end
@@ -363,7 +394,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        contact_gridpoints = paint_object(contact,grid)
+        contact_gridpoints = paint_object(ssd, contact,grid)
         for gridpoint in contact_gridpoints
             potential[ gridpoint... ] = pot
             pointtypes[ gridpoint... ] = zero(PointType)
@@ -445,7 +476,6 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     end
     if length(ax_φ) > 1
         φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
-        @show 
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
     if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even

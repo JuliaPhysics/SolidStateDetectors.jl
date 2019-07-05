@@ -1,40 +1,17 @@
-"""
-    calculate_weighting_potential(det::SolidStateDetector{T}, channel_id::Int; <keyword arguments>) where {T}
 
-
-Compute the weighting potential for the given Detector `det` on an adaptive grid
-through successive over relaxation. It returns a collection struct `PotentialSimulationSetup{T}` which stores
-the potential, the charge density, the dielectric distribution, pointtypes and the final grid.
-
-There are serveral `<keyword arguments>` which can be used to tune the computation:
-
-# Keywords
-- `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation. The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. Default of `convergence_limit` is `5e-6` (times bias voltage).
-- `max_refinements::Int`: number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
-- `refinement_limits::Vector{Real}`: vector of refinement limits for each dimension (in case of cylindrical coordinates the order is `r`, `φ`, `z`). A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the maximum allowed voltage difference between two neighbouring grid points in the respective dimension. When the difference is larger, new points are created inbetween. Default is `[1e-4, 1e-4, 1e-4]`.
-- `init_grid_spacing::Vector{Real}`: vector of the initial distances between two grid points for each dimension. For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
-- `min_grid_spacing::Vector{Real}`: vector of the mimimum allowed distance between two grid points for each dimension. For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. It prevents the refinement to make the grid to fine. Default is [`1e-4`, `1e-2`, `1e-4`].
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
-- `depletion_handling::Bool`: enables the handling of undepleted regions. Default is false.
-- `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-- `sor_consts::Vector{<:Real}`: Two element array. First element contains the SOR constant for `r` = 0. Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between. First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
-- `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement. Default is `10000`. If set to `-1` there will be no limit.
-- `verbose::Bool=true`: Boolean whether info output is produced or not.
-- `init_grid_spacing::Vector{<:Real}`: Initial spacing of the grid. Default is [2e-3, 5, 2e-3] <=> [2mm, 5 degree, 2mm ]
-"""
 function calculate_weighting_potential( detector::SolidStateDetector{T, :cylindrical}, channel_id::Int;
-                                        init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                                        init_grid_size::NTuple{3, Int} = (12, 12, 12),
                                         init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing,
                                                                     for_weighting_potential = true),
-                                        convergence_limit::Real = 5e-6,
+                                        convergence_limit::Real = 2e-6,
                                         max_refinements::Int = 3,
-                                        refinement_limits::Vector{<:Real} = [1e-4, 1e-3, 1e-4],
-                                        min_grid_spacing::Vector{<:Real} = [1e-4, 1e-2, 1e-4],  # mm, degree, mm
+                                        refinement_limits::Vector{<:Real} = [1e-5, 1e-3, 1e-5],
+                                        min_grid_spacing::Vector{<:Real}  = [1e-6, 1e-5, 1e-6],  # mm, degree, mm
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4, 1.85],
-                                        max_n_iterations::Int=10000,
+                                        max_n_iterations::Int=50000,
                                         verbose::Bool=true,
                                         ) where {T, N, S}
     refinement_limits::Vector{T} = T.(refinement_limits)
@@ -105,7 +82,7 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :cylindr
         end
     end
 
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, PointTypeArray(fssrb), ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, PointTypeArray(fssrb), ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
 """
@@ -121,17 +98,17 @@ end
 
 
 function calculate_weighting_potential( detector::SolidStateDetector{T, :cartesian}, channel_id::Int;
-                                        init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                                        init_grid_size::NTuple{3, Int} = (12, 12, 12),
                                         init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
                                         grid::Grid{T, N, S} = Grid(detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing),
-                                        convergence_limit::Real = 5e-6,
+                                        convergence_limit::Real = 2e-6,
                                         max_refinements::Int = 3,
                                         refinement_limits::Vector{<:Real} = [1e-5, 1e-5, 1e-5],
                                         min_grid_spacing::Vector{<:Real} = [1e-6, 1e-6, 1e-6],  
                                         depletion_handling::Bool = false,
                                         use_nthreads::Int = Base.Threads.nthreads(),
                                         sor_consts::Vector{<:Real}=[1.4],
-                                        max_n_iterations::Int=10000,
+                                        max_n_iterations::Int=50000,
                                         verbose::Bool=true,
                                         ) where {T, N, S}
     refinement_limits::Vector{T} = T.(refinement_limits)
@@ -197,5 +174,5 @@ function calculate_weighting_potential( detector::SolidStateDetector{T, :cartesi
 
     pointtypes::Array{PointType, 3} = PointTypeArray(fssrb)
 
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), potential, pointtypes, ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
