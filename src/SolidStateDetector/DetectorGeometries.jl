@@ -266,14 +266,6 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
 end
 
 
-function write_grid_to_detector!(ssd::SolidStateDetector{T}, grid::Grid{T, 3, :cylindrical})::Nothing where {T}
-    ssd.rs = grid[:r].ticks
-    ssd.φs = grid[:φ].ticks
-    ssd.zs = grid[:z].ticks
-    nothing
-end
-
-
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, :cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
@@ -323,7 +315,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             end
         end
     end
-    
+
     for contact in ssd.contacts
         pot::T = if ismissing(weighting_potential_contact_id)
             contact.potential
@@ -426,7 +418,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 for_weighting_potential::Bool = false,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
 
-    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing) 
+    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true
     else
         missing, false
@@ -444,12 +436,12 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     important_z_points = uniq(sort(important_z_points))
     push!(important_φ_points, detector.world.intervals[2].left)
     push!(important_φ_points, detector.world.intervals[2].right)
-    important_φ_points = uniq(sort(important_φ_points)) 
+    important_φ_points = uniq(sort(important_φ_points))
 
     # r
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
     int_r = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
-    ax_r::DiscreteAxis{T, BL, BR} = if use_spacing 
+    ax_r::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
     else
         DiscreteAxis{BL, BR}(int_r, length = init_grid_size[1])
@@ -457,18 +449,18 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
     ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
 
-    
+
     # φ
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
     if full_2π == true || (for_weighting_potential && (detector.world.intervals[2].left != detector.world.intervals[2].right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
-        int_φ = Interval{L, R, T}(0, 2π) 
+        int_φ = Interval{L, R, T}(0, 2π)
     end
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
-        if use_spacing 
+        if use_spacing
             DiscreteAxis{BL, BR}(int_φ, step = init_grid_spacing[2])
         else
             DiscreteAxis{BL, BR}(int_φ, length = init_grid_size[2])
@@ -520,7 +512,7 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
     important_y_points::Vector{T} = get_important_points(detector, :y)
     important_z_points::Vector{T} = get_important_points(detector, :z)
 
-    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing) 
+    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true
     else
         missing, false
@@ -529,7 +521,7 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
     # x
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
     int_x = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
-    ax_x::DiscreteAxis{T, BL, BR} = if use_spacing 
+    ax_x::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
     else
         DiscreteAxis{BL, BR}(int_x, length = init_grid_size[1])
@@ -547,7 +539,7 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
     # y
     L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
     int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    ax_y::DiscreteAxis{T, BL, BR} = if use_spacing 
+    ax_y::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
     else
         DiscreteAxis{BL, BR}(int_y, length = init_grid_size[2])
