@@ -155,10 +155,13 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
 
             Emag_threshold::T = 1e-5
 
-            tmp0::T = 2.888470213
-            tmp1::T = -1.182108256
-            tmp2::T = 3.160660533
-            tmp3::T = 0.25
+            mli::T = 1. / 1.64
+            mti::T = 1. / 0.0819
+            B::T = 1/3 * sqrt(8*mti + mli)
+
+            Gamma0::T = sqrt(2/3*mti + 1/3*mli)
+            Gamma1::T = (-4*sqrt(mli) -4/3 * B)/(sqrt(mli) - B)^2
+            Gamma2::T = Gamma1*(sqrt(mli) + 3*B)/(-4)
 
             if Emag < Emag_threshold
                 return SVector{3,T}(0, 0, 0)
@@ -171,8 +174,8 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
             V100e::T = Vl(Emag, cdm.electrons.axis100) * f100e
             V111e::T = Vl(Emag, cdm.electrons.axis111) * f111e
 
-            AE::T = V100e / tmp0
-            RE::T = tmp1 * V111e / AE + tmp2
+            AE::T = V100e / Gamma0
+            RE::T = Gamma1 * V111e / AE + Gamma2
 
             e0 = SVector{3, T}(fv * Emag_inv)
 
@@ -180,7 +183,7 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
 
             g0 = MVector{3, T}(0,0,0)
             for j in eachindex(1:4)
-                NiOverNj::T = RE * (oneOverSqrtEgE[j] / sum(oneOverSqrtEgE) - tmp3) + tmp3
+                NiOverNj::T = RE * (oneOverSqrtEgE[j] / sum(oneOverSqrtEgE) - T(0.25)) + T(0.25)
                 g0 += gammas[j] * e0 * NiOverNj * oneOverSqrtEgE[j]
             end
 
@@ -188,7 +191,8 @@ function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::
         end
     end
 
-    @showprogress for i in eachindex(df)
+    #@showprogress for i in eachindex(df)
+    for i in eachindex(df)
         @inbounds df[i] = getVe(ef[i], cdm.gammas)
     end
 
@@ -279,7 +283,8 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
         end
     end
 
-    @showprogress for i in eachindex(df)
+    #@showprogress for i in eachindex(df)
+    for i in eachindex(df)
         @inbounds df[i] = getVh(ef[i], Emag_threshold)
     end
 
