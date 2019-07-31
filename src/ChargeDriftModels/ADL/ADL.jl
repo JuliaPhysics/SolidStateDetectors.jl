@@ -81,7 +81,7 @@ function ADLChargeDriftModel{T}(chargedriftmodel::ADLChargeDriftModel)::ADLCharg
     phi110::T = cdmf64.phi110
     gammas = SVector{4, SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
     temperaturemodel::AbstractTemperatureModel{T} = cdmf64.temperaturemodel
-    ADLChargeDriftModel{T}(electrons, holes, phi110, gammas, temperaturemodel)
+    ADLChargeDriftModel{T}(electrons, holes, masses, phi110, gammas, temperaturemodel)
 end
 
 function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32,
@@ -164,16 +164,20 @@ Applies the charge drift model onto the electric field vectors. The field vector
 """
 function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
-    cdm = ADLChargeDriftModel{T}(chargedriftmodel)
     #@showprogress for i in eachindex(df)
     for i in eachindex(df)
-        @inbounds df[i] = getVe(ef[i], cdm)
+        @inbounds df[i] = getVe(ef[i], chargedriftmodel)
     end
     return df
 end
 
 
-@fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = 1e-5)::SVector{3, T} where {T <: SSDFloat}
+function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
+    cdmT = ADLChargeDriftModel{T}(cdm)
+    getVe(fv, cdmT, Emag_threshold)
+end
+
+@fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
     @inbounds begin
         Emag::T = norm(fv)
         Emag_inv::T = inv(Emag)
@@ -244,16 +248,19 @@ end
 
 function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
-    cdm = ADLChargeDriftModel{T}(chargedriftmodel)
     #@showprogress for i in eachindex(df)
     for i in eachindex(df)
-        @inbounds df[i] = getVh(ef[i], cdm, Emag_threshold)
+        @inbounds df[i] = getVh(ef[i], chargedriftmodel)
     end
     return df
 end
 
+function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
+    cdmT = ADLChargeDriftModel{T}(cdm)
+    getVh(fv, cdmT, Emag_threshold)
+end
 
-@fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = 1e-5)::SVector{3,T} where {T <: SSDFloat}
+@fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
     @inbounds begin
         Emag::T = norm(fv)
         Emag_inv::T = inv(Emag)
