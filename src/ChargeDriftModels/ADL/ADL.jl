@@ -127,7 +127,7 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
         masses = MassParameters{T}(T(1.64),T(0.0819))
     end
 
-    ismissing(phi110) ? phi110 = config["phi110"] : phi110 = T(phi110)  #if you give the angle of the 110 axis it will be used, otherwise read from config file
+    ismissing(phi110) ? phi110 = T(config["phi110"]) : phi110 = T(phi110)  #if you give the angle of the 110 axis it will be used, otherwise read from config file
 
     gammas = setup_gamma_matrices(phi110, masses)
 
