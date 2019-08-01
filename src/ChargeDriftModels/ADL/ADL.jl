@@ -27,7 +27,7 @@ include("VacuumModel.jl")
     tmp::T = 2 / 3
     a::T = acos(sqrt(tmp))
     Rx::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(1, 0, 0, 0, cos(a), sin(a), 0, -sin(a), cos(a))
-    b::T = phi110 + (j - 1) * T(π) / 2
+    b::T = -phi110 + (j - 1) * T(π) / 2
     Rzj::SArray{Tuple{3,3},T,2,9} = SMatrix{3,3,T}(cos(b), sin(b), 0, -sin(b), cos(b), 0, 0, 0, 1)
     Rj = Rx * Rzj
     transpose(Rj) * γ0 * Rj
