@@ -22,13 +22,13 @@ end
                     φ = missing,
                     z = missing ) where {T <: SSDFloat}
     g::Grid{T, 3, :cylindrical} = wp.grid
-   
+
     seriescolor --> :viridis
     st --> :heatmap
     aspect_ratio --> 1
     foreground_color_border --> nothing
     tick_direction --> :out
-    
+
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
@@ -50,12 +50,12 @@ end
     end
     value::T = if cross_section == :φ
         g[:φ][idx]
-    elseif cross_section == :r    
+    elseif cross_section == :r
         g[:r][idx]
     elseif cross_section == :z
         g[:z][idx]
     end
-    
+
     @series begin
         clims --> (0, 1)
         if cross_section == :φ
@@ -82,13 +82,13 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::Discre
     l::Int = length( axφ )
     Δφ::T = int.right - int.left
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
-    n::Int = Int(round(T(2π) / Δφ, digits = 5)) 
+    n::Int = Int(round(T(2π) / Δφ, digits = 5))
     new_ticks::Vector{T} = Vector{T}(undef, l * n)
     new_pot::Array{T, 3} = Array{T, 3}(undef, size(wp, 1), l * n, size(wp, 3))
     for idx_n in 1:n
         for il in 1:l
             idx::Int = il + (idx_n - 1) * l
-            new_ticks[idx] = (idx_n - 1) * int.right + axφ.ticks[il]
+            new_ticks[idx] = (idx_n - 1) * Δφ + axφ.ticks[il]
             new_pot[:, idx, :] = wp[:, il, :]
         end
     end
@@ -105,7 +105,7 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::Discre
     Δφ::T = int.right - int.left
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(int.left, int.right + Δφ)
     new_ticks::Vector{T} = Vector{T}(undef, l)
-    new_ticks[1:length( axφ )] = collect(axφ.ticks) 
+    new_ticks[1:length( axφ )] = collect(axφ.ticks)
     new_pot::Array{T, 3} = Array{T, 3}(undef, size(wp, 1), l, size(wp, 3))
     new_pot[:, 1:length( axφ ), :] = wp.data[:, :, :]
     for i in 1:(length(axφ) - 2)
@@ -190,13 +190,13 @@ end
                     z = missing,
                     contours_equal_potential=false ) where {T}
     g::Grid{T, 3, :cartesian} = wp.grid
-   
+
     seriescolor --> :viridis
     st --> :heatmap
     aspect_ratio --> 1
     foreground_color_border --> nothing
     tick_direction --> :out
-       
+
     cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
         :x, 1
     elseif !ismissing(x) && ismissing(y) && ismissing(z)

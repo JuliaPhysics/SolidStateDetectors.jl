@@ -16,11 +16,11 @@ function drift_charge!(
     done::Bool = false
     drift_path[1] = startpos
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
-    @inbounds for istep in eachindex(drift_path)[2:end] #end] 
+    @inbounds for istep in eachindex(drift_path)[2:end] #end]
         if done == false
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, current_pos) * Δt
-            if stepvector == null_step done = true end 
+            if stepvector == null_step done = true end
             next_pos::CartesianPoint{T} = current_pos + stepvector
             if next_pos in point_types
                 drift_path[istep] = next_pos
@@ -44,11 +44,11 @@ function drift_charge!(
                     if i == 1000 && verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
                     drift_path[istep] = next_pos
                 elseif cd_point_type == CD_BULK
-                    if verbose @warn ("Internal error for charge stating at $startpos") end
+                    if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
                     done = true
-                else # elseif cd_point_type == CD_OUTSIDE      
-                    if verbose @warn ("Internal error for charge stating at $startpos") end
+                else # elseif cd_point_type == CD_OUTSIDE
+                    if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
                     done = true
                 end
@@ -66,7 +66,7 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  detector::SolidStateDetector{T, :cartesian}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T}; 
+function get_crossing_pos(  detector::SolidStateDetector{T, :cartesian}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
                             max_n_iter::Int = 2000)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
     cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, point_mid)
@@ -85,4 +85,3 @@ function get_crossing_pos(  detector::SolidStateDetector{T, :cartesian}, grid::G
     end
     return point_mid, cd_point_type, contact_idx, surface_normal
 end
-

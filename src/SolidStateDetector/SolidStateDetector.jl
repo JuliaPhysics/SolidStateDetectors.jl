@@ -26,10 +26,10 @@ function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat,
     world = World(Val(S), world_limits)
 
     return SolidStateDetector{T, S}(
-        "EmptyDetector", 
+        "EmptyDetector",
         default_unit_dict(),
         world,
-        Dict(), 
+        Dict(),
         material_properties[materials["vacuum"]],
         semiconductors,
         contacts,
@@ -41,15 +41,15 @@ function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
     S::Symbol = :cartesian
     return SolidStateDetector{T, S}()
 end
-function SolidStateDetector()::SolidStateDetector{Float32, :cartesian} 
+function SolidStateDetector()::SolidStateDetector{Float32, :cartesian}
     return SolidStateDetector{Float32, :cartesian}()
 end
 
 function default_unit_dict()::Dict{String, Unitful.Units}
-    return Dict{String, Unitful.Units}(  
+    return Dict{String, Unitful.Units}(
         "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V", 
-        "angle" => u"°", 
+        "potential" => u"V",
+        "angle" => u"°",
         "temperature" => u"K"
     )
 end
@@ -89,7 +89,7 @@ function construct_objects(T, objects::Vector, semiconductors, contacts, passive
         elseif obj["type"] == "passive"
             push!(passives, construct_passive(T, obj, inputunit_dict))
         else
-            @warn "please spcify the calss to bei either a \"semiconductor\", a \"contact\", or \"passive\""
+            @warn "please specify the class to be either a \"semiconductor\", a \"contact\", or \"passive\""
         end
     end
     nothing
@@ -170,10 +170,10 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     grid_type::Symbol = :cartesian
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     medium::NamedTuple = material_properties[materials["vacuum"]]
-    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(  
+    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(
         "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V", 
-        "angle" => u"°", 
+        "potential" => u"V",
+        "angle" => u"°",
         "temperature" => u"K"
     )
     inputunits = construct_units(config_file)
