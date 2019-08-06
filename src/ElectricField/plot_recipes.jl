@@ -219,6 +219,7 @@ end
     xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
     ylabel --> L"$z$ / m"
     
+    
     if potential == true
         @series begin
             # contours_equal_potential --> contours_equal_potential
@@ -248,13 +249,13 @@ end
     grid = sim.electric_field.grid# Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
     
-    for c in contacts_to_spawn_charges_for
-        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(sim.detector, c, grid, Val(dim_symbol), v))
-        for position in ongrid_positions
-            push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
-            push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
-        end
-    end
+    # for c in contacts_to_spawn_charges_for
+    #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(sim.detector, c, grid, Val(dim_symbol), v))
+    #     for position in ongrid_positions
+    #         push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
+    #         push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
+    #     end
+    # end
 
     ax1 = unique(range(sim.electric_field.grid[1][1], stop = sim.electric_field.grid[1][end], step = spacing * 0.001))
     ax2 = unique(range(sim.electric_field.grid[2][1], stop = sim.electric_field.grid[2][end], step = spacing * 0.001))
