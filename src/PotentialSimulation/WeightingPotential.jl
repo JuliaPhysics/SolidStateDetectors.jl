@@ -82,7 +82,7 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::Discre
     l::Int = length( axφ )
     Δφ::T = int.right - int.left
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
-    n::Int = Int(round(T(2π) / Δφ, digits = 5))
+    n::Int = Int(round(T(2π) / Δφ, sigdigits = 6))
     new_ticks::Vector{T} = Vector{T}(undef, l * n)
     new_pot::Array{T, 3} = Array{T, 3}(undef, size(wp, 1), l * n, size(wp, 3))
     for idx_n in 1:n
