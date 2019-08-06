@@ -123,8 +123,8 @@ end
 
 # Functions
 
-function apply_initial_state!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
-    init_sim = SolidStateDetectors.PotentialSimulationSetup(sim.detector);
+function apply_initial_state!(sim::Simulation{T}; init_grid_size::NTuple{3, Int} = (10, 10, 10) )::Nothing where {T <: SSDFloat}
+    init_sim = SolidStateDetectors.PotentialSimulationSetup(sim.detector, Grid(sim.detector, init_grid_size = init_grid_size));
 
     sim.ρ = ChargeDensity(init_sim.ρ, init_sim.grid)
     sim.ρ_fix = ChargeDensity(init_sim.ρ_fix, init_sim.grid)
