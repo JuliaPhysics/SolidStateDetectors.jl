@@ -307,7 +307,7 @@ function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::
             ax::Vector{T} = grid[sax].ticks
             imin::Int = searchsortednearest(ax, minimum(imps_ax))
             imax::Int = searchsortednearest(ax, maximum(imps_ax))
-
+            
             ax = ax[imin:imax]
             delete_inds::Vector{Int} = Int[]
             for imp in imps_ax
@@ -315,18 +315,31 @@ function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::
             end
             unique!(sort!(delete_inds))
             deleteat!(ax, delete_inds)
-            stepsize::T = if length(ax) <= 1
-                T(1)
-            else
-                minimum(diff(ax)) / 4
-            end
+            stepsize::T = length(ax) <= 1 ? T(1) : geom_round((minimum(diff(ax)) / 4))
             imps_g = get_important_points(g, Val(sax))
             unique!(sort!(imps_g))
             if length(imps_g) > 1
                 min_imps_g::T = minimum(diff(imps_g)) / 4
                 if min_imps_g < stepsize
-                    stepsize = min_imps_g
+                    stepsize = geom_round(min_imps_g)
                 end
+            end
+            imps_g_min::T, imps_g_max::T = if length(imps_g) > 0
+                minimum(imps_g), maximum(imps_g)
+            else
+                0, 0
+            end
+            Δg::T = (imps_g_max - imps_g_min)
+            if Δg > 0 
+                g_imin::Int = searchsortednearest(ax, imps_g_min)
+                g_imax::Int = searchsortednearest(ax, imps_g_max)
+                n_grid_points::Int = g_imax - g_imin + 1
+                n::Int = Int(round(Δg / stepsize))
+                if n > 2 * n_grid_points
+                    stepsize = Δg / (2 * n_grid_points)
+                end
+            else
+                stepsize = 1
             end
             if iszero(stepsize) stepsize = 1 end
             push!(stepsizes, stepsize)
