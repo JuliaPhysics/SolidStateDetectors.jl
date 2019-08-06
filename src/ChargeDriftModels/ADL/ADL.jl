@@ -1,17 +1,16 @@
-
-struct VelocityParameters{T}
+struct VelocityParameters{T <: SSDFloat}
     mu0::T
     beta::T
     E0::T
     mun::T
 end
 
-struct CarrierParameters{T}
+struct CarrierParameters{T <: SSDFloat}
     axis100::VelocityParameters{T}
     axis111::VelocityParameters{T}
 end
 
-struct MassParameters{T}
+struct MassParameters{T <: SSDFloat}
     ml::T
     mt::T
 end
@@ -255,7 +254,7 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLCh
     return df
 end
 
-function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
+function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
     cdmT = ADLChargeDriftModel{T}(cdm)
     getVh(fv, cdmT, Emag_threshold)
 end
