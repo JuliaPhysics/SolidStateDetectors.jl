@@ -116,21 +116,21 @@ function Geometry(T::DataType, t::Val{:cone}, dict::Dict{Any, Any}, inputunit_di
 end
 
 function get_important_points(c::Cone{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return T[c.rStart1, c.rStop1, c.rStart2, c.rStop2]
+    return geom_round.(T[c.rStart1, c.rStop1, c.rStart2, c.rStop2])
 end
 function get_important_points(c::Cone{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return T[-c.rStart1, -c.rStop1, -c.rStart2, -c.rStop2, c.rStart1, c.rStop1, c.rStart2, c.rStop2]
+    return geom_round.(T[-c.rStart1, -c.rStop1, -c.rStart2, -c.rStop2, c.rStart1, c.rStop1, c.rStart2, c.rStop2])
 end
 function get_important_points(c::Cone{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return T[-c.rStart1, -c.rStop1, -c.rStart2, -c.rStop2, c.rStart1, c.rStop1, c.rStart2, c.rStop2]
+    return geom_round.(T[-c.rStart1, -c.rStop1, -c.rStart2, -c.rStop2, c.rStart1, c.rStop1, c.rStart2, c.rStop2])
 end
 
 function get_important_points(c::Cone{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
-    return T[c.φStart, c.φStop]
+    return geom_round.(T[c.φStart, c.φStop])
 end
 
 function get_important_points(c::Cone{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
-    return T[c.zStart, c.zStop]
+    return geom_round.(T[c.zStart, c.zStop])
 end
 
 function sample(c::Cone{T}, stepsize::Vector{T}) where T
