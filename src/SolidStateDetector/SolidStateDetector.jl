@@ -336,7 +336,7 @@ function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::
                 n_grid_points::Int = g_imax - g_imin + 1
                 n::Int = Int(round(Δg / stepsize))
                 if n > 2 * n_grid_points
-                    stepsize = Δg / (2 * n_grid_points)
+                    stepsize = Δg / (4 * n_grid_points)
                 end
             else
                 stepsize = 1
