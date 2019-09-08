@@ -17,7 +17,8 @@ Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ])
         gw3::Array{T, 2} = fssrb.geom_weights[3].weights  # z or z
 
         # for idx3 in 2:(size(fssrb.potential, 3) - 1)
-        @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
+        Base.Threads.@threads for idx3 in 2:(size(fssrb.potential, 3) - 1) 
+        # @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
             innerloops!( idx3, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, bulk_is_ptype, is_weighting_potential)
         end 
     end 
@@ -78,7 +79,7 @@ end
             r_inv_pwΔmpr_Δφ_ext_inv_r::T = r_inv_pwΔmpr * Δφ_ext_inv_r
             r_inv_pwΔmpr_Δφ_ext_inv_l::T = r_inv_pwΔmpr * Δφ_ext_inv_l
 
-            @fastmath @inbounds @simd ivdep for iz in 2:(size(fssrb.potential, 1) - 1)
+            @fastmath @inbounds for iz in 2:(size(fssrb.potential, 1) - 1)
                 inz::Int = nidx(iz, update_even_points, rφi_is_even_t)::Int
                 # izr::Int = get_rbidx_right_neighbour(iz, update_even_points, rφi_is_even)::Int # this is somehow slower than the two lines below
                 izr::Int = ifelse( rφi_is_even, iz, even_points ? iz - 1 : iz + 1)

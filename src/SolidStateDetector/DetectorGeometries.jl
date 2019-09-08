@@ -81,6 +81,11 @@ end
 
 function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: SSDFloat}
     imp::Vector{T} = []
+    for semiconductor in c.semiconductors
+        for g in vcat(semiconductor.geometry_positive,semiconductor.geometry_negative)
+            append!(imp, get_important_points(g, Val{s}()))
+        end
+    end
     for contact in c.contacts
         for g in vcat(contact.geometry_positive,contact.geometry_negative)
             append!(imp, get_important_points(g, Val{s}()))

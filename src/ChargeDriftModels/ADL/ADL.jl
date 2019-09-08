@@ -164,7 +164,7 @@ Applies the charge drift model onto the electric field vectors. The field vector
 function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
     #@showprogress for i in eachindex(df)
-    for i in eachindex(df)
+    @showprogress for i in eachindex(df)
         @inbounds df[i] = getVe(ef[i], chargedriftmodel)
     end
     return df
@@ -248,7 +248,7 @@ end
 function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
     df = Array{SVector{3,T}, 3}(undef, size(ef))
     #@showprogress for i in eachindex(df)
-    for i in eachindex(df)
+    @showprogress for i in eachindex(df)
         @inbounds df[i] = getVh(ef[i], chargedriftmodel)
     end
     return df
