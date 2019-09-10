@@ -84,9 +84,9 @@ function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :
     if only_2d
         iφ::Int = 2
         @inbounds for iz in axes(fssrb.potential, 1)
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, nrbi, ax2, int2, fssrb.grid_boundary_factors[2], only2d)
-            end
+            # for ir in axes(fssrb.potential, 3)
+            #     apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, nrbi, ax2, int2, fssrb.grid_boundary_factors[2], only2d)
+            # end
             apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, ax1, int1, fssrb.grid_boundary_factors[1])
         end
         @inbounds for ir in axes(fssrb.potential, 3)
