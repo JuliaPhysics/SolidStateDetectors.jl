@@ -79,7 +79,7 @@ end
             r_inv_pwΔmpr_Δφ_ext_inv_r::T = r_inv_pwΔmpr * Δφ_ext_inv_r
             r_inv_pwΔmpr_Δφ_ext_inv_l::T = r_inv_pwΔmpr * Δφ_ext_inv_l
 
-            @fastmath @inbounds for iz in 2:(size(fssrb.potential, 1) - 1)
+            @fastmath @inbounds @simd ivdep for iz in 2:(size(fssrb.potential, 1) - 1)
                 inz::Int = nidx(iz, update_even_points, rφi_is_even_t)::Int
                 # izr::Int = get_rbidx_right_neighbour(iz, update_even_points, rφi_is_even)::Int # this is somehow slower than the two lines below
                 izr::Int = ifelse( rφi_is_even, iz, even_points ? iz - 1 : iz + 1)
