@@ -16,9 +16,7 @@ Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ])
         gw2::Array{T, 2} = fssrb.geom_weights[2].weights  # φ or y
         gw3::Array{T, 2} = fssrb.geom_weights[3].weights  # z or z
 
-        # for idx3 in 2:(size(fssrb.potential, 3) - 1)
-        Base.Threads.@threads for idx3 in 2:(size(fssrb.potential, 3) - 1) 
-        # @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
+        @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
             innerloops!( idx3, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, bulk_is_ptype, is_weighting_potential)
         end 
     end 
