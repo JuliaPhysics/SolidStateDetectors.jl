@@ -6,7 +6,7 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
     S: System (Cartesian, Cylindrical...)
 """
 struct Grid{T, N, S} <: AbstractGrid{T, N}
-    axes::NTuple{N, DiscreteAxis{T}} 
+    axes::NTuple{N, DiscreteAxis{T, BL, BR, I} where {BL, BR, I}} 
 end
 
 const CartesianGrid{T, N} = Grid{T, N, :cartesian} 
@@ -23,13 +23,25 @@ const SphericalGrid{T} = Grid{T, 3, :Spherical}
 @inline getindex(g::Grid{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = broadcast(getindex, g.axes, I)
 @inline getindex(g::Grid{T, N, S}, i::Int) where {T, N, S} = getproperty(g, :axes)[i]
 @inline getindex(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getindex(g, Val{s}())
+@inline getproperty(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getproperty(g, Val{s}())
 
-@inline getindex(g::CylindricalGrid{T}, ::Val{:r}) where {T} = g.axes[1]
-@inline getindex(g::CylindricalGrid{T}, ::Val{:φ}) where {T} = g.axes[2]
-@inline getindex(g::CylindricalGrid{T}, ::Val{:z}) where {T} = g.axes[3]
-@inline getindex(g::CartesianGrid{T}, ::Val{:x}) where {T} = g.axes[1]
-@inline getindex(g::CartesianGrid{T}, ::Val{:y}) where {T} = g.axes[2]
-@inline getindex(g::CartesianGrid{T}, ::Val{:z}) where {T} = g.axes[3]
+@inline getproperty(g::Grid{T}, ::Val{:axes}) where {T} = getfield(g, :axes)
+
+@inline getproperty(g::CylindricalGrid{T}, ::Val{:axes}) where {T} = getfield(g, :axes)
+@inline getproperty(g::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds g.axes[1]
+@inline getproperty(g::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds g.axes[2]
+@inline getproperty(g::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
+@inline getproperty(g::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds g.axes[1]
+@inline getproperty(g::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds g.axes[2]
+@inline getproperty(g::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
+
+
+@inline getindex(g::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds g.axes[1]
+@inline getindex(g::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds g.axes[2]
+@inline getindex(g::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
+@inline getindex(g::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds g.axes[1]
+@inline getindex(g::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds g.axes[2]
+@inline getindex(g::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
 
 function sizeof(g::Grid{T, N, S}) where {T, N, S}
     return sum( sizeof.(g.axes) )
@@ -137,9 +149,9 @@ end
 Base.convert(T::Type{Grid}, x::NamedTuple) = T(x)
 
 function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
-    axr::DiscreteAxis{T} = grid[:r]
-    axφ::DiscreteAxis{T} = grid[:φ]
-    axz::DiscreteAxis{T} = grid[:z]
+    axr::DiscreteAxis{T} = grid.r
+    axφ::DiscreteAxis{T} = grid.φ
+    axz::DiscreteAxis{T} = grid.z
     return (
         coordtype = "cylindrical",
         ndims = 3,
@@ -153,7 +165,7 @@ end
 function NamedTuple(grid::Grid{T, 3, :cartesian}) where {T}
     axx::DiscreteAxis{T} = grid[:x]
     axy::DiscreteAxis{T} = grid[:y]
-    axz::DiscreteAxis{T} = grid[:z]
+    axz::DiscreteAxis{T} = grid.z
     return (
         coordtype = "cartesian",
         ndims = 3,

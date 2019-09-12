@@ -71,7 +71,7 @@ Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
         :y, searchsortednearest(g[:y], T(y))
     elseif ismissing(x) && ismissing(y) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, y, z` is allowed.")
     end
@@ -80,7 +80,7 @@ Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
     elseif cross_section == :y
         g[:y][idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
 
     @series begin
@@ -88,11 +88,11 @@ Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
         if cross_section == :x
             xlabel --> "y / m"
             ylabel --> "z / m"
-            g[:y], g[:z], ep.data[idx, :, :]'
+            g[:y], g.z, ep.data[idx, :, :]'
         elseif cross_section == :y
             xlabel --> "x / m"
             ylabel --> "z / m"
-            g[:x], g[:z], ep.data[:, idx, :]'
+            g[:x], g.z, ep.data[:, idx, :]'
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"
@@ -104,9 +104,9 @@ Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
             seriescolor := :thermal
             st := :contours
             if cross_section == :x
-                g[:y], g[:z], ep.data[idx, :, :]'
+                g[:y], g.z, ep.data[idx, :, :]'
             elseif cross_section == :y
-                g[:x], g[:z], ep.data[:, idx, :]'
+                g[:x], g.z, ep.data[:, idx, :]'
             elseif cross_section == :z
                 g[:x], g[:y], ep.data[:,:,idx]
             end
@@ -132,27 +132,27 @@ end
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right) && g[:φ].interval.right != g[:φ].interval.left
-            if φ_rad > g[:φ].interval.right
-                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
-            elseif φ_rad < g[:φ].interval.left
-                φ_rad += g[:φ].interval.right - g[:φ].interval.left
+        while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left
+            if φ_rad > g.φ.interval.right
+                φ_rad -= g.φ.interval.right - g.φ.interval.left
+            elseif φ_rad < g.φ.interval.left
+                φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g[:φ], φ_rad)
+        :φ, searchsortednearest(g.φ, φ_rad)
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(g[:r], T(r))
+        :r, searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
     value::T = if cross_section == :φ
-        g[:φ][idx]
+        g.φ[idx]
     elseif cross_section == :r    
-        g[:r][idx]
+        g.r[idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
 
 
@@ -162,15 +162,15 @@ end
             title --> "Electric Potential @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
-            size --> ( 400, 350 / (g[:r][end] - g[:r][1]) * (g[:z][end] - g[:z][1]) )
-            g[:r], g[:z], ep.data[:, idx,:]'
+            size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
+            g.r, g.z, ep.data[:, idx,:]'
         elseif cross_section == :r
             title --> "Electric Potential @$(cross_section) = $(round(value, sigdigits = 2))"
-            g[:φ], g[:z], ep.data[idx,:,:]'
+            g.φ, g.z, ep.data[idx,:,:]'
         elseif cross_section == :z
             title --> "Electric Potential @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
-            g[:φ], g[:r], ep.data[:,:,idx]
+            g.φ, g.r, ep.data[:,:,idx]
         end
     end
     if contours_equal_potential
@@ -178,12 +178,12 @@ end
             seriescolor := :thermal
             st := :contours
             if cross_section == :φ
-                g[:r], g[:z], ep.data[:, idx,:]'
+                g.r, g.z, ep.data[:, idx,:]'
             elseif cross_section == :r
-                g[:φ], g[:z], ep.data[idx,:,:]'
+                g.φ, g.z, ep.data[idx,:,:]'
             elseif cross_section == :z
                 proj --> :polar
-                g[:φ], g[:r], ep.data[:,:,idx]
+                g.φ, g.r, ep.data[:,:,idx]
             end
         end
     end

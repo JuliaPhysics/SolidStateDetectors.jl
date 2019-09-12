@@ -11,27 +11,27 @@
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
-            if φ_rad > g[:φ].interval.right
-                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
-            elseif φ_rad < g[:φ].interval.left
-                φ_rad += g[:φ].interval.right - g[:φ].interval.left
+        while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
+            if φ_rad > g.φ.interval.right
+                φ_rad -= g.φ.interval.right - g.φ.interval.left
+            elseif φ_rad < g.φ.interval.left
+                φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g[:φ], φ_rad)
+        :φ, searchsortednearest(g.φ, φ_rad)
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(g[:r], T(r))
+        :r, searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
     value::T = if cross_section == :φ
-        g[:φ][idx]
+        g.φ[idx]
     elseif cross_section == :r    
-        g[:r][idx]
+        g.r[idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
 
     if cross_section == :φ
@@ -77,7 +77,7 @@ end
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
         :y, searchsortednearest(g[:y], T(y))
     elseif ismissing(x) && ismissing(y) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `x, y, z` is allowed.")
     end
@@ -87,7 +87,7 @@ end
     elseif cross_section == :y
         y --> g[:y][idx]
     elseif cross_section == :z
-        z --> g[:z][idx]
+        z --> g.z[idx]
     end
 
 

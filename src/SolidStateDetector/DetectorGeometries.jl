@@ -280,9 +280,9 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         Int[]
     end
 
-    axr::Vector{T} = grid[:r].ticks
-    axφ::Vector{T} = grid[:φ].ticks
-    axz::Vector{T} = grid[:z].ticks
+    axr::Vector{T} = grid.r.ticks
+    axφ::Vector{T} = grid.φ.ticks
+    axz::Vector{T} = grid.z.ticks
 
     for iz in axes(potential, 3)
         z::T = axz[iz]
@@ -347,7 +347,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 
     axx::Vector{T} = grid[:x].ticks
     axy::Vector{T} = grid[:y].ticks
-    axz::Vector{T} = grid[:z].ticks
+    axz::Vector{T} = grid.z.ticks
 
     for iz in axes(potential, 3)
         z::T = axz[iz]

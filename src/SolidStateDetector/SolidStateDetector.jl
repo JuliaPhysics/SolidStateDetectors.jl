@@ -352,8 +352,8 @@ end
 
 
 function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:φ}, φ::T )  where {T <: SSDFloat}
-    closest_φ_idx=searchsortednearest(grid[:φ].ticks, φ)
-    stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
+    closest_φ_idx=searchsortednearest(grid.φ.ticks, φ)
+    stepsize::Vector{T}= [minimum(diff(grid.r.ticks)), IntervalSets.width(grid.φ.interval) == 0.0 ? 0.05236 : minimum(diff(grid.φ.ticks)), minimum(diff(grid.z.ticks))]
     stepsize /= 2
     samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
     object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
