@@ -39,6 +39,7 @@ export Grid, CylindricalPoint, CartesianPoint
 
 export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export calculate_electric_potential!, calculate_weighting_potential!, get_active_volume
+export calculate_electric_field!
 export generate_charge_signals, generate_charge_signals!
 export AbstractChargeDriftModel
 export VacuumChargeDriftModel, ADLChargeDriftModel
