@@ -54,12 +54,12 @@ all depleted cells.
 function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
     active_volume::T = 0
 
-    only_2d::Bool = length(pts.φ) == 1
-    cyclic::T = pts.φ.interval.right
+    only_2d::Bool = length(pts.grid.φ) == 1
+    cyclic::T = pts.grid.φ.interval.right
 
-    r_ext::Vector{T} = get_extended_ticks(pts.r)
-    φ_ext::Vector{T} = get_extended_ticks(pts.φ)
-    z_ext::Vector{T} = get_extended_ticks(pts.z)
+    r_ext::Vector{T} = get_extended_ticks(pts.grid.r)
+    φ_ext::Vector{T} = get_extended_ticks(pts.grid.φ)
+    z_ext::Vector{T} = get_extended_ticks(pts.grid.z)
     Δr_ext::Vector{T} = diff(r_ext)
     Δφ_ext::Vector{T} = diff(φ_ext)
     Δz_ext::Vector{T} = diff(z_ext)
@@ -74,11 +74,11 @@ function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
         Δmpr_squared[1] = T(0.5) * (mpr[2]^2)
     end
 
-    isclosed::Bool = typeof(pts.φ.interval).parameters[2] == :closed 
-    for iz in eachindex(pts.z)
+    isclosed::Bool = typeof(pts.grid.φ.interval).parameters[2] == :closed 
+    for iz in eachindex(pts.grid.z)
         if !isclosed || only_2d
-            for iφ in eachindex(pts.φ)
-                for ir in eachindex(pts.r)
+            for iφ in eachindex(pts.grid.φ)
+                for ir in eachindex(pts.grid.r)
                     pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV::T = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
@@ -87,8 +87,8 @@ function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
                 end
             end
         elseif isclosed && !only_2d
-            for iφ in eachindex(pts.φ)
-                for ir in eachindex(pts.r)
+            for iφ in eachindex(pts.grid.φ)
+                for ir in eachindex(pts.grid.r)
                     pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
