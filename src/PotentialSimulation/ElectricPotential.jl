@@ -31,6 +31,7 @@ function ElectricPotential(setup::PotentialSimulationSetup{T, 3, :cartesian} )::
 end
 
 
+
 function NamedTuple(ep::ElectricPotential{T, 3}) where {T}
     return (
         grid = NamedTuple(ep.grid),
@@ -42,7 +43,7 @@ Base.convert(T::Type{NamedTuple}, x::ElectricPotential) = T(x)
 function ElectricPotential(nt::NamedTuple)
     grid = Grid(nt.grid)
     T = typeof(ustrip(nt.values[1]))
-    S = get_coordinate_type(grid)
+    S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     ElectricPotential{T, N, S}( ustrip.(uconvert.(u"V", nt.values)), grid)
 end

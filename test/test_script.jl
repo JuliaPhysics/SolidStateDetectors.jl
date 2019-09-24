@@ -28,7 +28,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     simulation = Simulation(det);
 
-    SSD.apply_initial_state!(simulation)
+    apply_initial_state!(simulation, ElectricPotential)
     p = if S == :cartesian
         plot(simulation.electric_potential, y = 0.002)
     else
@@ -37,7 +37,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     savefig(joinpath(outputdir, "$(key)_0_init_setup"))
 
     for nrefs in [0, 1, 2]
-        SSD.calculate_electric_potential!(simulation, max_refinements = nrefs)
+        calculate_electric_potential!(simulation, max_refinements = nrefs)
         p = if S == :cartesian
             plot(simulation.electric_potential, y = 0.002)
         else
@@ -45,7 +45,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
         end
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nrefs)_refinements"))
     end
-    SSD.calculate_electric_potential!(simulation, max_refinements = 3)
+    calculate_electric_potential!(simulation, max_refinements = 3)
     p = if S == :cartesian
         plot(
             plot(simulation.electric_potential, y = 0.002),
@@ -65,7 +65,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     n_contacts = length(simulation.detector.contacts)
     for contact in simulation.detector.contacts
-        SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
+        calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
     end
     wp_plots = if S != :cartesian
         [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
@@ -75,7 +75,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     plot( wp_plots..., size = (1000, 1000))
     savefig(joinpath(outputdir, "$(key)_2_Weighting_Potentials"))
 
-    SSD.calculate_electric_field!(simulation)
+    calculate_electric_field!(simulation)
 
     plot( simulation.electric_field.grid[1], simulation.electric_field.grid[3], SSD.get_electric_field_strength(simulation.electric_field)[:, div(length(simulation.electric_field.grid[2].ticks), 2), :]',
           st=:heatmap, title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
@@ -89,9 +89,9 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 
-    SSD.set_charge_drift_model!(simulation, ADLChargeDriftModel())
+    set_charge_drift_model!(simulation, ADLChargeDriftModel())
 
-    SSD.apply_charge_drift_model!(simulation)
+    apply_charge_drift_model!(simulation)
 
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
@@ -107,8 +107,8 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     energy_depos = T[1460]
     @assert in(pos[1], simulation.detector) "Test point $(pos[1]) not inside the detector $(key)."
 
-    event = SSD.Event(pos, energy_depos)
-    SSD.simulate!(event, simulation)
+    event = Event(pos, energy_depos)
+    simulate!(event, simulation)
 
     plot(simulation.detector)
     plot!(event.drift_paths)

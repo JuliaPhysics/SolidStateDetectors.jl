@@ -1,21 +1,31 @@
 function update_and_get_max_abs_diff!(  fssrb::PotentialSimulationSetupRB{T, N1, N2},
-                                        depletion_handling::Val{depletion_handling_enabled}, only2d::Val{only_2d} = Val{false}(), is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
-                                        use_nthreads::Int = Base.Threads.nthreads())::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
+                                        depletion_handling::Val{depletion_handling_enabled}, 
+                                        only2d::Val{only_2d} = Val{false}(), 
+                                        is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
+                                        use_nthreads::Int = Base.Threads.nthreads()
+                                        )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
     tmp_potential::Array{T, N2} = copy(fssrb.potential)
-    update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-    max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
-    return max_diff
+    for i in 1:10
+        update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+    end
+    # max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
+    mean_diff::T = T(0.1) * mean(abs.(tmp_potential - fssrb.potential))
+    return mean_diff
 end
 
 
-function update_till_convergence!(  fssrb::PotentialSimulationSetupRB{T, N1, N2}, 
-                                    convergence_limit::Real, bias_voltage::AbstractFloat;
+function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}, 
+                                    convergence_limit::Real;
                                     n_iterations_between_checks = 500,
-                                    depletion_handling::Val{depletion_handling_enabled} = Val{false}(), only2d::Val{only_2d} = Val{false}(), is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
-                                    use_nthreads::Int = Base.Threads.nthreads(), max_n_iterations::Int = -1)::Real where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
+                                    depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
+                                    only2d::Val{only_2d} = Val{false}(), 
+                                    is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
+                                    use_nthreads::Int = Base.Threads.nthreads(), 
+                                    max_n_iterations::Int = -1
+                                    )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
     n_iterations::Int = 0
     cf::T = Inf
-    cl::T = abs(convergence_limit * bias_voltage) # to get relative change in respect to bias voltage
+    cl::T = abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
     prog = ProgressThresh(cl, 0.1, "Convergence: ")
     while cf > cl
         for i in 1:n_iterations_between_checks
@@ -35,7 +45,8 @@ end
 
 
 
-function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindrical}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
+function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, :cylindrical}, 
+                max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T <: SSDFloat}
     inds_r::Vector{Int} = Int[]
     inds_φ::Vector{Int} = Int[]
     inds_z::Vector{Int} = Int[]
@@ -47,13 +58,13 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
     int2::Interval = ax2.interval
     int3::Interval = ax3.interval
 
-    refinement_value_r::T = max_diff[1]
-    refinement_value_φ::T = max_diff[2]
-    refinement_value_z::T = max_diff[3]
+    refinement_value_r::T = max_diffs[1]
+    refinement_value_φ::T = max_diffs[2]
+    refinement_value_z::T = max_diffs[3]
 
-    minimum_distance_r::T = minimum_distance[1]
-    minimum_distance_φ::T = minimum_distance[2]
-    minimum_distance_z::T = minimum_distance[3]
+    minimum_distance_r::T = minimum_distances[1]
+    minimum_distance_φ::T = minimum_distances[2]
+    minimum_distance_z::T = minimum_distances[3]
 
     minimum_distance_φ_deg::T = rad2deg(minimum_distance_φ)
 
@@ -202,7 +213,8 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
 end
 
 
-function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cartesian}, max_diff::AbstractArray, minimum_distance::AbstractArray)::NTuple{3, Vector{Int}} where {T}
+function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, :cartesian}, 
+                                max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T}
     inds_x::Vector{Int} = Int[]
     inds_y::Vector{Int} = Int[]
     inds_z::Vector{Int} = Int[]
@@ -214,13 +226,13 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cartesi
     int2::Interval = ax2.interval
     int3::Interval = ax3.interval
 
-    refinement_value_x::T = max_diff[1]
-    refinement_value_y::T = max_diff[2]
-    refinement_value_z::T = max_diff[3]
+    refinement_value_x::T = max_diffs[1]
+    refinement_value_y::T = max_diffs[2]
+    refinement_value_z::T = max_diffs[3]
 
-    minimum_distance_x::T = minimum_distance[1]
-    minimum_distance_y::T = minimum_distance[2]
-    minimum_distance_z::T = minimum_distance[3]
+    minimum_distance_x::T = minimum_distances[1]
+    minimum_distance_y::T = minimum_distances[2]
+    minimum_distance_z::T = minimum_distances[3]
 
     ax_x::Vector{T} = collect(grid.axes[1])
     ax_y::Vector{T} = collect(grid.axes[2])
@@ -303,4 +315,11 @@ function check_for_refinement( potential::Array{T, 3}, grid::Grid{T, 3, :cartesi
     
 
     return sort(inds_x), sort(inds_y), sort(inds_z)
+end
+
+function refine(p::ScalarPotential, max_diffs::Vector{<:Real}, minimum_distances::Vector{<:Real})::typeof(p) 
+    T = eltype(p.grid)
+    refine_at_inds = _get_refinement_inds(p.data, p.grid, T.(max_diffs), T.(minimum_distances))
+    potential, grid = add_points_and_interpolate(p.data, p.grid, refine_at_inds...)
+    return typeof(p)(potential, grid)
 end

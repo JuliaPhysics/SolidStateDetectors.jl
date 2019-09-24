@@ -115,7 +115,7 @@ end
 function PointTypes(nt::NamedTuple)
     grid = Grid(nt.grid)
     T = typeof(grid[1].ticks[1])
-    S = get_coordinate_type(grid)
+    S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     PointTypes{T, N, S}( nt.values, grid )
 end

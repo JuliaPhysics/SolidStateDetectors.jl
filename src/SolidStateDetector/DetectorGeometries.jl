@@ -419,7 +419,7 @@ end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 init_grid_size::NTuple{3, Int} = (10, 10, 10),
-                init_grid_spacing::Union{Missing, Vector{<:Real}} = missing,
+                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
 
@@ -511,7 +511,8 @@ end
 
 function Grid(  detector::SolidStateDetector{T, :cartesian};
                 init_grid_size::NTuple{3, Int} = (10, 10, 10),
-                init_grid_spacing::Union{Missing, Vector{<:Real}} = missing)::CartesianGrid3D{T} where {T}
+                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
+                for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
     important_x_points::Vector{T} = get_important_points(detector, :x)
     important_y_points::Vector{T} = get_important_points(detector, :y)

@@ -189,7 +189,7 @@ end
                     spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, 
                     potential=true, contours_equal_potential=true, offset = (5e-5))
     sim = gdd.args[1]
-    S = get_coordinate_type(sim.electric_field.grid)
+    S = get_coordinate_system(sim.electric_field.grid)
     T = Float32
     
     dim_array = [φ, r, x, y, z]

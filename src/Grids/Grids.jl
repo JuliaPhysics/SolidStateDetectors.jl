@@ -113,7 +113,7 @@ include("RefineGrid.jl")
 end
 
 
-function get_coordinate_type(grid::Grid{T, N, S}) where {T, N, S}
+function get_coordinate_system(grid::Grid{T, N, S}) where {T, N, S}
     return S
 end
 function get_number_of_dimensions(grid::Grid{T, N, S}) where {T, N, S}
