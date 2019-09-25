@@ -45,6 +45,19 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
             break
         end
     end
+    if depletion_handling_enabled
+        tmp_pointtypes::Array{PointType, N2} = fssrb.pointtypes .& undepleted_bit
+        @showprogress "Checking depletion regions" for i in 1:10
+            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            @inbounds for i in eachindex(fssrb.pointtypes)
+                if (fssrb.pointtypes[i] & undepleted_bit == 0) && (tmp_pointtypes[i] > 0)
+                    fssrb.pointtypes[i] += undepleted_bit
+                elseif (fssrb.pointtypes[i] & undepleted_bit > 0) && (tmp_pointtypes[i] == 0)
+                    tmp_pointtypes[i] += undepleted_bit
+                end
+            end
+        end
+    end
 
     ProgressMeter.finish!(prog)
     return cf
