@@ -46,7 +46,7 @@ export get_active_volume
 export generate_charge_signals, generate_charge_signals!
 export VacuumChargeDriftModel, ADLChargeDriftModel
 export Simulation, simulate!
-export Event
+export Event, drift_charges!
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
