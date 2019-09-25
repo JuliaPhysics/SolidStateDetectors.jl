@@ -19,14 +19,14 @@ T = Float32
     end
     @testset "Simulate example detector: Coax" begin
         sim = Simulation(SSD_examples[:Coax])
-        simulate!(sim, max_refinements = 1, verbose = true)
+        simulate!(sim, max_refinements = 0, verbose = true)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
         for i in 1:length(evt.signals)
             signalsum += abs(evt.signals[i][end])
         end
-        @test isapprox( signalsum, T(2), atol = 1e-2 )
+        @test isapprox( signalsum, T(2), atol = 5e-2 )
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation(SSD_examples[:BEGe])
