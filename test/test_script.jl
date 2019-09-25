@@ -36,34 +36,27 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     end
     savefig(joinpath(outputdir, "$(key)_0_init_setup"))
 
-    for nrefs in [0, 1, 2]
-        calculate_electric_potential!(simulation, max_refinements = nrefs)
+    for nrefs in [0, 1, 2, 3]
+        update_till_convergence!(simulation, ElectricPotential)
         p = if S == :cartesian
-            plot(simulation.electric_potential, y = 0.002)
+            plot(
+                plot(simulation.electric_potential, y = 0.002),
+                plot(simulation.ρ, y = 0.002),
+                plot(simulation.point_types, y = 0.002),
+                size = (1000, 600), layout= (1, 3)
+            )
         else
-            plot(simulation.electric_potential)
+            plot(
+                plot(simulation.electric_potential),
+                plot(simulation.ρ),
+                plot(simulation.point_types),
+                size = (1000, 600), layout= (1, 3)
+            )
         end
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nrefs)_refinements"))
+        refine!(simulation, ElectricPotential)
     end
-    calculate_electric_potential!(simulation, max_refinements = 3)
-    p = if S == :cartesian
-        plot(
-            plot(simulation.electric_potential, y = 0.002),
-            plot(simulation.ρ, y = 0.002),
-            plot(simulation.point_types, y = 0.002),
-            size = (1000, 600), layout= (1, 3)
-        )
-    else
-        plot(
-            plot(simulation.electric_potential),
-            plot(simulation.ρ),
-            plot(simulation.point_types),
-            size = (1000, 600), layout= (1, 3)
-        )
-    end
-    savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(3)_refinements"))
 
-    n_contacts = length(simulation.detector.contacts)
     for contact in simulation.detector.contacts
         calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
     end
