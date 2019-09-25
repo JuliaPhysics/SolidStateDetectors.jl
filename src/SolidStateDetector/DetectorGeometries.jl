@@ -257,6 +257,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
             if in(pt, sc)
                 ρ_semiconductor = get_charge_density(sc, pt) * elementary_charge
                 ϵ = sc.material.ϵ_r
+                break
             end
         end
     elseif in(pt, ssd.passives)
@@ -264,6 +265,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
             if pt in ep
                 ρ_fix = get_charge_density(ep, pt) * elementary_charge
                 ϵ = ep.material.ϵ_r
+                break
             end
         end
     end
