@@ -47,13 +47,22 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
     end
     if depletion_handling_enabled
         tmp_pointtypes::Array{PointType, N2} = fssrb.pointtypes .& undepleted_bit
-        @showprogress "Checking depletion regions" for i in 1:10
+        @showprogress "Checking undepleted regions " for i in 1:10
             update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
             @inbounds for i in eachindex(fssrb.pointtypes)
                 if (fssrb.pointtypes[i] & undepleted_bit == 0) && (tmp_pointtypes[i] > 0)
                     fssrb.pointtypes[i] += undepleted_bit
                 elseif (fssrb.pointtypes[i] & undepleted_bit > 0) && (tmp_pointtypes[i] == 0)
                     tmp_pointtypes[i] += undepleted_bit
+                end
+            end
+        end
+        @inbounds for i in eachindex(fssrb.pointtypes)
+            if (fssrb.pointtypes[i] & update_bit == 0)
+                fssrb.pointtypes[i] = PointType(0)
+            else
+                if (fssrb.pointtypes[i] & pn_junction_bit == 0)
+                    if fssrb.pointtypes[i] & undepleted_bit > 0 fssrb.pointtypes[i] -= undepleted_bit end
                 end
             end
         end
