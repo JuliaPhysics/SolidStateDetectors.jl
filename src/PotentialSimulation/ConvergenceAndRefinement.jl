@@ -346,7 +346,7 @@ function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, :cartes
     return sort(inds_x), sort(inds_y), sort(inds_z)
 end
 
-function refine(p::ScalarPotential, max_diffs::Vector{<:Real}, minimum_distances::Vector{<:Real})::typeof(p) 
+function refine(p::ScalarPotential, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})::typeof(p) 
     T = eltype(p.grid)
     refine_at_inds = _get_refinement_inds(p.data, p.grid, T.(max_diffs), T.(minimum_distances))
     potential, grid = add_points_and_interpolate(p.data, p.grid, refine_at_inds...)

@@ -418,10 +418,28 @@ function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
 end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
-                init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
+
+    world_diffs = [(getproperty.(detector.world.intervals, :right) .- getproperty.(detector.world.intervals, :left))...]
+    world_diffs[2] = world_diffs[2] * 0.3 * detector.world.intervals[1].right # in radiance
+    inds::Vector{Int} = sortperm([world_diffs...])
+    min_n_ticks::Int = 8
+    ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
+        inv(world_diffs[inds[1]])
+    elseif world_diffs[inds[2]] > 0
+        inv(world_diffs[inds[2]])
+    elseif world_diffs[inds[3]] > 0
+        inv(world_diffs[inds[3]])
+    else
+        error("This should not happen... World has no dimension")
+    end
+    init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[inds[1]], RoundUp))
+    init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[inds[2]], RoundUp))
+    init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[inds[3]], RoundUp))
+    init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3][inds] )
 
     init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true
@@ -429,6 +447,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
         missing, false
     end
 
+    
     important_r_points::Vector{T} = get_important_points(detector, :r)
     important_φ_points::Vector{T} = get_important_points(detector, :φ)
     important_z_points::Vector{T} = get_important_points(detector, :z)
@@ -510,9 +529,26 @@ end
 
 
 function Grid(  detector::SolidStateDetector{T, :cartesian};
-                init_grid_size::NTuple{3, Int} = (10, 10, 10),
+                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
+
+    world_diffs = [(getproperty.(detector.world.intervals, :right) .- getproperty.(detector.world.intervals, :left))...]
+    inds::Vector{Int} = sortperm([world_diffs...])
+    min_n_ticks::Int = 8
+    ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
+        inv(world_diffs[inds[1]])
+    elseif world_diffs[inds[2]] > 0
+        inv(world_diffs[inds[2]])
+    elseif world_diffs[inds[3]] > 0
+        inv(world_diffs[inds[3]])
+    else
+        error("This should not happen... World has no dimension")
+    end
+    init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[inds[1]], RoundUp))
+    init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[inds[2]], RoundUp))
+    init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[inds[3]], RoundUp))
+    init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3][inds] )
 
     important_x_points::Vector{T} = get_important_points(detector, :x)
     important_y_points::Vector{T} = get_important_points(detector, :y)
