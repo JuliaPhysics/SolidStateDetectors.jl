@@ -8,7 +8,7 @@ T = Float32
 
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation(SSD_examples[:InvertedCoax])
-        simulate!(sim, max_refinements = 1)
+        simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
@@ -19,7 +19,7 @@ T = Float32
     end
     @testset "Simulate example detector: Coax" begin
         sim = Simulation(SSD_examples[:Coax])
-        simulate!(sim, max_refinements = 1)
+        simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
@@ -30,7 +30,7 @@ T = Float32
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation(SSD_examples[:BEGe])
-        simulate!(sim, max_refinements = 1)
+        simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
@@ -41,7 +41,7 @@ T = Float32
     end
     @testset "Simulate example detector: CGD" begin
         sim = Simulation(SSD_examples[:CGD])
-        simulate!(sim, max_refinements = 1)
+        simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event([CartesianPoint{T}(5e-3, 5e-3, 5e-3)])
         simulate!(evt, sim)
         signalsum = T(0)
@@ -52,7 +52,7 @@ T = Float32
     end
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation(SSD_examples[:Spherical])
-        simulate!(sim, max_refinements = 2)
+        simulate!(sim, max_refinements = 2, verbose = true)
         evt = Event([CartesianPoint{T}(0,0,0)])
         simulate!(evt, sim)
         signalsum = T(0)

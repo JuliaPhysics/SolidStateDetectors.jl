@@ -17,7 +17,7 @@ T = Float32
 
 plot() # creates a plot so that the plots during the following loop pop up.
 
-key = :InvertedCoax
+key = :CGD
 
 for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 # for key in keys(SSD_examples)
@@ -30,13 +30,32 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     apply_initial_state!(simulation, ElectricPotential)
     p = if S == :cartesian
-        plot(simulation.electric_potential, y = 0.002)
+        plot(
+            plot(simulation.electric_potential, y = 0.002),
+            plot(simulation.ρ, y = 0.002),
+            plot(simulation.point_types, y = 0.002),
+            size = (1000, 600), layout= (1, 3)
+        )
     else
-        plot(simulation.electric_potential)
+        plot(
+            plot(simulation.electric_potential),
+            plot(simulation.ρ),
+            plot(simulation.point_types),
+            size = (1000, 600), layout= (1, 3)
+        )
     end
     savefig(joinpath(outputdir, "$(key)_0_init_setup"))
 
-    for nrefs in [0, 1, 2, 3]
+    nrefs = if key == :InvertedCoax
+        0:3
+    elseif key == :Spherical
+        0:3
+    elseif key == :CGD
+        0:3
+    else
+        0:1
+    end
+    for nref in nrefs
         update_till_convergence!(simulation, ElectricPotential)
         p = if S == :cartesian
             plot(
@@ -53,12 +72,15 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
                 size = (1000, 600), layout= (1, 3)
             )
         end
-        savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nrefs)_refinements"))
-        refine!(simulation, ElectricPotential)
+        savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nref)_refinements"))
+        if nref != nrefs[end] 
+            refine!(simulation, ElectricPotential, (1e-5, 1e-5, 1e-5), (1e-5, 1e-5, 1e-5), update_other_fields = true)
+        end
+        @show size(simulation.electric_potential.grid)
     end
 
     for contact in simulation.detector.contacts
-        calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 1 : 2)
+        calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 1, verbose = true)
     end
     wp_plots = if S != :cartesian
         [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
