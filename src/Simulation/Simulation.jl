@@ -183,7 +183,7 @@ function update_till_convergence!( sim::Simulation{T},
         sor_consts = T(sor_consts[1])
     end
     only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
-
+    
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} = 
         PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data, sor_consts = T.(sor_consts))
     
@@ -280,17 +280,19 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 """
 function refine!(sim::Simulation{T}, ::Type{ElectricPotential}, 
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)), 
-                    minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0))) where {T <: SSDFloat}
+                    minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
+                    update_other_fields::Bool = false) where {T <: SSDFloat}
     sim.electric_potential = refine(sim.electric_potential, max_diffs, minimum_distances)
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} = 
-        PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data)
+    if update_other_fields
+        fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} = 
+            PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data)
 
-    sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), sim.electric_potential.grid)
-    sim.ρ_fix = ChargeDensity(FixedChargeDensityArray(fssrb), sim.electric_potential.grid)
-    sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), sim.electric_potential.grid)
-    sim.point_types = PointTypes(PointTypeArray(fssrb), sim.electric_potential.grid)
-
+        sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), sim.electric_potential.grid)
+        sim.ρ_fix = ChargeDensity(FixedChargeDensityArray(fssrb), sim.electric_potential.grid)
+        sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), sim.electric_potential.grid)
+        sim.point_types = PointTypes(PointTypeArray(fssrb), sim.electric_potential.grid)
+    end
     nothing
 end
 """
