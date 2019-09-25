@@ -8,7 +8,6 @@ function update_and_get_max_abs_diff!(  fssrb::PotentialSimulationSetupRB{T, N1,
     for i in 1:10
         update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
     end
-    # max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
     mean_diff::T = T(0.1) * mean(abs.(tmp_potential - fssrb.potential))
     return mean_diff
 end
@@ -25,6 +24,7 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
                                     )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
     n_iterations::Int = 0
     cf::T = Inf
+    cfs::Vector{T} = fill(cf, 10)
     cl::T = abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
     prog = ProgressThresh(cl, 0.1, "Convergence: ")
     while cf > cl
@@ -32,13 +32,20 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
             update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
         end
         cf = update_and_get_max_abs_diff!(fssrb, depletion_handling, only2d, is_weighting_potential, use_nthreads)
+        @inbounds cfs[1:end-1] = cfs[2:end]
+        @inbounds cfs[end] = cf
+        slope::T = abs(mean(diff(cfs)))
         ProgressMeter.update!(prog, cf)
         n_iterations += n_iterations_between_checks
+        if slope < cl
+            cf = slope
+        end
         if max_n_iterations > 0 && n_iterations > max_n_iterations
             @info "Maximum number of iterations reached. (`n_iterations = $(n_iterations)`)"
             break
         end
     end
+
     ProgressMeter.finish!(prog)
     return cf
 end
