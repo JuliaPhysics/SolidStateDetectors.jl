@@ -26,10 +26,10 @@ function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat,
     world = World(Val(S), world_limits)
 
     return SolidStateDetector{T, S}(
-        "EmptyDetector", 
+        "EmptyDetector",
         default_unit_dict(),
         world,
-        Dict(), 
+        Dict(),
         material_properties[materials["vacuum"]],
         semiconductors,
         contacts,
@@ -41,15 +41,15 @@ function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
     S::Symbol = :cartesian
     return SolidStateDetector{T, S}()
 end
-function SolidStateDetector()::SolidStateDetector{Float32, :cartesian} 
+function SolidStateDetector()::SolidStateDetector{Float32, :cartesian}
     return SolidStateDetector{Float32, :cartesian}()
 end
 
 function default_unit_dict()::Dict{String, Unitful.Units}
-    return Dict{String, Unitful.Units}(  
+    return Dict{String, Unitful.Units}(
         "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V", 
-        "angle" => u"°", 
+        "potential" => u"V",
+        "angle" => u"°",
         "temperature" => u"K"
     )
 end
@@ -89,7 +89,7 @@ function construct_objects(T, objects::Vector, semiconductors, contacts, passive
         elseif obj["type"] == "passive"
             push!(passives, construct_passive(T, obj, inputunit_dict))
         else
-            @warn "please spcify the calss to bei either a \"semiconductor\", a \"contact\", or \"passive\""
+            @warn "please specify the class to be either a \"semiconductor\", a \"contact\", or \"passive\""
         end
     end
     nothing
@@ -170,10 +170,10 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     grid_type::Symbol = :cartesian
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     medium::NamedTuple = material_properties[materials["vacuum"]]
-    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(  
+    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(
         "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V", 
-        "angle" => u"°", 
+        "potential" => u"V",
+        "angle" => u"°",
         "temperature" => u"K"
     )
     inputunits = construct_units(config_file)
@@ -307,7 +307,7 @@ function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::
             ax::Vector{T} = grid[sax].ticks
             imin::Int = searchsortednearest(ax, minimum(imps_ax))
             imax::Int = searchsortednearest(ax, maximum(imps_ax))
-
+            
             ax = ax[imin:imax]
             delete_inds::Vector{Int} = Int[]
             for imp in imps_ax
@@ -315,18 +315,31 @@ function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::
             end
             unique!(sort!(delete_inds))
             deleteat!(ax, delete_inds)
-            stepsize::T = if length(ax) <= 1
-                T(1)
-            else
-                minimum(diff(ax)) / 4
-            end
+            stepsize::T = length(ax) <= 1 ? T(1) : geom_round((minimum(diff(ax)) / 4))
             imps_g = get_important_points(g, Val(sax))
             unique!(sort!(imps_g))
             if length(imps_g) > 1
                 min_imps_g::T = minimum(diff(imps_g)) / 4
                 if min_imps_g < stepsize
-                    stepsize = min_imps_g
+                    stepsize = geom_round(min_imps_g)
                 end
+            end
+            imps_g_min::T, imps_g_max::T = if length(imps_g) > 0
+                minimum(imps_g), maximum(imps_g)
+            else
+                0, 0
+            end
+            Δg::T = (imps_g_max - imps_g_min)
+            if Δg > 0 
+                g_imin::Int = searchsortednearest(ax, imps_g_min)
+                g_imax::Int = searchsortednearest(ax, imps_g_max)
+                n_grid_points::Int = g_imax - g_imin + 1
+                n::Int = Int(round(Δg / stepsize))
+                if n > 2 * n_grid_points
+                    stepsize = Δg / (4 * n_grid_points)
+                end
+            else
+                stepsize = 1
             end
             if iszero(stepsize) stepsize = 1 end
             push!(stepsizes, stepsize)
@@ -339,8 +352,8 @@ end
 
 
 function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:φ}, φ::T )  where {T <: SSDFloat}
-    closest_φ_idx=searchsortednearest(grid[:φ].ticks, φ)
-    stepsize::Vector{T}= [minimum(diff(grid[:r].ticks)), IntervalSets.width(grid[:φ].interval) == 0.0 ? 0.05236 : minimum(diff(grid[:φ].ticks)), minimum(diff(grid[:z].ticks))]
+    closest_φ_idx=searchsortednearest(grid.φ.ticks, φ)
+    stepsize::Vector{T}= [minimum(diff(grid.r.ticks)), IntervalSets.width(grid.φ.interval) == 0.0 ? 0.05236 : minimum(diff(grid.φ.ticks)), minimum(diff(grid.z.ticks))]
     stepsize /= 2
     samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
     object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])

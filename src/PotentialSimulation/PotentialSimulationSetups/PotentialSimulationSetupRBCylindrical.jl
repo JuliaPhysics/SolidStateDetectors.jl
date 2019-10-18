@@ -1,5 +1,5 @@
 function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, grid::Grid{T, 3, :cylindrical} = Grid(ssd),
-                potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = [1.0, 1.0],
+                potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = (1.0, 1.0),
                 weighting_potential_contact_id::Union{Missing, Int} = missing
                 )::PotentialSimulationSetupRB{T} where {T}
     r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0

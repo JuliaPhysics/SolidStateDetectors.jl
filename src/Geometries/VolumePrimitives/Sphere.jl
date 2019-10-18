@@ -70,21 +70,21 @@ end
 
 # For proper grid creation we also need the function get_important_points:
 function get_important_points(s::Sphere{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    v::Vector{T} = T[ s.org.x - s.r, s.org.x, s.org.x + s.r, 
-                      s.org.y - s.r, s.org.y, s.org.y + s.r ] 
+    v::Vector{T} = geom_round.(T[ s.org.x - s.r, s.org.x, s.org.x + s.r, 
+                                  s.org.y - s.r, s.org.y, s.org.y + s.r ]) 
     return findall(r -> r >= 0 , v)
 end
 function get_important_points(s::Sphere{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
     return T[ ]
 end
 function get_important_points(s::Sphere{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
-    return T[ s.org.z - s.r, s.org.z, s.org.z + s.r]
+    return geom_round.(T[ s.org.z - s.r, s.org.z, s.org.z + s.r])
 end
 function get_important_points(s::Sphere{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return T[ s.org.x - s.r, s.org.x, s.org.x + s.r]
+    return geom_round.(T[ s.org.x - s.r, s.org.x, s.org.x + s.r])
 end
 function get_important_points(s::Sphere{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return T[ s.org.y - s.r, s.org.y, s.org.y + s.r]
+    return geom_round.(T[ s.org.y - s.r, s.org.y, s.org.y + s.r])
 end
 
 # and a sample function to paint the primitive on the grid (necessary if the object is small)

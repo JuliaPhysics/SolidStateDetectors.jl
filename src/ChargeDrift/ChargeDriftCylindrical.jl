@@ -47,11 +47,11 @@ function drift_charge!(
                     if i == 1000 && verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
                     drift_path[istep] = next_pos
                 elseif cd_point_type == CD_BULK
-                    if verbose @warn ("Internal error for charge stating at $startpos") end
+                    if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
                     done = true
                 else # elseif cd_point_type == CD_OUTSIDE      
-                    if verbose @warn ("Internal error for charge stating at $startpos") end
+                    if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
                     done = true
                 end

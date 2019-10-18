@@ -160,7 +160,7 @@ end
 function add_points_and_interpolate(potential::Array{T, 3}, grid::CylindricalGrid{T}, idcs_r::Vector{Int}, idcs_φ::Vector{Int}, idcs_z::Vector{Int})::Tuple{Array{T, 3}, CylindricalGrid{T}} where {T}
     potential::Array{T, 3}, grid::CylindricalGrid{T} = add_points_in_r_and_interpolate(potential, grid, idcs_r)
     potential, grid = add_points_in_φ_and_interpolate(potential, grid, idcs_φ)
-    if isodd(length(grid[:φ])) && length(length(grid[:φ])) != 1
+    if isodd(length(grid.φ)) && length(length(grid.φ)) != 1
         potential, grid = add_points_in_φ_and_interpolate(potential, grid, [1])
     end    
     potential, grid = add_points_in_z_and_interpolate(potential, grid, idcs_z)
@@ -176,7 +176,7 @@ end
 
 
 function add_points_in_z_and_interpolate(potential::Array{T, 3}, grid::CartesianGrid3D{T}, idcs::Vector{Int})::Tuple{Array{T, 3}, CartesianGrid3D{T}} where {T}
-    ax::Vector{T} = collect(grid[:z])
+    ax::Vector{T} = collect(grid.z)
     n = length(idcs)
     if n == 0 return potential, grid end
     if idcs[end] >= length(ax)
@@ -211,7 +211,7 @@ function add_points_in_z_and_interpolate(potential::Array{T, 3}, grid::Cartesian
 
     BL::Symbol = typeof(grid.axes[3]).parameters[2]
     BR::Symbol = typeof(grid.axes[3]).parameters[3]
-    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid[:z].interval, ax )
+    da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid.z.interval, ax )
     grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (grid[:x], grid[:y], da) )
 
     return potential, grid
@@ -254,7 +254,7 @@ function add_points_in_x_and_interpolate(potential::Array{T, 3}, grid::Cartesian
     BL::Symbol = typeof(grid[:x]).parameters[2]
     BR::Symbol = typeof(grid[:x]).parameters[3]
     da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid[:x].interval, ax )
-    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (da, grid[:y], grid[:z]) )
+    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (da, grid[:y], grid.z) )
 
     return potential, grid
 end
@@ -296,7 +296,7 @@ function add_points_in_y_and_interpolate(potential::Array{T, 3}, grid::Cartesian
     BL::Symbol = typeof(grid[:y]).parameters[2]
     BR::Symbol = typeof(grid[:y]).parameters[3]
     da::DiscreteAxis{T, BL, BR} = DiscreteAxis{T, BL, BR}( grid[:y].interval, ax )
-    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (grid[:x], da,  grid[:z]) )
+    grid::CartesianGrid3D{T} = CartesianGrid3D{T}( (grid[:x], da,  grid.z) )
 
     return potential, grid
 end
