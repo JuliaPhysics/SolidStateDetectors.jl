@@ -315,11 +315,11 @@ end
     end
 end
 
-@recipe function f(c::SolidStateDetector{T}; coloring = [], labeling = []) where T
-    legendfont --> 16
+@recipe function f(c::SolidStateDetector{T}; coloring = [], labeling = [], gfs = 13, lfs = 16, tfs = 13) where T
+    legendfontsize := lfs
     # aspect_ratio := 1
-    tickfontsize --> 9
-    guidefontsize --> 13
+    tickfontsize := tfs
+    guidefontsize := gfs
     lw --> 2
     # xlabel --> "\n x / m"
     # ylabel --> "\n y / m"
@@ -344,6 +344,7 @@ end
     else
         for (ic,contact) in enumerate(c.contacts)
             @series begin
+                guidefontsize --> 22
                 !isempty(coloring) ? c --> coloring[ic] : nothing
                 !isempty(labeling) ? label --> labeling[ic] : nothing
                 contact
