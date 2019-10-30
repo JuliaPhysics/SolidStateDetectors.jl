@@ -63,7 +63,7 @@ T = Float32
     end
     @testset "Simulate example detector: SigGen Inverted Coax" begin
         sim = Simulation(SSD_examples[:SigGen])
-        simulate!(sim, max_refinements = max_refinements)
+        simulate!(sim, max_refinements = 1)
         evt = SSD.Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
         simulate!(evt, sim)
         signalsum::T = 0
