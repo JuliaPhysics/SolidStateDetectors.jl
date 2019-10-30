@@ -251,7 +251,7 @@ function siggentodict(config::Dict;
     #>----------------Contacts START-------------------------------------------<
 
 
-    geometry_1   = [] # gathers all parts of contact_1
+    geometry_1   = Any[] # gathers all parts of contact_1
 
     #>----------------Area/volume of point contact-----------------------------<
     #>----------------Contact 1------------------------------------------------<
@@ -293,7 +293,7 @@ function siggentodict(config::Dict;
                                            "parts" => geometry_1));
 
     #>----------------Contact 2------------------------------------------------<
-    geometry_2 = []
+    geometry_2 = Any[]
 
     if config["wrap_around_radius"] != 0.0
         bottom = Dict("type" => "tube",
@@ -404,17 +404,17 @@ function siggentodict(config::Dict;
     #>----------------Final configuration--------------------------------------<
 
 
-    impurity_z0       = config["impurity_z0"]*1e10
-    impurity_gradient = config["impurity_gradient"]*1e10
-    if units["length"] == "mm"
-        impurity_z0      /= 1e3
-        impurity_gradient /= 1e3
+    impurity_z0            = config["impurity_z0"]*1e10
+    impurity_gradient      = config["impurity_gradient"]*1e10
+    if units["length"]     == "mm"
+        impurity_z0        /= 1e3
+        impurity_gradient  /= 1e4
     elseif units["length"] == "m"
-        impurity_z0      *= 1e6
-        impurity_gradient *= 1e6
+        impurity_z0        *= 1e6
+        impurity_gradient  *= 1e8
     end
     
-    objects = [Dict("type"        => "semiconductor",
+    objects = Any[Dict("type"        => "semiconductor",
                     "material"    => "HPGe",
                     "bulk_type"   => "p",
                     "temperature" => config["xtal_temp"],
