@@ -10,7 +10,7 @@ Non-existing parameteres are set to 0.
 """
 function readsiggen(file_path::String; T::Type=Float64)
     detector_name = split(basename(file_path), ".config")[1]
-
+    detector_name = "Public Inverted Coax"
     config = Dict("name"       => detector_name,
         "verbosity_level"      => 0,
         "xtal_length"          => 0,
