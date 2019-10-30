@@ -256,7 +256,7 @@ function siggentodict(config::Dict;
     #>----------------Area/volume of point contact-----------------------------<
     #>----------------Contact 1------------------------------------------------<
     # Depending on whether the contact is a borehole or not
-    if config["pc_radius"] != 0 && config["pc_length"] >= 1 # below this, it is the thickness of the layer
+    if config["pc_radius"] != 0 && config["pc_length"] >= 5 # below this, it is the thickness of the layer
         borehole_wall = Dict(    "type" => "tube",
              "r"         => Dict("from" => config["pc_radius"],
                                    "to" => config["pc_radius"]),
