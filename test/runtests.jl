@@ -5,7 +5,7 @@ using Test
 T = Float32
 
 @testset "Package SolidStateDetectors" begin
-
+    #=
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation(SSD_examples[:InvertedCoax])
         simulate!(sim, max_refinements = 1, verbose = true)
@@ -60,7 +60,7 @@ T = Float32
             signalsum += abs(evt.signals[i][end])
         end
         @test isapprox( signalsum, T(2), atol = 1e-2 )
-    end
+    end =#
     @testset "Simulate example detector: SigGen Inverted Coax" begin
         sim = Simulation(SSD_examples[:SigGen])
         simulate!(sim, max_refinements = 1, verbose = true)
