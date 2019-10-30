@@ -9,8 +9,8 @@ Non-existing parameteres are set to 0.
 ...
 """
 function readsiggen(file_path::String; T::Type=Float64)
-    #detector_name = split(basename(file_path), ".config")[1]
-    detector_name = "Public Inverted Coax"
+    detector_name = split(basename(file_path), ".config")[1]
+
     config = Dict("name"       => detector_name,
         "verbosity_level"      => 0,
         "xtal_length"          => 0,
@@ -280,7 +280,8 @@ function siggentodict(config::Dict;
              "phi"       => Dict("from" => 0.0,
                                    "to" => 360.0),
              "h"         => config["pc_length"])
-        push!(geometry_1, pc_vol)
+        geometry_1 = pc_vol
+        #push!(geometry_1, pc_vol)
     end
 
     #>----------------Define contact 1-----------------------------------------<
