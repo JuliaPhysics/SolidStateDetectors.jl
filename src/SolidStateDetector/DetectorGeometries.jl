@@ -14,6 +14,7 @@ include("Object.jl")
 include("Passive.jl")
 include("Contacts.jl")
 include("Semiconductor.jl")
+include("SigGenInterface.jl")
 include("SolidStateDetector.jl")
 
 
@@ -30,8 +31,11 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
         parsed_dict = JSON.parse(dicttext)
     elseif endswith(filename, ".yaml")
         parsed_dict = YAML.load_file(filename)
+    elseif endswith(filename, ".config")
+        siggen_dict = readsiggen(filename)
+        parsed_dict = siggentodict(siggen_dict)
     else
-        error("currently only .json and .yaml files are supported.")
+        error("currently only .json, .yaml and .config (SigGen) files are supported.")
     end
     parsed_dict
 end
