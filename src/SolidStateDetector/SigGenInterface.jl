@@ -10,7 +10,7 @@ Non-existing parameteres are set to 0.
 """
 function readsiggen(file_path::String; T::Type=Float64)
     detector_name = split(basename(file_path), ".config")[1]
-    detector_name = "Public Inverted Coax"
+
     config = Dict("name"       => detector_name,
         "verbosity_level"      => 0,
         "xtal_length"          => 0,
@@ -270,6 +270,13 @@ function siggentodict(config::Dict;
                                    "to" => 360.0),
              "h"         => 0.0,
              "translate" => Dict("z"    => config["pc_length"]))
+        borehole_around = Dict(  "type" => "tube",
+             "r"         => Dict("from" => config["pc_radius"],
+                                   "to" => config["wrap_around_radius"] - config["ditch_thickness"]),
+             "phi"       => Dict("from" => 0.0,
+                                   "to" => 360.0),
+             "h"         => 0.0,
+             "translate" => Dict("z"    => 0.0)
         push!(geometry_1, borehole_wall)
         push!(geometry_1, borehole_top)
 
