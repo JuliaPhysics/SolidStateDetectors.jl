@@ -273,7 +273,7 @@ function siggentodict(config::Dict;
         push!(geometry_1, borehole_wall)
         push!(geometry_1, borehole_top)
 
-    elseif config["pc_radius"] != 0 && config["pc_length"] < 1
+    elseif config["pc_radius"] != 0 && config["pc_length"] < 5
         pc_vol = Dict(           "type" => "tube",
              "r"         => Dict("from" => 0.0,
                                    "to" => config["pc_radius"]),
