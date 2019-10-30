@@ -276,9 +276,10 @@ function siggentodict(config::Dict;
              "phi"       => Dict("from" => 0.0,
                                    "to" => 360.0),
              "h"         => 0.0,
-             "translate" => Dict("z"    => 0.0)
+             "translate" => Dict("z"    => 0.0))
         push!(geometry_1, borehole_wall)
         push!(geometry_1, borehole_top)
+        push!(geometry_1, borehole_around)
 
     elseif config["pc_radius"] != 0 && config["pc_length"] < 5
         pc_vol = Dict(           "type" => "tube",
