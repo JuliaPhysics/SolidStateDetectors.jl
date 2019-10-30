@@ -280,8 +280,7 @@ function siggentodict(config::Dict;
              "phi"       => Dict("from" => 0.0,
                                    "to" => 360.0),
              "h"         => config["pc_length"])
-        geometry_1 = pc_vol
-        #push!(geometry_1, pc_vol)
+        push!(geometry_1, pc_vol)
     end
 
     #>----------------Define contact 1-----------------------------------------<
@@ -290,8 +289,8 @@ function siggentodict(config::Dict;
                      "material"    => "HPGe",
                      "channel"     => 1,
                      "potential"   => 0.0,
-                     "geometry"    => geometry_1);#Dict("type"  => "union",
-                                      #     "parts" => geometry_1));
+                     "geometry"    => Dict("type"  => "union",
+                                           "parts" => geometry_1));
 
     #>----------------Contact 2------------------------------------------------<
     geometry_2 = Any[]
