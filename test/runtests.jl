@@ -61,7 +61,7 @@ T = Float32
         end
         @test isapprox( signalsum, T(2), atol = 1e-2 )
     end 
-    @testset "Simulate example detector: SigGen Inverted Coax" begin
+    @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation(SSD_examples[:SigGen])
         simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
