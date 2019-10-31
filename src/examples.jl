@@ -25,5 +25,5 @@ SSD_examples[:Spherical] = (
     joinpath(@__DIR__, "../examples/example_detector_config_files/public_spherical_detector_config.json")
 )
 SSD_examples[:SigGen] = (
-    joinpath(@__DIR__, "../examples/example_detector_config_files/public_ivc_config_SigGen.config")
+    joinpath(@__DIR__, "../examples/example_detector_config_files/public_ppc_config_SigGen.config")
 )
