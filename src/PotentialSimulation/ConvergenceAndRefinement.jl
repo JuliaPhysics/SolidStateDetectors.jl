@@ -8,13 +8,12 @@ function update_and_get_max_abs_diff!(  fssrb::PotentialSimulationSetupRB{T, N1,
     for i in 1:10
         update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
     end
-    mean_diff::T = T(0.1) * mean(abs.(tmp_potential - fssrb.potential))
-    return mean_diff
+    max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
+    return max_diff
 end
 
-
 function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}, 
-                                    convergence_limit::Real;
+                                    convergence_limit::T;
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
                                     only2d::Val{only_2d} = Val{false}(), 
@@ -25,7 +24,7 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
     n_iterations::Int = 0
     cf::T = Inf
     cfs::Vector{T} = fill(cf, 10)
-    cl::T = abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
+    cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
     prog = ProgressThresh(cl, 0.1, "Convergence: ")
     while cf > cl
         for i in 1:n_iterations_between_checks
@@ -38,9 +37,11 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
         ProgressMeter.update!(prog, cf)
         n_iterations += n_iterations_between_checks
         if slope < cl
+            # @info "Slope is basically 0 -> Converged: $slope"
             cf = slope
         end
         if max_n_iterations > 0 && n_iterations > max_n_iterations
+            # @show n_iterations_between_checks
             @info "Maximum number of iterations reached. (`n_iterations = $(n_iterations)`)"
             break
         end
