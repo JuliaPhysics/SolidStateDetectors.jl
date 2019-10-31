@@ -5,7 +5,7 @@ using Test
 T = Float32
 
 @testset "Package SolidStateDetectors" begin
-
+  
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation(SSD_examples[:InvertedCoax])
         simulate!(sim, max_refinements = 1, verbose = true)
@@ -60,6 +60,17 @@ T = Float32
             signalsum += abs(evt.signals[i][end])
         end
         @test isapprox( signalsum, T(2), atol = 1e-2 )
+    end 
+    @testset "Simulate example detector: SigGen PPC" begin
+        sim = Simulation(SSD_examples[:SigGen])
+        simulate!(sim, max_refinements = 1, verbose = true)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
+        simulate!(evt, sim)
+        signalsum = T(0)
+        for i in 1:length(evt.signals)
+            signalsum += abs(evt.signals[i][end])
+        end
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
 
 end
