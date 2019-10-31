@@ -167,7 +167,7 @@ Takes the current state of `sim.electric_potential` and updates it until it has 
 """
 function update_till_convergence!( sim::Simulation{T}, 
                                    ::Type{ElectricPotential}, 
-                                   convergence_limit::Real = 1e-6;
+                                   convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
                                    depletion_handling::Bool = false,
@@ -202,26 +202,53 @@ function update_till_convergence!( sim::Simulation{T},
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
     
-    cl::T = abs(convergence_limit * fssrb.bias_voltage)
     if depletion_handling == false 
+        update_again::Bool = false # With SOR-Constant = 1
         if fssrb.bulk_is_ptype
             @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential - cl
-                    @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                           At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
-                           than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
-                           However, small overshoots might be due to over relaxation and/or not full convergence."""
-                    break
+                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential 
+                    sim.electric_potential.data[i] = fssrb.minimum_applied_potential
+                    update_again = true                  
                 end
             end
         else # ntype
             @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential + cl
-                    @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                           At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
-                           than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
-                           However, small overshoots might be due to over relaxation and/or not full convergence."""
-                    break
+                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential
+                    sim.electric_potential.data[i] = fssrb.maximum_applied_potential
+                    update_again = true
+                end
+            end
+        end
+        if update_again
+            fssrb.sor_const[:] .= T(1)
+            cf = _update_till_convergence!( fssrb, T(convergence_limit); 
+                                            only2d = Val{only_2d}(), 
+                                            depletion_handling = Val{depletion_handling}(),
+                                            is_weighting_potential = Val{false}(),
+                                            use_nthreads = use_nthreads,
+                                            n_iterations_between_checks = n_iterations_between_checks,
+                                            max_n_iterations = max_n_iterations )
+            sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
+            
+            if fssrb.bulk_is_ptype                
+                @inbounds for i in eachindex(sim.electric_potential.data)
+                    if sim.electric_potential.data[i] < fssrb.minimum_applied_potential 
+                        @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                            At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
+                            than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
+                            However, small overshoots could be due to numerical precision."""
+                        break
+                    end
+                end
+            else # ntype
+                @inbounds for i in eachindex(sim.electric_potential.data)
+                    if sim.electric_potential.data[i] > fssrb.maximum_applied_potential
+                        @warn """Detector seems not to be not fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                            At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
+                            than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
+                            However, small overshoots could be due to numerical precision."""
+                        break
+                    end
                 end
             end
         end
@@ -262,7 +289,7 @@ function update_till_convergence!( sim::Simulation{T},
     cf::T = _update_till_convergence!( fssrb, T(convergence_limit); 
                                        only2d = Val{only_2d}(), 
                                        depletion_handling = Val{depletion_handling}(),
-                                       is_weighting_potential = Val{false}(),
+                                       is_weighting_potential = Val{true}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
                                        max_n_iterations = max_n_iterations )
@@ -313,7 +340,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
         init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
         init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         grid::Union{Missing, Grid{T}} = missing,
-        convergence_limit::Real = 2e-6,
+        convergence_limit::Real = 1e-7,
         max_refinements::Int = 3,
         refinement_limits::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing, 
@@ -436,7 +463,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
                     max_n_iterations = max_n_iterations,
                     depletion_handling = depletion_handling,
                     use_nthreads = use_nthreads,
-                    sor_consts = refinement_counter == max_refinements ? (T(1), T(1)) : sor_consts  )
+                    sor_consts = sor_consts )
             else
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
@@ -721,7 +748,7 @@ end
 ToDo...
 """
 function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false, 
-                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
+                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim, 
                                     max_refinements = max_refinements, 
                                     verbose = verbose, 
