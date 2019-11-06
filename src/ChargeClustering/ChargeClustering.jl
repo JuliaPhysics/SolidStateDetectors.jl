@@ -55,8 +55,8 @@ function cluster_detector_hits(
                 push!(r_edep, sum(c_hits.edep))
                 esum = ustrip(r_edep[end])
                 inv_e_sum = inv(esum)
-                weights = FrequencyWeights(ustrip.(c_hits.edep), esum) .* inv_e_sum
-                push!(r_pos, mean(c_hits.pos .* weights))
+                weights = Weights(ustrip.(c_hits.edep), esum) .* inv_e_sum
+                push!(r_pos, sum(c_hits.pos .* weights))
             end
         else
             append!(r_detno, d_hits.detno)
