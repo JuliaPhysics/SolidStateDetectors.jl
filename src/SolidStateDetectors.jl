@@ -32,7 +32,6 @@ import Base: size, sizeof, length, getindex, setindex!, axes, getproperty,
 import Base: show, print, println, display, +, -, &
 import Base.convert
 
-const SSD = SolidStateDetectors; export SSD
 export SolidStateDetector
 export SSD_examples
 
