@@ -524,7 +524,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    # S = SSD.get_coordinate_system(sim.detector)
+    # S = get_coordinate_system(sim.detector)
     # periodicity::T = get_periodicity(sim.detector.world.intervals[2])
     # if S == :cylindrical && periodicity == T(0)
     #     if ismissing(n_points_in_φ)
@@ -597,7 +597,7 @@ end
 ToDo...
 """
 function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    S = SSD.get_coordinate_system(sim.detector)
+    S = get_coordinate_system(sim.detector)
     periodicity::T = get_periodicity(sim.detector.world.intervals[2])
     e_pot, point_types = if S == :cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)

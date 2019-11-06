@@ -244,13 +244,13 @@ end
     end
     PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
     
-    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in sim.detector.contacts])
+    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = PT[]
     grid = sim.electric_field.grid# Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
     
     # for c in contacts_to_spawn_charges_for
-    #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(sim.detector, c, grid, Val(dim_symbol), v))
+    #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), paint_object(sim.detector, c, grid, Val(dim_symbol), v))
     #     for position in ongrid_positions
     #         push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
     #         push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
@@ -277,13 +277,13 @@ end
     
     @info "$(length(spawn_positions)) drifts are now being simulated..."
     
-    el_field_itp     = SSD.get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
-    el_field_itp_inv = SSD.get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
+    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
+    el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
     @showprogress for (ipos, pos) in enumerate(spawn_positions)
         if ((spacing-1)+ipos)%spacing == 0
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
@@ -305,7 +305,7 @@ end
             end
             
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
