@@ -18,6 +18,7 @@ using ParallelProcessingTools
 using ProgressMeter
 using RecipesBase
 using StaticArrays
+using StatsBase
 using Unitful
 using YAML
 

@@ -37,6 +37,7 @@ function cluster_detector_hits(
     ustripped_cradius = ustrip(uconvert(posunit, cluster_radius))
     t_default = TT(0)
 
+    
     for d_hits_nt in grouped
         d_hits = Table(d_hits_nt)
         d_detno = first(d_hits.detno)
@@ -47,11 +48,15 @@ function cluster_detector_hits(
                 idxs = vcat(c.boundary_indices, c.core_indices)
                 @assert length(idxs) == c.size
                 c_hits = view(d_hits, idxs)
+                global c_hits = c_hits
                 
                 push!(r_detno, d_detno)
                 push!(r_thit, t_default)
                 push!(r_edep, sum(c_hits.edep))
-                push!(r_pos, mean(c_hits.pos))
+                esum = ustrip(r_edep[end])
+                inv_e_sum = inv(esum)
+                weights = FrequencyWeights(ustrip.(c_hits.edep), esum) .* inv_e_sum
+                push!(r_pos, mean(c_hits.pos .* weights))
             end
         else
             append!(r_detno, d_hits.detno)
@@ -63,5 +68,8 @@ function cluster_detector_hits(
 
     (detno = r_detno, thit = r_thit, edep = r_edep, pos = r_pos)
 end
+
+c_hits = 0
+
 
 export cluster_detector_hits
