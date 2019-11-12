@@ -12,8 +12,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.signals)
-            signalsum += abs(evt.signals[i][end])
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
         end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
@@ -23,8 +23,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.signals)
-            signalsum += abs(evt.signals[i][end])
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
         end
         @test isapprox( signalsum, T(2), atol = 5e-2 )
     end
@@ -34,8 +34,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.signals)
-            signalsum += abs(evt.signals[i][end])
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
         end
         @test isapprox( signalsum, T(2), atol = 1e-2 )
     end
@@ -45,8 +45,8 @@ T = Float32
         evt = Event([CartesianPoint{T}(5e-3, 5e-3, 5e-3)])
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.signals)
-            signalsum += abs(evt.signals[i][end])
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
         end
         @test isapprox( signalsum, T(2), atol = 1e-2 )
     end
@@ -56,8 +56,8 @@ T = Float32
         evt = Event([CartesianPoint{T}(0,0,0)])
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.signals)
-            signalsum += abs(evt.signals[i][end])
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
         end
         @test isapprox( signalsum, T(2), atol = 1e-2 )
     end 
@@ -67,8 +67,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.signals)
-            signalsum += abs(evt.signals[i][end])
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
         end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end

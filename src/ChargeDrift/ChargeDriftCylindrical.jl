@@ -1,10 +1,11 @@
 """
-    drift_charge(...)
+    _drift_charge(...)
 
 Before calling this function one should check that `startpos` is inside `det`: `in(startpos, det`
 """
-function drift_charge!(
+function _drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
+                            timestamps::Vector{T},
                             det::SolidStateDetector{T, :cylindrical},
                             point_types::PointTypes{T, 3, :cylindrical},
                             grid::Grid{T, 3, :cylindrical},
@@ -12,28 +13,34 @@ function drift_charge!(
                             Δt::T,
                             velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3};
                             verbose::Bool = true
-                        )::Nothing where {T <: SSDFloat}
+                        )::Int where {T <: SSDFloat}
     drifttime::T = 0
     done::Bool = false
     drift_path[1] = startpos
+    timestamps[1] = zero(T)
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
-    @inbounds for istep in eachindex(drift_path)[2:end] #end] 
+    last_real_step_index::Int = 1
+    @inbounds for istep in eachindex(drift_path)[2:end] 
         if done == false
+            last_real_step_index += 1
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, CylindricalPoint(current_pos)) * Δt
-
-            if stepvector == null_step done = true end 
+            if geom_round.(stepvector) == null_step 
+                done = true 
+            end 
             next_pos::CartesianPoint{T} = current_pos + stepvector
             next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
-            if next_pos_cyl in point_types 
+            if next_pos_cyl in point_types || next_pos_cyl in det
                 drift_path[istep] = next_pos
-            elseif (next_pos_cyl in det)
-                drift_path[istep] = next_pos
+                drifttime += Δt
+                timestamps[istep] = drifttime
             else
                 crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, boundary_index::Int, surface_normal::CartesianVector{T} = get_crossing_pos(det, grid, current_pos, next_pos)
                 if cd_point_type == CD_ELECTRODE
-                    done = true
                     drift_path[istep] = crossing_pos
+                    drifttime += Δt
+                    timestamps[istep] = drifttime
+                    done = true
                 elseif cd_point_type == CD_FLOATING_BOUNDARY
                     projected_vector = CartesianVector{T}(project_to_plane(stepvector, surface_normal))
                     next_pos = current_pos + projected_vector
@@ -46,13 +53,19 @@ function drift_charge!(
                     end
                     if i == 1000 && verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
                     drift_path[istep] = next_pos
+                    drifttime += Δt * (1 - i * T(0.001))
+                    timestamps[istep] = drifttime
                 elseif cd_point_type == CD_BULK
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
+                    drifttime += Δt
+                    timestamps[istep] = drifttime
                     done = true
                 else # elseif cd_point_type == CD_OUTSIDE      
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
+                    drifttime += Δt
+                    timestamps[istep] = drifttime
                     done = true
                 end
             end
@@ -60,7 +73,7 @@ function drift_charge!(
             drift_path[istep] = drift_path[istep - 1]
         end
     end
-    return nothing
+    return last_real_step_index
 end
 
 

@@ -638,35 +638,40 @@ function get_interpolated_drift_field(ef::ElectricField)
 end
 
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
-                        Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{DriftPath{T}} where {T <: SSDFloat}
+                        Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
-                             Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{DriftPath{T}}
+                             Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{EHDriftPath{T}}
 end
 
 # User friendly functions for looking at single events. They are not ment to be used for large sets of events
-function get_signal(sim::Simulation{T}, drift_paths::Vector{DriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int)::Vector{T} where {T <: SSDFloat}
-    signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
+function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::RealQuantity = 5u"ns") where {T <: SSDFloat}
+    signal::Vector{T} = zeros(T, _common_length(drift_paths))
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
+    timestamps = range(zero(T), step = T(ustrip(uconvert(u"s", Δt))), length = _common_length(drift_paths))
     for ipath in eachindex(drift_paths)
-        add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, Val(get_coordinate_system(sim.detector)))
+        tmp_signal::Vector{T} = zeros(T, _common_length(drift_paths))
+        add_signal!(tmp_signal, timestamps, drift_paths[ipath], energy_depositions[ipath], wp, Val(get_coordinate_system(sim.detector)))
+        signal .+= tmp_signal
     end
-    return signal
+    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal ) 
 end
-function get_signals(sim::Simulation{T}, drift_paths::Vector{DriftPath{T}}, energy_depositions::Vector{T})::Array{T, 2} where {T <: SSDFloat}
-    n_contacts::Int = length(sim.detector.contacts)
-    signals::Array{T, 2} = zeros(T, length(drift_paths[1].e_path), n_contacts)
-    S = Val(get_coordinate_system(sim.detector))
-    for c in sim.detector.contacts
-        wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[c.id])
-        signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
-        for ipath in eachindex(drift_paths)
-            add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, S)
-        end
-        signals[:, c.id] = signal
-    end
-    return signals
-end
+
+# This function is deprecated
+# function get_signals(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}; Δt::RealQuantity = 5u"ns")::Array{T, 2} where {T <: SSDFloat}
+#     n_contacts::Int = length(sim.detector.contacts)
+#     signals::Array{T, 2} = zeros(T, _common_length(drift_paths), n_contacts)
+#     S = Val(get_coordinate_system(sim.detector))
+#     for c in sim.detector.contacts
+#         wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[c.id])
+#         signal::Vector{T} = zeros(T, _common_length(drift_paths))
+#         for ipath in eachindex(drift_paths)
+#             add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, S)
+#         end
+#         signals[:, c.id] = signal
+#     end
+#     return signals
+# end
 
 
 function generate_charge_signals!(
@@ -701,7 +706,7 @@ function generate_charge_signals!(
         edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
         n_charges_vec::Vector{T} = edep_vec * E_conversion_factor
 
-        drift_paths::Vector{DriftPath{T}} = drift_charges( sim, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
+        drift_paths::Vector{EHDriftPath{T}} = drift_charges( sim, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
 
         for i in eachindex(contacts)
             contact::Contact{T} = contacts[i]
