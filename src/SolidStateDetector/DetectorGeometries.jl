@@ -126,7 +126,7 @@ end
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
-        if p in contact || geom_round(p) in contact || in(searchsortednearest(grid, p), contact) || in(searchsortednearest(grid, geom_round(p)), contact)
+        if in(searchsortednearest(grid, geom_round(p)), contact) || in(searchsortednearest(grid, p), contact) || geom_round(p) in contact || p in contact 
             return CD_ELECTRODE::UInt8, contact.id, surface_normal
         end
     end
@@ -194,7 +194,7 @@ function searchsortednearest(grid::Grid{T, 3, :cartesian}, pt::CartesianPoint{T}
 end
 
 function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Bool, CartesianVector{T}} where {T <: SSDFloat}
-    if !(p in c)
+    if !(p in c) # contacts are already checked in 
         return false, CartesianPoint{T}(0, 0, 0)
     end
     n::MVector{3,T} = @MVector T[0, 0, 0]
@@ -220,8 +220,8 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cylindr
     end
 end
 function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::CartesianPoint{T})::Tuple{Bool, CartesianVector{T}} where T
-    if !(p in c) # is this necessary?
-        return false, CartesianVector{T}(0, 0, 0)
+    if !(p in c) 
+        return false, CartesianPoint{T}(0, 0, 0)
     end
     n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
     look_around::Vector{Bool} = [   CartesianPoint{T}(prevfloat(p.x), p.y, p.z) in c,
