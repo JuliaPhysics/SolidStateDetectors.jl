@@ -14,7 +14,7 @@ function _drift_charge!(
                             velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3};
                             verbose::Bool = true
                         )::Int where {T <: SSDFloat}
-    drifttime::T = 0
+    drifttime::T = zero(T)
     done::Bool = false
     drift_path[1] = startpos
     timestamps[1] = zero(T)
@@ -55,6 +55,9 @@ function _drift_charge!(
                     drift_path[istep] = next_pos
                     drifttime += Δt * (1 - i * T(0.001))
                     timestamps[istep] = drifttime
+                    if geom_round.(next_pos - current_pos) == null_step
+                        done = true
+                    end
                 elseif cd_point_type == CD_BULK
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
@@ -69,8 +72,6 @@ function _drift_charge!(
                     done = true
                 end
             end
-        elseif done == true
-            drift_path[istep] = drift_path[istep - 1]
         end
     end
     return last_real_step_index

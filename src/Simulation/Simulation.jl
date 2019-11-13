@@ -641,37 +641,18 @@ function drift_charges( sim::Simulation{T}, starting_positions::Vector{Cartesian
                         Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
-                             Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{EHDriftPath{T}}
+                             Δt, n_steps = n_steps, verbose = verbose)::Vector{EHDriftPath{T}}
 end
 
-# User friendly functions for looking at single events. They are not ment to be used for large sets of events
-function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::RealQuantity = 5u"ns") where {T <: SSDFloat}
-    signal::Vector{T} = zeros(T, _common_length(drift_paths))
+function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, TT}
+    dt::T = to_internal_units(internal_time_unit, Δt)
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
-    timestamps = range(zero(T), step = T(ustrip(uconvert(u"s", Δt))), length = _common_length(drift_paths))
-    for ipath in eachindex(drift_paths)
-        tmp_signal::Vector{T} = zeros(T, _common_length(drift_paths))
-        add_signal!(tmp_signal, timestamps, drift_paths[ipath], energy_depositions[ipath], wp, Val(get_coordinate_system(sim.detector)))
-        signal .+= tmp_signal
-    end
+    timestamps = _common_timestamps( drift_paths, dt )
+    signal::Vector{T} = zeros(T, length(timestamps))
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, Val(get_coordinate_system(sim.detector)))
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal ) 
 end
 
-# This function is deprecated
-# function get_signals(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}; Δt::RealQuantity = 5u"ns")::Array{T, 2} where {T <: SSDFloat}
-#     n_contacts::Int = length(sim.detector.contacts)
-#     signals::Array{T, 2} = zeros(T, _common_length(drift_paths), n_contacts)
-#     S = Val(get_coordinate_system(sim.detector))
-#     for c in sim.detector.contacts
-#         wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[c.id])
-#         signal::Vector{T} = zeros(T, _common_length(drift_paths))
-#         for ipath in eachindex(drift_paths)
-#             add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, S)
-#         end
-#         signals[:, c.id] = signal
-#     end
-#     return signals
-# end
 
 
 function generate_charge_signals!(

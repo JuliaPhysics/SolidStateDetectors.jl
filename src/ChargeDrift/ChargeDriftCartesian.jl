@@ -14,7 +14,7 @@ function _drift_charge!(
                             velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3};
                             verbose::Bool = true
                         )::Int where {T <: SSDFloat}
-    drifttime::T = 0
+    drifttime::T = zero(T)
     done::Bool = false
     drift_path[1] = startpos
     timestamps[1] = zero(T)
@@ -68,8 +68,6 @@ function _drift_charge!(
                     done = true
                 end
             end
-        elseif done == true
-            drift_path[istep] = drift_path[istep-1]
         end
     end
     return last_real_step_index
