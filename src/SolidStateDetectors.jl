@@ -17,6 +17,7 @@ using NamedTupleTools
 using ParallelProcessingTools
 using ProgressMeter
 using RecipesBase
+using Requires
 using StaticArrays
 using StatsBase
 using Unitful
@@ -83,9 +84,15 @@ include("ChargeClustering/ChargeClustering.jl")
 
 include("Simulation/Simulation.jl")
 include("Event/Event.jl")
+include("MCEventsProcessing/MCEventsProcessing.jl")
 
 include("IO/IO.jl")
 
 include("examples.jl")
+
+function __init__()
+    @require LegendHDF5IO="c9265ca6-b027-5446-b1a4-febfa8dd10b0" nothing
+    @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" include("IO/hdf5_specific.jl")
+end
 
 end # module
