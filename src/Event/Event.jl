@@ -1,6 +1,3 @@
-include("waveforms.jl") # For now. Later use RadiationDetectorSignals.jl
-
-
 """
     mutable struct Event{T <: SSDFloat}
 

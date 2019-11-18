@@ -19,10 +19,10 @@ function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:Real
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
 _common_time(dps::Vector{<:EHDriftPath}) = 
-    maximum(_common_time.(dps))
+maximum(_common_time.(dps))
 
 function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}}, Δt) where {T} 
-    range(zero(Δt), step = Δt, stop = _common_time(dp) + Δt)
+    range(zero(Δt), step = Δt, stop = typeof(Δt)(_common_time(dp)) + Δt)
 end
 
 function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, point::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}  
