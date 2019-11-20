@@ -72,3 +72,16 @@ function simulate!(event::Event{T}, sim::Simulation{T}; n_steps::Int = 1000, Δt
     get_signals!(event, sim, Δt = Δt)
     nothing
 end
+
+function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,U,TV,UV}, n_baseline_samples::Int, total_waveform_length::Int) where {T,U,TV,UV}
+    new_signal::Vector{eltype(UV)} = Vector{eltype(UV)}(undef, total_waveform_length)
+    new_signal[1:n_baseline_samples] .= zero(eltype(UV))
+    new_signal[n_baseline_samples+1:n_baseline_samples+length(wv.value)] = wv.value
+    new_signal[n_baseline_samples+length(wv.value)+1:end] .= wv.value[end]
+    new_times = if TV <: AbstractRange
+        range( zero(first(wv.time)), step = step(wv.time), length = total_waveform_length )
+    else
+        error("Not yet definted for timestamps of type `$(TV)`")
+    end
+    return RDWaveform( new_times, new_signal )
+end
