@@ -14,7 +14,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
     h_drift_field = get_interpolated_drift_field(s.hole_drift_field);
     
     @info "Detector has $(n_contacts) contact(s)"
-    @info "Table has $(length(mcevents)) physics events ($(length(flatview(mcevents.edep))) single charge depositions)."
+    @info "Table has $(length(mcevents)) physics events ($(sum(map(edeps -> length(edeps), mcevents.edep))) single charge depositions)."
 
     # First simulate drift paths
     drift_paths = _simulate_charge_drifts(mcevents, s, Δt, max_steps, e_drift_field, h_drift_field, verbose)
@@ -33,7 +33,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
         eachindex(contacts)
     )
     mcevents_chns = map(
-        i -> add_column(mcevents_chns[i], :waveform, ArrayOfRDWaveforms(waveforms[1])),
+        i -> add_column(mcevents_chns[i], :waveform, ArrayOfRDWaveforms(waveforms[i])),
         eachindex(waveforms)
     )
     return vcat(mcevents_chns...)  
@@ -54,13 +54,12 @@ end
 
 
 
-function _generate_waveform( drift_paths::Vector{EHDriftPath{T}}, charges::Vector{T}, Δt::RealQuantity, dt::T,
+function _generate_waveform( drift_paths::Vector{EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
                              wp::Interpolations.Extrapolation{T, 3}, S::Union{Val{:cylindrical}, Val{:cartesian}}) where {T <: SSDFloat}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
-
     signal = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, charges, wp, S)
+    add_signal!(signal, timestamps, drift_paths, T.(charges), wp, S)
     RDWaveform( timestamps_with_units, signal )
 end
 

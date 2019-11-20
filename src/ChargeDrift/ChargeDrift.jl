@@ -39,8 +39,8 @@ include("ChargeDriftCartesian.jl")
 
 function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                         starting_points::Vector{CartesianPoint{T}}, 
-                        velocity_field_e::Interpolations.Extrapolation{SVector{3, Float64}, 3},
-                        velocity_field_h::Interpolations.Extrapolation{SVector{3, Float64}, 3},
+                        velocity_field_e::Interpolations.Extrapolation{<:SVector{3}, 3},
+                        velocity_field_h::Interpolations.Extrapolation{<:SVector{3}, 3},
                         Δt::RQ; n_steps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
     drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points)) 
@@ -62,8 +62,8 @@ end
 
 function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                        starting_point::CartesianPoint{T}, 
-                       velocity_field_e::Interpolations.Extrapolation{SVector{3, Float64}, 3},
-                       velocity_field_h::Interpolations.Extrapolation{SVector{3, Float64}, 3},
+                       velocity_field_e::Interpolations.Extrapolation{SVector{3, T}, 3},
+                       velocity_field_h::Interpolations.Extrapolation{SVector{3, T}, 3},
                        Δt::RealQuantity, n_steps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(detector, grid, point_types, [starting_point], velocity_field_e, velocity_field_h, Δt, n_steps = n_steps, verbose = verbose)
 end
