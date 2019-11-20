@@ -48,16 +48,15 @@ function sizeof(g::Grid{T, N, S}) where {T, N, S}
 end
 
 function print(io::IO, g::Grid{T, N, S}) where {T, N, S}
-    for ax in g.axes
-        print(io, ax, " | ")
-    end
+    print(io, "Grid{$T, $N, $S}", g.axes)
 end
 function println(io::IO, g::Grid{T, N, S}) where {T, N, S}
+    println(" Grid{$T, $N, $S}")
     for (i, ax) in enumerate(g.axes)
-        println(io, "Axis $(i): ", ax)
+        println(io, "  Axis $(i): ", ax)
     end
 end
-show(io::IO, g::Grid{T, N, S}) where {T, N, S} = println(io, g)
+show(io::IO, g::Grid{T, N, S}) where {T, N, S} = print(io, g)
 show(io::IO, ::MIME"text/plain", g::Grid{T, N, S}) where {T, N, S} = show(io, g)
 
 

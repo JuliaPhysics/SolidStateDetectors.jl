@@ -104,10 +104,13 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
 
-function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
-function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
-function display(io::IO, sim::Simulation{T} ) where {T <: SSDFloat} println(sim) end
-function show(io::IO,::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
+function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
+    print(io, "Simulation{$T} - ", "$(sim.detector.name)") 
+end
+
+function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(io, sim) end
+
+function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
     show(io, sim)
 end
 

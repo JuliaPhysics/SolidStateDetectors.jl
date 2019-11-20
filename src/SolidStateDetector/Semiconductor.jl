@@ -30,17 +30,12 @@ end
 
 
 function println(io::IO, d::Semiconductor{T}) where {T <: SSDFloat}
-
     println("\t---General Properties---")
     println("\t-Detector Material: \t $(d.material.name)")
-
     println("\t-Bulk type: \t\t $(d.bulk_type)")
 end
 
+print(io::IO, d::Semiconductor{T}) where {T} = print(io, "Semiconductor{$T} - $(d.bulk_type) - $(d.material.name)")
 
-function show(io::IO, d::Semiconductor{T}) where {T <: SSDFloat} println(d) end
-function print(io::IO, d::Semiconductor{T}) where {T <: SSDFloat} println(d) end
-function display(io::IO, d::Semiconductor{T} ) where {T <: SSDFloat} println(d) end
-function show(io::IO,::MIME"text/plain", d::Semiconductor) where {T <: SSDFloat}
-    show(io, d)
-end
+show(io::IO, d::Semiconductor) = print(io, d)
+show(io::IO,::MIME"text/plain", d::Semiconductor) = show(io, d)
