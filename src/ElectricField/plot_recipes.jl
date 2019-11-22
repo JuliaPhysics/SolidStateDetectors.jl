@@ -186,7 +186,7 @@ end
 
 @userplot Plot_electric_field
 @recipe function f(gdd::Plot_electric_field; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000, 
+                    spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], max_nsteps=3000, 
                     potential=true, contours_equal_potential=true, offset = (5e-5))
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
@@ -283,8 +283,8 @@ end
     @showprogress for (ipos, pos) in enumerate(spawn_positions)
         if ((spacing-1)+ipos)%spacing == 0
 
-            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            _drift_charge!(path, Vector{T}(undef, n_steps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
+            _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
@@ -305,8 +305,8 @@ end
                 x, y
             end
             
-            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            _drift_charge!(path, Vector{T}(undef, n_steps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
+            _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
