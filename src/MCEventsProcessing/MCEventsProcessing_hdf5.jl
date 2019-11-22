@@ -3,7 +3,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T},
                              output_base_name::AbstractString = "generated_waveforms";
                              chunk_n_physics_events::Int = 1000, 
                              Δt::RealQuantity = 4u"ns",
-                             max_steps::Int = 1000,
+                             max_nsteps::Int = 1000,
                              verbose = false) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(internal_time_unit, Δt)) 
@@ -22,7 +22,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T},
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
-        mcevents_sub = simulate_waveforms(mcevents[evtrange], s, Δt = Δt, max_steps = max_steps, verbose = verbose)
+        mcevents_sub = simulate_waveforms(mcevents[evtrange], s, Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
       
         HDF5.h5open(ofn, "w") do output
             LegendHDF5IO.writedata(output, "generated_waveforms", mcevents_sub)

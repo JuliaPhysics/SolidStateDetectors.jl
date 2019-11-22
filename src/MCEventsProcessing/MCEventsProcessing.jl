@@ -2,7 +2,7 @@ include("table_utils.jl")
 
 function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
-                             max_steps::Int = 1000,
+                             max_nsteps::Int = 1000,
                              verbose = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(internal_time_unit, Δt)) 
@@ -17,7 +17,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
     @info "Table has $(length(mcevents)) physics events ($(sum(map(edeps -> length(edeps), mcevents.edep))) single charge depositions)."
 
     # First simulate drift paths
-    drift_paths = _simulate_charge_drifts(mcevents, s, Δt, max_steps, e_drift_field, h_drift_field, verbose)
+    drift_paths = _simulate_charge_drifts(mcevents, s, Δt, max_nsteps, e_drift_field, h_drift_field, verbose)
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
@@ -41,14 +41,14 @@ end
 
 
 function _simulate_charge_drifts( mcevents::TypedTables.Table, s::Simulation{T},
-                                  Δt::RealQuantity, max_steps::Int, 
+                                  Δt::RealQuantity, max_nsteps::Int, 
                                   e_drift_field::Interpolations.Extrapolation, h_drift_field::Interpolations.Extrapolation, 
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
         _drift_charges(s.detector, s.electric_potential.grid, s.point_types, 
-                        CartesianPoint.(to_internal_units.(u"m", phyevt.pos)),
+                        CartesianPoint{T}.(to_internal_units.(u"m", phyevt.pos)),
                         e_drift_field, h_drift_field, 
-                        Δt, n_steps = max_steps, verbose = verbose)
+                        T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
     end
 end
 
