@@ -58,7 +58,7 @@ end
         end
     elseif view == :ef
         if plane == :rφ
-            vectorfield_xyz = Array{Vector{Float32}}(undef,size(vectorfield,1),size(vectorfield,2),size(vectorfield,3));
+            vectorfield_xyz = Array{Vector{T}}(undef,size(vectorfield,1),size(vectorfield,2),size(vectorfield,3));
             for (iz,z) in enumerate(grid.z)
                 for (iφ,φ) in enumerate(grid.φ)
                     for (ir,r) in enumerate(grid.r)
@@ -190,7 +190,7 @@ end
                     potential=true, contours_equal_potential=true, offset = (5e-5))
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
-    T = Float32
+    T = SolidStateDetectors.get_precision_type(s.detector)
     
     dim_array = [φ, r, x, y, z]
     dim_symbols_array = [:φ, :r, :x, :y, :z]
