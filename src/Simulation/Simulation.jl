@@ -667,10 +667,12 @@ function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool 
     calculate_electric_potential!(  sim, 
                                     max_refinements = max_refinements, 
                                     verbose = verbose, 
+                                    init_grid_size = (10,10,10),
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, 
+                init_grid_size = (10,10,10),
                 verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
