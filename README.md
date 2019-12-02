@@ -1,4 +1,4 @@
-<p align="center"> <img src="logo.svg" alt="SolidStateDetectors.jl" width="400"></ü> </div> 
+<p align="center"> <img src="docs/src/assets/logo.svg" alt="SolidStateDetectors.jl" width="400"></ü> </div> 
 
 # SolidStateDetectors.jl
 
