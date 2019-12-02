@@ -30,3 +30,14 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
     return pass
 end
+
+function println(io::IO, d::Passive{T}) where {T}
+    println("\t________"*"Passive{$T} $(d.name) $(d.id)"*"________\n")
+    println("\t---General Properties---")
+    println("\t-Potential: \t\t $(d.potential) V")
+    println("\t-Material: \t $(d.material.name)")
+    println()
+end
+print(io::IO, d::Passive{T}) where {T} = print(io, "Passive $(d.name) - id $(d.id) - $(d.potential) V")
+show(io::IO, d::Passive) = print(io, d)
+show(io::IO,::MIME"text/plain", d::Passive) = show(io, d)

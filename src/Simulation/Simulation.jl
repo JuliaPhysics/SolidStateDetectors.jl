@@ -104,10 +104,13 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
 
-function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
-function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
-function display(io::IO, sim::Simulation{T} ) where {T <: SSDFloat} println(sim) end
-function show(io::IO,::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
+function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
+    print(io, "Simulation{$T} - ", "$(sim.detector.name)") 
+end
+
+function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(io, sim) end
+
+function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
     show(io, sim)
 end
 
@@ -167,7 +170,7 @@ Takes the current state of `sim.electric_potential` and updates it until it has 
 """
 function update_till_convergence!( sim::Simulation{T}, 
                                    ::Type{ElectricPotential}, 
-                                   convergence_limit::Real = 1e-6;
+                                   convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
                                    depletion_handling::Bool = false,
@@ -202,26 +205,53 @@ function update_till_convergence!( sim::Simulation{T},
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
     
-    cl::T = abs(convergence_limit * fssrb.bias_voltage)
     if depletion_handling == false 
+        update_again::Bool = false # With SOR-Constant = 1
         if fssrb.bulk_is_ptype
             @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential - cl
-                    @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                           At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
-                           than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
-                           However, small overshoots might be due to over relaxation and/or not full convergence."""
-                    break
+                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential 
+                    sim.electric_potential.data[i] = fssrb.minimum_applied_potential
+                    update_again = true                  
                 end
             end
         else # ntype
             @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential + cl
-                    @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                           At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
-                           than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
-                           However, small overshoots might be due to over relaxation and/or not full convergence."""
-                    break
+                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential
+                    sim.electric_potential.data[i] = fssrb.maximum_applied_potential
+                    update_again = true
+                end
+            end
+        end
+        if update_again
+            fssrb.sor_const[:] .= T(1)
+            cf = _update_till_convergence!( fssrb, T(convergence_limit); 
+                                            only2d = Val{only_2d}(), 
+                                            depletion_handling = Val{depletion_handling}(),
+                                            is_weighting_potential = Val{false}(),
+                                            use_nthreads = use_nthreads,
+                                            n_iterations_between_checks = n_iterations_between_checks,
+                                            max_n_iterations = max_n_iterations )
+            sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
+            
+            if fssrb.bulk_is_ptype                
+                @inbounds for i in eachindex(sim.electric_potential.data)
+                    if sim.electric_potential.data[i] < fssrb.minimum_applied_potential 
+                        @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                            At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
+                            than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
+                            However, small overshoots could be due to numerical precision."""
+                        break
+                    end
+                end
+            else # ntype
+                @inbounds for i in eachindex(sim.electric_potential.data)
+                    if sim.electric_potential.data[i] > fssrb.maximum_applied_potential
+                        @warn """Detector seems not to be not fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                            At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
+                            than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
+                            However, small overshoots could be due to numerical precision."""
+                        break
+                    end
                 end
             end
         end
@@ -262,7 +292,7 @@ function update_till_convergence!( sim::Simulation{T},
     cf::T = _update_till_convergence!( fssrb, T(convergence_limit); 
                                        only2d = Val{only_2d}(), 
                                        depletion_handling = Val{depletion_handling}(),
-                                       is_weighting_potential = Val{false}(),
+                                       is_weighting_potential = Val{true}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
                                        max_n_iterations = max_n_iterations )
@@ -313,7 +343,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
         init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
         init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         grid::Union{Missing, Grid{T}} = missing,
-        convergence_limit::Real = 2e-6,
+        convergence_limit::Real = 1e-7,
         max_refinements::Int = 3,
         refinement_limits::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing, 
@@ -436,7 +466,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
                     max_n_iterations = max_n_iterations,
                     depletion_handling = depletion_handling,
                     use_nthreads = use_nthreads,
-                    sor_consts = refinement_counter == max_refinements ? (T(1), T(1)) : sor_consts  )
+                    sor_consts = sor_consts )
             else
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
@@ -497,7 +527,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    # S = SSD.get_coordinate_system(sim.detector)
+    # S = get_coordinate_system(sim.detector)
     # periodicity::T = get_periodicity(sim.detector.world.intervals[2])
     # if S == :cylindrical && periodicity == T(0)
     #     if ismissing(n_points_in_φ)
@@ -570,7 +600,7 @@ end
 ToDo...
 """
 function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    S = SSD.get_coordinate_system(sim.detector)
+    S = get_coordinate_system(sim.detector)
     periodicity::T = get_periodicity(sim.detector.world.intervals[2])
     e_pot, point_types = if S == :cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
@@ -611,107 +641,19 @@ function get_interpolated_drift_field(ef::ElectricField)
 end
 
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
-                        Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{DriftPath{T}} where {T <: SSDFloat}
+                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
-                             Δt = T(to_internal_units(internal_time_unit, Δt)), n_steps = n_steps, verbose = verbose)::Vector{DriftPath{T}}
+                             Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
 end
 
-# User friendly functions for looking at single events. They are not ment to be used for large sets of events
-function get_signal(sim::Simulation{T}, drift_paths::Vector{DriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int)::Vector{T} where {T <: SSDFloat}
-    signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
+function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, TT}
+    dt::T = to_internal_units(internal_time_unit, Δt)
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
-    for ipath in eachindex(drift_paths)
-        add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, Val(get_coordinate_system(sim.detector)))
-    end
-    return signal
-end
-function get_signals(sim::Simulation{T}, drift_paths::Vector{DriftPath{T}}, energy_depositions::Vector{T})::Array{T, 2} where {T <: SSDFloat}
-    n_contacts::Int = length(sim.detector.contacts)
-    signals::Array{T, 2} = zeros(T, length(drift_paths[1].e_path), n_contacts)
-    S = Val(get_coordinate_system(sim.detector))
-    for c in sim.detector.contacts
-        wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[c.id])
-        signal::Vector{T} = zeros(T, length(drift_paths[1].e_path))
-        for ipath in eachindex(drift_paths)
-            add_signal!(signal, drift_paths[ipath], energy_depositions[ipath], wp, S)
-        end
-        signals[:, c.id] = signal
-    end
-    return signals
-end
-
-
-function generate_charge_signals!(
-    contact_charge_signals::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
-    sim::Simulation{T},
-    hit_pos::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
-    hit_edep::AbstractVector{<:AbstractVector{<:RealQuantity}},
-    n_steps::Integer,
-    Δt::RealQuantity;
-    channels::Union{Missing, Vector{Int}} = missing,
-    verbose::Bool = true
-)::Nothing where {T <: SSDFloat}
-    E_ionisation = sim.detector.semiconductors[1].material.E_ionisation
-    E_conversion_factor::T = 1 / ustrip(uconvert(internal_energy_unit, E_ionisation))
-
-    unitless_delta_t::T = to_internal_units(internal_time_unit, Δt)
-    S = Val(get_coordinate_system(sim.detector))
-    
-    contacts::Vector{Contact{T}} = []
-    if ismissing(channels) 
-        contacts = sim.detector.contacts
-    else
-        for contact in sim.detector.contacts 
-            if contact.id in channels push!(contacts, contact) end
-        end
-    end
-    wps_interpolated::Vector{<:Interpolations.Extrapolation{T, 3}} = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ]
-
-    prog = Progress(length(hit_pos), 0.1, "Generating charge signals...")
-    @inbounds for i_evt in eachindex(hit_pos)
-        startpos_vec::Vector{CartesianPoint{T}} = CartesianPoint{T}[ CartesianPoint{T}( to_internal_units(u"m", hit_pos[i_evt][idep]) ) for idep in eachindex(hit_pos[i_evt]) ]
-        edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
-        n_charges_vec::Vector{T} = edep_vec * E_conversion_factor
-
-        drift_paths::Vector{DriftPath{T}} = drift_charges( sim, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
-
-        for i in eachindex(contacts)
-            contact::Contact{T} = contacts[i]
-            signal::Vector{T} = zeros(T, n_steps)
-            add_signal!(signal, drift_paths, n_charges_vec, wps_interpolated[contact.id], S)
-            contact_charge_signals[contact.id][i_evt] = signal
-        end
-        ProgressMeter.next!(prog)
-    end
-    ProgressMeter.finish!(prog)
-    nothing
-end
-
-
-function generate_charge_signals(   sim::Simulation{T},
-                                    events::DetectorHitEvents;
-                                    n_steps::Integer = 1000,
-                                    Δt::RealQuantity = 5u"ns",
-                                    channels::Union{Missing, Vector{Int}} = missing,
-                                    verbose::Bool = true
-                                ) where {T <: SSDFloat}
-    hit_pos = events.pos
-    hit_edep = events.edep
-
-    # contact_charge_signals = [nestedview(Array{T, 2}(undef, n_steps, size(hit_pos, 1))) for i in eachindex(sim.detector.contacts)]
-    contact_charge_signals = [nestedview(zeros(T, n_steps, size(hit_pos, 1))) for i in eachindex(sim.detector.contacts)]
-
-    generate_charge_signals!(
-        contact_charge_signals,
-        sim,
-        hit_pos, hit_edep,
-        n_steps, Δt,
-        channels = channels,
-        verbose = verbose
-    )
-
-    contact_charge_signals
+    timestamps = _common_timestamps( drift_paths, dt )
+    signal::Vector{T} = zeros(T, length(timestamps))
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, Val(get_coordinate_system(sim.detector)))
+    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal ) 
 end
 
 """
@@ -721,14 +663,16 @@ end
 ToDo...
 """
 function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false, 
-                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
+                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim, 
                                     max_refinements = max_refinements, 
                                     verbose = verbose, 
+                                    init_grid_size = (10,10,10),
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, 
+                init_grid_size = (10,10,10),
                 verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)

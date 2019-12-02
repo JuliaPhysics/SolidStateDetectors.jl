@@ -51,7 +51,7 @@ function println(io::IO, dx::DiscreteAxis{T, BL, BR}) where {T, BL, BR}
     println(io, "length = ", length(dx))
 end
 function show(io::IO, dx::DiscreteAxis{T, BL, BR}) where {T, BL, BR}
-    println(io, dx)
+    print(io, dx)
 end
 function show(io::IO, ::MIME"text/plain", dx::DiscreteAxis{T, BL, BR}) where {T, BL, BR}
     show(io, dx)

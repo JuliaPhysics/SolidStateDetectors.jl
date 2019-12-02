@@ -26,19 +26,13 @@ function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, inputunit_dic
     return Contact{T}( dict["potential"], material, channel, name, geometry, geometry_positive, geometry_negative )
 end
 
-function println(io::IO, d::Contact{T}) where {T <: SSDFloat}
+function println(io::IO, d::Contact) 
     println("\t________"*"Contact $(d.id)"*"________\n")
     println("\t---General Properties---")
-    println("\t-Potential: \t\t $(d.potential)")
+    println("\t-Potential: \t\t $(d.potential) V")
     println("\t-Contact Material: \t $(d.material.name)")
     println()
-
 end
-
-
-function show(io::IO, d::Contact{T}) where {T <: SSDFloat} println(d) end
-function print(io::IO, d::Contact{T}) where {T <: SSDFloat} println(d) end
-function display(io::IO, d::Contact{T} ) where {T <: SSDFloat} println(d) end
-function show(io::IO,::MIME"text/plain", d::Contact) where {T <: SSDFloat}
-    show(io, d)
-end
+print(io::IO, d::Contact{T}) where {T} = print(io, "Contact $(d.id) - $(d.potential) V - $(d.material.name)")
+show(io::IO, d::Contact) = print(io, d)
+show(io::IO,::MIME"text/plain", d::Contact) = show(io, d)

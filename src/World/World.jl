@@ -24,7 +24,7 @@ struct World{T <: SSDFloat, ND, S} <: AbstractWorld{T, ND}
 end
 
 function World{T, ND, S}(args...) where {T <: SSDFloat, ND, S} 
-    return SSD.World{T, ND, S}(args)
+    return World{T, ND, S}(args)
 end
 
 

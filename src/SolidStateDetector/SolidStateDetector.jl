@@ -271,9 +271,8 @@ function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
     end
 end
 
-function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(d) end
-function print(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(d) end
-function display(io::IO, d::SolidStateDetector{T} ) where {T <: SSDFloat} println(d) end
+function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
+function print(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
 function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDFloat}
     show(io, d)
 end

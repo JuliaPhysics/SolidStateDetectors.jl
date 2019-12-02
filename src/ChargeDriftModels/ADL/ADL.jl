@@ -301,10 +301,14 @@ end
 
 
 
-function println(io::IO, tm::VacuumModel{T}) where {T <: SSDFloat}
-    print("No temperature model defined")
+function print(io::IO, tm::VacuumModel{T}) where {T <: SSDFloat}
+    print(io, "No temperature model defined")
 end
+println(io::IO, tm::VacuumModel) = print(io, tm)
 
+function print(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat}
+    print(io, "BoltzmannModel{$T}")
+end
 function println(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat}
     println("\n________BoltzmannModel________")
     println("Fit function: p1 + p2 exp(-p3/T)\n")
@@ -319,6 +323,9 @@ function println(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat}
     println("p3 \t$(tm.p3e100)   \t$(tm.p3e111)   \t$(tm.p3h100)   \t$(tm.p3h111)")
 end
 
+function print(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
+    print(io, "LinearModel{$T}")
+end
 function println(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
     println("\n________LinearModel________")
     println("Fit function: p1 + p2 * T\n")
@@ -332,6 +339,9 @@ function println(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
     println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
 end
 
+function print(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
+    print(io, "PowerLawModel{$T}")
+end
 function println(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
     println("\n________PowerLawModel________")
     println("Fit function: p1 * T^(3/2)\n")
@@ -345,9 +355,6 @@ function println(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
 end
 
 
-function show(io::IO, tm::AbstractTemperatureModel{T}) where {T <: SSDFloat} println(tm) end
-function print(io::IO, tm::AbstractTemperatureModel{T}) where {T <: SSDFloat} println(tm) end
-function display(io::IO, tm::AbstractTemperatureModel{T}) where {T <: SSDFloat} println(tm) end
-function show(io::IO,::MIME"text/plain", tm::AbstractTemperatureModel{T}) where {T <: SSDFloat}
-    show(io, tm)
-end
+show(io::IO, tm::AbstractTemperatureModel) = print(io, tm) 
+show(io::IO,::MIME"text/plain", tm::AbstractTemperatureModel) = show(io, tm)
+
