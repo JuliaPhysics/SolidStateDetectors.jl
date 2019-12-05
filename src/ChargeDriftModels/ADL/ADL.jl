@@ -156,19 +156,6 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
 end
 
 
-"""
-    get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
-
-Applies the charge drift model onto the electric field vectors. The field vectors have to be in cartesian coordinates.
-"""
-function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
-    df = Array{SVector{3,T}, 3}(undef, size(ef))
-    #@showprogress for i in eachindex(df)
-    @showprogress for i in eachindex(df)
-        @inbounds df[i] = getVe(ef[i], chargedriftmodel)
-    end
-    return df
-end
 
 
 function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
@@ -245,14 +232,6 @@ end
 end
 
 
-function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::ADLChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
-    df = Array{SVector{3,T}, 3}(undef, size(ef))
-    #@showprogress for i in eachindex(df)
-    @showprogress for i in eachindex(df)
-        @inbounds df[i] = getVh(ef[i], chargedriftmodel)
-    end
-    return df
-end
 
 function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
     cdmT = ADLChargeDriftModel{T}(cdm)

@@ -630,9 +630,10 @@ function set_charge_drift_model!(sim::Simulation{T}, charge_drift_model::Abstrac
     nothing
 end
 
-function apply_charge_drift_model!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
-    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
-    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
+function apply_charge_drift_model!(sim::Simulation{T}; 
+            use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
+    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
+    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     nothing
 end
 
