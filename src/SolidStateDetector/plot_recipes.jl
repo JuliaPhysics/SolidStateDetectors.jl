@@ -1,4 +1,3 @@
-
 @recipe function f(::Val{:InvertedCoax}, dim::Symbol;
                     r=missing,
                     φ=missing,
@@ -315,7 +314,7 @@ end
     end
 end
 
-@recipe function f(c::SolidStateDetector{T}; coloring = [], labeling = []) where T
+@recipe function f(c::SolidStateDetector{T}; coloring = missing, labeling = missing) where T
     legendfont --> 16
     # aspect_ratio := 1
     tickfontsize --> 9
@@ -325,23 +324,25 @@ end
     # ylabel --> "\n y / m"
     # zlabel --> "\n z / m"
     camera --> (15,25)
-    coloring = coloring
+    if ismissing(coloring) coloring = 1:length(c.contacts) end
+    if ismissing(labeling) labeling = ["ChnID=$(contact.id)" for contact in c.contacts] end
     labeling = labeling
-        if c.name == "Public Segmented BEGe"
-        @series begin
-            # zlims --> (-0.023,0.063)
-            # aspect_ratio --> 0.5
-            c, Val(:segBEGe)
-        end
-    elseif c.name == "Public Inverted Coax"
-        @series begin
-            c, Val(:ivc)
-        end
-    elseif c.name == "Public Coax"
-        @series begin
-            c, Val(:coax)
-        end
-    else
+    # if c.name == "Public Segmented BEGe"
+    #     @series begin
+    #         # zlims --> (-0.023,0.063)
+    #         # aspect_ratio --> 0.5
+    #         c, Val(:segBEGe)
+    #     end
+    # elseif c.name == "Public Inverted Coax"
+    #     @series begin
+    #         c, Val(:ivc)
+    #     end
+    # elseif c.name == "Public Coax"
+    #     @series begin
+    #         c, Val(:coax)
+    #     end
+    # else
+    begin
         for (ic,contact) in enumerate(c.contacts)
             @series begin
                 !isempty(coloring) ? c --> coloring[ic] : nothing
