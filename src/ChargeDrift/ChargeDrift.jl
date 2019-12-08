@@ -68,6 +68,10 @@ end
 @inline _convert_vector(pt::CartesianPoint, ::Val{:cylindrical}) = CylindricalPoint(pt)
 @inline _convert_vector(pt::CartesianPoint, ::Val{:cartesian}) = pt
 
+function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where {T <: SSDFloat}
+    return p
+end
+
 """
     _drift_charge(...)
 
@@ -112,7 +116,8 @@ function _drift_charge!(
                     timestamps[istep] = drifttime
                     done = true
                 elseif cd_point_type == CD_FLOATING_BOUNDARY
-                    projected_vector = CartesianVector{T}(project_to_plane(stepvector, surface_normal))
+                    projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(stepvector, surface_normal))
+                    projected_vector = modulate_surface_drift(projected_vector)
                     next_pos = current_pos + projected_vector
                     # ToDo: We actually need a time array as well to do this properly...
                     small_projected_vector = projected_vector * T(0.001)
@@ -180,3 +185,6 @@ function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}
     end
     return point_mid, cd_point_type, contact_idx, surface_normal
 end
+
+
+include("plot_recipes.jl")
