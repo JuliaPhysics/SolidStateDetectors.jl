@@ -9,6 +9,8 @@ using Random
 using Statistics
 
 using ArraysOfArrays
+using FillArrays
+using Formatting
 using Interpolations
 using IntervalSets
 using JSON
@@ -16,7 +18,10 @@ using LaTeXStrings
 using NamedTupleTools
 using ParallelProcessingTools
 using ProgressMeter
+using RadiationDetectorSignals
 using RecipesBase
+using Requires
+using Rotations
 using StaticArrays
 using StatsBase
 using Unitful
@@ -83,9 +88,21 @@ include("ChargeClustering/ChargeClustering.jl")
 
 include("Simulation/Simulation.jl")
 include("Event/Event.jl")
+include("MCEventsProcessing/MCEventsProcessing.jl")
 
 include("IO/IO.jl")
 
 include("examples.jl")
+
+include("PlotRecipes/PlotRecipes.jl")
+
+function __init__()
+    @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
+        @require LegendHDF5IO="c9265ca6-b027-5446-b1a4-febfa8dd10b0" begin
+            include("IO/hdf5_specific.jl") 
+        end
+        include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
+    end
+end
 
 end # module

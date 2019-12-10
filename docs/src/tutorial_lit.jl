@@ -102,7 +102,7 @@ plot!(event.drift_paths)
 # We need weighting potentials to simulate the detector charge signal induced by drifting charges. We'll calculate the weighting potential for the point contact and the outer shell of the detector:
 
 for contact in simulation.detector.contacts
-    SSD.calculate_weighting_potential!(simulation, contact.id, max_refinements = 4, n_points_in_φ = 2, verbose = false)
+    calculate_weighting_potential!(simulation, contact.id, max_refinements = 4, n_points_in_φ = 2, verbose = false)
 end
 
 plot(  
@@ -115,20 +115,9 @@ plot(
 
 # ### Single-event simulation
  
-# Given an interaction at an arbitrary point in the detector, we can now simulate charge drift and the resulting detector charge signals (e.g. at the point contact):
+# Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the resulting detector charge signals (e.g. at the point contact):
 
-SSD.get_signal!(event, simulation, 1) # 1 = contact id of the point contact, 2 would be the mantle (defined in the config file)
+simulate!(event, simulation) # drift_charges + signal generation of all channels
 
-time_steps = range(0, step = ustrip(time_step), length = length(event.signals[1]))
-p_pc_signal = plot( time_steps, event.signals[1], lw = 1.5, xlims = (0, 2000), xlabel = "Time / ns", legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
-
- 
-# Or just calculate the signals of all channels:
-
-SSD.get_signals!(event, simulation) 
-plot(  time_steps, event.signals[1], lw = 1.5, xlims = (0, 2000), xlabel = "Time / ns", legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
-plot!( time_steps, event.signals[2], lw = 1.5)
-
-# The drift and signal generation can also be done together:
-
-SSD.simulate!(event, simulation) # drift_charges + signal generation of all channels
+p_pc_signal = plot( event.waveforms[1], lw = 1.5, xlims = (0, 2000), xlabel = "Time / ns", 
+                    legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)

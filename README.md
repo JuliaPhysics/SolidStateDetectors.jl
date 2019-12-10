@@ -1,3 +1,5 @@
+<p align="center"> <img src="docs/src/assets/logo.svg" alt="SolidStateDetectors.jl" width="400"></ü> </div> 
+
 # SolidStateDetectors.jl
 
 [![Documentation for stable version](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable)

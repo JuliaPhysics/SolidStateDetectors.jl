@@ -104,10 +104,13 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
 
-function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
-function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(sim) end
-function display(io::IO, sim::Simulation{T} ) where {T <: SSDFloat} println(sim) end
-function show(io::IO,::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
+function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
+    print(io, "Simulation{$T} - ", "$(sim.detector.name)") 
+end
+
+function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(io, sim) end
+
+function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFloat}
     show(io, sim)
 end
 
@@ -627,9 +630,10 @@ function set_charge_drift_model!(sim::Simulation{T}, charge_drift_model::Abstrac
     nothing
 end
 
-function apply_charge_drift_model!(sim::Simulation{T})::Nothing where {T <: SSDFloat}
-    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
-    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model), sim.electric_field.grid)
+function apply_charge_drift_model!(sim::Simulation{T}; 
+            use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
+    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
+    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     nothing
 end
 
@@ -638,10 +642,10 @@ function get_interpolated_drift_field(ef::ElectricField)
 end
 
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
-                        Δt::RealQuantity = 5u"ns", n_steps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
+                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
-                             Δt, n_steps = n_steps, verbose = verbose)::Vector{EHDriftPath{T}}
+                             Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
 end
 
 function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, TT}
@@ -651,80 +655,6 @@ function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, ene
     signal::Vector{T} = zeros(T, length(timestamps))
     add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, Val(get_coordinate_system(sim.detector)))
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal ) 
-end
-
-
-
-function generate_charge_signals!(
-    contact_charge_signals::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
-    sim::Simulation{T},
-    hit_pos::AbstractVector{<:AbstractVector{<:AbstractVector{<:RealQuantity}}},
-    hit_edep::AbstractVector{<:AbstractVector{<:RealQuantity}},
-    n_steps::Integer,
-    Δt::RealQuantity;
-    channels::Union{Missing, Vector{Int}} = missing,
-    verbose::Bool = true
-)::Nothing where {T <: SSDFloat}
-    E_ionisation = sim.detector.semiconductors[1].material.E_ionisation
-    E_conversion_factor::T = 1 / ustrip(uconvert(internal_energy_unit, E_ionisation))
-
-    unitless_delta_t::T = to_internal_units(internal_time_unit, Δt)
-    S = Val(get_coordinate_system(sim.detector))
-    
-    contacts::Vector{Contact{T}} = []
-    if ismissing(channels) 
-        contacts = sim.detector.contacts
-    else
-        for contact in sim.detector.contacts 
-            if contact.id in channels push!(contacts, contact) end
-        end
-    end
-    wps_interpolated::Vector{<:Interpolations.Extrapolation{T, 3}} = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ]
-
-    prog = Progress(length(hit_pos), 0.1, "Generating charge signals...")
-    @inbounds for i_evt in eachindex(hit_pos)
-        startpos_vec::Vector{CartesianPoint{T}} = CartesianPoint{T}[ CartesianPoint{T}( to_internal_units(u"m", hit_pos[i_evt][idep]) ) for idep in eachindex(hit_pos[i_evt]) ]
-        edep_vec::Vector{T} = T[ to_internal_units(u"eV", hit_edep[i_evt][idep]) for idep in eachindex(hit_edep[i_evt]) ]
-        n_charges_vec::Vector{T} = edep_vec * E_conversion_factor
-
-        drift_paths::Vector{EHDriftPath{T}} = drift_charges( sim, startpos_vec, Δt = unitless_delta_t, n_steps = n_steps, verbose = verbose)
-
-        for i in eachindex(contacts)
-            contact::Contact{T} = contacts[i]
-            signal::Vector{T} = zeros(T, n_steps)
-            add_signal!(signal, drift_paths, n_charges_vec, wps_interpolated[contact.id], S)
-            contact_charge_signals[contact.id][i_evt] = signal
-        end
-        ProgressMeter.next!(prog)
-    end
-    ProgressMeter.finish!(prog)
-    nothing
-end
-
-
-function generate_charge_signals(   sim::Simulation{T},
-                                    events::DetectorHitEvents;
-                                    n_steps::Integer = 1000,
-                                    Δt::RealQuantity = 5u"ns",
-                                    channels::Union{Missing, Vector{Int}} = missing,
-                                    verbose::Bool = true
-                                ) where {T <: SSDFloat}
-    hit_pos = events.pos
-    hit_edep = events.edep
-
-    # contact_charge_signals = [nestedview(Array{T, 2}(undef, n_steps, size(hit_pos, 1))) for i in eachindex(sim.detector.contacts)]
-    contact_charge_signals = [nestedview(zeros(T, n_steps, size(hit_pos, 1))) for i in eachindex(sim.detector.contacts)]
-
-    generate_charge_signals!(
-        contact_charge_signals,
-        sim,
-        hit_pos, hit_edep,
-        n_steps, Δt,
-        channels = channels,
-        verbose = verbose
-    )
-
-    contact_charge_signals
 end
 
 """
@@ -738,10 +668,12 @@ function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool 
     calculate_electric_potential!(  sim, 
                                     max_refinements = max_refinements, 
                                     verbose = verbose, 
+                                    init_grid_size = (10,10,10),
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, 
+                init_grid_size = (10,10,10),
                 verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
