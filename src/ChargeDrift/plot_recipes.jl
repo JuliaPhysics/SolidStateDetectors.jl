@@ -1,4 +1,4 @@
-@recipe function f(dp::DriftPath{T}; showlabel = true, scaling = 1.0) where {T <: Real}
+@recipe function f(dp::EHDriftPath{T}; showlabel = true, scaling = 1.0) where {T <: Real}
     legendfont --> 15
     lw --> 3
     @series begin
@@ -24,7 +24,7 @@
         CartesianPoint{T}(dp.h_path[end] * scaling)
     end
 end
-@recipe function f(dps::Vector{DriftPath{T}}, scaling = 1.0) where {T <: Real}
+@recipe function f(dps::Vector{EHDriftPath{T}}, scaling = 1.0) where {T <: Real}
     for i in eachindex(dps)
         @series begin
             scaling --> scaling

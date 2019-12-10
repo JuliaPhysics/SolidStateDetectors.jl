@@ -7,7 +7,7 @@
 using Documenter
 using Literate
 using Plots
-pyplot(fmt=:svg)
+pyplot(fmt=:png) 
 using SolidStateDetectors
 
 gen_content_dir = joinpath(@__DIR__, "src")

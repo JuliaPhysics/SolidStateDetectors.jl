@@ -1,6 +1,7 @@
 function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid::Grid{T, 3, :cartesian} = Grid(ssd),
-                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing) where {T}#::PotentialSimulationSetupRB{T} where {T}
-    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
+                potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing,
+                sor_consts::T = T(1)) where {T}#::PotentialSimulationSetupRB{T} where {T}
+                is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
     @inbounds begin
         begin # Geometrical weights of the Axes
@@ -101,7 +102,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
         maximum_applied_potential::T = maximum(contact_bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
         depletion_handling_potential_limit::T = -bias_voltage
-        sor_consts::Vector{T} = [1]
+        sor_consts = [sor_consts]
 
         ϵ = Array{T, 3}(undef, length(mpx), length(mpy), length(mpz))
         ρ_tmp = Array{T, 3}(undef, length(mpx), length(mpy), length(mpz))

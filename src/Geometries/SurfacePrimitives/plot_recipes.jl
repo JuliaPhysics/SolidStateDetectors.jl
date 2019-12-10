@@ -1,4 +1,4 @@
-# @recipe function f(Vol::SSD.ConeMantle{T}, n_aux_lines =0) where T
+# @recipe function f(Vol::ConeMantle{T}, n_aux_lines =0) where T
 #
 #     rStart = Vol.cone.r_interval.left
 #     rStop = Vol.cone.r_interval.right

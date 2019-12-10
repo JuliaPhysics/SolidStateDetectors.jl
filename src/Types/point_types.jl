@@ -54,12 +54,12 @@ all depleted cells.
 function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
     active_volume::T = 0
 
-    only_2d::Bool = length(pts[:φ]) == 1
-    cyclic::T = pts[:φ].interval.right
+    only_2d::Bool = length(pts.grid.φ) == 1
+    cyclic::T = pts.grid.φ.interval.right
 
-    r_ext::Vector{T} = get_extended_ticks(pts[:r])
-    φ_ext::Vector{T} = get_extended_ticks(pts[:φ])
-    z_ext::Vector{T} = get_extended_ticks(pts[:z])
+    r_ext::Vector{T} = get_extended_ticks(pts.grid.r)
+    φ_ext::Vector{T} = get_extended_ticks(pts.grid.φ)
+    z_ext::Vector{T} = get_extended_ticks(pts.grid.z)
     Δr_ext::Vector{T} = diff(r_ext)
     Δφ_ext::Vector{T} = diff(φ_ext)
     Δz_ext::Vector{T} = diff(z_ext)
@@ -74,11 +74,11 @@ function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
         Δmpr_squared[1] = T(0.5) * (mpr[2]^2)
     end
 
-    isclosed::Bool = typeof(pts[:φ].interval).parameters[2] == :closed 
-    for iz in eachindex(pts[:z])
+    isclosed::Bool = typeof(pts.grid.φ.interval).parameters[2] == :closed 
+    for iz in eachindex(pts.grid.z)
         if !isclosed || only_2d
-            for iφ in eachindex(pts[:φ])
-                for ir in eachindex(pts[:r])
+            for iφ in eachindex(pts.grid.φ)
+                for ir in eachindex(pts.grid.r)
                     pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV::T = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
@@ -87,12 +87,12 @@ function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
                 end
             end
         elseif isclosed && !only_2d
-            for iφ in eachindex(pts[:φ])
-                for ir in eachindex(pts[:r])
+            for iφ in eachindex(pts.grid.φ)
+                for ir in eachindex(pts.grid.r)
                     pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
-                        active_volume += if iφ == length(pts[:φ]) || iφ == 1
+                        active_volume += if iφ == length(pts.φ) || iφ == 1
                             dV / 2
                         else
                             dV
@@ -115,7 +115,7 @@ end
 function PointTypes(nt::NamedTuple)
     grid = Grid(nt.grid)
     T = typeof(grid[1].ticks[1])
-    S = get_coordinate_type(grid)
+    S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     PointTypes{T, N, S}( nt.values, grid )
 end
@@ -148,27 +148,27 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
-            if φ_rad > g[:φ].interval.right
-                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
-            elseif φ_rad < g[:φ].interval.left
-                φ_rad += g[:φ].interval.right - g[:φ].interval.left
+        while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
+            if φ_rad > g.φ.interval.right
+                φ_rad -= g.φ.interval.right - g.φ.interval.left
+            elseif φ_rad < g.φ.interval.left
+                φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g[:φ], φ_rad)
+        :φ, searchsortednearest(g.φ, φ_rad)
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(g[:r], T(r))
+        :r, searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
     value::T = if cross_section == :φ
-        g[:φ][idx]
+        g.φ[idx]
     elseif cross_section == :r    
-        g[:r][idx]
+        g.r[idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
     
     @series begin
@@ -177,15 +177,15 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
             title --> "Point Type Map @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
-            size --> ( 400, 350 / (g[:r][end] - g[:r][1]) * (g[:z][end] - g[:z][1]) )
-            g[:r], g[:z], pts.data[:, idx,:]'
+            size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
+            g.r, g.z, pts.data[:, idx,:]'
         elseif cross_section == :r
             title --> "Point Type Map @$(cross_section) = $(round(value, sigdigits = 2))"
-            g[:φ], g[:z], pts.data[idx,:,:]'
+            g.φ, g.z, pts.data[idx,:,:]'
         elseif cross_section == :z
             title --> "Point Type Map @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
-            g[:φ], g[:r], pts.data[:,:,idx]
+            g.φ, g.r, pts.data[:,:,idx]
         end
     end
 end
@@ -209,7 +209,7 @@ end
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
         :y, searchsortednearest(g[:y], T(y))
     elseif ismissing(x) && ismissing(y) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, y, z` is allowed.")
     end
@@ -218,7 +218,7 @@ end
     elseif cross_section == :y
         g[:y][idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
     
     @series begin
@@ -227,11 +227,11 @@ end
         if cross_section == :x
             xlabel --> "y / m"
             ylabel --> "z / m"
-            g[:y], g[:z], pts.data[idx, :, :]'
+            g[:y], g.z, pts.data[idx, :, :]'
         elseif cross_section == :y
             xlabel --> "x / m"
             ylabel --> "z / m"
-            g[:x], g[:z], pts.data[:, idx, :]'
+            g[:x], g.z, pts.data[:, idx, :]'
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"

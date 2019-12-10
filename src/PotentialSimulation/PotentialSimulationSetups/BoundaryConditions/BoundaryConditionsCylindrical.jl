@@ -1,21 +1,22 @@
 
 
-function apply_boundary_conditions_on_φ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T},
+function apply_boundary_conditions_on_φ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, nrbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T},
                                                 grid_boundary_factors::NTuple{2, T}, only2d::Val{only_2d})::Nothing where {T, only_2d}
     rbpot[iz,   1, ir, rbi] = rbpot[ iz, end - 1, ir, rbi] # cycling boundary
     rbpot[iz, end, ir, rbi] = rbpot[ iz,       2, ir, rbi] # cycling boundary
     nothing
 end
 
-function apply_boundary_conditions_on_φ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, ax::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
-                                                grid_boundary_factors::NTuple{2, T}, only2d::Val{only_2d})::Nothing where {T, only_2d}
-    if only_2d
-        rbpot[iz,   1, ir, rbi] = rbpot[ iz, 2, ir, rbi] # cycling boundary
-        rbpot[iz, end, ir, rbi] = rbpot[ iz, 2, ir, rbi] # cycling boundary
-    else
-        rbpot[iz,   1, ir, rbi] = rbpot[ iz, 3, ir, rbi] # cycling boundary
-        rbpot[iz, end, ir, rbi] = rbpot[ iz, end - 2, ir, rbi] # cycling boundary
-    end
+function apply_boundary_conditions_on_φ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, nrbi::Int, ax::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
+                                                grid_boundary_factors::NTuple{2, T}, only2d::Val{false})::Nothing where {T}
+    rbpot[iz,   1, ir, rbi] = rbpot[ iz,       3, ir, rbi] # cycling boundary
+    rbpot[iz, end, ir, rbi] = rbpot[ iz, end - 2, ir, rbi] # cycling boundary
+    nothing
+end
+function apply_boundary_conditions_on_φ_axis!(  rbpot::Array{T, 4}, iz::Int, ir::Int, rbi::Int, nrbi::Int, ax::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
+                                                grid_boundary_factors::NTuple{2, T}, only2d::Val{true})::Nothing where {T}
+    rbpot[iz,   1, ir, nrbi] = rbpot[ iz, 2, ir, rbi] # cycling boundary
+    rbpot[iz, end, ir, nrbi] = rbpot[ iz, 2, ir, rbi] # cycling boundary
     nothing
 end
 function apply_boundary_conditions_on_r_axis!(  rbpot::Array{T, 4}, iz::Int, iφ::Int, rbi::Int, ax::DiscreteAxis{T, :r0, :infinite}, int::Interval{:closed, :closed, T},
@@ -73,29 +74,36 @@ end
 
 function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
+    nrbi::Int = even_points ? rb_odd::Int : rb_even::Int
+    ax1::typeof(fssrb.grid.axes[1]) = fssrb.grid.axes[1]
+    ax2::typeof(fssrb.grid.axes[2]) = fssrb.grid.axes[2]
+    ax3::typeof(fssrb.grid.axes[3]) = fssrb.grid.axes[3]
+    int1::typeof(ax1.interval) = ax1.interval
+    int2::typeof(ax2.interval) = ax2.interval
+    int3::typeof(ax3.interval) = ax3.interval
     if only_2d
         iφ::Int = 2
         @inbounds for iz in axes(fssrb.potential, 1)
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2], only2d)
-            end
-            apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
+            # for ir in axes(fssrb.potential, 3)
+            #     apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, nrbi, ax2, int2, fssrb.grid_boundary_factors[2], only2d)
+            # end
+            apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, ax1, int1, fssrb.grid_boundary_factors[1])
         end
         @inbounds for ir in axes(fssrb.potential, 3)
-            apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iφ, rbi, fssrb.grid.axes[3], fssrb.grid.axes[3].interval, fssrb.grid_boundary_factors[3])
+            apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iφ, rbi, ax3, int3, fssrb.grid_boundary_factors[3])
         end
     else
         @inbounds for iz in axes(fssrb.potential, 1)
             for iφ in axes(fssrb.potential, 2)
-                apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
+                apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, ax1, int1, fssrb.grid_boundary_factors[1])
             end
             for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2], only2d)
+                apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, nrbi, ax2, int2, fssrb.grid_boundary_factors[2], only2d)
             end
         end
         @inbounds for iφ in axes(fssrb.potential, 2) # z boundaries
             for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iφ, rbi, fssrb.grid.axes[3], fssrb.grid.axes[3].interval, fssrb.grid_boundary_factors[3])
+                apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iφ, rbi, ax3, int3, fssrb.grid_boundary_factors[3])
             end
         end
         begin # r = 0 handling

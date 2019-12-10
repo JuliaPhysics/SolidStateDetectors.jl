@@ -1,4 +1,4 @@
-@recipe function f(Vol::SSD.Tube{T}, coloring = missing) where T <: SSDFloat
+@recipe function f(Vol::Tube{T}, coloring = missing) where T <: SSDFloat
     rStart = Vol.r_interval.left
     rStop = Vol.r_interval.right
     φStart = Vol.φ_interval.left
@@ -70,7 +70,7 @@
 end
 
 
-@recipe function f(vol::SSD.Cone{T},n_aux_lines = 0, coloring = missing) where T
+@recipe function f(vol::Cone{T},n_aux_lines = 0, coloring = missing) where T
     ismissing(vol.translate) ? translate = [0.0,0.0,0.0] : translate = vol.translate
     ismissing(coloring) ? c --> :orange : c --> coloring
     @series begin

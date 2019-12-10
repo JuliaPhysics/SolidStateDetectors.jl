@@ -430,8 +430,8 @@ end
             for g in c.geometry_positive
                 @series begin
                     if d.name == "Public Inverted Coax"
-                        if typeof(c) == SSD.Contact{T,:N}; color --> :orange
-                        elseif typeof(c) == SSD.Contact{T,:P}; color --> :blue; end
+                        if typeof(c) == Contact{T,:N}; color --> :orange
+                        elseif typeof(c) == Contact{T,:P}; color --> :blue; end
                     else color --> :black
                     end
                     lw --> 2
@@ -446,8 +446,8 @@ end
             for g in c.geometry_positive
                 @series begin
                     if d.name == "Public Inverted Coax"
-                        if typeof(c) == SSD.Contact{T,:N}; color --> :orange
-                        elseif typeof(c) == SSD.Contact{T,:P}; color --> :blue; end
+                        if typeof(c) == Contact{T,:N}; color --> :orange
+                        elseif typeof(c) == Contact{T,:P}; color --> :blue; end
                     else color --> :black
                     end
                     lw --> 2
@@ -462,7 +462,7 @@ end
 end
 
 
-@recipe function f(Vol::SSD.Tube{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+@recipe function f(Vol::Tube{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
     if dim == :φ
         if parameter in Vol.φ_interval
            rStart = Vol.r_interval.left
@@ -531,7 +531,7 @@ end
 
 
 
-# @recipe function f(Vol::SSD.ConeMantle{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+# @recipe function f(Vol::ConeMantle{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
 #     newVol = Vol.cone
 #     @series begin
 #         newVol, dim, parameter
@@ -540,7 +540,7 @@ end
 
 
 
-@recipe function f(Vol::SSD.Cone{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
+@recipe function f(Vol::Cone{T}, dim::Symbol, parameter::T) where{T <: SSDFloat}
     if dim == :φ
         if parameter in Vol.φ_interval
             rStart = Vol.r_interval.left

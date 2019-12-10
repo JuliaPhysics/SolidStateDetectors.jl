@@ -1,2 +1,5 @@
 build/
 site/
+src/ssd_tutorial.ipynb
+src/ssd_tutorial.jl
+src/tutorial.md

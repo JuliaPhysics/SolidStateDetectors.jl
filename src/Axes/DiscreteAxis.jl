@@ -1,5 +1,5 @@
-abstract type AbstractAxis{T, BL, BR} <: AbstractVector{T} end
-abstract type AbstractDiscreteAxis{T, BL, BR <: Number} <: AbstractAxis{T, BL, BR} end
+abstract type AbstractAxis{T, BL, BR, I} <: AbstractVector{T} end
+abstract type AbstractDiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} end
 
 """
     DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
@@ -8,9 +8,10 @@ abstract type AbstractDiscreteAxis{T, BL, BR <: Number} <: AbstractAxis{T, BL, B
 * BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
 * BL: left boundary condition
 * BR: right boundary condition
+* I: IntervalSets.Interval (closed or open boundaries)
 """
-struct DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR} 
-    interval::Interval{L, R, T} where {L, R}
+struct DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} 
+    interval::I
     ticks::Vector{T}
 end
 @inline size(dx::DiscreteAxis{T, BL, BR}) where {T, BL, BR} = size(dx.ticks)
@@ -19,6 +20,10 @@ end
 @inline getindex(dx::DiscreteAxis{T, BL, BR}, i::Int) where {T, BL, BR} = dx.ticks[i]
 @inline setindex!(dx::DiscreteAxis{T, BL, BR}, v::T, i::Int) where {T, BL, BR} = setindex!(dx.ticks, v, i)
 @inline axes(dx::DiscreteAxis{T, BL, BR}) where {T, BL, BR} = axes(dx.ticks)
+
+function DiscreteAxis{T, BL, BR}(int::I, ticks::Vector{T})::DiscreteAxis{T, BL, BR, typeof(int)} where {T, BL, BR, I}
+    return DiscreteAxis{T, BL, BR, typeof(int)}( int, ticks )
+end
 
 """
     DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
@@ -30,7 +35,7 @@ end
 """
 function DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
     int::Interval{L, R, T} = Interval{L, R, T}( left_endpoint, right_endpoint )
-    return DiscreteAxis{T, BL, BR}( int, ticks )
+    return DiscreteAxis{T, BL, BR, typeof(int)}( int, ticks )
 end
 
 
@@ -344,9 +349,9 @@ function DiscreteAxis(nt::NamedTuple; unit = u"m/m")
     knots::Vector{T} = convert(Vector{T}, ustrip.(uconvert.(unit, nt.knots)))
     lep::T = ustrip(uconvert.(unit, nt.interval.left_boundary.endpoint ))
     rep::T = ustrip(uconvert.(unit, nt.interval.right_boundary.endpoint))
-    return DiscreteAxis{T, nt.interval.left_boundary.boundaryhandling, nt.interval.right_boundary.boundaryhandling}(
-        Interval{nt.interval.left_boundary.closedopen, nt.interval.right_boundary.closedopen}( lep, rep ),
-        knots
+    int = Interval{nt.interval.left_boundary.closedopen, nt.interval.right_boundary.closedopen}( lep, rep )
+    return DiscreteAxis{T, nt.interval.left_boundary.boundaryhandling, nt.interval.right_boundary.boundaryhandling, typeof(int)}(
+        int, knots
     )
 end
 

@@ -74,23 +74,23 @@ end
 
 
 function get_important_points(t::Tube{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return T[t.r_interval.left, t.r_interval.right]
+    return geom_round.(T[t.r_interval.left, t.r_interval.right])
 end
 
 function get_important_points(t::Tube{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
-    return T[t.φ_interval.left, t.φ_interval.right]
+    return geom_round.(T[t.φ_interval.left, t.φ_interval.right])
 end
 
 function get_important_points(t::Tube{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
-    return T[t.z_interval.left, t.z_interval.right]
+    return geom_round.(T[t.z_interval.left, t.z_interval.right])
 end
 
 function get_important_points(t::Tube{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return T[-t.r_interval.left, -t.r_interval.right, t.r_interval.left, t.r_interval.right]
+    return geom_round.(T[-t.r_interval.left, -t.r_interval.right, t.r_interval.left, t.r_interval.right])
 end
 
 function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return T[-t.r_interval.right, -t.r_interval.left, t.r_interval.left, t.r_interval.right]
+    return geom_round.(T[-t.r_interval.right, -t.r_interval.left, t.r_interval.left, t.r_interval.right])
 end
 
 function sample(c::Tube{T}, stepsize::Vector{T}) where T

@@ -32,36 +32,36 @@ end
                 subplot := 1
                 title := "r_component"
                 ylabel --> "z ["*units[SI_factor]*"]"
-                grid[:r] ./ SI_factor, grid[:z] ./ SI_factor, vectorfield_r[:,i_fixed,:]'
+                grid.r ./ SI_factor, grid.z ./ SI_factor, vectorfield_r[:,i_fixed,:]'
             end
             @series begin
                 subplot := 2
                 colorbar_title --> "Field Strength [V / "*units[SI_factor]*"]"
                 title := "φ_component"
 
-                grid[:r] ./SI_factor, grid[:z] ./SI_factor, vectorfield_φ[:,i_fixed,:]'
+                grid.r ./SI_factor, grid.z ./SI_factor, vectorfield_φ[:,i_fixed,:]'
             end
             @series begin
                 subplot := 3
                 title := "z_component"
                 ylabel --> "z ["*units[SI_factor]*"]"
                 xlabel --> "r ["*units[SI_factor]*"]"
-                grid[:r] ./SI_factor, grid[:z] ./SI_factor, vectorfield_z[:,i_fixed,:]'
+                grid.r ./SI_factor, grid.z ./SI_factor, vectorfield_z[:,i_fixed,:]'
             end
             @series begin
                 subplot := 4
                 colorbar_title --> "Field Strength [V / "*units[SI_factor]*"]"
                 xlabel --> "r ["*units[SI_factor]*"]"
                 title:= "magnitude"
-                grid[:r] ./SI_factor, grid[:z] ./SI_factor, vectorfield_magn[:,i_fixed,:]'
+                grid.r ./SI_factor, grid.z ./SI_factor, vectorfield_magn[:,i_fixed,:]'
             end
         end
     elseif view == :ef
         if plane == :rφ
             vectorfield_xyz = Array{Vector{Float32}}(undef,size(vectorfield,1),size(vectorfield,2),size(vectorfield,3));
-            for (iz,z) in enumerate(grid[:z])
-                for (iφ,φ) in enumerate(grid[:φ])
-                    for (ir,r) in enumerate(grid[:r])
+            for (iz,z) in enumerate(grid.z)
+                for (iφ,φ) in enumerate(grid.φ)
+                    for (ir,r) in enumerate(grid.r)
                         vectorfield_xyz[ir,iφ,iz]=get_xyz_vector_from_rφz_field_vector_at_rφz(vectorfield,r,φ,z,ir,iφ,iz)
                     end
                 end
@@ -78,14 +78,14 @@ end
         label := ""
         ylabel := "y "
         xlabel := "x "
-        title := "z = $(round(grid[:z][i_fixed]/SI_factor,digits=2)) / mm"
-        xlims := (-1.2/SI_factor*maximum(grid[:r]),1.2/SI_factor*maximum(grid[:r]))
-        ylims := (-1.2/SI_factor*maximum(grid[:r]),1.2/SI_factor*maximum(grid[:r]))
-        for (ir,r) in enumerate(grid[:r][1:spacing:end])
+        title := "z = $(round(grid.z[i_fixed]/SI_factor,digits=2)) / mm"
+        xlims := (-1.2/SI_factor*maximum(grid.r),1.2/SI_factor*maximum(grid.r))
+        ylims := (-1.2/SI_factor*maximum(grid.r),1.2/SI_factor*maximum(grid.r))
+        for (ir,r) in enumerate(grid.r[1:spacing:end])
         for (iφ,φ) in enumerate(grid.φ)
                 x= r*cos(φ)
             y= r*sin(φ)
-            ir_actual=findfirst(x->x==r,grid[:r])
+            ir_actual=findfirst(x->x==r,grid.r)
             iφ_actual=findfirst(x->x==φ,grid.φ)
                 xy_magn = vectorfield_xy_magn[ir_actual,iφ_actual]
                 vector=vectorfield_xyz[ir_actual,iφ_actual,i_fixed]/xy_magn
@@ -189,8 +189,8 @@ end
                     spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], n_steps=3000,
                     potential=true, contours_equal_potential=true, offset = (5e-5))
     sim = gdd.args[1]
-    S = get_coordinate_type(sim.electric_field.grid)
-    T = Float32
+    S = get_coordinate_system(sim.electric_field.grid)
+    T = typeof(sim).parameters[1]
 
     dim_array = [φ, r, x, y, z]
     dim_symbols_array = [:φ, :r, :x, :y, :z]
@@ -219,6 +219,7 @@ end
     xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
     ylabel --> L"$z$ / m"
 
+
     if potential == true
         @series begin
             # contours_equal_potential --> contours_equal_potential
@@ -243,14 +244,14 @@ end
     end
     PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
 
-    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, SSD.Contact{T}[c for c in sim.detector.contacts])
+    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = PT[]
-    # grid = sim.electric_field.grid# Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
-    grid = Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
+    grid = sim.electric_field.grid# Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
+    # grid = Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
     pt_offset = T[offset,0.0,offset]
 
     for c in contacts_to_spawn_charges_for
-        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), SSD.paint_object(sim.detector, c, grid, Val(dim_symbol), v))
+        ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), paint_object(sim.detector, c, grid, Val(dim_symbol), v))
         for position in ongrid_positions
             push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
             push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
@@ -277,13 +278,14 @@ end
 
     @info "$(length(spawn_positions)) drifts are now being simulated..."
 
-    el_field_itp     = SSD.get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
-    el_field_itp_inv = SSD.get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
+    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
+    el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
+
     @showprogress for (ipos, pos) in enumerate(spawn_positions)
         if ((spacing-1)+ipos)%spacing == 0
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            _drift_charge!(path, Vector{T}(undef, n_steps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
@@ -305,7 +307,7 @@ end
             end
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:n_steps]
-            SSD.drift_charge!(path, sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            _drift_charge!(path, Vector{T}(undef, n_steps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end

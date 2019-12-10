@@ -14,6 +14,3 @@ include("WeightingPotential.jl")
 include("SimulationAlgorithms/Cylindrical.jl")
 include("SimulationAlgorithms/Cartesian3D.jl")
 include("ConvergenceAndRefinement.jl")
-
-include("CalculateElectricPotential.jl")
-include("CalculateWeightingPotential.jl")

@@ -26,7 +26,7 @@ Base.convert(T::Type{NamedTuple}, x::DielectricDistribution) = T(x)
 function DielectricDistribution(nt::NamedTuple)
     grid = Grid(nt.grid)
     T = typeof(ustrip(nt.values[1]))
-    S = get_coordinate_type(grid)
+    S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     DielectricDistribution{T, N, S}( ustrip.(uconvert.(internal_voltage_unit, nt.values)), grid)
 end
@@ -49,27 +49,27 @@ Base.convert(T::Type{DielectricDistribution}, x::NamedTuple) = T(x)
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(g[:φ].interval.left <= φ_rad <= g[:φ].interval.right)
-            if φ_rad > g[:φ].interval.right
-                φ_rad -= g[:φ].interval.right - g[:φ].interval.left
-            elseif φ_rad < g[:φ].interval.left
-                φ_rad += g[:φ].interval.right - g[:φ].interval.left
+        while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
+            if φ_rad > g.φ.interval.right
+                φ_rad -= g.φ.interval.right - g.φ.interval.left
+            elseif φ_rad < g.φ.interval.left
+                φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g[:φ], φ_rad)
+        :φ, searchsortednearest(g.φ, φ_rad)
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(g[:r], T(r))
+        :r, searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
     value::T = if cross_section == :φ
-        g[:φ][idx]
+        g.φ[idx]
     elseif cross_section == :r    
-        g[:r][idx]
+        g.r[idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
 
     @series begin
@@ -77,15 +77,15 @@ Base.convert(T::Type{DielectricDistribution}, x::NamedTuple) = T(x)
             title --> "Dielectric Distribution @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
             xlabel --> "r / m"
             ylabel --> "z / m"
-            size --> ( 400, 350 / (g[:r][end] - g[:r][1]) * (g[:z][end] - g[:z][1]) )
-            g[:r], g[:z], ϵ.data[:, idx,:]'
+            size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
+            g.r, g.z, ϵ.data[:, idx,:]'
         elseif cross_section == :r
             title --> "Dielectric Distribution @$(cross_section) = $(round(value, sigdigits = 2))"
-            g[:φ], g[:z], ϵ.data[idx,:,:]'
+            g.φ, g.z, ϵ.data[idx,:,:]'
         elseif cross_section == :z
             title --> "Dielectric Distribution @$(cross_section) = $(round(value, sigdigits = 2))"
             proj --> :polar
-            g[:φ], g[:r], ϵ.data[:,:,idx]
+            g.φ, g.r, ϵ.data[:,:,idx]
         end
     end
 end
@@ -110,7 +110,7 @@ end
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
         :y, searchsortednearest(g[:y], T(y))
     elseif ismissing(x) && ismissing(y) && !ismissing(z)
-        :z, searchsortednearest(g[:z], T(z))
+        :z, searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, y, z` is allowed.")
     end
@@ -119,7 +119,7 @@ end
     elseif cross_section == :y
         g[:y][idx]
     elseif cross_section == :z
-        g[:z][idx]
+        g.z[idx]
     end
     @series begin
             title --> "Dielectric Distribution @$(cross_section) = $(round(value, sigdigits = 2))"
@@ -127,14 +127,14 @@ end
             xlabel --> "y / m"
             ylabel --> "z / m"
             xlims --> (g[:y][1], g[:y][end])
-            ylims --> (g[:z][1], g[:z][end])
-            g[:y], g[:z], ϵ.data[idx, :, :]'
+            ylims --> (g.z[1], g.z[end])
+            g[:y], g.z, ϵ.data[idx, :, :]'
         elseif cross_section == :y
             xlabel --> "x / m"
             ylabel --> "z / m"
             xlims --> (g[:x][1], g[:x][end])
-            ylims --> (g[:z][1], g[:z][end])
-            g[:x], g[:z], ϵ.data[:, idx, :]'
+            ylims --> (g.z[1], g.z[end])
+            g[:x], g.z, ϵ.data[:, idx, :]'
         elseif cross_section == :z
             xlabel --> "x / m"
             ylabel --> "y / m"
