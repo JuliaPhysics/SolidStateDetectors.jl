@@ -76,7 +76,7 @@ function Simulation(nt::NamedTuple)
     end
     if !ismissing(nt.electron_drift_field) sim.electron_drift_field = ElectricField(nt.electron_drift_field) end
     if !ismissing(nt.hole_drift_field) sim.hole_drift_field = ElectricField(nt.hole_drift_field) end
-    sim.charge_drift_model = ADLChargeDriftModel{T}()
+    sim.charge_drift_model = ADLChargeDriftModel(T=T)
     @info "I/O of charge drift model not yet supported. Loading default: ADLChargeDriftModel"
     return sim
 end
