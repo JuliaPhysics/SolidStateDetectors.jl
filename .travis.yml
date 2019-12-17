@@ -5,6 +5,7 @@ language: julia
 os:
   - linux
   - osx
+  - windows
 
 julia:
   - 1.0
@@ -46,6 +47,8 @@ jobs:
   fast_finish: true
   exclude:
     - os: osx
+      arch: x86
+    - os: windows
       arch: x86
   include:
     - stage: "Documentation"
