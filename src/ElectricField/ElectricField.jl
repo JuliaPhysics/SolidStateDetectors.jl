@@ -339,3 +339,50 @@ function get_electric_field_strength(ef::ElectricField{T}) where {T <: SSDFloat}
     end
     return efs
 end
+
+
+"""
+    calculate_stored_energy(ef::ElectricField{T, 3, :cylindrical})::T where {T <: SSDFloat}
+
+Returns the stored energy of an electric field in Joule.
+"""
+function calculate_stored_energy(ef::ElectricField{T, 3, :cylindrical})::T where {T <: SSDFloat}
+    W::T = 0
+    axr::Vector{T} = collect(ef.grid.r)
+    Δaxr::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid[1])))
+    Δaxφ::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid[2])))
+    Δaxz::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid[3])))
+    @inbounds for iz in eachindex(Δaxz)
+        Δz::T = Δaxz[iz]
+        for iφ in eachindex(Δaxφ)
+            Δφ::T = Δaxφ[iφ] 
+            for ir in eachindex(Δaxr)
+                ev::SArray{Tuple{3},Float32,1,3} = ef.data[ir, iφ, iz]
+                dV::T = Δaxr[ir]::T * (axr[ir]::T * Δφ) * Δz
+                W += sum(ev.^2) * dV
+            end
+        end
+    end
+    return W * ϵ0 / 2
+end
+"""
+    calculate_stored_energy(ef::ElectricField{T, 3, :cartesian})::T where {T <: SSDFloat}
+
+Returns the stored energy of an electric field in Joule.
+"""
+function calculate_stored_energy(ef::ElectricField{T, 3, :cartesian})::T where {T <: SSDFloat}
+    W::T = 0
+    Δaxx::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid.x)))
+    Δaxy::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid.y)))
+    Δaxz::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid.z)))
+    for iz in eachindex(Δaxz)
+        for iy in eachindex(Δaxy)
+            for ix in eachindex(Δaxz)
+                ev::SArray{Tuple{3},Float32,1,3} = ef.data[ix, iy, iz]
+                dV::T = Δaxx[ix] * Δaxy[iy] * Δaxz[iz]
+                W += sum(ev.^2) * dV
+            end
+        end
+    end
+    return W * ϵ0 / 2
+end
