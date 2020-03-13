@@ -57,5 +57,6 @@ deploydocs(
     repo = "github.com/JuliaPhysics/SolidStateDetectors.jl.git",
     devbranch = "master",
     devurl = "master",
-    forcepush = true
+    forcepush = true,
+    push_preview = true,
 )
