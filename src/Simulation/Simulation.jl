@@ -681,3 +681,20 @@ function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool 
     apply_charge_drift_model!(sim)
     @info "Detector simulation done"
 end
+
+function _get_abs_bias_voltage(det::SolidStateDetector{T}) where {T <: SSDFloat}
+    potentials::Vector{T} = map(c -> c.potential, det.contacts)
+    return maximum(potentials) - minimum(potentials)
+end
+
+
+export calculate_capacitance
+"""
+    calculate_capacitance(sim::Simulation{T})::T where {T <: SSDFloat}
+
+Calculates the capacitance of an detector in Farad.
+"""
+function calculate_capacitance(sim::Simulation{T})::T where {T <: SSDFloat}
+    W::T = calculate_stored_energy(sim.electric_field)
+    return 2 * W / (_get_abs_bias_voltage(sim.detector)^2)
+end
