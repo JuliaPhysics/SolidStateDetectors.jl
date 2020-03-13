@@ -190,7 +190,7 @@ end
                     potential=true, contours_equal_potential=true, offset = (5e-5))
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
-    T = SolidStateDetectors.get_precision_type(s.detector)
+    T = SolidStateDetectors.get_precision_type(sim.detector)
     
     dim_array = [φ, r, x, y, z]
     dim_symbols_array = [:φ, :r, :x, :y, :z]
