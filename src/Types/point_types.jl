@@ -46,6 +46,10 @@ function in(pt::AbstractCoordinatePoint{T}, pts::PointTypes{T, 3, S})::Bool wher
     return pts.data[i1, i2, i3] & pn_junction_bit > 0
 end
 
+is_depleted(point_types::PointTypes)::Bool = 
+    !any(b -> undepleted_bit & b > 0, point_types.data)
+
+
 """
     get_active_volume(pts::PointTypes{T}) where {T}
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
