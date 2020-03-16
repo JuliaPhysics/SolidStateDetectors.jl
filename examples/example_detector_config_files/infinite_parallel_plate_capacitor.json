@@ -12,21 +12,21 @@
 			"x": {
 				"from": -0.5,
 				"to": 0.5,
-				"boundaries": "periodic"
+				"boundaries": "reflecting"
 			},
 			"y": {
-				"from": -5,
-				"to": 5,
-				"boundaries": "periodic"
+				"from": -5.0,
+				"to": 5.0,
+				"boundaries": "reflecting"
 			},
 			"z": {
-				"from": -5,
-				"to": 5,
-				"boundaries": "periodic"
+				"from": -5.0,
+				"to": 5.0,
+				"boundaries": "reflecting"
 			}
 		}
 	},
-	"medium": "vacuum",
+	"medium": "HPGe",
 	"objects": [
 		{
 			"type": "semiconductor",
@@ -55,12 +55,12 @@
 					"to": 0.5
 				},
 				"y":{
-					"from": -5.0,
-					"to": 5.0
+					"from": -5.1,
+					"to": 5.1
 				},
 				"z": {
-					"from": -5.0,
-					"to": 5.0
+					"from": -5.1,
+					"to": 5.1
 				}
 			}
 		},
@@ -77,12 +77,12 @@
 					"to": -0.5
 				},
 				"y":{
-					"from": -5.0,
-					"to": 5.0
+					"from": -5.1,
+					"to": 5.1
 				},
 				"z": {
-					"from": -5.0,
-					"to": 5.0
+					"from": -5.1,
+					"to": 5.1
 				}
 			}
 		},
@@ -99,12 +99,12 @@
 					"to": 0.5
 				},
 				"y":{
-					"from": -5.0,
-					"to": 5.0
+					"from": -5.1,
+					"to": 5.1
 				},
 				"z": {
-					"from":-5.0,
-					"to": 5.0
+					"from":-5.1,
+					"to": 5.1
 				}
 			}
 		}
