@@ -51,7 +51,7 @@ StatsBase = "0.32"
 Tables = "0.2, 1"
 TypedTables = "1.2"
 Unitful = "0.18, 1"
-YAML = "0.3"
+YAML = "0.3, 0.4"
 julia = "1"
 
 [extras]
