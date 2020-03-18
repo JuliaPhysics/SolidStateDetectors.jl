@@ -15,7 +15,6 @@ using Interpolations
 using IntervalSets
 using JSON
 using LaTeXStrings
-using NamedTupleTools
 using ParallelProcessingTools
 using ProgressMeter
 using RadiationDetectorSignals

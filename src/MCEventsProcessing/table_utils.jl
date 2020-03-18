@@ -43,7 +43,8 @@ end
 
 function split_table_by_each_charge_deposition(table::TypedTables.Table)
     row_lengths = length.(values(table[1]))
-    if all(isequal(row_lengths[1]), row_lengths)
+    all_vectors = all(t -> t <: AbstractVector, typeof.(values(table[1])))
+    if all(isequal(row_lengths[1]), row_lengths) && all_vectors
         TypedTables.Table( map(flatview, TypedTables.columns(table)) )
     else
         split_table_by_each_charge_deposition(blow_up_to_commen_length(table))

@@ -1,0 +1,112 @@
+{
+	"name":"Infinite Parallel Plate Capacitor",
+	"units": {
+		"length": "mm",
+		"angle": "deg",
+		"potential": "V",
+		"temperature": "K"
+	},
+	"grid": {
+		"coordinates": "cartesian",
+		"axes": {
+			"x": {
+				"from": -0.5,
+				"to": 0.5,
+				"boundaries": "reflecting"
+			},
+			"y": {
+				"from": -5.0,
+				"to": 5.0,
+				"boundaries": "reflecting"
+			},
+			"z": {
+				"from": -5.0,
+				"to": 5.0,
+				"boundaries": "reflecting"
+			}
+		}
+	},
+	"medium": "HPGe",
+	"objects": [
+		{
+			"type": "semiconductor",
+			"material": "HPGe",
+			"bulk_type": "n",
+			"temperature": 77,
+			"charge_density_model": {
+				"name": "linear",
+				"x": {
+					"init": 0.0,
+					"gradient": 0.000
+				},
+				"y": {
+					"init": 0.0,
+					"gradient": 0.0
+				},
+				"z": {
+					"init": 0.0,
+					"gradient": 0.0
+				}
+			},
+			"geometry": {
+				"type": "box",
+				"x": {
+					"from": -0.5,
+					"to": 0.5
+				},
+				"y":{
+					"from": -5.1,
+					"to": 5.1
+				},
+				"z": {
+					"from": -5.1,
+					"to": 5.1
+				}
+			}
+		},
+		{
+			"type": "contact",
+			"material": "HPGe",
+			"name": "n+ contact",
+			"potential": 10.0,
+			"channel": 1,
+			"geometry": {
+				"type": "box",
+				"x": {
+					"from": -0.5,
+					"to": -0.5
+				},
+				"y":{
+					"from": -5.1,
+					"to": 5.1
+				},
+				"z": {
+					"from": -5.1,
+					"to": 5.1
+				}
+			}
+		},
+		{
+			"type": "contact",
+			"material": "HPGe",
+			"name": "p+ contact",
+			"potential": 0.0,
+			"channel": 2,
+			"geometry": {
+				"type": "box",
+				"x": {
+					"from": 0.5,
+					"to": 0.5
+				},
+				"y":{
+					"from": -5.1,
+					"to": 5.1
+				},
+				"z": {
+					"from":-5.1,
+					"to": 5.1
+				}
+			}
+		}
+	]
+}
