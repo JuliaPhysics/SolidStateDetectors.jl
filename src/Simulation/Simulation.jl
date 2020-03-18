@@ -23,20 +23,23 @@ end
 
 function Simulation{T}() where {T <: SSDFloat}
     Simulation{T}(
-        SolidStateDetector{T}(), 
-        missing, 
-        missing, 
-        missing, 
-        missing, 
-        missing, 
-        [missing], 
-        missing, 
-        VacuumChargeDriftModel{T}(), 
-        missing, 
+        SolidStateDetector{T}(),
+        missing,
+        missing,
+        missing,
+        missing,
+        missing,
+        [missing],
+        missing,
+        VacuumChargeDriftModel{T}(),
+        missing,
         missing
     )
 end
 
+function get_precision_type(sim::Simulation{T}) where {T}
+    typeof(sim).parameters[1]
+end
 
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     wps_syms = Symbol.(["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts])
@@ -60,7 +63,7 @@ function Simulation(nt::NamedTuple)
     T = eltype(ep.data)
     det = SolidStateDetector{T}( Dict(nt.detector_json_string) )
     sim = Simulation( det )
-    if !ismissing(nt.electric_potential) sim.electric_potential = ep end 
+    if !ismissing(nt.electric_potential) sim.electric_potential = ep end
     if !ismissing(nt.ρ) sim.ρ = ChargeDensity(nt.ρ) end
     if !ismissing(nt.ρ_fix) sim.ρ_fix = ChargeDensity(nt.ρ_fix) end
     if !ismissing(nt.ϵ) sim.ϵ = DielectricDistribution(nt.ϵ) end
@@ -105,7 +108,7 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
 end
 
 function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
-    print(io, "Simulation{$T} - ", "$(sim.detector.name)") 
+    print(io, "Simulation{$T} - ", "$(sim.detector.name)")
 end
 
 function show(io::IO, sim::Simulation{T}) where {T <: SSDFloat} println(io, sim) end
@@ -136,10 +139,10 @@ end
 Applies the initial state of the electric potential calculation.
 It overwrites `sim.electric_potential`, `sim.ρ`, `sim.ρ_fix`, `sim.ϵ` and `sim.point_types`.
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}  
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} = 
+function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} =
         PotentialSimulationSetupRB(sim.detector, grid);
-   
+
     sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), grid)
     sim.ρ_fix = ChargeDensity(FixedChargeDensityArray(fssrb), grid)
     sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
@@ -154,10 +157,10 @@ end
 Applies the initial state of the weighting potential calculation for the contact with the id `contact_id`.
 It overwrites `sim.weighting_potentials[contact_id]`.
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}  
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} = 
+function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} =
         PotentialSimulationSetupRB(sim.detector, grid, weighting_potential_contact_id = contact_id);
-   
+
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(fssrb), grid)
     nothing
 end
@@ -168,8 +171,8 @@ end
 
 Takes the current state of `sim.electric_potential` and updates it until it has converged.
 """
-function update_till_convergence!( sim::Simulation{T}, 
-                                   ::Type{ElectricPotential}, 
+function update_till_convergence!( sim::Simulation{T},
+                                   ::Type{ElectricPotential},
                                    convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
@@ -186,12 +189,12 @@ function update_till_convergence!( sim::Simulation{T},
         sor_consts = T(sor_consts[1])
     end
     only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
-    
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} = 
+
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
         PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data, sor_consts = T.(sor_consts))
-    
-    cf::T = _update_till_convergence!( fssrb, T(convergence_limit); 
-                                       only2d = Val{only_2d}(), 
+
+    cf::T = _update_till_convergence!( fssrb, T(convergence_limit);
+                                       only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{false}(),
                                        use_nthreads = use_nthreads,
@@ -204,14 +207,14 @@ function update_till_convergence!( sim::Simulation{T},
     sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
-    
-    if depletion_handling == false 
+
+    if depletion_handling == false
         update_again::Bool = false # With SOR-Constant = 1
         if fssrb.bulk_is_ptype
             @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential 
+                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential
                     sim.electric_potential.data[i] = fssrb.minimum_applied_potential
-                    update_again = true                  
+                    update_again = true
                 end
             end
         else # ntype
@@ -224,18 +227,18 @@ function update_till_convergence!( sim::Simulation{T},
         end
         if update_again
             fssrb.sor_const[:] .= T(1)
-            cf = _update_till_convergence!( fssrb, T(convergence_limit); 
-                                            only2d = Val{only_2d}(), 
+            cf = _update_till_convergence!( fssrb, T(convergence_limit);
+                                            only2d = Val{only_2d}(),
                                             depletion_handling = Val{depletion_handling}(),
                                             is_weighting_potential = Val{false}(),
                                             use_nthreads = use_nthreads,
                                             n_iterations_between_checks = n_iterations_between_checks,
                                             max_n_iterations = max_n_iterations )
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
-            
-            if fssrb.bulk_is_ptype                
+
+            if fssrb.bulk_is_ptype
                 @inbounds for i in eachindex(sim.electric_potential.data)
-                    if sim.electric_potential.data[i] < fssrb.minimum_applied_potential 
+                    if sim.electric_potential.data[i] < fssrb.minimum_applied_potential
                         @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
                             At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
                             than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
@@ -265,9 +268,9 @@ end
 
 Takes the current state of `sim.weighting_potentials[contact_id]` and updates it until it has converged.
 """
-function update_till_convergence!( sim::Simulation{T}, 
+function update_till_convergence!( sim::Simulation{T},
                                    ::Type{WeightingPotential},
-                                   contact_id::Int, 
+                                   contact_id::Int,
                                    convergence_limit::Real;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
@@ -283,39 +286,39 @@ function update_till_convergence!( sim::Simulation{T},
     elseif length(sor_consts) > 1 && CS == :cartesian
         sor_consts = T(sor_consts[1])
     end
-    
+
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.weighting_potentials[contact_id].grid)} = 
-        PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.weighting_potentials[contact_id].data, 
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.weighting_potentials[contact_id].grid)} =
+        PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id)
-    
-    cf::T = _update_till_convergence!( fssrb, T(convergence_limit); 
-                                       only2d = Val{only_2d}(), 
+
+    cf::T = _update_till_convergence!( fssrb, T(convergence_limit);
+                                       only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{true}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
                                        max_n_iterations = max_n_iterations )
-    
+
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(fssrb), sim.weighting_potentials[contact_id].grid)
-    
+
     cf
 end
 
 """
     function refine!(sim::Simulation{T}, ::Type{ElectricPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
 
-Takes the current state of `sim.electric_potential` and refines it with respect to the input arguments 
-`max_diffs` and `minimum_distances`.        
+Takes the current state of `sim.electric_potential` and refines it with respect to the input arguments
+`max_diffs` and `minimum_distances`.
 """
-function refine!(sim::Simulation{T}, ::Type{ElectricPotential}, 
-                    max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)), 
+function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
+                    max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
                     update_other_fields::Bool = false) where {T <: SSDFloat}
     sim.electric_potential = refine(sim.electric_potential, max_diffs, minimum_distances)
 
     if update_other_fields
-        fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} = 
+        fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
             PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data)
 
         sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), sim.electric_potential.grid)
@@ -328,11 +331,11 @@ end
 """
     function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
 
-Takes the current state of `sim.weighting_potentials[contact_id]` and refines it with respect to the input arguments 
-`max_diffs` and `minimum_distances`.        
+Takes the current state of `sim.weighting_potentials[contact_id]` and refines it with respect to the input arguments
+`max_diffs` and `minimum_distances`.
 """
-function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, 
-                    max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)), 
+function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int,
+                    max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0))) where {T <: SSDFloat}
     sim.weighting_potentials[contact_id] = refine(weighting_potentials[contact_id], max_diffs, minimum_distances)
     nothing
@@ -346,21 +349,21 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
         convergence_limit::Real = 1e-7,
         max_refinements::Int = 3,
         refinement_limits::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
-        min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing, 
+        min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         depletion_handling::Bool = false,
         use_nthreads::Int = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
         verbose::Bool = true,
     )::Nothing where {T <: SSDFloat}
-    
+
     begin # preperations
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
         if isWP depletion_handling = false end
         CS = get_coordinate_system(sim.detector)
-        if ismissing(grid) 
+        if ismissing(grid)
             grid = Grid(sim.detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing, for_weighting_potential = isWP)
         end
         if ismissing(sor_consts)
@@ -427,7 +430,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
                                   n_iterations_between_checks = n_iterations_between_checks,
                                   max_n_iterations = max_n_iterations,
                                   depletion_handling = depletion_handling,
-                                  use_nthreads = use_nthreads, 
+                                  use_nthreads = use_nthreads,
                                   sor_consts = sor_consts )
     else
         apply_initial_state!(sim, potential_type, contact_id, grid)
@@ -435,20 +438,20 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
                                     depletion_handling = depletion_handling,
-                                    use_nthreads = use_nthreads, 
+                                    use_nthreads = use_nthreads,
                                     sor_consts = sor_consts )
     end
 
     refinement_counter::Int = 1
     if refine
         max_diffs::NTuple{3, T} = abs.(refinement_limits .* bias_voltage)
-        refine_at_inds::NTuple{3, Vector{Int}} = if isEP 
+        refine_at_inds::NTuple{3, Vector{Int}} = if isEP
             _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
         else
             _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
         end
-        while any(!isempty, refine_at_inds[1]) && refinement_counter <= max_refinements 
-            if isEP 
+        while any(!isempty, refine_at_inds[1]) && refinement_counter <= max_refinements
+            if isEP
                 sim.electric_potential = ElectricPotential(add_points_and_interpolate(
                         sim.electric_potential.data, sim.electric_potential.grid, refine_at_inds...)...)
                 if verbose @info "New Grid Size = $(size(sim.electric_potential.grid))" end
@@ -472,11 +475,11 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
                                     depletion_handling = depletion_handling,
-                                    use_nthreads = use_nthreads, 
+                                    use_nthreads = use_nthreads,
                                     sor_consts = sor_consts )
             end
-            
-            refine_at_inds = if isEP 
+
+            refine_at_inds = if isEP
                 _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
             else
                 _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
@@ -489,25 +492,25 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
 end
 
 """
-    calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int; kwargs...)::Nothing 
+    calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int; kwargs...)::Nothing
 
-Compute the weighting potential for the contact with id `contact_id` 
-for the given Simulation `sim` on an adaptive grid through successive over relaxation. 
+Compute the weighting potential for the contact with id `contact_id`
+for the given Simulation `sim` on an adaptive grid through successive over relaxation.
 
 There are serveral `<keyword arguments>` which can be used to tune the computation:
 
 # Keywords
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
-    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. 
+    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
 - `max_refinements::Int`: Number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
 - `refinement_limits::Tuple{<:Real, <:Real, <:Real}`: Tuple of refinement limits for each dimension
-    (in case of cylindrical coordinates the order is `r`, `φ`, `z`). 
-    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the 
-    maximum allowed voltage difference between two neighbouring grid points in the respective dimension. 
+    (in case of cylindrical coordinates the order is `r`, `φ`, `z`).
+    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the
+    maximum allowed voltage difference between two neighbouring grid points in the respective dimension.
     When the difference is larger, new points are created inbetween. Default is `[1e-5, 1e-5, 1e-5]`.
 - `init_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the initial distances between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. 
+    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
     It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
 - `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
     For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
@@ -515,11 +518,11 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
-    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was 
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-- `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates. 
-    First element contains the SOR constant for `r` = 0. 
-    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between. 
+- `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
     First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
     In case of cartesian coordinates only one value is taken.
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
@@ -551,26 +554,26 @@ function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, arg
 end
 
 """
-    calculate_electric_potential!(sim::Simulation{T}; kwargs...)::Nothing 
+    calculate_electric_potential!(sim::Simulation{T}; kwargs...)::Nothing
 
 
 Compute the electric potential for the given Simulation `sim` on an adaptive grid
-through successive over relaxation. 
+through successive over relaxation.
 
 There are serveral `<keyword arguments>` which can be used to tune the computation:
 
 # Keywords
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
-    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points. 
+    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
 - `max_refinements::Int`: Number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
 - `refinement_limits::Tuple{<:Real, <:Real, <:Real}`: Tuple of refinement limits for each dimension
-    (in case of cylindrical coordinates the order is `r`, `φ`, `z`). 
-    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the 
-    maximum allowed voltage difference between two neighbouring grid points in the respective dimension. 
+    (in case of cylindrical coordinates the order is `r`, `φ`, `z`).
+    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the
+    maximum allowed voltage difference between two neighbouring grid points in the respective dimension.
     When the difference is larger, new points are created inbetween. Default is `[1e-5, 1e-5, 1e-5]`.
 - `init_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the initial distances between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance. 
+    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
     It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
 - `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
     For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
@@ -578,11 +581,11 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
-    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was 
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-- `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates. 
-    First element contains the SOR constant for `r` = 0. 
-    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between. 
+- `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
     First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
     In case of cartesian coordinates only one value is taken.
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
@@ -630,7 +633,7 @@ function set_charge_drift_model!(sim::Simulation{T}, charge_drift_model::Abstrac
     nothing
 end
 
-function apply_charge_drift_model!(sim::Simulation{T}; 
+function apply_charge_drift_model!(sim::Simulation{T};
             use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
     sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
@@ -654,25 +657,25 @@ function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, ene
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
     add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, Val(get_coordinate_system(sim.detector)))
-    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal ) 
+    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal )
 end
 
 """
-    function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false, 
+    function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false,
                                         depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
 
 ToDo...
 """
-function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false, 
+function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false,
                                         depletion_handling::Bool = false, convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
-    calculate_electric_potential!(  sim, 
-                                    max_refinements = max_refinements, 
-                                    verbose = verbose, 
+    calculate_electric_potential!(  sim,
+                                    max_refinements = max_refinements,
+                                    verbose = verbose,
                                     init_grid_size = (10,10,10),
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
-        calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements, 
+        calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements,
                 init_grid_size = (10,10,10),
                 verbose = verbose, convergence_limit = convergence_limit)
     end
