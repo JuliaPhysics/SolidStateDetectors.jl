@@ -14,7 +14,7 @@ end
 function (+)(u::CartesianVector{T}, v::CartesianVector{T})::CartesianVector{T} where {T <: Real}
     return CartesianVector{T}( u.x + v.x, u.y + v.y, u.z + v.z )
 end
-function broadcast(f::Function, v::Vector{CartesianPoint{T}}, p::CartesianVector{T})::Vector{CartesianPoint{T}} where {T}
+function broadcast(f::Function, v::Vector{CartesianPoint{T}}, p::CartesianVector{T}) where {T}
     f(v ,[p for i in eachindex(v)])
 end
 
@@ -39,5 +39,8 @@ function (+)(p::CylindricalPoint{T}, v::CylindricalVector{T})::CylindricalPoint{
     error("Not yet defined")
 end
 function (-)(p::CylindricalPoint{T}, v::CylindricalVector{T})::CylindricalPoint{T} where {T <: Real}
+    error("Not yet defined")
+end
+function (-)(p1::CylindricalPoint{T}, p2::CylindricalPoint{T})::CylindricalPoint{T} where {T <: Real}
     error("Not yet defined")
 end

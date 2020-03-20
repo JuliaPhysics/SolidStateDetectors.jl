@@ -45,15 +45,11 @@ function (+)(p1::CylindricalPoint{T}, p2::CylindricalPoint{T})::CylindricalPoint
     return CylindricalPoint(CartesianPoint(p1) + CartesianPoint(p2))
 end
 
-function (-)(p1::CylindricalPoint{T}, p2::CylindricalPoint{T})::CylindricalPoint{T} where {T <: Real}
-    return CylindricalPoint{T}(CartesianPoint{T}(p1) - CartesianPoint{T}(p2))
-end
-
-function broadcast(f::Function, v::Vector{CartesianPoint{T}}, p::CartesianPoint{T})::Vector{CartesianPoint{T}} where {T}
+function broadcast(f::Function, v::Vector{CartesianPoint{T}}, p::CartesianPoint{T}) where {T}
     f(v ,[p for i in eachindex(v)])
 end
 
-function broadcast(f::Function, v::Vector{CylindricalPoint{T}}, p::CylindricalPoint{T})::Vector{CylindricalPoint{T}} where {T}
+function broadcast(f::Function, v::Vector{CylindricalPoint{T}}, p::CylindricalPoint{T}) where {T}
     f(v ,[p for i in eachindex(v)])
 end
 
