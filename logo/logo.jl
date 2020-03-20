@@ -151,7 +151,7 @@ Compute and save the SolidStateDetectors.jl logo.
 function get_and_save_logo(; animate::Bool=false, label::Bool=true)
     logo = get_logo(animate = animate, label = label);
     basename = "logo" * (label ? "" : "_no_name")
-    animate ? gif(logo, basename*".gif") : savefig(basename*".png")
+    animate ? gif(logo, basename*".gif") : savefig(basename*".svg")
 end
 
 get_and_save_logo()
