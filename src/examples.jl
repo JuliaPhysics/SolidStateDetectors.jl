@@ -27,3 +27,9 @@ SSD_examples[:Spherical] = (
 SSD_examples[:SigGen] = (
     joinpath(@__DIR__, "../examples/example_detector_config_files/public_ppc_config_SigGen.config")
 )
+SSD_examples[:InfiniteParallelPlateCapacitor] = (
+    joinpath(@__DIR__, "../examples/example_detector_config_files/infinite_parallel_plate_capacitor.json")
+)
+SSD_examples[:InfiniteCoaxialCapacitor] = (
+    joinpath(@__DIR__, "../examples/example_detector_config_files/infinite_coaxial_capacitor.json")
+)

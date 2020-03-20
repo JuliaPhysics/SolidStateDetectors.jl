@@ -13,7 +13,6 @@ IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-NamedTupleTools = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
 ParallelProcessingTools = "8e8a01fc-6193-5ca1-a2f1-20776dae4199"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 RadiationDetectorSignals = "bf2c0563-65cf-5db2-a620-ceb7de82658c"
@@ -39,7 +38,6 @@ Interpolations = "0.12"
 IntervalSets = "0.3, 0.4"
 JSON = "0.21"
 LaTeXStrings = "1"
-NamedTupleTools = "0.12, 0.13"
 ParallelProcessingTools = "0.4"
 ProgressMeter = "1.2"
 RadiationDetectorSignals = "0.1"
@@ -55,7 +53,8 @@ YAML = "0.3, 0.4"
 julia = "1"
 
 [extras]
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "Unitful"]

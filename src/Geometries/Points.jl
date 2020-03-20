@@ -33,6 +33,26 @@ function convert(type::Type{CartesianPoint}, origin::SolidStateDetectors.Cylindr
     return CartesianPoint(origin)
 end
 
+function (+)(p1::CartesianPoint{T}, p2::CartesianPoint{T})::CartesianPoint{T} where {T <: Real}
+    return CartesianPoint{T}( p1.x + p2.x, p1.y + p2.y, p1.z + p2.z )
+end
+
+# function (-)(p1::CartesianPoint{T}, p2::CartesianPoint{T})::CartesianPoint{T} where {T <: Real}
+#     return CartesianPoint{T}( p1.x - p2.x, p1.y - p2.y, p1.z - p2.z )
+# end
+
+function (+)(p1::CylindricalPoint{T}, p2::CylindricalPoint{T})::CylindricalPoint{T} where {T <: Real}
+    return CylindricalPoint(CartesianPoint(p1) + CartesianPoint(p2))
+end
+
+function broadcast(f::Function, v::Vector{CartesianPoint{T}}, p::CartesianPoint{T}) where {T}
+    f(v ,[p for i in eachindex(v)])
+end
+
+function broadcast(f::Function, v::Vector{CylindricalPoint{T}}, p::CylindricalPoint{T}) where {T}
+    f(v ,[p for i in eachindex(v)])
+end
+
 @recipe function f(p::CylindricalPoint)
     @series begin
         CartesianPoint(p)

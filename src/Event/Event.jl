@@ -50,7 +50,7 @@ function get_signal!(event::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::
     @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, sim::Simulation` first."
     @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim, contact_id)` first."
     if ismissing(event.waveforms)
-        event.waveforms = Any[missing for i in eachindex(sim.detector.contacts)]
+        event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
     event.waveforms[contact_id] = get_signal(sim, event.drift_paths, event.energies, contact_id)
     nothing
@@ -58,13 +58,19 @@ end
 function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
     @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, sim::Simulation` first."
     if ismissing(event.waveforms)
-        event.waveforms = Any[missing for i in eachindex(sim.detector.contacts)]
+        event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
     for contact in sim.detector.contacts
         @assert !ismissing(sim.weighting_potentials[contact.id]) "No weighting potential for contact $(contact.id). Use `calculate_weighting_potential!(sim, contact_id)` first."
         event.waveforms[contact.id] = get_signal(sim, event.drift_paths, event.energies, contact.id, Δt = Δt)
     end
     nothing
+end
+
+@recipe function f(wvs::Vector{Union{Missing, RadiationDetectorSignals.RDWaveform}})
+    @series begin
+        RadiationDetectorSignals.RDWaveform[wv for wv in skipmissing(wvs)]
+    end
 end
 
 function simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
@@ -76,8 +82,12 @@ end
 function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,U,TV,UV}, n_baseline_samples::Int, total_waveform_length::Int) where {T,U,TV,UV}
     new_signal::Vector{eltype(UV)} = Vector{eltype(UV)}(undef, total_waveform_length)
     new_signal[1:n_baseline_samples] .= zero(eltype(UV))
-    new_signal[n_baseline_samples+1:n_baseline_samples+length(wv.value)] = wv.value
-    new_signal[n_baseline_samples+length(wv.value)+1:end] .= wv.value[end]
+    if length(wv.value) <= total_waveform_length - n_baseline_samples
+        new_signal[n_baseline_samples+1:n_baseline_samples+length(wv.value)] = wv.value
+        new_signal[n_baseline_samples+length(wv.value)+1:end] .= wv.value[end]
+    else
+        new_signal[n_baseline_samples+1:end] = wv.value[1:total_waveform_length - n_baseline_samples]
+    end
     new_times = if TV <: AbstractRange
         range( zero(first(wv.time)), step = step(wv.time), length = total_waveform_length )
     else

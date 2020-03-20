@@ -183,21 +183,20 @@ end
     end
 end
 
-
 @userplot Plot_electric_field
 @recipe function f(gdd::Plot_electric_field; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    spacing = 4, grid_spacing=[0.0005, deg2rad(1.0), 0.0005], max_nsteps=3000, 
-                    potential=true, contours_equal_potential=true, offset = (5e-5))
+                    sampling = 4u"mm", spacing = 1, max_nsteps=3000,
+                    potential=true, contours_equal_potential=true, offset = (0.001))
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
-    T = SolidStateDetectors.get_precision_type(s.detector)
-    
+    T = SolidStateDetectors.get_precision_type(sim.detector)
+
     dim_array = [φ, r, x, y, z]
     dim_symbols_array = [:φ, :r, :x, :y, :z]
     if isempty(skipmissing(dim_array))
         if S == :cylindrical
             v::T = 0
-            dim_number = 2 
+            dim_number = 2
             dim_symbol = :φ
         elseif S == :cartesian
             dim_number = 1
@@ -218,8 +217,8 @@ end
     title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))"
     xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
     ylabel --> L"$z$ / m"
-    
-    
+
+
     if potential == true
         @series begin
             # contours_equal_potential --> contours_equal_potential
@@ -243,12 +242,26 @@ end
         end
     end
     PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
-    
+
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
-    spawn_positions = PT[]
-    grid = sim.electric_field.grid# Grid(sim.detector, init_grid_spacing = grid_spacing, full_2π = true)
-    pt_offset = T[offset,0.0,offset]
-    
+    spawn_positions = CartesianPoint{T}[]
+    grid = sim.electric_field.grid
+    pt_offset = CartesianVector{T}(offset, 0.0, offset)
+
+    sampling_vector = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
+    sampling_vector[2] = 2π
+    for c in contacts_to_spawn_charges_for
+        for positive_geometry in c.geometry_positive
+            push!(spawn_positions, broadcast(+, CartesianPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector)), pt_offset )...)
+            push!(spawn_positions, broadcast(-, CartesianPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector)), pt_offset )...)
+        end
+    end
+    # println(spawn_positions[:])
+
+    # !ismissing(φ) ? spawn_positions = unique!(map(x-> CartesianPoint(CylindricalPoint{T}(x.r, φ, x.z)), CylindricalPoint{T}.(spawn_positions)  )) : nothing
+
+    # println(spawn_positions[1:10])
+
     # for c in contacts_to_spawn_charges_for
     #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), paint_object(sim.detector, c, grid, Val(dim_symbol), v))
     #     for position in ongrid_positions
@@ -257,26 +270,28 @@ end
     #     end
     # end
 
-    ax1 = unique(range(sim.electric_field.grid[1][1], stop = sim.electric_field.grid[1][end], step = spacing * 0.001))
-    ax2 = unique(range(sim.electric_field.grid[2][1], stop = sim.electric_field.grid[2][end], step = spacing * 0.001))
-    if ismissing(φ) && S == :cylindrical
-        ax2 = T[0]
-    elseif !ismissing(φ)
-        ax2 = T[φ]
-    end
-    ax3 = unique(range(sim.electric_field.grid[3][1], stop = sim.electric_field.grid[3][end], step = spacing * 0.001))
-    for x1 in ax1
-        for x2 in ax2
-            for x3 in ax3 
-                pt::PT = PT(x1, x2, x3)
-                push!(spawn_positions, pt)
-            end
-        end
-    end
+    # ax1 = unique(range(sim.electric_field.grid[1][1], stop = sim.electric_field.grid[1][end], step = spacing * 0.001))
+    # ax2 = unique(range(sim.electric_field.grid[2][1], stop = sim.electric_field.grid[2][end], step = spacing * 0.001))
+    # if ismissing(φ) && S == :cylindrical
+    #     ax2 = T[0]
+    # elseif !ismissing(φ)
+    #     ax2 = T[φ]
+    # end
+    # ax3 = unique(range(sim.electric_field.grid[3][1], stop = sim.electric_field.grid[3][end], step = spacing * 0.001))
+    # for x1 in ax1
+    #     for x2 in ax2
+    #         for x3 in ax3
+    #             pt::PT = PT(x1, x2, x3)
+    #             push!(spawn_positions, pt + pt_offset)
+    #             push!(spawn_positions, pt - pt_offset)
+    #         end
+    #     end
+    # end
+
     filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions)
-    
+    # println(spawn_positions[:])
     @info "$(length(spawn_positions)) drifts are now being simulated..."
-    
+
     el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
     el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
 
@@ -285,6 +300,7 @@ end
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
@@ -304,9 +320,10 @@ end
                 end
                 x, y
             end
-            
+
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
+            filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
                 c --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
@@ -326,7 +343,7 @@ end
                 end
                 x, y
             end
-            
+
         end
     end
 end

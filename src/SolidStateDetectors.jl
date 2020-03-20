@@ -15,7 +15,6 @@ using Interpolations
 using IntervalSets
 using JSON
 using LaTeXStrings
-using NamedTupleTools
 using ParallelProcessingTools
 using ProgressMeter
 using RadiationDetectorSignals
@@ -55,7 +54,7 @@ export Event, drift_charges!
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
-struct ConfigFileError <: Exception 
+struct ConfigFileError <: Exception
     msg::AbstractString
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
@@ -94,10 +93,12 @@ include("IO/IO.jl")
 
 include("examples.jl")
 
+include("PlotRecipes/PlotRecipes.jl")
+
 function __init__()
     @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
         @require LegendHDF5IO="c9265ca6-b027-5446-b1a4-febfa8dd10b0" begin
-            include("IO/hdf5_specific.jl") 
+            include("IO/hdf5_specific.jl")
         end
         include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
     end
