@@ -696,38 +696,6 @@ end
 calculate_stored_energy(sim::Simulation) = 
     calculate_stored_energy(sim.electric_field, sim.ϵ)
 
-# function calculate_stored_energy(ef::ElectricField{T, 3, :cartesian}, ϵ::DielectricDistribution{T,3,:cartesian}) where {T <: SSDFloat}
-#     W::T = 0
-#     Δaxx::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid.x)))
-#     Δaxy::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid.y)))
-#     Δaxz::Vector{T} = diff(midpoints(get_extended_ticks(ef.grid.z)))
-#     @fastmath @inbounds for iz in eachindex(Δaxz)
-#         Δz::T = Δaxz[iz]
-#         if iz == 1 || iz == length(Δaxz) Δz /= 2 end
-#         for iy in eachindex(Δaxy)
-#             Δy::T = Δaxy[iy] 
-#             if iy == 1 || iy == length(Δaxy) Δy /= 2 end
-#             for ix in eachindex(Δaxx)
-#                 Δx::T = Δaxx[ix] 
-#                 if ix == 1 || ix == length(Δaxx) Δx /= 2 end
-#                 ev::SArray{Tuple{3},T,1,3} = ef.data[ix, iy, iz]
-#                 dV::T = Δx * Δy * Δz
-#                 W += sum(ev.^2) * dV * mean([
-#                     ϵ[ix, iy, iz], 
-#                     ϵ[ix + 1, iy, iz],
-#                     ϵ[ix, iy + 1, iz], 
-#                     ϵ[ix, iy, iz + 1],
-#                     ϵ[ix + 1, iy + 1, iz], 
-#                     ϵ[ix + 1, iy, iz + 1],
-#                     ϵ[ix, iy + 1, iz + 1],
-#                     ϵ[ix + 1, iy + 1, iz + 1]
-#                 ])
-#             end
-#         end
-#     end
-#     return W * ϵ0 / 2 * u"J"
-# end
-
 function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistribution{T,3,S}) where {T <: SSDFloat, S}
     W::T = 0
     
