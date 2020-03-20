@@ -73,7 +73,8 @@ println("Undepleted: ", get_active_volume(simulation_undep.point_types));
 
 calculate_electric_field!(simulation, n_points_in_φ = 72)
 
- 
+plot_electric_field(simulation, size = (350, 500))
+
 # ## Drift field calculation
 
 # Given the electric field and a charge drift model, calculate drift fields for electrons and holes. Precalculating the drift fields saves time during charge drift simulation:
