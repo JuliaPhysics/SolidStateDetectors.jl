@@ -646,7 +646,7 @@ end
 
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
                         Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
+    return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
                              Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
 end
