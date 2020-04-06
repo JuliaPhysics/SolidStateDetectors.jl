@@ -42,8 +42,14 @@ function get_precision_type(sim::Simulation{T}) where {T}
 end
 
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
-    wps_syms = Symbol.(["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts])
-    return (
+    wps_strings = AbstractString[]
+    for contact in sim.detector.contacts
+        if !ismissing(sim.weighting_potentials[contact.id])
+            push!(wps_strings, "WeightingPotential_$(contact.id)")
+        end
+    end
+    wps_syms = Symbol.(wps_strings)
+    nt = (
         detector_json_string = NamedTuple(sim.detector.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
         ρ = NamedTuple(sim.ρ),
@@ -51,10 +57,13 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         ϵ = NamedTuple(sim.ϵ),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
-        weighting_potentials = NamedTuple{Tuple(wps_syms)}( NamedTuple.( sim.weighting_potentials )),
         electron_drift_field = NamedTuple(sim.electron_drift_field),
         hole_drift_field = NamedTuple(sim.hole_drift_field)
     )
+    if length(wps_strings) > 0 
+        nt = merge(nt, NamedTuple{Tuple(wps_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))))
+    end
+    return nt
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
