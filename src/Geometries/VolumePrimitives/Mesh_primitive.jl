@@ -45,12 +45,12 @@ function in(pt::CartesianPoint{T}, g::mesh_surface{T})::Bool where {T}
 
         pF = pC + pD + pE + pB
 
-        winding_angle = abs(atan(pA,pF)) 
+        winding_angle = atan(pA,pF)
         winding_sum = winding_sum + winding_angle
         
     end
 
-    truth = ((2 * pi) < winding_sum < (3* pi))
+    truth = ((1.9 * pi) < winding_sum < (2.1* pi))
 
 #	open("truefalse.txt", "a") do io
 #	   println(io, string(pt[1]), " ", string(pt[2]), " ", string(pt[3]), " ", string(truth))
