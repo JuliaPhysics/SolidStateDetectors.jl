@@ -1,0 +1,1294 @@
+{
+    "name": "AGATA crystal",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+
+
+    
+    "grid": {
+        "coordinates": "cartesian",
+        "axes": {
+            "x": {
+                "from": -50.0,
+                "to": 50.0,
+                "boundaries": "reflecting"
+            },
+            "y": {
+                "from": -50.0,
+                "to": 50.0,
+                "boundaries": "reflecting"
+            },
+            "z": {
+                "from": -10.0,
+                "to": 100.0,
+                "boundaries": "reflecting"
+            }
+        }
+    },
+
+
+
+    "medium": "vacuum",
+    "objects": [
+        {
+            "type": "semiconductor",
+            "material": "HPGe",
+            "bulk_type": "n",
+            "temperature": 77.0,
+            "charge_density_model": {
+                "name": "linear",
+                "r": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "phi": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "z": {
+                    "init": 0,
+                    "gradient": 0
+                }
+            },
+            "geometry": {
+                "type": "mesh_surface",
+				"filepath": 
+				"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/volume.stl"
+				
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 1,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 0.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 0.382,
+						        "to": 59.618
+						    },
+						    "h": 9.0,
+						    "translate": {
+						        "z": -1.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 2,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 0.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 60.382,
+						        "to": 119.618
+						    },
+						    "h": 9.0,
+						    "translate": {
+						        "z": -1.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 3,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 0.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 120.382,
+						        "to": 179.618
+						    },
+						    "h": 9.0,
+						    "translate": {
+						        "z": -1.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 4,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 0.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 180.382,
+						        "to": 239.618
+						    },
+						    "h": 9.0,
+						    "translate": {
+						        "z": -1.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 5,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 0.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 240.382,
+						        "to": 299.618
+						    },
+						    "h": 9.0,
+						    "translate": {
+						        "z": -1.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 6,
+            "potential": 0.0,
+                        "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 0.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 300.382,
+						        "to": 359.618
+						    },
+						    "h": 9.0,
+						    "translate": {
+						        "z": -1.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 7,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 0.382,
+						        "to": 59.618
+						    },
+						    "h": 12.0,
+						    "translate": {
+						        "z": 9.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 8,
+            "potential": 0.0,
+                        "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 60.382,
+						        "to": 119.618
+						    },
+						    "h": 12.0,
+						    "translate": {
+						        "z": 9.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 9,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 120.382,
+						        "to": 179.618
+						    },
+						    "h": 12.0,
+						    "translate": {
+						        "z": 9.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 10,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 180.382,
+						        "to": 239.618
+						    },
+						    "h": 12.0,
+						    "translate": {
+						        "z": 9.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 11,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 240.382,
+						        "to": 299.618
+						    },
+						    "h": 12.0,
+						    "translate": {
+						        "z": 9.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 12,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 300.382,
+						        "to": 359.618
+						    },
+						    "h": 12.0,
+						    "translate": {
+						        "z": 9.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 13,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 0.382,
+						        "to": 59.618
+						    },
+						    "h": 14.0,
+						    "translate": {
+						        "z": 22.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 14,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 60.382,
+						        "to": 119.618
+						    },
+						    "h": 14.0,
+						    "translate": {
+						        "z": 22.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 15,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 120.382,
+						        "to": 179.618
+						    },
+						    "h": 14.0,
+						    "translate": {
+						        "z": 22.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 16,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 180.382,
+						        "to": 239.618
+						    },
+						    "h": 14.0,
+						    "translate": {
+						        "z": 22.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 17,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 240.382,
+						        "to": 299.618
+						    },
+						    "h": 14.0,
+						    "translate": {
+						        "z": 22.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 18,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 300.382,
+						        "to": 359.618
+						    },
+						    "h": 14.0,
+						    "translate": {
+						        "z": 22.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 19,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 0.382,
+						        "to": 59.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 37.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 20,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 60.382,
+						        "to": 119.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 37.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 21,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 120.382,
+						        "to": 179.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 37.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 22,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 180.382,
+						        "to": 239.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 37.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 23,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 240.382,
+						        "to": 299.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 37.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 24,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 300.382,
+						        "to": 359.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 37.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 25,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 0.382,
+						        "to": 59.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 55.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 26,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 60.382,
+						        "to": 119.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 55.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 27,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 120.382,
+						        "to": 179.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 55.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 28,
+            "potential": 0.0,
+             "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 180.382,
+						        "to": 239.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 55.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 29,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 240.382,
+						        "to": 299.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 55.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 30,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 300.382,
+						        "to": 359.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 55.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 31,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 0.382,
+						        "to": 59.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 73.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 32,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 60.382,
+						        "to": 119.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 73.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 33,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 120.382,
+						        "to": 179.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 73.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 34,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 180.382,
+						        "to": 239.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 73.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 35,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 240.382,
+						        "to": 299.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 73.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 36,
+            "potential": 0.0,
+            "geometry": {
+			"type": "intersection",
+				"parts":[
+						{
+							"type": "mesh_surface",
+							"filepath": 
+							"/home/fraser/Julia/SolidStateDetectors.jl/examples/example_detector_config_files/skin.stl"
+						
+						},
+						{
+                			"type": "tube",
+						    "r": {
+						        "from": 30.0,
+						        "to": 41.0
+						    },
+						    "phi": {
+						        "from": 300.382,
+						        "to": 359.618
+						    },
+						    "h": 17.0,
+						    "translate": {
+						        "z": 73.0
+						    }
+						}
+
+						]
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 37,
+            "potential": 6000.0,
+            "geometry": {
+                "type": "union",
+                "parts":  [
+                {
+                "type": "tube",
+                "r": {
+                    "from": 5.0,
+                    "to": 6.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "h": 75.0,
+                "translate": {
+                    "z": 15.0
+                }
+                },
+                {
+                "type": "tube",
+                "r": {
+                    "from": 0.0,
+                    "to": 5.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "h": 0.0,
+                "translate": {
+                    "z": 15.0
+                }
+                }
+            ]
+            }
+        }
+    ]
+}

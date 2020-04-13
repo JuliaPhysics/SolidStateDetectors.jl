@@ -12,5 +12,5 @@ include("RectangularCuboid.jl")
 include("Tube.jl")
 include("Cone.jl")
 include("Sphere.jl")
-
+include("Mesh_primitive.jl")
 include("plot_recipes.jl")

@@ -1,0 +1,240 @@
+{
+    "name": "SAGE",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "r": {
+                "to": 50.0,
+                "boundaries": "inf"
+            },
+            "phi": {
+                "from": 0,
+                "to":0,
+                "boundaries": "periodic"
+            },
+            "z": {
+                "from": -10,
+                "to": 80.0,
+                "boundaries": {
+                    "left": "inf",
+                    "right": "inf"
+                }
+            }
+        }
+    },
+    "medium": "vacuum",
+    "objects": [
+        {
+            "type": "semiconductor",
+            "material": "HPGe",
+            "bulk_type": "p",
+            "temperature": 77.0,
+            "charge_density_model": {
+                "name": "linear",
+                "r": {
+                    "init": 0,
+                    "gradient": 0
+                },
+                "phi": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "z": {
+                    "init": -1e7,
+                    "gradient": -1e5
+                }
+            },
+            "geometry": {
+                "type": "difference",
+                "parts": [
+                    {
+                        "type": "difference",
+                        "parts": [
+                            {
+                                "name": "Initial Cylinder",
+                                "type": "tube",
+                                "r": {
+                                    "from": 0.0,
+                                    "to": 42.0
+                                },
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 64.0,
+                                "translate": {
+                                    "z": 0.0
+                                }
+                            },
+                            {
+                                "name": "Upper cone",
+                                "type": "cone",
+                                "r": {
+                                    "bottom": {
+                                        "from": 42.0,
+                                        "to": 43.0
+                                    },
+                                    "top": {
+                                        "from": 32.0,
+                                        "to": 43.0
+                                    }
+                                },
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 23.0,
+                                "translate": {
+                                    "z": 41.0
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "borehole",
+                        "type": "tube",
+                        "r": {
+                            "from": 0.0,
+                            "to": 18.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 40.0,
+                        "translate": {
+                            "z": 24.0
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 1,
+            "potential": 0.0,
+            "geometry": {
+                "type": "tube",
+                "r": {
+                    "from": 0.0,
+                    "to": 12.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "h": 2.0
+            }
+        },
+        {
+            "type": "contact",
+            "material": "HPGe",
+            "channel": 2,
+            "potential": 3500.0,
+            "geometry": {
+                "type": "union",
+                "parts":  [
+                    {
+                        "type": "tube",
+                        "r": {
+                            "from": 15.0,
+                            "to": 42.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 0.0
+                    },
+                    {
+                        "type": "tube",
+                        "r": {
+                            "from": 42.0,
+                            "to": 42.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 41.0
+                    },
+                    {
+                        "name": "Upper cone",
+                        "type": "cone",
+                        "r": {
+                            "bottom": {
+                                "from": 42.0,
+                                "to": 42.0
+                            },
+                            "top": {
+                                "from": 32.0,
+                                "to": 32.0
+                            }
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 23.0,
+                        "translate": {
+                            "z": 41.0
+                        }
+                    },
+                    {
+                        "type": "tube",
+                        "r": {
+                            "from": 18.0,
+                            "to": 32.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 0.0,
+                        "translate": {
+                            "z": 64.0
+                        }
+                    },
+                    {
+                        "type": "tube",
+                        "r": {
+                            "from": 18.0,
+                            "to": 18.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 40.0,
+                        "translate": {
+                            "z": 24.0
+                        }
+                    },
+                    {
+                        "type": "tube",
+                        "r": {
+                            "from": 0.0,
+                            "to": 18.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 0.0,
+                        "translate": {
+                            "z": 24.0
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
