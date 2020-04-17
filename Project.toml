@@ -1,6 +1,6 @@
 name = "SolidStateDetectors"
 uuid = "71e43887-2bd9-5f77-aebd-47f656f0a3f0"
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 ArraysOfArrays = "65a8f2f4-9b39-5baf-92e2-a9cc46fdf018"
@@ -30,22 +30,22 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 ArraysOfArrays = "0.4"
-Clustering = "0.13"
+Clustering = "0.13, 0.14"
 Distributions = "0.21, 0.22, 0.23"
 FillArrays = "0.8"
 Formatting = "0.4"
 Interpolations = "0.12"
-IntervalSets = "0.3, 0.4"
+IntervalSets = "0.3, 0.4, 0.5"
 JSON = "0.21"
 LaTeXStrings = "1"
 ParallelProcessingTools = "0.4"
 ProgressMeter = "1.2"
 RadiationDetectorSignals = "0.1"
-RecipesBase = "0.7, 0.8"
+RecipesBase = "0.7, 0.8, 1.0"
 Requires = "0.5, 1"
 Rotations = "0.12, 0.13"
 StaticArrays = "0.12"
-StatsBase = "0.32"
+StatsBase = "0.32, 0.33"
 Tables = "0.2, 1"
 TypedTables = "1.2"
 Unitful = "0.18, 1"
@@ -53,8 +53,8 @@ YAML = "0.3, 0.4"
 julia = "1"
 
 [extras]
-Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
 test = ["Test", "Unitful"]
