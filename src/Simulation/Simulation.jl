@@ -61,7 +61,7 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         hole_drift_field = NamedTuple(sim.hole_drift_field)
     )
     if length(wps_strings) > 0 
-        nt = merge(nt, NamedTuple{Tuple(wps_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))))
+        nt = merge(nt, (weighting_potentials = NamedTuple{Tuple(wps_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))),))
     end
     return nt
 end
