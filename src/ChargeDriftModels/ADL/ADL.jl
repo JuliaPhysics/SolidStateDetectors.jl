@@ -163,6 +163,11 @@ function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel, Emag_threshold::T = 
     getVe(fv, cdmT, Emag_threshold)
 end
 
+function getVe(fv::StaticArrays.FieldVector{3, T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
+    sv = SVector{3, T}(fv)
+    getVe(sv, cdm, Emag_threshold)
+end
+
 @fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
     @inbounds begin
         Emag::T = norm(fv)
@@ -236,6 +241,11 @@ end
 function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
     cdmT = ADLChargeDriftModel{T}(cdm)
     getVh(fv, cdmT, Emag_threshold)
+end
+
+function getVh(fv::StaticArrays.FieldVector{3, T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
+    sv = SVector{3, T}(fv)
+    getVh(sv, cdm, Emag_threshold)
 end
 
 @fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
