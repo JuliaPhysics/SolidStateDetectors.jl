@@ -29,7 +29,7 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-ArraysOfArrays = "0.4"
+ArraysOfArrays = "0.4, 0.5"
 Clustering = "0.13, 0.14"
 Distributions = "0.21, 0.22, 0.23"
 FillArrays = "0.8"
