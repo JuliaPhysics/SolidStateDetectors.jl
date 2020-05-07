@@ -14,6 +14,8 @@ include("Object.jl")
 include("Passive.jl")
 include("Contacts.jl")
 include("Semiconductor.jl")
+include("AbstractVirtualVolume.jl")
+include("TransitionLayer.jl")
 include("SigGenInterface.jl")
 include("SolidStateDetector.jl")
 

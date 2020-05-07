@@ -72,6 +72,14 @@ function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where
     return p
 end
 
+function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv::Vector{AbstractVirtualVolume{T}})::CartesianVector{T} where {T <: SSDFloat}
+    for i in eachindex(vdv)
+        if in(cp, vdv[i])
+            return modulate_driftvector(sv, cp, vdv[i]) 
+        end
+    end
+    return sv
+end
 """
     _drift_charge(...)
 
@@ -99,6 +107,7 @@ function _drift_charge!(
             last_real_step_index += 1
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_vector(current_pos, Val(S))) * Δt
+            stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
             if geom_round.(stepvector) == null_step 
                 done = true 
             end 
