@@ -12,12 +12,12 @@
             "x": {
                 "from": -35.0,
                 "to": 35.0,
-                "boundaries": "fixed"
+                "boundaries": "reflecting"
             },
             "y": {
                 "from": -35.0,
                 "to": 35.0,
-                "boundaries": "fixed"
+                "boundaries": "reflecting"
             },
             "z": {
                 "from": 0,

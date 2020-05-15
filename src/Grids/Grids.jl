@@ -23,8 +23,8 @@ const SphericalGrid{T} = Grid{T, 3, :Spherical}
 @inline getindex(g::Grid{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = broadcast(getindex, g.axes, I)
 @inline getindex(g::Grid{T, N, S}, i::Int) where {T, N, S} = getproperty(g, :axes)[i]
 @inline getindex(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getindex(g, Val{s}())
-@inline getproperty(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getproperty(g, Val{s}())
 
+@inline getproperty(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getproperty(g, Val{s}())
 @inline getproperty(g::Grid{T}, ::Val{:axes}) where {T} = getfield(g, :axes)
 
 @inline getproperty(g::CylindricalGrid{T}, ::Val{:axes}) where {T} = getfield(g, :axes)
@@ -34,7 +34,6 @@ const SphericalGrid{T} = Grid{T, 3, :Spherical}
 @inline getproperty(g::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds g.axes[1]
 @inline getproperty(g::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds g.axes[2]
 @inline getproperty(g::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
-
 
 @inline getindex(g::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds g.axes[1]
 @inline getindex(g::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds g.axes[2]
@@ -148,9 +147,9 @@ end
 Base.convert(T::Type{Grid}, x::NamedTuple) = T(x)
 
 function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
-    axr::DiscreteAxis{T} = grid.r
-    axφ::DiscreteAxis{T} = grid.φ
-    axz::DiscreteAxis{T} = grid.z
+    axr::DiscreteAxis{T} = grid.axes[1]
+    axφ::DiscreteAxis{T} = grid.axes[2]
+    axz::DiscreteAxis{T} = grid.axes[3]
     return (
         coordtype = "cylindrical",
         ndims = 3,
@@ -162,9 +161,9 @@ function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
     )
 end
 function NamedTuple(grid::Grid{T, 3, :cartesian}) where {T}
-    axx::DiscreteAxis{T} = grid[:x]
-    axy::DiscreteAxis{T} = grid[:y]
-    axz::DiscreteAxis{T} = grid.z
+    axx::DiscreteAxis{T} = grid.axes[1]
+    axy::DiscreteAxis{T} = grid.axes[2]
+    axz::DiscreteAxis{T} = grid.axes[3]
     return (
         coordtype = "cartesian",
         ndims = 3,
