@@ -1,4 +1,3 @@
-T = Float64
 ϵ0 = SolidStateDetectors.ϵ0 * u"F / m"
 e = SolidStateDetectors.elementary_charge * u"C"
 
@@ -25,6 +24,19 @@ e = SolidStateDetectors.elementary_charge * u"C"
     end
 end
 
+struct DummyChargeDensityModel{T} <: SolidStateDetectors.AbstractChargeDensityModel{T} end
+
+function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
+    if ustrip(R1) <= pt[1] <= ustrip(R2)
+        return -ustrip(ρ1 / e) * pt[1]^2 
+    else 
+        return 0
+    end
+end
+
+function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
+    SolidStateDetectors.get_charge_density(cdm, CylindricalPoint(pt))
+end
 
 @testset "InfiniteCoaxialCapacitor" begin
     sim_cyl = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
@@ -41,11 +53,11 @@ end
 
     calculate_electric_potential!(sim_cyl, 
         init_grid_size = (40, 2, 40), 
-        max_refinements = 3,
+        max_refinements = 1,
     )
     calculate_electric_potential!(sim_car, 
         init_grid_size = (40, 40, 20), 
-        max_refinements = 3, verbose = true, max_n_iterations = 10^4
+        max_refinements = 1
     )
     calculate_electric_field!(sim_cyl)
     calculate_electric_field!(sim_car)
@@ -60,7 +72,7 @@ end
 
     @testset "Capacity" begin
         @test isapprox(C_cyl_ssd, C_true, rtol = 0.01) 
-        @test isapprox(C_car_ssd, C_true, rtol = 0.03) 
+        @test isapprox(C_car_ssd, C_true, rtol = 0.06) 
     end
 
     # Add impurity density and compare resulting potential to analytic solution
@@ -80,29 +92,15 @@ end
     rs_analytic = range(R1, stop = R2, length = 500);
     pot_analytic = map(r -> potential_analytic(r), rs_analytic)
 
-    struct DummyChargeDensityModel{T} <: SolidStateDetectors.AbstractChargeDensityModel{T} end
-
-    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
-        if ustrip(R1) <= pt[1] <= ustrip(R2)
-            return -ustrip(ρ1 / e) * pt[1]^2 
-        else 
-            return 0
-        end
-    end
-
-    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
-        SolidStateDetectors.get_charge_density(cdm, CylindricalPoint(pt))
-    end
-
     sim_cyl.detector.semiconductors[1].charge_density_model = DummyChargeDensityModel{T}()
     sim_car.detector.semiconductors[1].charge_density_model = DummyChargeDensityModel{T}()
 
     calculate_electric_potential!(sim_cyl, 
         init_grid_size = (40, 2, 40), 
-        max_refinements = 1,
+        max_refinements = 1
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (80, 80, 40), 
+        init_grid_size = (40, 40, 20), 
         max_refinements = 1
     )
 
@@ -113,8 +111,9 @@ end
     rs = sim_car.electric_potential.grid.axes[1].ticks[idxR1:end]
     idy0 = searchsortedfirst( sim_car.electric_potential.grid.axes[2], 0)
     potential_rms_car = sqrt(sum((ustrip.(map(r -> potential_analytic(r * u"m"), rs)) .- sim_car.electric_potential.data[idxR1:end, idy0, 1]).^2))
+
     @testset "Potential RMS" begin
         @test potential_rms_cyl < 0.01
-        @test potential_rms_car < 1.0
+        @test potential_rms_car < 1.1
     end
 end
