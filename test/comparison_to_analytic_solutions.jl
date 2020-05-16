@@ -26,17 +26,6 @@ end
 
 struct DummyChargeDensityModel{T} <: SolidStateDetectors.AbstractChargeDensityModel{T} end
 
-function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
-    if ustrip(R1) <= pt[1] <= ustrip(R2)
-        return -ustrip(ρ1 / e) * pt[1]^2 
-    else 
-        return 0
-    end
-end
-
-function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
-    SolidStateDetectors.get_charge_density(cdm, CylindricalPoint(pt))
-end
 
 @testset "InfiniteCoaxialCapacitor" begin
     sim_cyl = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
@@ -91,6 +80,18 @@ end
     end
     rs_analytic = range(R1, stop = R2, length = 500);
     pot_analytic = map(r -> potential_analytic(r), rs_analytic)
+
+    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
+        if ustrip(R1) <= pt[1] <= ustrip(R2)
+            return -ustrip(ρ1 / e) * pt[1]^2 
+        else 
+            return 0
+        end
+    end
+
+    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensityModel{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
+        SolidStateDetectors.get_charge_density(cdm, CylindricalPoint(pt))
+    end
 
     sim_cyl.detector.semiconductors[1].charge_density_model = DummyChargeDensityModel{T}()
     sim_car.detector.semiconductors[1].charge_density_model = DummyChargeDensityModel{T}()
