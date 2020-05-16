@@ -383,10 +383,10 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
             sor_consts = T(sor_consts[1])
         end
         if ismissing(refinement_limits)
-            refinement_limits::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.r[end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            refinement_limits::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
         if ismissing(min_grid_spacing)
-            min_grid_spacing::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.r[end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            min_grid_spacing::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
         n_iterations_between_checks::Int = div(10^7, length(grid))
         if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end

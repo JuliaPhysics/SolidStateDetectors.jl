@@ -33,3 +33,6 @@ SSD_examples[:InfiniteParallelPlateCapacitor] = (
 SSD_examples[:InfiniteCoaxialCapacitor] = (
     joinpath(@__DIR__, "../examples/example_detector_config_files/infinite_coaxial_capacitor.json")
 )
+SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords] = (
+    joinpath(@__DIR__, "../examples/example_detector_config_files/infinite_coaxial_capacitor_cartesian_coords.json")
+)

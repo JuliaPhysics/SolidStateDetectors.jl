@@ -56,11 +56,11 @@ end
 
 function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, :cylindrical} where {T <: SSDFloat}
     p = ep.data
-    axr::Vector{T} = collect(ep.grid.r)
-    axφ::Vector{T} = collect(ep.grid.φ)
-    axz::Vector{T} = collect(ep.grid.z)
+    axr::Vector{T} = collect(ep.grid.axes[1])
+    axφ::Vector{T} = collect(ep.grid.axes[2])
+    axz::Vector{T} = collect(ep.grid.axes[3])
 
-    cyclic::T = ep.grid.φ.interval.right
+    cyclic::T = ep.grid.axes[2].interval.right
     ef = Array{SVector{3, T}}(undef, size(p)...)
     for iz in 1:size(ef, 3)
         for iφ in 1:size(ef, 2)
@@ -185,55 +185,37 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
         for iz in axes(field, 3)
             for ir in axes(field, 1)
                 field_xyz[ir,iφ,iz] = Rα * field[ir,iφ,iz]
-                # field_xyz[ir,iφ,iz] = get_xyz_vector_from_field_vector(field[ir,iφ,iz], φ)
             end
         end
     end
     return field_xyz
 end
-#
-# function get_xyz_vector_from_field_vector(vector, α)
-#         Rα = @SArray([cos(α) -1*sin(α) 0;sin(α) cos(α) 0;0 0 1])
-#         result = Rα*vector
-#         result
-# end
+
+
 function interpolated_scalarfield(ep::ScalarPotential{T, 3, :cylindrical}) where {T}
-    knots = ep.grid.axes[1].ticks, cat(ep.grid.axes[2].ticks,T(2π),dims=1), ep.grid.axes[3].ticks#(grid.r, grid.φ, grid.z)
+    @inbounds knots = ep.grid.axes[1].ticks, cat(ep.grid.axes[2].ticks,T(2π),dims=1), ep.grid.axes[3].ticks
     ext_data = cat(ep.data, ep.data[:,1:1,:], dims=2)
     i = interpolate(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
 end
 function interpolated_scalarfield(ep::ScalarPotential{T, 3, :cartesian}) where {T}
-    knots = ep.grid.axes#(grid.x, grid.y, grid.z)
+    @inbounds knots = ep.grid.axes[1].ticks, ep.grid.axes[2].ticks, ep.grid.axes[3].ticks
     i = interpolate(knots, ep.data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return vector_field_itp
 end
-#
-# function interpolated_vectorfield(vectorfield::AbstractArray{<:SVector{3, T},3}, ep::ElectricPotential{T}) where {T}
-#     knots = ep.grid.axes#(grid.r, grid.φ, grid.z)
-#     i = interpolate(knots, vectorfield, Gridded(Linear()))
-#     vectorfield_itp = extrapolate(i, Periodic())
-#     return vectorfield_itp
-# end
-#
-# function setup_interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
-#     knots = grid.axes #(grid.r, grid.φ, grid.z)
-#     i = interpolate(knots, vectorfield, Gridded(Linear()))
-#     vector_field_itp = extrapolate(i, Periodic())
-#     return vector_field_itp
-# end
+
 
 function get_interpolated_drift_field(velocityfield, grid::CylindricalGrid{T}) where {T}
     extended_velocityfield = cat(velocityfield, velocityfield[:,1:1,:], dims=2)
-    knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
+    @inbounds knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
     i = interpolate(knots, extended_velocityfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
 end
 function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) where {T}
-    knots = grid.axes[:1].ticks, grid.axes[:2].ticks, grid.axes[:3].ticks
+    @inbounds knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
     i = interpolate(knots, velocityfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return velocity_field_itp
@@ -242,12 +224,12 @@ end
 include("plot_recipes.jl")
 
 function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :cartesian} where {T <: SSDFloat}
-    axx::Vector{T} = collect(ep.grid[:x])
-    axy::Vector{T} = collect(ep.grid[:y])
-    axz::Vector{T} = collect(ep.grid.z)
-    axx_ext::Vector{T} = get_extended_ticks(ep.grid[:x])
-    axy_ext::Vector{T} = get_extended_ticks(ep.grid[:y])
-    axz_ext::Vector{T} = get_extended_ticks(ep.grid.z)
+    axx::Vector{T} = collect(ep.grid.axes[1])
+    axy::Vector{T} = collect(ep.grid.axes[2])
+    axz::Vector{T} = collect(ep.grid.axes[3])
+    axx_ext::Vector{T} = get_extended_ticks(ep.grid.axes[1])
+    axy_ext::Vector{T} = get_extended_ticks(ep.grid.axes[2])
+    axz_ext::Vector{T} = get_extended_ticks(ep.grid.axes[3])
 
     ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(ep.data))
 
