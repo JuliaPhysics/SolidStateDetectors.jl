@@ -41,11 +41,11 @@ struct DummyChargeDensityModel{T} <: SolidStateDetectors.AbstractChargeDensityMo
     intV = (R2^2 - R1^2) * π * L
 
     calculate_electric_potential!(sim_cyl, 
-        init_grid_size = (40, 2, 40), 
+        init_grid_size = (40, 2, 2), 
         max_refinements = 1,
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (40, 40, 20), 
+        init_grid_size = (40, 40, 2), 
         max_refinements = 1
     )
     calculate_electric_field!(sim_cyl)
@@ -66,7 +66,7 @@ struct DummyChargeDensityModel{T} <: SolidStateDetectors.AbstractChargeDensityMo
 
     # Add impurity density and compare resulting potential to analytic solution
     Q = uconvert(u"C", -1e7 * e * u"cm^-3" * intV)
-    Δz = (sim_cyl.electric_potential.grid.axes[3].ticks[end] - sim_cyl.electric_potential.grid.axes[3].ticks[1])* u"m"
+    Δz = L #(sim_cyl.electric_potential.grid.axes[3].ticks[end] - sim_cyl.electric_potential.grid.axes[3].ticks[1])* u"m"
     # Δz = 0.04f0 * u"m"
     ρ1 = 4Q / ((R2^4 - R1^4)*Δz*2π)
     function ρ_r(r) 
@@ -97,11 +97,11 @@ struct DummyChargeDensityModel{T} <: SolidStateDetectors.AbstractChargeDensityMo
     sim_car.detector.semiconductors[1].charge_density_model = DummyChargeDensityModel{T}()
 
     calculate_electric_potential!(sim_cyl, 
-        init_grid_size = (40, 2, 40), 
+        init_grid_size = (40, 2, 2), 
         max_refinements = 1
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (40, 40, 20), 
+        init_grid_size = (40, 40, 2), 
         max_refinements = 1
     )
 
