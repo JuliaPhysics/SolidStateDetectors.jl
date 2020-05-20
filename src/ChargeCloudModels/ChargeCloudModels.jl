@@ -8,3 +8,5 @@ end
 struct NBodyChargeCloud{T <: SSDFloat, S} <: AbstractChargeCloud 
     # To be done...
 end
+
+include("GaussianChargeCloud.jl")

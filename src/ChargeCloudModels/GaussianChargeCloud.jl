@@ -5,24 +5,25 @@ function chargecloudsize(
         drift_path::Vector{CartesianPoint{T}}, 
         timestamps::Vector{T}, 
         charge::RealQuantity,
-        energy::RealQuantity; 
+        energy::RealQuantity, 
+        material;
         initial_size::RealQuantity = 0.1u"mm", 
-        max_growth::RealQuantity = 0.05u"mm", 
+        max_growth::RealQuantity = 0.05u"mm",
         temperature::RealQuantity = 77u"K"
     )::Vector{T} where {T <: SSDFloat}
 
     max_Δσ = to_internal_units.(internal_length_unit, max_growth)*10^9 #0.05 mm/ns
     max_ΔσΔt = to_internal_units.(internal_length_unit, 0.1u"mm")
     itemperature::T = ustrip(uconvert(u"K", temperature))
-    
+
     n = length(timestamps)
     σ::Vector{T} = zeros(T, n)
 
     σ[1] = to_internal_units.(internal_length_unit, initial_size)
     previous_vel = norm(get_velocity_vector(velocity_field, drift_path[1]))
 
-    ncharges =  to_internal_units(internal_energy_unit, energy) / to_internal_units(internal_energy_unit, hpge[:E_ionisation])
-    repulsion_factor = ncharges * elementary_charge / (4*π*hpge[:ϵ_r]*ϵ0) * 0.68^3 #charge in 1σ, unitless
+    ncharges =  to_internal_units(internal_energy_unit, energy) / to_internal_units(internal_energy_unit, material[:E_ionisation])
+    repulsion_factor = ncharges * elementary_charge / (4*π*material.ϵ_r*ϵ0) * 0.68^3 #charge in 1σ, unitless
     
     for i in 2:n
 
@@ -58,7 +59,7 @@ function chargecloudsize(
 
         ####### diffusion part #######
         
-        diff_coeff = boltzmann_constant * itemperature / elementary_charge * v_over_E # k*T/e is in siggen 0.67
+        diff_coeff = kB * itemperature / elementary_charge * v_over_E # k*T/e is in siggen 0.67
         Δσ_dif = diff_coeff / σ[i]
 
         ####### final step #######
