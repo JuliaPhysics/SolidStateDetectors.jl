@@ -1,8 +1,8 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
-
-const elementary_charge = Float64(1.602176487e-19)
-const ϵ0  = Float64(8.8541878176e-12)
+const kB = Float64(PhysicalConstants.CODATA2018.StefanBoltzmannConstant.val)
+const elementary_charge = Float64(PhysicalConstants.CODATA2018.ElementaryCharge.val)
+const ϵ0  = Float64(PhysicalConstants.CODATA2018.VacuumElectricPermittivity.val)
 
 const material_properties = Dict{Symbol, NamedTuple}()
 

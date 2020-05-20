@@ -16,6 +16,7 @@ using IntervalSets
 using JSON
 using LaTeXStrings
 using ParallelProcessingTools
+using PhysicalConstants
 using ProgressMeter
 using RadiationDetectorSignals
 using RecipesBase
