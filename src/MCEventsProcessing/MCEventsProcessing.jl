@@ -7,9 +7,11 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(internal_time_unit, Δt)) 
     n_contacts = length(s.detector.contacts)
-    S = Val(get_coordinate_system(s.electric_potential.grid))
+    S = Val(get_coordinate_system(s.electron_drift_field.grid))
     contacts = s.detector.contacts;
-    wps_interpolated = [interpolated_scalarfield(s.weighting_potentials[contact.id]) for contact in contacts ];
+    contact_ids = Int[]
+    for contact in contacts if !ismissing(s.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
+    wps_interpolated = [ interpolated_scalarfield(s.weighting_potentials[id]) for id in contact_ids ];
     e_drift_field = get_interpolated_drift_field(s.electron_drift_field);
     h_drift_field = get_interpolated_drift_field(s.hole_drift_field);
     
@@ -27,10 +29,9 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
         ),
         wps_interpolated
     )
-
     mcevents_chns = map(
-        i -> add_column(mcevents, :chnid, fill(contacts[i].id, n_total_physics_events)),
-        eachindex(contacts)
+        i -> add_column(mcevents, :chnid, fill(contact_ids[i], n_total_physics_events)),
+        eachindex(contact_ids)
     )
     mcevents_chns = map(
         i -> add_column(mcevents_chns[i], :waveform, ArrayOfRDWaveforms(waveforms[i])),
@@ -45,7 +46,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, s::Simulation{T},
                                   e_drift_field::Interpolations.Extrapolation, h_drift_field::Interpolations.Extrapolation, 
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
-        _drift_charges(s.detector, s.electric_potential.grid, s.point_types, 
+        _drift_charges(s.detector, s.electron_drift_field.grid, s.point_types, 
                         CartesianPoint{T}.(to_internal_units.(u"m", phyevt.pos)),
                         e_drift_field, h_drift_field, 
                         T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)

@@ -42,8 +42,14 @@ function get_precision_type(sim::Simulation{T}) where {T}
 end
 
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
-    wps_syms = Symbol.(["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts])
-    return (
+    wps_strings = AbstractString[]
+    for contact in sim.detector.contacts
+        if !ismissing(sim.weighting_potentials[contact.id])
+            push!(wps_strings, "WeightingPotential_$(contact.id)")
+        end
+    end
+    wps_syms = Symbol.(wps_strings)
+    nt = (
         detector_json_string = NamedTuple(sim.detector.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
         ρ = NamedTuple(sim.ρ),
@@ -51,10 +57,13 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         ϵ = NamedTuple(sim.ϵ),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
-        weighting_potentials = NamedTuple{Tuple(wps_syms)}( NamedTuple.( sim.weighting_potentials )),
         electron_drift_field = NamedTuple(sim.electron_drift_field),
         hole_drift_field = NamedTuple(sim.hole_drift_field)
     )
+    if length(wps_strings) > 0 
+        nt = merge(nt, (weighting_potentials = NamedTuple{Tuple(wps_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))),))
+    end
+    return nt
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
@@ -374,10 +383,10 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
             sor_consts = T(sor_consts[1])
         end
         if ismissing(refinement_limits)
-            refinement_limits::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.r[end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            refinement_limits::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
         if ismissing(min_grid_spacing)
-            min_grid_spacing::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.r[end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            min_grid_spacing::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
         n_iterations_between_checks::Int = div(10^7, length(grid))
         if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
@@ -646,7 +655,7 @@ end
 
 function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
                         Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(   sim.detector, sim.electric_potential.grid, sim.point_types, starting_positions,
+    return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions,
                              get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
                              Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
 end

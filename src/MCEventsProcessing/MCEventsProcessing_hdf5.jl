@@ -11,7 +11,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T},
     S = Val(get_coordinate_system(s.electric_potential.grid))
     @info "Detector has $(n_contacts) contact(s)"
     contacts = s.detector.contacts;
-    wps_interpolated = [interpolated_scalarfield(s.weighting_potentials[contact.id]) for contact in contacts ];
+    # wps_interpolated = [interpolated_scalarfield(s.weighting_potentials[contact.id]) for contact in contacts ];
     if !ispath(output_dir) mkpath(output_dir) end
     nfmt(i::Int) = format(i, zeropadding = true, width = length(digits(n_total_physics_events)))
     evt_ranges = chunked_ranges(n_total_physics_events, chunk_n_physics_events)
