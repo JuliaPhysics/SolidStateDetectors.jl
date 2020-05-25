@@ -20,7 +20,8 @@ end
 @recipe function f( wp::WeightingPotential{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,
-                    z = missing ) where {T <: SSDFloat}
+                    z = missing,
+                    full_det = false ) where {T <: SSDFloat}
     g::Grid{T, 3, :cylindrical} = wp.grid
 
     seriescolor --> :viridis
@@ -29,8 +30,8 @@ end
     foreground_color_border --> nothing
     tick_direction --> :out
 
-    cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 1
+    cross_section::Symbol, idx::Int, idx_mirror::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
+        :φ, 1, Int(length(g.φ)/2)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
@@ -40,11 +41,11 @@ end
                 φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g.φ, φ_rad)
+        :φ, searchsortednearest(g.φ, φ_rad), searchsortednearest(g.φ, (φ_rad+π)%(2π))
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(g.r, T(r))
+        :r, searchsortednearest(g.r, T(r)) , searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(g.z, T(z))
+        :z, searchsortednearest(g.z, T(z)), searchsortednearest(g.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
@@ -63,7 +64,12 @@ end
             xlabel --> "r / m"
             ylabel --> "z / m"
             size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
-            g.r, g.z, wp.data[:, idx,:]'
+            if full_det == true
+                size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
+                vcat(-1 .* g.r[end:-1:2], g.r),  g.z, cat(wp.data[end:-1:2, idx_mirror, :]', wp.data[:, idx, :]', dims = 2)
+            else
+                g.r, g.z, wp.data[:, idx,:]'
+            end
         elseif cross_section == :r
             g.φ, g.z, wp.data[idx,:,:]'
         elseif cross_section == :z
