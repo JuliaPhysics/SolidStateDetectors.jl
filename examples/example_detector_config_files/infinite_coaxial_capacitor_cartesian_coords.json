@@ -7,16 +7,17 @@
         "temperature": "K"
     },
     "grid": {
-        "coordinates": "cylindrical",
+        "coordinates": "cartesian",
         "axes": {
-            "r": {
+            "x": {
+                "from": -35.0,
                 "to": 35.0,
-                "boundaries": "inf"
+                "boundaries": "reflecting"
             },
-            "phi": {
-                "from": 0,
-                "to": 0,
-                "boundaries": "periodic"
+            "y": {
+                "from": -35.0,
+                "to": 35.0,
+                "boundaries": "reflecting"
             },
             "z": {
                 "from": 0,

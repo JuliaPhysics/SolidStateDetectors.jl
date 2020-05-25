@@ -15,6 +15,8 @@ mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     semiconductors::Vector{Semiconductor{T}}
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
+
+    virtual_drift_volumes::Vector{AbstractVirtualVolume{T}}
 end
 
 get_precision_type(d::SolidStateDetector{T}) where {T} = T
@@ -22,6 +24,7 @@ get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
 
 function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat, S}
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     world_limits = get_world_limits_from_objects(Val(S), semiconductors, contacts, passives )
     world = World(Val(S), world_limits)
 
@@ -33,7 +36,8 @@ function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat,
         material_properties[materials["vacuum"]],
         semiconductors,
         contacts,
-        passives
+        passives,
+        virtual_drift_volumes
     )
 end
 
@@ -80,7 +84,17 @@ function construct_contact(T, contact::Dict, inputunit_dict::Dict{String, Unitfu
     Contact{T}(contact, inputunit_dict)
 end
 
-function construct_objects(T, objects::Vector, semiconductors, contacts, passives, inputunit_dict)::Nothing
+function construct_virtual_volume(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units})
+    construct_virtual_volume(T, pass, inputunit_dict, Val{Symbol(pass["model"])} )
+end
+function construct_virtual_volume(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units}, ::Type{Val{:dead}})
+    DeadVolume{T}(pass, inputunit_dict)
+end
+function construct_virtual_volume(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units}, ::Type{Val{:arbitrary}})
+    ArbitraryDriftModificationVolume{T}(pass, inputunit_dict)
+end
+
+function construct_objects(T, objects::Vector, semiconductors, contacts, passives, virtual_drift_volumes, inputunit_dict)::Nothing
     for obj in objects
         if obj["type"] == "semiconductor"
             push!(semiconductors, construct_semiconductor(T, obj, inputunit_dict))
@@ -88,6 +102,8 @@ function construct_objects(T, objects::Vector, semiconductors, contacts, passive
             push!(contacts, construct_contact(T, obj, inputunit_dict))
         elseif obj["type"] == "passive"
             push!(passives, construct_passive(T, obj, inputunit_dict))
+        elseif obj["type"] == "virtual_drift_volume"
+            push!(virtual_drift_volumes, construct_virtual_volume(T, obj, inputunit_dict))
         else
             @warn "please specify the class to be either a \"semiconductor\", a \"contact\", or \"passive\""
         end
@@ -169,6 +185,7 @@ end
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
     grid_type::Symbol = :cartesian
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
     inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(
         "length" => u"m", # change this to u"m" ? SI Units
@@ -182,7 +199,7 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     end
 
     if haskey(config_file, "objects")
-        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, inputunits)
+        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, virtual_drift_volumes, inputunits)
     end
 
     world = if haskey(config_file, "grid")
@@ -208,6 +225,7 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     c.inputunits = inputunits
     c.medium = medium
     c.world = world
+    c.virtual_drift_volumes = virtual_drift_volumes
     return c
 end
 
@@ -303,7 +321,7 @@ function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::
         stepsizes = T[]
         for (iax, sax) in enumerate(axes_syms)
             imps_ax = all_imps[iax]
-            ax::Vector{T} = grid[sax].ticks
+            ax::Vector{T} = grid.axes[iax].ticks
             imin::Int = searchsortednearest(ax, minimum(imps_ax))
             imax::Int = searchsortednearest(ax, maximum(imps_ax))
             
@@ -351,8 +369,8 @@ end
 
 
 function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:φ}, φ::T )  where {T <: SSDFloat}
-    closest_φ_idx=searchsortednearest(grid.φ.ticks, φ)
-    stepsize::Vector{T}= [minimum(diff(grid.r.ticks)), IntervalSets.width(grid.φ.interval) == 0.0 ? 0.05236 : minimum(diff(grid.φ.ticks)), minimum(diff(grid.z.ticks))]
+    closest_φ_idx=searchsortednearest(grid.axes[2].ticks, φ)
+    stepsize::Vector{T}= [minimum(diff(grid.axes[1].ticks)), IntervalSets.width(grid.axes[2].interval) == 0.0 ? 0.05236 : minimum(diff(grid.axes[2].ticks)), minimum(diff(grid.axes[3].ticks))]
     stepsize /= 2
     samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
     object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])

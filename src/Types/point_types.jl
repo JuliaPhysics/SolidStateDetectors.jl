@@ -58,12 +58,12 @@ all depleted cells.
 function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
     active_volume::T = 0
 
-    only_2d::Bool = length(pts.grid.φ) == 1
-    cyclic::T = pts.grid.φ.interval.right
+    only_2d::Bool = length(pts.grid.axes[2]) == 1
+    cyclic::T = pts.grid.axes[2].interval.right
 
-    r_ext::Vector{T} = get_extended_ticks(pts.grid.r)
-    φ_ext::Vector{T} = get_extended_ticks(pts.grid.φ)
-    z_ext::Vector{T} = get_extended_ticks(pts.grid.z)
+    r_ext::Vector{T} = get_extended_ticks(pts.grid.axes[1])
+    φ_ext::Vector{T} = get_extended_ticks(pts.grid.axes[2])
+    z_ext::Vector{T} = get_extended_ticks(pts.grid.axes[3])
     Δr_ext::Vector{T} = diff(r_ext)
     Δφ_ext::Vector{T} = diff(φ_ext)
     Δz_ext::Vector{T} = diff(z_ext)
@@ -78,11 +78,11 @@ function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
         Δmpr_squared[1] = T(0.5) * (mpr[2]^2)
     end
 
-    isclosed::Bool = typeof(pts.grid.φ.interval).parameters[2] == :closed 
-    for iz in eachindex(pts.grid.z)
+    isclosed::Bool = typeof(pts.grid.axes[2].interval).parameters[2] == :closed 
+    for iz in eachindex(pts.grid.axes[3])
         if !isclosed || only_2d
-            for iφ in eachindex(pts.grid.φ)
-                for ir in eachindex(pts.grid.r)
+            for iφ in eachindex(pts.grid.axes[2])
+                for ir in eachindex(pts.grid.axes[1])
                     pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV::T = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
@@ -91,8 +91,8 @@ function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
                 end
             end
         elseif isclosed && !only_2d
-            for iφ in eachindex(pts.grid.φ)
-                for ir in eachindex(pts.grid.r)
+            for iφ in eachindex(pts.grid.axes[2])
+                for ir in eachindex(pts.grid.axes[1])
                     pt::PointType = pts[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
@@ -118,7 +118,7 @@ end
 
 function PointTypes(nt::NamedTuple)
     grid = Grid(nt.grid)
-    T = typeof(grid[1].ticks[1])
+    T = typeof(grid.axes[1].ticks[1])
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     PointTypes{T, N, S}( nt.values, grid )

@@ -61,8 +61,10 @@ function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5
         event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
     for contact in sim.detector.contacts
-        @assert !ismissing(sim.weighting_potentials[contact.id]) "No weighting potential for contact $(contact.id). Use `calculate_weighting_potential!(sim, contact_id)` first."
-        event.waveforms[contact.id] = get_signal(sim, event.drift_paths, event.energies, contact.id, Δt = Δt)
+        if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
+        if !ismissing(sim.weighting_potentials[contact.id])
+            event.waveforms[contact.id] = get_signal(sim, event.drift_paths, event.energies, contact.id, Δt = Δt)
+        end
     end
     nothing
 end

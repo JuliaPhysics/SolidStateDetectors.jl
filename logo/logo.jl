@@ -126,9 +126,12 @@ function plot_rest(k::Integer, label::Bool)
     plot!()
 end
 
-function get_logo(; animate::Bool=false, label::Bool=true, transparent = true)
+
+function get_logo(; animate::Bool=false, label::Bool=true, step::Int = 5)
     if animate
-        return @animate for k in 0:600
+        ks::Vector{Int} = collect(0:step:600)
+        if !(600 in ks) push!(ks, 600) end
+        return @animate for k in ks
             k = (k == 0 ? k = 600 : k)
             plot_frame(:white)
             plot_rest(k, label)
@@ -150,10 +153,15 @@ Compute and save the SolidStateDetectors.jl logo.
 - `label::Bool=true`: if set to `true`, the words "Solid State Detectors" will appear on the right of the logo.
 
 """
+<<<<<<< HEAD
 function get_and_save_logo(; animate::Bool=false, label::Bool=true, transparent::Bool=true)
     logo = get_logo(animate = animate, label = label, transparent = transparent);
+=======
+function get_and_save_logo(; animate::Bool=false, label::Bool=true, fps = 15, step::Int = 5, loop::Bool = false)
+    logo = get_logo(animate = animate, label = label, step = step);
+>>>>>>> 10145762b217596c800cee09ba4b91cd530b2502
     basename = "logo" * (label ? "" : "_no_name")
-    animate ? gif(logo, basename*".gif") : savefig(basename*".svg")
+    animate ? gif(logo, basename*".gif", fps = fps, loop = loop) : savefig(basename*".svg")
 end
 
-get_and_save_logo()
+# get_and_save_logo(animate = true, label = false, fps = 300, step = 5, loop = false)

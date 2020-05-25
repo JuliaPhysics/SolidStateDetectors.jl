@@ -14,6 +14,8 @@ include("Object.jl")
 include("Passive.jl")
 include("Contacts.jl")
 include("Semiconductor.jl")
+include("AbstractVirtualVolume.jl")
+include("TransitionLayer.jl")
 include("SigGenInterface.jl")
 include("SolidStateDetector.jl")
 
@@ -286,9 +288,9 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         Int[]
     end
 
-    axr::Vector{T} = grid.r.ticks
-    axφ::Vector{T} = grid.φ.ticks
-    axz::Vector{T} = grid.z.ticks
+    axr::Vector{T} = grid.axes[1].ticks
+    axφ::Vector{T} = grid.axes[2].ticks
+    axz::Vector{T} = grid.axes[3].ticks
 
     for iz in axes(potential, 3)
         z::T = axz[iz]
@@ -351,9 +353,9 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         Int[]
     end
 
-    axx::Vector{T} = grid[:x].ticks
-    axy::Vector{T} = grid[:y].ticks
-    axz::Vector{T} = grid.z.ticks
+    axx::Vector{T} = grid.axes[1].ticks
+    axy::Vector{T} = grid.axes[2].ticks
+    axz::Vector{T} = grid.axes[3].ticks
 
     for iz in axes(potential, 3)
         z::T = axz[iz]
