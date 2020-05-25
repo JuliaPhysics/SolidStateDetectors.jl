@@ -28,6 +28,7 @@ function Cone{T}( rStart1::T, rStop1::T, rStart2::T, rStop2::T, φStart::T, φSt
 end
 
 function in(point::CylindricalPoint{T}, cone::Cone{T}) where T
+    !(ismissing(cone.translate) || cone.translate == CartesianVector{T}(0.0, 0.0, 0.0)) ? point = CylindricalPoint(CartesianPoint(point) - cone.translate) : nothing
     if ( point.z in ClosedInterval{T}(cone.zStart,cone.zStop) ) && ( point.φ in ClosedInterval{T}(cone.φStart,cone.φStop) ) && ( point.r in ClosedInterval{T}(minimum([cone.rStart1,cone.rStart2,cone.rStop1,cone.rStop2]), maximum([cone.rStart1,cone.rStart2,cone.rStop1,cone.rStop2])) )
 
         r1,r2 = get_intersection_rs_for_given_z(point.z,cone)
