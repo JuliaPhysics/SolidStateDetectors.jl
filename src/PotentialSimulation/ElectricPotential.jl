@@ -141,7 +141,7 @@ end
                 φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g.φ, φ_rad), searchsortednearest(g.φ, (φ_rad+π)%(2π))
+        :φ, searchsortednearest(g.φ, φ_rad), searchsortednearest(g.φ, T((φ_rad+π)%(2π)))
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, searchsortednearest(g.r, T(r)), searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)

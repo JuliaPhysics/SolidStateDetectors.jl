@@ -187,6 +187,7 @@ end
                     r = missing,
                     φ = missing,
                     z = missing,
+                    scaling = 1.0,
                     contours_equal_potential=false,
                     full_det = false ) where {T}
     g::Grid{T, 3, :cylindrical} = ef.grid
@@ -197,7 +198,7 @@ end
     foreground_color_border --> nothing
     tick_direction --> :out
 
-    ef_magn = get_magnitude_of_rφz_vector.(ef)
+    ef_magn = get_magnitude_of_rφz_vector.(ef) .* scaling
 
     cross_section::Symbol, idx::Int, idx_mirror = if ismissing(φ) && ismissing(r) && ismissing(z)
         :φ, 1, 1+round(Int, length(g.φ)/2, RoundDown)
@@ -210,7 +211,7 @@ end
                 φ_rad += g.φ.interval.right - g.φ.interval.left
             end
         end
-        :φ, searchsortednearest(g.φ, φ_rad), searchsortednearest(g.φ, (φ_rad+π)%(2π))
+        :φ, searchsortednearest(g.φ, φ_rad), searchsortednearest(g.φ, T((φ_rad+π)%(2π)))
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
         :r, searchsortednearest(g.r, T(r)), searchsortednearest(g.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
@@ -266,7 +267,7 @@ end
 
 @userplot Plot_electric_field_
 @recipe function f(gdd::Plot_electric_field_; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    potential = false, contours_equal_potential = true, full_det = false, field_lines = true,
+                    potential = false, contours_equal_potential = true, full_det = false, field_lines = true, scaling = 1.0,
                     sampling = 4u"mm", spacing = 1, max_nsteps = 3000, offset = (0.001)
                     )
     sim = gdd.args[1]
@@ -319,13 +320,14 @@ end
                 y --> v
             end
             #clims --> missing
+            scaling --> scaling
             potential ? sim.electric_potential : sim.electric_field
         end
 end
 
 @userplot Plot_electric_fieldlines
 @recipe function f(gdd::Plot_electric_fieldlines; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    sampling = 4u"mm", spacing = 2, max_nsteps=3000,
+                    sampling = 4u"mm", spacing = 1, max_nsteps=3000, scaling = 1.0,
                     potential=true, contours_equal_potential=true, offset = (0.002), full_det = false)
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
