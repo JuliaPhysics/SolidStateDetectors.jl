@@ -31,7 +31,7 @@ end
     tick_direction --> :out
 
     cross_section::Symbol, idx::Int, idx_mirror::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 1, Int(length(g.φ)/2)
+        :φ, 1, 1+round(Int, length(g.φ)/2, RoundDown)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
@@ -88,7 +88,7 @@ function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::Discre
     l::Int = length( axφ )
     Δφ::T = int.right - int.left
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
-    n::Int = Int(round(T(2π) / Δφ, sigdigits = 6))
+    n::Int = round(Int, round(T(2π) / Δφ, sigdigits = 6))
     new_ticks::Vector{T} = Vector{T}(undef, l * n)
     new_pot::Array{T, 3} = Array{T, 3}(undef, size(wp, 1), l * n, size(wp, 3))
     for idx_n in 1:n

@@ -200,7 +200,7 @@ end
     ef_magn = get_magnitude_of_rφz_vector.(ef)
 
     cross_section::Symbol, idx::Int, idx_mirror = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 1, Int(length(g.φ)/2)
+        :φ, 1, 1+round(Int, length(g.φ)/2, RoundDown)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left

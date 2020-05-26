@@ -131,7 +131,7 @@ end
     tick_direction --> :out
 
     cross_section::Symbol, idx::Int, idx_mirror::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 1, Int(length(g.φ)/2)
+        :φ, 1, 1+round(Int, length(g.φ)/2, RoundDown)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left
