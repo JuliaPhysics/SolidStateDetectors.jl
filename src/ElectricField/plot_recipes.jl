@@ -200,7 +200,7 @@ end
 
     ef_magn = get_magnitude_of_rφz_vector.(ef) .* scaling
 
-    cross_section::Symbol, idx::Int, idx_mirror = if ismissing(φ) && ismissing(r) && ismissing(z)
+    cross_section::Symbol, idx::Int, idx_mirror::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         :φ, 1, 1+round(Int, length(g.φ)/2, RoundDown)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
@@ -338,6 +338,7 @@ end
     if isempty(skipmissing(dim_array))
         if S == :cylindrical
             v::T = 0
+            φ = 0
             dim_number = 2
             dim_symbol = :φ
         elseif S == :cartesian
