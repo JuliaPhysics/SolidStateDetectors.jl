@@ -78,6 +78,16 @@ plot_electric_field(simulation, size = (350, 500))
 # ## Drift field calculation
 
 # Given the electric field and a charge drift model, calculate drift fields for electrons and holes. Precalculating the drift fields saves time during charge drift simulation:
+
+# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the Bruyneel model from the Agata Data Library (ADL) is used. Other configurations are saved in their JSON configuration files and can be found under:
+
+# `<package_directory>/src/ChargeDriftModels/ADL/<config_filename>.json.`
+
+# Set the charge drift model of the simulation:
+
+charge_drift_model = ADLChargeDriftModel()
+set_charge_drift_model!(simulation, charge_drift_model) 
+
  
 # And apply the charge drift model to the electric field:
  
