@@ -48,7 +48,7 @@ export update_till_convergence!, refine!
 export set_charge_drift_model!, calculate_drift_fields!
 export get_active_volume
 export generate_charge_signals, generate_charge_signals!
-export VacuumChargeDriftModel, ADLChargeDriftModel
+export ElectricFieldChargeDriftModel, ADLChargeDriftModel
 export Simulation, simulate!
 export Event, drift_charges!
 

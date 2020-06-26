@@ -31,7 +31,7 @@ function Simulation{T}() where {T <: SSDFloat}
         missing,
         [missing],
         missing,
-        VacuumChargeDriftModel{T}(),
+        ElectricFieldChargeDriftModel{T}(),
         missing,
         missing
     )
