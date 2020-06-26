@@ -91,7 +91,7 @@ set_charge_drift_model!(simulation, charge_drift_model)
  
 # And apply the charge drift model to the electric field:
  
-apply_charge_drift_model!(simulation)
+calculate_drift_fields!(simulation)
 
 # Now, let's create an "random" (multiside) event:
 
