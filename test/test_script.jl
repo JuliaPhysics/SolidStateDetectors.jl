@@ -106,7 +106,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     set_charge_drift_model!(simulation, ADLChargeDriftModel())
 
-    apply_charge_drift_model!(simulation)
+    calculate_drift_fields!(simulation)
 
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
