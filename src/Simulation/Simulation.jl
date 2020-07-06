@@ -31,7 +31,7 @@ function Simulation{T}() where {T <: SSDFloat}
         missing,
         [missing],
         missing,
-        VacuumChargeDriftModel{T}(),
+        ElectricFieldChargeDriftModel{T}(),
         missing,
         missing
     )
@@ -642,12 +642,13 @@ function set_charge_drift_model!(sim::Simulation{T}, charge_drift_model::Abstrac
     nothing
 end
 
-function apply_charge_drift_model!(sim::Simulation{T};
-            use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
+function calculate_drift_fields!(sim::Simulation{T};
+    use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
     sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     nothing
 end
+@deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
 
 function get_interpolated_drift_field(ef::ElectricField)
     get_interpolated_drift_field(ef.data, ef.grid)
@@ -690,7 +691,7 @@ function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool 
     end
     calculate_electric_field!(sim)
     set_charge_drift_model!(sim, sim.charge_drift_model)
-    apply_charge_drift_model!(sim)
+    calculate_drift_fields!(sim)
     @info "Detector simulation done"
 end
 
