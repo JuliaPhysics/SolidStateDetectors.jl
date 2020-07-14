@@ -56,7 +56,6 @@ end
 - `gammas::SVector{4, SMatrix{3,3,T}}`
 - `temperaturemodel::AbstractTemperatureModel{T}`
 """
-
 struct ADLChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
