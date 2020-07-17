@@ -5,11 +5,23 @@ function update_and_get_max_abs_diff!(  fssrb::PotentialSimulationSetupRB{T, N1,
                                         use_nthreads::Int = Base.Threads.nthreads()
                                         )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
     tmp_potential::Array{T, N2} = copy(fssrb.potential)
-    for i in 1:10
+    if depletion_handling_enabled
         update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+        slopes::Array{T, N2} = tmp_potential - fssrb.potential
+        @inbounds for i in 1:19
+            tmp_potential[:] = fssrb.potential[:]
+            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            slopes += tmp_potential - fssrb.potential
+        end
+        @inbounds slopes /= 20
+        return maximum(abs.(slopes))
+    else
+        for i in 1:10
+            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+        end
+        max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
+        return max_diff
     end
-    max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
-    return max_diff
 end
 
 function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}, 
