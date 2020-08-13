@@ -23,7 +23,7 @@ plot(
 # Next, calculate the electric potential:
  
 calculate_electric_potential!( simulation, 
-                               max_refinements = 4)
+                               max_refinements = 3)
 
 plot(
     plot(simulation.electric_potential, φ = 20), # initial electric potential (boundary conditions)
@@ -51,7 +51,8 @@ simulation_undep = Simulation(detector_undep);
 
 calculate_electric_potential!( simulation_undep, 
                                depletion_handling = true, 
-                               max_refinements = 4, 
+                               convergence_limit=1e-6,
+                               max_refinements = 3, 
                                verbose = false)
 
 plot(
@@ -73,7 +74,7 @@ println("Undepleted: ", get_active_volume(simulation_undep.point_types));
 
 calculate_electric_field!(simulation, n_points_in_φ = 72)
 
-plot_electric_field(simulation, size = (350, 500))
+# plot_electric_field(simulation, size = (350, 500))
 
 # ## Drift field calculation
 
@@ -113,7 +114,7 @@ plot!(event.drift_paths)
 # We need weighting potentials to simulate the detector charge signal induced by drifting charges. We'll calculate the weighting potential for the point contact and the outer shell of the detector:
 
 for contact in simulation.detector.contacts
-    calculate_weighting_potential!(simulation, contact.id, max_refinements = 4, n_points_in_φ = 2, verbose = false)
+    calculate_weighting_potential!(simulation, contact.id, max_refinements = 3, n_points_in_φ = 2, verbose = false)
 end
 
 plot(  
