@@ -56,5 +56,5 @@ jobs:
       arch: amd64
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-        - travis_wait 30 julia --project=docs/ docs/make.jl
+        - julia --project=docs/ docs/make.jl
       after_success: skip
