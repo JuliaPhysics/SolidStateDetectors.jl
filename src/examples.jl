@@ -36,3 +36,6 @@ SSD_examples[:InfiniteCoaxialCapacitor] = (
 SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords] = (
     joinpath(@__DIR__, "../examples/example_detector_config_files/infinite_coaxial_capacitor_cartesian_coords.json")
 )
+SSD_examples[:Hexagon] = (
+    joinpath(@__DIR__, "../examples/example_detector_config_files/minimum_hexagon_config.json")
+)

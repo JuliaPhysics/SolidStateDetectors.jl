@@ -1,0 +1,54 @@
+{
+    "name": "Simple Hexagon",
+    "units": {
+        "length": "mm",
+        "angle": "deg"
+    },
+    "grid": {
+        "coordinates": "cartesian",
+        "axes": {
+          "x": {
+             "from": -1,
+             "to": 12.0,
+             "boundaries": {
+                 "left": "inf",
+                 "right": "inf"
+             }
+         },
+         "y": {
+             "from": -1,
+             "to": 12,
+             "boundaries": {
+                 "left": "inf",
+                 "right": "inf"
+             }
+         },
+         "z": {
+             "from": -1,
+             "to": 12,
+             "boundaries": {
+                 "left": "inf",
+                 "right": "inf"
+               }
+            }
+        }
+    },
+    "medium": "vacuum",
+    "objects": [
+        {
+            "type": "semiconductor",
+            "material": "Si",
+            "bulk_type": "n",
+            "geometry": {
+                "type": "HexagonalPrism",
+                "a": 3,
+                "h": 3,
+                "translate": {
+                  "x": 8,
+                  "y": 5,
+                  "Z": 2
+                }
+            }
+        }
+    ]
+}
