@@ -40,8 +40,6 @@ function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
     end
 
 function in(pt::CylindricalPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
-    translate_vector = _get_translate_vector(T, dict, inputunit_dict)
-    org::CartesianPoint{T} = ismissing(translate_vector) ? CartesianPoint{T}(0, 0, 0) : translate_vector
     return in(CartesianPoint(pt), hp)
 end
 
@@ -50,8 +48,16 @@ end
 # You also should provide a example config file containing this new primitive
 function HexagonalPrism{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, inputunit_dict::Dict{String,Unitful.Units})::HexagonalPrism{T} where {T <: SSDFloat}
     # ... parse values from dict to NewPrimitive{T}(...)
-    translate_vector = _get_translate_vector(T, dict, inputunit_dict)
-    org::CartesianPoint{T} = ismissing(translate_vector) ? CartesianPoint{T}(0, 0, 0) : translate_vector
+    if haskey(dict, "translate")
+        org::CartesianPoint{T} = CartesianPoint{T}(
+            haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : 0,
+            haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : 0,
+            haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : 0)
+    else
+        org = CartesianPoint{T}(0,0,0)
+    end
+    #translate_vector = _get_translate_vector(T, dict, inputunit_dict)
+    #org::CartesianPoint{T} = ismissing(translate_vector) ? CartesianPoint{T}(0, 0, 0) : translate_vector
     a::T = ustrip(uconvert(u"m", dict["a"] * inputunit_dict["length"]))
     h::T = ustrip(uconvert(u"m", dict["h"] * inputunit_dict["length"]))
     #φ::T = ustrip(uconvert(u"m", dict["φ"] * inputunit_dict["length"]))
@@ -62,8 +68,8 @@ function Geometry(T::DataType, t::Val{:HexagonalPrism}, dict::Dict{Any, Any}, in
 end
 
 # add a (+) method to shift the primitive
-function (+)(s::HexagonalPrism{T}, translate::Union{CartesianVector{T}, Missing})::HexagonalPrism{T} where {T <: SSDFloat}
-    return ismissing(translate) ? s : HexagonalPrism{T}( s.org +  translate, s.a, s.h)
+function (+)(hp::HexagonalPrism{T}, translate::Union{CartesianVector{T}, Missing})::HexagonalPrism{T} where {T <: SSDFloat}
+    return ismissing(translate) ? hp : HexagonalPrism{T}( hp.org + translate, hp.a, hp.h)
 end
 
 # Also a plot recipe for this new primitive should be provided:
