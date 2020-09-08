@@ -56,8 +56,6 @@ function HexagonalPrism{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, input
     else
         org = CartesianPoint{T}(0,0,0)
     end
-    #translate_vector = _get_translate_vector(T, dict, inputunit_dict)
-    #org::CartesianPoint{T} = ismissing(translate_vector) ? CartesianPoint{T}(0, 0, 0) : translate_vector
     a::T = ustrip(uconvert(u"m", dict["a"] * inputunit_dict["length"]))
     h::T = ustrip(uconvert(u"m", dict["h"] * inputunit_dict["length"]))
     #φ::T = ustrip(uconvert(u"m", dict["φ"] * inputunit_dict["length"]))
@@ -80,9 +78,9 @@ end
         pts_bottom = []
         label --> ""
         for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
-            pt_top = s.org + CartesianVector{T}(hp.a * cos(φ), s.r * sin(φ), hp.h/2)
+            pt_top = hp.org + CartesianVector{T}(hp.a * cos(φ), hp.a * sin(φ), hp.h/2)
             push!(pts_top, pt_top)
-            pt_bottom = s.org + CartesianVector{T}(hp.a * cos(φ), s.r * sin(φ), -hp.h/2)
+            pt_bottom = hp.org + CartesianVector{T}(hp.a * cos(φ), hp.a * sin(φ), -hp.h/2)
             push!(pts_bottom, pt_bottom)
         end
         lines = LineSegment{T, 3, :cartesian}[]
