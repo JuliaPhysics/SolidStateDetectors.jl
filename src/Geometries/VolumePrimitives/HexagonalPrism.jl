@@ -96,7 +96,10 @@ end
 
 # For proper grid creation we also need the function get_important_points:
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return T[]
+    r = hp.a > (hp.h/2) ? hp.a : hp.h/2
+    v::Vector{T} = geom_round.(T[ hp.org.x - r, hp.org.x, hp.org.x + r,
+                                  hp.org.y - r, hp.org.y, hp.org.y + r ])
+    return findall(r -> r >= 0 , v)
 end
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
     return T[]
@@ -105,8 +108,7 @@ function get_important_points(hp::HexagonalPrism{T}, ::Val{:z})::Vector{T} where
     return geom_round.(T[hp.org.z+hp.h/2, hp.org.z-hp.h/2])
 end
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    r = cos(deg2rad(30))*hp.a
-    return geom_round.(T[hp.org.x-r,hp.org.x+r])
+    return geom_round.(T[hp.org.x-hp.a,hp.org.x+hp.a])
 end
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
     return geom_round.(T[hp.org.y-hp.a, hp.org.y+hp.a])
