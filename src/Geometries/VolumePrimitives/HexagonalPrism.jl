@@ -9,8 +9,9 @@ function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
     shift::CartesianPoint{T} = pt - hp.org #shift pt to prism's frame
     r = cos(deg2rad(30))*hp.a #minimal radius
     #convert to cylindrical to break into 6 segements of a hexagon
-    θ = rad2deg(atan(shift.y, shift.x))
-    ρ = hypot(shift.x, shift.y)
+    shift2 = CylindricalPoint(shift)
+    θ = rad2deg(shift2.φ)
+    ρ = shift2.r
     return  abs(shift.z) <= hp.h/2 &&
             ρ <= hp.a && #outside maximal radius?
             if ρ > r     #if outside minimal radius we need to carefully check each segment

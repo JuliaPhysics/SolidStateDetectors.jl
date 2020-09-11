@@ -1,7 +1,7 @@
 {
     "name": "Simple Hexagon",
     "units": {
-        "length": "mm",
+        "length": "m",
         "angle": "deg"
     },
     "grid": {
@@ -41,12 +41,12 @@
             "bulk_type": "n",
             "geometry": {
                 "type": "HexagonalPrism",
-                "a": 3,
-                "h": 3,
+                "a": 1,
+                "h": 1,
                 "translate": {
-                  "x": 8,
-                  "y": 5,
-                  "Z": 2
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
                 }
             }
         }
