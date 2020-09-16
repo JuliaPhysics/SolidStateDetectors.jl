@@ -77,19 +77,21 @@ end
     @series begin
         pts_top = []
         pts_bottom = []
-        label --> ""
+
+        #find all vertices, this loop has been tested and works
         for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
-            pt_top = hp.org + CartesianVector{T}(hp.a * cos(φ), hp.a * sin(φ), hp.h/2)
+            pts_top = hp.org + CartesianPoint(hp.a * cos(φ), hp.a * sin(φ), hp.h/2)
             push!(pts_top, pt_top)
-            pt_bottom = hp.org + CartesianVector{T}(hp.a * cos(φ), hp.a * sin(φ), -hp.h/2)
+            pts_bottom = hp.org + CartesianPoint(hp.a * cos(φ), hp.a * sin(φ), -hp.h/2)
             push!(pts_bottom, pt_bottom)
         end
+
+        #create Linesegments connecting the vertices
         lines = LineSegment{T, 3, :cartesian}[]
         for i in 1:length(pts_top)-1
-            push!(lines, LineSegment(pts_top[i+1], pts_top[i]))
-            push!(lines, LineSegment(pts_bottom[i+1], pts_bottom[i]))
-            push!(lines, LineSegment(pts_bottom[i], pts_top[i]))
-        end
+            push!(lines, LineSegment(pts_top[i+1], pts_top[i])) #top hexagon
+            push!(lines, LineSegment(pts_bottom[i+1], pts_bottom[i])) #bottom hexagon
+            push!(lines, LineSegment(pts_bottom[i], pts_top[i])) #lines connecting hexagons (missing one line)
         lines
     end
 end
@@ -114,7 +116,7 @@ function get_important_points(hp::HexagonalPrism{T}, ::Val{:y})::Vector{T} where
     return geom_round.(T[hp.org.y-hp.a, hp.org.y+hp.a])
 end
 
-# and a sample function to paint the primitive on the grid (necessary if the object is small)
+and a sample function to paint the primitive on the grid (necessary if the object is small)
 function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where {T <: SSDFloat}
     samples::Vector{CartesianPoint{T}} = CartesianPoint{T}[]
     φarr::Vector{T} = geom_round.(T[0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)])

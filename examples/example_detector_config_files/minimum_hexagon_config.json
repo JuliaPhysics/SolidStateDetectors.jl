@@ -8,24 +8,24 @@
         "coordinates": "cartesian",
         "axes": {
           "x": {
-             "from": -1,
-             "to": 12.0,
+             "from": -5,
+             "to": 5,
              "boundaries": {
                  "left": "inf",
                  "right": "inf"
              }
          },
          "y": {
-             "from": -1,
-             "to": 12,
+             "from": -5,
+             "to": 5,
              "boundaries": {
                  "left": "inf",
                  "right": "inf"
              }
          },
          "z": {
-             "from": -1,
-             "to": 12,
+             "from": -5,
+             "to": 5,
              "boundaries": {
                  "left": "inf",
                  "right": "inf"
