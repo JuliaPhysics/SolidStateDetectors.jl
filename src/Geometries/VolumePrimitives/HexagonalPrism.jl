@@ -75,6 +75,7 @@ end
 @recipe function f(hp::HexagonalPrism{T}) where {T <: SSDFloat}
     label --> "HexagonalPrism"
     @series begin
+        #line_3d(1,1,1,1,0,1, translate=[0.0,0.0,0.0])
         pts_top = []
         pts_bottom = []
 
