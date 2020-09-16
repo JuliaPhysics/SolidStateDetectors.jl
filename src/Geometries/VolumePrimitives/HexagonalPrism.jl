@@ -78,11 +78,8 @@ end
         #line_3d(1,1,1,1,0,1, translate=[0.0,0.0,0.0])
         pts_top = []
         pts_bottom = []
-<<<<<<< HEAD
 
         #find all vertices, this loop has been tested and works
-=======
->>>>>>> 68aa055b5b44a44928d2daf0572cc4c7a373271b
         for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
             pts_top = hp.org + CartesianPoint(hp.a * cos(φ), hp.a * sin(φ), hp.h/2)
             push!(pts_top, pt_top)
@@ -99,22 +96,6 @@ end
         lines
     end
 end
-
-# @recipe function f(hp::HexagonalPrism{T}) where {T <: SSDFloat}
-#     label --> "HexagonalPrism"
-#     @series begin
-#         pts_top = []
-#         pts_bottom = []
-#         for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
-#             pts_top = hp.org + CartesianPoint(hp.a * cos(φ), hp.a * sin(φ), hp.h/2)
-#             push!(pts_top, pt_top)
-#             pts_bottom = hp.org + CartesianPoint(hp.a * cos(φ), hp.a * sin(φ), -hp.h/2)
-#             push!(pts_bottom, pt_bottom)
-#         end
-#         seriestype = :scatter
-#         pts_top, pts_bottom
-#     end
-# end
 
 # For proper grid creation we also need the function get_important_points:
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
@@ -136,7 +117,6 @@ function get_important_points(hp::HexagonalPrism{T}, ::Val{:y})::Vector{T} where
     return geom_round.(T[hp.org.y-hp.a, hp.org.y+hp.a])
 end
 
-<<<<<<< HEAD
 and a sample function to paint the primitive on the grid (necessary if the object is small)
 function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where {T <: SSDFloat}
     samples::Vector{CartesianPoint{T}} = CartesianPoint{T}[]
@@ -153,21 +133,20 @@ function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where {T <: SSDFloa
     end
     return samples
 end
-=======
-# and a sample function to paint the primitive on the grid (necessary if the object is small)
-# function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where {T <: SSDFloat}
-#     samples::Vector{CartesianPoint{T}} = CartesianPoint{T}[]
-#     φarr::Vector{T} = geom_round.(T[0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)])
-#     r = cos(deg2rad(30))*hp.a
-#     zarr::Vector{T} = get_important_points(hp, Val{:z}())
-#     for φ in φarr
-#         for z in zarr[1] : zarr[2]
-#             pt1::CylindricalPoint{T} = CylindricalPoint{T}(cos(φ)*hp.a+hp.org.x, sin(φ)*hp.a+hp.org.y, z)
-#             pt2::CylindricalPoint{T} = CylindricalPoint{T}(cos(φ+deg2rad(30))*r+hp.org.x, sin(φ+deg2rad(30))*r+hp.org.y, z)
-#             push!(samples, pt1)
-#             push!(samples, pt2)
-#         end
-#     end
-#     return samples
-# end
->>>>>>> 68aa055b5b44a44928d2daf0572cc4c7a373271b
+
+#and a sample function to paint the primitive on the grid (necessary if the object is small)
+function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where {T <: SSDFloat}
+    samples::Vector{CartesianPoint{T}} = CartesianPoint{T}[]
+    φarr::Vector{T} = geom_round.(T[0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)])
+    r = cos(deg2rad(30))*hp.a
+    zarr::Vector{T} = get_important_points(hp, Val{:z}())
+    for φ in φarr
+        for z in zarr[1] : zarr[2]
+            pt1::CylindricalPoint{T} = CylindricalPoint{T}(cos(φ)*hp.a+hp.org.x, sin(φ)*hp.a+hp.org.y, z)
+            pt2::CylindricalPoint{T} = CylindricalPoint{T}(cos(φ+deg2rad(30))*r+hp.org.x, sin(φ+deg2rad(30))*r+hp.org.y, z)
+            push!(samples, pt1)
+            push!(samples, pt2)
+        end
+    end
+    return samples
+end
