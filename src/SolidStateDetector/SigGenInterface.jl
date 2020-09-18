@@ -89,13 +89,12 @@ function readsiggen(file_path::String; T::Type=Float64)
                 config[key] = string(file[key])
             elseif key == "taper_angle" && parse(Float64, file["taper_angle"]) != 0
                 config["outer_taper_width"] = tan(2*pi*parse(T, file[key])/360)*parse(T, file["outer_taper_length"])
+                config["inner_taper_width"] = tan(2*pi*parse(T, file[key])/360)*parse(T, file["inner_taper_length"])
                 config[key]                 = parse(T, file[key])
-
             else
                 config[key] = parse(T, file[key])
             end
         end
-
     end
     return config
 end
