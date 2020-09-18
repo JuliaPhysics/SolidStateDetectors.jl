@@ -88,8 +88,8 @@ function readsiggen(file_path::String; T::Type=Float64)
             if key == "wp_name" || key == "drift_name" || key == "field_name"
                 config[key] = string(file[key])
             elseif key == "taper_angle" && parse(Float64, file["taper_angle"]) != 0
-                config["outer_taper_width"] = tan(2*pi*parse(T, file[key])/360)*parse(T, file["outer_taper_length"])
-                config["inner_taper_width"] = tan(2*pi*parse(T, file[key])/360)*parse(T, file["inner_taper_length"])
+                config["outer_taper_width"] = tan(deg2rad(parse(T, file[key]))) * parse(T, file["outer_taper_length"])
+                config["inner_taper_width"] = tan(deg2rad(parse(T, file[key]))) * parse(T, file["inner_taper_length"])
                 config[key]                 = parse(T, file[key])
             else
                 config[key] = parse(T, file[key])
