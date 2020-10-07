@@ -80,6 +80,14 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv
     end
     return sv
 end
+
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cylindrical}, point_types::PointTypes{T, 3, :cylindrical})::Bool where {T <: SSDFloat}
+    pt_cyl in point_types || pt_cyl in det 
+end
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cartesian}, point_types::PointTypes{T, 3, :cartesian})::Bool where {T <: SSDFloat}
+    pt_car in point_types || pt_car in det 
+end
+
 """
     _drift_charge(...)
 
@@ -112,8 +120,8 @@ function _drift_charge!(
                 done = true 
             end 
             next_pos::CartesianPoint{T} = current_pos + stepvector
-            next_pos_cyl::CylindricalPoint{T} = _convert_vector(next_pos, Val(S))
-            if next_pos_cyl in point_types || next_pos_cyl in det
+            next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
+            if _is_next_point_in_det(next_pos, next_pos_cyl, det, point_types)
                 drift_path[istep] = next_pos
                 drifttime += Δt
                 timestamps[istep] = drifttime
