@@ -31,7 +31,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 [compat]
 ArraysOfArrays = "0.4, 0.5"
 Clustering = "0.13, 0.14"
-Distributions = "0.21, 0.22, 0.23"
+Distributions = "0.21, 0.22, 0.23, 0.24"
 FillArrays = "0.8, 0.9"
 Formatting = "0.4"
 Interpolations = "0.12"
