@@ -59,7 +59,10 @@
 			},
 			"geometry": {
 				"type": "HexagonalPrism",
-				"a": 1.0,
+				"r": {
+					"from": 0.5,
+					"to": 1.0
+				},
 				"h": 2.0,
 				"translate": {
 					"z": 1.0
@@ -74,7 +77,10 @@
 			"channel": 1,
 			"geometry": {
 				"type": "HexagonalPrism",
-				"a": 1.0,
+				"r": {
+					"from": 0.5,
+					"to": 1.0
+				},
 				"h": 1e-6,
 				"translate": {
 					"z": 2.0
@@ -89,7 +95,9 @@
 			"channel": 2,
 			"geometry": {
 				"type": "HexagonalPrism",
-				"a": 1.0,
+				"r": {
+					"to": 1.0
+				},
 				"h": 1e-6,
 				"translate": {
 					"z": 0.0
