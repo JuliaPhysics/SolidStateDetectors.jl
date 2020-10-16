@@ -37,20 +37,13 @@ function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
     cpt = CylindricalPoint(pt) #shift pt to prism's frame
     minRadInner = sqrt(3)/2*hp.rInner
     minRadOuter = sqrt(3)/2*hp.rOuter
-    # Use hexagonal symmetry and do the ol' point in a triangle test, algebraically
+    # Use hexagonal symmetry to sweep the point into a basic triangle
     angle = π/6 - max(0, mod(cpt.φ, π/3)-π/6)
     pt_mod = CartesianPoint(CylindricalPoint{T}(cpt.r, angle, cpt.z))
 
     return abs(pt_mod.z) <= hp.h/2 && # Within the height
             cpt.r <= hp.rOuter && # within outer radius
-            if cpt.r >= minRadInner # Inside inner and outer radius
-                # v1 = CartesianPoint{T}(0, 0, 0)
-                # v2 = CartesianPoint{T}(minRad, 0, 0)
-                # v3 = CartesianPoint{T}(minRad, hp.a/2, 0)
-                # b1 = tri_area(pt_mod, v1, v2) < 0.
-                # b2 = tri_area(pt_mod, v2, v3) < 0.
-                # b3 = tri_area(pt_mod, v3, v1) < 0.
-                # ((b1 == b2) && (b2 == b3))
+            if cpt.r >= minRadInner # Inside minimal inner radius
                 ((pt_mod.x >= minRadInner) && (pt_mod.x <= minRadOuter))
             else # Inside inner radius
                 false
@@ -139,8 +132,6 @@ end
 
 #and a sample function to paint the primitive on the grid (necessary if the object is small)
 function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where T
-    minRadInner = sqrt(3)/2*hp.rInner
-    minRadOuter = sqrt(3)/2*hp.rOuter
     samples = CartesianPoint{T}[]
     for x in -hp.rOuter : stepsize[1] : hp.rOuter
         for y in -hp.rOuter : stepsize[2]: hp.rOuter
@@ -149,11 +140,6 @@ function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where T
                 if in(samples, p)
                     push!(samples, p)
                 end
-                # if p.x >= minRad && p.y >= minRad
-                #     push!(samples, p)
-                # elseif in(p, hp)
-                #     push!(samples, p)
-                # end
             end
         end
     end
