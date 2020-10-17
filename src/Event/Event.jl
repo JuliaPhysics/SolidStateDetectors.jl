@@ -2,9 +2,9 @@
     mutable struct Event{T <: SSDFloat}
 
 Collection struct for individual events. This (mutable) struct is ment to be used to look at individual events,
-not to process a hugh amount of events.
+not to process a huge amount of events.
 """
-mutable struct Event{T <: SSDFloat} 
+mutable struct Event{T <: SSDFloat}
     locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}
     energies::Union{Vector{T}, Missing}
     drift_paths::Union{Vector{EHDriftPath{T}}, Missing}
@@ -30,7 +30,7 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
         }}, T = missing)
     if ismissing(T) T = eltype(to_internal_units(internal_energy_unit, evt[:edep][:])) end
 
-    event = Event( 
+    event = Event(
         CartesianPoint{T}.(to_internal_units.(internal_length_unit, evt[:pos][:])),
         T.(to_internal_units.(internal_energy_unit, evt[:edep][:]))
     )
@@ -47,16 +47,16 @@ function drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1
     nothing
 end
 function get_signal!(event::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, sim::Simulation` first."
-    @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim, contact_id)` first."
+    @assert !ismissing(event.drift_paths) "No drift path for this event. Use `drift_charges(event::Event, sim::Simulation)` first."
+    @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
     if ismissing(event.waveforms)
         event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
-    event.waveforms[contact_id] = get_signal(sim, event.drift_paths, event.energies, contact_id)
+    event.waveforms[contact_id] = get_signal(sim, event.drift_paths, event.energies, contact_id, Δt = Δt)
     nothing
 end
 function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(event.drift_paths) "No drit path for this event. Use `drift_charges(event::Event, sim::Simulation` first."
+    @assert !ismissing(event.drift_paths) "No drift path for this event. Use `drift_charges(event::Event, sim::Simulation)` first."
     if ismissing(event.waveforms)
         event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
