@@ -10,24 +10,24 @@
 		"coordinates": "cartesian",
 		"axes": {
             "x": {
-								"from": -5,
-                "to": 5,
+								"from": -2,
+                "to": 2,
                 "boundaries": {
                     "left": "inf",
                     "right": "inf"
                 }
             },
             "y": {
-                "from": -5,
-                "to": 5,
+                "from": -2,
+                "to": 2,
 								"boundaries": {
                     "left": "inf",
                     "right": "inf"
                 }
             },
             "z": {
-                "from": -5,
-                "to": 5,
+                "from": -1,
+                "to": 3,
                 "boundaries": {
                     "left": "inf",
                     "right": "inf"
@@ -46,21 +46,21 @@
 				"name": "linear",
 				"r": {
 					"init": 0.0,
-					"gradient": 0.0
+					"gradient": 1e-12
 				},
 				"phi": {
 					"init": 0.0,
 					"gradient": 0.0
 				},
 				"z": {
-					"init": 1e-7,
-					"gradient": 0.0
+					"init": 1e-12,
+					"gradient": 1e-13
 				}
 			},
 			"geometry": {
 				"type": "HexagonalPrism",
 				"r": {
-					"from": 0.5,
+					"from": 0.0,
 					"to": 1.0
 				},
 				"h": 2.0,
@@ -78,12 +78,12 @@
 			"geometry": {
 				"type": "HexagonalPrism",
 				"r": {
-					"from": 0.5,
+					"from": 0.,
 					"to": 1.0
 				},
-				"h": 1e-6,
+				"h": 1e-2,
 				"translate": {
-					"z": 2.0
+					"z": 2.005
 				}
 			}
 		},
@@ -96,11 +96,12 @@
 			"geometry": {
 				"type": "HexagonalPrism",
 				"r": {
+					"from": 0.0,
 					"to": 1.0
 				},
-				"h": 1e-6,
+				"h": 0.01,
 				"translate": {
-					"z": 0.0
+					"z": -5e-3
 				}
 			}
 		}

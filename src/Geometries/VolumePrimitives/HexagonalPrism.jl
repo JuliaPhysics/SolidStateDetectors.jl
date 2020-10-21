@@ -2,7 +2,7 @@ struct HexagonalPrism{T} <: AbstractVolumePrimitive{T, 3} ## Only upright hexago
     rInner::T
     rOuter::T
     h::T #total height
-    translate::Union{CartesianPoint{T}, Missing}#origin at middle of hexagonal prism
+    translate::Union{CartesianVector{T}, Missing}#origin at middle of hexagonal prism
 end
 
 # You also have to implement the function to obtain the primitive from a config file (so an dic)
@@ -26,25 +26,19 @@ function HexagonalPrism{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, input
     return HexagonalPrism{T}(rInner, rOuter, h, translate)
 end
 
-# Auxiliary function for point in a triangle check
-function tri_area(p1::CartesianPoint{T}, p2::CartesianPoint{T}, p3::CartesianPoint{T})::T where {T}
-    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
-end
-
 # is a point inside the hexagonal prism?
 function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
-    pt = ismissing(hp.translate) ? pt : pt .- hp.translate
+    pt = ismissing(hp.translate) ? pt : pt - hp.translate
     cpt = CylindricalPoint(pt) #shift pt to prism's frame
     minRadInner = sqrt(3)/2*hp.rInner
     minRadOuter = sqrt(3)/2*hp.rOuter
     # Use hexagonal symmetry to sweep the point into a basic triangle
-    angle = π/6 - max(0, mod(cpt.φ, π/3)-π/6)
-    pt_mod = CartesianPoint(CylindricalPoint{T}(cpt.r, angle, cpt.z))
+    angle = if (mod(cpt.φ ÷ (π/6), 2) > 0) π/6 - mod(cpt.φ, (π/6)) else mod(cpt.φ, (π/6)) end
 
-    return abs(pt_mod.z) <= hp.h/2 && # Within the height
+    return abs(pt.z) <= hp.h/2 && # Within the height
             cpt.r <= hp.rOuter && # within outer radius
             if cpt.r >= minRadInner # Inside minimal inner radius
-                ((pt_mod.x >= minRadInner) && (pt_mod.x <= minRadOuter))
+                ((cpt.r*cos(angle) >= minRadInner) && (cpt.r*cos(angle) <= minRadOuter))
             else # Inside inner radius
                 false
             end
@@ -80,13 +74,13 @@ end
 
         #find all vertices, this loop has been tested and works
         for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
-            pt_top_outer = hp.translate .+ CartesianPoint{T}(hp.rOuter * cos(φ), hp.rOuter * sin(φ), hp.h/2)
+            pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
             push!(pts_top_outer, pt_top_outer)
-            pt_top_inner = hp.translate .+ CartesianPoint{T}(hp.rInner * cos(φ), hp.rInner * sin(φ), hp.h/2)
+            pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
             push!(pts_top_inner, pt_top_inner)
-            pt_bottom_outer = hp.translate .+ CartesianPoint{T}(hp.rOuter * cos(φ), hp.rOuter * sin(φ), -hp.h/2)
+            pt_bottom_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z -hp.h/2)
             push!(pts_bottom_outer, pt_bottom_outer)
-            pt_bottom_inner = hp.translate .+ CartesianPoint{T}(hp.rInner * cos(φ), hp.rInner * sin(φ), -hp.h/2)
+            pt_bottom_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z -hp.h/2)
             push!(pts_bottom_inner, pt_bottom_inner)
         end
 
@@ -95,13 +89,15 @@ end
         N = length(pts_top_outer)
         for i in 1:N
             push!(lines, LineSegment(pts_top_outer[i%N+1], pts_top_outer[i])) #top outer hexagon
-            push!(lines, LineSegment(pts_top_inner[i%N+1], pts_top_inner[i])) #top inner hexagon
             push!(lines, LineSegment(pts_bottom_outer[i%N+1], pts_bottom_outer[i])) #bottom outer hexagon
-            push!(lines, LineSegment(pts_bottom_inner[i%N+1], pts_bottom_inner[i])) #bottom inner hexagon
             push!(lines, LineSegment(pts_bottom_outer[i], pts_top_outer[i])) #lines connecting outer hexagons
-            push!(lines, LineSegment(pts_bottom_inner[i], pts_top_inner[i])) #lines connecting inner hexagons
-            push!(lines, LineSegment(pts_top_outer[i], pts_top_inner[i])) #lines connecting hexagons
-            push!(lines, LineSegment(pts_bottom_outer[i], pts_bottom_inner[i])) #lines connecting hexagons
+            if hp.rInner > 0
+                push!(lines, LineSegment(pts_bottom_inner[i%N+1], pts_bottom_inner[i])) #bottom inner hexagon
+                push!(lines, LineSegment(pts_top_inner[i%N+1], pts_top_inner[i])) #top inner hexagon
+                push!(lines, LineSegment(pts_bottom_inner[i], pts_top_inner[i])) #lines connecting inner hexagons
+                push!(lines, LineSegment(pts_top_outer[i], pts_top_inner[i])) #lines connecting hexagons
+                push!(lines, LineSegment(pts_bottom_outer[i], pts_bottom_inner[i])) #lines connecting hexagons
+            end
         end
         lines
     end
@@ -110,7 +106,7 @@ end
 # For proper grid creation we also need the function get_important_points:
 # Radial
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[sqrt(3)/2*hp.rInner, hp.rInner, sqrt(3)/2*hp.rOuter, hp.rOuter])
+    return geom_round.(T[-hp.rOuter, -sqrt(3)/2*hp.rOuter, -hp.rInner, -sqrt(3)/2*hp.rInner, 0., sqrt(3)/2*hp.rInner, hp.rInner, sqrt(3)/2*hp.rOuter, hp.rOuter] .+ sqrt(hp.translate.x^2 + hp.translate.y^2))
 end
 
 # polar angle
@@ -119,15 +115,15 @@ function get_important_points(hp::HexagonalPrism{T}, ::Val{:φ})::Vector{T} wher
 end
 # Z
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[-hp.h/2, hp.h/2])
+    return geom_round.(T[-hp.h/2, hp.h/2] .+ hp.translate.z)
 end
 # X
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[-hp.rOuter, -sqrt(3)/2*hp.rOuter, -hp.rInner, -sqrt(3)/2*hp.rInner, sqrt(3)/2*hp.rInner, hp.rInner, sqrt(3)/2*hp.rOuter, hp.rOuter])
+    return geom_round.(T[-hp.rOuter, -sqrt(3)/2*hp.rOuter, -hp.rInner, -sqrt(3)/2*hp.rInner, 0., sqrt(3)/2*hp.rInner, hp.rInner, sqrt(3)/2*hp.rOuter, hp.rOuter] .+ hp.translate.x)
 end
 # Y
 function get_important_points(hp::HexagonalPrism{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[-hp.rOuter, -sqrt(3)/2*hp.rOuter, -hp.rInner, -sqrt(3)/2*hp.rInner, sqrt(3)/2*hp.rInner, hp.rInner, sqrt(3)/2*hp.rOuter, hp.rOuter])
+    return geom_round.(T[-hp.rOuter, -sqrt(3)/2*hp.rOuter, -hp.rInner, -sqrt(3)/2*hp.rInner, 0., sqrt(3)/2*hp.rInner, hp.rInner, sqrt(3)/2*hp.rOuter, hp.rOuter] .+ hp.translate.y)
 end
 
 #and a sample function to paint the primitive on the grid (necessary if the object is small)
