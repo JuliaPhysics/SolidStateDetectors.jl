@@ -67,12 +67,13 @@ materials = Dict{String, Symbol}(
     "Copper" => :Co,
     "copper" => :Co,
     "Al"  => :Al,
-    "CZT" => :CdZnTe
+    "CZT" => :CdZnTe,
+    "Si" => :Si
 )
 
 
 for key in keys(material_properties)
     if !haskey(materials, string(key))
-        push!(materials, string(key) => key) 
+        push!(materials, string(key) => key)
     end
 end
