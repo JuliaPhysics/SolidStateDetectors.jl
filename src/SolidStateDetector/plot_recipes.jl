@@ -2,7 +2,7 @@
 
     clabel = (ismissing(label) ? map(c -> (c.name == "" ? c.id : c.name), det.contacts) : label)
     if !(typeof(clabel) <: AbstractArray) clabel = [clabel] end
-    ccolor = (ismissing(seriescolor) ? collect(1:length(det.contacts)) : seriescolor)
+    ccolor = (ismissing(seriescolor) ? map(c -> c.id, det.contacts) : seriescolor)
     if !(typeof(ccolor) <: AbstractArray) ccolor = [ccolor] end
 
     if ismissing(φ)
@@ -30,15 +30,16 @@
 end
 
 
-@recipe function f(contact::Contact{T}; n = 30, seriescolor = :grey) where {T}
+@recipe function f(contact::Contact{T}; n = 30, seriescolor = missing) where {T}
+    ccolor = (ismissing(seriescolor) ? contact.id : seriescolor)
     @series begin
-        seriescolor --> seriescolor
-        label --> "Contact"
+        seriescolor := ccolor
+        label --> (contact.name == "" ? contact.id : contact.name)
         []
     end
     for (cn,c) in enumerate(contact.geometry_positive)
         @series begin
-            seriescolor := seriescolor
+            seriescolor := ccolor
             label := ""
             n --> n
             c
