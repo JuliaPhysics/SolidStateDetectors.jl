@@ -72,6 +72,30 @@ function iscolinear(l1::AbstractLine{T, 3, :cartesian}, l2::AbstractLine{T, 3, :
 end
 
 
+"""
+    struct PartialCircle{T, N, S} <: AbstractLine{T, N, S}
+        ________
+      _/        \\_ 
+     /            \\
+    A              B
+    
+"""
+struct PartialCircle{T,N,S} <: AbstractLine{T,N,S}
+    r::T
+    phiStart::T
+    phiStop::T
+    Translate::AbstractCoordinateVector{T,N,S}
+end
+
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T} = CartesianVector{T}([0,0,0])) where {T}
+    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate)
+end
+
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing) where {T}
+    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]))
+end
+
+
 
 # Plot Recipes:
 @recipe function f(l::AbstractLine{T, 3, :cartesian}) where {T}
@@ -85,6 +109,14 @@ end
     x::Vector{T} = [l.org.x, l.org.x + l.dir.x] 
     y::Vector{T} = [l.org.y, l.org.y + l.dir.y] 
     x, y
+end
+
+@recipe function f(pc::PartialCircle{T, 3, :cartesian}; n = 30) where {T}
+    phirange = range(pc.phiStart, pc.phiStop, length = round(Int, n + 1))
+    x::Vector{T} = pc.r .* cos.(phirange) .+ pc.Translate.x
+    y::Vector{T} = pc.r .* sin.(phirange) .+ pc.Translate.y
+    z::Vector{T} = map(phi -> pc.Translate.z, phirange)
+    x, y, z
 end
 
 @recipe function f(ls::Array{<:AbstractLine{T, 3, :cartesian}, 1}) where {T}
