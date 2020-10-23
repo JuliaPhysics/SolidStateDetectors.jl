@@ -1,6 +1,6 @@
 # # Example 1: Inverted Coax Detector 
 
-using Plots; pyplot(fmt = :png);
+using Plots
 using SolidStateDetectors
 using Unitful
 
@@ -17,7 +17,7 @@ plot(
     plot(simulation.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
     plot(simulation.ρ), # charge density distribution
     plot(simulation.ϵ), # dielectric distribution
-    layout = (1, 4), size = (1400, 700)
+    layout = (1, 4), size = (1600, 500)
 )
 
 # Next, calculate the electric potential:
@@ -30,7 +30,7 @@ plot(
     plot(simulation.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
     plot(simulation.ρ), # charge density distribution
     plot(simulation.ϵ), # dielectric distribution
-    layout = (1, 4), size = (1400, 700)
+    layout = (1, 4), size = (1600, 500)
 )
 
 # SolidStateDetectors.jl supports active (i.e. depleted) volume calculation:
@@ -131,5 +131,5 @@ plot(
 
 simulate!(event, simulation) # drift_charges + signal generation of all channels
 
-p_pc_signal = plot( event.waveforms[1], lw = 1.5, xlims = (0, 2000), xlabel = "Time / ns", 
+p_pc_signal = plot( event.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time / ns", 
                     legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
