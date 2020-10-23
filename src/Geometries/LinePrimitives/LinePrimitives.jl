@@ -120,7 +120,7 @@ end
 end
 
 @recipe function f(ls::Array{<:AbstractLine{T, 3, :cartesian}, 1}) where {T}
-    linecolor --> 1
+    seriescolor --> 1
     for l in ls
         @series begin
             label := ""

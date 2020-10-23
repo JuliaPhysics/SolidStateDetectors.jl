@@ -8,7 +8,7 @@ Install via
 using Pkg; pkg"add SolidStateDetectors"
 ```
 
-## Vizualization / Plotting (Optional)
+## Visualization / Plotting (Optional)
 
 This package provides serveral [plot recipes](https://docs.juliaplots.org/latest/recipes/) for different outputs for the plotting package [Plots.jl](https://github.com/JuliaPlots/Plots.jl/).
 
@@ -18,10 +18,11 @@ In order to use these also install the [Plots.jl](https://github.com/JuliaPlots/
 using Pkg; pkg"add Plots"
 ```
 
-Then you can load it via
+Load the [Plots.jl](https://github.com/JuliaPlots/Plots.jl/) package (and optionally the backend `pyplot`) via
 ```julia
 using Plots
 pyplot() #optional
 ```
 
-Currently, SolidStateDetectors.jl supports the backends `gr` and `pyplot`.
+The backends supported by SolidStateDetectors.jl are `gr` and `pyplot`.
+By default, `gr` is loaded when importing `Plots`.
