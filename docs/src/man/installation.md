@@ -19,6 +19,7 @@ using Pkg; pkg"add Plots"
 ```
 
 Load the [Plots.jl](https://github.com/JuliaPlots/Plots.jl/) package (and optionally the backend `pyplot`) via
+
 ```julia
 using Plots
 pyplot() #optional
