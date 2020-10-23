@@ -18,12 +18,10 @@ In order to use these also install the [Plots.jl](https://github.com/JuliaPlots/
 using Pkg; pkg"add Plots"
 ```
 
-It is recommended to use `pyplot` as backend. Install via
-```julia
-using Pkg; pkg"add PyPlot"
-```
-
 Then you can load it via
 ```julia
-using Plots; pyplot();
+using Plots
+pyplot() #optional
 ```
+
+Currently, SolidStateDetectors.jl supports the backends `gr` and `pyplot`.
