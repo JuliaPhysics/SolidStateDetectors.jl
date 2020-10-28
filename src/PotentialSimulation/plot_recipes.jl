@@ -43,7 +43,7 @@ end
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    ep, g, cross_section, idx, value
+    ep, cross_section, idx, value
 end
 
 
@@ -60,7 +60,7 @@ end
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    wp, g, cross_section, idx, value
+    wp, cross_section, idx, value
 end
 
 
@@ -76,7 +76,7 @@ end
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    ρ, g, cross_section, idx, value
+    ρ, cross_section, idx, value
 end
 
 
@@ -93,11 +93,11 @@ end
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    pt, g, cross_section, idx, value
+    pt, cross_section, idx, value
 end
 
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, g::Grid{T, 3, :cylindrical}, cross_section::Symbol, idx::Int, value::T) where {T}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T) where {T}
 
     g::Grid{T, 3, :cylindrical} = sp.grid
     
@@ -164,6 +164,161 @@ end
         elseif cross_section == :z
             projection --> :polar
             rad2deg_backend.(gφ_ext), gr_ext, ϵ.data[:,:,idx]
+        end
+    end
+end
+
+
+
+function get_crosssection_idx_and_value(g::Grid{T, 3, :cartesian}, x, y, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
+
+    cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
+        :y, 1
+    elseif !ismissing(x) && ismissing(y) && ismissing(z)
+        :x, searchsortednearest(g.x, T(x))
+    elseif ismissing(x) && !ismissing(y) && ismissing(z)
+        :y, searchsortednearest(g.y, T(y))
+    elseif ismissing(x) && ismissing(y) && !ismissing(z)
+        :z, searchsortednearest(g.z, T(z))
+    else
+        error(ArgumentError, ": Only one of the keywords `x, y, z` is allowed.")
+    end
+    value::T = g[cross_section][idx]
+    cross_section, idx, value
+end
+
+@recipe function f(ep::ElectricPotential{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+
+    g::Grid{T, 3, :cartesian} = ep.grid
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+
+    seriescolor --> :viridis
+    title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
+
+    ep, cross_section, idx, value
+end
+
+@recipe function f(wp::WeightingPotential{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+
+    g::Grid{T, 3, :cartesian} = wp.grid
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+
+    seriescolor --> :viridis
+    clims --> (0,1)
+    title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
+
+    wp, cross_section, idx, value
+end
+
+
+@recipe function f(ρ::ChargeDensity{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+
+    g::Grid{T, 3, :cartesian} = ρ.grid
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+
+    seriescolor --> :inferno
+    title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))m"
+
+    ρ, cross_section, idx, value
+end
+
+
+@recipe function f(pt::PointTypes{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+
+    g::Grid{T, 3, :cartesian} = pt.grid
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+
+    seriescolor --> :viridis
+    clims --> (0,7)
+    title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))m"
+
+    pt, cross_section, idx, value
+end
+
+
+@recipe function f(sp::ScalarPotential{T,3,:cartesian}, cross_section::Symbol, idx::Int, value::T) where {T}
+
+    g::Grid{T, 3, :cartesian} = sp.grid
+    
+    if minimum(sp.data) == maximum(sp.data)
+        #@info "Set colorbar to display heatmap with non uniform axes"
+        clims --> (sp.data[1], sp.data[1]+1)
+    end
+        
+
+    @series begin
+        seriestype := :heatmap
+        foreground_color_border --> nothing
+        tick_direction --> :out
+        if cross_section == :x
+            aspect_ratio --> 1
+            xguide --> "y / m"
+            yguide --> "z / m"
+            xlims --> (g.y[1],g.y[end])
+            ylims --> (g.z[1],g.z[end])
+            gy_ext = midpoints(get_extended_ticks(g.y))
+            gz_ext = midpoints(get_extended_ticks(g.z))
+            midpoints(gy_ext), midpoints(gz_ext), sp.data[idx,:,:]'
+        elseif cross_section == :y
+            aspect_ratio --> 1
+            xguide --> "x / m"
+            yguide --> "z / m"
+            xlims --> (g.x[1],g.x[end])
+            ylims --> (g.z[1],g.z[end])
+            gx_ext = midpoints(get_extended_ticks(g.x))
+            gz_ext = midpoints(get_extended_ticks(g.z))
+            midpoints(gx_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+        elseif cross_section == :z
+            aspect_ratio --> 1
+            xguide --> "x / m"
+            yguide --> "y / m"
+            xlims --> (g.x[1],g.x[end])
+            ylims --> (g.y[1],g.y[end])
+            gx_ext = midpoints(get_extended_ticks(g.x))
+            gy_ext = midpoints(get_extended_ticks(g.y))
+            midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
+        end
+    end
+end
+
+
+@recipe function f(ϵ::DielectricDistribution{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+
+    g::Grid{T, 3, :cartesian} = ϵ.grid
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+
+    seriestype --> :heatmap
+    seriescolor --> :inferno
+    foreground_color_border --> nothing
+    tick_direction --> :out
+    title --> "Dielectric Distribution @ $(cross_section) = $(round(value,sigdigits=2))m"
+
+    gx_ext::Array{T,1} = midpoints(get_extended_ticks(g.x))
+    gy_ext::Array{T,1} = midpoints(get_extended_ticks(g.y))
+    gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
+
+    @series begin
+        if cross_section == :x
+            aspect_ratio --> 1
+            xguide --> "y / m"
+            yguide --> "z / m"
+            xlims --> (g.y[1],g.y[end])
+            ylims --> (g.z[1],g.z[end])
+            gy_ext, gz_ext, ϵ.data[idx,:,:]'
+        elseif cross_section == :y
+            aspect_ratio --> 1
+            xguide --> "x / m"
+            yguide --> "z / m"
+            xlims --> (g.x[1],g.x[end])
+            ylims --> (g.z[1],g.z[end])
+            gx_ext, gz_ext, ϵ.data[:,idx,:]'
+        elseif cross_section == :z
+            aspect_ratio --> 1
+            xguide --> "x / m"
+            yguide --> "y / m"
+            xlims --> (g.x[1],g.x[end])
+            ylims --> (g.y[1],g.y[end])
+            gx_ext, gy_ext, ϵ.data[:,:,idx]'
         end
     end
 end
