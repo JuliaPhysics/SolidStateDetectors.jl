@@ -101,11 +101,6 @@ end
 
     g::Grid{T, 3, :cylindrical} = sp.grid
     
-    if minimum(sp.data) == maximum(sp.data)
-        #@info "Set colorbar to display heatmap with non uniform axes"
-        clims --> (sp.data[1], sp.data[1]+1)
-    end
-    
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -240,12 +235,6 @@ end
 
     g::Grid{T, 3, :cartesian} = sp.grid
     
-    if minimum(sp.data) == maximum(sp.data)
-        #@info "Set colorbar to display heatmap with non uniform axes"
-        clims --> (sp.data[1], sp.data[1]+1)
-    end
-        
-
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
