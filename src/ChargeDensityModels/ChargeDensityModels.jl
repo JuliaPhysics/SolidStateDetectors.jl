@@ -11,14 +11,13 @@ Simple charge density model which assumes a linear gradient in charge density in
 `offsets::NTuple{3, T}` are the charge densities at 0 and `gradients::NTuple{3, T}` are the linear
 slopes in each dimension.
 """
-struct LinearChargeDensityModel{T <: SSDFloat} <: AbstractChargeDensityModel{T}
+struct LinearChargeDensityModel{T <: SSDFloat, CS} <: AbstractChargeDensityModel{T}
     offsets::NTuple{3, T}
     gradients::NTuple{3, T}
-    CS::Symbol
 end
 
-function get_charge_density(lcdm::LinearChargeDensityModel{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
-    pt::AbstractCoordinatePoint{T} = (lcdm.CS == :cylindrical) ? CylindricalPoint(pt) : CartesianPoint(pt)    
+function get_charge_density(lcdm::LinearChargeDensityModel{T, CS}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat, CS}
+    pt::AbstractCoordinatePoint{T} = (CS == :cylindrical) ? CylindricalPoint(pt) : CartesianPoint(pt)    
     ρ::T = 0
     for i in eachindex(lcdm.offsets)
         ρ += (lcdm.offsets[i] + pt[i] * lcdm.gradients[i]) #* T(1e16) # * T(1e10) * T(1e6) -> 1/cm^3 -> 1/m^3
@@ -64,21 +63,30 @@ function ChargeDensityModel(T::DataType, t::Val{:linear}, dict::Union{Dict{Strin
     return LinearChargeDensityModel{T}( dict, unit_factor, gradient_unit_factor )
 end
 
-function LinearChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T)::LinearChargeDensityModel{T} where {T <: SSDFloat}
-    offsets, gradients = zeros(T,3), zeros(T,3)
+function LinearChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T) where {T <: SSDFloat}
+    offsets, gradients = zeros(T, 3), zeros(T, 3)
     if haskey(dict, "r") && (haskey(dict, "x") || haskey(dict, "y"))
         error(ErrorException, ": Only Cartesian or cylindrical gradients are supported. In the config file, both `r` and `x` or `y` are defined.")
     end
     CS::Symbol = :cartesian
-    if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
     if haskey(dict, "r")
         offsets[1] = geom_round(unit_factor * T(dict["r"]["init"]));    
         gradients[1] = geom_round(gradient_unit_factor * T(dict["r"]["gradient"]))
         CS = :cylindrical
     end
-    if haskey(dict, "x")     offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["x"]["gradient"]))    end
-    if haskey(dict, "y")     offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]));     gradients[2] = geom_round(gradient_unit_factor * T(dict["y"]["gradient"]))    end
-    return LinearChargeDensityModel{T}( NTuple{3, T}(offsets), NTuple{3, T}(gradients), CS )
+    if haskey(dict, "x")
+        offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]))
+        gradients[1] = geom_round(gradient_unit_factor * T(dict["x"]["gradient"]))    
+    end
+    if haskey(dict, "y")
+        offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]))
+        gradients[2] = geom_round(gradient_unit_factor * T(dict["y"]["gradient"]))
+    end
+    if haskey(dict, "z")     
+        offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]))
+        gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))
+    end
+    return LinearChargeDensityModel{T, CS}( NTuple{3, T}(offsets), NTuple{3, T}(gradients) )
 end
 
 
