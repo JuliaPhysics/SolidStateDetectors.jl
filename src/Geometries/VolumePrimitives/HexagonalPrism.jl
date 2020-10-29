@@ -73,7 +73,7 @@ end
         pts_bottom_inner = []
 
         #find all vertices, this loop has been tested and works
-        for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
+        for φ in [deg2rad(30),deg2rad(90), deg2rad(150), deg2rad(210), deg2rad(270), deg2rad(330)]
             pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
             push!(pts_top_outer, pt_top_outer)
             pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
