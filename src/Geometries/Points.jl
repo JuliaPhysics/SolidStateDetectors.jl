@@ -25,6 +25,14 @@ function CartesianPoint( pt::CylindricalPoint{T} )::CartesianPoint{T} where {T <
     return CartesianPoint{T}(pt.r * cφ, pt.r * sφ, pt.z)
 end
 
+@inline function CylindricalPoint( pt::CylindricalPoint{T} )::CylindricalPoint{T} where {T <: RealQuantity} 
+    pt
+end
+
+@inline function CartesianPoint( pt::CartesianPoint{T} )::CartesianPoint{T} where {T <: RealQuantity}
+    pt
+end
+
 function convert(type::Type{CylindricalPoint}, origin::SolidStateDetectors.CartesianPoint{T})::CylindricalPoint{T} where T
     return CylindricalPoint(origin)
 end
