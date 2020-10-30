@@ -33,7 +33,7 @@ end
 
 
 
-@recipe function f(ep::ElectricPotential{T,3,:cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(ep::ElectricPotential{T,3,:cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
     if !(ep.grid[2][end] - ep.grid[2][1] ≈ 2π) ep = get_2π_potential(ep, n_points_in_φ = 72) end
 
@@ -43,7 +43,7 @@ end
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    ep, cross_section, idx, value
+    ep, cross_section, idx, value, contours_equal_potential
 end
 
 
@@ -97,7 +97,7 @@ end
 end
 
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T) where {T}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T}
 
     g::Grid{T, 3, :cylindrical} = sp.grid
     
@@ -122,6 +122,31 @@ end
         elseif cross_section == :z
             projection --> :polar
             g.φ, g.r, sp.data[:,:,idx]
+        end
+    end
+    
+    if contours_equal_potential && cross_section == :φ
+        @series begin
+            seriescolor := :thermal
+            seriestype := :contours
+            #if cross_section == :φ
+                aspect_ratio --> 1
+                xguide := "r / m"
+                yguide := "z / m"
+                xlims --> (g.r[1],g.r[end])
+                ylims --> (g.z[1],g.z[end])
+                g.r, g.z, sp.data[:,idx,:]'
+                #=
+            elseif cross_section == :r
+                xguide --> "φ / °"
+                yguide --> "z / m"
+                ylims --> (g.z[1],g.z[end])
+                g.φ, g.z, sp.data[idx,:,:]'
+            elseif cross_section == :z
+                projection --> :polar
+                g.φ, g.r, sp.data[:,:,idx]
+            end
+            =#
         end
     end
 end
