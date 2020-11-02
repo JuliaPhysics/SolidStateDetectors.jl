@@ -20,7 +20,7 @@ In Julia, their path is already saved in the SolidStateDetectors.jl package in a
 ```julia
     using SolidStateDetectors
     SSD_examples # dictionary holding the full path to the corresponding config JSON files
-    SSD_exmpless[:Coax]
+    SSD_examples[:Coax]
 ```
 The keys are: `:Coax`, `:InvertedCoax`, `:BEGe`, `:CGD`.
 

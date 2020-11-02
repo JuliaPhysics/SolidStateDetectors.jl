@@ -10,22 +10,22 @@ struct EHDriftPath{T <: SSDFloat, TT <: RealQuantity}
     timestamps_h::Vector{TT}
 end
 
-_common_length(dp::EHDriftPath{T} where {T <: SSDFloat})::Int = 
+_common_length(dp::EHDriftPath{T} where {T <: SSDFloat})::Int =
     max(length(dp.timestamps_e), length(dp.timestamps_h))
-_common_length(dps::Vector{EHDriftPath{T}} where {T <: SSDFloat})::Int = 
+_common_length(dps::Vector{EHDriftPath{T}} where {T <: SSDFloat})::Int =
     maximum(_common_length.(dps))
 
-function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}  
+function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
-_common_time(dps::Vector{<:EHDriftPath}) = 
+_common_time(dps::Vector{<:EHDriftPath}) =
 maximum(_common_time.(dps))
 
-function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}}, Δt) where {T} 
+function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}}, Δt) where {T}
     range(zero(Δt), step = Δt, stop = typeof(Δt)(_common_time(dp)) + Δt)
 end
 
-function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, point::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}  
+function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, point::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
     return CartesianVector{T}(interpolation_field(point.x, point.y, point.z))
 end
 
@@ -35,12 +35,12 @@ end
 
 
 function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
-                        starting_points::Vector{CartesianPoint{T}}, 
+                        starting_points::Vector{CartesianPoint{T}},
                         velocity_field_e::Interpolations.Extrapolation{<:SVector{3}, 3},
                         velocity_field_h::Interpolations.Extrapolation{<:SVector{3}, 3},
                         Δt::RQ; max_nsteps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
-    drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points)) 
+    drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points))
 
     dt::T = T(to_internal_units(internal_time_unit, Δt))
 
@@ -54,11 +54,11 @@ function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
         drift_paths[i] = EHDriftPath{T, T}( drift_path_e[1:n_e], drift_path_h[1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
     end
 
-    return drift_paths 
+    return drift_paths
 end
 
 function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
-                       starting_point::CartesianPoint{<:SSDFloat}, 
+                       starting_point::CartesianPoint{<:SSDFloat},
                        velocity_field_e::Interpolations.Extrapolation{SVector{3, T}, 3},
                        velocity_field_h::Interpolations.Extrapolation{SVector{3, T}, 3},
                        Δt::RealQuantity, max_nsteps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat}
@@ -75,15 +75,23 @@ end
 function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv::Vector{AbstractVirtualVolume{T}})::CartesianVector{T} where {T <: SSDFloat}
     for i in eachindex(vdv)
         if in(cp, vdv[i])
-            return modulate_driftvector(sv, cp, vdv[i]) 
+            return modulate_driftvector(sv, cp, vdv[i])
         end
     end
     return sv
 end
-"""
-    _drift_charge(...)
 
-Before calling this function one should check that `startpos` is inside `det`: `in(startpos, det`
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cylindrical}, point_types::PointTypes{T, 3, :cylindrical})::Bool where {T <: SSDFloat}
+    pt_cyl in point_types || pt_cyl in det
+end
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cartesian}, point_types::PointTypes{T, 3, :cartesian})::Bool where {T <: SSDFloat}
+    pt_car in point_types || pt_car in det
+end
+
+"""
+    _drift_charge!(...)
+
+Before calling this function one should check that `startpos` is inside `det`: `in(startpos, det)`
 """
 function _drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
@@ -102,18 +110,18 @@ function _drift_charge!(
     timestamps[1] = zero(T)
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
     last_real_step_index::Int = 1
-    @inbounds for istep in eachindex(drift_path)[2:end] 
+    @inbounds for istep in eachindex(drift_path)[2:end]
         if done == false
             last_real_step_index += 1
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_vector(current_pos, Val(S))) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
-            if geom_round.(stepvector) == null_step 
-                done = true 
-            end 
+            if geom_round.(stepvector) == null_step
+                done = true
+            end
             next_pos::CartesianPoint{T} = current_pos + stepvector
-            next_pos_cyl::CylindricalPoint{T} = _convert_vector(next_pos, Val(S))
-            if next_pos_cyl in point_types || next_pos_cyl in det
+            next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
+            if _is_next_point_in_det(next_pos, next_pos_cyl, det, point_types)
                 drift_path[istep] = next_pos
                 drifttime += Δt
                 timestamps[istep] = drifttime
@@ -131,7 +139,7 @@ function _drift_charge!(
                     # ToDo: We actually need a time array as well to do this properly...
                     small_projected_vector = projected_vector * T(0.001)
                     i::Int = 0
-                    while i < 1000 && !(next_pos in det) 
+                    while i < 1000 && !(next_pos in det)
                         next_pos -= small_projected_vector
                         i += 1
                     end
@@ -148,7 +156,7 @@ function _drift_charge!(
                     drifttime += Δt
                     timestamps[istep] = drifttime
                     done = true
-                else # elseif cd_point_type == CD_OUTSIDE      
+                else # elseif cd_point_type == CD_OUTSIDE
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
                     drifttime += Δt
@@ -175,7 +183,7 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T}; 
+function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
     cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_vector(point_mid, Val(S)))

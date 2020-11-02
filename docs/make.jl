@@ -7,7 +7,6 @@
 using Documenter
 using Literate
 using Plots
-pyplot(fmt=:png) 
 using SolidStateDetectors
 
 function fix_literate_output(content)

@@ -51,20 +51,29 @@ material_properties[:Co] = (
     ρ = 8.96Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
 )
 
+material_properties[:CdZnTe] = (
+    name = "Cadmium zinc telluride",
+    E_ionisation = 4.64u"eV",
+    ϵ_r = 10.9,
+    ρ = 5.78Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
+)
 # Add new materials above this line
 # and just put different spellings into the dict `materials` below
 
-materials = Dict{String, Symbol}( 
+materials = Dict{String, Symbol}(
     "HPGe" => :HPGe,
     "vacuum" => :Vacuum,
     "Vacuum" => :Vacuum,
     "Copper" => :Co,
     "copper" => :Co,
-    "Al"  => :Al
+    "Al"  => :Al,
+    "CZT" => :CdZnTe,
+    "Si" => :Si
 )
+
 
 for key in keys(material_properties)
     if !haskey(materials, string(key))
-        push!(materials, string(key) => key) 
+        push!(materials, string(key) => key)
     end
 end

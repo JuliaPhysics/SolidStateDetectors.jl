@@ -6,17 +6,17 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
     S: System (Cartesian, Cylindrical...)
 """
 struct Grid{T, N, S} <: AbstractGrid{T, N}
-    axes::NTuple{N, DiscreteAxis{T, BL, BR, I} where {BL, BR, I}} 
+    axes::NTuple{N, DiscreteAxis{T, BL, BR, I} where {BL, BR, I}}
 end
 
-const CartesianGrid{T, N} = Grid{T, N, :cartesian} 
+const CartesianGrid{T, N} = Grid{T, N, :cartesian}
 const CartesianGrid1D{T} = CartesianGrid{T, 1}
 const CartesianGrid2D{T} = CartesianGrid{T, 2}
 const CartesianGrid3D{T} = CartesianGrid{T, 3}
-const RadialGrid{T} = Grid{T, 1, :Radial} 
-const PolarGrid{T} = Grid{T, 2, :Polar} 
-const CylindricalGrid{T} = Grid{T, 3, :cylindrical} 
-const SphericalGrid{T} = Grid{T, 3, :Spherical} 
+const RadialGrid{T} = Grid{T, 1, :Radial}
+const PolarGrid{T} = Grid{T, 2, :Polar}
+const CylindricalGrid{T} = Grid{T, 3, :cylindrical}
+const SphericalGrid{T} = Grid{T, 3, :Spherical}
 
 @inline size(g::Grid{T, N, S}) where {T, N, S} = size.(g.axes, 1)
 @inline length(g::Grid{T, N, S}) where {T, N, S} = prod(size(g))
@@ -82,14 +82,14 @@ end
 
 function check_grid(grid::CylindricalGrid{T})::Nothing where {T}
     nr::Int, nφ::Int, nz::Int = size(grid)
-    @assert iseven(nz) "GridError: Field simulation algorithm in cylindrical coordinates need an even number of grid points in z. This is not the case. #z-ticks = $(nz)."
-    @assert (iseven(nφ) || (nφ == 1)) "GridError: Field simulation algorithm in cylindrical coordinates need an even number of grid points in φ or just one point (2D). This is not the case. #φ-ticks = $(nφ)."
+    @assert iseven(nz) "GridError: Field simulation algorithm in cylindrical coordinates needs an even number of grid points in z. This is not the case. #z-ticks = $(nz)."
+    @assert (iseven(nφ) || (nφ == 1)) "GridError: Field simulation algorithm in cylindrical coordinates needs an even number of grid points in φ or just one point (2D). This is not the case. #φ-ticks = $(nφ)."
     return nothing
 end
 
 function check_grid(grid::CartesianGrid3D{T})::Nothing where {T}
     nx::Int, ny::Int, nz::Int = size(grid)
-    @assert iseven(nx) "GridError: Field simulation algorithm in cartesian coordinates need an even number of grid points in x. This is not the case. #x-ticks = $(nx)."
+    @assert iseven(nx) "GridError: Field simulation algorithm in cartesian coordinates needs an even number of grid points in x. This is not the case. #x-ticks = $(nx)."
     return nothing
 end
 
@@ -122,7 +122,7 @@ function eltype(grid::Grid{T, N, S})::DataType where {T, N, S}
 end
 
 function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
-   return get_boundary_types.(grid.axes) 
+   return get_boundary_types.(grid.axes)
 end
 
 
@@ -176,4 +176,3 @@ function NamedTuple(grid::Grid{T, 3, :cartesian}) where {T}
 end
 
 Base.convert(T::Type{NamedTuple}, x::Grid) = T(x)
-

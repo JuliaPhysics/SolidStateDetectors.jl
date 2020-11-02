@@ -10,7 +10,10 @@ include("ChargeDensity.jl")
 include("DielectricDistribution.jl")
 include("ElectricPotential.jl")
 include("WeightingPotential.jl")
+include("ScalarPotential.jl")
 
 include("SimulationAlgorithms/Cylindrical.jl")
 include("SimulationAlgorithms/Cartesian3D.jl")
 include("ConvergenceAndRefinement.jl")
+
+include("plot_recipes.jl")
