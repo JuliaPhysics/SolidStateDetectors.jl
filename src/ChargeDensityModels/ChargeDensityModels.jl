@@ -28,6 +28,7 @@ end
 
 function LinearChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T)::LinearChargeDensityModel{T} where {T <: SSDFloat}
     offsets, gradients = zeros(T,3), zeros(T,3)
+    if haskey(dict, "r") @warn "r is not supported in linear charge density model.\nChange the charge density model to 'radial' in the config file or remove the entries." end
     if haskey(dict, "x")     offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["x"]["gradient"]))    end
     if haskey(dict, "y")     offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]));     gradients[2] = geom_round(gradient_unit_factor * T(dict["y"]["gradient"]))    end
     if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
@@ -69,6 +70,7 @@ end
 
 function RadialChargeDensityModel{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T)::RadialChargeDensityModel{T} where {T <: SSDFloat}
     offsets, gradients = zeros(T,3), zeros(T,3)
+    if haskey(dict, "x") || haskey(dict, "y") @warn "x and y are not supported in radial charge density model.\nChange the charge density model to 'linear' in the config file or remove the entries." end
     if haskey(dict, "r")     offsets[1] = geom_round(unit_factor * T(dict["r"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["r"]["gradient"]))    end
     if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
     RadialChargeDensityModel{T}( NTuple{3, T}(offsets), NTuple{3, T}(gradients) )
