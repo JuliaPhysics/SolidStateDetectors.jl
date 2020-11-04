@@ -73,7 +73,7 @@ end
         pts_bottom_inner = []
 
         #find all vertices, this loop has been tested and works
-        for φ in [0,deg2rad(60), deg2rad(120), deg2rad(180), deg2rad(240), deg2rad(300)]
+        for φ in [deg2rad(30),deg2rad(90), deg2rad(150), deg2rad(210), deg2rad(270), deg2rad(330)]
             pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
             push!(pts_top_outer, pt_top_outer)
             pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
@@ -131,10 +131,9 @@ function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where T
     samples = CartesianPoint{T}[]
     for x in -hp.rOuter : stepsize[1] : hp.rOuter
         for y in -hp.rOuter : stepsize[2]: hp.rOuter
-            for z in -hp.h/2 : stepsize[3] : hp.h/2
-                p = CartesianPoint{T}(x, y, z)
-                if in(samples, p)
-                    push!(samples, p)
+            if CartesianPoint{T}(x, y, 0) in hp
+                for z in -hp.h/2 : stepsize[3] : hp.h/2
+                    push!(samples, CartesianPoint{T}(x, y, z))
                 end
             end
         end
