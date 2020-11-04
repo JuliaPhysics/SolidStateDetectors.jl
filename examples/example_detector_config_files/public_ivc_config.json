@@ -41,10 +41,6 @@
                     "init": 0,
                     "gradient": 0
                 },
-                "phi": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                },
                 "z": {
                     "init": -1e7,
                     "gradient": -1e5
