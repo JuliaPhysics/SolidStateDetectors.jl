@@ -34,12 +34,8 @@
             "bulk_type": "p",
             "temperature": 77.0,
             "charge_density_model": {
-                "name": "linear",
+                "name": "radial",
                 "r": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                },
-                "phi": {
                     "init": 0.0,
                     "gradient": 0.0
                 },
