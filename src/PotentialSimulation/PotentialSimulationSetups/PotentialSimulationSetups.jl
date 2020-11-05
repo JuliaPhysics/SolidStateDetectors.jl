@@ -65,7 +65,7 @@ end
 
 function PotentialSimulationSetup(ssd::SolidStateDetector{T, S}, grid::Grid{T, N, S} = Grid(ssd), potential_array::Union{Missing, Array{T, N}} = missing)::PotentialSimulationSetup{T, N, S} where {T, N, S}   
     fssrb::PotentialSimulationSetupRB{T, N, N + 1, S} = PotentialSimulationSetupRB(ssd, grid, potential_array)
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), ChargeDensityArray(fssrb), FixedChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
+    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), EffectiveChargeDensityArray(fssrb), FixedEffectiveChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
 end
 
 include("BoundaryConditions/BoundaryConditions.jl")

@@ -1,4 +1,4 @@
-const ScalarPotential{T, N, S} = Union{ElectricPotential{T, N, S}, WeightingPotential{T, N, S}, PointTypes{T, N, S}, ChargeDensity{T, N, S}}
+const ScalarPotential{T, N, S} = Union{ElectricPotential{T, N, S}, WeightingPotential{T, N, S}, PointTypes{T, N, S}, EffectiveChargeDensity{T, N, S}}
 
 function get_2π_potential(wp::ScalarPotential{T, 3, :cylindrical}, axφ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T}) where {T}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"

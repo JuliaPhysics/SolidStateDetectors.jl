@@ -48,7 +48,7 @@
     end
     @series begin
         subplot := 2
-        ChargeDensity(pss)
+        EffectiveChargeDensity(pss)
     end
     @series begin
         subplot := 3
@@ -97,7 +97,7 @@ end
     end
     @series begin
         subplot := 2
-        ChargeDensity(pss)
+        EffectiveChargeDensity(pss)
     end
     @series begin
         subplot := 3

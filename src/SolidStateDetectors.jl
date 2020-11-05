@@ -41,7 +41,7 @@ export SSD_examples
 
 export Grid, CylindricalPoint, CartesianPoint
 
-export ElectricPotential, PointTypes, ChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
+export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!
 export update_till_convergence!, refine!
