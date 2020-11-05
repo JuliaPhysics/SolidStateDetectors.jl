@@ -39,7 +39,7 @@
             "bulk_type": "n",
             "temperature": 77.0,
             "charge_density_model": {
-                "name": "radial",
+                "name": "cylindrical",
                 "r": {
                     "init": 0,
                     "gradient": 0.000
