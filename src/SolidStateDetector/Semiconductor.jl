@@ -6,7 +6,7 @@ mutable struct Semiconductor{T} <: AbstractSemiconductor{T}
     temperature::T
     material::NamedTuple
     bulk_type::Symbol
-    charge_density_model::AbstractChargeDensityModel{T}
+    charge_density_model::AbstractChargeDensity{T}
     geometry::AbstractGeometry{T}
     geometry_positive::Vector{AbstractGeometry{T}}
     geometry_negative::Vector{AbstractGeometry{T}}
@@ -17,9 +17,9 @@ end
 function Semiconductor{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
     sc = Semiconductor{T}()
     sc.charge_density_model = if haskey(dict, "charge_density_model") 
-        ChargeDensityModel(T, dict["charge_density_model"], inputunit_dict)
+        ChargeDensity(T, dict["charge_density_model"], inputunit_dict)
     else
-        ZeroChargeDensityModel{T}()
+        ZeroChargeDensity{T}()
     end
     sc.material = material_properties[materials[dict["material"]]]
     sc.bulk_type = bulk_types[dict["bulk_type"]]
