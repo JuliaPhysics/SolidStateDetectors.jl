@@ -100,12 +100,7 @@ end
 @recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T) where {T}
 
     g::Grid{T, 3, :cylindrical} = sp.grid
-    
-    if minimum(sp.data) == maximum(sp.data)
-        #@info "Set colorbar to display heatmap with non uniform axes"
-        clims --> (sp.data[1], sp.data[1]+1)
-    end
-    
+        
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -118,14 +113,17 @@ end
             ylims --> (g.z[1],g.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(g.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
+            if minimum(sp.data[idx,:,:]) == maximum(sp.data[idx,:,:]) clims --> (sp.data[idx,1,1], sp.data[idx,1,1]+1) end #remove with Plots v1.7.4
             midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
         elseif cross_section == :r
             xguide --> "φ / °"
             yguide --> "z / m"
             ylims --> (g.z[1],g.z[end])
+            if minimum(sp.data[:,idx,:]) == maximum(sp.data[:,idx,:]) clims --> (sp.data[1,idx,1], sp.data[1,idx,1]+1) end #remove with Plots v1.7.4
             g.φ, g.z, sp.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
+            if minimum(sp.data[:,:,idx]) == maximum(sp.data[:,:,idx]) clims --> (sp.data[1,1,idx], sp.data[1,1,idx]+1) end #remove with Plots v1.7.4
             g.φ, g.r, sp.data[:,:,idx]
         end
     end
@@ -239,12 +237,6 @@ end
 @recipe function f(sp::ScalarPotential{T,3,:cartesian}, cross_section::Symbol, idx::Int, value::T) where {T}
 
     g::Grid{T, 3, :cartesian} = sp.grid
-    
-    if minimum(sp.data) == maximum(sp.data)
-        #@info "Set colorbar to display heatmap with non uniform axes"
-        clims --> (sp.data[1], sp.data[1]+1)
-    end
-        
 
     @series begin
         seriestype := :heatmap
@@ -258,6 +250,7 @@ end
             ylims --> (g.z[1],g.z[end])
             gy_ext = midpoints(get_extended_ticks(g.y))
             gz_ext = midpoints(get_extended_ticks(g.z))
+            if minimum(sp.data[idx,:,:]) == maximum(sp.data[idx,:,:]) clims --> (sp.data[idx,1,1], sp.data[idx,1,1]+1) end #remove with Plots v1.7.4
             midpoints(gy_ext), midpoints(gz_ext), sp.data[idx,:,:]'
         elseif cross_section == :y
             aspect_ratio --> 1
@@ -267,6 +260,7 @@ end
             ylims --> (g.z[1],g.z[end])
             gx_ext = midpoints(get_extended_ticks(g.x))
             gz_ext = midpoints(get_extended_ticks(g.z))
+            if minimum(sp.data[:,idx,:]) == maximum(sp.data[:,idx,:]) clims --> (sp.data[1,idx,1], sp.data[1,idx,1]+1) end #remove with Plots v1.7.4
             midpoints(gx_ext), midpoints(gz_ext), sp.data[:,idx,:]'
         elseif cross_section == :z
             aspect_ratio --> 1
@@ -276,6 +270,7 @@ end
             ylims --> (g.y[1],g.y[end])
             gx_ext = midpoints(get_extended_ticks(g.x))
             gy_ext = midpoints(get_extended_ticks(g.y))
+            if minimum(sp.data[:,:,idx]) == maximum(sp.data[:,:,idx]) clims --> (sp.data[1,1,idx], sp.data[1,1,idx]+1) end #remove with Plots v1.7.4
             midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
         end
     end
