@@ -417,13 +417,6 @@ function json_to_dict(inputfile::String)::Dict
     end
     return parsed_json_file
 end
-function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
-    (
-    r_range = ClosedInterval{T}(0.0,d.crystal_radius),
-    φ_range = ClosedInterval{T}(0.0,2π),
-    z_range = ClosedInterval{T}(0.0,d.crystal_length)
-    )
-end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
