@@ -52,19 +52,19 @@ function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where 
     end
     for φ in ((c.φStop - c.φStart ≈ 2π) ? [c.φStart] : [c.φStart, c.φStop])
         push!(ls, LineSegment(
-            CartesianPoint{T}(c.rStart1 * sin(φ), c.rStart1 * cos(φ), c.zStart) + translate,
-            CartesianPoint{T}(c.rStart2 * sin(φ), c.rStart2 * cos(φ), c.zStop) + translate))
+            CartesianPoint{T}(c.rStart1 * cos(φ), c.rStart1 * sin(φ), c.zStart) + translate,
+            CartesianPoint{T}(c.rStart2 * cos(φ), c.rStart2 * sin(φ), c.zStop) + translate))
         push!(ls, LineSegment(
-            CartesianPoint{T}(c.rStop1 * sin(φ), c.rStop1 * cos(φ), c.zStart) + translate,
-            CartesianPoint{T}(c.rStop2 * sin(φ), c.rStop2 * cos(φ), c.zStop) + translate))
+            CartesianPoint{T}(c.rStop1 * cos(φ), c.rStop1 * sin(φ), c.zStart) + translate,
+            CartesianPoint{T}(c.rStop2 * cos(φ), c.rStop2 * sin(φ), c.zStop) + translate))
     end
     for φ in ((c.φStop - c.φStart ≈ 2π) ? [c.φStart] : [c.φStart, c.φStop])
         push!(ls, LineSegment(
-            CartesianPoint{T}(c.rStart1 * sin(φ),  c.rStart1 * cos(φ),  c.zStart) + translate,
-            CartesianPoint{T}(c.rStop1 * sin(φ),   c.rStop1 * cos(φ), c.zStart) + translate))
+            CartesianPoint{T}(c.rStart1 * cos(φ),  c.rStart1 * sin(φ),  c.zStart) + translate,
+            CartesianPoint{T}(c.rStop1 * cos(φ),   c.rStop1 * sin(φ), c.zStart) + translate))
         push!(ls, LineSegment(
-            CartesianPoint{T}(c.rStart2 * sin(φ),  c.rStart2 * cos(φ),  c.zStop) + translate,
-            CartesianPoint{T}(c.rStop2 * sin(φ),   c.rStop2 * cos(φ), c.zStop) + translate))
+            CartesianPoint{T}(c.rStart2 * cos(φ),  c.rStart2 * sin(φ),  c.zStop) + translate,
+            CartesianPoint{T}(c.rStop2 * cos(φ),   c.rStop2 * sin(φ), c.zStop) + translate))
     end
     return ls
 end
