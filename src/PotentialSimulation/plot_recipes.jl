@@ -33,7 +33,7 @@ end
 
 
 
-@recipe function f(ep::ElectricPotential{T,3,:cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(ep::ElectricPotential{T,3,:cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
     if !(ep.grid[2][end] - ep.grid[2][1] ≈ 2π) ep = get_2π_potential(ep, n_points_in_φ = 72) end
 
@@ -43,7 +43,7 @@ end
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    ep, cross_section, idx, value
+    ep, cross_section, idx, value, contours_equal_potential
 end
 
 
@@ -97,7 +97,7 @@ end
 end
 
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T) where {T}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
 
     g::Grid{T, 3, :cylindrical} = sp.grid
         
@@ -125,6 +125,31 @@ end
             projection --> :polar
             if minimum(sp.data[:,:,idx]) == maximum(sp.data[:,:,idx]) clims --> (sp.data[1,1,idx], sp.data[1,1,idx]+1) end #remove with Plots v1.7.4
             g.φ, g.r, sp.data[:,:,idx]
+        end
+    end
+    
+    if contours_equal_potential && cross_section == :φ
+        @series begin
+            seriescolor := :thermal
+            seriestype := :contours
+            #if cross_section == :φ
+                aspect_ratio --> 1
+                xguide := "r / m"
+                yguide := "z / m"
+                xlims --> (g.r[1],g.r[end])
+                ylims --> (g.z[1],g.z[end])
+                g.r, g.z, sp.data[:,idx,:]'
+                #=
+            elseif cross_section == :r
+                xguide --> "φ / °"
+                yguide --> "z / m"
+                ylims --> (g.z[1],g.z[end])
+                g.φ, g.z, sp.data[idx,:,:]'
+            elseif cross_section == :z
+                projection --> :polar
+                g.φ, g.r, sp.data[:,:,idx]
+            end
+            =#
         end
     end
 end
@@ -185,7 +210,7 @@ function get_crosssection_idx_and_value(g::Grid{T, 3, :cartesian}, x, y, z)::Tup
     cross_section, idx, value
 end
 
-@recipe function f(ep::ElectricPotential{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(ep::ElectricPotential{T,3,:cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
     g::Grid{T, 3, :cartesian} = ep.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
@@ -193,7 +218,7 @@ end
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    ep, cross_section, idx, value
+    ep, cross_section, idx, value, contours_equal_potential
 end
 
 @recipe function f(wp::WeightingPotential{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
@@ -234,7 +259,7 @@ end
 end
 
 
-@recipe function f(sp::ScalarPotential{T,3,:cartesian}, cross_section::Symbol, idx::Int, value::T) where {T}
+@recipe function f(sp::ScalarPotential{T,3,:cartesian}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
 
     g::Grid{T, 3, :cartesian} = sp.grid
 
@@ -272,6 +297,39 @@ end
             gy_ext = midpoints(get_extended_ticks(g.y))
             if minimum(sp.data[:,:,idx]) == maximum(sp.data[:,:,idx]) clims --> (sp.data[1,1,idx], sp.data[1,1,idx]+1) end #remove with Plots v1.7.4
             midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
+        end
+    end
+    
+    if contours_equal_potential
+        @series begin
+            seriescolor := :thermal
+            seriestype := :contours
+            aspect_ratio --> 1
+            if cross_section == :x
+                xguide --> "y / m"
+                yguide --> "z / m"
+                xlims --> (g.y[1],g.y[end])
+                ylims --> (g.z[1],g.z[end])
+                gy_ext = midpoints(get_extended_ticks(g.y))
+                gz_ext = midpoints(get_extended_ticks(g.z))
+                midpoints(gy_ext), midpoints(gz_ext), sp.data[idx,:,:]'
+            elseif cross_section == :y
+                xguide --> "x / m"
+                yguide --> "z / m"
+                xlims --> (g.x[1],g.x[end])
+                ylims --> (g.z[1],g.z[end])
+                gx_ext = midpoints(get_extended_ticks(g.x))
+                gz_ext = midpoints(get_extended_ticks(g.z))
+                midpoints(gx_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+            elseif cross_section == :z
+                xguide --> "x / m"
+                yguide --> "y / m"
+                xlims --> (g.x[1],g.x[end])
+                ylims --> (g.y[1],g.y[end])
+                gx_ext = midpoints(get_extended_ticks(g.x))
+                gy_ext = midpoints(get_extended_ticks(g.y))
+                midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
+            end
         end
     end
 end
