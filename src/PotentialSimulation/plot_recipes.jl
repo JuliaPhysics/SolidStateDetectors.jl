@@ -113,13 +113,13 @@ end
             ylims --> (g.z[1],g.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(g.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
-            if minimum(sp.data[idx,:,:]) == maximum(sp.data[idx,:,:]) clims --> (sp.data[idx,1,1], sp.data[idx,1,1]+1) end #remove with Plots v1.7.4
+            if minimum(sp.data[:,idx,:]) == maximum(sp.data[:,idx,:]) clims --> (sp.data[1,idx,1], sp.data[1,idx,1]+1) end #remove with Plots v1.7.4
             midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
         elseif cross_section == :r
             xguide --> "φ / °"
             yguide --> "z / m"
             ylims --> (g.z[1],g.z[end])
-            if minimum(sp.data[:,idx,:]) == maximum(sp.data[:,idx,:]) clims --> (sp.data[1,idx,1], sp.data[1,idx,1]+1) end #remove with Plots v1.7.4
+            if minimum(sp.data[idx,:,:]) == maximum(sp.data[idx,:,:]) clims --> (sp.data[idx,1,1], sp.data[idx,1,1]+1) end #remove with Plots v1.7.4
             g.φ, g.z, sp.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
