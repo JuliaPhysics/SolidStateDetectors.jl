@@ -6,7 +6,7 @@ include("RedBlack/RedBlack.jl")
 include("GeometricalWeights/GeometricalWeights.jl")
 include("PotentialSimulationSetups/PotentialSimulationSetups.jl")
 
-include("ChargeDensity.jl")
+include("EffectiveChargeDensity.jl")
 include("DielectricDistribution.jl")
 include("ElectricPotential.jl")
 include("WeightingPotential.jl")

@@ -428,10 +428,8 @@ function siggentodict(config::Dict;
                     "bulk_type"   => "p",
                     "temperature" => config["xtal_temp"],
                     "charge_density_model" => Dict(
-                                "name"     => "linear",
+                                "name"     => "cylindrical",
                                 "r"        => Dict("init"     => 0.0,
-                                                   "gradient" => 0.0),
-                                "phi"      => Dict("init"     => 0.0,
                                                    "gradient" => 0.0),
                                 "z"        => Dict("init"     => impurity_z0,
                                                    "gradient" => impurity_gradient)

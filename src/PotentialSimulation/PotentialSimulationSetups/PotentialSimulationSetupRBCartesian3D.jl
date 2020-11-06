@@ -276,7 +276,7 @@ end
 
 
 
-function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T} where {T}
+function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
@@ -297,7 +297,7 @@ function ChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesia
     end
     return ρ
 end
-function FixedChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T} where {T}
+function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1

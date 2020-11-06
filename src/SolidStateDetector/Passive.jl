@@ -6,7 +6,7 @@ mutable struct Passive{T} <: AbstractPassive{T}
     potential::Union{Symbol,T}
     temperature::Union{T,Missing}
     material::NamedTuple
-    charge_density_model::AbstractChargeDensityModel{T}
+    charge_density_model::AbstractChargeDensity{T}
     geometry::AbstractGeometry{T}
     geometry_positive::Vector{AbstractGeometry{T}}
     geometry_negative::Vector{AbstractGeometry{T}}
@@ -22,9 +22,9 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     haskey(dict, "temperature") ? pass.temperature = T(dict["temperature"]) : pass.temperature = missing
     pass.material = material_properties[materials[dict["material"]]]
     pass.charge_density_model = if haskey(dict, "charge_density_model") 
-        ChargeDensityModel(T, dict["charge_density_model"], inputunit_dict)
+        ChargeDensity(T, dict["charge_density_model"], inputunit_dict)
     else
-        ZeroChargeDensityModel{T}()
+        ZeroChargeDensity{T}()
     end
     pass.geometry = Geometry(T, dict["geometry"], inputunit_dict)
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)

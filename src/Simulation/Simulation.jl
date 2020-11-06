@@ -7,8 +7,8 @@ Collection of all parts of a Simulation of a Solid State Detector.
 """
 mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     detector::Union{SolidStateDetector{T}, Missing}
-    ρ::Union{ChargeDensity{T}, Missing}
-    ρ_fix::Union{ChargeDensity{T}, Missing}
+    ρ::Union{EffectiveChargeDensity{T}, Missing}
+    ρ_fix::Union{EffectiveChargeDensity{T}, Missing}
     ϵ::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
     electric_potential::Union{ElectricPotential{T}, Missing}
@@ -73,8 +73,8 @@ function Simulation(nt::NamedTuple)
     det = SolidStateDetector{T}( Dict(nt.detector_json_string) )
     sim = Simulation( det )
     if !ismissing(nt.electric_potential) sim.electric_potential = ep end
-    if !ismissing(nt.ρ) sim.ρ = ChargeDensity(nt.ρ) end
-    if !ismissing(nt.ρ_fix) sim.ρ_fix = ChargeDensity(nt.ρ_fix) end
+    if !ismissing(nt.ρ) sim.ρ = EffectiveChargeDensity(nt.ρ) end
+    if !ismissing(nt.ρ_fix) sim.ρ_fix = EffectiveChargeDensity(nt.ρ_fix) end
     if !ismissing(nt.ϵ) sim.ϵ = DielectricDistribution(nt.ϵ) end
     if !ismissing(nt.point_types) sim.point_types = PointTypes(nt.point_types) end
     if !ismissing(nt.electric_field) sim.electric_field = ElectricField(nt.electric_field) end
@@ -152,8 +152,8 @@ function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, gri
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} =
         PotentialSimulationSetupRB(sim.detector, grid);
 
-    sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), grid)
-    sim.ρ_fix = ChargeDensity(FixedChargeDensityArray(fssrb), grid)
+    sim.ρ = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
+    sim.ρ_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
     sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
@@ -211,8 +211,8 @@ function update_till_convergence!( sim::Simulation{T},
                                        max_n_iterations = max_n_iterations )
 
     grid::Grid = Grid(fssrb)
-    sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), grid)
-    sim.ρ_fix = ChargeDensity(FixedChargeDensityArray(fssrb), grid)
+    sim.ρ = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
+    sim.ρ_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
     sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
@@ -330,8 +330,8 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
         fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
             PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data)
 
-        sim.ρ = ChargeDensity(ChargeDensityArray(fssrb), sim.electric_potential.grid)
-        sim.ρ_fix = ChargeDensity(FixedChargeDensityArray(fssrb), sim.electric_potential.grid)
+        sim.ρ = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
+        sim.ρ_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
         sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), sim.electric_potential.grid)
         sim.point_types = PointTypes(PointTypeArray(fssrb), sim.electric_potential.grid)
     end

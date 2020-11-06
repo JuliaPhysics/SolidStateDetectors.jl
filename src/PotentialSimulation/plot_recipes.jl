@@ -64,7 +64,7 @@ end
 end
 
 
-@recipe function f(ρ::ChargeDensity{T,3,:cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(ρ::EffectiveChargeDensity{T,3,:cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
 
     if !(ρ.grid[2][end] - ρ.grid[2][1] ≈ 2π)
         ρ = get_2π_potential(ρ, n_points_in_φ = 72)
@@ -96,11 +96,8 @@ end
     pt, cross_section, idx, value
 end
 
-
 @recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
-
     g::Grid{T, 3, :cylindrical} = sp.grid
-        
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -211,7 +208,6 @@ function get_crosssection_idx_and_value(g::Grid{T, 3, :cartesian}, x, y, z)::Tup
 end
 
 @recipe function f(ep::ElectricPotential{T,3,:cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
-
     g::Grid{T, 3, :cartesian} = ep.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
 
@@ -234,8 +230,7 @@ end
 end
 
 
-@recipe function f(ρ::ChargeDensity{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
-
+@recipe function f(ρ::EffectiveChargeDensity{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
     g::Grid{T, 3, :cartesian} = ρ.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
 
@@ -260,9 +255,7 @@ end
 
 
 @recipe function f(sp::ScalarPotential{T,3,:cartesian}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
-
     g::Grid{T, 3, :cartesian} = sp.grid
-
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
