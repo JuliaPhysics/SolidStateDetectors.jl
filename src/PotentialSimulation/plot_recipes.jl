@@ -96,7 +96,7 @@ end
     pt, cross_section, idx, value
 end
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool=false) where {T <: SSDFloat}
     g::Grid{T, 3, :cylindrical} = sp.grid
     @series begin
         seriestype := :heatmap
@@ -111,7 +111,14 @@ end
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(g.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
             if minimum(sp.data[:,idx,:]) == maximum(sp.data[:,idx,:]) clims --> (sp.data[1,idx,1], sp.data[1,idx,1]+1) end #remove with Plots v1.7.4
-            midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+            if full_det == true
+                cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
+                extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
+                xlims := (-1*g.r[end],g.r[end])
+                vcat(-1 .* g.r[end:-1:2], g.r), g.z, extended_data
+             else
+                midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+            end
         elseif cross_section == :r
             xguide --> "φ / °"
             yguide --> "z / m"
@@ -124,7 +131,7 @@ end
             g.φ, g.r, sp.data[:,:,idx]
         end
     end
-    
+
     if contours_equal_potential && cross_section == :φ
         @series begin
             seriescolor := :thermal
@@ -135,7 +142,15 @@ end
                 yguide := "z / m"
                 xlims --> (g.r[1],g.r[end])
                 ylims --> (g.z[1],g.z[end])
-                g.r, g.z, sp.data[:,idx,:]'
+                if full_det == true
+                    cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
+                    extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
+                    xlims := (-1*g.r[end],g.r[end])
+                    vcat(-1 .* g.r[end:-1:2], g.r), g.z, extended_data
+                 else
+                    # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+                    g.r, g.z, sp.data[:,idx,:]'
+                end
                 #=
             elseif cross_section == :r
                 xguide --> "φ / °"
@@ -292,7 +307,7 @@ end
             midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
         end
     end
-    
+
     if contours_equal_potential
         @series begin
             seriescolor := :thermal
