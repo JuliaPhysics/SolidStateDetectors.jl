@@ -21,107 +21,18 @@ end
                     full_det = false ) where {T}
 
     g::Grid{T, 3, :cylindrical} = ef.grid
+    ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    # st --> :heatmap
     aspect_ratio --> 1
-    foreground_color_border --> nothing
-    tick_direction --> :out
-    ef_magn  = norm.(ef)
-    # ef_magn = get_magnitude_of_rφz_vector.(ef) .* scaling
+    # foreground_color_border --> nothing
+    # tick_direction --> :out
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
-
-    title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-    if cross_section == :φ
-        title --> "Electric Potential @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
-        # xlabel --> "r / m"
-        # ylabel --> "z / m"
-        if full_det == true
-            # size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
-            cross_section_dummy::Symbol, idx_mirror::Int, dummy_value::T = get_crosssection_idx_and_value(g, r, φ+180, z)
-            ef_magn = vcat(-1 .* g.r[end:-1:2], g.r),  g.z, cat(ef_magn[end:-1:2, idx_mirror, :]', ef_magn[:, idx, :]', dims = 2)
-        end
-    end
-    # @series begin
-    #     ef_magn, cross_section, idx, value
-    # end
+    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
     @series begin
-        ElectricPotential(ef_magn,g), cross_section, idx, value
-    end
-    if contours_equal_potential
-        @series begin
-            seriescolor := :thermal
-            st := :contours
-            g.r, g.z, ef_magn[:, idx,:]'
-        end
+        ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential, full_det
     end
 end
-# end
-#     cross_section::Symbol, idx::Int, idx_mirror::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
-#         :φ, 1, 1+round(Int, length(g.φ)/2, RoundDown)
-#     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
-#         φ_rad::T = T(deg2rad(φ))
-#         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left
-#             if φ_rad > g.φ.interval.right
-#                 φ_rad -= g.φ.interval.right - g.φ.interval.left
-#             elseif φ_rad < g.φ.interval.left
-#                 φ_rad += g.φ.interval.right - g.φ.interval.left
-#             end
-#         end
-#         :φ, searchsortednearest(g.φ, φ_rad), searchsortednearest(g.φ, T((φ_rad+π)%(2π)))
-#     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-#         :r, searchsortednearest(g.r, T(r)), searchsortednearest(g.r, T(r))
-#     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-#         :z, searchsortednearest(g.z, T(z)), searchsortednearest(g.z, T(z))
-#     else
-#         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
-#     end
-#     value::T = if cross_section == :φ
-#         g.φ[idx]
-#     elseif cross_section == :r
-#         g.r[idx]
-#     elseif cross_section == :z
-#         g.z[idx]
-#     end
-#
-#     @series begin
-#         if cross_section == :φ
-#             title --> "Electric Potential @$(cross_section) = $(round(rad2deg(value), sigdigits = 2))"
-#             xlabel --> "r / m"
-#             ylabel --> "z / m"
-#             if full_det == true
-#                 size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
-#                 vcat(-1 .* g.r[end:-1:2], g.r),  g.z, cat(ef_magn[end:-1:2, idx_mirror, :]', ef_magn[:, idx, :]', dims = 2)
-#             else
-#                 size --> ( 400, 350 / (g.r[end] - g.r[1]) * (g.z[end] - g.z[1]) )
-#                 g.r, g.z, ef_magn[:, idx,:]'
-#             end
-#         elseif cross_section == :r
-#             title --> "Electric Potential @$(cross_section) = $(round(value, sigdigits = 2))"
-#             g.φ, g.z, ef_magn[idx,:,:]'
-#         elseif cross_section == :z
-#             title --> "Electric Potential @$(cross_section) = $(round(value, sigdigits = 2))"
-#             proj --> :polar
-#             g.φ, g.r, ef_magn[:,:,idx]
-#         end
-#     end
-#     if contours_equal_potential
-#         @series begin
-#             seriescolor := :thermal
-#             st := :contours
-#             if cross_section == :φ
-#                 g.r, g.z, ef_magn[:, idx,:]'
-#             elseif cross_section == :r
-#                 g.φ, g.z, ef_magn[idx,:,:]'
-#             elseif cross_section == :z
-#                 proj --> :polar
-#                 g.φ, g.r, ef_magn[:,:,idx]
-#             end
-#         end
-#     end
-# end
-
-
 
 @userplot Plot_electric_field_
 @recipe function f(gdd::Plot_electric_field_; φ = missing, r = missing, x = missing, y = missing, z = missing,
@@ -156,8 +67,8 @@ end
     S::Symbol = get_coordinate_system(sim.detector)
     aspect_ratio --> 1
     title --> (field_lines ? "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))" : "Electric Field @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))")
-    xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-    ylabel --> L"$z$ / m"
+    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
+    yguide --> L"$z$ / m"
         @series begin
             # contours_equal_potential --> contours_equal_potential
             if dim_symbol == :φ
@@ -216,29 +127,28 @@ end
     S::Symbol = get_coordinate_system(sim.detector)
     aspect_ratio --> 1
     title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))"
-    xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-    ylabel --> L"$z$ / m"
+    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
+    yguide --> L"$z$ / m"
 
     PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
-
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = CartesianPoint{T}[]
     spawn_positions_mirror = CartesianPoint{T}[]
     grid = sim.electric_field.grid
-    pt_offset = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, φ, offset)))
-    pt_offset_mirror = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, φ+π, offset)))
+    pt_offset = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ), offset)))
+    pt_offset_mirror = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ)+π, offset)))
     sampling_vector = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
-    sampling_vector[2] = 2π
+    sampling_vector[2] = 3π
     for c in contacts_to_spawn_charges_for[:]#[4:4]
         for positive_geometry in c.geometry_positive[:]#[6:6]
             sampled_point_cyl = CylindricalPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector))
-            sampled_point_cyl =  map(x->geom_round(CylindricalPoint{T}(x[1], φ, x[3])), sampled_point_cyl)
+            sampled_point_cyl =  map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ), x[3])), sampled_point_cyl)
             if sampled_point_cyl[1] in positive_geometry
                 push!(spawn_positions, broadcast(+, CartesianPoint.(sampled_point_cyl), pt_offset )...)
                 push!(spawn_positions, broadcast(-, CartesianPoint.(sampled_point_cyl), pt_offset )...)
             end
             if full_det == true
-                sampled_point_cyl_mirror = map(x->geom_round(CylindricalPoint{T}(x[1], φ+π, x[3])), sampled_point_cyl)
+                sampled_point_cyl_mirror = map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ)+π, x[3])), sampled_point_cyl)
                 if sampled_point_cyl_mirror[1] in positive_geometry
                     push!(spawn_positions_mirror, broadcast(+, CartesianPoint.(sampled_point_cyl_mirror), pt_offset_mirror )...)
                     push!(spawn_positions_mirror, broadcast(-, CartesianPoint.(sampled_point_cyl_mirror), pt_offset_mirror )...)
@@ -263,7 +173,7 @@ end
             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
-                c --> :white
+                seriescolor --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
                 label --> ""
                 x, y = if dim_symbol == :φ
@@ -286,7 +196,7 @@ end
             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
-                c --> :white
+                seriescolor --> :white
                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
                 label --> ""
                 x, y = if dim_symbol == :φ
