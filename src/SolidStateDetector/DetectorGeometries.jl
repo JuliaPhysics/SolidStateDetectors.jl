@@ -39,7 +39,7 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     else
         error("currently only .json, .yaml and .config (SigGen) files are supported.")
     end
-    parsed_dict
+    scan_and_merge_included_json_files!(parsed_dict)
 end
 
 function yaml2json_convert(filename::String)
@@ -58,6 +58,39 @@ function yaml2json(directory::String)# or filename
         end
     end
 end
+
+function scan_and_merge_included_json_files!(parsed_dict)
+    key_word = "include"
+    for k in keys(parsed_dict)
+        is_subdict = hasfield(typeof(parsed_dict[k]), :keys)
+        if !is_subdict && string(k) != key_word
+            typeof(parsed_dict[k]) == Array{Any,1} ? is_subdict = true : is_subdict = false
+        end
+        if is_subdict
+            scan_dict!(parsed_dict[k])
+        elseif string(k) == key_word
+            files = []
+            if typeof(parsed_dict[k]) == String
+                push!(files, parsed_dict[k])
+            else
+                append!(files, parsed_dict[k])
+            end
+            for file in files
+                if isfile(file)
+                    tmp = JSON.parsefile(file)
+                    scan_dict!(tmp)
+                    for sub_k in keys(tmp)
+                        parsed_dict[sub_k] = tmp[sub_k]
+                    end
+                else
+                    @info("Wrong file path? " * parsed_dict[k])
+                end
+            end
+            delete!(parsed_dict, k)
+        end
+    end
+end
+
 function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
     parsed_dict = parse_config_file(filename)
     return SolidStateDetector{T}(parsed_dict)
