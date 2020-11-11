@@ -39,7 +39,8 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     else
         error("currently only .json, .yaml and .config (SigGen) files are supported.")
     end
-    scan_and_merge_included_json_files!(parsed_dict)
+    # scan_and_merge_included_json_files!(parsed_dict)
+    parsed_dict
 end
 
 function yaml2json_convert(filename::String)
