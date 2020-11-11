@@ -31,6 +31,7 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     elseif endswith(filename, ".json")
         dicttext = read(filename, String)
         parsed_dict = JSON.parse(dicttext)
+        scan_and_merge_included_json_files!(parsed_dict)
     elseif endswith(filename, ".yaml")
         parsed_dict = YAML.load_file(filename)
     elseif endswith(filename, ".config")
@@ -39,7 +40,6 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     else
         error("Currently only .json and .yaml files are supported.")
     end
-    scan_and_merge_included_json_files!(parsed_dict)
     parsed_dict
 end
 
