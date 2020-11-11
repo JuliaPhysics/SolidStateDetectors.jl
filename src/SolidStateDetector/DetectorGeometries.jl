@@ -66,7 +66,7 @@ function scan_and_merge_included_json_files!(parsed_dict)
             typeof(parsed_dict[k]) == Array{Any,1} ? is_subdict = true : is_subdict = false
         end
         if is_subdict
-            scan_dict!(parsed_dict[k])
+            scan_and_merge_included_json_files!(parsed_dict[k])
         elseif string(k) == key_word
             files = []
             if typeof(parsed_dict[k]) == String
@@ -77,7 +77,7 @@ function scan_and_merge_included_json_files!(parsed_dict)
             for file in files
                 if isfile(file)
                     tmp = JSON.parsefile(file)
-                    scan_dict!(tmp)
+                    scan_and_merge_included_json_files!(tmp)
                     for sub_k in keys(tmp)
                         parsed_dict[sub_k] = tmp[sub_k]
                     end
