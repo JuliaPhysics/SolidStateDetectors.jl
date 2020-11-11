@@ -58,7 +58,6 @@ function yaml2json(directory::String)# or filename
         end
     end
 end
-
 function scan_and_merge_included_json_files!(parsed_dict)
     key_word = "include"
     for k in keys(parsed_dict)
