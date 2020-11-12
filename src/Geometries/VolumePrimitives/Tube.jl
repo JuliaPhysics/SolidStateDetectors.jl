@@ -13,9 +13,7 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
         translate = CartesianVector{T}( haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : T(0),
                                         haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : T(0),
                                         haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : T(0))
-        if translate[1] == T(0.0) && translate[2] == T(0.0) && translate[3] == T(0.0)
-            translate = missing
-        elseif translate[1] == T(0.0) && translate[2] == T(0.0)
+        if translate[1] == T(0.0) && translate[2] == T(0.0)
             translate = missing
             z_offset = geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] )))
         end
@@ -31,7 +29,7 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
         @warn "please specify a height of the Tube 'h'"
     end
     
-    phi_interval =  if haskey(dict, "phi") 
+    φ_interval =  if haskey(dict, "phi") 
         Interval(geom_round(T(deg2rad(dict["phi"]["from"]))), geom_round(T(deg2rad(dict["phi"]["to"]))))
     else
         Interval(geom_round(T(deg2rad(0))), geom_round(T(deg2rad(360))))
@@ -45,7 +43,7 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
 
     return Tube{T}(
         r_interval,
-        phi_interval,
+        φ_interval,
         Interval(zStart, zStop),
         translate  
     )
@@ -55,21 +53,15 @@ function Geometry(T::DataType, t::Val{:tube}, dict::Dict{Union{Any,String}, Any}
     return Tube{T}(Dict{Any,Any}(dict), inputunit_dict)
 end
 
-function in(point::CartesianPoint{T}, tube::Tube{T}) where T
+function in(point::CartesianPoint{T}, tube::Tube{T}) where {T <: SSDFloat}
     ismissing(tube.translate) ? nothing : point -= tube.translate
-    point = convert(CylindricalPoint,point)
-    if point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
-        return true
-    end
-    return false
+    point = CylindricalPoint(point)
+    return point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
 end
 
-function in(point::CylindricalPoint{T}, tube::Tube{T}) where T
-    ismissing(tube.translate) ? nothing  : point = CylindricalPoint(CartesianPoint(point)-tube.translate)
-    if point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
-        return true
-    end
-    return false
+function in(point::CylindricalPoint{T}, tube::Tube{T}) where {T <: SSDFloat}
+    ismissing(tube.translate) ? nothing : point = CylindricalPoint(CartesianPoint(point) - tube.translate)
+    return point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
 end
 
 
@@ -93,7 +85,7 @@ function get_important_points(t::Tube{T}, ::Val{:y})::Vector{T} where {T <: SSDF
     return geom_round.(T[-t.r_interval.right, -t.r_interval.left, t.r_interval.left, t.r_interval.right])
 end
 
-function sample(c::Tube{T}, stepsize::Vector{T}) where T
+function sample(c::Tube{T}, stepsize::Vector{T}) where {T <: SSDFloat}
     samples = CylindricalPoint[]
     for r in c.r_interval.left:stepsize[1]: c.r_interval.right
         for φ in c.φ_interval.left:stepsize[2]: c.φ_interval.right
