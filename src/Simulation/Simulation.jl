@@ -60,7 +60,7 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         electron_drift_field = NamedTuple(sim.electron_drift_field),
         hole_drift_field = NamedTuple(sim.hole_drift_field)
     )
-    if length(wps_strings) > 0 
+    if length(wps_strings) > 0
         nt = merge(nt, (weighting_potentials = NamedTuple{Tuple(wps_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))),))
     end
     return nt
@@ -398,7 +398,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
         if CS == :cylindrical
             cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
-            n_φ_sym::Int = only_2d ? 1 : Int(round(T(2π) / cyclic, digits = 3))
+            n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3))
             n_φ_sym_info_txt = if only_2d
                 "φ symmetry: Detector is φ-symmetric -> 2D computation."
             else
@@ -703,12 +703,12 @@ end
 
 
 
-calculate_stored_energy(sim::Simulation) = 
+calculate_stored_energy(sim::Simulation) =
     calculate_stored_energy(sim.electric_field, sim.ϵ)
 
 function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistribution{T,3,S}) where {T <: SSDFloat, S}
     W::T = 0
-    
+
     cylindric::Bool = S == :cylindrical
     cartesian::Bool = !cylindric
     r0_handling::Bool = typeof(ef.grid.axes[1]).parameters[2] == :r0
@@ -725,7 +725,7 @@ function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistrib
     Δmp1::Vector{T} = diff(mp1)
     Δmp2::Vector{T} = diff(mp2)
     Δmp3::Vector{T} = diff(mp3)
-    
+
     w1r::Vector{T} = inv.(Δmp1) .* (mp1[2:end] .- ax1)
     w1l::Vector{T} = inv.(Δmp1) .* (ax1 - mp1[1:end-1])
     w2r::Vector{T} = inv.(Δmp2) .* (mp2[2:end] .- ax2)
@@ -751,11 +751,11 @@ function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistrib
                 ev::SArray{Tuple{3},Float32,1,3} = ef.data[i1, i2, i3]
                 dV::T = _Δmp3 * _Δmp2 * _Δmp1
                 _ϵ::T = sum([
-                    ϵ[i1, i2, i3]             * w1l[i1] * w2l[i2] * w3l[i3], 
+                    ϵ[i1, i2, i3]             * w1l[i1] * w2l[i2] * w3l[i3],
                     ϵ[i1 + 1, i2, i3]         * w1r[i1] * w2l[i2] * w3l[i3],
-                    ϵ[i1, i2 + 1, i3]         * w1l[i1] * w2r[i2] * w3l[i3], 
+                    ϵ[i1, i2 + 1, i3]         * w1l[i1] * w2r[i2] * w3l[i3],
                     ϵ[i1, i2, i3 + 1]         * w1l[i1] * w2l[i2] * w3r[i3],
-                    ϵ[i1 + 1, i2 + 1, i3]     * w1r[i1] * w2r[i2] * w3l[i3], 
+                    ϵ[i1 + 1, i2 + 1, i3]     * w1r[i1] * w2r[i2] * w3l[i3],
                     ϵ[i1 + 1, i2, i3 + 1]     * w1r[i1] * w2l[i2] * w3r[i3],
                     ϵ[i1, i2 + 1, i3 + 1]     * w1l[i1] * w2r[i2] * w3r[i3],
                     ϵ[i1 + 1, i2 + 1, i3 + 1] * w1r[i1] * w2r[i2] * w3r[i3]
