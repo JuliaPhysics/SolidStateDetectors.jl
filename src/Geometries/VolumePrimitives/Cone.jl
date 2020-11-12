@@ -38,22 +38,6 @@ function in(point::CartesianPoint{T}, cone::Cone{T})::Bool where {T <: SSDFloat}
             point.r in ClosedInterval{T}(get_intersection_rs_for_given_z(point.z,cone)...)
 end
 
-# function get_diagonal_r_from_z(cone::Cone{T}, z::T) where T
-#     if cone.orientation == :top_right
-#         r = tan(cone.β)*(z-cone.z_interval.left)
-#         return geom_round(T(cone.r_interval.right - r))
-#     elseif cone.orientation == :top_left
-#         r = tan(cone.α)*(z-cone.z_interval.left)
-#         return geom_round(T(cone.r_interval.left + r))
-#     elseif cone.orientation == :bottom_right
-#         r = tan(cone.α)*(z-cone.z_interval.left)
-#         return geom_round(T(cone.r_interval.left + r))
-#     elseif cone.orientation == :bottom_left
-#         r =  tan(cone.β)*(cone.z_interval.right -z)
-#         return geom_round(T(cone.r_interval.left + r))
-#     end
-# end
-
 function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit_dict::Dict{String,Unitful.Units})::Cone{T} where {T <: SSDFloat}
 
     rotX::T = haskey(dict, "rotX") ? geom_round(ustrip(uconvert(u"rad", T(dict["rotX"]) * inputunit_dict["angle"]))) : T(0.0)
