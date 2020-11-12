@@ -35,7 +35,7 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
         Interval(geom_round(T(deg2rad(0))), geom_round(T(deg2rad(360))))
     end
 
-    r_interval = if haskey(dict["r"], "from") 
+    r_interval = if haskey(dict["r"], "from")
         Interval(geom_round(ustrip(uconvert(u"m", T(dict["r"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["r"]["to"]) * inputunit_dict["length"]))))
     else
         Interval(geom_round(0), geom_round(ustrip(uconvert(u"m", T(dict["r"]) * inputunit_dict["length"]))))
@@ -45,7 +45,7 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
         r_interval,
         φ_interval,
         Interval(zStart, zStop),
-        translate  
+        translate
     )
 end
 
@@ -53,15 +53,15 @@ function Geometry(T::DataType, t::Val{:tube}, dict::Dict{Union{Any,String}, Any}
     return Tube{T}(Dict{Any,Any}(dict), inputunit_dict)
 end
 
-function in(point::CartesianPoint{T}, tube::Tube{T}) where {T <: SSDFloat}
-    ismissing(tube.translate) ? nothing : point -= tube.translate
-    point = CylindricalPoint(point)
-    return point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
+function in(point::CartesianPoint{T}, tube::Tube{T})::Bool where {T <: SSDFloat}
+    (ismissing(tube.translate) || tube.translate == CartesianVector{T}(0.0,0.0,0.0)) ? nothing : point -= tube.translate
+    point = convert(CylindricalPoint,point)
+    return (point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval)
 end
 
-function in(point::CylindricalPoint{T}, tube::Tube{T}) where {T <: SSDFloat}
-    ismissing(tube.translate) ? nothing : point = CylindricalPoint(CartesianPoint(point) - tube.translate)
-    return point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval
+function in(point::CylindricalPoint{T}, tube::Tube{T})::Bool where {T <: SSDFloat}
+    (ismissing(tube.translate) || tube.translate == CartesianVector{T}(0.0,0.0,0.0)) ? nothing  : point = CylindricalPoint(CartesianPoint(point)-tube.translate)
+    return (point.r in tube.r_interval && point.φ in tube.φ_interval && point.z in tube.z_interval)
 end
 
 

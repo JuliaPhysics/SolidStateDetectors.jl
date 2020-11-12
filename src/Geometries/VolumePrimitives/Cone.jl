@@ -8,17 +8,18 @@ struct Cone{T} <: AbstractVolumePrimitive{T, 3} ## Only upright Cones at the mom
     zStart::T
     zStop::T
     translate::Union{CartesianVector{T},Missing}
-    rotate::SMatrix{3,3,T}
+    rotate::Rotations.RotXYZ{T}
 end
 
 
-function Cone{T}( rStart1::T, rStop1::T, rStart2::T, rStop2::T, φStart::T, φStop::T, zStart::T, zStop::T, translate::Union{CartesianVector{T},Missing}, rotX::T, rotY::T, rotZ::T) where {T <: SSDFloat}
-    rotationMatrix::SMatrix{3,3,T} = RotXYZ{T}(rotX, rotY, rotZ)
+
+function Cone{T}( rStart1::T, rStop1::T, rStart2::T, rStop2::T, φStart::T, φStop::T, zStart::T, zStop::T, translate::Union{CartesianVector{T},Missing}, rotX::T, rotY::T, rotZ::T) where {T}
+    rotationMatrix::Rotations.RotXYZ{T} = RotXYZ{T}(rotX, rotY, rotZ)
     Cone{T}(rStart1, rStop1, rStart2, rStop2, φStart, φStop, zStart, zStop, translate, rotationMatrix)
 end
 
 function in(point::CylindricalPoint{T}, cone::Cone{T})::Bool where {T <: SSDFloat}
-    ismissing(cone.translate) ? nothing : point = CylindricalPoint(CartesianPoint(point) - cone.translate)
+    (ismissing(cone.translate) || cone.translate == CartesianVector{T}(0.0, 0.0, 0.0)) ? nothing : point = CylindricalPoint(CartesianPoint(point) - cone.translate)
     return point.z in ClosedInterval{T}(cone.zStart,cone.zStop) && 
             point.φ in ClosedInterval{T}(cone.φStart,cone.φStop) && 
             point.r in ClosedInterval{T}(get_intersection_rs_for_given_z(point.z,cone)...)
