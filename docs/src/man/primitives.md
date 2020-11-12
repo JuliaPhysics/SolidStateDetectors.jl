@@ -2,7 +2,7 @@
 
 CSG = Constructive Solid Geometries
 
-## Primitve: Box
+## Primitive: Box
 
 ```json
 {
@@ -42,7 +42,7 @@ CSG = Constructive Solid Geometries
 }
 ```
 
-## Primitve: Cone
+## Primitive: Cone
 
 ```json
 {
@@ -68,7 +68,7 @@ CSG = Constructive Solid Geometries
 }
 ```
 
-## Primitve: Sphere
+## Primitive: Sphere
 
 ```json
 {
@@ -87,8 +87,8 @@ CSG = Constructive Solid Geometries
 If you need a primitive which is not yet implemented you can implemented yourself and make a PR on GitHub :)
 
 There are a few functions you will have to define for a new primitive. Here is a layout for a new primitive.
-Place the struct and all the functions in a file 'NewPrimitive.jl' inside '<SSD>/src/Geometries/VolumePrimitives'
-and include it in the file '<SSD>/src/Geometries/VolumePrimitives/VolumePrimitives.jl'
+Place the struct and all the functions in a file `NewPrimitive.jl` inside `<SSD>/src/Geometries/VolumePrimitives`
+and include it in the file `<SSD>/src/Geometries/VolumePrimitives/VolumePrimitives.jl`
 
 Note that internally everything is in SI units. So please have a look in the already implemented primitives (`Box`, `Sphere`, `Tube`, ...) how the conversion from config file units to SI units is done. 
 
@@ -97,10 +97,10 @@ struct NewPrimitive{T} <: AbstractVolumePrimitive{T, 3}
     # fields of the new primitive
 end
 
-function in(pt::CartesianPoint{T}, g::NewPrimitive{T})::Bool where {T}
+function in(pt::CartesianPoint{T}, g::NewPrimitive{T})::Bool where {T <: SSDFloat}
     # pt in NewPrimitive?
 end
-function in(pt::CylindricalPoint{T}, g::NewPrimitive{T})::Bool where {T}
+function in(pt::CylindricalPoint{T}, g::NewPrimitive{T})::Bool where {T <: SSDFloat}
     # pt in NewPrimitive?
 end
 
