@@ -2,16 +2,15 @@
     innerloops!(  iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
-                                bulk_is_ptype::Val{_bulk_is_ptype}  )::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype}
+                                )::Nothing where {T, even_points, depletion_handling_enabled}
 
 (Vectorized) inner loop for Cartesian coordinates. This function does all the work in the field calculation.                            
 """
 @fastmath function innerloops!( iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
-                                bulk_is_ptype::Val{_bulk_is_ptype}, 
                                 is_weighting_potential::Val{_is_weighting_potential},
-                                only2d::Val{only_2d})::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype, _is_weighting_potential, only_2d}
+                                only2d::Val{only_2d})::Nothing where {T, even_points, depletion_handling_enabled, _is_weighting_potential, only_2d}
     @inbounds begin 
         inz::Int = iz - 1 
                 
