@@ -14,59 +14,36 @@ end
 
 
 function Cone{T}( rStart1::T, rStop1::T, rStart2::T, rStop2::T, φStart::T, φStop::T, zStart::T, zStop::T, translate::Union{CartesianVector{T},Missing}, rotX::T, rotY::T, rotZ::T) where {T}
-    rotationMatrix::Rotations.RotXYZ{T} = RotXYZ(rotX, rotY, rotZ)
-
+    rotationMatrix::Rotations.RotXYZ{T} = RotXYZ{T}(rotX, rotY, rotZ)
     Cone{T}(rStart1, rStop1, rStart2, rStop2, φStart, φStop, zStart, zStop, translate, rotationMatrix)
 end
 
-function in(point::CylindricalPoint{T}, cone::Cone{T}) where T
+function in(point::CylindricalPoint{T}, cone::Cone{T})::Bool where {T <: SSDFloat}
     (ismissing(cone.translate) || cone.translate == CartesianVector{T}(0.0, 0.0, 0.0)) ? nothing : point = CylindricalPoint(CartesianPoint(point) - cone.translate)
-    if ( point.z in ClosedInterval{T}(cone.zStart,cone.zStop) ) && ( point.φ in ClosedInterval{T}(cone.φStart,cone.φStop) ) && ( point.r in ClosedInterval{T}(minimum([cone.rStart1,cone.rStart2,cone.rStop1,cone.rStop2]), maximum([cone.rStart1,cone.rStart2,cone.rStop1,cone.rStop2])) )
-
-        r1,r2 = get_intersection_rs_for_given_z(point.z,cone)
-        if point.r in ClosedInterval{T}(r1,r2)
-            return true
-        else
-            return false
-        end
-
-    else
-        return false
-    end
+    return point.z in ClosedInterval{T}(cone.zStart,cone.zStop) && 
+            point.φ in ClosedInterval{T}(cone.φStart,cone.φStop) && 
+            point.r in ClosedInterval{T}(get_intersection_rs_for_given_z(point.z,cone)...)
 end
 
-function get_intersection_rs_for_given_z(z::T, c::Cone{T}) where {T}
+function get_intersection_rs_for_given_z(z::T, c::Cone{T}) where {T <: SSDFloat}
     r1::T = ( (c.rStart1*c.zStop - c.zStart*c.rStart2) * (T(0.0) - T(1.0)) - (c.rStart1 - c.rStart2) * (T(0.0)*z - z*T(1.0)) ) / ( (c.rStart1 - c.rStart2) * (z - z) - (c.zStart - c.zStop) * (T(0.0) - T(1.0)) )
     r2::T = ( (c.rStop1*c.zStop - c.zStart*c.rStop2) * (T(0.0) - T(1.0)) - (c.rStop1 - c.rStop2) * (T(0.0)*z - z*T(1.0)) ) / ( (c.rStop1 - c.rStop2) * (z - z) - (c.zStart - c.zStop) * (T(0.0) - T(1.0)) )
     r1,r2
 end
 
-function in(point::CartesianPoint{T}, cone::Cone{T}) where T
-    point = convert(CylindricalPoint,point)
-    point in cone
+function in(point::CartesianPoint{T}, cone::Cone{T})::Bool where {T <: SSDFloat}
+    ismissing(cone.translate) ? nothing : point -= cone.translate
+    point = CylindricalPoint(point)
+    return point.z in ClosedInterval{T}(cone.zStart,cone.zStop) && 
+            point.φ in ClosedInterval{T}(cone.φStart,cone.φStop) && 
+            point.r in ClosedInterval{T}(get_intersection_rs_for_given_z(point.z,cone)...)
 end
-
-# function get_diagonal_r_from_z(cone::Cone{T}, z::T) where T
-#     if cone.orientation == :top_right
-#         r = tan(cone.β)*(z-cone.z_interval.left)
-#         return geom_round(T(cone.r_interval.right - r))
-#     elseif cone.orientation == :top_left
-#         r = tan(cone.α)*(z-cone.z_interval.left)
-#         return geom_round(T(cone.r_interval.left + r))
-#     elseif cone.orientation == :bottom_right
-#         r = tan(cone.α)*(z-cone.z_interval.left)
-#         return geom_round(T(cone.r_interval.left + r))
-#     elseif cone.orientation == :bottom_left
-#         r =  tan(cone.β)*(cone.z_interval.right -z)
-#         return geom_round(T(cone.r_interval.left + r))
-#     end
-# end
 
 function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit_dict::Dict{String,Unitful.Units})::Cone{T} where {T <: SSDFloat}
 
-    haskey(dict, "rotX") ? rotX::T = deg2rad(dict["rotX"]) : rotX = T(0.0)
-    haskey(dict, "rotY") ? rotY::T = deg2rad(dict["rotY"]) : rotY = T(0.0)
-    haskey(dict, "rotZ") ? rotZ::T = deg2rad(dict["rotZ"]) : rotZ = T(0.0)
+    rotX::T = haskey(dict, "rotX") ? geom_round(ustrip(uconvert(u"rad", T(dict["rotX"]) * inputunit_dict["angle"]))) : T(0.0)
+    rotY::T = haskey(dict, "rotY") ? geom_round(ustrip(uconvert(u"rad", T(dict["rotY"]) * inputunit_dict["angle"]))) : T(0.0)
+    rotZ::T = haskey(dict, "rotZ") ? geom_round(ustrip(uconvert(u"rad", T(dict["rotZ"]) * inputunit_dict["angle"]))) : T(0.0)
 
     z_offset::T = 0.0
 
@@ -74,12 +51,9 @@ function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit_dict::D
         translate = CartesianVector{T}( haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : 0.0,
                                         haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : 0.0,
                                         haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : 0.0)
-        if translate[1] == T(0.0) && translate[2] == T(0.0) && translate[3] == T(0.0)
-            translate = missing
-        elseif translate[1] == T(0.0) && translate[2] == T(0.0)
+        if translate[1] == T(0.0) && translate[2] == T(0.0)
             translate = missing
             z_offset = geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] )))
-
         end
     else
         translate = missing
@@ -101,7 +75,8 @@ function Cone{T}(dict::Union{Dict{Any, Any},Dict{String,Any}}, inputunit_dict::D
         geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["to"]) * inputunit_dict["angle"])))),
         zStart,
         zStop,
-        translate, rotX, rotY, rotZ)
+        translate, 
+        rotX, rotY, rotZ)
 end
 
 function Geometry(T::DataType, t::Val{:cone}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
@@ -126,7 +101,7 @@ function get_important_points(c::Cone{T}, ::Val{:z})::Vector{T} where {T <: SSDF
     return geom_round.(T[c.zStart, c.zStop])
 end
 
-function sample(c::Cone{T}, stepsize::Vector{T}) where T
+function sample(c::Cone{T}, stepsize::Vector{T}) where {T <: SSDFloat}
     samples = CylindricalPoint[]
     for z in c.zStart:stepsize[3]:c.zStop
         for φ in c.φStart:stepsize[2]:c.φStop

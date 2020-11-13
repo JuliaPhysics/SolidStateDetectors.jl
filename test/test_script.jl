@@ -130,7 +130,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     savefig(joinpath(outputdir, "$(key)_4_charge_drift"))
 
     # signals[:, 2] *= -1
-    plot(event.signals, size = (1200, 600), lw = 1.5)
+    plot(event.waveforms, size = (1200, 600), lw = 1.5)
     savefig(joinpath(outputdir, "$(key)_5_induced_signals"))
 
 end
