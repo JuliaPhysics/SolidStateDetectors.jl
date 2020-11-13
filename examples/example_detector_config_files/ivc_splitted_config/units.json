@@ -1,0 +1,8 @@
+{
+    "units": {
+        "length": "mm",
+        "potential": "V",
+        "angle": "deg",
+        "temperature": "K"
+    }
+}

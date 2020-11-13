@@ -1,0 +1,21 @@
+{
+    "type": "passive",
+    "material": "Al",
+    "name": "Base plate",
+    "potential": 0,
+    "geometry": {
+        "type": "tube",
+        "r": {
+            "from": 0,
+            "to": 59
+        },
+        "phi": {
+            "from": 0,
+            "to": 360
+        },
+        "z": {
+            "from": -10.0,
+            "to": -5.0
+        }
+    }
+}
