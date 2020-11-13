@@ -47,7 +47,7 @@ end
 end
 
 
-@recipe function f(wp::WeightingPotential{T,3,:cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(wp::WeightingPotential{T,3,:cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
     if !(wp.grid[2][end] - wp.grid[2][1] ≈ 2π)
         wp = get_2π_potential(wp, n_points_in_φ = 72)
@@ -60,7 +60,7 @@ end
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    wp, cross_section, idx, value
+    wp, cross_section, idx, value, contours_equal_potential
 end
 
 
@@ -227,7 +227,7 @@ end
     ep, cross_section, idx, value, contours_equal_potential
 end
 
-@recipe function f(wp::WeightingPotential{T,3,:cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(wp::WeightingPotential{T,3,:cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
     g::Grid{T, 3, :cartesian} = wp.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
@@ -236,7 +236,7 @@ end
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    wp, cross_section, idx, value
+    wp, cross_section, idx, value, contours_equal_potential
 end
 
 
