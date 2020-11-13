@@ -96,7 +96,7 @@ end
     pt, cross_section, idx, value
 end
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false; resample = true) where {T <: SSDFloat}
     g::Grid{T, 3, :cylindrical} = sp.grid
     @series begin
         seriestype := :heatmap
@@ -118,7 +118,20 @@ end
             g.φ, g.z, sp.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
-            g.φ, g.r, sp.data[:,:,idx]
+            if resample
+                #resample the data as non-uniform polar heatmaps are not shown correctly in GR
+                #this can be removed if implemented in GR
+                resample_gr::Vector{T} = range(g.r[1], g.r[end], step = (g.r[end] - g.r[1])/(5*length(g.r)))
+                resample_gφ::Vector{T} = range(g.φ[1], g.φ[end], step = (g.φ[end] - g.φ[1])/(5*length(g.φ)))
+                @info "Data is resampled to correctly display non-uniform polar plot in GR.\n"*
+                      "If this is not required, please use the keyword argument `resample = false`\n"*
+                      "Points in r: $(length(resample_gr))\nPoints in φ: $(length(resample_gφ))"
+                ridx = map(x -> searchsortednearest(g.r, x), resample_gr)
+                φidx = map(x -> searchsortednearest(g.φ, x), resample_gφ)
+                resample_gφ, resample_gr, sp.data[ridx, φidx, idx]
+            else
+                g.φ, g.r, sp.data[:,:,idx]
+            end
         end
     end
     
