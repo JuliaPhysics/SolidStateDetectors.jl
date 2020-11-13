@@ -77,7 +77,13 @@ function scan_and_merge_included_json_files!(parsed_dict)
             end
             for file in files
                 if isfile(file)
-                    tmp = JSON.parsefile(file)
+                    if occursin("@__DIR__", file)
+                        filepath = split(pathof(SolidStateDetectors), basename(pathof(SolidStateDetectors)))[1]
+                        filepath *= split(file, "@__DIR__/")[2]
+                    else
+                        filepath = file
+                    end
+                    tmp = JSON.parsefile(filepath)
                     scan_and_merge_included_json_files!(tmp)
                     for sub_k in keys(tmp)
                         parsed_dict[sub_k] = tmp[sub_k]
