@@ -5,7 +5,7 @@ mutable struct Semiconductor{T} <: AbstractSemiconductor{T}
     id::Int
     temperature::T
     material::NamedTuple
-    charge_density_model::AbstractChargeDensity{T}
+    impurity_density_model::AbstractImpurityDensity{T}
     geometry::AbstractGeometry{T}
     geometry_positive::Vector{AbstractGeometry{T}}
     geometry_negative::Vector{AbstractGeometry{T}}
@@ -15,10 +15,15 @@ end
 
 function Semiconductor{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
     sc = Semiconductor{T}()
-    sc.charge_density_model = if haskey(dict, "charge_density_model") 
-        ChargeDensity(T, dict["charge_density_model"], inputunit_dict)
+    sc.impurity_density_model = if haskey(dict, "impurity_density") 
+        ImpurityDensity(T, dict["impurity_density"], inputunit_dict)
+    elseif haskey(dict, "charge_density_model") 
+        @warn "Config file deprication: The field \"charge_density_model\" under semiconductor is deprecated. 
+            It should be changed to \"impurity_density\". In later version this will result in an error.
+            For now, it will be treated as an impurity density."
+        ImpurityDensity(T, dict["charge_density_model"], inputunit_dict)
     else
-        ZeroChargeDensity{T}()
+        ConstantImpurityDensity{T}(0)
     end
     sc.material = material_properties[materials[dict["material"]]]
     sc.geometry = Geometry(T, dict["geometry"], inputunit_dict)

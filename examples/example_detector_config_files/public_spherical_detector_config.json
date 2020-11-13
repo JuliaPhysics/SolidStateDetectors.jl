@@ -13,7 +13,7 @@
             "type": "semiconductor",
             "material": "HPGe",
             "temperature": 77.0,
-            "charge_density_model": {
+            "impurity_density": {
                 "name": "constant",
                 "charge_density": -1e6
             },

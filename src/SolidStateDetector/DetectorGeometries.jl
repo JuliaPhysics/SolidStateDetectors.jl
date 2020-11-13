@@ -242,7 +242,7 @@ end
 
 
 function get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
-    get_charge_density(sc.charge_density_model, pt)
+    get_impurity_density(sc.impurity_density_model, pt) * elementary_charge
 end
 function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
     get_charge_density(p.charge_density_model, pt)
@@ -255,7 +255,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     if in(pt,ssd.semiconductors)
         for sc in ssd.semiconductors
             if in(pt, sc)
-                ρ_semiconductor = get_charge_density(sc, pt) * elementary_charge
+                ρ_semiconductor = get_charge_density(sc, pt) 
                 ϵ = sc.material.ϵ_r
                 break
             end
@@ -263,7 +263,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     elseif in(pt, ssd.passives)
         for ep in ssd.passives
             if pt in ep
-                q_eff_fix = get_charge_density(ep, pt) * elementary_charge
+                q_eff_fix = get_charge_density(ep, pt)
                 ϵ = ep.material.ϵ_r
                 break
             end
