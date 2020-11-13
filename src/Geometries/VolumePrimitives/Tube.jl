@@ -30,15 +30,16 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
     end
     
     φ_interval =  if haskey(dict, "phi") 
-        Interval(geom_round(T(deg2rad(dict["phi"]["from"]))), geom_round(T(deg2rad(dict["phi"]["to"]))))
+        Interval(geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["from"]) * inputunit_dict["angle"])))), 
+                 geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["to"]) * inputunit_dict["angle"])))))                      
     else
-        Interval(geom_round(T(deg2rad(0))), geom_round(T(deg2rad(360))))
+        Interval(T(0), geom_round(T(2π)))
     end
 
     r_interval = if haskey(dict["r"], "from")
         Interval(geom_round(ustrip(uconvert(u"m", T(dict["r"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["r"]["to"]) * inputunit_dict["length"]))))
     else
-        Interval(geom_round(0), geom_round(ustrip(uconvert(u"m", T(dict["r"]) * inputunit_dict["length"]))))
+        Interval(T(0), geom_round(ustrip(uconvert(u"m", T(dict["r"]) * inputunit_dict["length"]))))
     end
 
     return Tube{T}(
