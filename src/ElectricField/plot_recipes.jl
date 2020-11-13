@@ -125,9 +125,7 @@ end
 
 @userplot Plot_electric_field_
 @recipe function f(gdd::Plot_electric_field_; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    potential = false, contours_equal_potential = true, full_det = false, field_lines = true, scaling = 1.0,
-                    sampling = 4u"mm", spacing = 1, max_nsteps = 3000, offset = (0.001)
-                    )
+                    contours_equal_potential = true, full_det = false)
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
     T = SolidStateDetectors.get_precision_type(sim.detector)
@@ -156,8 +154,8 @@ end
     S::Symbol = get_coordinate_system(sim.detector)
     aspect_ratio --> 1
     title --> (field_lines ? "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))" : "Electric Field @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))")
-    xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-    ylabel --> L"$z$ / m"
+    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
+    yguide --> L"$z$ / m"
         @series begin
             # contours_equal_potential --> contours_equal_potential
             if dim_symbol == :φ
