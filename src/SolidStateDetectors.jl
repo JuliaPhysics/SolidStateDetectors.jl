@@ -69,7 +69,7 @@ include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
-include("ChargeDensityModels/ChargeDensityModels.jl")
+include("ChargeDensities/ChargeDensity.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 include("GeometryRounding.jl")
 
