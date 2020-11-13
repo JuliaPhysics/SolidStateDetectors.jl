@@ -425,7 +425,6 @@ function siggentodict(config::Dict;
     
     objects = Any[Dict("type"        => "semiconductor",
                     "material"    => "HPGe",
-                    "bulk_type"   => "p",
                     "temperature" => config["xtal_temp"],
                     "charge_density_model" => Dict(
                                 "name"     => "cylindrical",
