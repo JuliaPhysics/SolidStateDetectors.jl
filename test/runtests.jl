@@ -27,7 +27,7 @@ end
     @testset "Simulate example detector: Inverted Coax in cryostat" begin
         sim = Simulation(SSD_examples[:InvertedCoaxInCryostat])
         simulate!(sim, max_refinements = 1, verbose = true)
-        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(10e-3, deg2rad(10), 20e-3 )]))
         simulate!(evt, sim)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
