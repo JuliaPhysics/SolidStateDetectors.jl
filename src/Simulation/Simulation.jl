@@ -217,18 +217,17 @@ function update_till_convergence!( sim::Simulation{T},
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
 
-    if depletion_handling == false
+    if depletion_handling == true
         update_again::Bool = false # With SOR-Constant = 1
-        if fssrb.bulk_is_ptype
-            @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential
-                    sim.electric_potential.data[i] = fssrb.minimum_applied_potential
-                    update_again = true
-                end
+        @inbounds for i in eachindex(sim.electric_potential.data)
+            if sim.electric_potential.data[i] < fssrb.minimum_applied_potential # p-type
+                sim.electric_potential.data[i] = fssrb.minimum_applied_potential
+                update_again = true
             end
-        else # ntype
+        end
+        if update_again == false
             @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential
+                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential # n-type
                     sim.electric_potential.data[i] = fssrb.maximum_applied_potential
                     update_again = true
                 end
@@ -245,25 +244,20 @@ function update_till_convergence!( sim::Simulation{T},
                                             max_n_iterations = max_n_iterations )
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
 
-            if fssrb.bulk_is_ptype
-                @inbounds for i in eachindex(sim.electric_potential.data)
-                    if sim.electric_potential.data[i] < fssrb.minimum_applied_potential
-                        @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                            At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
-                            than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
-                            However, small overshoots could be due to numerical precision."""
-                        break
-                    end
+            @inbounds for i in eachindex(sim.electric_potential.data)
+                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential # p-type
+                    @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                        At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
+                        than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
+                        However, small overshoots could be due to numerical precision."""
+                    break
                 end
-            else # ntype
-                @inbounds for i in eachindex(sim.electric_potential.data)
-                    if sim.electric_potential.data[i] > fssrb.maximum_applied_potential
-                        @warn """Detector seems not to be not fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                            At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
-                            than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
-                            However, small overshoots could be due to numerical precision."""
-                        break
-                    end
+                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential # n-type
+                    @warn """Detector seems not to be not fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                        At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
+                        than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
+                        However, small overshoots could be due to numerical precision."""
+                    break
                 end
             end
         end
