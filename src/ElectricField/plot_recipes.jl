@@ -25,14 +25,28 @@ end
 
     seriescolor --> :inferno
     aspect_ratio --> 1
-    # foreground_color_border --> nothing
-    # tick_direction --> :out
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-    @series begin
-        ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential, full_det
-    end
+    ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential, full_det
+
 end
+
+@recipe function f(ef::ElectricField{T, 3, :cartesian};
+                    x = missing,
+                    y = missing,
+                    z = missing) where {T <: SSDFloat}
+
+    g::Grid{T, 3, :cartesian} = ef.grid
+
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+    ef_magn  = norm.(ef)
+
+    seriescolor --> :inferno
+    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
+
+    ElectricPotential(ef_magn,g), cross_section, idx, value
+end
+
 
 @userplot Plot_electric_field_
 @recipe function f(gdd::Plot_electric_field_; φ = missing, r = missing, x = missing, y = missing, z = missing,
@@ -133,18 +147,72 @@ end
     spawn_positions = CartesianPoint{T}[]
     spawn_positions_mirror = CartesianPoint{T}[]
     grid = sim.electric_field.grid
-    pt_offset = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ), offset)))
-    pt_offset_mirror = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ)+π, offset)))
+    # pt_offset = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ), offset)))
+    # pt_offset_mirror = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ)+π, offset)))
+    sampling_vector_pool = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
+    function get_closest_samples(pt::PT, sampled_points_pool) where PT
+        pool1 = unique!(map(x->x[1],sampled_points_pool))
+        pool2 = unique!(map(y->y[2],sampled_points_pool))
+        pool3 = unique!(map(z->z[3],sampled_points_pool))
+        idcs_closest = [searchsortednearest(pool1,pt[2]), searchsortednearest(pool2, pt[2]), searchsortednearest(pool3,pt[3])]
+
+        pairs = [
+          (PT(pool1[maximum([idcs_closest[1]-1,1])], pool2[idcs_closest[2]], pool3[idcs_closest[3]]),PT(pool1[minimum([idcs_closest[1]+1,length(pool1)])], pool2[idcs_closest[2]], pool3[idcs_closest[3]]) )
+          (PT(pool1[idcs_closest[1]], pool2[maximum([idcs_closest[2]-1,1])], pool3[idcs_closest[3]]),PT(pool1[idcs_closest[1]], pool2[minimum([idcs_closest[2]+1,length(pool2)])], pool3[idcs_closest[3]]) )
+          (PT(pool1[idcs_closest[1]], pool2[idcs_closest[2]], pool3[maximum([idcs_closest[3]-1,1])]),PT(pool1[idcs_closest[1]], pool2[idcs_closest[2]], pool3[minimum([idcs_closest[3]+1,length(pool3)])]) )
+        ]
+    end
     sampling_vector = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
-    sampling_vector[2] = 3π
-    for c in contacts_to_spawn_charges_for[:]#[4:4]
+    symbol2dimnumber_dict = Dict(:r => 1, :x => 1, :y => 2, :φ => 2, :z => 3)
+    symbol2dimnumber(dim_symbol) = symbol2dimnumber_dict[dim_symbol]
+    # if dim_symbol == :φ
+    #     sampling_vector[2] = 3π # set to something that with one step surely exceedsd the contact dimensions. This way only a plane is sampled
+    # elseif dim_symbol == :r
+    #     sampling_vector[1] = 1000
+    # elseif sim_symbol == :x
+    #     sampling_vector[1] = 1000
+    # elseif sim_symbol == :y
+    #     sampling_vector[2] = 1000
+    # elseif sim_symbol == :z
+    #     sampling_vector[3] = 1000
+    # end
+    sampling_vector[symbol2dimnumber(dim_symbol)] = 1000 # set to something that with one step surely exceedsd the contact dimensions. This way only a plane is sampled
+    @info(sampling_vector_pool)
+    @info(sampling_vector)
+    @info(dim_symbol)
+    @info(symbol2dimnumber(dim_symbol))
+    @info(v)
+    for c in contacts_to_spawn_charges_for[:]#[1:1]
         for positive_geometry in c.geometry_positive[:]#[6:6]
-            sampled_point_cyl = CylindricalPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector))
-            sampled_point_cyl =  map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ), x[3])), sampled_point_cyl)
-            if sampled_point_cyl[1] in positive_geometry
-                push!(spawn_positions, broadcast(+, CartesianPoint.(sampled_point_cyl), pt_offset )...)
-                push!(spawn_positions, broadcast(-, CartesianPoint.(sampled_point_cyl), pt_offset )...)
+            sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool)
+            PT = eltype(sample_pool)
+            sampled_points = SolidStateDetectors.sample(positive_geometry, sampling_vector)
+            sampled_points_mutable = map(x->MVector(x), sampled_points)
+            map(x->x[symbol2dimnumber(dim_symbol)]=v, sampled_points_mutable)
+            sampled_points_xsec = map(x->geom_round(PT(x...)), sampled_points_mutable)
+            # sampled_point_cyl = CylindricalPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector))
+            # sampled_point_cyl =  map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ), x[3])), sampled_point_cyl)
+            sampled_points_xsec_cart = CartesianPoint.(sampled_points_xsec)
+            function get_offset_vector(sample_points, sample_pool )
+                local_samples_in_xsec_dir = map(x->get_closest_samples(x,sample_pool)[symbol2dimnumber(dim_symbol)], sample_points)
+                vec_in_xsec_dir = map(x->CartesianPoint(x[2]) - CartesianPoint(x[1]), local_samples_in_xsec_dir)
+                sample_forward_vec = CartesianPoint{T}[]
+                for i in 1:length(sampled_points_xsec_cart)
+                    i!=length(sampled_points_xsec_cart) ? push!(sample_forward_vec, sampled_points_xsec_cart[i+1] - sampled_points_xsec_cart[i]) : push!(sample_forward_vec, sampled_points_xsec_cart[i] - sampled_points_xsec_cart[i-1])
+                end
+                @info sample_forward_vec[1]
+                @info vec_in_xsec_dir[1]
+                @info((cross.(sample_forward_vec, vec_in_xsec_dir))./norm.(cross.(sample_forward_vec, vec_in_xsec_dir)))
+                offset_vector = (cross.(sample_forward_vec, vec_in_xsec_dir))./norm.(cross.(sample_forward_vec, vec_in_xsec_dir))
             end
+            # if sampled_point_cyl[1] in positive_geometry
+            #     push!(spawn_positions, broadcast(+, CartesianPoint.(sampled_point_cyl), pt_offset )...)
+            #     push!(spawn_positions, broadcast(-, CartesianPoint.(sampled_point_cyl), pt_offset )...)
+            # end
+            offset_vector = get_offset_vector(sampled_points_xsec, sample_pool) .* 0.0004
+            @info(offset_vector)
+            push!(spawn_positions, broadcast(+, sampled_points_xsec_cart, offset_vector)...)
+            push!(spawn_positions, broadcast(-, sampled_points_xsec_cart, offset_vector)...)
             if full_det == true
                 sampled_point_cyl_mirror = map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ)+π, x[3])), sampled_point_cyl)
                 if sampled_point_cyl_mirror[1] in positive_geometry
@@ -155,7 +223,7 @@ end
         end
     end
 
-
+# @info(spawn_positions)
     filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions)
     full_det == true ? filter!(x ->x in sim.detector && !in(x, sim.detector.contacts), spawn_positions_mirror) : nothing
     spawn_positions = vcat(spawn_positions,spawn_positions_mirror)
