@@ -1,7 +1,7 @@
 {
     "include": [
-        "ivc_splitted_config/grid.json",
-        "ivc_splitted_config/units.json"
+        "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/grid.json",
+        "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/units.json"
     ],
     "name": "Public Inverted Coax",
     "medium": "vacuum",
@@ -12,21 +12,21 @@
             "bulk_type": "p",
             "temperature": 77.0,
             "include" : [
-                "ivc_splitted_config/detector_geometry.json",
-                "ivc_splitted_config/charge_density_model.json"
+                "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/detector_geometry.json",
+                "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/charge_density_model.json"
             ]
         },
         {
-            "include" : "ivc_splitted_config/channels/01.json"
+            "include" : "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/channels/01.json"
         },
         {
-            "include" : "ivc_splitted_config/channels/02.json"
+            "include" : "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/channels/02.json"
         },
 		{
-			"include": "ivc_splitted_config/cryostat_base.json"
+			"include": "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/cryostat_base.json"
 		},
 		{
-            "include": "ivc_splitted_config/cryostat_hat.json"
+            "include": "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/cryostat_hat.json"
 		}
     ]
 }
