@@ -31,7 +31,6 @@
 		{
 			"type": "semiconductor",
 			"material": "HPGe",
-			"bulk_type": "n",
 			"temperature": 77,
 			"charge_density_model": {
 				"name": "linear",

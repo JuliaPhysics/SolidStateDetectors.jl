@@ -1,9 +1,3 @@
-bulk_types = Dict("n" => :ntype,
-    "n-type" => :ntype,
-    "ntype" => :ntype,
-    "p-type" => :ptype,
-    "ptype" => :ptype,
-    "p" => :ptype  )
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
     "deg" => u"°","rad" => u"rad", #angle

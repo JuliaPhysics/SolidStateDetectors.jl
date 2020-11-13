@@ -40,7 +40,6 @@
 		{
 			"type": "semiconductor",
 			"material": "Si",
-			"bulk_type": "n",
 			"temperature": 140,
 			"charge_density_model": {
 				"name": "linear",
