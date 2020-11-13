@@ -15,8 +15,8 @@ apply_initial_state!(simulation, ElectricPotential) # optional
 plot(
     plot(simulation.electric_potential), # initial electric potential (boundary conditions)
     plot(simulation.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
-    plot(simulation.ρ), # charge density distribution
-    plot(simulation.ϵ), # dielectric distribution
+    plot(simulation.q_eff_imp), # charge density distribution
+    plot(simulation.ϵ_r), # dielectric distribution
     layout = (1, 4), size = (1600, 500)
 )
 
@@ -28,8 +28,8 @@ calculate_electric_potential!( simulation,
 plot(
     plot(simulation.electric_potential, φ = 20), # initial electric potential (boundary conditions)
     plot(simulation.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
-    plot(simulation.ρ), # charge density distribution
-    plot(simulation.ϵ), # dielectric distribution
+    plot(simulation.q_eff_imp), # charge density distribution
+    plot(simulation.ϵ_r), # dielectric distribution
     layout = (1, 4), size = (1600, 500)
 )
 

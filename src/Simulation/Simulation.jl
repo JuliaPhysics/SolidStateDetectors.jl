@@ -7,9 +7,9 @@ Collection of all parts of a Simulation of a Solid State Detector.
 """
 mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     detector::Union{SolidStateDetector{T}, Missing}
-    ρ::Union{EffectiveChargeDensity{T}, Missing}
-    ρ_fix::Union{EffectiveChargeDensity{T}, Missing}
-    ϵ::Union{DielectricDistribution{T}, Missing}
+    q_eff_imp::Union{EffectiveChargeDensity{T}, Missing} # Effective charge coming from the impurites of the semiconductors
+    q_eff_fix::Union{EffectiveChargeDensity{T}, Missing} # Fixed charge coming from fixed space charges, e.g. charged up surface layers
+    ϵ_r::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
     electric_potential::Union{ElectricPotential{T}, Missing}
     weighting_potentials::Vector{Any}
@@ -52,9 +52,9 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     nt = (
         detector_json_string = NamedTuple(sim.detector.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
-        ρ = NamedTuple(sim.ρ),
-        ρ_fix = NamedTuple(sim.ρ_fix),
-        ϵ = NamedTuple(sim.ϵ),
+        q_eff_imp = NamedTuple(sim.q_eff_imp),
+        q_eff_fix = NamedTuple(sim.q_eff_fix),
+        ϵ_r = NamedTuple(sim.ϵ_r),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
         electron_drift_field = NamedTuple(sim.electron_drift_field),
@@ -73,9 +73,9 @@ function Simulation(nt::NamedTuple)
     det = SolidStateDetector{T}( Dict(nt.detector_json_string) )
     sim = Simulation( det )
     if !ismissing(nt.electric_potential) sim.electric_potential = ep end
-    if !ismissing(nt.ρ) sim.ρ = EffectiveChargeDensity(nt.ρ) end
-    if !ismissing(nt.ρ_fix) sim.ρ_fix = EffectiveChargeDensity(nt.ρ_fix) end
-    if !ismissing(nt.ϵ) sim.ϵ = DielectricDistribution(nt.ϵ) end
+    if !ismissing(nt.q_eff_imp) sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp) end
+    if !ismissing(nt.q_eff_fix) sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix) end
+    if !ismissing(nt.ϵ_r) sim.ϵ_r = DielectricDistribution(nt.ϵ_r) end
     if !ismissing(nt.point_types) sim.point_types = PointTypes(nt.point_types) end
     if !ismissing(nt.electric_field) sim.electric_field = ElectricField(nt.electric_field) end
     sim.weighting_potentials = [missing for contact in sim.detector.contacts]
@@ -101,9 +101,9 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println(typeof(sim), " - Coordinate system: ", get_coordinate_system(sim.detector))
     println("  Detector: $(sim.detector.name)")
     println("  Electric potential: ", !ismissing(sim.electric_potential) ? size(sim.electric_potential) : missing)
-    println("  Charge density: ", !ismissing(sim.ρ) ? size(sim.ρ) : missing)
-    println("  Fix Charge density: ", !ismissing(sim.ρ_fix) ? size(sim.ρ_fix) : missing)
-    println("  Dielectric distribution: ", !ismissing(sim.ϵ) ? size(sim.ϵ) : missing)
+    println("  Charge density: ", !ismissing(sim.q_eff_imp) ? size(sim.q_eff_imp) : missing)
+    println("  Fix Charge density: ", !ismissing(sim.q_eff_fix) ? size(sim.q_eff_fix) : missing)
+    println("  Dielectric distribution: ", !ismissing(sim.ϵ_r) ? size(sim.ϵ_r) : missing)
     println("  Point types: ", !ismissing(sim.point_types) ? size(sim.point_types) : missing)
     println("  Electric field: ", !ismissing(sim.electric_field) ? size(sim.electric_field) : missing)
     println("  Weighting potentials: ")
@@ -146,15 +146,15 @@ end
     function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim.detector))::Nothing
 
 Applies the initial state of the electric potential calculation.
-It overwrites `sim.electric_potential`, `sim.ρ`, `sim.ρ_fix`, `sim.ϵ` and `sim.point_types`.
+It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`.
 """
 function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} =
         PotentialSimulationSetupRB(sim.detector, grid);
 
-    sim.ρ = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
-    sim.ρ_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
-    sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
+    sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
+    sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
+    sim.ϵ_r = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     nothing
@@ -211,9 +211,9 @@ function update_till_convergence!( sim::Simulation{T},
                                        max_n_iterations = max_n_iterations )
 
     grid::Grid = Grid(fssrb)
-    sim.ρ = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
-    sim.ρ_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
-    sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
+    sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
+    sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
+    sim.ϵ_r = DielectricDistribution(DielektrikumDistributionArray(fssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
 
@@ -324,9 +324,9 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
         fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
             PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.electric_potential.data)
 
-        sim.ρ = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
-        sim.ρ_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
-        sim.ϵ = DielectricDistribution(DielektrikumDistributionArray(fssrb), sim.electric_potential.grid)
+        sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
+        sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
+        sim.ϵ_r = DielectricDistribution(DielektrikumDistributionArray(fssrb), sim.electric_potential.grid)
         sim.point_types = PointTypes(PointTypeArray(fssrb), sim.electric_potential.grid)
     end
     nothing
@@ -698,7 +698,7 @@ end
 
 
 calculate_stored_energy(sim::Simulation) =
-    calculate_stored_energy(sim.electric_field, sim.ϵ)
+    calculate_stored_energy(sim.electric_field, sim.ϵ_r)
 
 function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistribution{T,3,S}) where {T <: SSDFloat, S}
     W::T = 0

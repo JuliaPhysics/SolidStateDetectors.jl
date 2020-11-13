@@ -109,7 +109,7 @@ function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :
         begin # r = 0 handling
             nφ::Int = size(fssrb.potential, 2) - 1
             gw_φ::Array{T, 2} = fssrb.geom_weights[2].weights
-            @inbounds for inz in 1:(size(fssrb.ϵ, 3) - 1)
+            @inbounds for inz in 1:(size(fssrb.ϵ_r, 3) - 1)
                 m::T = 0
                 l::T = 0
                 for inφ in 1:nφ

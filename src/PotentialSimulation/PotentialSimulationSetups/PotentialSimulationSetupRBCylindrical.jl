@@ -118,7 +118,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
 
         ϵ = Array{T, 3}(undef,    length(mpr), length(mpφ), length(mpz))
         ρ_tmp = Array{T, 3}(undef, length(mpr), length(mpφ), length(mpz))
-        ρ_fix_tmp = Array{T, 3}(undef, length(mpr), length(mpφ), length(mpz))
+        q_eff_fix_tmp = Array{T, 3}(undef, length(mpr), length(mpφ), length(mpz))
         for iz in 1:size(ϵ, 3)
             pos_z::T = mpz[iz]
             for iφ in 1:size(ϵ, 2)
@@ -130,23 +130,23 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
                     pos_r = axr[2] * 0.5
                 end
                 pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
+                ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
 
                 for ir in 2:size(ϵ, 1)
                     pos_r = mpr[ir]
                     pt = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                    ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
+                    ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd)
                 end
             end
         end
         ϵ0_inv::T = inv(ϵ0)
         ρ_tmp *= ϵ0_inv
-        ρ_fix_tmp *= ϵ0_inv
+        q_eff_fix_tmp *= ϵ0_inv
     
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
         ρ::Array{T, 4} = RBExtBy2Array(T, grid)
-        ρ_fix::Array{T, 4} = RBExtBy2Array(T, grid)
+        q_eff_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
             irbz::Int = rbidx(inz)
@@ -162,7 +162,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
                     # rbinds = irbz, iφ, ir, rbi
 
                     ρ_cell::T = 0
-                    ρ_fix_cell::T = 0
+                    q_eff_fix_cell::T = 0
                     if !is_weighting_potential
                         if inr > 1
                             ρ_cell += ρ_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
@@ -175,25 +175,25 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
                             ρ_cell += ρ_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
                             ρ_cell += ρ_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
 
-                            ρ_fix_cell += ρ_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[ ir, inφ,  iz] * wzr[inz] * wrr[inr] * wφl[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[ ir, inφ, inz] * wzl[inz] * wrr[inr] * wφl[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ,  iz] * wzr[inz] * wrr[inr] * wφl[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ, inz] * wzl[inz] * wrr[inr] * wφl[inφ]
 
-                            ρ_fix_cell += ρ_fix_tmp[inr,  iφ,  iz] * wzr[inz] * wrl[inr] * wφr[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[inr,  iφ, inz] * wzl[inz] * wrl[inr] * wφr[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[inr,  iφ,  iz] * wzr[inz] * wrl[inr] * wφr[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[inr,  iφ, inz] * wzl[inz] * wrl[inr] * wφr[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
                         else
                             ρ_cell += ρ_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
                             ρ_cell += ρ_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
                             ρ_cell += ρ_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
                             ρ_cell += ρ_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
 
-                            ρ_fix_cell += ρ_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
-                            ρ_fix_cell += ρ_fix_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
+                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
                         end
                     end
                     if inr > 1
@@ -238,7 +238,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
 
                         dV::T = Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                         ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
-                        ρ_fix[ irbz, iφ, ir, rbi ] = dV * ρ_fix_cell
+                        q_eff_fix[ irbz, iφ, ir, rbi ] = dV * q_eff_fix_cell
                     else
                         wrr_eps = ϵ[  ir,  iφ, inz + 1] * 0.5 * wzr[inz]
                         wrr_eps   += ϵ[  ir, inφ, inz + 1] * 0.5 * wzr[inz]
@@ -281,7 +281,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
 
                         dV = Δmpz[inz] * 2π * Δmpr_squared[inr]
                         ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
-                        ρ_fix[ irbz, iφ, ir, rbi ] = dV * ρ_fix_cell
+                        q_eff_fix[ irbz, iφ, ir, rbi ] = dV * q_eff_fix_cell
                     end
                 end
             end
@@ -302,7 +302,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
         rbpointtypes,
         volume_weights,
         ρ,
-        ρ_fix,
+        q_eff_fix,
         ϵ,
         geom_weights,
         sor_const,
@@ -380,7 +380,7 @@ function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, 
                 if ir == 1
                     dV = dV * 2π / Δmpφ
                 end
-                ρ[ir, iφ, iz] = fssrb.ρ[irbz, irbφ, irbr, rbi ] / dV
+                ρ[ir, iφ, iz] = fssrb.q_eff_imp[irbz, irbφ, irbr, rbi ] / dV
             end
         end
     end
@@ -404,7 +404,7 @@ function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3
                 if ir == 1
                     dV = dV * 2π / Δmpφ
                 end
-                ρ[ir, iφ, iz] = fssrb.ρ_fix[irbz, irbφ, irbr, rbi ] / dV
+                ρ[ir, iφ, iz] = fssrb.q_eff_fix[irbz, irbφ, irbr, rbi ] / dV
             end
         end
     end
@@ -413,5 +413,5 @@ end
 
 
 function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
-    return fssrb.ϵ
+    return fssrb.ϵ_r
 end
