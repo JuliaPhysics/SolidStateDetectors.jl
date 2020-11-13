@@ -87,7 +87,6 @@ function scan_and_merge_included_json_files!(parsed_dict)
                     @info("Please check: " * parsed_dict[k])
                 end
                 if isfile(filepath)
-                    println(filepath)
                     tmp = JSON.parsefile(filepath)
                     scan_and_merge_included_json_files!(tmp)
                     for sub_k in keys(tmp)
