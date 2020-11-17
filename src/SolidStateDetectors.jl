@@ -31,7 +31,7 @@ import Distributions
 import Tables
 import TypedTables
 
-import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
+import Base: size, sizeof, length, getindex, hasfield, setindex!, axes, getproperty, broadcast,
              range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
 import Base: show, print, println, display, +, -, &
 import Base.convert
