@@ -43,9 +43,9 @@ end
 @userplot Plot_electric_fieldlines
 @recipe function f(gdd::Plot_electric_fieldlines; φ = missing, r = missing, x = missing, y = missing, z = missing,
                     max_nsteps=3000,
-                    sampling = 2u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
-                    offset = 2u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
-                    spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
+                    sampling = 1u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
+                    offset = 1u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
+                    spacing = 2, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
                     full_det = false,
                     skip_contact = 1) # Usually the "core" contact is skipped, and the other contacts are equally sampled for charges to drift
     sim = gdd.args[1]
@@ -76,10 +76,10 @@ end
 
     show_full_det = full_det == true && dim_symbol == :φ ? true : false # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
-    dim_symbol != :r ? aspect_ratio --> 1 : nothing
+    (dim_symbol != :r && !(dim_symbol == :z && S== :cylindrical) ) ? aspect_ratio --> 1 : nothing
     title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=4))"*(dim_symbol == :φ ? "°" : "m")
-    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / rad" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-    yguide --> L"$z$ / m"
+    xguide --> (S == :cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
+    yguide --> "z / m"
     (S == :cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
     (S == :cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
 
@@ -234,14 +234,5 @@ end
             end
 
         end
-    end
-end
-export plot_electric_field
-function plot_electric_field(sim; field_lines = true, kwargs...)
-    @series begin
-        sim.electric_field, kwargs...
-    end
-    if field_lines == true
-        plot_electric_fieldlines!(sim; kwargs...)
     end
 end
