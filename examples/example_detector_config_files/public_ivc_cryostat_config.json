@@ -23,10 +23,7 @@
             "include" : "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/channels/02.json"
         },
 		{
-			"include": "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/cryostat_base.json"
-		},
-		{
-            "include": "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/cryostat_hat.json"
+			"include": "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/cryostat.json"
 		}
     ]
 }

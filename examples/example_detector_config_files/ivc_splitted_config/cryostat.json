@@ -1,7 +1,7 @@
 {
     "type": "passive",
     "material": "Al",
-    "name": "Hat",
+    "name": "Cryostat",
     "potential": 0,
     "geometry": {
         "type": "union",
@@ -34,6 +34,21 @@
                 "z": {
                     "from": 100,
                     "to": 104
+                }
+            },
+            {
+                "type": "tube",
+                "r": {
+                    "from": 0,
+                    "to": 59
+                },
+                "phi": {
+                    "from": 0,
+                    "to": 360
+                },
+                "z": {
+                    "from": -10.0,
+                    "to": -5.0
                 }
             }
         ]
