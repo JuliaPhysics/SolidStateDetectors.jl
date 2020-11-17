@@ -129,8 +129,8 @@ end
             if resample
                 #resample the data as non-uniform polar heatmaps are not shown correctly in GR
                 #this can be removed if implemented in GR
-                resample_gr::Vector{T} = range(g.r[1], g.r[end], step = (g.r[end] - g.r[1])/(5*length(g.r)))
-                resample_gφ::Vector{T} = range(g.φ[1], g.φ[end], step = (g.φ[end] - g.φ[1])/(5*length(g.φ)))
+                resample_gr::Vector{T} = range(g.r.interval.left, g.r.interval.right, step = (g.r.interval.right - g.r.interval.left)/(5*length(g.r)))
+                resample_gφ::Vector{T} = range(g.φ.interval.left, g.φ.interval.right, step = (g.φ.interval.right - g.φ.interval.left)/(5*length(g.φ)))
                 @info "Data is resampled to correctly display non-uniform polar plot in GR.\n"*
                       "If this is not required, please use the keyword argument `resample = false`\n"*
                       "Points in r: $(length(resample_gr))\nPoints in φ: $(length(resample_gφ))"
