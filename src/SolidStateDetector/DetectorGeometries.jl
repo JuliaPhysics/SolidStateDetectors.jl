@@ -31,15 +31,16 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     elseif endswith(filename, ".json")
         dicttext = read(filename, String)
         parsed_dict = JSON.parse(dicttext)
+        scan_and_merge_included_json_files!(parsed_dict)
     elseif endswith(filename, ".yaml")
         parsed_dict = YAML.load_file(filename)
     elseif endswith(filename, ".config")
         siggen_dict = readsiggen(filename)
         parsed_dict = siggentodict(siggen_dict)
     else
-        error("currently only .json, .yaml and .config (SigGen) files are supported.")
+        error("Currently only .json and .yaml files are supported.")
     end
-    scan_and_merge_included_json_files!(parsed_dict)
+    parsed_dict
 end
 
 function yaml2json_convert(filename::String)
@@ -58,16 +59,15 @@ function yaml2json(directory::String)# or filename
         end
     end
 end
-
 function scan_and_merge_included_json_files!(parsed_dict)
     key_word = "include"
     for k in keys(parsed_dict)
-        is_subdict = hasfield(typeof(parsed_dict[k]), :keys)
+        is_subdict = typeof(parsed_dict[k]) <: Dict
         if !is_subdict && string(k) != key_word
-            typeof(parsed_dict[k]) == Array{Any,1} ? is_subdict = true : is_subdict = false
+            typeof(parsed_dict[k]) <: Array ? is_subdict = true : is_subdict = false
         end
         if is_subdict
-            scan_dict!(parsed_dict[k])
+            scan_and_merge_included_json_files!(parsed_dict[k])
         elseif string(k) == key_word
             files = []
             if typeof(parsed_dict[k]) == String
@@ -77,13 +77,22 @@ function scan_and_merge_included_json_files!(parsed_dict)
             end
             for file in files
                 if isfile(file)
-                    tmp = JSON.parsefile(file)
-                    scan_dict!(tmp)
+                    filepath = file
+                elseif occursin("@__DIR__", file)
+                    # This step is only neccessary to read the example files
+                    pkg_dir = pathof(SolidStateDetectors)
+                    filepath = pkg_dir[1:end-length(basename(pkg_dir))]
+                    filepath *= split(file, "@__DIR__/")[2]
+                else
+                    @info("Wrong file path?")
+                    @info("Please check: " * parsed_dict[k])
+                end
+                if isfile(filepath)
+                    tmp = JSON.parsefile(filepath)
+                    scan_and_merge_included_json_files!(tmp)
                     for sub_k in keys(tmp)
                         parsed_dict[sub_k] = tmp[sub_k]
                     end
-                else
-                    @info("Wrong file path? " * parsed_dict[k])
                 end
             end
             delete!(parsed_dict, k)

@@ -1,0 +1,29 @@
+{
+    "include": [
+        "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/grid.json",
+        "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/units.json"
+    ],
+    "name": "Public Inverted Coax",
+    "medium": "vacuum",
+    "objects": [
+        {
+            "material": "HPGe",
+            "type": "semiconductor",
+            "bulk_type": "p",
+            "temperature": 77.0,
+            "include" : [
+                "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/detector_geometry.json",
+                "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/charge_density_model.json"
+            ]
+        },
+        {
+            "include" : "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/channels/01.json"
+        },
+        {
+            "include" : "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/channels/02.json"
+        },
+		{
+			"include": "@__DIR__/../examples/example_detector_config_files/ivc_splitted_config/cryostat.json"
+		}
+    ]
+}
