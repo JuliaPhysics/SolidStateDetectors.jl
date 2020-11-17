@@ -64,7 +64,7 @@ function scan_and_merge_included_json_files!(parsed_dict)
     for k in keys(parsed_dict)
         is_subdict = typeof(parsed_dict[k]) <: Dict
         if !is_subdict && string(k) != key_word
-            typeof(parsed_dict[k]) == Array{Any,1} ? is_subdict = true : is_subdict = false
+            typeof(parsed_dict[k]) <: Array ? is_subdict = true : is_subdict = false
         end
         if is_subdict
             scan_and_merge_included_json_files!(parsed_dict[k])
