@@ -131,7 +131,7 @@ function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where T
     samples = CartesianPoint{T}[]
     for x in -hp.rOuter : stepsize[1] : hp.rOuter
         for y in -hp.rOuter : stepsize[2]: hp.rOuter
-            if CartesianPoint{T}(x, y, 0) in hp
+            if (ismissing(hp.translate) ? CartesianPoint{T}(x, y, 0) : CartesianPoint{T}(x, y, 0) + hp.translate) in hp
                 for z in -hp.h/2 : stepsize[3] : hp.h/2
                     push!(samples, CartesianPoint{T}(x, y, z))
                 end
