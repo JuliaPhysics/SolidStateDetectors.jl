@@ -2,15 +2,16 @@ struct HexagonalPrism{T} <: AbstractVolumePrimitive{T, 3} ## Only upright hexago
     rInner::T
     rOuter::T
     h::T #total height
-    translate::Union{CartesianVector{T}, Missing}#origin at middle of hexagonal prism
+    translate::Union{CartesianVector{T}, Missing} #origin at middle of hexagonal prism
+    rotZ::T #rotation around z-axis, counterclockwise when looking from the top
 end
 
 # You also have to implement the function to obtain the primitive from a config file (so an dic)
 # You also should provide a example config file containing this new primitive
 function HexagonalPrism{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, inputunit_dict::Dict{String,Unitful.Units})::HexagonalPrism{T} where {T <: SSDFloat}
-    # ... parse values from dict to NewPrimitive{T}(...)
+
     if haskey(dict, "translate")
-        translate::CartesianPoint{T} = CartesianPoint{T}(
+        translate = CartesianPoint{T}(
             haskey(dict["translate"],"x") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["x"]) * inputunit_dict["length"] ))) : T(0),
             haskey(dict["translate"],"y") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["y"]) * inputunit_dict["length"] ))) : T(0),
             haskey(dict["translate"],"z") ? geom_round(ustrip(uconvert(u"m", T(dict["translate"]["z"]) * inputunit_dict["length"] ))) : T(0))
@@ -23,13 +24,15 @@ function HexagonalPrism{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, input
         geom_round(0), geom_round(ustrip(uconvert(u"m", T(dict["r"]["to"]) * inputunit_dict["length"])))
     end
     h::T = ustrip(uconvert(u"m", dict["h"] * inputunit_dict["length"]))
-    return HexagonalPrism{T}(rInner, rOuter, h, translate)
+    rotZ::T = haskey(dict, "rotZ") ? geom_round(T(ustrip(uconvert(u"rad", T(dict["rotZ"]) * inputunit_dict["angle"])))) : T(0)
+    return HexagonalPrism{T}(rInner, rOuter, h, translate, rotZ)
 end
 
 # is a point inside the hexagonal prism?
-function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
+function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T <: SSDFloat}
     pt = ismissing(hp.translate) ? pt : pt - hp.translate
     cpt = CylindricalPoint(pt) #shift pt to prism's frame
+    cpt = CylindricalPoint{T}( cpt.r, cpt.φ + hp.rotZ, cpt.z ) #rotate it by rotZ
     minRadInner = sqrt(3)/2*hp.rInner
     minRadOuter = sqrt(3)/2*hp.rOuter
     # Use hexagonal symmetry to sweep the point into a basic triangle
@@ -37,14 +40,11 @@ function in(pt::CartesianPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
 
     return abs(pt.z) <= hp.h/2 && # Within the height
             cpt.r <= hp.rOuter && # within outer radius
-            if cpt.r >= minRadInner # Inside minimal inner radius
-                ((cpt.r*cos(angle) >= minRadInner) && (cpt.r*cos(angle) <= minRadOuter))
-            else # Inside inner radius
-                false
-            end
+            cpt.r >= minRadInner && # Inside minimal inner radius
+            ((cpt.r*cos(angle) >= minRadInner) && (cpt.r*cos(angle) <= minRadOuter))
 end
 
-function in(pt::CylindricalPoint{T}, hp::HexagonalPrism{T})::Bool where {T}
+@inline function in(pt::CylindricalPoint{T}, hp::HexagonalPrism{T})::Bool where {T <: SSDFloat}
     return in(CartesianPoint(pt), hp)
 end
 
@@ -57,9 +57,9 @@ function (+)(hp::HexagonalPrism{T}, translate::Union{CartesianVector{T}, Missing
     if ismissing(translate)
         return hp
     elseif ismissing(hp.translate)
-        return HexagonalPrism(hp.rInner, hp.rOuter, hp.h, translate)
+        return HexagonalPrism(hp.rInner, hp.rOuter, hp.h, translate, hp.rotZ)
     else
-        return HexagonalPrism(hp.rInner, hp.rOuter, hp.h, hp.translate + translate)
+        return HexagonalPrism(hp.rInner, hp.rOuter, hp.h, hp.translate + translate, hp.rotZ)
     end
 end
 
@@ -73,7 +73,7 @@ end
         pts_bottom_inner = []
 
         #find all vertices, this loop has been tested and works
-        for φ in [deg2rad(30),deg2rad(90), deg2rad(150), deg2rad(210), deg2rad(270), deg2rad(330)]
+        for φ in deg2rad.(30:60:330) .- hp.rotZ
             pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
             push!(pts_top_outer, pt_top_outer)
             pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
@@ -127,7 +127,7 @@ function get_important_points(hp::HexagonalPrism{T}, ::Val{:y})::Vector{T} where
 end
 
 #and a sample function to paint the primitive on the grid (necessary if the object is small)
-function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where T
+function sample(hp::HexagonalPrism{T}, stepsize::Vector{T})  where {T <: SSDFloat}
     samples = CartesianPoint{T}[]
     for x in -hp.rOuter : stepsize[1] : hp.rOuter
         for y in -hp.rOuter : stepsize[2]: hp.rOuter

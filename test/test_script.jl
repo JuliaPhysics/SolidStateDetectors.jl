@@ -1,5 +1,5 @@
 #=
-    This is a script to test the hole simulation chain with all standard detector types.
+    This is a script to test the whole simulation chain with all standard detector types.
     The script also produces some output plots but only very basic ones, since it
     is only to test the core functionality of the package. (So not detector specific plots)
 =#
@@ -10,7 +10,7 @@ mkpath(outputdir)
 
 @info "Loading packages"
 using Plots; pyplot()
-using SolidStateDetectors
+using SolidStateDetectors; SSD = SolidStateDetectors
 
 T = Float32
 @info "Testing now for Float32:"
@@ -73,7 +73,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
             )
         end
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nref)_refinements"))
-        if nref != nrefs[end] 
+        if nref != nrefs[end]
             refine!(simulation, ElectricPotential, (1e-5, 1e-5, 1e-5), (1e-5, 1e-5, 1e-5), update_other_fields = true)
         end
         @show size(simulation.electric_potential.grid)
@@ -111,11 +111,11 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
     elseif key == :CGD
-        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.005, 0.005  ) ] 
+        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.005, 0.005  ) ]
     elseif key == :BEGe
-        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.015  ) ] 
+        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.015  ) ]
     elseif key == :Coax
-        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.005  ) ] 
+        CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.005  ) ]
     elseif key == :Spherical
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.00, deg2rad(0), 0.0  ) ]
     end
@@ -130,7 +130,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     savefig(joinpath(outputdir, "$(key)_4_charge_drift"))
 
     # signals[:, 2] *= -1
-    plot(event.signals, size = (1200, 600), lw = 1.5)
+    plot(event.waveforms, size = (1200, 600), lw = 1.5)
     savefig(joinpath(outputdir, "$(key)_5_induced_signals"))
 
 end

@@ -31,7 +31,6 @@
 		{
 			"type": "semiconductor",
 			"material": "HPGe",
-			"bulk_type": "n",
 			"temperature": 77,
 			"charge_density_model": {
 				"name": "linear",
@@ -55,12 +54,12 @@
 					"to": 0.5
 				},
 				"y":{
-					"from": -5.1,
-					"to": 5.1
+					"from": -6,
+					"to": 6
 				},
 				"z": {
-					"from": -5.1,
-					"to": 5.1
+					"from": -6,
+					"to": 6
 				}
 			}
 		},
@@ -77,12 +76,12 @@
 					"to": -0.5
 				},
 				"y":{
-					"from": -5.1,
-					"to": 5.1
+					"from": -6,
+					"to": 6
 				},
 				"z": {
-					"from": -5.1,
-					"to": 5.1
+					"from": -6,
+					"to": 6
 				}
 			}
 		},
@@ -99,12 +98,12 @@
 					"to": 0.5
 				},
 				"y":{
-					"from": -5.1,
-					"to": 5.1
+					"from": -6,
+					"to": 6
 				},
 				"z": {
-					"from":-5.1,
-					"to": 5.1
+					"from":-6,
+					"to": 6
 				}
 			}
 		}

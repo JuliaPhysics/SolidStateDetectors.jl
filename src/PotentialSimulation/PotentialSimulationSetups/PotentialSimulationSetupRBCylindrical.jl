@@ -104,13 +104,6 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
             grid_boundary_factors::NTuple{3, NTuple{2, T}} = ((grid_boundary_factor_r_left, grid_boundary_factor_r_right), (grid_boundary_factor_φ_left, grid_boundary_factor_φ_right), (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-
-        # bulk_is_ptype::Bool = ssd.bulk_type == :ptype ? true : false
-        bulk_is_ptype::Bool = if length(ssd.semiconductors) > 0
-            ssd.semiconductors[1].bulk_type == :ptype ? true : false
-        else
-            true
-        end
         bias_voltages::Vector{T} = if length(ssd.contacts) > 0
             [i.potential for i in ssd.contacts]
         else
@@ -317,7 +310,6 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
         maximum_applied_potential,
         minimum_applied_potential,
         depletion_handling_potential_limit,
-        bulk_is_ptype,
         grid_boundary_factors
      )
 

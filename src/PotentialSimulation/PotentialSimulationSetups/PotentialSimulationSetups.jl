@@ -28,7 +28,6 @@ struct PotentialSimulationSetupRB{T, N1, N2, S} <: AbstractPotentialSimulationSe
     maximum_applied_potential::T
     minimum_applied_potential::T
     depletion_handling_potential_limit::T
-    bulk_is_ptype::Bool
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
@@ -58,7 +57,6 @@ function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1,
     s += sizeof(fssrb.maximum_applied_potential)
     s += sizeof(fssrb.minimum_applied_potential)
     s += sizeof(fssrb.depletion_handling_potential_limit)
-    s += sizeof(fssrb.bulk_is_ptype)
     s += sizeof(fssrb.grid_boundary_factors)
     return s
 end

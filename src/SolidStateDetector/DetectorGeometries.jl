@@ -1,9 +1,3 @@
-bulk_types = Dict("n" => :ntype,
-    "n-type" => :ntype,
-    "ntype" => :ntype,
-    "p-type" => :ptype,
-    "ptype" => :ptype,
-    "p" => :ptype  )
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
     "deg" => u"°","rad" => u"rad", #angle
@@ -416,13 +410,6 @@ function json_to_dict(inputfile::String)::Dict
         parsed_json_file = JSON.parse(dicttext)
     end
     return parsed_json_file
-end
-function bounding_box(d::SolidStateDetector{T})::NamedTuple where T
-    (
-    r_range = ClosedInterval{T}(0.0,d.crystal_radius),
-    φ_range = ClosedInterval{T}(0.0,2π),
-    z_range = ClosedInterval{T}(0.0,d.crystal_length)
-    )
 end
 
 function Grid(  detector::SolidStateDetector{T, :cylindrical};

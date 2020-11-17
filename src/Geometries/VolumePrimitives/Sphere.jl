@@ -3,11 +3,11 @@ struct Sphere{T} <: AbstractVolumePrimitive{T, 3}
     r::T
 end
 
-function in(pt::CartesianPoint{T}, s::Sphere{T})::Bool where {T}
-    v::CartesianVector{T} = s.org - pt
+function in(pt::CartesianPoint{T}, s::Sphere{T})::Bool where {T <: SSDFloat}
+    v::CartesianVector{T} = pt - s.org
     return norm(v) <= s.r
 end
-function in(pt::CylindricalPoint{T}, s::Sphere{T})::Bool where {T}
+@inline function in(pt::CylindricalPoint{T}, s::Sphere{T})::Bool where {T <: SSDFloat}
     return in(CartesianPoint(pt), s)
 end
 
@@ -72,7 +72,7 @@ end
 function get_important_points(s::Sphere{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
     v::Vector{T} = geom_round.(T[ s.org.x - s.r, s.org.x, s.org.x + s.r, 
                                   s.org.y - s.r, s.org.y, s.org.y + s.r ]) 
-    return findall(r -> r >= 0 , v)
+    return unique(filter(r -> r >= 0 , v))
 end
 function get_important_points(s::Sphere{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
     return T[ ]

@@ -2,16 +2,15 @@
     innerloops!(  iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
-                                bulk_is_ptype::Val{_bulk_is_ptype}  )::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype}
+                                )::Nothing where {T, even_points, depletion_handling_enabled}
 
 (Vectorized) inner loop for Cartesian coordinates. This function does all the work in the field calculation.                            
 """
 @fastmath function innerloops!( iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
-                                bulk_is_ptype::Val{_bulk_is_ptype}, 
                                 is_weighting_potential::Val{_is_weighting_potential},
-                                only2d::Val{only_2d})::Nothing where {T, even_points, depletion_handling_enabled, _bulk_is_ptype, _is_weighting_potential, only_2d}
+                                only2d::Val{only_2d})::Nothing where {T, even_points, depletion_handling_enabled, _is_weighting_potential, only_2d}
     @inbounds begin 
         inz::Int = iz - 1 
                 
@@ -130,43 +129,35 @@
                 new_potential = muladd(new_potential, fssrb.sor_const[1], old_potential)
 
                 if depletion_handling_enabled
-                    if _bulk_is_ptype # p-type detectors
-                        if new_potential < fssrb.minimum_applied_potential
-                            # new_potential = fssrb.minimum_applied_potential
+                    if new_potential < fssrb.minimum_applied_potential || new_potential > fssrb.maximum_applied_potential
+                        new_potential -= fssrb.ρ[ix, iy, iz, rb_tar_idx] * fssrb.volume_weights[ix, iy, iz, rb_tar_idx] * fssrb.sor_const[1]
+                        if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
+                    elseif fssrb.ρ[ix, iy, iz, rb_tar_idx] < 0 # p-type material -> charge density is negative 
+                        vmin::T = ifelse( vxr <  vxl, vxr,  vxl)
+                        vmin    = ifelse( vyr < vmin, vyr, vmin)
+                        vmin    = ifelse( vyl < vmin, vyl, vmin)
+                        vmin    = ifelse( vzr < vmin, vzr, vmin)
+                        vmin    = ifelse( vzl < vmin, vzl, vmin)
+                        if new_potential <= vmin # bubble point
                             new_potential -= fssrb.ρ[ix, iy, iz, rb_tar_idx] * fssrb.volume_weights[ix, iy, iz, rb_tar_idx] * fssrb.sor_const[1]
                             if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
-                        else
-                            vmin::T = ifelse( vxr <  vxl, vxr,  vxl)
-                            vmin    = ifelse( vyr < vmin, vyr, vmin)
-                            vmin    = ifelse( vyl < vmin, vyl, vmin)
-                            vmin    = ifelse( vzr < vmin, vzr, vmin)
-                            vmin    = ifelse( vzl < vmin, vzl, vmin)
-                            if new_potential <= vmin # bubble point
-                                new_potential -= fssrb.ρ[ix, iy, iz, rb_tar_idx] * fssrb.volume_weights[ix, iy, iz, rb_tar_idx] * fssrb.sor_const[1]
-                                if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
-                            else # normal point
-                                if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] -= undepleted_bit end # unmark this point
-                            end
+                        else # normal point
+                            if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] -= undepleted_bit end # unmark this point
                         end
-                    else # n-type detectors
-                        if new_potential > fssrb.maximum_applied_potential
+                    else # n-type material -> charge density is positive 
+                        vmax::T = ifelse( vxr >  vxl, vxr,  vxl)
+                        vmax    = ifelse( vyr > vmax, vyr, vmax)
+                        vmax    = ifelse( vyl > vmax, vyl, vmax)
+                        vmax    = ifelse( vzr > vmax, vzr, vmax)
+                        vmax    = ifelse( vzl > vmax, vzl, vmax)
+                        if new_potential >= vmax # bubble point
                             new_potential -= fssrb.ρ[ix, iy, iz, rb_tar_idx] * fssrb.volume_weights[ix, iy, iz, rb_tar_idx] * fssrb.sor_const[1]
                             if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
-                        else
-                            vmax::T = ifelse( vxr >  vxl, vxr,  vxl)
-                            vmax    = ifelse( vyr > vmax, vyr, vmax)
-                            vmax    = ifelse( vyl > vmax, vyl, vmax)
-                            vmax    = ifelse( vzr > vmax, vzr, vmax)
-                            vmax    = ifelse( vzl > vmax, vzl, vmax)
-                            if new_potential >= vmax # bubble point
-                                new_potential -= fssrb.ρ[ix, iy, iz, rb_tar_idx] * fssrb.volume_weights[ix, iy, iz, rb_tar_idx] * fssrb.sor_const[1]
-                                if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
-                            else # normal point -> unmark
-                                if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] -= undepleted_bit end # unmark this point
-                            end
+                        else # normal point -> unmark
+                            if (fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0) fssrb.pointtypes[ix, iy, iz, rb_tar_idx] -= undepleted_bit end # unmark this point
                         end
                     end
-                end 
+                  end 
 
                 fssrb.potential[ix, iy, iz, rb_tar_idx]::T = ifelse(fssrb.pointtypes[ix, iy, iz, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
             end # x loop
