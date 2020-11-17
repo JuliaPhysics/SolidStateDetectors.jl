@@ -75,7 +75,6 @@ end
 
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-
     ρ, cross_section, idx, value
 end
 
@@ -96,7 +95,7 @@ end
     pt, cross_section, idx, value
 end
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool=false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
     g::Grid{T, 3, :cylindrical} = sp.grid
     @series begin
         seriestype := :heatmap
@@ -127,6 +126,8 @@ end
             g.φ, g.z, sp.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
+            xguide --> ""
+            yguide --> ""
             if minimum(sp.data[:,:,idx]) == maximum(sp.data[:,:,idx]) clims --> (sp.data[1,1,idx], sp.data[1,1,idx]+1) end #remove with Plots v1.7.4
             g.φ, g.r, sp.data[:,:,idx]
         end
