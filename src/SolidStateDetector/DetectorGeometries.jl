@@ -80,7 +80,8 @@ function scan_and_merge_included_json_files!(parsed_dict)
                     filepath = file
                 elseif occursin("@__DIR__", file)
                     # This step is only neccessary to read the example files
-                    filepath = split(pathof(SolidStateDetectors), basename(pathof(SolidStateDetectors)))[1]
+                    pkg_dir = pathof(SolidStateDetectors)
+                    filepath = pkg_dir[1:end-length(basename(pkg_dir))]
                     filepath *= split(file, "@__DIR__/")[2]
                 else
                     @info("Wrong file path?")
