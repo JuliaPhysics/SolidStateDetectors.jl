@@ -46,7 +46,8 @@ end
                     sampling = 2u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
                     offset = 2u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
                     spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
-                    full_det = false)
+                    full_det = false,
+                    skip_contact = 1) # Usually the "core" contact is skipped, and the other contacts are equally sampled for charges to drift
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
     T = SolidStateDetectors.get_precision_type(sim.detector)
@@ -82,7 +83,7 @@ end
     (S == :cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
     (S == :cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
 
-    contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
+    contacts_to_spawn_charges_for = filter!(x -> x.id !=skip_contact, Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = CartesianPoint{T}[]
     spawn_positions_mirror = CartesianPoint{T}[] # Will only be used if show_full_det == true
     grid = sim.electric_field.grid
@@ -127,7 +128,6 @@ end
 
             v_Xsec_plane = sampled_planes[searchsortednearest(sampled_planes,v)]
             if abs(v-v_Xsec_plane) > sampling_vector_pool[dim_number] continue; end
-            @info("v_plane $v_Xsec_plane")
 
             # v_Xsec_plane_mirror = show_full_det ? sampled_planes[searchsortednearest(sampled_planes,v+π)] : v_Xsec_plane
             sampled_points_Xsec = sample_pool[findall(x-> (abs(x[dim_number] - v_Xsec_plane)<sampling_vector_pool[dim_number]/3), sample_pool)]
@@ -142,7 +142,6 @@ end
             if show_full_det # generate a seperate pool of charges for the + 180 deg direction. This is necessary to later know which drift paths have to be mirrored.
                 v_Xsec_plane_mirror =sampled_planes[searchsortednearest(sampled_planes,v+π)]
                 if abs(v+π - v_Xsec_plane_mirror) > sampling_vector_pool[dim_number] continue; end
-                @info("v_plane_mirror $v_Xsec_plane")
 
                 sampled_points_Xsec_mirror = sample_pool[findall(x-> (abs(x[dim_number] - v_Xsec_plane_mirror)<sampling_vector_pool[dim_number]/3), sample_pool)]
                 sampled_points_Xsec_cart_mirror = CartesianPoint.(sampled_points_Xsec_mirror)
@@ -161,12 +160,11 @@ end
     show_full_det ? spawn_positions = vcat(spawn_positions,spawn_positions_mirror) : nothing
     @info "$(round(Int,length(spawn_positions)/spacing)) drifts are now being simulated..."
 
-    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid) #Interpolate the Electric fields, in which the charges will drift. Is passed to the drift function.
+    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data      , sim.electric_field.grid) #Interpolate the Electric fields, in which the charges will drift. Is passed to the drift function.
     el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
 
     @showprogress for (ipos, pos) in enumerate(spawn_positions) # Charge drift and plotting loop. Not optimized for speed, but it doesnt have to be. Uses low level drift function for more contorl.
         if ((spacing-1)+ipos)%spacing == 0
-
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field_itp, verbose = false )
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
