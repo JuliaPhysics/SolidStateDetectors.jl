@@ -1,18 +1,3 @@
-@recipe function f(ρ::EffectiveChargeDensity{T,3,:cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
-
-    if !(ρ.grid[2][end] - ρ.grid[2][1] ≈ 2π)
-        ρ = get_2π_potential(ρ, n_points_in_φ = 72)
-    end
-
-    g::Grid{T, 3, :cylindrical} = ρ.grid
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
-
-    seriescolor --> :inferno
-    title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-
-    ρ, cross_section, idx, value
-end
-
 @recipe function f( ef::ElectricField{T, 3, :cylindrical};
                     r = missing,
                     φ = missing,
@@ -24,9 +9,12 @@ end
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    aspect_ratio --> 1
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
+    cross_section != :r ? aspect_ratio --> 1 : nothing
+
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
+    colorbar_title --> "Electric Field Strength in V / m"
+
     ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential, full_det
 
 end
@@ -34,82 +22,31 @@ end
 @recipe function f(ef::ElectricField{T, 3, :cartesian};
                     x = missing,
                     y = missing,
-                    z = missing) where {T <: SSDFloat}
+                    z = missing,
+                    contours_equal_potential = false) where {T <: SSDFloat}
 
     g::Grid{T, 3, :cartesian} = ef.grid
-
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
-
-    ElectricPotential(ef_magn,g), cross_section, idx, value
-end
-
-
-@userplot Plot_electric_field_
-@recipe function f(gdd::Plot_electric_field_; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    contours_equal_potential = true, full_det = false)
-    sim = gdd.args[1]
-    S = get_coordinate_system(sim.electric_field.grid)
-    T = SolidStateDetectors.get_precision_type(sim.detector)
-
-    dim_array = [φ, r, x, y, z]
-    dim_symbols_array = [:φ, :r, :x, :y, :z]
-    if isempty(skipmissing(dim_array))
-        if S == :cylindrical
-            v::T = 0
-            dim_number = 2
-            dim_symbol = :φ
-        elseif S == :cartesian
-            dim_number = 1
-            dim_symbol = :x
-            v = sim.electric_field.grid[dim_number][ div(length(sim.electric_field.grid[dim_number]), 2) ]
-        end
-    elseif sum(ismissing.(dim_array)) == 4
-        dim_number = findfirst(x -> !ismissing(x), dim_array)
-        dim_symbol = dim_symbols_array[dim_number]
-        v = dim_array[dim_number]
-        if dim_symbol == :φ v = deg2rad(v) end
-    else
-        throw(ArgumentError("Only one keyword for a certain dimension is allowed. One of 'φ', 'r', 'x', 'y', 'z'"))
-    end
-
-    S::Symbol = get_coordinate_system(sim.detector)
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
     aspect_ratio --> 1
-    title --> (field_lines ? "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))" : "Electric Field @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))")
-    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-    yguide --> L"$z$ / m"
-        @series begin
-            # contours_equal_potential --> contours_equal_potential
-            if dim_symbol == :φ
-                φ --> v
-                full_det --> full_det
-            elseif dim_symbol == :z
-                if S == :cylindrical error("Electric field plot not yet implemented for z in cylindrical coordinates") end
-                z --> v
-                if S == :cylindrical
-                    proj --> :polar
-                end
-            elseif dim_symbol == :r
-                error("Electric field plot not yet implemented for r")
-                r --> v
-            elseif dim_symbol == :x
-                x --> v
-            elseif dim_symbol == :y
-                y --> v
-            end
-            #clims --> missing
-            scaling --> scaling
-            potential ? sim.electric_potential : sim.electric_field
-        end
+
+    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
+    colorbar_title --> "Electric Field Strength in V / m"
+
+    ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential
 end
+
+
 
 @userplot Plot_electric_fieldlines
 @recipe function f(gdd::Plot_electric_fieldlines; φ = missing, r = missing, x = missing, y = missing, z = missing,
-                    sampling = 4u"mm", spacing = 1, max_nsteps=3000, scaling = 1.0,
-                    potential=true, contours_equal_potential=true, offset = (0.002), full_det = false)
+                    max_nsteps=3000,
+                    sampling = 2u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
+                    offset = 2u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
+                    spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
+                    full_det = false)
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
     T = SolidStateDetectors.get_precision_type(sim.detector)
@@ -133,117 +70,112 @@ end
         v = dim_array[dim_number]
         if dim_symbol == :φ v = deg2rad(v) end
     else
-        throw(ArgumentError("Only one keyword for a certain dimension is allowed. One of 'φ', 'r', 'x', 'y', 'z'"))
+        throw(ArgumentError("Only one keyword for a certain dimension s allowed. One of 'φ', 'r', 'x', 'y', 'z'"))
     end
 
-    S::Symbol = get_coordinate_system(sim.detector)
-    aspect_ratio --> 1
-    title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))"
-    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-    yguide --> L"$z$ / m"
+    show_full_det = full_det == true && dim_symbol == :φ ? true : false # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
-    PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
+    dim_symbol != :r ? aspect_ratio --> 1 : nothing
+    title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=4))"*(dim_symbol == :φ ? "°" : "m")
+    xguide --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / rad" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
+    yguide --> L"$z$ / m"
+    (S == :cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
+    (S == :cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
+
     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = CartesianPoint{T}[]
-    spawn_positions_mirror = CartesianPoint{T}[]
+    spawn_positions_mirror = CartesianPoint{T}[] # Will only be used if show_full_det == true
     grid = sim.electric_field.grid
-    # pt_offset = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ), offset)))
-    # pt_offset_mirror = CartesianVector(CartesianPoint(CylindricalPoint{T}(offset, deg2rad(φ)+π, offset)))
-    sampling_vector_pool = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
-    function get_closest_samples(pt::PT, sampled_points_pool) where PT
-        pool1 = unique!(map(x->x[1],sampled_points_pool))
-        pool2 = unique!(map(y->y[2],sampled_points_pool))
-        pool3 = unique!(map(z->z[3],sampled_points_pool))
-        idcs_closest = [searchsortednearest(pool1,pt[2]), searchsortednearest(pool2, pt[2]), searchsortednearest(pool3,pt[3])]
+    function get_closest_samples(pt::PT, sampled_points_pool) where PT # Looks for the closest neighbors of a sample point in pool of samplesthe three major directions and give pairs.
+        pool1 = unique!(map(x->x[1], sampled_points_pool))
+        pool2 = unique!(map(y->y[2], sampled_points_pool))
+        pool3 = unique!(map(z->z[3], sampled_points_pool))
+        idcs_closest = [searchsortednearest(pool1, pt[1]), searchsortednearest(pool2, pt[2]), searchsortednearest(pool3, pt[3])]
 
         pairs = [
-          (PT(pool1[maximum([idcs_closest[1]-1,1])], pool2[idcs_closest[2]], pool3[idcs_closest[3]]),PT(pool1[minimum([idcs_closest[1]+1,length(pool1)])], pool2[idcs_closest[2]], pool3[idcs_closest[3]]) )
-          (PT(pool1[idcs_closest[1]], pool2[maximum([idcs_closest[2]-1,1])], pool3[idcs_closest[3]]),PT(pool1[idcs_closest[1]], pool2[minimum([idcs_closest[2]+1,length(pool2)])], pool3[idcs_closest[3]]) )
-          (PT(pool1[idcs_closest[1]], pool2[idcs_closest[2]], pool3[maximum([idcs_closest[3]-1,1])]),PT(pool1[idcs_closest[1]], pool2[idcs_closest[2]], pool3[minimum([idcs_closest[3]+1,length(pool3)])]) )
+          ( PT(pool1[maximum([idcs_closest[1]-1,1])], pool2[idcs_closest[2]], pool3[idcs_closest[3]] ), PT(pool1[minimum([idcs_closest[1]+1,length(pool1)])], pool2[idcs_closest[2]], pool3[idcs_closest[3]]) )
+          ( PT(pool1[idcs_closest[1]], pool2[maximum([idcs_closest[2]-1,1])], pool3[idcs_closest[3]] ), PT(pool1[idcs_closest[1]], pool2[minimum([idcs_closest[2]+1,length(pool2)])], pool3[idcs_closest[3]]) )
+          ( PT(pool1[idcs_closest[1]], pool2[idcs_closest[2]], pool3[maximum([idcs_closest[3]-1,1])] ), PT(pool1[idcs_closest[1]], pool2[idcs_closest[2]], pool3[minimum([idcs_closest[3]+1,length(pool3)])]) )
         ]
     end
-    sampling_vector = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
     symbol2dimnumber_dict = Dict(:r => 1, :x => 1, :y => 2, :φ => 2, :z => 3)
-    symbol2dimnumber(dim_symbol) = symbol2dimnumber_dict[dim_symbol]
-    # if dim_symbol == :φ
-    #     sampling_vector[2] = 3π # set to something that with one step surely exceedsd the contact dimensions. This way only a plane is sampled
-    # elseif dim_symbol == :r
-    #     sampling_vector[1] = 1000
-    # elseif sim_symbol == :x
-    #     sampling_vector[1] = 1000
-    # elseif sim_symbol == :y
-    #     sampling_vector[2] = 1000
-    # elseif sim_symbol == :z
-    #     sampling_vector[3] = 1000
-    # end
-    sampling_vector[symbol2dimnumber(dim_symbol)] = 1000 # set to something that with one step surely exceedsd the contact dimensions. This way only a plane is sampled
-    @info(sampling_vector_pool)
-    @info(sampling_vector)
-    @info(dim_symbol)
-    @info(symbol2dimnumber(dim_symbol))
-    @info(v)
-    for c in contacts_to_spawn_charges_for[:]#[1:1]
-        for positive_geometry in c.geometry_positive[:]#[6:6]
-            sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool)
-            PT = eltype(sample_pool)
-            sampled_points = SolidStateDetectors.sample(positive_geometry, sampling_vector)
-            sampled_points_mutable = map(x->MVector(x), sampled_points)
-            map(x->x[symbol2dimnumber(dim_symbol)]=v, sampled_points_mutable)
-            sampled_points_xsec = map(x->geom_round(PT(x...)), sampled_points_mutable)
-            # sampled_point_cyl = CylindricalPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector))
-            # sampled_point_cyl =  map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ), x[3])), sampled_point_cyl)
-            sampled_points_xsec_cart = CartesianPoint.(sampled_points_xsec)
-            function get_offset_vector(sample_points, sample_pool )
-                local_samples_in_xsec_dir = map(x->get_closest_samples(x,sample_pool)[symbol2dimnumber(dim_symbol)], sample_points)
-                vec_in_xsec_dir = map(x->CartesianPoint(x[2]) - CartesianPoint(x[1]), local_samples_in_xsec_dir)
-                sample_forward_vec = CartesianPoint{T}[]
-                for i in 1:length(sampled_points_xsec_cart)
-                    i!=length(sampled_points_xsec_cart) ? push!(sample_forward_vec, sampled_points_xsec_cart[i+1] - sampled_points_xsec_cart[i]) : push!(sample_forward_vec, sampled_points_xsec_cart[i] - sampled_points_xsec_cart[i-1])
-                end
-                @info sample_forward_vec[1]
-                @info vec_in_xsec_dir[1]
-                @info((cross.(sample_forward_vec, vec_in_xsec_dir))./norm.(cross.(sample_forward_vec, vec_in_xsec_dir)))
-                offset_vector = (cross.(sample_forward_vec, vec_in_xsec_dir))./norm.(cross.(sample_forward_vec, vec_in_xsec_dir))
-            end
-            # if sampled_point_cyl[1] in positive_geometry
-            #     push!(spawn_positions, broadcast(+, CartesianPoint.(sampled_point_cyl), pt_offset )...)
-            #     push!(spawn_positions, broadcast(-, CartesianPoint.(sampled_point_cyl), pt_offset )...)
-            # end
-            offset_vector = get_offset_vector(sampled_points_xsec, sample_pool) .* 0.0004
-            @info(offset_vector)
-            push!(spawn_positions, broadcast(+, sampled_points_xsec_cart, offset_vector)...)
-            push!(spawn_positions, broadcast(-, sampled_points_xsec_cart, offset_vector)...)
-            if full_det == true
-                sampled_point_cyl_mirror = map(x->geom_round(CylindricalPoint{T}(x[1], deg2rad(φ)+π, x[3])), sampled_point_cyl)
-                if sampled_point_cyl_mirror[1] in positive_geometry
-                    push!(spawn_positions_mirror, broadcast(+, CartesianPoint.(sampled_point_cyl_mirror), pt_offset_mirror )...)
-                    push!(spawn_positions_mirror, broadcast(-, CartesianPoint.(sampled_point_cyl_mirror), pt_offset_mirror )...)
-                end
+    symbol2dimnumber(dim_symbol) = symbol2dimnumber_dict[dim_symbol] # give the corresponding dimension for each cross section symbol
+    dim_number = symbol2dimnumber(dim_symbol)
+
+    function get_vector_in_Xsec_dir(sample_points, sample_pool, dim_symbol) # get a vetor that points in the direction of the cross section
+        local_samples_in_Xsec_dir = map(x->get_closest_samples(x,sample_pool)[symbol2dimnumber(dim_symbol)], sample_points)
+        vec_in_Xsec_dir = map(x->CartesianPoint(x[2]) - CartesianPoint(x[1]), local_samples_in_Xsec_dir)
+    end
+    function get_offset_vector(sampled_points_Xsec_cart, vec_in_Xsec_dir) # Get the vector of two neighboring samples and take the cross product with the vector in direction of the xsection to generate a orthogonal offset vector.
+        sample_forward_vec = CartesianPoint{T}[]
+        for i in 1:length(sampled_points_Xsec_cart)
+            i!=length(sampled_points_Xsec_cart) ? push!(sample_forward_vec, sampled_points_Xsec_cart[i+1] - sampled_points_Xsec_cart[i]) : push!(sample_forward_vec, sampled_points_Xsec_cart[i] - sampled_points_Xsec_cart[i-1])
+        end
+        offset_vector = CartesianVector{T}.(cross.(sample_forward_vec, vec_in_Xsec_dir))./norm.(cross.(sample_forward_vec, vec_in_Xsec_dir)) # calculate normaliezed cross product
+    end
+
+    for c in contacts_to_spawn_charges_for[:] # Main loop to generate the close-to-the-surface charges
+        for positive_geometry in c.geometry_positive[:]
+            sample_dummy = SolidStateDetectors.sample(positive_geometry, T[1000,1000,1000]) # used to extract the point type of the volume primitive
+            PT = eltype(sample_dummy)
+            sampling_vector_pool = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
+            PT == CylindricalPoint{T} ? sampling_vector_pool[2] = sampling_vector_pool[2]/0.001 *2*π / 100 : nothing # rough translation of mm to radians; Might need some polish
+            sample_pool = geom_round.(SolidStateDetectors.sample(positive_geometry, sampling_vector_pool))
+            sample_pool = S == :cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : sample_pool
+            sample_pool = S == :cartesian ? geom_round.(CartesianPoint.(sample_pool)) : sample_pool
+            sampled_planes = unique!(map(x->x[dim_number],sample_pool))
+
+            v_Xsec_plane = sampled_planes[searchsortednearest(sampled_planes,v)]
+            if abs(v-v_Xsec_plane) > sampling_vector_pool[dim_number] continue; end
+            @info("v_plane $v_Xsec_plane")
+
+            # v_Xsec_plane_mirror = show_full_det ? sampled_planes[searchsortednearest(sampled_planes,v+π)] : v_Xsec_plane
+            sampled_points_Xsec = sample_pool[findall(x-> (abs(x[dim_number] - v_Xsec_plane)<sampling_vector_pool[dim_number]/3), sample_pool)]
+            sampled_points_Xsec_cart = CartesianPoint.(sampled_points_Xsec)
+
+            vec_in_Xsec_dir = get_vector_in_Xsec_dir(sampled_points_Xsec, sample_pool, dim_symbol)
+            offset_vector::Vector{CartesianVector{T}} = get_offset_vector(sampled_points_Xsec_cart, vec_in_Xsec_dir) .* T.(ustrip.(uconvert(u"m", offset)))
+
+            push!(spawn_positions, broadcast(+, sampled_points_Xsec_cart, offset_vector)...)
+            push!(spawn_positions, broadcast(-, sampled_points_Xsec_cart, offset_vector)...)
+
+            if show_full_det # generate a seperate pool of charges for the + 180 deg direction. This is necessary to later know which drift paths have to be mirrored.
+                v_Xsec_plane_mirror =sampled_planes[searchsortednearest(sampled_planes,v+π)]
+                if abs(v+π - v_Xsec_plane_mirror) > sampling_vector_pool[dim_number] continue; end
+                @info("v_plane_mirror $v_Xsec_plane")
+
+                sampled_points_Xsec_mirror = sample_pool[findall(x-> (abs(x[dim_number] - v_Xsec_plane_mirror)<sampling_vector_pool[dim_number]/3), sample_pool)]
+                sampled_points_Xsec_cart_mirror = CartesianPoint.(sampled_points_Xsec_mirror)
+
+                vec_in_Xsec_dir_mirror = get_vector_in_Xsec_dir(sampled_points_Xsec_mirror, sample_pool, dim_symbol)
+                offset_vector_mirror::Vector{CartesianVector{T}} = get_offset_vector(sampled_points_Xsec_cart_mirror, vec_in_Xsec_dir_mirror) .* T.(ustrip.(uconvert(u"m", offset)))
+
+                push!(spawn_positions_mirror, broadcast(+, sampled_points_Xsec_cart_mirror, offset_vector_mirror)...)
+                push!(spawn_positions_mirror, broadcast(-, sampled_points_Xsec_cart_mirror, offset_vector_mirror)...)
             end
         end
     end
 
-# @info(spawn_positions)
-    filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions)
-    full_det == true ? filter!(x ->x in sim.detector && !in(x, sim.detector.contacts), spawn_positions_mirror) : nothing
-    spawn_positions = vcat(spawn_positions,spawn_positions_mirror)
+    filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions) # get rid of unneccessary spawnpositions
+    show_full_det ? filter!(x ->x in sim.detector && !in(x, sim.detector.contacts), spawn_positions_mirror) : nothing
+    show_full_det ? spawn_positions = vcat(spawn_positions,spawn_positions_mirror) : nothing
     @info "$(round(Int,length(spawn_positions)/spacing)) drifts are now being simulated..."
 
-    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
+    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid) #Interpolate the Electric fields, in which the charges will drift. Is passed to the drift function.
     el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
 
-    @showprogress for (ipos, pos) in enumerate(spawn_positions)
+    @showprogress for (ipos, pos) in enumerate(spawn_positions) # Charge drift and plotting loop. Not optimized for speed, but it doesnt have to be. Uses low level drift function for more contorl.
         if ((spacing-1)+ipos)%spacing == 0
 
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
-            _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
+            _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field_itp, verbose = false )
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
                 seriescolor --> :white
-                if dim_symbol == :z && S == :cylindrical proj --> :polar end
+                if dim_symbol == :z && S == :cylindrical projection --> :polar end
                 label --> ""
                 x, y = if dim_symbol == :φ
-                    map(x -> (pos in spawn_positions_mirror ? -1 : 1) * sqrt(x[1]^2+x[2]^2), path),
+                    map(x -> (pos in spawn_positions_mirror ? -1 : 1) * sqrt(x[1]^2+x[2]^2), path), # mirror the path for the charges that originate from v + 2 \pi
                     map(x -> x[3], path)
                 elseif dim_symbol == :x
                     map(x -> x[2], path),
@@ -252,18 +184,28 @@ end
                     map(x -> x[1], path),
                     map(x -> x[3], path)
                 elseif dim_symbol == :z
-                    map(x -> x[1], path),
-                    map(x -> x[2], path)
+                    if S == :cylindrical
+                        path = CylindricalPoint.(path)
+                        map(x -> x[2], path),
+                        map(x -> x[1], path)
+                    else
+                        map(x -> x[1], path),
+                        map(x -> x[2], path)
+                    end
+                elseif dim_symbol == :r
+                    path = CylindricalPoint.(path)
+                    map(x -> x[2], path),
+                    map(x -> x[3], path)
                 end
                 x, y
             end
-
+            # Repeat for the other charge carrier type
             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
                 seriescolor --> :white
-                if dim_symbol == :z && S == :cylindrical proj --> :polar end
+                if dim_symbol == :z && S == :cylindrical projection --> :polar end
                 label --> ""
                 x, y = if dim_symbol == :φ
                     map(x -> (pos in spawn_positions_mirror ? -1 : 1) * sqrt(x[1]^2+x[2]^2), path),
@@ -275,8 +217,20 @@ end
                     map(x -> x[1], path),
                     map(x -> x[3], path)
                 elseif dim_symbol == :z
-                    map(x -> x[1], path),
-                    map(x -> x[2], path)
+                    if S == :cylindrical
+                        path = CylindricalPoint.(path)
+                        ylims --> (0.0, sim.detector.world.intervals[1].right)
+                        map(x -> x[2], path),
+                        map(x -> x[1], path)
+                    else
+                        map(x -> x[1], path),
+                        map(x -> x[2], path)
+                    end
+                elseif dim_symbol == :r
+                    ylims --> (sim.detector.world.intervals[3].left, sim.detector.world.intervals[3].right)
+                    path = CylindricalPoint.(path)
+                    map(x -> x[2], path),
+                    map(x -> x[3], path)
                 end
                 x, y
             end
@@ -286,359 +240,10 @@ end
 end
 export plot_electric_field
 function plot_electric_field(sim; field_lines = true, kwargs...)
-    plot_electric_field_(sim; kwargs...)
+    @series begin
+        sim.electric_field, kwargs...
+    end
     if field_lines == true
         plot_electric_fieldlines!(sim; kwargs...)
     end
 end
-
-
-# function get_xyz_vector_from_rφz_field_vector_at_rφz(field,r,φ,z,ir,iφ,iz)::Vector
-#     startpoint_vector = get_xyz_vector_from_rφz_vector([r,φ,z])
-#     endpoint_vector = get_xyz_vector_from_rφz_vector([r,φ,z]+field[ir,iφ,iz])
-#     xyz_vector = endpoint_vector-startpoint_vector
-#     for ic in 1:size(xyz_vector,1)
-#         isapprox(xyz_vector[ic],0.0) ? xyz_vector[ic] = 0.0 : nothing
-#     end
-#     xyz_vector
-# end
-#
-#
-# function get_xy_magnitude(xyz_vector::AbstractArray)
-#     sqrt(xyz_vector[1]^2+xyz_vector[2]^2)
-# end
-#
-# @recipe function f(electrical_field::Array{SVector{3,T},3}, grid::CylindricalGrid{T}; view=:Components, plane=:rz, i_fixed=3, spacing = 8, vectorscale = 0.0018, SI_factor=1/1000.) where{T <: SSDFloat}
-#
-#     vectorfield = electrical_field.*SI_factor
-#     units = Dict(1e-3=>"mm",1e-2=>"cm",1e-1=>"dm",1=>"m",1.0=>"m")
-#     if view == :Components
-#         if plane == :rz
-#             layout := (2,2)
-#             size := (800,900)
-#             vectorfield_r = get_component_field(vectorfield);
-#             vectorfield_φ = get_component_field(vectorfield,:phi);
-#             vectorfield_z = get_component_field(vectorfield,:z);
-#             vectorfield_magn = get_magnitude_of_rφz_vector.(vectorfield);
-#
-#             st := :heatmap
-#             # colorbar_title := "Field Strength / V m\$\^\{-1\}\$"
-#             @series begin
-#                 subplot := 1
-#                 title := "r_component"
-#                 ylabel --> "z ["*units[SI_factor]*"]"
-#                 grid.axes[1] ./ SI_factor, grid.axes[3] ./ SI_factor, vectorfield_r[:,i_fixed,:]'
-#             end
-#             @series begin
-#                 subplot := 2
-#                 colorbar_title --> "Field Strength [V / "*units[SI_factor]*"]"
-#                 title := "φ_component"
-#
-#                 grid.axes[1] ./SI_factor, grid.axes[3] ./SI_factor, vectorfield_φ[:,i_fixed,:]'
-#             end
-#             @series begin
-#                 subplot := 3
-#                 title := "z_component"
-#                 ylabel --> "z ["*units[SI_factor]*"]"
-#                 xlabel --> "r ["*units[SI_factor]*"]"
-#                 grid.axes[1] ./SI_factor, grid.axes[3] ./SI_factor, vectorfield_z[:,i_fixed,:]'
-#             end
-#             @series begin
-#                 subplot := 4
-#                 colorbar_title --> "Field Strength [V / "*units[SI_factor]*"]"
-#                 xlabel --> "r ["*units[SI_factor]*"]"
-#                 title:= "magnitude"
-#                 grid.axes[1] ./SI_factor, grid.axes[3] ./SI_factor, vectorfield_magn[:,i_fixed,:]'
-#             end
-#         end
-#     elseif view == :ef
-#         if plane == :rφ
-#             vectorfield_xyz = Array{Vector{T}}(undef,size(vectorfield,1),size(vectorfield,2),size(vectorfield,3));
-#             for (iz,z) in enumerate(grid.axes[3])
-#                 for (iφ,φ) in enumerate(grid.axes[2])
-#                     for (ir,r) in enumerate(grid.axes[1])
-#                         vectorfield_xyz[ir,iφ,iz]=get_xyz_vector_from_rφz_field_vector_at_rφz(vectorfield,r,φ,z,ir,iφ,iz)
-#                     end
-#                 end
-#             end
-#         elseif plane == :xy
-#             vectorfield_xyz = electrical_field.field
-#         end
-#         vectorfield_xy_magn = map(x->get_xy_magnitude(x),vectorfield_xyz[:,:,i_fixed])
-#         max_magn = maximum(vectorfield_xy_magn)
-#         diff_magn = max_magn-minimum(vectorfield_xy_magn)
-#
-#         size := (800,800)
-#         line := (:arrow,:blue,2)
-#         label := ""
-#         ylabel := "y "
-#         xlabel := "x "
-#         title := "z = $(round(grid.axes[3][i_fixed]/SI_factor,digits=2)) / mm"
-#         xlims := (-1.2/SI_factor*maximum(grid.axes[1]),1.2/SI_factor*maximum(grid.axes[1]))
-#         ylims := (-1.2/SI_factor*maximum(grid.axes[1]),1.2/SI_factor*maximum(grid.axes[1]))
-#         for (ir,r) in enumerate(grid.axes[1][1:spacing:end])
-#         for (iφ,φ) in enumerate(grid..axes[2])
-#                 x= r*cos(φ)
-#             y= r*sin(φ)
-#             ir_actual=findfirst(x->x==r,grid.axes[1])
-#             iφ_actual=findfirst(x->x==φ,grid.axes[2])
-#                 xy_magn = vectorfield_xy_magn[ir_actual,iφ_actual]
-#                 vector=vectorfield_xyz[ir_actual,iφ_actual,i_fixed]/xy_magn
-#                 vector*=((vectorfield_xy_magn[ir_actual,iφ_actual]-0.8*minimum(vectorfield_xy_magn))/diff_magn)
-#                 vector*=vectorscale
-#                 @series begin
-#                     [x-0.5*vector[1],x+0.5*vector[1]]/SI_factor, [y-0.5*vector[2],y+0.5*vector[2]]/SI_factor
-#                 end
-#             end
-#         end
-#     end
-# end
-#
-# using Base.Math
-# @recipe function f( electric_field::Array{ <:StaticVector{3, T}, 3}, det::SolidStateDetector; φ=missing, z = missing, scaling_factor=1.0, spacings = [3,20]) where T
-#     ismissing(φ) && !ismissing(z) ? iz = searchsortednearest(det.zs,T(z)) : nothing
-#     !ismissing(φ) && ismissing(z) ? iφ = searchsortednearest(det.φs,T(φ)) : nothing
-#     guidefontsize --> 15
-#     tickfontsize -->15
-#     # labelfontsize --> 13
-#     if ismissing(φ)
-#         xy = T[0, 0]
-#         values = T[0, 0]
-#         magnitudes_xy = []
-#         for (iφ ,φ)  in enumerate(det.φs)
-#             if (iφ+spacings[1]-1)%spacings[1]==0
-#                 for (ir, r) in enumerate(det.rs)
-#                     if (ir+spacings[2]-1)%spacings[2] == 0
-#                         xy = hcat(xy,[ r * cos(φ), r * sin(φ)])
-#                         values = hcat(values, electric_field[ir, iφ, iz][1:2])
-#                         push!(magnitudes_xy,sqrt(electric_field[ir, iφ, iz][1]^2 + electric_field[ir, iφ, iz][2]^2))
-#                     end
-#                 end
-#             end
-#         end
-#
-#         num = minimum([mean(diff(det.φs)*spacings[1]),mean(diff(det.rs))*spacings[2]])
-#         nom = maximum(magnitudes_xy)
-#         scaling = num/nom * scaling_factor
-#         for i in 1:size(xy,2)
-#             @series begin
-#                 title --> "z = $(round(det.zs[iz] .* 1000,digits=2)) mm"
-#                 xlabel --> "x / mm"
-#                 ylabel --> "y / mm"
-#                 aspect_ratio --> 1
-#                 label --> ""
-#                 color --> :red
-#                 arrow --> true
-#                 [xy[1,i] - 0.5*scaling*values[1,i], xy[1,i] + 0.5*scaling*values[1,i]] .* 1000, [xy[2,i] - 0.5*scaling*values[2,i], xy[2,i] + 0.5*scaling*values[2,i]] .* 1000
-#             end
-#         end
-#
-#     elseif ismissing(z)
-#         rz = T[0, 0]
-#         values = T[0, 0]
-#         magnitudes_rz = []
-#         for (iz ,z)  in enumerate(det.zs)
-#             if (iz+spacings[1])%spacings[1]==0
-#                 for (ir, r) in enumerate(det.rs)
-#                     if (ir+spacings[2]-1)%spacings[2] == 0
-#                         rz = hcat(rz,[ r, z])
-#                         values = hcat(values, electric_field[ir, iφ, iz][1:2:3])
-#                         push!(magnitudes_rz,sqrt(electric_field[ir, iφ, iz][1]^2 + electric_field[ir, iφ, iz][3]^2))
-#                     end
-#                 end
-#             end
-#         end
-#         num = minimum([mean(diff(det.zs)*spacings[1]),mean(diff(det.rs))*spacings[2]])
-#         nom = maximum(magnitudes_rz)
-#         scaling = num/nom * scaling_factor
-#         for i in 1:size(rz,2)
-#             @series begin
-#                 title --> "φ = $(round(rad2deg(det.φs[iφ]) , digits=2)) deg"
-#                 xlabel --> "r [mm]"
-#                 ylabel --> "z [mm]"
-#                 aspect_ratio --> 1
-#                 label --> ""
-#                 color --> :red
-#                 arrow --> true
-#                 [rz[1,i] - 0.5*scaling*values[1,i], rz[1,i] + 0.5*scaling*values[1,i]] .* 1000, [rz[2,i] - 0.5*scaling*values[2,i], rz[2,i] + 0.5*scaling*values[2,i]] .* 1000
-#             end
-#         end
-#     end
-# end
-#
-# @userplot MyQuiver
-# @recipe function f(gdd::MyQuiver; scaling=1.0)
-#     xy::Matrix = gdd.args[1]
-#     values = gdd.args[2]
-#     for i in 1:size(xy,2)
-#         @series begin
-#             arrow --> true
-#             [xy[1,i] - 0.5*scaling*values[1,i], xy[1,i] + 0.5*scaling*values[1,i]], [xy[2,i] - 0.5*scaling*values[2,i], xy[2,i] + 0.5*scaling*values[2,i]]
-#         end
-#     end
-# end
-#
-# @userplot Plot_electric_field
-# @recipe function f(gdd::Plot_electric_field; φ = missing, r = missing, x = missing, y = missing, z = missing,
-#                     sampling = 4u"mm", spacing = 1, max_nsteps=3000,
-#                     potential=true, contours_equal_potential=true, offset = (0.001))
-#     sim = gdd.args[1]
-#     S = get_coordinate_system(sim.electric_field.grid)
-#     T = SolidStateDetectors.get_precision_type(sim.detector)
-#
-#     dim_array = [φ, r, x, y, z]
-#     dim_symbols_array = [:φ, :r, :x, :y, :z]
-#     if isempty(skipmissing(dim_array))
-#         if S == :cylindrical
-#             v::T = 0
-#             dim_number = 2
-#             dim_symbol = :φ
-#         elseif S == :cartesian
-#             dim_number = 1
-#             dim_symbol = :x
-#             v = sim.electric_field.grid[dim_number][ div(length(sim.electric_field.grid[dim_number]), 2) ]
-#         end
-#     elseif sum(ismissing.(dim_array)) == 4
-#         dim_number = findfirst(x -> !ismissing(x), dim_array)
-#         dim_symbol = dim_symbols_array[dim_number]
-#         v = dim_array[dim_number]
-#         if dim_symbol == :φ v = deg2rad(v) end
-#     else
-#         throw(ArgumentError("Only one keyword for a certain dimension is allowed. One of 'φ', 'r', 'x', 'y', 'z'"))
-#     end
-#
-#     S::Symbol = get_coordinate_system(sim.detector)
-#     aspect_ratio --> 1
-#     title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=2))"
-#     xlabel --> (S == :cylindrical ? (dim_symbol == :r ? L"$\varphi$ / °" : L"$r$ / m") : (dim_symbol == :x ? L"$y$ / m" : L"$x$ / m"))
-#     ylabel --> L"$z$ / m"
-#
-#
-#     if potential == true
-#         @series begin
-#             # contours_equal_potential --> contours_equal_potential
-#             if dim_symbol == :φ
-#                 φ --> v
-#             elseif dim_symbol == :z
-#                 if S == :cylindrical error("Electric field plot not yet implemented for z in cylindrical coordinates") end
-#                 z --> v
-#                 if S == :cylindrical
-#                     proj --> :polar
-#                 end
-#             elseif dim_symbol == :r
-#                 error("Electric field plot not yet implemented for r")
-#                 r --> v
-#             elseif dim_symbol == :x
-#                 x --> v
-#             elseif dim_symbol == :y
-#                 y --> v
-#             end
-#             sim.electric_potential
-#         end
-#     end
-#     PT = S == :cylindrical ? CylindricalPoint{T} : CartesianPoint{T}
-#
-#     contacts_to_spawn_charges_for = filter!(x -> x.id !=1, Contact{T}[c for c in sim.detector.contacts])
-#     spawn_positions = CartesianPoint{T}[]
-#     grid = sim.electric_field.grid
-#     pt_offset = CartesianVector{T}(offset, 0.0, offset)
-#
-#     sampling_vector = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
-#     sampling_vector[2] = 2π
-#     for c in contacts_to_spawn_charges_for
-#         for positive_geometry in c.geometry_positive
-#             push!(spawn_positions, broadcast(+, CartesianPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector)), pt_offset )...)
-#             push!(spawn_positions, broadcast(-, CartesianPoint{T}.(SolidStateDetectors.sample(positive_geometry, sampling_vector)), pt_offset )...)
-#         end
-#     end
-#     # println(spawn_positions[:])
-#
-#     # !ismissing(φ) ? spawn_positions = unique!(map(x-> CartesianPoint(CylindricalPoint{T}(x.r, φ, x.z)), CylindricalPoint{T}.(spawn_positions)  )) : nothing
-#
-#     # println(spawn_positions[1:10])
-#
-#     # for c in contacts_to_spawn_charges_for
-#     #     ongrid_positions= map(x-> CylindricalPoint{T}(grid[x...]), paint_object(sim.detector, c, grid, Val(dim_symbol), v))
-#     #     for position in ongrid_positions
-#     #         push!(spawn_positions, CylindricalPoint{T}((position + pt_offset)...))
-#     #         push!(spawn_positions, CylindricalPoint{T}((position - pt_offset)...))
-#     #     end
-#     # end
-#
-#     # ax1 = unique(range(sim.electric_field.grid[1][1], stop = sim.electric_field.grid[1][end], step = spacing * 0.001))
-#     # ax2 = unique(range(sim.electric_field.grid[2][1], stop = sim.electric_field.grid[2][end], step = spacing * 0.001))
-#     # if ismissing(φ) && S == :cylindrical
-#     #     ax2 = T[0]
-#     # elseif !ismissing(φ)
-#     #     ax2 = T[φ]
-#     # end
-#     # ax3 = unique(range(sim.electric_field.grid[3][1], stop = sim.electric_field.grid[3][end], step = spacing * 0.001))
-#     # for x1 in ax1
-#     #     for x2 in ax2
-#     #         for x3 in ax3
-#     #             pt::PT = PT(x1, x2, x3)
-#     #             push!(spawn_positions, pt + pt_offset)
-#     #             push!(spawn_positions, pt - pt_offset)
-#     #         end
-#     #     end
-#     # end
-#
-#     filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions)
-#     # println(spawn_positions[:])
-#     @info "$(length(spawn_positions)) drifts are now being simulated..."
-#
-#     el_field_itp     = get_interpolated_drift_field(sim.electric_field.data,       sim.electric_field.grid)
-#     el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
-#
-#     @showprogress for (ipos, pos) in enumerate(spawn_positions)
-#         if ((spacing-1)+ipos)%spacing == 0
-#
-#             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
-#             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp, verbose = false )
-#             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
-#             @series begin
-#                 c --> :white
-#                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
-#                 label --> ""
-#                 x, y = if dim_symbol == :φ
-#                     map(x -> sqrt(x[1]^2+x[2]^2), path),
-#                     map(x -> x[3], path)
-#                 elseif dim_symbol == :x
-#                     map(x -> x[2], path),
-#                     map(x -> x[3], path)
-#                 elseif dim_symbol == :y
-#                     map(x -> x[1], path),
-#                     map(x -> x[3], path)
-#                 elseif dim_symbol == :z
-#                     map(x -> x[1], path),
-#                     map(x -> x[2], path)
-#                 end
-#                 x, y
-#             end
-#
-#             path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
-#             _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(2e-9), el_field_itp_inv, verbose = false )
-#             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
-#             @series begin
-#                 c --> :white
-#                 if dim_symbol == :z && S == :cylindrical proj --> :polar end
-#                 label --> ""
-#                 x, y = if dim_symbol == :φ
-#                     map(x -> sqrt(x[1]^2+x[2]^2), path),
-#                     map(x -> x[3], path)
-#                 elseif dim_symbol == :x
-#                     map(x -> x[2], path),
-#                     map(x -> x[3], path)
-#                 elseif dim_symbol == :y
-#                     map(x -> x[1], path),
-#                     map(x -> x[3], path)
-#                 elseif dim_symbol == :z
-#                     map(x -> x[1], path),
-#                     map(x -> x[2], path)
-#                 end
-#                 x, y
-#             end
-#
-#         end
-#     end
-# end
