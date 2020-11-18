@@ -43,9 +43,9 @@ end
 @userplot Plot_electric_fieldlines
 @recipe function f(gdd::Plot_electric_fieldlines; φ = missing, r = missing, x = missing, y = missing, z = missing,
                     max_nsteps=3000,
-                    sampling = 1u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
-                    offset = 1u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
-                    spacing = 2, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
+                    sampling = 2u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
+                    offset = 2u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
+                    spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
                     full_det = false,
                     skip_contact = 1) # Usually the "core" contact is skipped, and the other contacts are equally sampled for charges to drift
     sim = gdd.args[1]
@@ -66,9 +66,9 @@ end
             v = sim.electric_field.grid[dim_number][ div(length(sim.electric_field.grid[dim_number]), 2) ]
         end
     elseif sum(ismissing.(dim_array)) == 4
-        dim_number = findfirst(x -> !ismissing(x), dim_array)
-        dim_symbol = dim_symbols_array[dim_number]
-        v = dim_array[dim_number]
+        dim_idx = findfirst(x -> !ismissing(x), dim_array)
+        dim_symbol = dim_symbols_array[dim_idx]
+        v = dim_array[dim_idx]
         if dim_symbol == :φ v = deg2rad(v) end
     else
         throw(ArgumentError("Only one keyword for a certain dimension s allowed. One of 'φ', 'r', 'x', 'y', 'z'"))
@@ -77,7 +77,7 @@ end
     show_full_det = full_det == true && dim_symbol == :φ ? true : false # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
     (dim_symbol != :r && !(dim_symbol == :z && S== :cylindrical) ) ? aspect_ratio --> 1 : nothing
-    title --> "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, digits=4))"*(dim_symbol == :φ ? "°" : "m")
+    title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°, (=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
     xguide --> (S == :cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
     yguide --> "z / m"
     (S == :cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
@@ -120,10 +120,10 @@ end
             sample_dummy = SolidStateDetectors.sample(positive_geometry, T[1000,1000,1000]) # used to extract the point type of the volume primitive
             PT = eltype(sample_dummy)
             sampling_vector_pool = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
-            PT == CylindricalPoint{T} ? sampling_vector_pool[2] = sampling_vector_pool[2]/0.001 *2*π / 100 : nothing # rough translation of mm to radians; Might need some polish
-            sample_pool = geom_round.(SolidStateDetectors.sample(positive_geometry, sampling_vector_pool))
-            sample_pool = S == :cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : sample_pool
-            sample_pool = S == :cartesian ? geom_round.(CartesianPoint.(sample_pool)) : sample_pool
+            PT == CylindricalPoint{T} ? sampling_vector_pool[2] = sampling_vector_pool[2]/0.001 *2*π / 360 : nothing # rough translation of mm to radians; Might need some polish
+            sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool)
+            sample_pool = S == :cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : geom_round.(sample_pool)
+            sample_pool = S == :cartesian ? geom_round.(CartesianPoint.(sample_pool)) : geom_round.(sample_pool)
             sampled_planes = unique!(map(x->x[dim_number],sample_pool))
 
             v_Xsec_plane = sampled_planes[searchsortednearest(sampled_planes,v)]
@@ -140,8 +140,8 @@ end
             push!(spawn_positions, broadcast(-, sampled_points_Xsec_cart, offset_vector)...)
 
             if show_full_det # generate a seperate pool of charges for the + 180 deg direction. This is necessary to later know which drift paths have to be mirrored.
-                v_Xsec_plane_mirror =sampled_planes[searchsortednearest(sampled_planes,v+π)]
-                if abs(v+π - v_Xsec_plane_mirror) > sampling_vector_pool[dim_number] continue; end
+                v_Xsec_plane_mirror::T = sampled_planes[searchsortednearest(sampled_planes,T((v+π)%(2π)))]
+                if abs(T((v+π)%(2π)) - v_Xsec_plane_mirror) > sampling_vector_pool[dim_number] continue; end
 
                 sampled_points_Xsec_mirror = sample_pool[findall(x-> (abs(x[dim_number] - v_Xsec_plane_mirror)<sampling_vector_pool[dim_number]/3), sample_pool)]
                 sampled_points_Xsec_cart_mirror = CartesianPoint.(sampled_points_Xsec_mirror)
@@ -158,6 +158,7 @@ end
     filter!(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions) # get rid of unneccessary spawnpositions
     show_full_det ? filter!(x ->x in sim.detector && !in(x, sim.detector.contacts), spawn_positions_mirror) : nothing
     show_full_det ? spawn_positions = vcat(spawn_positions,spawn_positions_mirror) : nothing
+    #spawn_positions = unique!(geom_round.(spawn_positions))
     @info "$(round(Int,length(spawn_positions)/spacing)) drifts are now being simulated..."
 
     el_field_itp     = get_interpolated_drift_field(sim.electric_field.data      , sim.electric_field.grid) #Interpolate the Electric fields, in which the charges will drift. Is passed to the drift function.
