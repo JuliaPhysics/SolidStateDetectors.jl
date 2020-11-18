@@ -1,0 +1,17 @@
+{
+    "charge_density_model": {
+        "name": "linear",
+        "phi": {
+            "init": 0.0,
+            "gradient": 0.0
+        },
+        "r": {
+            "init": 0,
+            "gradient": 0
+        },
+        "z": {
+            "init": -1.0e7,
+            "gradient": -100000.0
+        }
+    }
+}
