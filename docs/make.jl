@@ -4,6 +4,7 @@
 #
 # for local builds.
 
+using Pkg
 using Documenter
 using Literate
 using Plots
