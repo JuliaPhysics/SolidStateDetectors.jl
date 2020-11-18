@@ -17,10 +17,10 @@
             ]
         },
         {
-            "include" : "channels/01.json"
+            "include" : "channels/01_PointContact.json"
         },
         {
-            "include" : "channels/02.json"
+            "include" : "channels/02_Mantle.json"
         },
 		{
 			"include": "cryostat.json"

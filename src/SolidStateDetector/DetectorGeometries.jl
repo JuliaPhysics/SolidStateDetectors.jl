@@ -17,21 +17,23 @@ include("SolidStateDetector.jl")
 """
     SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
 
-Reads in a config-JSON file and returns an Detector struct which holds all information specified in the config file.
+Reads in a config file and returns an Detector struct which holds all information specified in the config file.
+Currently supported formats for the config file: .json, .yaml
 """
 function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     if endswith(filename, ".toml")
-        error("currently only .json and .yaml files are supported. We intend to add .toml support in the near future")
+        error("Currently only .json and .yaml files are supported.")
     elseif endswith(filename, ".json")
         dicttext = read(filename, String)
         parsed_dict = JSON.parse(dicttext)
+        scan_and_merge_included_json_files!(parsed_dict, filename)
     elseif endswith(filename, ".yaml")
         parsed_dict = YAML.load_file(filename)
     elseif endswith(filename, ".config")
         siggen_dict = readsiggen(filename)
         parsed_dict = siggentodict(siggen_dict)
     else
-        error("currently only .json, .yaml and .config (SigGen) files are supported.")
+        error("Currently only .json and .yaml files are supported.")
     end
     parsed_dict
 end
@@ -52,6 +54,52 @@ function yaml2json(directory::String)# or filename
         end
     end
 end
+function scan_and_merge_included_json_files!(parsed_dict, config_filename::AbstractString)
+    key_word = "include"
+    config_dir = config_filename[1:end-length(basename(config_filename))]
+    for k in keys(parsed_dict)
+        is_subdict = typeof(parsed_dict[k]) <: Dict
+        if !is_subdict && string(k) != key_word
+            typeof(parsed_dict[k]) <: Array ? is_subdict = true : is_subdict = false
+        end
+        if is_subdict
+            scan_and_merge_included_json_files!(parsed_dict[k], config_filename)
+        elseif string(k) == key_word
+            files = []
+            if typeof(parsed_dict[k]) <: Array
+                append!(files, parsed_dict[k])
+            else
+                push!(files, parsed_dict[k])
+            end
+            for file in files
+                if isabspath(file) && isfile(file)
+                    # Case: filepath is absolute
+                    filepath = file
+                elseif isfile(file)
+                    # Case: filepath is relative to current directory
+                    filepath = file
+                elseif isfile(joinpath(config_dir, file))
+                    # Case: filepath is relative to main config file
+                    filepath = joinpath(config_dir, file)
+                else
+                    # Case: file can't be found
+                    @info("Wrong file path?")
+                    @info("Please check: " * parsed_dict[k])
+                end
+                if isfile(filepath)
+                    tmp = JSON.parsefile(filepath)
+                    scan_and_merge_included_json_files!(tmp, config_filename)
+                    for sub_k in keys(tmp)
+                        parsed_dict[sub_k] = tmp[sub_k]
+                    end
+                end
+            end
+            delete!(parsed_dict, k)
+        end
+    end
+end
+
+
 function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
     parsed_dict = parse_config_file(filename)
     return SolidStateDetector{T}(parsed_dict)
