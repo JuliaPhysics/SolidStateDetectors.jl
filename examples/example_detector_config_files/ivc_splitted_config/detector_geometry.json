@@ -1,0 +1,66 @@
+{
+    "geometry": {
+        "parts": [
+            {
+                "parts": [
+                    {
+                        "translate": {
+                            "z": 0.0
+                        },
+                        "name": "Initial Cylinder",
+                        "phi": {
+                            "to": 360.0,
+                            "from": 0.0
+                        },
+                        "r": {
+                            "to": 35.0,
+                            "from": 0.0
+                        },
+                        "type": "tube",
+                        "h": 80.0
+                    },
+                    {
+                        "translate": {
+                            "z": 20.0
+                        },
+                        "name": "Upper cone",
+                        "phi": {
+                            "to": 360.0,
+                            "from": 0.0
+                        },
+                        "r": {
+                            "bottom": {
+                                "to": 36.0,
+                                "from": 35.0
+                            },
+                            "top": {
+                                "to": 36.0,
+                                "from": 24.42
+                            }
+                        },
+                        "type": "cone",
+                        "h": 60.0
+                    }
+                ],
+                "type": "difference"
+            },
+            {
+                "translate": {
+                    "z": 25.0
+                },
+                "name": "borehole",
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "to": 5.0,
+                    "from": 0.0
+                },
+                "type": "tube",
+                "h": 80.0
+            }
+        ],
+        "type": "difference"
+    }
+}

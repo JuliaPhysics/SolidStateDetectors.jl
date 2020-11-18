@@ -1,0 +1,24 @@
+{
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "phi": {
+                "boundaries": "periodic",
+                "to": 0,
+                "from": 0
+            },
+            "r": {
+                "boundaries": "inf",
+                "to": 59.0
+            },
+            "z": {
+                "boundaries": {
+                    "left": "inf",
+                    "right": "inf"
+                },
+                "to": 104.0,
+                "from": -10
+            }
+        }
+    }
+}

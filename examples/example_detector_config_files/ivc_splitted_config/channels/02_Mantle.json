@@ -1,0 +1,102 @@
+{
+    "type": "contact",
+    "potential": 3500.0,
+    "channel": 2,
+    "material": "HPGe",
+    "geometry": {
+        "parts": [
+            {
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "to": 35.0,
+                    "from": 15.0
+                },
+                "type": "tube",
+                "h": 0.0
+            },
+            {
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "to": 35.0,
+                    "from": 35.0
+                },
+                "type": "tube",
+                "h": 20.0
+            },
+            {
+                "translate": {
+                    "z": 20.0
+                },
+                "name": "Upper cone",
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "bottom": {
+                        "to": 35.0,
+                        "from": 35.0
+                    },
+                    "top": {
+                        "to": 24.42,
+                        "from": 24.42
+                    }
+                },
+                "type": "cone",
+                "h": 60.0
+            },
+            {
+                "translate": {
+                    "z": 80.0
+                },
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "to": 24.42,
+                    "from": 5.0
+                },
+                "type": "tube",
+                "h": 0.0
+            },
+            {
+                "translate": {
+                    "z": 25.0
+                },
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "to": 5.0,
+                    "from": 5.0
+                },
+                "type": "tube",
+                "h": 55.0
+            },
+            {
+                "translate": {
+                    "z": 25.0
+                },
+                "phi": {
+                    "to": 360.0,
+                    "from": 0.0
+                },
+                "r": {
+                    "to": 5.0,
+                    "from": 0.0
+                },
+                "type": "tube",
+                "h": 0.0
+            }
+        ],
+        "type": "union"
+    }
+}

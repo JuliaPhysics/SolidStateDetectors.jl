@@ -24,6 +24,17 @@ end
         end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
+    @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
+        sim = Simulation(SSD_examples[:InvertedCoaxInCryostat])
+        simulate!(sim, max_refinements = 1, verbose = true)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
+        simulate!(evt, sim)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
+    end
     @testset "Simulate example detector: Coax" begin
         sim = Simulation(SSD_examples[:Coax])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
