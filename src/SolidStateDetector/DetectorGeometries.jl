@@ -29,6 +29,7 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
         scan_and_merge_included_json_files!(parsed_dict, filename)
     elseif endswith(filename, ".yaml")
         parsed_dict = YAML.load_file(filename)
+        scan_and_merge_included_json_files!(parsed_dict, filename)
     elseif endswith(filename, ".config")
         siggen_dict = readsiggen(filename)
         parsed_dict = siggentodict(siggen_dict)
@@ -56,7 +57,7 @@ function yaml2json(directory::String)# or filename
 end
 function scan_and_merge_included_json_files!(parsed_dict, config_filename::AbstractString)
     key_word = "include"
-    config_dir = config_filename[1:end-length(basename(config_filename))]
+    config_dir = dirname(config_filename)
     for k in keys(parsed_dict)
         is_subdict = typeof(parsed_dict[k]) <: Dict
         if !is_subdict && string(k) != key_word
@@ -72,23 +73,9 @@ function scan_and_merge_included_json_files!(parsed_dict, config_filename::Abstr
                 push!(files, parsed_dict[k])
             end
             for file in files
-                if isabspath(file) && isfile(file)
-                    # Case: filepath is absolute
-                    filepath = file
-                elseif isfile(file)
-                    # Case: filepath is relative to current directory
-                    filepath = file
-                elseif isfile(joinpath(config_dir, file))
-                    # Case: filepath is relative to main config file
-                    filepath = joinpath(config_dir, file)
-                else
-                    # Case: file can't be found
-                    @info("Wrong file path?")
-                    @info("Please check: " * parsed_dict[k])
-                end
+                filepath = joinpath(config_dir, file)
                 if isfile(filepath)
-                    tmp = JSON.parsefile(filepath)
-                    scan_and_merge_included_json_files!(tmp, config_filename)
+                    tmp = parse_config_file(filepath)
                     for sub_k in keys(tmp)
                         parsed_dict[sub_k] = tmp[sub_k]
                     end
