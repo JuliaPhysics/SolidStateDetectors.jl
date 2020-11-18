@@ -1,0 +1,10 @@
+{
+    "type": "semiconductor",
+    "material": "HPGe",
+    "bulk_type": "p",
+    "temperature": 77.0,
+    "include" : [
+        "detector_geometry.json",
+        "charge_density_model.json"
+    ]
+}

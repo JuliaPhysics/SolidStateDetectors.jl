@@ -1,4 +1,6 @@
 {
+    "type": "contact",
+    "potential": 3500.0,
     "channel": 2,
     "material": "HPGe",
     "geometry": {
@@ -96,7 +98,5 @@
             }
         ],
         "type": "union"
-    },
-    "potential": 3500.0,
-    "type": "contact"
+    }
 }

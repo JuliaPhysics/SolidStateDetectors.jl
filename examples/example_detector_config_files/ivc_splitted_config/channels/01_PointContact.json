@@ -1,4 +1,6 @@
 {
+    "type": "contact",
+    "potential": 0.0,
     "channel": 1,
     "material": "HPGe",
     "geometry": {
@@ -12,7 +14,5 @@
         },
         "type": "tube",
         "h": 2.0
-    },
-    "potential": 0.0,
-    "type": "contact"
+    }
 }
