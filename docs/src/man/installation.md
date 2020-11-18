@@ -22,8 +22,12 @@ Load the [Plots.jl](https://github.com/JuliaPlots/Plots.jl/) package (and option
 
 ```julia
 using Plots
-pyplot() #optional
 ```
 
 The backends supported by SolidStateDetectors.jl are `gr` and `pyplot`.
 By default, `gr` is loaded when importing `Plots`.
+
+This documentation was build with
+```@example
+using Pkg; Pkg.status(["Plots", "GR"], mode = PKGMODE_MANIFEST)
+```
