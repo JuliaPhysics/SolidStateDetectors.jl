@@ -75,7 +75,6 @@ end
 
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-
     ρ, cross_section, idx, value
 end
 
@@ -96,7 +95,7 @@ end
     pt, cross_section, idx, value
 end
 
-@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false; resample = true) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,:cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false; resample = true) where {T <: SSDFloat}
     g::Grid{T, 3, :cylindrical} = sp.grid
     @series begin
         seriestype := :heatmap
@@ -110,7 +109,14 @@ end
             ylims --> (g.z[1],g.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(g.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
-            midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+            if full_det == true
+                cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
+                extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
+                xlims := (-1*g.r[end],g.r[end])
+                vcat(-1 .* g.r[end:-1:2], g.r), g.z, extended_data
+             else
+                midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+            end
         elseif cross_section == :r
             xguide --> "φ / °"
             yguide --> "z / m"
@@ -118,11 +124,13 @@ end
             g.φ, g.z, sp.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
+            xguide --> ""
+            yguide --> ""
             if resample
                 #resample the data as non-uniform polar heatmaps are not shown correctly in GR
                 #this can be removed if implemented in GR
-                resample_gr::Vector{T} = range(g.r[1], g.r[end], step = (g.r[end] - g.r[1])/(5*length(g.r)))
-                resample_gφ::Vector{T} = range(g.φ[1], g.φ[end], step = (g.φ[end] - g.φ[1])/(5*length(g.φ)))
+                resample_gr::Vector{T} = range(g.r.interval.left, g.r.interval.right, step = (g.r.interval.right - g.r.interval.left)/(5*length(g.r)))
+                resample_gφ::Vector{T} = range(g.φ.interval.left, g.φ.interval.right, step = (g.φ.interval.right - g.φ.interval.left)/(5*length(g.φ)))
                 @info "Data is resampled to correctly display non-uniform polar plot in GR.\n"*
                       "If this is not required, please use the keyword argument `resample = false`\n"*
                       "Points in r: $(length(resample_gr))\nPoints in φ: $(length(resample_gφ))"
@@ -134,7 +142,7 @@ end
             end
         end
     end
-    
+
     if contours_equal_potential && cross_section == :φ
         @series begin
             seriescolor := :thermal
@@ -145,7 +153,15 @@ end
                 yguide := "z / m"
                 xlims --> (g.r[1],g.r[end])
                 ylims --> (g.z[1],g.z[end])
-                g.r, g.z, sp.data[:,idx,:]'
+                if full_det == true
+                    cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
+                    extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
+                    xlims := (-1*g.r[end],g.r[end])
+                    vcat(-1 .* g.r[end:-1:2], g.r), g.z, extended_data
+                 else
+                    # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+                    g.r, g.z, sp.data[:,idx,:]'
+                end
                 #=
             elseif cross_section == :r
                 xguide --> "φ / °"
@@ -299,7 +315,7 @@ end
             midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
         end
     end
-    
+
     if contours_equal_potential
         @series begin
             seriescolor := :thermal
