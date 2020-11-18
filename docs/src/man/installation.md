@@ -29,5 +29,5 @@ By default, `gr` is loaded when importing `Plots`.
 
 This documentation was build with
 ```@example
-using Pkg; Pkg.status(["Plots", "GR"])
+using Pkg; Pkg.status(["Plots", "GR"], mode = PKGMODE_MANIFEST)
 ```
