@@ -13,5 +13,6 @@ include("Tube.jl")
 include("Cone.jl")
 include("Sphere.jl")
 include("HexagonalPrism.jl")
+include("Torus.jl")
 
 include("plot_recipes.jl")

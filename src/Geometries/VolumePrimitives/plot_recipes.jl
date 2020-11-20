@@ -44,7 +44,7 @@ function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where 
     ls = AbstractLine{T, 3, :cartesian}[]
     translate::CartesianVector{T} = ismissing(c.translate) ? CartesianVector{T}([0, 0, 0]) : c.translate
     for r in [c.rStart1, c.rStop1]
-        push!(ls, PartialCircle(r, c.φStart, c.φStop, translate + CartesianVector{T}([0, 0, c.zStart]))) 
+        push!(ls, PartialCircle(r, c.φStart, c.φStop, translate + CartesianVector{T}([0, 0, c.zStart])))
     end
     for r in [c.rStart2, c.rStop2]
         push!(ls, PartialCircle(r, c.φStart, c.φStop, translate + CartesianVector{T}([0, 0, c.zStop])))
@@ -80,4 +80,43 @@ end
     seriescolor := seriescolor
     label := ""
     LineSegments(c)
+end
+
+function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {T <: SSDFloat}
+    ls = AbstractLine{T, 3, :cartesian}[]
+    translate::CartesianVector{T} = ismissing(t.translate) ? CartesianVector{T}([0, 0, 0]) : t.translate
+    for r_tube in (t.r_tube_interval.left == 0 ? [t.r_tube_interval.right] : [t.r_tube_interval.left, t.r_tube_interval.right])
+        θ_circles = (t.θ_interval.right - t.θ_interval.left) ≈ 2π ? [t.θ_interval.left] : [t.θ_interval.left, t.θ_interval.right]
+        π in OpenInterval(t.θ_interval) ? push!(θ_circles, π) : nothing
+        for θ in θ_circles
+            r = r_tube*cos(θ) + t.r_torus
+            z = r_tube*sin(θ)
+            push!(ls, PartialCircle(r, t.φ_interval.left, t.φ_interval.right, translate + CartesianVector{T}([0, 0, z])))
+        end
+    end
+    for φ in (t.φ_interval.right - t.φ_interval.left ≈ 2π ? [t.φ_interval.left] : [t.φ_interval.left, t.φ_interval.right])
+        for r_tube in (t.r_tube_interval.left == 0 ? [t.r_tube_interval.right] : [t.r_tube_interval.left, t.r_tube_interval.right])
+            r = r_tube
+            push!(ls, PartialCircle(r, t.θ_interval.left, t.θ_interval.right, translate + CartesianVector{T}([t.r_torus*cos(φ), t.r_torus*sin(φ), 0]), RotZ{T}(φ)*RotX{T}(π/2)))
+        end
+        for θ in (t.θ_interval.right - t.θ_interval.left ≈ 2π ? [] : [t.θ_interval.left, t.θ_interval.right])
+            push!(ls, LineSegment(
+                RotZ{T}(φ)*RotY{T}(-θ)*CartesianPoint{T}(t.r_tube_interval.left, 0, 0) + CartesianVector{T}([t.r_torus*cos(φ), t.r_torus*sin(φ), 0]) + translate,
+                RotZ{T}(φ)*RotY{T}(-θ)*CartesianPoint{T}(t.r_tube_interval.right, 0, 0) + CartesianVector{T}([t.r_torus*cos(φ), t.r_torus*sin(φ), 0]) + translate))
+        end
+    end
+    return ls
+end
+
+@recipe function f(t::Torus{T}; n = 30, seriescolor = :green) where {T}
+    linewidth --> 2
+    n --> n
+    @series begin
+        seriescolor --> seriescolor
+        label --> "Torus"
+        []
+    end
+    label := ""
+    seriescolor := seriescolor
+    LineSegments(t)
 end
