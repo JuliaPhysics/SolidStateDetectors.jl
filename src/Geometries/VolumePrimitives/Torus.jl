@@ -1,6 +1,16 @@
-struct Torus{T} <: AbstractVolumePrimitive{T, 3} ## Only upright Toruss at the moment
-    c::T
-    a_interval::AbstractInterval{T}
+"""
+    # struct Torus{T}
+
+r_torus: Radius measured from origin to center of tube in the standard r coordinate.
+r_tube_interval: Internal to external radius of cross section of torus tube.
+φ_interval: Standard cylindrical coordinate φ
+θ_interval: Angle measured from plane of torus, in a perpendicular cross section.
+...
+"""
+
+struct Torus{T} <: AbstractVolumePrimitive{T, 3} ## Only upright Torus at the moment
+    r_torus::T
+    r_tube_interval::AbstractInterval{T}
     φ_interval::AbstractInterval{T}
     θ_interval::AbstractInterval{T}
     translate::Union{CartesianVector{T},Missing}
@@ -17,10 +27,10 @@ function Torus{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Unit
         translate = missing
     end
 
-    if haskey(dict,"c")
-        c = geom_round(ustrip(uconvert(u"m", T(dict["c"]) * inputunit_dict["length"] )))
+    if haskey(dict,"r_torus")
+        r_torus = geom_round(ustrip(uconvert(u"m", T(dict["r_torus"]) * inputunit_dict["length"] )))
     else
-        @warn "please specify the radius from the center of the hole to the center of the torus tube 'c'"
+        @warn "please specify the radius from the center of the hole to the center of the torus tube 'r_torus'"
     end
 
     θ_interval =  if haskey(dict, "theta")
@@ -37,19 +47,19 @@ function Torus{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Unit
         Interval(T(0), geom_round(T(2π)))
     end
 
-    if haskey(dict,"a")
-        if haskey(dict["a"], "from")
-            a_interval =  Interval(geom_round(ustrip(uconvert(u"m", T(dict["a"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["a"]["to"]) * inputunit_dict["length"]))))
+    if haskey(dict,"r_tube")
+        if haskey(dict["r_tube"], "from")
+            r_tube_interval =  Interval(geom_round(ustrip(uconvert(u"m", T(dict["r_tube"]["from"]) * inputunit_dict["length"] ))), geom_round(ustrip(uconvert(u"m", T(dict["r_tube"]["to"]) * inputunit_dict["length"]))))
         else
-            a_interval = Interval(T(0), geom_round(ustrip(uconvert(u"m", T(dict["a"]) * inputunit_dict["length"]))))
+            r_tube_interval = Interval(T(0), geom_round(ustrip(uconvert(u"m", T(dict["r_tube"]) * inputunit_dict["length"]))))
         end
     else
-        @warn "please specify the radius of torus tube 'a'"
+        @warn "please specify the radius of torus tube 'r_tube'"
     end
 
     return Torus{T}(
-        c,
-        a_interval,
+        r_torus,
+        r_tube_interval,
         φ_interval,
         θ_interval,
         translate
@@ -63,31 +73,31 @@ end
 function in(point::CartesianPoint{T}, Torus::Torus{T})::Bool where {T <: SSDFloat}
     (ismissing(Torus.translate) || Torus.translate == CartesianVector{T}(0.0,0.0,0.0)) ? nothing : point -= Torus.translate
     point = convert(CylindricalPoint,point)
-    a = sqrt((point.r - Torus.c)^2 + point.z^2)
-    θ = acos((point.r - Torus.c)/a)
+    r_tube = sqrt((point.r - Torus.r_torus)^2 + point.z^2)
+    θ = acos((point.r - Torus.r_torus)/r_tube)
     if point.z < 0
         θ = 2π - θ
     end
-    return (a in Torus.a_interval && point.φ in Torus.φ_interval && θ in Torus.θ_interval)
+    return (r_tube in Torus.r_tube_interval && point.φ in Torus.φ_interval && θ in Torus.θ_interval)
 end
 
 function in(point::CylindricalPoint{T}, Torus::Torus{T})::Bool where {T <: SSDFloat}
     (ismissing(Torus.translate) || Torus.translate == CartesianVector{T}(0.0,0.0,0.0)) ? nothing  : point = CylindricalPoint(CartesianPoint(point)-Torus.translate)
-    a = sqrt((point.r - Torus.c)^2 + point.z^2)
-    θ = acos((point.r - Torus.c)/a)
+    r_tube = sqrt((point.r - Torus.r_torus)^2 + point.z^2)
+    θ = acos((point.r - Torus.r_torus)/r_tube)
     if point.z < 0
         θ = 2π - θ
     end
-    return (a in Torus.a_interval && point.φ in Torus.φ_interval && θ in Torus.θ_interval)
+    return (r_tube in Torus.r_tube_interval && point.φ in Torus.φ_interval && θ in Torus.θ_interval)
 end
 
 
-function get_important_points(t::Torus{T}, ::Val{:a})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[t.a_interval.left, t.a_interval.right])
+function get_important_points(t::Torus{T}, ::Val{:r_tube})::Vector{T} where {T <: SSDFloat}
+    return geom_round.(T[t.r_tube_interval.left, t.r_tube_interval.right])
 end
 
 function get_important_points(t::Torus{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[t.c-t.a_interval.right, t.a_interval.right+t.c])
+    return geom_round.(T[t.r_torus-t.r_tube_interval.right, t.r_tube_interval.right+t.r_torus])
 end
 
 function get_important_points(t::Torus{T}, ::Val{:φ})::Vector{T} where {T <: SSDFloat}
@@ -99,23 +109,23 @@ function get_important_points(t::Torus{T}, ::Val{:θ})::Vector{T} where {T <: SS
 end
 
 function get_important_points(t::Torus{T}, ::Val{:x})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[-(t.a_interval.right+t.c), -(t.c-t.a_interval.right), (t.c-t.a_interval.right), (t.a_interval.right+t.c)])
+    return geom_round.(T[-(t.r_tube_interval.right+t.r_torus), -(t.r_torus-t.r_tube_interval.right), (t.r_torus-t.r_tube_interval.right), (t.r_tube_interval.right+t.r_torus)])
 end
 
 function get_important_points(t::Torus{T}, ::Val{:y})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[-(t.a_interval.right+t.c), -(t.c-t.a_interval.right), (t.c-t.a_interval.right), (t.a_interval.right+t.c)])
+    return geom_round.(T[-(t.r_tube_interval.right+t.r_torus), -(t.r_torus-t.r_tube_interval.right), (t.r_torus-t.r_tube_interval.right), (t.r_tube_interval.right+t.r_torus)])
 end
 
 function get_important_points(t::Torus{T}, ::Val{:z})::Vector{T} where {T <: SSDFloat}
-    return geom_round.(T[-t.a_interval.right, t.a_interval.right])
+    return geom_round.(T[-t.r_tube_interval.right, t.r_tube_interval.right])
 end
 
 function sample(t::Torus{T}, stepsize::Vector{T}) where {T <: SSDFloat}
     samples = CylindricalPoint[]
-    for a in t.a_interval.left:stepsize[1]: t.a_interval.right
+    for r_tube in t.r_tube_interval.left:stepsize[1]: t.r_tube_interval.right
         for φ in t.φ_interval.left:stepsize[2]: t.φ_interval.right
             for θ in t.θ_interval.left:stepsize[3]: t.θ_interval.right
-                push!(samples, CylindricalPoint{T}(t.c+a*cos(θ),φ,a*sin(θ)))
+                push!(samples, CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),φ,r_tube*sin(θ)))
             end
         end
     end
@@ -127,8 +137,8 @@ function (+)(t::Torus{T}, translate::Union{CartesianVector{T},Missing})::Torus{T
     if ismissing(translate)
         return t
     elseif ismissing(t.translate)
-        return Torus(t.c, t.a_interval, t.φ_interval, t.θ_interval, translate)
+        return Torus(t.r_torus, t.r_tube_interval, t.φ_interval, t.θ_interval, translate)
     else
-        return Torus(t.c, t.a_interval, t.φ_interval, t.θ_interval, t.translate + translate)
+        return Torus(t.r_torus, t.r_tube_interval, t.φ_interval, t.θ_interval, t.translate + translate)
     end
  end

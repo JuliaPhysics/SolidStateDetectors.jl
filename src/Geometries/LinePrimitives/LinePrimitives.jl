@@ -88,14 +88,21 @@ struct PartialCircle{T,N,S} <: AbstractLine{T,N,S}
     Rotate::AbstractMatrix{T}
 end
 
-function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T} = CartesianVector{T}([0,0,0]), Rotate::AngleAxis{T} = AngleAxis{T}(0,0,0,1)) where {T}
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T} = CartesianVector{T}([0,0,0]), Rotate::Rotation{3,Float32} = RotZ{T}(0)) where {T}
     PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate, Rotate)
 end
 
-function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing,  Rotate::Missing) where {T}
-    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]),  AngleAxis{T}(0,0,0,1))
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T}, Rotate::Missing) where {T}
+    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate, RotZ{T}(0))
 end
 
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing, Rotate::Rotation{3,Float32}) where {T}
+    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]), Rotate)
+end
+
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing, Rotate::Missing) where {T}
+    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]),  RotZ{T}(0))
+end
 
 
 # Plot Recipes:

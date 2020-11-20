@@ -85,24 +85,24 @@ end
 function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {T <: SSDFloat}
     ls = AbstractLine{T, 3, :cartesian}[]
     translate::CartesianVector{T} = ismissing(t.translate) ? CartesianVector{T}([0, 0, 0]) : t.translate
-    for a in (t.a_interval.left == 0 ? [t.a_interval.right] : [t.a_interval.left, t.a_interval.right])
+    for r_tube in (t.r_tube_interval.left == 0 ? [t.r_tube_interval.right] : [t.r_tube_interval.left, t.r_tube_interval.right])
         θ_circles = (t.θ_interval.right - t.θ_interval.left) ≈ 2π ? [t.θ_interval.left] : [t.θ_interval.left, t.θ_interval.right]
         π in OpenInterval(t.θ_interval) ? push!(θ_circles, π) : nothing
         for θ in θ_circles
-            r = a*cos(θ) + t.c
-            z = a*sin(θ)
+            r = r_tube*cos(θ) + t.r_torus
+            z = r_tube*sin(θ)
             push!(ls, PartialCircle(r, t.φ_interval.left, t.φ_interval.right, translate + CartesianVector{T}([0, 0, z])))
         end
     end
     for φ in (t.φ_interval.right - t.φ_interval.left ≈ 2π ? [t.φ_interval.left] : [t.φ_interval.left, t.φ_interval.right])
-        for a in (t.a_interval.left == 0 ? [t.a_interval.right] : [t.a_interval.left, t.a_interval.right])
-            r = a
-            push!(ls, PartialCircle(r, t.θ_interval.left, t.θ_interval.right, translate + CartesianVector{T}([t.c*cos(φ), t.c*sin(φ), 0]), AngleAxis{T}(RotZ(φ)*RotX(π/2))))
+        for r_tube in (t.r_tube_interval.left == 0 ? [t.r_tube_interval.right] : [t.r_tube_interval.left, t.r_tube_interval.right])
+            r = r_tube
+            push!(ls, PartialCircle(r, t.θ_interval.left, t.θ_interval.right, translate + CartesianVector{T}([t.r_torus*cos(φ), t.r_torus*sin(φ), 0]), RotZ{T}(φ)*RotX{T}(π/2)))
         end
         for θ in (t.θ_interval.right - t.θ_interval.left ≈ 2π ? [] : [t.θ_interval.left, t.θ_interval.right])
             push!(ls, LineSegment(
-                RotZ(φ)*RotY(-θ)*CartesianPoint{T}(t.a_interval.left, 0, 0) + CartesianVector{T}([t.c*cos(φ), t.c*sin(φ), 0]) + translate,
-                RotZ(φ)*RotY(-θ)*CartesianPoint{T}(t.a_interval.right, 0, 0) + CartesianVector{T}([t.c*cos(φ), t.c*sin(φ), 0]) + translate))
+                RotZ{T}(φ)*RotY{T}(-θ)*CartesianPoint{T}(t.r_tube_interval.left, 0, 0) + CartesianVector{T}([t.r_torus*cos(φ), t.r_torus*sin(φ), 0]) + translate,
+                RotZ{T}(φ)*RotY{T}(-θ)*CartesianPoint{T}(t.r_tube_interval.right, 0, 0) + CartesianVector{T}([t.r_torus*cos(φ), t.r_torus*sin(φ), 0]) + translate))
         end
     end
     return ls
