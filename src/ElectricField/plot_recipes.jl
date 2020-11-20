@@ -122,10 +122,21 @@ end
             sampling_vector_pool = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
             PT == CylindricalPoint{T} ? sampling_vector_pool[2] = sampling_vector_pool[2]/0.001 *2*π / 360 : nothing # rough translation of mm to radians; Might need some polish
             sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool)
+            if length(sample_pool)<8
+                @warn("The sampling step is to coarse ($(sampling)). Please use the 'sampling' keyword (e.g. 'sampling  = 0.1u\"mm\"') to specify smaller sampling steps. Also consider to reduce the 'offset' keyword accordingly. Attempting to automatically reduce the sampling size.")
+                exponent = 1
+                while length(unique!(map(x->x[dim_number],sample_pool))) < 8
+                    exponent+=1
+                    sampling_vector_pool ./=2^exponent
+                    # sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool./(2^exponent))
+                    sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool)
+                end
+                @info("Scaling down sampling steps by a factor of $(2^exponent). Now using sampling steps of $(sampling_vector_pool./2^exponent) m. Also scaling down offset by a factor $(2^exponent).")
+                offset /= 2^exponent
+            end
             sample_pool = S == :cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : geom_round.(sample_pool)
             sample_pool = S == :cartesian ? geom_round.(CartesianPoint.(sample_pool)) : geom_round.(sample_pool)
             sampled_planes = unique!(map(x->x[dim_number],sample_pool))
-
             v_Xsec_plane = sampled_planes[searchsortednearest(sampled_planes,v)]
             if abs(v-v_Xsec_plane) > sampling_vector_pool[dim_number] continue; end
 
@@ -135,7 +146,6 @@ end
 
             vec_in_Xsec_dir = get_vector_in_Xsec_dir(sampled_points_Xsec, sample_pool, dim_symbol)
             offset_vector::Vector{CartesianVector{T}} = get_offset_vector(sampled_points_Xsec_cart, vec_in_Xsec_dir) .* T.(ustrip.(uconvert(u"m", offset)))
-
             push!(spawn_positions, broadcast(+, sampled_points_Xsec_cart, offset_vector)...)
             push!(spawn_positions, broadcast(-, sampled_points_Xsec_cart, offset_vector)...)
 
