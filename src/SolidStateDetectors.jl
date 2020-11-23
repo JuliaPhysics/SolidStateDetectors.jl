@@ -39,7 +39,8 @@ import Base.convert
 export SolidStateDetector
 export SSD_examples
 
-export Grid, CylindricalPoint, CartesianPoint
+export Grid
+# export CylindricalPoint, CartesianPoint
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
@@ -59,6 +60,8 @@ struct ConfigFileError <: Exception
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
+include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
+# using .ConstructiveSolidGeometry
 include("Geometries/Geometries.jl")
 
 include("Axes/DiscreteAxis.jl")
