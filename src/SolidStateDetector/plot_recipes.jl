@@ -1,5 +1,8 @@
-@recipe function f(det::SolidStateDetector{T}; n = 30, φ = missing, seriescolor = missing, label = missing) where {T}
-
+@recipe function f(det::SolidStateDetector{T}; SSD_style = :wireframe, n = 30, φ = missing, seriescolor = missing, label = missing, alpha_factor = 1) where {T}
+    if !(SSD_style in [:wireframe, :samplesurface])
+        @warn "Chose SSD_style from [:wireframe, :samplesurface]. Defaulting to :wireframe"
+        SSD_style = :wireframe
+    end
     clabel = (ismissing(label) ? map(c -> (c.name == "" ? c.id : c.name), det.contacts) : label)
     if !(typeof(clabel) <: AbstractArray) clabel = [clabel] end
     ccolor = (ismissing(seriescolor) ? map(c -> c.id, det.contacts) : seriescolor)
@@ -16,6 +19,9 @@
             @series begin
                 label := ""
                 n --> n
+                SSD_style --> SSD_style
+                detector --> det
+                alpha_factor --> alpha_factor
                 contact
             end
             @series begin
@@ -30,7 +36,7 @@
 end
 
 
-@recipe function f(contact::Contact{T}; n = 30, seriescolor = missing) where {T}
+@recipe function f(contact::Contact{T}; SSD_style = :wireframe, n = 30, seriescolor = missing, detector = missing, alpha_factor = 1) where {T}
     ccolor = (ismissing(seriescolor) ? contact.id : seriescolor)
     @series begin
         seriescolor := ccolor
@@ -42,6 +48,10 @@ end
             seriescolor := ccolor
             label := ""
             n --> n
+            SSD_style --> SSD_style
+            detector --> detector
+            contact --> contact
+            alpha_factor --> alpha_factor
             c
         end
     end

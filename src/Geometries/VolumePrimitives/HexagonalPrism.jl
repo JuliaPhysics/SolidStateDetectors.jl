@@ -63,44 +63,75 @@ function (+)(hp::HexagonalPrism{T}, translate::Union{CartesianVector{T}, Missing
     end
 end
 
-# Also a plot recipe for this new primitive should be provided:
-@recipe function f(hp::HexagonalPrism{T}) where {T <: SSDFloat}
-    label --> "HexagonalPrism"
-    @series begin
-        pts_top_outer = []
-        pts_bottom_outer = []
-        pts_top_inner = []
-        pts_bottom_inner = []
-
-        #find all vertices, this loop has been tested and works
-        for φ in deg2rad.(30:60:330) .- hp.rotZ
-            pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
-            push!(pts_top_outer, pt_top_outer)
-            pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
-            push!(pts_top_inner, pt_top_inner)
-            pt_bottom_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z -hp.h/2)
-            push!(pts_bottom_outer, pt_bottom_outer)
-            pt_bottom_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z -hp.h/2)
-            push!(pts_bottom_inner, pt_bottom_inner)
-        end
-
-        #create Linesegments connecting the vertices
-        lines = LineSegment{T, 3, :cartesian}[]
-        N = length(pts_top_outer)
-        for i in 1:N
-            push!(lines, LineSegment(pts_top_outer[i%N+1], pts_top_outer[i])) #top outer hexagon
-            push!(lines, LineSegment(pts_bottom_outer[i%N+1], pts_bottom_outer[i])) #bottom outer hexagon
-            push!(lines, LineSegment(pts_bottom_outer[i], pts_top_outer[i])) #lines connecting outer hexagons
-            if hp.rInner > 0
-                push!(lines, LineSegment(pts_bottom_inner[i%N+1], pts_bottom_inner[i])) #bottom inner hexagon
-                push!(lines, LineSegment(pts_top_inner[i%N+1], pts_top_inner[i])) #top inner hexagon
-                push!(lines, LineSegment(pts_bottom_inner[i], pts_top_inner[i])) #lines connecting inner hexagons
-                push!(lines, LineSegment(pts_top_outer[i], pts_top_inner[i])) #lines connecting hexagons
-                push!(lines, LineSegment(pts_bottom_outer[i], pts_bottom_inner[i])) #lines connecting hexagons
-            end
-        end
-        lines
+function LineSegments(hp::HexagonalPrism{T})::Vector{AbstractLine{T,3,:cartesian}} where {T <: SSDFloat}
+    pts_top_outer = []
+    pts_bottom_outer = []
+    pts_top_inner = []
+    pts_bottom_inner = []
+    #find all vertices, this loop has been tested and works
+    for φ in deg2rad.(30:60:330) .- hp.rotZ
+        pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
+        push!(pts_top_outer, pt_top_outer)
+        pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
+        push!(pts_top_inner, pt_top_inner)
+        pt_bottom_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z -hp.h/2)
+        push!(pts_bottom_outer, pt_bottom_outer)
+        pt_bottom_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z -hp.h/2)
+        push!(pts_bottom_inner, pt_bottom_inner)
     end
+
+    #create Linesegments connecting the vertices
+    lines = LineSegment{T, 3, :cartesian}[]
+    N = length(pts_top_outer)
+    for i in 1:N
+        push!(lines, LineSegment(pts_top_outer[i%N+1], pts_top_outer[i])) #top outer hexagon
+        push!(lines, LineSegment(pts_bottom_outer[i%N+1], pts_bottom_outer[i])) #bottom outer hexagon
+        push!(lines, LineSegment(pts_bottom_outer[i], pts_top_outer[i])) #lines connecting outer hexagons
+        if hp.rInner > 0
+            push!(lines, LineSegment(pts_bottom_inner[i%N+1], pts_bottom_inner[i])) #bottom inner hexagon
+            push!(lines, LineSegment(pts_top_inner[i%N+1], pts_top_inner[i])) #top inner hexagon
+            push!(lines, LineSegment(pts_bottom_inner[i], pts_top_inner[i])) #lines connecting inner hexagons
+            push!(lines, LineSegment(pts_top_outer[i], pts_top_inner[i])) #lines connecting hexagons
+            push!(lines, LineSegment(pts_bottom_outer[i], pts_bottom_inner[i])) #lines connecting hexagons
+        end
+    end
+    return lines
+end
+# Also a plot recipe for this new primitive should be provided:
+@recipe function f(hp::HexagonalPrism{T}; seriescolor = :purple, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T <: SSDFloat}
+    linewidth --> 2
+    @series begin
+        seriescolor --> seriescolor
+        label --> "Hexagon"
+        []
+    end
+    label := ""
+    seriescolor := seriescolor
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(hp)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        grid = Grid(detector)
+        coord_sys = get_coordinate_system(grid)
+        points = 100
+        if coord_sys == :cylindrical
+            sampling_vector = T.([width(grid.r.interval)/points, width(grid.r.interval)/points, width(grid.z.interval)/points])
+            plotobject = CylindricalPoint.(sample(hp, sampling_vector))
+        elseif coord_sys == :cartesian
+            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
+            plotobject = CartesianPoint{T}.(sample(hp, sampling_vector))
+        end
+        for neg_geo in contact.geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
 
 # For proper grid creation we also need the function get_important_points:

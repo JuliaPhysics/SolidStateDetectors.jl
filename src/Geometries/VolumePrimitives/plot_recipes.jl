@@ -26,7 +26,7 @@ function LineSegments(t::Tube{T})::Vector{AbstractLine{T,3,:cartesian}} where {T
     return ls
 end
 
-@recipe function f(t::Tube{T}; n = 30, seriescolor = :green) where {T}
+@recipe function f(t::Tube{T}; n = 30, seriescolor = :green, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -36,7 +36,31 @@ end
     end
     label := ""
     seriescolor := seriescolor
-    LineSegments(t)
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(t)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        grid = Grid(detector)
+        coord_sys = get_coordinate_system(grid)
+        points = 100
+        if coord_sys == :cylindrical
+            sampling_vector = T.([width(grid.r.interval)/points, π/points, width(grid.z.interval)/points])
+            plotobject = CylindricalPoint{T}.(sample(t, sampling_vector))
+        elseif coord_sys == :cartesian
+            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
+            plotobject = CartesianPoint{T}.(sample(t, sampling_vector))
+        end
+        for neg_geo in contact.geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
 
 
@@ -69,7 +93,7 @@ function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where 
     return ls
 end
 
-@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange) where {T}
+@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -79,7 +103,31 @@ end
     end
     seriescolor := seriescolor
     label := ""
-    LineSegments(c)
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(c)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        grid = Grid(detector)
+        coord_sys = get_coordinate_system(grid)
+        points = 100
+        if coord_sys == :cylindrical
+            sampling_vector = T.([width(grid.r.interval)/points, π/points, width(grid.z.interval)/points])
+            plotobject = CylindricalPoint{T}.(sample(c, sampling_vector))
+        elseif coord_sys == :cartesian
+            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
+            plotobject = CartesianPoint{T}.(sample(t, sampling_vector))
+        end
+        for neg_geo in contact.geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
 
 function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {T <: SSDFloat}
@@ -108,7 +156,7 @@ function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {
     return ls
 end
 
-@recipe function f(t::Torus{T}; n = 30, seriescolor = :green) where {T}
+@recipe function f(t::Torus{T}; n = 30, seriescolor = :red, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -118,5 +166,29 @@ end
     end
     label := ""
     seriescolor := seriescolor
-    LineSegments(t)
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(t)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        grid = Grid(detector)
+        coord_sys = get_coordinate_system(grid)
+        points = 100
+        if coord_sys == :cylindrical
+            sampling_vector = T.([width(grid.r.interval)/points, π/points, π/points])
+            plotobject = CylindricalPoint{T}.(sample(t, sampling_vector))
+        elseif coord_sys == :cartesian
+            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
+            plotobject = CartesianPoint{T}.(sample(t, sampling_vector))
+        end
+        for neg_geo in contact.geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
