@@ -102,7 +102,7 @@ end
     linewidth --> 2
     @series begin
         seriescolor --> seriescolor
-        label --> "Hexagon"
+        label --> "HexagonalPrism"
         []
     end
     label := ""
