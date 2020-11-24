@@ -14,11 +14,15 @@ struct Tube{T,R,PHI} <: AbstractVolumePrimitive{T}
     zMax::T
 end
 
-function Tube(;rMin::T = 0, rMax::T = 1, φMin::T = 0, φMax::T = 2π, zMin::T = -1/2, zMax::T = 1/2) where {T}
+# Constructors
+function Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) 
+    T = promote_type(typeof.((rMin, rMax, φMin, φMax, zMin, zMax))...)
     Tube{T, rMin == 0 ? :full : :open, mod(φMax - φMin, 2π) == 0 ? :full : :open}(
         rMin, rMax, φMin, φMax, zMin, zMax
     )
 end
+Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMin, zMax)    
+Tube(radius::T, height::T) where {T} = Tube(rMax = radius, zMin = -height/2, zMax = height/2)
 
 in(p::CartesianPoint, t::Tube{<:Any, :full, :full}) = 
     (t.zMin <= p.z <= t.zMax) && ((p.x^2 + p.y^2) <= t.rMax^2)
