@@ -26,7 +26,7 @@ function LineSegments(t::Tube{T})::Vector{AbstractLine{T,3,:cartesian}} where {T
     return ls
 end
 
-@recipe function f(t::Tube{T}; n = 30, seriescolor = :green, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T}
+@recipe function f(t::Tube{T}; n = 30, seriescolor = :green, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -42,17 +42,20 @@ end
         plotobject = LineSegments(t)
     elseif SSD_style == :samplesurface
         st = :scatter
-        grid = Grid(detector)
-        coord_sys = get_coordinate_system(grid)
-        points = 100
-        if coord_sys == :cylindrical
-            sampling_vector = T.([width(grid.r.interval)/points, π/points, width(grid.z.interval)/points])
-            plotobject = CylindricalPoint{T}.(sample(t, sampling_vector))
-        elseif coord_sys == :cartesian
-            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
-            plotobject = CartesianPoint{T}.(sample(t, sampling_vector))
+        if ismissing(world_size)
+            r_size = t.r_interval.right*width(t.φ_interval)/(π/2) >= width(t.r_interval) ? t.r_interval.right :  width(t.r_interval)
+            max_dim = max(r_size, width(t.z_interval))
+            world_size = CylindricalVector{T}(max_dim, π, max_dim)
         end
-        for neg_geo in contact.geometry_negative
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            plotobject = CylindricalPoint.(sample(t, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, world_size.z]/points)
+            plotobject = CartesianPoint.(sample(t, sampling_vector))
+        end
+        for neg_geo in geometry_negative
             filter!(x -> !(x in neg_geo), plotobject)
         end
         α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
@@ -93,7 +96,7 @@ function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where 
     return ls
 end
 
-@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T}
+@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -109,17 +112,21 @@ end
         plotobject = LineSegments(c)
     elseif SSD_style == :samplesurface
         st = :scatter
-        grid = Grid(detector)
-        coord_sys = get_coordinate_system(grid)
-        points = 100
-        if coord_sys == :cylindrical
-            sampling_vector = T.([width(grid.r.interval)/points, π/points, width(grid.z.interval)/points])
-            plotobject = CylindricalPoint{T}.(sample(c, sampling_vector))
-        elseif coord_sys == :cartesian
-            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
-            plotobject = CartesianPoint{T}.(sample(t, sampling_vector))
+        if ismissing(world_size)
+            r_max = max(c.rStop1, c.rStop2)
+            r_size = r_max*width(c.φ_interval)/(π/2) >= abs(r_max - min(c.rStart1, c.rStart2)) ? r_max :  abs(r_max - min(c.rStart1, c.rStart2))
+            max_dim = max(r_size, abs(c.zStop-c.zStart))
+            world_size = CylindricalVector{T}(max_dim, π, max_dim)
         end
-        for neg_geo in contact.geometry_negative
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            plotobject = CylindricalPoint.(sample(c, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, world_size.z]/points)
+            plotobject = CartesianPoint.(sample(c, sampling_vector))
+        end
+        for neg_geo in geometry_negative
             filter!(x -> !(x in neg_geo), plotobject)
         end
         α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
@@ -156,7 +163,7 @@ function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {
     return ls
 end
 
-@recipe function f(t::Torus{T}; n = 30, seriescolor = :red, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T}
+@recipe function f(t::Torus{T}; n = 30, seriescolor = :red, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -172,17 +179,20 @@ end
         plotobject = LineSegments(t)
     elseif SSD_style == :samplesurface
         st = :scatter
-        grid = Grid(detector)
-        coord_sys = get_coordinate_system(grid)
-        points = 100
-        if coord_sys == :cylindrical
-            sampling_vector = T.([width(grid.r.interval)/points, π/points, π/points])
-            plotobject = CylindricalPoint{T}.(sample(t, sampling_vector))
-        elseif coord_sys == :cartesian
-            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
-            plotobject = CartesianPoint{T}.(sample(t, sampling_vector))
+        if ismissing(world_size)
+            r_size = (t.r_torus+t.r_tube_interval.right)*width(t.φ_interval)/(π/2) > max(t.r_tube_interval.right*width(t.θ_interval)/(π/2), width(t.r_tube_interval)) ?  t.r_torus+t.r_tube_interval.right : t.r_tube_interval.right
+            world_size = CylindricalVector{T}(r_size, π, r_size)
         end
-        for neg_geo in contact.geometry_negative
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            sampling_vector[3] = π/points
+            plotobject = CylindricalPoint.(sample(t, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, π]/points)
+            plotobject = CartesianPoint.(sample(t, sampling_vector))
+        end
+        for neg_geo in geometry_negative
             filter!(x -> !(x in neg_geo), plotobject)
         end
         α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)

@@ -7,7 +7,19 @@
     if !(typeof(clabel) <: AbstractArray) clabel = [clabel] end
     ccolor = (ismissing(seriescolor) ? map(c -> c.id, det.contacts) : seriescolor)
     if !(typeof(ccolor) <: AbstractArray) ccolor = [ccolor] end
-
+    world_size = missing
+    if SSD_style == :samplesurface
+        grid = Grid(det)
+        coord_sys = get_coordinate_system(grid)
+        coord_sys = get_coordinate_system(det)
+        if coord_sys == :cylindrical
+            world_size = CylindricalVector{T}(width(grid.r.interval), π, width(grid.z.interval))
+        elseif coord_sys == :cartesian
+            world_size = CartesianVector{T}(width(grid.x.interval), width(grid.y.interval), width(grid.z.interval))
+        else
+            @error "Could not determine the world size, try SSD_style = :wireframe"
+        end
+    end
     if ismissing(φ)
         xguide --> "x / m"
         yguide --> "y / m"
@@ -20,7 +32,7 @@
                 label := ""
                 n --> n
                 SSD_style --> SSD_style
-                detector --> det
+                world_size --> world_size
                 alpha_factor --> alpha_factor
                 contact
             end
@@ -36,7 +48,7 @@
 end
 
 
-@recipe function f(contact::Contact{T}; SSD_style = :wireframe, n = 30, seriescolor = missing, detector = missing, alpha_factor = 1) where {T}
+@recipe function f(contact::Contact{T}; SSD_style = :wireframe, n = 30, seriescolor = missing, world_size = missing, alpha_factor = 1) where {T}
     ccolor = (ismissing(seriescolor) ? contact.id : seriescolor)
     @series begin
         seriescolor := ccolor
@@ -49,8 +61,8 @@ end
             label := ""
             n --> n
             SSD_style --> SSD_style
-            detector --> detector
-            contact --> contact
+            world_size --> world_size
+            geometry_negative --> contact.geometry_negative
             alpha_factor --> alpha_factor
             c
         end

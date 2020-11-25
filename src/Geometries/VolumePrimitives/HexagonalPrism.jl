@@ -98,7 +98,7 @@ function LineSegments(hp::HexagonalPrism{T})::Vector{AbstractLine{T,3,:cartesian
     return lines
 end
 # Also a plot recipe for this new primitive should be provided:
-@recipe function f(hp::HexagonalPrism{T}; seriescolor = :purple, SSD_style = :wireframe, detector = missing, contact = missing, alpha_factor = 1) where {T <: SSDFloat}
+@recipe function f(hp::HexagonalPrism{T}; seriescolor = :purple, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T <: SSDFloat}
     linewidth --> 2
     @series begin
         seriescolor --> seriescolor
@@ -113,17 +113,20 @@ end
         plotobject = LineSegments(hp)
     elseif SSD_style == :samplesurface
         st = :scatter
-        grid = Grid(detector)
-        coord_sys = get_coordinate_system(grid)
-        points = 100
-        if coord_sys == :cylindrical
-            sampling_vector = T.([width(grid.r.interval)/points, width(grid.r.interval)/points, width(grid.z.interval)/points])
-            plotobject = CylindricalPoint.(sample(hp, sampling_vector))
-        elseif coord_sys == :cartesian
-            sampling_vector = T.([width(grid.x.interval)/points, width(grid.y.interval)/points, width(grid.z.interval)/points])
-            plotobject = CartesianPoint{T}.(sample(hp, sampling_vector))
+        if ismissing(world_size)
+            max_dim = max(hp.rOuter, hp.h)
+            world_size = CartesianVector{T}(max_dim, max_dim, max_dim)
         end
-        for neg_geo in contact.geometry_negative
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            sampling_vector[2] = sampling_vector[1]
+            plotobject = CylindricalPoint.(sample(hp, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            plotobject = CartesianPoint.(sample(hp, sampling_vector))
+        end
+        for neg_geo in geometry_negative
             filter!(x -> !(x in neg_geo), plotobject)
         end
         α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
