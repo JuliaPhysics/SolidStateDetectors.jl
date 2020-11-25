@@ -17,6 +17,16 @@ end
 
 @inline (*)(r::RotMatrix, p::CartesianPoint) = CartesianPoint(r.mat * p)
 
+@inline _in_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
+@inline _in_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
+
+@inline _in_φ(p::CartesianPoint{T}, φ::AbstractInterval) where {T} = mod(atan(p.y, p.x), T(2π)) in φ    
+
+@inline _in_z(p::CartesianPoint, z::Real) = abs(p.z) <= z
+@inline _in_z(p::CartesianPoint, z::AbstractInterval) = p.z in z
+
+# have to add _in_x & _in_y
+
 """
     struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
 
@@ -41,7 +51,7 @@ struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
     r::T
     φ::T
     z::T
-    # CylindricalPoint{T}(r::T, φ::T, z::T) where {T} = new(r, mod(φ,2π), z)
+    CylindricalPoint{T}(r::T, φ::T, z::T) where {T} = new(r, mod(φ,2π), z)
 end
 
 function CylindricalPoint(pt::CartesianPoint{T})::CylindricalPoint{T} where {T}
@@ -53,3 +63,4 @@ function CartesianPoint(pt::CylindricalPoint{T})::CartesianPoint{T} where {T}
     return CartesianPoint{T}(pt.r * cφ, pt.r * sφ, pt.z)
 end
 
+# Have to add: _in_r, _in_φ, _in_z, _in_x, _in_y for Cylindrical Points

@@ -1,23 +1,31 @@
 using Test
-using SolidStateDetectors
 using BenchmarkTools
+
+using SolidStateDetectors
+using IntervalSets
+using Unitful
 using LinearAlgebra
 using Rotations
-using Unitful
 using StaticArrays
-using Plots
 
 using SolidStateDetectors.ConstructiveSolidGeometry: 
     CartesianPoint, CartesianVector, CylindricalPoint,
     StretchedGeometry, RotatedGeometry, TranslatedGeometry,
     Tube,
     CSGUnion, CSGIntersection, CSGDifference
-    
+
 
 T = Float64
 p_car = CartesianPoint{T}(0, 1, 0)
 
+t1 = Tube(1, 0.4)
+t2 = Tube(0.2, 1, 0, π, -0.3, 0.4)
+
+p_car in t1
+p_car in t2
+
 @btime CylindricalPoint($p_car);
+
 
 p_cyl = CylindricalPoint(p_car)
 @btime CartesianPoint($p_cyl);
@@ -36,9 +44,9 @@ end
     @testset "Tube" begin
         tube = Tube(0.2, 2.0) # radius 1, height 2
         @test CartesianPoint{T}(0, 0, 0) in tube
-        @test CartesianPoint{T}(tube.rMax, 0, tube.zMin) in tube
-        @test !(CartesianPoint{T}(tube.rMax, 0, 1.1*tube.zMin) in tube) 
-        @test !(CartesianPoint{T}(1.1*tube.rMax, 0, tube.zMax) in tube) 
+        @test CartesianPoint{T}(tube.r, 0, tube.z) in tube
+        @test !(CartesianPoint{T}(tube.r, 0, 1.1*tube.z) in tube) 
+        @test !(CartesianPoint{T}(1.1*tube.r, 0, tube.z) in tube) 
     end
 end
 
@@ -90,17 +98,17 @@ cp1 = CartesianPoint{T}(0, 0, 1)
 
 @btime cp1 in translated_rot_streched_tube
 
-
+using Plots
 begin
     plts = []
     for p in [  
-                # tube, 
-                # streched_tube, 
+                tube, 
+                streched_tube, 
                 rot_tube, 
-                # rot_streched_tube, 
-                # translated_tube, 
-                # translated_rotated_tube ,
-                # translated_rot_streched_tube,
+                rot_streched_tube, 
+                translated_tube, 
+                translated_rotated_tube ,
+                translated_rot_streched_tube,
             ]
         xs = T[]
         ys = T[]
@@ -116,10 +124,10 @@ begin
                 end
             end
         end
-        push!(plts, plot(ys, zs, st=:scatter, ms = 4, markerstrokewidth = 0, xguide = "y", yguide = "z",
-                            xlims = (-2,2), ylims = (-2,2)))
-        # push!(plts, plot3d(xs, ys, zs, st=:scatter, ms = 2, markerstrokewidth = 0, xguide = "x",
-        #                     xlims = (-2,2), ylims = (-2,2), zlims = (-2,2)))
+        # push!(plts, plot(ys, zs, st=:scatter, ms = 4, markerstrokewidth = 0, xguide = "y", yguide = "z",
+        #                     xlims = (-2,2), ylims = (-2,2)))
+        push!(plts, plot3d(xs, ys, zs, st=:scatter, ms = 2, markerstrokewidth = 0, xguide = "x",
+                            xlims = (-2,2), ylims = (-2,2), zlims = (-2,2)))
     end
     plot(plts..., size = (600,600))
 end

@@ -7,8 +7,9 @@ module ConstructiveSolidGeometry
     using LinearAlgebra
 
     # # Other Packages
-    using StaticArrays
+    using IntervalSets
     using Rotations
+    using StaticArrays
 
     import Base: in, *
     
@@ -27,7 +28,7 @@ module ConstructiveSolidGeometry
 
     include("PointsAndVectors.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
-    include("TranslationsAndRotations.jl")
+    include("Transformations.jl")
     include("CSG.jl")
 
 end 
