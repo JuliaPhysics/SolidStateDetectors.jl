@@ -45,7 +45,7 @@ end
         if ismissing(world_size)
             r_size = t.r_interval.right*width(t.φ_interval)/(π/2) >= width(t.r_interval) ? t.r_interval.right :  width(t.r_interval)
             max_dim = max(r_size, width(t.z_interval))
-            world_size = CylindricalVector{T}(max_dim, π, max_dim)
+            world_size = CylindricalVector{T}(max_dim, width(t.φ_interval)/2, max_dim)
         end
         points = 100
         if typeof(world_size) == CylindricalVector{T}
@@ -116,7 +116,7 @@ end
             r_max = max(c.rStop1, c.rStop2)
             r_size = r_max*width(c.φ_interval)/(π/2) >= abs(r_max - min(c.rStart1, c.rStart2)) ? r_max :  abs(r_max - min(c.rStart1, c.rStart2))
             max_dim = max(r_size, abs(c.zStop-c.zStart))
-            world_size = CylindricalVector{T}(max_dim, π, max_dim)
+            world_size = CylindricalVector{T}(max_dim, width(t.φ_interval)/2, max_dim)
         end
         points = 100
         if typeof(world_size) == CylindricalVector{T}
@@ -179,14 +179,16 @@ end
         plotobject = LineSegments(t)
     elseif SSD_style == :samplesurface
         st = :scatter
+        own_world = false
         if ismissing(world_size)
+            own_world = true
             r_size = (t.r_torus+t.r_tube_interval.right)*width(t.φ_interval)/(π/2) > max(t.r_tube_interval.right*width(t.θ_interval)/(π/2), width(t.r_tube_interval)) ?  t.r_torus+t.r_tube_interval.right : t.r_tube_interval.right
-            world_size = CylindricalVector{T}(r_size, π, r_size)
+            world_size = CylindricalVector{T}(r_size, width(t.φ_interval)/2, width(t.θ_interval)/2)
         end
         points = 100
         if typeof(world_size) == CylindricalVector{T}
             sampling_vector = Array{T}(world_size/points)
-            sampling_vector[3] = π/points
+            own_world ? nothing : sampling_vector[3] = π/points
             plotobject = CylindricalPoint.(sample(t, sampling_vector))
         elseif typeof(world_size) == CartesianVector{T}
             sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, π]/points)
