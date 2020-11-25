@@ -14,7 +14,7 @@ end
 # Constructors
 function Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) 
     T = promote_type(typeof.((rMin, rMax, φMin, φMax, zMin, zMax))...)
-    φ = mod(φMax - φMin, 2π) == 0 ? nothing : T(φMax)..T(φMin)
+    φ = mod(φMax - φMin, 2π) == 0 ? nothing : T(φMin)..T(φMax)
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     Tube( T, T(rMin)..T(rMax), φ, z)
 end
