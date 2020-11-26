@@ -14,15 +14,15 @@ struct PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, 
     ϵ::Array{T, N}
 end
 
-struct PotentialSimulationSetupRB{T, N1, N2, S} <: AbstractPotentialSimulationSetup{T, N1}
-    grid::Grid{T, N1, S}
+struct PotentialSimulationSetupRB{T, N1, N2, S, TGW, AT} <: AbstractPotentialSimulationSetup{T, N1}
+    grid::Grid{T, N1, S, AT}
     potential::Array{T, N2}
     pointtypes::Array{PointType, N2}
     volume_weights::Array{T, N2}
     ρ::Array{T, N2}
     ρ_fix::Array{T, N2}
     ϵ::Array{T, N1}
-    geom_weights::NTuple{N1, AbstractGeometricalAxisWeights{T}}        
+    geom_weights::TGW  
     sor_const::Array{T, 1}
     bias_voltage::T
     maximum_applied_potential::T
