@@ -88,7 +88,7 @@ struct PartialCircle{T,N,S} <: AbstractLine{T,N,S}
     Rotate::AbstractMatrix{T}
 end
 
-function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T} = CartesianVector{T}([0,0,0]), Rotate::Rotation{3,Float32} = RotZ{T}(0)) where {T}
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T} = CartesianVector{T}([0,0,0]), Rotate::Rotation{3,T} = RotZ{T}(0)) where {T}
     PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate, Rotate)
 end
 
@@ -96,7 +96,7 @@ function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector
     PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate, RotZ{T}(0))
 end
 
-function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing, Rotate::Rotation{3,Float32}) where {T}
+function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing, Rotate::Rotation{3,T}) where {T}
     PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]), Rotate)
 end
 

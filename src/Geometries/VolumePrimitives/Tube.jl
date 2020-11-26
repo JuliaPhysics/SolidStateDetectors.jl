@@ -28,10 +28,10 @@ function Tube{T}(dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units
     else
         @warn "please specify a height of the Tube 'h'"
     end
-    
-    φ_interval =  if haskey(dict, "phi") 
-        Interval(geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["from"]) * inputunit_dict["angle"])))), 
-                 geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["to"]) * inputunit_dict["angle"])))))                      
+
+    φ_interval =  if haskey(dict, "phi")
+        Interval(geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["from"]) * inputunit_dict["angle"])))),
+                 geom_round(T(ustrip(uconvert(u"rad", T(dict["phi"]["to"]) * inputunit_dict["angle"])))))
     else
         Interval(T(0), geom_round(T(2π)))
     end

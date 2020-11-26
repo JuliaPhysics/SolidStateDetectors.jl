@@ -26,7 +26,7 @@ function LineSegments(t::Tube{T})::Vector{AbstractLine{T,3,:cartesian}} where {T
     return ls
 end
 
-@recipe function f(t::Tube{T}; n = 30, seriescolor = :green) where {T}
+@recipe function f(t::Tube{T}; n = 30, seriescolor = :green, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -36,7 +36,34 @@ end
     end
     label := ""
     seriescolor := seriescolor
-    LineSegments(t)
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(t)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        if ismissing(world_size)
+            r_size = max(t.r_interval.right*(1-cos(min(width(t.φ_interval), π))), width(t.r_interval))
+            max_dim = max(r_size, width(t.z_interval))
+            world_size = CylindricalVector{T}(max_dim, width(t.φ_interval)/2, max_dim)
+        end
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            plotobject = CylindricalPoint.(sample(t, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, world_size.z]/points)
+            plotobject = CartesianPoint.(sample(t, sampling_vector))
+        end
+        for neg_geo in geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
 
 
@@ -69,7 +96,7 @@ function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where 
     return ls
 end
 
-@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange) where {T}
+@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -79,7 +106,35 @@ end
     end
     seriescolor := seriescolor
     label := ""
-    LineSegments(c)
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(c)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        if ismissing(world_size)
+            r_max = max(c.rStop1, c.rStop2)
+            r_size = max(r_max*(1-cos(min(width(t.φ_interval), π))), abs(r_max - min(c.rStart1, c.rStart2)))
+            max_dim = max(r_size, abs(c.zStop-c.zStart))
+            world_size = CylindricalVector{T}(max_dim, width(t.φ_interval)/2, max_dim)
+        end
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            plotobject = CylindricalPoint.(sample(c, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, world_size.z]/points)
+            plotobject = CartesianPoint.(sample(c, sampling_vector))
+        end
+        for neg_geo in geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
 
 function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {T <: SSDFloat}
@@ -108,7 +163,7 @@ function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {
     return ls
 end
 
-@recipe function f(t::Torus{T}; n = 30, seriescolor = :green) where {T}
+@recipe function f(t::Torus{T}; n = 30, seriescolor = :red, SSD_style = :wireframe, world_size = missing, geometry_negative = [], alpha_factor = 1) where {T}
     linewidth --> 2
     n --> n
     @series begin
@@ -118,5 +173,34 @@ end
     end
     label := ""
     seriescolor := seriescolor
-    LineSegments(t)
+    α = 1
+    st = :path
+    if SSD_style == :wireframe
+        plotobject = LineSegments(t)
+    elseif SSD_style == :samplesurface
+        st = :scatter
+        own_world = false
+        if ismissing(world_size)
+            own_world = true
+            r_size = max((t.r_torus+t.r_tube_interval.right)*(1-cos(min(width(t.φ_interval), π))), t.r_tube_interval.right*(1-cos(min(width(t.θ_interval), π))), width(t.r_tube_interval))
+            world_size = CylindricalVector{T}(r_size, width(t.φ_interval)/2, width(t.θ_interval)/2)
+        end
+        points = 100
+        if typeof(world_size) == CylindricalVector{T}
+            sampling_vector = Array{T}(world_size/points)
+            own_world ? nothing : sampling_vector[3] = π/points
+            plotobject = CylindricalPoint.(sample(t, sampling_vector))
+        elseif typeof(world_size) == CartesianVector{T}
+            sampling_vector = T.([sqrt(world_size.x^2+world_size.y^2), π, π]/points)
+            plotobject = CartesianPoint.(sample(t, sampling_vector))
+        end
+        for neg_geo in geometry_negative
+            filter!(x -> !(x in neg_geo), plotobject)
+        end
+        α = min(alpha_factor*max(1-length(plotobject)/3000,0.05),1)
+    end
+    seriestype  :=  st
+    markerstrokewidth := 0
+    seriesalpha := α
+    plotobject
 end
