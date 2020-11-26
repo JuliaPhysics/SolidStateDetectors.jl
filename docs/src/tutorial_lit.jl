@@ -12,7 +12,7 @@ plot(simulation.detector)
 
 
 plot(simulation.detector, SSD_style = :samplesurface, alpha_factor = 1)
-# alpha_factor ϵ [0,1) will increase transparency and alpa_factor > 1 will increase opacity.
+# alpha_factor ϵ [0,1) will increase transparency and alpa_factor > 1 will increase opacity. You can choose from the default collor palettes like using keyword 'palette = :tab10' or create your own palette like 'palette = [:yellow, :blue, :red]'
 
 # One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
 
