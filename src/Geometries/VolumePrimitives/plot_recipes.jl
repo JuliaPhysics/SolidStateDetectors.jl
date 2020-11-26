@@ -43,7 +43,7 @@ end
     elseif SSD_style == :samplesurface
         st = :scatter
         if ismissing(world_size)
-            r_size = max(t.r_interval.right*(1-cos(max(width(t.φ_interval), π))), width(t.r_interval))
+            r_size = max(t.r_interval.right*(1-cos(min(width(t.φ_interval), π))), width(t.r_interval))
             max_dim = max(r_size, width(t.z_interval))
             world_size = CylindricalVector{T}(max_dim, width(t.φ_interval)/2, max_dim)
         end
@@ -114,7 +114,7 @@ end
         st = :scatter
         if ismissing(world_size)
             r_max = max(c.rStop1, c.rStop2)
-            r_size = max(r_max*(1-cos(max(width(t.φ_interval), π))), abs(r_max - min(c.rStart1, c.rStart2)))
+            r_size = max(r_max*(1-cos(min(width(t.φ_interval), π))), abs(r_max - min(c.rStart1, c.rStart2)))
             max_dim = max(r_size, abs(c.zStop-c.zStart))
             world_size = CylindricalVector{T}(max_dim, width(t.φ_interval)/2, max_dim)
         end
@@ -182,7 +182,7 @@ end
         own_world = false
         if ismissing(world_size)
             own_world = true
-            r_size = max((t.r_torus+t.r_tube_interval.right)*(1-cos(max(width(t.φ_interval), π))), t.r_tube_interval.right*(1-cos(max(width(t.θ_interval), π))), width(t.r_tube_interval))
+            r_size = max((t.r_torus+t.r_tube_interval.right)*(1-cos(min(width(t.φ_interval), π))), t.r_tube_interval.right*(1-cos(min(width(t.θ_interval), π))), width(t.r_tube_interval))
             world_size = CylindricalVector{T}(r_size, width(t.φ_interval)/2, width(t.θ_interval)/2)
         end
         points = 100
