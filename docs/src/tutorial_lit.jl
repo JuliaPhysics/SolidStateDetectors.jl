@@ -1,6 +1,6 @@
 # # Example 1: Inverted Coax Detector
 
-using Plots
+using Plots; gr(fmt = :png);
 using SolidStateDetectors
 using Unitful
 
@@ -8,11 +8,11 @@ T = Float32
 simulation = Simulation{T}(SSD_examples[:InvertedCoax])
 
 plot(simulation.detector)
-# This will use the defaul plotting method (SSD_style = :wireframe). You can also use SSD_style = :samplesurface, which will show the "solid" geometry.
+# This will use the default plotting method (`SSD_style = :wireframe`). You can also use `SSD_style = :samplesurface`, which will show the "solid" geometry.
 
 
 plot(simulation.detector, SSD_style = :samplesurface, alpha_factor = 1)
-# alpha_factor ϵ [0,1) will increase transparency and alpa_factor > 1 will increase opacity. You can choose from the default collor palettes like using keyword 'palette = :tab10' or create your own palette like 'palette = [:yellow, :blue, :red]'
+# `alpha_factor ϵ [0,1)` will increase transparency and `alpha_factor > 1` will increase opacity. You can choose from the default color palettes using keyword `palette` (ie `palette = :tab10`) or create your own palette such as `palette = [:yellow, :blue, :red]`. Note that `:samplesurface` files are heavy and require `gr(fmt = :png)` or `pyplot()` backends to run smoothly. Using SVG or PDF with this method is not recommended.
 
 # One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
 
