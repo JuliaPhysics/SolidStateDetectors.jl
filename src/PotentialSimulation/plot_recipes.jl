@@ -1,7 +1,7 @@
 function get_crosssection_idx_and_value(g::Grid{T, 3, :cylindrical}, r, φ, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
-        :φ, 1
+        return get_crosssection_idx_and_value(g, r, T(0.0), z)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left
@@ -219,7 +219,7 @@ end
 function get_crosssection_idx_and_value(g::Grid{T, 3, :cartesian}, x, y, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
-        :y, 1
+        return get_crosssection_idx_and_value(g, T(0.0), y, z)
     elseif !ismissing(x) && ismissing(y) && ismissing(z)
         :x, searchsortednearest(g.x, T(x))
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
