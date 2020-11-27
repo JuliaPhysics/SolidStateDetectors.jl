@@ -37,6 +37,10 @@ jobs:
             arch: x86
           - version: nightly
             arch: x86
+          - os: windows-latest
+            arch: x64
+          - version: nightly
+            arch: x64
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@latest
