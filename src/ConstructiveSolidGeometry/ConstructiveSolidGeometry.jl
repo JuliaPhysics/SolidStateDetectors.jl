@@ -27,8 +27,10 @@ module ConstructiveSolidGeometry
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end   
 
     include("PointsAndVectors.jl")
+    include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
     include("Transformations.jl")
+    include("Intervals.jl")
     include("CSG.jl")
 
 end 
