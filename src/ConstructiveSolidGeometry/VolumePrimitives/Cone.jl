@@ -45,9 +45,9 @@ end
 
 @inline get_r_at_z(rtop::TR, rbot::TR, cz::TZ, z::Real) where {TR, TZ} = (rtop - rbot) * (z - _left(cz)) / _width(cz) + rbot
 
-in(p::CartesianPoint, c::Cone{<:Any, <:Any, Nothing, <:Any}) =
+in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, Nothing, <:Any}) =
     _in_z(p, c.z) && _in_r(p, get_r_at_z(c, p.z))
 
 
-in(p::CartesianPoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any}) =
+in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_r(p, get_r_at_z(c, p.z))

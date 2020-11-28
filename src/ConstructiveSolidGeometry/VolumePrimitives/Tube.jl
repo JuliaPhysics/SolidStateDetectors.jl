@@ -26,8 +26,9 @@ function Tube(radius::R, height::H) where {R,H}
     Tube( T, T(radius), nothing, T(height/2))
 end
 
-in(p::CartesianPoint, t::Tube{<:Any, <:Any, Nothing, <:Any}) = 
+in(p::AbstractCoordinatePoint, t::Tube{<:Any, <:Any, Nothing, <:Any}) = 
     _in_z(p, t.z) && _in_r(p, t.r)
 
-in(p::CartesianPoint, t::Tube{<:Any, <:Any, <:AbstractInterval, <:Any}) = 
+in(p::AbstractCoordinatePoint, t::Tube{<:Any, <:Any, <:AbstractInterval, <:Any}) = 
     _in_z(p, t.z) && _in_r(p, t.r) && _in_φ(p, t.φ)
+

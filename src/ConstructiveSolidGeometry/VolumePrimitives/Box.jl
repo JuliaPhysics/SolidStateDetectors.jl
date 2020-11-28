@@ -26,7 +26,7 @@ function Box(x::X, y::Y, z::Z) where {X,Y,Z}
     Box( T, T(x/2), T(y/2), T(z/2))
 end
 
-in(p::CartesianPoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
+in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
     _in_x(p, b.x) && _in_y(p, b.y) && _in_z(p, b.z)
 
     

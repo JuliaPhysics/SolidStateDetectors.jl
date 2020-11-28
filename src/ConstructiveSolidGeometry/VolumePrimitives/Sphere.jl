@@ -19,5 +19,5 @@ function Sphere(r::T) where {T}
     Sphere(T, r)
 end
 
-in(p::CartesianPoint, s::Sphere{<:Any, <:Any}) = 
+in(p::AbstractCoordinatePoint, s::Sphere{<:Any, <:Any}) = 
     _in_radius(p, s.r)
