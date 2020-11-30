@@ -17,7 +17,7 @@ module ConstructiveSolidGeometry
     abstract type Cartesian <: AbstractCoordinateSystem end
     abstract type Cylindrical <: AbstractCoordinateSystem end
 
-    abstract type AbstractGeometry{T} end 
+    abstract type AbstractGeometry{T <: AbstractFloat} end
     
     abstract type AbstractPrimitive{T} <: AbstractGeometry{T} end
     abstract type AbstractVolumePrimitive{T} <: AbstractPrimitive{T} end
