@@ -1,4 +1,3 @@
-include("Tube.jl")
 include("Cone.jl")
 include("Box.jl")
 include("Sphere.jl")
