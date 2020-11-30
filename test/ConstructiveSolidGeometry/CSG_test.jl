@@ -1,32 +1,20 @@
 using Test
-using BenchmarkTools
-
 using SolidStateDetectors
-using IntervalSets
-using Unitful
+#using IntervalSets
+#using Unitful
 using LinearAlgebra
 using Rotations
 using StaticArrays
 
 using SolidStateDetectors.ConstructiveSolidGeometry: 
     CartesianPoint, CartesianVector, CylindricalPoint,
-    StretchedGeometry, RotatedGeometry, TranslatedGeometry,
+    ScaledGeometry, RotatedGeometry, TranslatedGeometry,
     Tube, Cone, Box, Sphere, HexagonalPrism,
     CSGUnion, CSGIntersection, CSGDifference
-    
-code_warntype = true
-
 
 T = Float64
-p_car = CartesianPoint{T}(0, 1, 0)
-@btime CylindricalPoint($p_car);
-
-
-p_cyl = CylindricalPoint(p_car)
-@btime CartesianPoint($p_cyl);
 
 @testset "Points" begin
-    T = Float64
     cp1 = CartesianPoint{T}(1, 2, 3)
     @test cp1 + cp1 == CartesianPoint{T}(2, 4, 6)
     @test cp1 - cp1 == CartesianPoint{T}(0, 0, 0)
@@ -34,24 +22,23 @@ p_cyl = CylindricalPoint(p_car)
     @test norm(cp1) == sqrt(14)
 end
 
-
 @testset "Volume Primitives" begin
     @testset "Tube" begin
-        tube = Tube(0.2, 2.0) # radius 0.2, height 2
+        tube = Tube(0.2, 2.0) # r from 0..0.2, z from -1.0..1.0
         @test CartesianPoint{T}(0, 0, 0) in tube
         @test CartesianPoint{T}(tube.r, 0, tube.z) in tube
         @test !(CartesianPoint{T}(tube.r, 0, 1.1*tube.z) in tube) 
         @test !(CartesianPoint{T}(1.1*tube.r, 0, tube.z) in tube) 
     end
     @testset "Cone" begin
-        cone = Cone(0.5, 1.0, 2.0) # radius@top 0.5, radius@bottom 1, height 2
+        cone = Cone(0.5, 1.0, 2.0) # radius@top from 0..0.5, radius@bottom from 0..1.0, z from -1.0..1.0
         @test CartesianPoint{T}(0, 0, 0) in cone
         @test CartesianPoint{T}(cone.rbot, 0, -cone.z) in cone
         @test !(CartesianPoint{T}(cone.rbot, 0, cone.z) in cone) 
         @test !(CartesianPoint{T}(0, 0, 1.1*cone.z) in cone) 
     end
     @testset "Box" begin
-        box = Box(1.0,2.0,3.0) # x from -0.5..0.5, y from -1.0..1.0, z from -1.5..1.5
+        box = Box(1.0, 2.0, 3.0) # x from -0.5..0.5, y from -1.0..1.0, z from -1.5..1.5
         @test CartesianPoint{T}(0, 0, 0) in box
         @test CartesianPoint{T}(box.x, box.y, box.z) in box
         @test CartesianPoint{T}(-box.x, -box.y, -box.z) in box
@@ -59,7 +46,7 @@ end
         @test !(CartesianPoint{T}(box.y, box.y, box.y) in box)
     end
     @testset "Sphere" begin
-        sphere = Sphere(0.5) # radius 0.5
+        sphere = Sphere(0.5) # r from 0..0.5
         @test CartesianPoint{T}(0, 0, 0) in sphere
         @test CartesianPoint{T}(sphere.r, 0, 0) in sphere
         @test CartesianPoint{T}(sphere.r/2, sphere.r/2, sphere.r/2) in sphere
@@ -67,194 +54,177 @@ end
         @test !(CartesianPoint{T}(1.1*sphere.r, 0, 0) in sphere) 
         @test !(CartesianPoint{T}(0, 0.1*sphere.r, sphere.r) in sphere) 
     end
-end
-
-
-@testset "Stretching & Rotation & Translation of Primitives" begin 
-    rot = RotX(deg2rad(90))
-    t = CartesianVector{T}(2, 0, 0 )
-    stretching = SVector(1.0, 3.0, 1.0)
-    @testset "Tube" begin
-        tube = Tube(0.2, 2.0) # r = 0.2, half_z = 1 -> h = 2 
-        stretched_tube = StretchedGeometry(tube, stretching)
-        rot_tube = RotatedGeometry(tube, RotMatrix(rot))
-        translated_tube = TranslatedGeometry(tube, t)
-        translated_rotated_tube = TranslatedGeometry(rot_tube, t)
-        rot_stretched_tube =  RotatedGeometry(stretched_tube, RotMatrix(rot))
-        translated_rot_stretched_tube = TranslatedGeometry(rot_stretched_tube, t)
-        cp1 = CartesianPoint{T}(0, 0, 1)
-        @test cp1 in tube
-        @test cp1 in stretched_tube
-        @test !(cp1 in rot_tube) 
-        @test !(cp1 in rot_stretched_tube)
-        @test !(cp1 in translated_tube) 
-        @test !(cp1 in translated_rotated_tube) 
-        @test !(cp1 in translated_rot_stretched_tube)
-    end
-    @testset "Cone" begin
-        cone = Cone(0.5,1.0,2.0) # radius@top 0.5, radius@bottom 1, height 2
-        cp1 = CartesianPoint{T}(0, 1, 0)
-        stretched_cone = StretchedGeometry(cone, stretching)
-        @test !(cp1 in cone)
-        @test cp1 in stretched_cone
+    @testset "HexagonalPrism" begin
+        hexagon = HexagonalPrism(1.0, 2.0) # outer radius from 0..1.0, z from -1.0..1.0
+        
     end
 end
 
 
-rot = RotX(deg2rad(90))
-t = CartesianVector{T}(1, 0, 0 )
-tube = Tube(0, 0.1, 0, 2π, 0, 2.0) # r = 1, half_z = 1 -> h = 2 
-stretching = SVector(1.0, 3.0, 1.0)
-stretched_tube = StretchedGeometry(tube, stretching)
-rot_tube = RotatedGeometry(tube, RotMatrix(rot))
-translated_tube = TranslatedGeometry(tube, t)
-translated_rotated_tube = TranslatedGeometry(rot_tube, t)
-rot_stretched_tube =  RotatedGeometry(stretched_tube, RotMatrix(rot))
-translated_rot_stretched_tube = TranslatedGeometry(rot_stretched_tube, t)
-cp1 = CartesianPoint{T}(0, 0, 1)
-
-if code_warntype
-    @code_warntype cp1 in tube
-    @code_warntype cp1 in stretched_tube
-    @code_warntype cp1 in rot_tube
-    @code_warntype cp1 in rot_stretched_tube
-    @code_warntype cp1 in translated_tube
-    @code_warntype cp1 in translated_rotated_tube
-    @code_warntype cp1 in translated_rot_stretched_tube
-end
-
-@btime cp1 in translated_rot_stretched_tube
-
-
-rot = RotX(deg2rad(90))
-t = CartesianVector{T}(1, 0, 0 )
-cone = Cone(0.1, 0.2, 0.1, 0.5, 0, 2π, 0, 2.0)
-stretching = SVector(1.0, 3.0, 1.0)
-stretched_cone = StretchedGeometry(cone, stretching)
-rot_cone = RotatedGeometry(cone, RotMatrix(rot))
-translated_cone = TranslatedGeometry(cone, t)
-translated_rotated_cone = TranslatedGeometry(rot_cone, t)
-rot_stretched_cone =  RotatedGeometry(stretched_cone, RotMatrix(rot))
-translated_rot_stretched_cone = TranslatedGeometry(rot_stretched_cone, t)
-cp1 = CartesianPoint{T}(0, 0, 1)
-
-if code_warntype
-    @code_warntype cp1 in cone
-    @code_warntype cp1 in stretched_cone
-    @code_warntype cp1 in rot_cone
-    @code_warntype cp1 in rot_stretched_cone
-    @code_warntype cp1 in translated_cone
-    @code_warntype cp1 in translated_rotated_cone
-    @code_warntype cp1 in translated_rot_stretched_cone
-end
-
-@btime cp1 in translated_rot_stretched_cone
-
-
-rot = RotX(deg2rad(90))
-t = CartesianVector{T}(1, 0, 0 )
-box = Box(-1.0,1.0,-1.0,1.0,-1.0,1.0)
-stretching = SVector(1.0, 3.0, 1.0)
-stretched_box = StretchedGeometry(box, stretching)
-rot_box = RotatedGeometry(box, RotMatrix(rot))
-translated_box = TranslatedGeometry(box, t)
-translated_rotated_box = TranslatedGeometry(rot_box, t)
-rot_stretched_box =  RotatedGeometry(stretched_box, RotMatrix(rot))
-translated_rot_stretched_box = TranslatedGeometry(rot_stretched_box, t)
-cp1 = CartesianPoint{T}(0, 0, 1)
-
-if code_warntype
-    @code_warntype cp1 in box
-    @code_warntype cp1 in stretched_box
-    @code_warntype cp1 in rot_box
-    @code_warntype cp1 in rot_stretched_box
-    @code_warntype cp1 in translated_box
-    @code_warntype cp1 in translated_rotated_box
-    @code_warntype cp1 in translated_rot_stretched_box
-end
-
-@btime cp1 in translated_rot_stretched_box
-
-
-rot = RotX(deg2rad(90))
-t = CartesianVector{T}(1, 0, 0 )
-sphere = Sphere(1.0)
-stretching = SVector(1.0, 3.0, 1.0)
-stretched_sphere = StretchedGeometry(sphere, stretching)
-rot_sphere = RotatedGeometry(sphere, RotMatrix(rot))
-translated_sphere = TranslatedGeometry(sphere, t)
-translated_rotated_sphere = TranslatedGeometry(rot_sphere, t)
-rot_stretched_sphere =  RotatedGeometry(stretched_sphere, RotMatrix(rot))
-translated_rot_stretched_sphere = TranslatedGeometry(rot_stretched_sphere, t)
-cp1 = CartesianPoint{T}(0, 0, 1)
-
-if code_warntype
-    @code_warntype cp1 in sphere
-    @code_warntype cp1 in stretched_sphere
-    @code_warntype cp1 in rot_sphere
-    @code_warntype cp1 in rot_stretched_sphere
-    @code_warntype cp1 in translated_sphere
-    @code_warntype cp1 in translated_rotated_sphere
-    @code_warntype cp1 in translated_rot_stretched_sphere
-end
-
-@btime cp1 in translated_rot_stretched_sphere
-
-
-rot = RotX(deg2rad(90))
-t = CartesianVector{T}(1, 0, 0 )
-hexagon = HexagonalPrism(0.5,1.0,-1.0,1.0)
-stretching = SVector(1.0, 3.0, 1.0)
-stretched_hexagon = StretchedGeometry(hexagon, stretching)
-rot_hexagon = RotatedGeometry(hexagon, RotMatrix(rot))
-translated_hexagon = TranslatedGeometry(hexagon, t)
-translated_rotated_hexagon = TranslatedGeometry(rot_hexagon, t)
-rot_stretched_hexagon =  RotatedGeometry(stretched_hexagon, RotMatrix(rot))
-translated_rot_stretched_hexagon = TranslatedGeometry(rot_stretched_hexagon, t)
-cp1 = CartesianPoint{T}(0, 0, 1)
-
-if code_warntype
-    @code_warntype cp1 in hexagon
-    @code_warntype cp1 in stretched_hexagon
-    @code_warntype cp1 in rot_hexagon
-    @code_warntype cp1 in rot_stretched_hexagon
-    @code_warntype cp1 in translated_hexagon
-    @code_warntype cp1 in translated_rotated_hexagon
-    @code_warntype cp1 in translated_rot_stretched_hexagon
-end
-
-@btime cp1 in translated_rot_stretched_hexagon
-
-using Plots
-begin
-    plts = []
-    for p in [  
-                tube, 
-                stretched_tube, 
-                rot_tube, 
-                rot_stretched_tube, 
-                translated_tube, 
-                translated_rotated_tube ,
-                translated_rot_stretched_tube,
-            ]
-        xs = T[]
-        ys = T[]
-        zs = T[]
-        for x in -2:0.05:2
-            for y in -2:0.05:2
-                for z in -2:0.05:2
-                    if CartesianPoint{T}(x, y, z) in p
-                        push!(xs, x)
-                        push!(ys, y)
-                        push!(zs, z)
-                    end
-                end
-            end
+@testset "Transformations" begin 
+    # test transformations on a Tube
+    tube = Tube(0, 0.5, 0, 0, 0, 1) # r from 0.0..0.5, z from 0.0..1.0
+    
+    @testset "Rotations" begin
+        @testset "Rotation around X" begin
+            rotX = RotX{T}(deg2rad(90))
+            rot_tube_x = RotatedGeometry(tube, RotMatrix(rotX)) # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
+            @test CartesianPoint{T}(0, -1, 0) in rot_tube_x
+            @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_x
+            @test CartesianPoint{T}(0, 0, 0) in rot_tube_x
+            @test !(CartesianPoint{T}(0, 0.5, 0) in rot_tube_x)
+            @test !(CartesianPoint{T}(0, 1, 0) in rot_tube_x)
+            @test CartesianPoint{T}(0.5, -0.5, 0) in rot_tube_x
+            @test CartesianPoint{T}(0, -0.5, 0.5) in rot_tube_x
+            @test CartesianPoint{T}(0.3, -0.5, 0.4) in rot_tube_x # should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.5, -0.5, 0.5) in rot_tube_x)
+            @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_x)
         end
-        # push!(plts, plot(ys, zs, st=:scatter, ms = 4, markerstrokewidth = 0, xguide = "y", yguide = "z",
-        #                     xlims = (-2,2), ylims = (-2,2)))
-        push!(plts, plot3d(xs, ys, zs, st=:scatter, ms = 2, markerstrokewidth = 0, xguide = "x",
-                            xlims = (-2,2), ylims = (-2,2), zlims = (-2,2)))
+        @testset "Rotation around Y and Z" begin # first around Y, then around Z
+            rotZY = RotZY{T}(deg2rad(-90), deg2rad(90))
+            rot_tube_zy = RotatedGeometry(tube, RotMatrix(rotZY)) # same Tube as rot_tube_x
+            @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
+            @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
+            @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
+            @test !(CartesianPoint{T}(0, 0.5, 0) in rot_tube_zy)
+            @test !(CartesianPoint{T}(0, 1, 0) in rot_tube_zy)
+            @test CartesianPoint{T}(0.5, -0.5, 0) in rot_tube_zy
+            @test CartesianPoint{T}(0, -0.5, 0.5) in rot_tube_zy
+            @test CartesianPoint{T}(0.3, -0.5, 0.4) in rot_tube_zy # should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.5, -0.5, 0.5) in rot_tube_zy)
+            @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_zy)
+        end
+        @testset "Rotations around X, Y and Z" begin # first around X, then around Z, then around Y
+            rotYZX = RotYZX{T}(deg2rad(90), deg2rad(90), deg2rad(90))
+            rot_tube_yzx = RotatedGeometry(tube, RotMatrix(rotYZX)) # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
+            @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
+            @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
+            @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
+            @test !(CartesianPoint{T}(0, 0, 0.5) in rot_tube_yzx)
+            @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_yzx)
+            @test CartesianPoint{T}(0.5, 0, -1) in rot_tube_yzx
+            @test CartesianPoint{T}(0, -0.5, -1) in rot_tube_yzx
+            @test CartesianPoint{T}(0.4, 0.3, -0.5) in rot_tube_yzx # should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.5, 0.5, -1) in rot_tube_yzx)
+            @test !(CartesianPoint{T}(0, 1, -0.5) in rot_tube_yzx)
+        end
     end
-    plot(plts..., size = (600,600))
+    
+    @testset "Translations" begin
+        @testset "Translation of a Tube along the axis" begin
+            translate1 = CartesianVector{T}(0, 0, -1)
+            translate_tube1 = TranslatedGeometry(tube, translate1) # same Tube as rot_tube_yzx
+            @test CartesianPoint{T}(0, 0, -1) in translate_tube1
+            @test CartesianPoint{T}(0, 0, -0.5) in translate_tube1
+            @test CartesianPoint{T}(0, 0, 0) in translate_tube1
+            @test !(CartesianPoint{T}(0, 0, 0.5) in translate_tube1)
+            @test !(CartesianPoint{T}(0, 0, 1) in translate_tube1)
+            @test CartesianPoint{T}(0.5, 0, -1) in translate_tube1
+            @test CartesianPoint{T}(0, -0.5, -1) in translate_tube1
+            @test !(CartesianPoint{T}(0.5, 0.5, -1) in translate_tube1)
+            @test !(CartesianPoint{T}(0, 1, -0.5) in translate_tube1)
+        end
+        @testset "Translation of a Tube perpendicular to the axis" begin
+            translate2 = CartesianVector{T}(1, 0, 0)
+            translate_tube2 = TranslatedGeometry(tube, translate2) # Tube with z from 0..1.0 and distance to z-axis at (1,0,0) of 0..0.5
+            @test !(CartesianPoint{T}(1, 0, -1) in translate_tube2)
+            @test !(CartesianPoint{T}(1, 0, -0.5) in translate_tube2)
+            @test CartesianPoint{T}(1, 0, 0) in translate_tube2
+            @test CartesianPoint{T}(1, 0, 0.5) in translate_tube2
+            @test CartesianPoint{T}(1, 0, 1) in translate_tube2
+            @test !(CartesianPoint{T}(0, 0, 0) in translate_tube2)
+            @test CartesianPoint{T}(0.5, 0, 0) in translate_tube2
+            @test CartesianPoint{T}(1.5, 0, 0) in translate_tube2
+            @test CartesianPoint{T}(1.3, -0.4, 0.5) in translate_tube2 # should be exactly on the mantle
+            @test !(CartesianPoint{T}(2, 0, 0) in translate_tube2)
+            @test !(CartesianPoint{T}(0.5, 0.5, 0) in translate_tube2)
+            @test CartesianPoint{T}(1, 0.5, 0) in translate_tube2
+        end
+    end
+    
+    @testset "Scaling" begin
+        @testset "Scaling of a Tube along the axis" begin
+            scale1 = SVector(1.0, 1.0, 4.0)
+            scaled_tube1 = ScaledGeometry(tube, scale1) # Tube with z from 0..4.0 and distance to the z-axis of 0..0.5
+            @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube1)
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube1
+            @test CartesianPoint{T}(0, 0, 1) in scaled_tube1
+            @test CartesianPoint{T}(0, 0, 2) in scaled_tube1
+            @test CartesianPoint{T}(0, 0, 3) in scaled_tube1
+            @test CartesianPoint{T}(0, 0, 4) in scaled_tube1
+            @test !(CartesianPoint{T}(0, 0, 5) in scaled_tube1)
+            @test CartesianPoint{T}(0.5, 0, 4) in scaled_tube1
+            @test CartesianPoint{T}(0, 0.5, 4) in scaled_tube1
+            @test !(CartesianPoint{T}(0.5, 0.5, 4) in scaled_tube1)
+        end
+        @testset "Scaling of a Tube perpendicular to the axis" begin
+            scale2 = SVector(2.0,0.5,1.0)
+            scaled_tube2 = ScaledGeometry(tube, scale2) # Tube with z from 0..1.0 and distance to the z-axis of 0..1.0 in x and 0..0.25 in y
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube2
+            @test CartesianPoint{T}(0.5, 0, 0) in scaled_tube2
+            @test CartesianPoint{T}(1, 0, 0) in scaled_tube2
+            @test !(CartesianPoint{T}(1.1, 0, 0) in scaled_tube2)
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube2
+            @test CartesianPoint{T}(0, 0.15, 0) in scaled_tube2
+            @test CartesianPoint{T}(0, 0.25, 0) in scaled_tube2
+            @test !(CartesianPoint{T}(0, 0.3, 0) in scaled_tube2)
+            @test CartesianPoint{T}(0.6, 0.2, 0) in scaled_tube2 #should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.2, 0.6, 0) in scaled_tube2)
+        end
+    end
+end
+
+@testset "Sets" begin
+    @testset "Union" begin
+        @testset "Tube surrounded by Tube" begin
+            inner_tube = Tube(0.3,1.0) #radius 0..0.3, height -0.5..0.5
+            outer_tube = Tube(0.7,1.5,0,0,-0.5,0.5) #radius 0.7..1.0, height -0.5..0.5
+            union = CSGUnion(inner_tube, outer_tube)
+            @test CartesianPoint{T}(0.2,0.0,0.0) in union
+            @test CartesianPoint{T}(0.8,0.0,0.0) in union
+            @test !(CartesianPoint{T}(0.5,0.0,0.0) in union)
+            @test CartesianPoint{T}(0.2,0.0,0.1) in union
+            @test CartesianPoint{T}(0.8,0.0,0.1) in union
+            @test !(CartesianPoint{T}(0.5,0.0,0.1) in union)
+        end
+    end
+    @testset "Intersection" begin
+        @testset "Intersection between two Tubes" begin
+            tube1 = Tube(0,0.5,0,0,-1,0.5) #radius 0..0.5, height -1.0..0.5
+            tube2 = Tube(0.3,1.0,0,0,-0.5,1.0) #radius 0.3..1.0, height -0.5..1.0
+            intersection = CSGIntersection(tube1, tube2) #should be tube with radius 0.3..0.5, height -0.5..0.5
+            @test !(CartesianPoint{T}(0.0,0.0,0.0) in intersection)
+            @test !(CartesianPoint{T}(0.2,0.0,0.0) in intersection)
+            @test CartesianPoint{T}(0.3,0.0,0.0) in intersection
+            @test CartesianPoint{T}(0.4,0.0,0.0) in intersection
+            @test CartesianPoint{T}(0.5,0.0,0.0) in intersection
+            @test !(CartesianPoint{T}(0.7,0.0,0.0) in intersection)
+            @test CartesianPoint{T}(0.3,0.0,0.5) in intersection
+            @test !(CartesianPoint{T}(0.4,0.0,-1.0) in intersection)
+            @test !(CartesianPoint{T}(0.5,0.0,1.0) in intersection)
+        end
+    end
+    @testset "Difference" begin
+        @testset "Difference between two Tubes" begin
+            inner_tube = Tube(0,0.5,0,0,-0.5,1) # tube with radius 0..0.5, height -0.5..1.0
+            outer_tube = Tube(0.0,1.0,0,0,-1,1) # tube with radius 0.0..1.0, height -1.0..1.0
+            difference = CSGDifference(outer_tube, inner_tube) # tube with radius 0.5..1.0, height -1.0..1.0
+            @test !(CartesianPoint{T}(0.0,0.0,0.0) in difference)
+            @test !(CartesianPoint{T}(0.5,0.0,0.0) in difference) #point on the surface should not be inside
+            @test CartesianPoint{T}(0.7,0.0,0.0) in difference
+            @test CartesianPoint{T}(1.0,0.0,0.0) in difference
+            @test !(CartesianPoint{T}(1.1,0.0,0.0) in difference)
+            @test !(CartesianPoint{T}(0.0,0.0,1.0) in difference)
+            #points of the subtracted volume should not be inside
+            @test !(CartesianPoint{T}(0.0,0.0,-0.5) in difference)
+            @test !(CartesianPoint{T}(0.5,0.0,-0.5) in difference)
+            @test CartesianPoint{T}(0.7,0.0,-0.5) in difference
+            @test CartesianPoint{T}(1.0,0.0,-0.5) in difference
+            #points on the surface of the initial volume should be inside if not subtracted
+            @test CartesianPoint{T}(0.0,0.0,-1.0) in difference
+            @test CartesianPoint{T}(0.5,0.0,-1.0) in difference
+            @test CartesianPoint{T}(0.7,0.0,-1.0) in difference
+            @test CartesianPoint{T}(1.0,0.0,-1.0) in difference
+        end
+    end
 end
