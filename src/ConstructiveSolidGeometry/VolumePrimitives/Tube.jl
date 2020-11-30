@@ -13,22 +13,22 @@ end
 
 # Constructors
 function Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) 
-    T = promote_type(typeof.((rMin, rMax, φMin, φMax, zMin, zMax))...)
+    T = float(promote_type(typeof.((rMin, rMax, φMin, φMax, zMin, zMax))...))
     r = rMin == 0 ? T(rMax) : T(rMin)..T(rMax)
-    φ = mod(φMax - φMin, 2π) == 0 ? nothing : T(φMin)..T(φMax)
+    φ = mod(T(φMax) - T(φMin), T(2π)) == 0 ? nothing : T(φMin)..T(φMax)
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     Tube( T, r, φ, z)
 end
 Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMin, zMax)    
 
-function Tube(radius::R, height::H) where {R,H}
-    T = promote_type(R,H)
+function Tube(radius::R, height::H) where {R<:Real, H<:Real}
+    T = float(promote_type(R,H))
     Tube( T, T(radius), nothing, T(height/2))
 end
 
 in(p::AbstractCoordinatePoint, t::Tube{<:Any, <:Any, Nothing, <:Any}) = 
-    _in_z(p, t.z) && _in_r(p, t.r)
+    _in_z(p, t.z) && _in_cyl_r(p, t.r)
 
 in(p::AbstractCoordinatePoint, t::Tube{<:Any, <:Any, <:AbstractInterval, <:Any}) = 
-    _in_z(p, t.z) && _in_r(p, t.r) && _in_φ(p, t.φ)
+    _in_z(p, t.z) && _in_cyl_r(p, t.r) && _in_φ(p, t.φ)
 

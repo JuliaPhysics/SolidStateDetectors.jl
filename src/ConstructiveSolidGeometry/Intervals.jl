@@ -1,8 +1,8 @@
-@inline _left(r::T) where {T <: Real} = -r
-@inline _left(r::AbstractInterval) = r.left
+@inline _left_linear_interval(z::T) where {T <: Real} = -z
+@inline _left_linear_interval(z::AbstractInterval) = z.left
 
-@inline _right(r::T) where {T <: Real} = r
-@inline _right(r::AbstractInterval) = r.right
+@inline _right_linear_interval(z::T) where {T <: Real} = z
+@inline _right_linear_interval(z::AbstractInterval) = z.right
 
-@inline _width(z::T) where {T <: Real} = T(2) * z
-@inline _width(z::AbstractInterval) = width(z)
+@inline _width_linear_interval(z::T) where {T <: Real} = 2z
+@inline _width_linear_interval(z::AbstractInterval) = width(z)

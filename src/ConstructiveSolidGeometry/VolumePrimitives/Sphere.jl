@@ -8,16 +8,15 @@ end
 
 #Constructors
 function Sphere(; rMin = 0, rMax = 1)
-    T = promote_type(typeof.((rMin, rMax))...)
+    T = float(promote_type(typeof.((rMin, rMax))...))
     r = rMin == 0 ? T(rMax) : T(rMin)..T(rMax)
     Sphere(T, r)
 end
 
 Sphere(rMin, rMax) = Sphere(;rMin, rMax)
-
-function Sphere(r::T) where {T}
-    Sphere(T, r)
+function Sphere(r::R) where {R <: Real}
+    T = float(R)
+    Sphere(T, T(r))
 end
 
-in(p::AbstractCoordinatePoint, s::Sphere{<:Any, <:Any}) = 
-    _in_radius(p, s.r)
+in(p::AbstractCoordinatePoint, s::Sphere{<:Any, <:Any}) = _in_sph_r(p, s.r)

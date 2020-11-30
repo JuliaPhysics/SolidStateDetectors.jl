@@ -13,7 +13,7 @@ end
 
 #Constructors
 function Box(;xMin = -1, xMax = 1, yMin = -1, yMax = 1, zMin = -1, zMax = 1)
-    T = promote_type(typeof.((xMin, xMax, yMin, yMax, zMin, zMax))...)
+    T = float(promote_type(typeof.((xMin, xMax, yMin, yMax, zMin, zMax))...))
     x = xMax == -xMin ? T(xMax) : T(xMin)..T(xMax)
     y = yMax == -yMin ? T(yMax) : T(yMin)..T(yMax)
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
@@ -21,8 +21,8 @@ function Box(;xMin = -1, xMax = 1, yMin = -1, yMax = 1, zMin = -1, zMax = 1)
 end
 Box(xMin, xMax, yMin, yMax, zMin, zMax) = Box(;xMin, xMax, yMin, yMax, zMin, zMax)
 
-function Box(x::X, y::Y, z::Z) where {X,Y,Z}
-    T = promote_type(X,Y,Z)
+function Box(x::X, y::Y, z::Z) where {X<:Real, Y<:Real, Z<:Real}
+    T = float(promote_type(X,Y,Z))
     Box( T, T(x/2), T(y/2), T(z/2))
 end
 

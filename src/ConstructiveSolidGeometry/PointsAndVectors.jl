@@ -17,8 +17,8 @@ end
 
 @inline (*)(r::RotMatrix, p::CartesianPoint) = CartesianPoint(r.mat * p)
 
-@inline _in_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
-@inline _in_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
+@inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
+@inline _in_cyl_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
 
 @inline _in_φ(p::CartesianPoint{T}, φ::AbstractInterval) where {T} = mod(atan(p.y, p.x), T(2π)) in φ    
 
@@ -31,8 +31,8 @@ end
 @inline _in_z(p::CartesianPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CartesianPoint, z::AbstractInterval) = p.z in z
 
-@inline _in_radius(p::CartesianPoint, radius::Real) = norm(p) <= radius
-@inline _in_radius(p::CartesianPoint, radius::AbstractInterval) = norm(p) in radius
+@inline _in_sph_r(p::CartesianPoint, radius::Real) = hypot(p.x, p.y, p.z) <= radius
+@inline _in_sph_r(p::CartesianPoint, radius::AbstractInterval) = hypot(p.x, p.y, p.z) in radius
 
 """
     struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
@@ -57,8 +57,8 @@ function CartesianPoint(pt::CylindricalPoint{T})::CartesianPoint{T} where {T}
     return CartesianPoint{T}(pt.r * cφ, pt.r * sφ, pt.z)
 end
 
-@inline _in_r(p::CylindricalPoint, r::Real) = p.r <= r
-@inline _in_r(p::CylindricalPoint, r::AbstractInterval) = p.r in r
+@inline _in_cyl_r(p::CylindricalPoint, r::Real) = p.r <= r
+@inline _in_cyl_r(p::CylindricalPoint, r::AbstractInterval) = p.r in r
 
 @inline _in_φ(p::CylindricalPoint, φ::AbstractInterval) = p.φ in φ
 
@@ -71,8 +71,8 @@ end
 @inline _in_z(p::CylindricalPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CylindricalPoint, z::AbstractInterval) = p.z in z
 
-@inline _in_radius(p::CylindricalPoint, radius::Real) = hypot(p.r, p.z) <= radius
-@inline _in_radius(p::CylindricalPoint, radius::AbstractInterval) = hypot(p.r, p.z) in radius
+@inline _in_sph_r(p::CylindricalPoint, radius::Real) = hypot(p.r, p.z) <= radius
+@inline _in_sph_r(p::CylindricalPoint, radius::AbstractInterval) = hypot(p.r, p.z) in radius
 
 
 """
