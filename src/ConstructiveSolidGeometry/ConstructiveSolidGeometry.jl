@@ -17,7 +17,7 @@ module ConstructiveSolidGeometry
     abstract type Cartesian <: AbstractCoordinateSystem end
     abstract type Cylindrical <: AbstractCoordinateSystem end
 
-    abstract type AbstractGeometry{T} end 
+    abstract type AbstractGeometry{T <: AbstractFloat} end
     
     abstract type AbstractPrimitive{T} <: AbstractGeometry{T} end
     abstract type AbstractVolumePrimitive{T} <: AbstractPrimitive{T} end
@@ -27,8 +27,10 @@ module ConstructiveSolidGeometry
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end   
 
     include("PointsAndVectors.jl")
+    include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
     include("Transformations.jl")
+    include("Intervals.jl")
     include("CSG.jl")
 
 end 
