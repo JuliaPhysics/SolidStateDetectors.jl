@@ -8,7 +8,7 @@ using StaticArrays
 
 using SolidStateDetectors.ConstructiveSolidGeometry: 
     CartesianPoint, CartesianVector, CylindricalPoint,
-    ScaledGeometry, RotatedGeometry, TranslatedGeometry,
+    scale, rotate, translate,
     Tube, Cone, Box, Sphere, HexagonalPrism,
     CSGUnion, CSGIntersection, CSGDifference
 
@@ -29,13 +29,6 @@ end
         @test CartesianPoint{T}(tube.r, 0, tube.z) in tube
         @test !(CartesianPoint{T}(tube.r, 0, 1.1*tube.z) in tube) 
         @test !(CartesianPoint{T}(1.1*tube.r, 0, tube.z) in tube) 
-    end
-    @testset "Cone" begin
-        cone = Cone(0.5, 1.0, 2.0) # radius@top from 0..0.5, radius@bottom from 0..1.0, z from -1.0..1.0
-        @test CartesianPoint{T}(0, 0, 0) in cone
-        @test CartesianPoint{T}(cone.rbot, 0, -cone.z) in cone
-        @test !(CartesianPoint{T}(cone.rbot, 0, cone.z) in cone) 
-        @test !(CartesianPoint{T}(0, 0, 1.1*cone.z) in cone) 
     end
     @testset "Box" begin
         box = Box(1.0, 2.0, 3.0) # x from -0.5..0.5, y from -1.0..1.0, z from -1.5..1.5
@@ -68,7 +61,7 @@ end
     @testset "Rotations" begin
         @testset "Rotation around X" begin
             rotX = RotX{T}(deg2rad(90))
-            rot_tube_x = RotatedGeometry(tube, RotMatrix(rotX)) # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
+            rot_tube_x = rotate(tube, RotMatrix(rotX)) # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
             @test CartesianPoint{T}(0, -1, 0) in rot_tube_x
             @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_x
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_x
@@ -80,9 +73,9 @@ end
             @test !(CartesianPoint{T}(0.5, -0.5, 0.5) in rot_tube_x)
             @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_x)
         end
-        @testset "Rotation around Y and Z" begin # first around Y, then around Z
+        @testset "Single rotation around Y and Z" begin # first around Y, then around Z
             rotZY = RotZY{T}(deg2rad(-90), deg2rad(90))
-            rot_tube_zy = RotatedGeometry(tube, RotMatrix(rotZY)) # same Tube as rot_tube_x
+            rot_tube_zy = rotate(tube, RotMatrix(rotZY)) # same Tube as rot_tube_x
             @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
             @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
@@ -94,9 +87,43 @@ end
             @test !(CartesianPoint{T}(0.5, -0.5, 0.5) in rot_tube_zy)
             @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_zy)
         end
-        @testset "Rotations around X, Y and Z" begin # first around X, then around Z, then around Y
+        @testset "Repeated rotation around Y and Z" begin # first around Y, then around Z
+            rotZ = RotZ{T}(deg2rad(-90))
+            rotY = RotY{T}(deg2rad(90))
+            rot_tube_y = rotate(tube, RotMatrix(rotY))
+            rot_tube_zy = rotate(rot_tube_y, RotMatrix(rotZ)) # same Tube as before
+            @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
+            @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
+            @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
+            @test !(CartesianPoint{T}(0, 0.5, 0) in rot_tube_zy)
+            @test !(CartesianPoint{T}(0, 1, 0) in rot_tube_zy)
+            @test CartesianPoint{T}(0.5, -0.5, 0) in rot_tube_zy
+            @test CartesianPoint{T}(0, -0.5, 0.5) in rot_tube_zy
+            @test CartesianPoint{T}(0.3, -0.5, 0.4) in rot_tube_zy # should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.5, -0.5, 0.5) in rot_tube_zy)
+            @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_zy)
+        end
+        @testset "Single rotation around X, Y and Z" begin # first around X, then around Z, then around Y
             rotYZX = RotYZX{T}(deg2rad(90), deg2rad(90), deg2rad(90))
-            rot_tube_yzx = RotatedGeometry(tube, RotMatrix(rotYZX)) # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
+            rot_tube_yzx = rotate(tube, RotMatrix(rotYZX)) # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
+            @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
+            @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
+            @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
+            @test !(CartesianPoint{T}(0, 0, 0.5) in rot_tube_yzx)
+            @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_yzx)
+            @test CartesianPoint{T}(0.5, 0, -1) in rot_tube_yzx
+            @test CartesianPoint{T}(0, -0.5, -1) in rot_tube_yzx
+            @test CartesianPoint{T}(0.4, 0.3, -0.5) in rot_tube_yzx # should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.5, 0.5, -1) in rot_tube_yzx)
+            @test !(CartesianPoint{T}(0, 1, -0.5) in rot_tube_yzx)
+        end
+        @testset "Repeated rotation around X, Y and Z" begin # first around X, then around Z, then around Y
+            rotY = RotY{T}(deg2rad(90))
+            rotZ = RotZ{T}(deg2rad(90))
+            rotX = RotX{T}(deg2rad(90))
+            rot_tube_x = rotate(tube, RotMatrix(rotX))
+            rot_tube_zx = rotate(rot_tube_x, RotMatrix(rotZ))
+            rot_tube_yzx = rotate(rot_tube_zx, RotMatrix(rotY)) # same Tube as before
             @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
             @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
@@ -111,9 +138,9 @@ end
     end
     
     @testset "Translations" begin
-        @testset "Translation of a Tube along the axis" begin
+        @testset "Single translation of a Tube along the axis" begin
             translate1 = CartesianVector{T}(0, 0, -1)
-            translate_tube1 = TranslatedGeometry(tube, translate1) # same Tube as rot_tube_yzx
+            translate_tube1 = translate(tube, translate1) # same Tube as rot_tube_yzx
             @test CartesianPoint{T}(0, 0, -1) in translate_tube1
             @test CartesianPoint{T}(0, 0, -0.5) in translate_tube1
             @test CartesianPoint{T}(0, 0, 0) in translate_tube1
@@ -124,9 +151,42 @@ end
             @test !(CartesianPoint{T}(0.5, 0.5, -1) in translate_tube1)
             @test !(CartesianPoint{T}(0, 1, -0.5) in translate_tube1)
         end
-        @testset "Translation of a Tube perpendicular to the axis" begin
+        @testset "Repeated translation of a Tube along the axis" begin
+            translate1 = CartesianVector{T}(0, 0, 1)
+            translate2 = CartesianVector{T}(0, 0, -2)
+            translate_tube = translate(tube, translate1)
+            translate_tube1 = translate(translate_tube, translate2) # same Tube as before
+            @test CartesianPoint{T}(0, 0, -1) in translate_tube1
+            @test CartesianPoint{T}(0, 0, -0.5) in translate_tube1
+            @test CartesianPoint{T}(0, 0, 0) in translate_tube1
+            @test !(CartesianPoint{T}(0, 0, 0.5) in translate_tube1)
+            @test !(CartesianPoint{T}(0, 0, 1) in translate_tube1)
+            @test CartesianPoint{T}(0.5, 0, -1) in translate_tube1
+            @test CartesianPoint{T}(0, -0.5, -1) in translate_tube1
+            @test !(CartesianPoint{T}(0.5, 0.5, -1) in translate_tube1)
+            @test !(CartesianPoint{T}(0, 1, -0.5) in translate_tube1)
+        end
+        @testset "Single translation of a Tube perpendicular to the axis" begin
             translate2 = CartesianVector{T}(1, 0, 0)
-            translate_tube2 = TranslatedGeometry(tube, translate2) # Tube with z from 0..1.0 and distance to z-axis at (1,0,0) of 0..0.5
+            translate_tube2 = translate(tube, translate2) # Tube with z from 0..1.0 and distance to z-axis at (1,0,0) of 0..0.5
+            @test !(CartesianPoint{T}(1, 0, -1) in translate_tube2)
+            @test !(CartesianPoint{T}(1, 0, -0.5) in translate_tube2)
+            @test CartesianPoint{T}(1, 0, 0) in translate_tube2
+            @test CartesianPoint{T}(1, 0, 0.5) in translate_tube2
+            @test CartesianPoint{T}(1, 0, 1) in translate_tube2
+            @test !(CartesianPoint{T}(0, 0, 0) in translate_tube2)
+            @test CartesianPoint{T}(0.5, 0, 0) in translate_tube2
+            @test CartesianPoint{T}(1.5, 0, 0) in translate_tube2
+            @test CartesianPoint{T}(1.3, -0.4, 0.5) in translate_tube2 # should be exactly on the mantle
+            @test !(CartesianPoint{T}(2, 0, 0) in translate_tube2)
+            @test !(CartesianPoint{T}(0.5, 0.5, 0) in translate_tube2)
+            @test CartesianPoint{T}(1, 0.5, 0) in translate_tube2
+        end
+        @testset "Repeated translation of a Tube perpendicular to the axis" begin
+            translate1 = CartesianVector{T}(0.5, 0.5, 0)
+            translate2 = CartesianVector{T}(0.5, -0.5, 0)
+            translate_tube1 = translate(tube, translate1) 
+            translate_tube2 = translate(translate_tube1, translate2) # same Tube as before
             @test !(CartesianPoint{T}(1, 0, -1) in translate_tube2)
             @test !(CartesianPoint{T}(1, 0, -0.5) in translate_tube2)
             @test CartesianPoint{T}(1, 0, 0) in translate_tube2
@@ -143,33 +203,64 @@ end
     end
     
     @testset "Scaling" begin
-        @testset "Scaling of a Tube along the axis" begin
-            scale1 = SVector(1.0, 1.0, 4.0)
-            scaled_tube1 = ScaledGeometry(tube, scale1) # Tube with z from 0..4.0 and distance to the z-axis of 0..0.5
-            @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube1)
-            @test CartesianPoint{T}(0, 0, 0) in scaled_tube1
-            @test CartesianPoint{T}(0, 0, 1) in scaled_tube1
-            @test CartesianPoint{T}(0, 0, 2) in scaled_tube1
-            @test CartesianPoint{T}(0, 0, 3) in scaled_tube1
-            @test CartesianPoint{T}(0, 0, 4) in scaled_tube1
-            @test !(CartesianPoint{T}(0, 0, 5) in scaled_tube1)
-            @test CartesianPoint{T}(0.5, 0, 4) in scaled_tube1
-            @test CartesianPoint{T}(0, 0.5, 4) in scaled_tube1
-            @test !(CartesianPoint{T}(0.5, 0.5, 4) in scaled_tube1)
+        @testset "Single scaling of a Tube along the axis" begin
+            scale0 = SVector(1.0, 1.0, 4.0)
+            scaled_tube = scale(tube, scale0) # Tube with z from 0..4.0 and distance to the z-axis of 0..0.5
+            @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube)
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube
+            @test CartesianPoint{T}(0, 0, 1) in scaled_tube
+            @test CartesianPoint{T}(0, 0, 2) in scaled_tube
+            @test CartesianPoint{T}(0, 0, 3) in scaled_tube
+            @test CartesianPoint{T}(0, 0, 4) in scaled_tube
+            @test !(CartesianPoint{T}(0, 0, 5) in scaled_tube)
+            @test CartesianPoint{T}(0.5, 0, 4) in scaled_tube
+            @test CartesianPoint{T}(0, 0.5, 4) in scaled_tube
+            @test !(CartesianPoint{T}(0.5, 0.5, 4) in scaled_tube)
         end
-        @testset "Scaling of a Tube perpendicular to the axis" begin
-            scale2 = SVector(2.0,0.5,1.0)
-            scaled_tube2 = ScaledGeometry(tube, scale2) # Tube with z from 0..1.0 and distance to the z-axis of 0..1.0 in x and 0..0.25 in y
+        @testset "Repeated scaling of a Tube along the axis" begin
+            scale1 = SVector(1.0, 1.0, 2.0)
+            scaled_tube1 = scale(tube, scale1) 
+            scaled_tube2 = scale(scaled_tube1, scale1) # same Tube as before
+            @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube2)
             @test CartesianPoint{T}(0, 0, 0) in scaled_tube2
-            @test CartesianPoint{T}(0.5, 0, 0) in scaled_tube2
-            @test CartesianPoint{T}(1, 0, 0) in scaled_tube2
-            @test !(CartesianPoint{T}(1.1, 0, 0) in scaled_tube2)
-            @test CartesianPoint{T}(0, 0, 0) in scaled_tube2
-            @test CartesianPoint{T}(0, 0.15, 0) in scaled_tube2
-            @test CartesianPoint{T}(0, 0.25, 0) in scaled_tube2
-            @test !(CartesianPoint{T}(0, 0.3, 0) in scaled_tube2)
-            @test CartesianPoint{T}(0.6, 0.2, 0) in scaled_tube2 #should be exactly on the mantle
-            @test !(CartesianPoint{T}(0.2, 0.6, 0) in scaled_tube2)
+            @test CartesianPoint{T}(0, 0, 1) in scaled_tube2
+            @test CartesianPoint{T}(0, 0, 2) in scaled_tube2
+            @test CartesianPoint{T}(0, 0, 3) in scaled_tube2
+            @test CartesianPoint{T}(0, 0, 4) in scaled_tube2
+            @test !(CartesianPoint{T}(0, 0, 5) in scaled_tube2)
+            @test CartesianPoint{T}(0.5, 0, 4) in scaled_tube2
+            @test CartesianPoint{T}(0, 0.5, 4) in scaled_tube2
+            @test !(CartesianPoint{T}(0.5, 0.5, 4) in scaled_tube2)
+        end
+        @testset "Single scaling of a Tube perpendicular to the axis" begin
+            scale3 = SVector(2.0,0.5,1.0)
+            scaled_tube3 = scale(tube, scale3) # Tube with z from 0..1.0 and distance to the z-axis of 0..1.0 in x and 0..0.25 in y
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube3
+            @test CartesianPoint{T}(0.5, 0, 0) in scaled_tube3
+            @test CartesianPoint{T}(1, 0, 0) in scaled_tube3
+            @test !(CartesianPoint{T}(1.1, 0, 0) in scaled_tube3)
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube3
+            @test CartesianPoint{T}(0, 0.15, 0) in scaled_tube3
+            @test CartesianPoint{T}(0, 0.25, 0) in scaled_tube3
+            @test !(CartesianPoint{T}(0, 0.3, 0) in scaled_tube3)
+            @test CartesianPoint{T}(0.6, 0.2, 0) in scaled_tube3 #should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.2, 0.6, 0) in scaled_tube3)
+        end
+        @testset "Repeated scaling of a Tube perpendicular to the axis" begin
+            scale4 = SVector(2.0,1.0,1.0)
+            scale5 = SVector(1.0,0.5,1.0)
+            scaled_tube4 = scale(tube, scale4)
+            scaled_tube5 = scale(scaled_tube4, scale5) # same Tube as before
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube5
+            @test CartesianPoint{T}(0.5, 0, 0) in scaled_tube5
+            @test CartesianPoint{T}(1, 0, 0) in scaled_tube5
+            @test !(CartesianPoint{T}(1.1, 0, 0) in scaled_tube5)
+            @test CartesianPoint{T}(0, 0, 0) in scaled_tube5
+            @test CartesianPoint{T}(0, 0.15, 0) in scaled_tube5
+            @test CartesianPoint{T}(0, 0.25, 0) in scaled_tube5
+            @test !(CartesianPoint{T}(0, 0.3, 0) in scaled_tube5)
+            @test CartesianPoint{T}(0.6, 0.2, 0) in scaled_tube5 #should be exactly on the mantle
+            @test !(CartesianPoint{T}(0.2, 0.6, 0) in scaled_tube5)
         end
     end
 end
