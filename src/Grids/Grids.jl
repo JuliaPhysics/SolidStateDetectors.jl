@@ -5,8 +5,8 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
     N: N dimensional
     S: System (Cartesian, Cylindrical...)
 """
-struct Grid{T, N, S} <: AbstractGrid{T, N}
-    axes::NTuple{N, DiscreteAxis{T, BL, BR, I} where {BL, BR, I}}
+struct Grid{T, N, S, AT} <: AbstractGrid{T, N}
+    axes::AT
 end
 
 const CartesianGrid{T, N} = Grid{T, N, :cartesian}
@@ -17,6 +17,9 @@ const RadialGrid{T} = Grid{T, 1, :Radial}
 const PolarGrid{T} = Grid{T, 2, :Polar}
 const CylindricalGrid{T} = Grid{T, 3, :cylindrical}
 const SphericalGrid{T} = Grid{T, 3, :Spherical}
+
+CylindricalGrid{T}(a) where {T} = Grid{T, 3, :cylindrical, typeof(a)}(a)
+CartesianGrid3D{T}(a) where {T} = Grid{T, 3, :cartesian, typeof(a)}(a)
 
 @inline size(g::Grid{T, N, S}) where {T, N, S} = size.(g.axes, 1)
 @inline length(g::Grid{T, N, S}) where {T, N, S} = prod(size(g))

@@ -72,15 +72,15 @@ function apply_boundary_conditions_on_cyl_z_axis!(  rbpot::Array{T, 4}, ir::Int,
 end
 
 
-function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
+function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical, AT}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d, AT}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
     nrbi::Int = even_points ? rb_odd::Int : rb_even::Int
-    ax1::typeof(fssrb.grid.axes[1]) = fssrb.grid.axes[1]
-    ax2::typeof(fssrb.grid.axes[2]) = fssrb.grid.axes[2]
-    ax3::typeof(fssrb.grid.axes[3]) = fssrb.grid.axes[3]
-    int1::typeof(ax1.interval) = ax1.interval
-    int2::typeof(ax2.interval) = ax2.interval
-    int3::typeof(ax3.interval) = ax3.interval
+    ax1 = fssrb.grid.axes[1]
+    ax2 = fssrb.grid.axes[2]
+    ax3 = fssrb.grid.axes[3]
+    int1 = ax1.interval
+    int2 = ax2.interval
+    int3 = ax3.interval
     if only_2d
         iφ::Int = 2
         @inbounds for iz in axes(fssrb.potential, 1)

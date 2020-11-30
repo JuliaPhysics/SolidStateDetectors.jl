@@ -213,7 +213,8 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cartesian}, grid
         pointtypes = clear(pointtypes)
     end # @inbounds
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian} = PotentialSimulationSetupRB{T, 3, 4, :cartesian}(
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cartesian, typeof(geom_weights), typeof(grid.axes)} = 
+        PotentialSimulationSetupRB{T, 3, 4, :cartesian, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
         rbpointtypes,

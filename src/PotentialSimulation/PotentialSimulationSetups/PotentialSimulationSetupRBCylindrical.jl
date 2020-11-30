@@ -296,7 +296,8 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
         pointtypes = clear(pointtypes)
     end # @inbounds
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical} = PotentialSimulationSetupRB{T, 3, 4, :cylindrical}(
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical, typeof(geom_weights), typeof(grid.axes)} = 
+        PotentialSimulationSetupRB{T, 3, 4, :cylindrical, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
         rbpointtypes,
