@@ -46,12 +46,12 @@ Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMi
 
 function Tube(r::R, height::H) where {R<:Real, H<:Real}
     T = float(promote_type(R,H))
-    Cone(T, T(r), nothing, T(height))
+    Cone(T, T(r), nothing, T(height)/2)
 end
 
 function Tube(rMin::R1, rMax::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1,R2,H))
-    Cone(T, T(rMin)..T(rMax), nothing, T(height))
+    Cone(T, T(rMin)..T(rMax), nothing, T(height)/2)
 end
 
 
