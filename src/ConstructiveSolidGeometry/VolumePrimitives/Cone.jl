@@ -12,7 +12,7 @@ struct Cone{T,TR,TP,TZ} <: AbstractVolumePrimitive{T}
 end
 
 #Constructors
-function Cone(;rtopMin = 0, rtopMax = 1, rbotMin = 0, rbotMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2)
+function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2)
     T = float(promote_type(typeof.((rtopMin, rtopMax, rbotMin, rbotMax, φMin, φMax, zMin, zMax))...))
     rMin_is_equal::Bool = rbotMin == rtopMin
     rMax_is_equal::Bool = rbotMax == rtopMax
@@ -32,7 +32,7 @@ function Cone(;rtopMin = 0, rtopMax = 1, rbotMin = 0, rbotMax = 1, φMin = 0, φ
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     Cone( T, r, φ, z)
 end
-Cone(rtopMin, rtopMax, rbotMin, rbotMax, φMin, φMax, zMin, zMax) = Cone(;rtopMin, rtopMax, rbotMin, rbotMax, φMin, φMax, zMin, zMax)
+Cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) = Cone(;rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
 
 function Cone(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1, R2, H))
@@ -51,7 +51,7 @@ end
 
 function Tube(rMin::R1, rMax::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1,R2,H))
-    Cone(T, T(rMin)..T(rMax), nothing, T(h))
+    Cone(T, T(rMin)..T(rMax), nothing, T(height))
 end
 
 
@@ -59,9 +59,9 @@ end
 get_r_at_z(c::Cone{T, <:Any, <:Any, <:Any}, z::Real) where {T} = c.r 
 
 # for Cones
-get_r_at_z(c::Cone{T, <:Tuple{T}, <:Any, <:Any}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
+get_r_at_z(c::Cone{T, <:Tuple{T,T}, <:Any, <:Any}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
 
-function get_r_at_z(c::Cone{T, <:Tuple{AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T}
+function get_r_at_z(c::Cone{T, <:Tuple{AbstractInterval{T},AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T}
     r1::T = _get_r_at_z(c.r[1].left, c.r[2].left, c.z, z)
     r2::T = _get_r_at_z(c.r[1].right, c.r[2].right, c.z, z)
     r1..r2
