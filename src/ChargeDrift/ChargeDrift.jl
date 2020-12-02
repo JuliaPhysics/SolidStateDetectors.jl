@@ -169,14 +169,6 @@ function _drift_charge!(
     return last_real_step_index
 end
 
-
-function is_real(pt::AbstractCoordinatePoint{T})::Bool where {T <: SSDFloat}
-    any(v -> isnan(v) || isinf(v), pt[:] )
-end
-function is_real(pt::AbstractCoordinateVector{T})::Bool where {T <: SSDFloat}
-    any(v -> isnan(v) || isinf(v), pt[:] )
-end
-
 # Point types for charge drift: Defined in DetectorGeometries/DetectorGeometries.jl
 # const CD_ELECTRODE = 0x00
 # const CD_OUTSIDE = 0x01

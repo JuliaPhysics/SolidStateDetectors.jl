@@ -242,10 +242,6 @@ function Base.sort!(v::AbstractVector{<:AbstractGeometry})
     return v_result
 end
 
-function SolidStateDetector{T}(parsed_dict::Dict) where T
-    SolidStateDetector{T}(parsed_dict)
-end
-
 function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::Bool where T
     for contact in c.contacts
         if point in contact
