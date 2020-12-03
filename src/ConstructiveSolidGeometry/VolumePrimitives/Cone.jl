@@ -4,9 +4,9 @@ struct Cone{T,TR,TP,TZ} <: AbstractVolumePrimitive{T}
     z::TZ
     #if r is a Tuple, the first entry refers to the r-interval at the bottom, the second one to the r-interval at the top
     function Cone( ::Type{T},
-                   r::Union{T, <:AbstractInterval{T}, Tuple{T,T}, Tuple{<:AbstractInterval{T},<:AbstractInterval{T}}},
+                   r::Union{T, <:AbstractInterval{T}, Tuple{T,T}, Tuple{I,I}},
                    φ::Union{Nothing, <:AbstractInterval{T}},
-                   z::Union{T, <:AbstractInterval{T}}) where {T}
+                   z::Union{T, <:AbstractInterval{T}}) where {T, I<:AbstractInterval{T}}
         new{T,typeof(r),typeof(φ),typeof(z)}(r, φ, z)
     end
 end
@@ -21,7 +21,9 @@ function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φ
             if rMin_is_zero # Tube with rMin = 0
                 T(rbotMax) 
             elseif rMin_is_equal # Tube
-                T(rbotMin)..T(rbotMax) 
+                T(rbotMin)..T(rbotMax)
+            else # Cone
+                (T(rbotMin)..T(rbotMax), T(rtopMin)..T(rtopMax))
             end
         elseif rMin_is_zero #Cone with rMin = 0
             (T(rbotMax), T(rtopMax))
@@ -51,17 +53,17 @@ end
 
 function Tube(rMin::R1, rMax::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1,R2,H))
-    Cone(T, T(rMin)..T(rMax), nothing, T(height)/2)
+    Cone(T, rMin == 0 ? T(rMax) : T(rMin)..T(rMax), nothing, T(height)/2)
 end
 
 
 # for Tubes
-get_r_at_z(c::Cone{T, <:Any, <:Any, <:Any}, z::Real) where {T} = c.r 
+get_r_at_z(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T} = c.r 
 
 # for Cones
-get_r_at_z(c::Cone{T, <:Tuple{T,T}, <:Any, <:Any}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
+get_r_at_z(c::Cone{T, Tuple{T,T}, <:Any, <:Any}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
 
-function get_r_at_z(c::Cone{T, <:Tuple{AbstractInterval{T},AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T}
+function get_r_at_z(c::Cone{T, Tuple{I,I}, <:Any, <:Any}, z::Real) where {T, I<:AbstractInterval{T}}
     r1::T = _get_r_at_z(c.r[1].left, c.r[2].left, c.z, z)
     r2::T = _get_r_at_z(c.r[1].right, c.r[2].right, c.z, z)
     r1..r2
