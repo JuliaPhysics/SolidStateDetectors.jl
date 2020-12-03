@@ -8,16 +8,15 @@
         []
     end
 
-    for ls in get_plot_points(c)
+    for points in get_plot_points(c)
         @series begin
             label := ""
-            ls
+            points
         end
     end
 end
 
-@recipe function f(ls::LineSegments{T}) where {T}
-    points::Vector{CartesianPoint{T}} = ls.points
+@recipe function f(points::Vector{CartesianPoint{T}}) where {T}
     map(p -> p.x, points), map(p -> p.y, points), map(p -> p.z, points)
 end
 

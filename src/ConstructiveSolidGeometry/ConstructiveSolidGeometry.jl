@@ -30,7 +30,6 @@ module ConstructiveSolidGeometry
     include("PointsAndVectors.jl")
     include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
-    include("LinePrimitives/LinePrimitives.jl")
     include("Transformations.jl")
     include("Intervals.jl")
     include("CSG.jl")

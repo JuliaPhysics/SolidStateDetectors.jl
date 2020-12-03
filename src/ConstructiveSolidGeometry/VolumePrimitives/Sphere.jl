@@ -25,7 +25,7 @@ in(p::AbstractCoordinatePoint, s::Sphere{<:Any, <:Any}) = _in_sph_r(p, s.r)
 # plotting
 function get_plot_points(s::Sphere{T}) where {T <: AbstractFloat}
     
-    plot_points = LineSegments{T}[]
+    plot_points = Vector{CartesianPoint{T}}[]
     
     rMin::T = _left_radial_interval(s.r)
     rMax::T = _right_radial_interval(s.r)
@@ -33,9 +33,9 @@ function get_plot_points(s::Sphere{T}) where {T <: AbstractFloat}
     
     for r in (rMin == 0 ? [rMax] : [rMin, rMax])
         for φ in range(0, 2π, length = 11)
-        push!(plot_points, LineSegments{T}([CartesianPoint{T}(r * sin(θ) * cos(φ), r * sin(θ) * sin(φ), r * cos(θ)) for θ in φrange]))
+        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * sin(θ) * cos(φ), r * sin(θ) * sin(φ), r * cos(θ)) for θ in φrange]))
         end
-        push!(plot_points, LineSegments{T}([CartesianPoint{T}(r * cos(φ), r * sin(φ), 0) for φ in φrange]))
+        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * cos(φ), r * sin(φ), 0) for φ in φrange]))
     end
 
     plot_points

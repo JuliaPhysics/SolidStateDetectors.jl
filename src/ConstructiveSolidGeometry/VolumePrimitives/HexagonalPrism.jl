@@ -91,10 +91,9 @@ end
 
 
 # plotting
-
 function get_plot_points(h::HexagonalPrism{T}) where {T <: AbstractFloat}
     
-    plot_points = LineSegments{T}[]
+    plot_points = Vector{CartesianPoint{T}}[]
     
     rMin::T = _left_radial_interval(h.r)
     rMax::T = _right_radial_interval(h.r)
@@ -105,12 +104,12 @@ function get_plot_points(h::HexagonalPrism{T}) where {T <: AbstractFloat}
         
         #horizontal hexagons
         for z in [zMin, zMax]
-            push!(plot_points, LineSegments{T}([CartesianPoint{T}(r * sin(φ), r * cos(φ), z) for φ in 0:π/3:2π]))
+            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * sin(φ), r * cos(φ), z) for φ in 0:π/3:2π]))
         end
             
         #vertical lines
         for φ in 0:π/3:5π/3
-            push!(plot_points, LineSegments{T}([CartesianPoint{T}(r * sin(φ), r * cos(φ), zMin), CartesianPoint{T}(r * sin(φ), r * cos(φ), zMax)]))
+            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * sin(φ), r * cos(φ), zMin), CartesianPoint{T}(r * sin(φ), r * cos(φ), zMax)]))
         end
     end
 

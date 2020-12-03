@@ -34,7 +34,7 @@ in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
 # plotting
 function get_plot_points(b::Box{T}) where {T <: AbstractFloat}
     
-    plot_points = LineSegments{T}[]
+    plot_points = Vector{CartesianPoint{T}}[]
     
     xMin::T = _left_linear_interval(b.x)
     xMax::T = _right_linear_interval(b.x)
@@ -45,7 +45,7 @@ function get_plot_points(b::Box{T}) where {T <: AbstractFloat}
     
     #horizontal squares
     for z in [zMin, zMax]
-        push!(plot_points, LineSegments{T}([CartesianPoint{T}(xMin, yMin, z), CartesianPoint{T}(xMin, yMax, z),
+        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(xMin, yMin, z), CartesianPoint{T}(xMin, yMax, z),
                             CartesianPoint{T}(xMax, yMax, z), CartesianPoint{T}(xMax, yMin, z), 
                             CartesianPoint{T}(xMin, yMin, z)]))
     end
@@ -53,7 +53,7 @@ function get_plot_points(b::Box{T}) where {T <: AbstractFloat}
     #vertical lines
     for x in [xMin, xMax]
         for y in [yMin, yMax]
-            push!(plot_points, LineSegments{T}([CartesianPoint{T}(x,y,zMin), CartesianPoint{T}(x,y,zMax)]))
+            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(x,y,zMin), CartesianPoint{T}(x,y,zMax)]))
         end
     end
         

@@ -15,7 +15,13 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     z::T
 end
 
-@inline (*)(r::RotMatrix, p::CartesianPoint) = CartesianPoint(r.mat * p)
+@inline (*)(r::RotMatrix{3,T,TT}, p::CartesianPoint{T}) where {T, TT} = r.mat * p
+@inline (*)(r::RotMatrix{3,T,TT}, vp::Vector{CartesianPoint{T}}) where {T, TT} = (r,) .* vp
+@inline (*)(r::RotMatrix{3,T,TT}, vvp::Vector{Vector{CartesianPoint{T}}}) where {T, TT} = (r,) .* vvp
+
+@inline (*)(p::CartesianPoint{T}, v::SVector{3,T}) where {T} = p .* v
+@inline (*)(vp::Vector{CartesianPoint{T}}, v::SVector{3,T}) where {T} = vp .* (v,)
+@inline (*)(vp::Vector{Vector{CartesianPoint{T}}}, v::SVector{3,T}) where {T} = vp .* (v,)
 
 @inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
 @inline _in_cyl_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
@@ -88,6 +94,10 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     z::T
 end
 
+@inline (+)(vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = vp .+ (v,)
+@inline (+)(vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = vvp .+ (v,)
+#@inline broadcast(f::Function, vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = f.(vp, [v for i in eachindex(vp)])
+#@inline broadcast(f::Function, vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = f.(vvp, [v for i in eachindex(vvp)])
 
 """
     struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
