@@ -40,9 +40,9 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
 end
 
 function yaml2json_convert(filename::String)
-    data = YAML.load(open(filename))
+    data = YAML.load(open(filename), dicttype = DataStructures.OrderedDict)
     open(replace(filename, ".yaml" => ".json"),"w") do f
-            JSON.print(f, data, 4)
+        JSON.print(f, data, 4)
     end
 end
 function yaml2json(directory::String)# or filename
@@ -55,6 +55,22 @@ function yaml2json(directory::String)# or filename
         end
     end
 end
+
+function json2yaml_convert(filename::String)
+    data = JSON.parsefile(filename, dicttype = DataStructures.OrderedDict)
+    YAML.write_file(replace(filename, ".json" => ".yaml"), data)
+end
+function json2yaml(directory::String)# or filename
+    if endswith(directory, ".json")
+        json2yaml_convert(directory)
+    else
+        yamlfiles = filter(x->endswith(x,".json"),readdir(directory))
+        for filename in yamlfiles
+            json2yaml_convert(filename)
+        end
+    end
+end
+
 function scan_and_merge_included_json_files!(parsed_dict, config_filename::AbstractString)
     key_word = "include"
     config_dir = dirname(config_filename)

@@ -27,6 +27,7 @@ using Unitful
 using YAML
 
 import Clustering
+import DataStructures
 import Distributions
 import Tables
 import TypedTables
