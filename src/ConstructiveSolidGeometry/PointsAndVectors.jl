@@ -21,7 +21,7 @@ end
 
 @inline (*)(p::CartesianPoint{T}, v::SVector{3,T}) where {T} = p .* v
 @inline (*)(vp::Vector{CartesianPoint{T}}, v::SVector{3,T}) where {T} = vp .* (v,)
-@inline (*)(vp::Vector{Vector{CartesianPoint{T}}}, v::SVector{3,T}) where {T} = vp .* (v,)
+@inline (*)(vvp::Vector{Vector{CartesianPoint{T}}}, v::SVector{3,T}) where {T} = vvp .* (v,)
 
 @inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
 @inline _in_cyl_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
@@ -96,8 +96,6 @@ end
 
 @inline (+)(vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = vp .+ (v,)
 @inline (+)(vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = vvp .+ (v,)
-#@inline broadcast(f::Function, vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = f.(vp, [v for i in eachindex(vp)])
-#@inline broadcast(f::Function, vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = f.(vvp, [v for i in eachindex(vvp)])
 
 """
     struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}

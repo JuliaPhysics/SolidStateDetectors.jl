@@ -12,7 +12,7 @@ module ConstructiveSolidGeometry
     using Rotations
     using StaticArrays
 
-    import Base: in, *, +
+    import Base: in, *, +, -, &
     
     abstract type AbstractCoordinateSystem end
     abstract type Cartesian <: AbstractCoordinateSystem end
