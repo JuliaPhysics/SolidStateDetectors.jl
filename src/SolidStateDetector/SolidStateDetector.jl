@@ -187,12 +187,6 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
-    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(
-        "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V",
-        "angle" => u"°",
-        "temperature" => u"K"
-    )
     inputunits = construct_units(config_file)
     if haskey(config_file, "medium")
         medium = material_properties[materials[config_file["medium"]]]
