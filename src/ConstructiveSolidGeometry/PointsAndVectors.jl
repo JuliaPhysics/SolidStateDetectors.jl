@@ -15,13 +15,13 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     z::T
 end
 
-@inline (*)(r::RotMatrix{3,T,TT}, p::CartesianPoint{T}) where {T, TT} = r.mat * p
-@inline (*)(r::RotMatrix{3,T,TT}, vp::Vector{CartesianPoint{T}}) where {T, TT} = (r,) .* vp
-@inline (*)(r::RotMatrix{3,T,TT}, vvp::Vector{Vector{CartesianPoint{T}}}) where {T, TT} = (r,) .* vvp
+@inline rotate(p::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * p
+@inline rotate!(vp::Vector{CartesianPoint{T}}, r::RotMatrix{3,T,TT}) where {T, TT} = for i in eachindex(vp) vp[i] = rotate(vp[i], r) end
+@inline rotate!(vvp::Vector{Vector{CartesianPoint{T}}}, r::RotMatrix{3,T,TT}) where {T, TT} = for i in eachindex(vvp) rotate!(vvp[i], r) end
 
-@inline (*)(p::CartesianPoint{T}, v::SVector{3,T}) where {T} = p .* v
-@inline (*)(vp::Vector{CartesianPoint{T}}, v::SVector{3,T}) where {T} = vp .* (v,)
-@inline (*)(vvp::Vector{Vector{CartesianPoint{T}}}, v::SVector{3,T}) where {T} = vvp .* (v,)
+@inline scale(p::CartesianPoint{T}, v::SVector{3,T}) where {T} = p .* v
+@inline scale!(vp::Vector{CartesianPoint{T}}, v::SVector{3,T}) where {T} = for i in eachindex(vp) vp[i] = scale(vp[i], v) end
+@inline scale!(vvp::Vector{Vector{CartesianPoint{T}}}, v::SVector{3,T}) where {T} = for i in eachindex(vvp) scale!(vvp[i], v) end
 
 @inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
 @inline _in_cyl_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
@@ -94,8 +94,9 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     z::T
 end
 
-@inline (+)(vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = vp .+ (v,)
-@inline (+)(vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = vvp .+ (v,)
+@inline translate(p::CartesianPoint{T}, v::CartesianVector{T}) where {T} = p + v
+@inline translate!(vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = for i in eachindex(vp) vp[i] = translate(vp[i], v) end
+@inline translate!(vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = for i in eachindex(vvp) translate!(vvp[i], v) end
 
 """
     struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
