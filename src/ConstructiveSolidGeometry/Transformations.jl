@@ -18,9 +18,9 @@ struct RotatedGeometry{T,P<:AbstractGeometry{T},RT} <: AbstractGeometry{T}
 end
 in(p::CartesianPoint, g::RotatedGeometry) = in(g.inv_r * p, g.p)
 in(p::CylindricalPoint, g::RotatedGeometry) = in(CartesianPoint(p), g)
-rotate(g::AbstractGeometry{T}, r::RotMatrix3{RT}) where {T,RT} = (tr(r) == 3 ? r : RotatedGeometry(g, r))
+rotate(g::AbstractGeometry{T}, r::RotMatrix3{RT}) where {T,RT} = (tr(r) == 3 ? g : RotatedGeometry(g, r))
 rotate(g::RotatedGeometry{T,<:Any,RT}, r::RotMatrix3{RT}) where {T,RT} = ( tr(r * inv(g.inv_r)) == 3 ? g.p : RotatedGeometry(g.p, r * inv(g.inv_r)) )
-(*)(g::AbstractGeometry{T}, r::RotMatrix3{RT}) where {T,RT} = rotate(g, r)
+(*)(r::RotMatrix3{RT}, g::AbstractGeometry{T}) where {T,RT} = rotate(g, r)
 get_plot_points(rg::RotatedGeometry{T}) where {T} = rotate!(get_plot_points(rg.p), inv(rg.inv_r))
 
 

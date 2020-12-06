@@ -1,16 +1,12 @@
 using Test
 using SolidStateDetectors
-#using IntervalSets
-#using Unitful
 using LinearAlgebra
 using Rotations
 using StaticArrays
 
 using SolidStateDetectors.ConstructiveSolidGeometry: 
-    CartesianPoint, CartesianVector, CylindricalPoint,
-    scale, rotate, translate,
-    Tube, Cone, Box, Sphere, HexagonalPrism,
-    CSGUnion, CSGIntersection, CSGDifference
+    CartesianPoint, CartesianVector, CylindricalPoint, scale,
+    Tube, Cone, Box, Sphere, HexagonalPrism
 
 T = Float64
 
@@ -61,7 +57,7 @@ end
     @testset "Rotations" begin
         @testset "Rotation around X" begin
             rotX = RotX{T}(deg2rad(90))
-            rot_tube_x = rotate(tube, RotMatrix(rotX)) # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
+            rot_tube_x = RotMatrix(rotX) * tube # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
             @test CartesianPoint{T}(0, -1, 0) in rot_tube_x
             @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_x
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_x
@@ -75,7 +71,7 @@ end
         end
         @testset "Single rotation around Y and Z" begin # first around Y, then around Z
             rotZY = RotZY{T}(deg2rad(-90), deg2rad(90))
-            rot_tube_zy = rotate(tube, RotMatrix(rotZY)) # same Tube as rot_tube_x
+            rot_tube_zy = RotMatrix(rotZY) * tube # same Tube as rot_tube_x
             @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
             @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
@@ -90,8 +86,8 @@ end
         @testset "Repeated rotation around Y and Z" begin # first around Y, then around Z
             rotZ = RotZ{T}(deg2rad(-90))
             rotY = RotY{T}(deg2rad(90))
-            rot_tube_y = rotate(tube, RotMatrix(rotY))
-            rot_tube_zy = rotate(rot_tube_y, RotMatrix(rotZ)) # same Tube as before
+            rot_tube_y =  RotMatrix(rotY) * tube
+            rot_tube_zy = RotMatrix(rotZ) * rot_tube_y # same Tube as before
             @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
             @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
@@ -105,7 +101,7 @@ end
         end
         @testset "Single rotation around X, Y and Z" begin # first around X, then around Z, then around Y
             rotYZX = RotYZX{T}(deg2rad(90), deg2rad(90), deg2rad(90))
-            rot_tube_yzx = rotate(tube, RotMatrix(rotYZX)) # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
+            rot_tube_yzx = RotMatrix(rotYZX) * tube # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
             @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
             @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
@@ -121,9 +117,9 @@ end
             rotY = RotY{T}(deg2rad(90))
             rotZ = RotZ{T}(deg2rad(90))
             rotX = RotX{T}(deg2rad(90))
-            rot_tube_x = rotate(tube, RotMatrix(rotX))
-            rot_tube_zx = rotate(rot_tube_x, RotMatrix(rotZ))
-            rot_tube_yzx = rotate(rot_tube_zx, RotMatrix(rotY)) # same Tube as before
+            rot_tube_x = RotMatrix(rotX) * tube
+            rot_tube_zx = RotMatrix(rotZ) * rot_tube_x
+            rot_tube_yzx = RotMatrix(rotY) * rot_tube_zx # same Tube as before
             @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
             @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
             @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
@@ -140,7 +136,7 @@ end
     @testset "Translations" begin
         @testset "Single translation of a Tube along the axis" begin
             translate1 = CartesianVector{T}(0, 0, -1)
-            translate_tube1 = translate(tube, translate1) # same Tube as rot_tube_yzx
+            translate_tube1 = tube + translate1 # same Tube as rot_tube_yzx
             @test CartesianPoint{T}(0, 0, -1) in translate_tube1
             @test CartesianPoint{T}(0, 0, -0.5) in translate_tube1
             @test CartesianPoint{T}(0, 0, 0) in translate_tube1
@@ -154,8 +150,8 @@ end
         @testset "Repeated translation of a Tube along the axis" begin
             translate1 = CartesianVector{T}(0, 0, 1)
             translate2 = CartesianVector{T}(0, 0, -2)
-            translate_tube = translate(tube, translate1)
-            translate_tube1 = translate(translate_tube, translate2) # same Tube as before
+            translate_tube = tube + translate1
+            translate_tube1 = translate_tube + translate2 # same Tube as before
             @test CartesianPoint{T}(0, 0, -1) in translate_tube1
             @test CartesianPoint{T}(0, 0, -0.5) in translate_tube1
             @test CartesianPoint{T}(0, 0, 0) in translate_tube1
@@ -168,7 +164,7 @@ end
         end
         @testset "Single translation of a Tube perpendicular to the axis" begin
             translate2 = CartesianVector{T}(1, 0, 0)
-            translate_tube2 = translate(tube, translate2) # Tube with z from 0..1.0 and distance to z-axis at (1,0,0) of 0..0.5
+            translate_tube2 = tube + translate2 # Tube with z from 0..1.0 and distance to z-axis at (1,0,0) of 0..0.5
             @test !(CartesianPoint{T}(1, 0, -1) in translate_tube2)
             @test !(CartesianPoint{T}(1, 0, -0.5) in translate_tube2)
             @test CartesianPoint{T}(1, 0, 0) in translate_tube2
@@ -185,8 +181,8 @@ end
         @testset "Repeated translation of a Tube perpendicular to the axis" begin
             translate1 = CartesianVector{T}(0.5, 0.5, 0)
             translate2 = CartesianVector{T}(0.5, -0.5, 0)
-            translate_tube1 = translate(tube, translate1) 
-            translate_tube2 = translate(translate_tube1, translate2) # same Tube as before
+            translate_tube1 = tube + translate1
+            translate_tube2 = translate_tube1 + translate2 # same Tube as before
             @test !(CartesianPoint{T}(1, 0, -1) in translate_tube2)
             @test !(CartesianPoint{T}(1, 0, -0.5) in translate_tube2)
             @test CartesianPoint{T}(1, 0, 0) in translate_tube2
@@ -270,7 +266,7 @@ end
         @testset "Tube surrounded by Tube" begin
             inner_tube = Tube(0.3,1.0) #radius 0..0.3, height -0.5..0.5
             outer_tube = Tube(0.7,1.5,0,0,-0.5,0.5) #radius 0.7..1.0, height -0.5..0.5
-            union = CSGUnion(inner_tube, outer_tube)
+            union = inner_tube + outer_tube
             @test CartesianPoint{T}(0.2,0.0,0.0) in union
             @test CartesianPoint{T}(0.8,0.0,0.0) in union
             @test !(CartesianPoint{T}(0.5,0.0,0.0) in union)
@@ -283,7 +279,7 @@ end
         @testset "Intersection between two Tubes" begin
             tube1 = Tube(0,0.5,0,0,-1,0.5) #radius 0..0.5, height -1.0..0.5
             tube2 = Tube(0.3,1.0,0,0,-0.5,1.0) #radius 0.3..1.0, height -0.5..1.0
-            intersection = CSGIntersection(tube1, tube2) #should be tube with radius 0.3..0.5, height -0.5..0.5
+            intersection = tube1 & tube2 #should be tube with radius 0.3..0.5, height -0.5..0.5
             @test !(CartesianPoint{T}(0.0,0.0,0.0) in intersection)
             @test !(CartesianPoint{T}(0.2,0.0,0.0) in intersection)
             @test CartesianPoint{T}(0.3,0.0,0.0) in intersection
@@ -299,7 +295,7 @@ end
         @testset "Difference between two Tubes" begin
             inner_tube = Tube(0,0.5,0,0,-0.5,1) # tube with radius 0..0.5, height -0.5..1.0
             outer_tube = Tube(0.0,1.0,0,0,-1,1) # tube with radius 0.0..1.0, height -1.0..1.0
-            difference = CSGDifference(outer_tube, inner_tube) # tube with radius 0.5..1.0, height -1.0..1.0
+            difference = outer_tube - inner_tube # tube with radius 0.5..1.0, height -1.0..1.0
             @test !(CartesianPoint{T}(0.0,0.0,0.0) in difference)
             @test !(CartesianPoint{T}(0.5,0.0,0.0) in difference) #point on the surface should not be inside
             @test CartesianPoint{T}(0.7,0.0,0.0) in difference

@@ -28,14 +28,12 @@ struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <:
 end
 
 in(p::AbstractCoordinatePoint, csg::CSGIntersection) = in(p, csg.a) && in(p, csg.b)
-(&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = Intersection{T,A,B}(a, b)
+(&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
 function Geometry(T::DataType, t::Val{:intersection}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, inputunit_dict::Dict{String,Unitful.Units})
     parts = map(x-> Geometry(T, x, inputunit_dict), dict["parts"]) 
-    intersection = parts[1]
-    for part in parts[2:end] intersection &= part end
-    intersection
+    reduce(&, parts)
 end
 
 
