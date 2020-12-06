@@ -30,6 +30,15 @@ in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
     _in_x(p, b.x) && _in_y(p, b.y) && _in_z(p, b.z)
     
     
+# read-in
+function Geometry(T::DataType, t::Val{:box}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, iud::Dict{String,Unitful.Units})
+    length_unit = iud["length"]
+    x = _get_linear_interval_of_primitive(T, "x", dict, length_unit)
+    y = _get_linear_interval_of_primitive(T, "y", dict, length_unit)
+    z = _get_linear_interval_of_primitive(T, "z", dict, length_unit)
+    return Box(T, x, y, z)
+end
+        
     
 # plotting
 function get_plot_points(b::Box{T}) where {T <: AbstractFloat}

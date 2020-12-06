@@ -79,7 +79,18 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, Nothing, <:Any}) =
 
 in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
-
+    
+    
+# read-in
+function Geometry(T::DataType, t::Union{Val{:tube},Val{:cone}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, iud::Dict{String,Unitful.Units})
+    length_unit = iud["length"]
+    angle_unit = iud["angle"]
+    @assert haskey(dict, "r") "Please specify 'r' of the '$(dict["type"])'."
+    r = _get_r_of_primitive(T, dict["r"], length_unit, t)
+    φ = _get_φ_of_primitive(T, dict, angle_unit)
+    z = _get_h_or_z_of_primitive(T, dict, length_unit)
+    return Cone(T, r, φ, z)
+end
 
 
 

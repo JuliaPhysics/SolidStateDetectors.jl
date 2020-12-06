@@ -90,6 +90,15 @@ function sample(hp::HexagonalPrism{T, <:Any, <:Any}, stepsize::Vector{T}) where 
 end
 
 
+# read-in
+function Geometry(T::DataType, t::Val{:HexagonalPrism}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, iud::Dict{String,Unitful.Units})
+    length_unit = iud["length"]
+    r = _get_r_of_primitive(T, dict["r"], length_unit)
+    z = _get_h_or_z_of_primitive(T, dict, length_unit)
+    return HexagonalPrism(T, r, z)
+end
+
+
 # plotting
 function get_plot_points(h::HexagonalPrism{T}) where {T <: AbstractFloat}
     
