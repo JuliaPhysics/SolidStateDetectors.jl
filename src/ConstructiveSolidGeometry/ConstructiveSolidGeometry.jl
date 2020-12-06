@@ -8,10 +8,11 @@ module ConstructiveSolidGeometry
 
     # # Other Packages
     using IntervalSets
+    using RecipesBase
     using Rotations
     using StaticArrays
 
-    import Base: in, *
+    import Base: in, *, +, -, &
     
     abstract type AbstractCoordinateSystem end
     abstract type Cartesian <: AbstractCoordinateSystem end
@@ -32,5 +33,6 @@ module ConstructiveSolidGeometry
     include("Transformations.jl")
     include("Intervals.jl")
     include("CSG.jl")
+    include("plot_recipes.jl")
 
 end 

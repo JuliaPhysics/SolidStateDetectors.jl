@@ -88,3 +88,30 @@ function sample(hp::HexagonalPrism{T, <:Any, <:Any}, stepsize::Vector{T}) where 
     end
     return samples
 end
+
+
+# plotting
+function get_plot_points(h::HexagonalPrism{T}) where {T <: AbstractFloat}
+    
+    plot_points = Vector{CartesianPoint{T}}[]
+    
+    rMin::T = _left_radial_interval(h.r)
+    rMax::T = _right_radial_interval(h.r)
+    zMin::T = _left_linear_interval(h.z)
+    zMax::T = _right_linear_interval(h.z)
+   
+    for r in (rMin == 0 ? [rMax] : [rMin, rMax])
+        
+        #horizontal hexagons
+        for z in [zMin, zMax]
+            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * sin(φ), r * cos(φ), z) for φ in 0:π/3:2π]))
+        end
+            
+        #vertical lines
+        for φ in 0:π/3:5π/3
+            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * sin(φ), r * cos(φ), zMin), CartesianPoint{T}(r * sin(φ), r * cos(φ), zMax)]))
+        end
+    end
+
+    plot_points
+end
