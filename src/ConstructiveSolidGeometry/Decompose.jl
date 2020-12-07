@@ -1,36 +1,31 @@
-function get_decomposed_volumes(vol::AbstractGeometry{T})::Tuple{Vector{<:AbstractGeometry},Vector{<:AbstractGeometry}} where T
+function get_decomposed_volumes(vol::AbstractGeometry{T})::Tuple{Vector{<:AbstractGeometry},Vector{<:AbstractGeometry}} where {T}
     positive_volumes = AbstractGeometry[]
     negative_volumes = AbstractGeometry[]
     translate = CartesianVector{T}(0.0,0.0,0.0)
-    decompose_volume(vol, positive_volumes, negative_volumes, translate, 1)
+    decompose_volume!(positive_volumes, negative_volumes, vol, translate, Val{:PositiveVolume})
     positive_volumes, negative_volumes
 end
 
-function decompose_volume(vol::CSGDifference, pos, neg, translate, flag = 1)::Nothing
-    decompose_volume(vol.a, pos, neg, translate, flag)
-    decompose_volume(vol.b, pos, neg, translate, flag *= -1)
+@inline invert_volume_type(::Type{Val{:PositiveVolume}}) = Val{:NegativeVolume}
+@inline invert_volume_type(::Type{Val{:NegativeVolume}}) = Val{:PositiveVolume}
+
+function decompose_volume!(pos, neg, vol::CSGDifference, translate, ::Type{VT})::Nothing where {VT <:Union{Val{:PositiveVolume}, Val{:NegativeVolume}}}
+    decompose_volume!(pos, neg, vol.a, translate, VT)
+    decompose_volume!(pos, neg, vol.b, translate, invert_volume_type(VT))
     nothing
 end
 
-function decompose_volume(vol::CSGUnion, pos, neg, translate, flag = 1)::Nothing
-    decompose_volume(vol.a ,pos, neg, translate, flag)
-    decompose_volume(vol.b, pos, neg, translate, flag)
+function decompose_volume!(pos, neg, vol::Union{CSGUnion, CSGIntersection}, translate, ::Type{VT})::Nothing where {VT <:Union{Val{:PositiveVolume}, Val{:NegativeVolume}}}
+    decompose_volume!(pos, neg, vol.a, translate, VT)
+    decompose_volume!(pos, neg, vol.b, translate, VT)
     nothing
 end
 
-function decompose_volume(vol::CSGIntersection, pos, neg, translate, flag = 1)::Nothing
-    decompose_volume(vol.a ,pos, neg, translate, flag)
-    decompose_volume(vol.b, pos, neg, translate, flag)
-    nothing
-end
-
-function decompose_volume(vol::TranslatedGeometry, pos, neg, translate, flag = 1)::Nothing
+function decompose_volume!(pos, neg, vol::TranslatedGeometry, translate, ::Type{VT})::Nothing where {VT <:Union{Val{:PositiveVolume}, Val{:NegativeVolume}}}
     translate += vol.t
-    decompose_volume(vol.p, pos, neg, translate, flag)
+    decompose_volume!(pos, neg, vol.p, translate, VT)
     nothing
 end
 
-function decompose_volume(vol::AbstractGeometry, pos, neg, translate, flag = 1)::Nothing
-    flag == 1 ? push!(pos, vol + translate) : push!(neg, vol + translate)
-    nothing
-end
+decompose_volume!(pos, neg, vol::Union{AbstractVolumePrimitive, RotatedGeometry, ScaledGeometry}, translate, ::Type{Val{:PositiveVolume}}) = push!(pos, vol + translate)
+decompose_volume!(pos, neg, vol::Union{AbstractVolumePrimitive, RotatedGeometry, ScaledGeometry}, translate, ::Type{Val{:NegativeVolume}}) = push!(neg, vol + translate)
