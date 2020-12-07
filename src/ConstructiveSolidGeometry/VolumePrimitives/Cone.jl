@@ -82,16 +82,14 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any})
     
     
 # read-in
-function Geometry(T::DataType, t::Union{Val{:tube},Val{:cone}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, iud::Dict{String,Unitful.Units})
-    length_unit = iud["length"]
-    angle_unit = iud["angle"]
-    @assert haskey(dict, "r") "Please specify 'r' of the '$(dict["type"])'."
-    r = _get_r_of_primitive(T, dict["r"], length_unit, t)
-    φ = _get_φ_of_primitive(T, dict, angle_unit)
-    z = _get_h_or_z_of_primitive(T, dict, length_unit)
+function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    r = parse_r_of_primitive(T, dict, length_unit)
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    z = parse_height_of_primitive(T, dict, length_unit)
     return Cone(T, r, φ, z)
 end
-
 
 
 # plotting

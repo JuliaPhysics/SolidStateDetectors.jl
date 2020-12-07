@@ -12,8 +12,9 @@ in(p::AbstractCoordinatePoint, csg::CSGUnion) = in(p, csg.a) || in(p, csg.b)
 (+)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGUnion{T,A,B}(a, b)
 
 # read-in
-function Geometry(T::DataType, t::Val{:union}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, inputunit_dict::Dict{String,Unitful.Units})
-    sum( map(x-> Geometry(T, x, inputunit_dict), dict["parts"]) )
+function Geometry(::Type{T}, t::Type{CSGUnion}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
+    sum( map(x-> Geometry(T, x, input_units), dict["parts"]) )
 end
 
 
@@ -31,8 +32,9 @@ in(p::AbstractCoordinatePoint, csg::CSGIntersection) = in(p, csg.a) && in(p, csg
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
-function Geometry(T::DataType, t::Val{:intersection}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, inputunit_dict::Dict{String,Unitful.Units})
-    parts = map(x-> Geometry(T, x, inputunit_dict), dict["parts"]) 
+function Geometry(::Type{T}, ::Type{CSGIntersection}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
+    parts = map(x-> Geometry(T, x, input_units), dict["parts"]) 
     reduce(&, parts)
 end
 
@@ -51,7 +53,8 @@ in(p::AbstractCoordinatePoint, csg::CSGDifference) = in(p, csg.a) && !in(p, csg.
 (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGDifference{T,A,B}(a, b)
 
 # read-in
-function Geometry(T::DataType, t::Val{:difference}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, inputunit_dict::Dict{String,Unitful.Units})
-    Geometry(T, dict["parts"][1], inputunit_dict) - sum( map(x-> Geometry(T, x, inputunit_dict), dict["parts"][2:end]) )
+function Geometry(::Type{T}, ::Type{CSGDifference}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
+    Geometry(T, dict["parts"][1], input_units) - sum( map(x-> Geometry(T, x, input_units), dict["parts"][2:end]) )
 end
 

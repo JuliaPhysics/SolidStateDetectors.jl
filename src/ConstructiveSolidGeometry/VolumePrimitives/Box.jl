@@ -31,11 +31,11 @@ in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
     
     
 # read-in
-function Geometry(T::DataType, t::Val{:box}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, iud::Dict{String,Unitful.Units})
-    length_unit = iud["length"]
-    x = _get_linear_interval_of_primitive(T, "x", dict, length_unit)
-    y = _get_linear_interval_of_primitive(T, "y", dict, length_unit)
-    z = _get_linear_interval_of_primitive(T, "z", dict, length_unit)
+function Geometry(::Type{T}, ::Type{Box}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    length_unit = input_units.length
+    x = parse_interval_of_primitive(T, "x", dict, length_unit)
+    y = parse_interval_of_primitive(T, "y", dict, length_unit)
+    z = parse_interval_of_primitive(T, "z", dict, length_unit)
     return Box(T, x, y, z)
 end
         
