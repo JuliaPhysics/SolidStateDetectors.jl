@@ -78,9 +78,10 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                 tube = Tube(T(0), T(0.5), T(0), T(0), T(0), T(1)) # r from 0.0..0.5, z from 0.0..1.0
                 
                 @testset "Rotations" begin
+                    RT = Float64
                     @testset "Rotation around X" begin
-                        rotX = RotX{T}(deg2rad(90))
-                        rot_tube_x = RotMatrix(rotX) * tube # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
+                        rotX = RotX{RT}(deg2rad(90))
+                        rot_tube_x = RotMatrix3{T}(rotX) * tube # Tube with y from -1.0..0.0 and distance to y-axis of 0..0.5
                         @test CartesianPoint{T}(0, -1, 0) in rot_tube_x
                         @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_x
                         @test CartesianPoint{T}(0, 0, 0) in rot_tube_x
@@ -93,8 +94,8 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                         @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_x)
                     end
                     @testset "Single rotation around Y and Z" begin # first around Y, then around Z
-                        rotZY = RotZY{T}(deg2rad(-90), deg2rad(90))
-                        rot_tube_zy = RotMatrix(rotZY) * tube # same Tube as rot_tube_x
+                        rotZY = RotZY{RT}(deg2rad(-90), deg2rad(90))
+                        rot_tube_zy = RotMatrix3{T}(rotZY) * tube # same Tube as rot_tube_x
                         @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
                         @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
                         @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
@@ -107,10 +108,10 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                         @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_zy)
                     end
                     @testset "Repeated rotation around Y and Z" begin # first around Y, then around Z
-                        rotZ = RotZ{T}(deg2rad(-90))
-                        rotY = RotY{T}(deg2rad(90))
-                        rot_tube_y =  RotMatrix(rotY) * tube
-                        rot_tube_zy = RotMatrix(rotZ) * rot_tube_y # same Tube as before
+                        rotZ = RotZ{RT}(deg2rad(-90))
+                        rotY = RotY{RT}(deg2rad(90))
+                        rot_tube_y =  RotMatrix3{T}(rotY) * tube
+                        rot_tube_zy = RotMatrix3{T}(rotZ) * rot_tube_y # same Tube as before
                         @test CartesianPoint{T}(0, -1, 0) in rot_tube_zy
                         @test CartesianPoint{T}(0, -0.5, 0) in rot_tube_zy
                         @test CartesianPoint{T}(0, 0, 0) in rot_tube_zy
@@ -123,8 +124,8 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                         @test !(CartesianPoint{T}(0, 0, 1) in rot_tube_zy)
                     end
                     @testset "Single rotation around X, Y and Z" begin # first around X, then around Z, then around Y
-                        rotYZX = RotYZX{T}(deg2rad(90), deg2rad(90), deg2rad(90))
-                        rot_tube_yzx = RotMatrix(rotYZX) * tube # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
+                        rotYZX = RotYZX{RT}(deg2rad(90), deg2rad(90), deg2rad(90))
+                        rot_tube_yzx = RotMatrix3{T}(rotYZX) * tube # Tube with z from -1.0..0.0 and distance to z-axis of 0..0.5
                         @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
                         @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
                         @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
@@ -137,12 +138,12 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                         @test !(CartesianPoint{T}(0, 1, -0.5) in rot_tube_yzx)
                     end
                     @testset "Repeated rotation around X, Y and Z" begin # first around X, then around Z, then around Y
-                        rotY = RotY{T}(deg2rad(90))
-                        rotZ = RotZ{T}(deg2rad(90))
-                        rotX = RotX{T}(deg2rad(90))
-                        rot_tube_x = RotMatrix(rotX) * tube
-                        rot_tube_zx = RotMatrix(rotZ) * rot_tube_x
-                        rot_tube_yzx = RotMatrix(rotY) * rot_tube_zx # same Tube as before
+                        rotY = RotY{RT}(deg2rad(90))
+                        rotZ = RotZ{RT}(deg2rad(90))
+                        rotX = RotX{RT}(deg2rad(90))
+                        rot_tube_x = RotMatrix3{T}(rotX) * tube
+                        rot_tube_zx = RotMatrix3{T}(rotZ) * rot_tube_x
+                        rot_tube_yzx = RotMatrix3{T}(rotY) * rot_tube_zx # same Tube as before
                         @test CartesianPoint{T}(0, 0, -1) in rot_tube_yzx
                         @test CartesianPoint{T}(0, 0, -0.5) in rot_tube_yzx
                         @test CartesianPoint{T}(0, 0, 0) in rot_tube_yzx
