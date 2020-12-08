@@ -16,7 +16,7 @@ function HexagonalPrism(; rInner = 0, rOuter = 1, zMin = -1, zMax = 1)
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     HexagonalPrism( T, r, z)
 end
-HexagonalPrism(rInner, rOuter, zMin, zMax) = HexagonalPrism(; rInner, rOuter, zMin, zMax)
+HexagonalPrism(rInner, rOuter, zMin, zMax) = HexagonalPrism(; rInner = rInner, rOuter = rOuter, zMin = zMin, zMax = zMax)
 
 function HexagonalPrism(rOuter::R, height::H) where {R<:Real, H<:Real}
     T = float(promote_type(R,H))

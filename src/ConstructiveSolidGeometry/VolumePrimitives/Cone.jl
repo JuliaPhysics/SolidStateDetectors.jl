@@ -34,7 +34,7 @@ function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φ
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     Cone( T, r, φ, z)
 end
-Cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) = Cone(;rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+Cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) = Cone(; rbotMin = rbotMin, rbotMax = rbotMax, rtopMin = rtopMin, rtopMax = rtopMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
 
 function Cone(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1, R2, H))
@@ -44,7 +44,7 @@ end
 
 #Constructors for Tubes
 Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) = Cone(rMin, rMax, rMin, rMax, φMin, φMax, zMin, zMax)
-Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMin, zMax) 
+Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(; rMin = rMin, rMax = rMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax) 
 
 function Tube(r::R, height::H) where {R<:Real, H<:Real}
     T = float(promote_type(R,H))

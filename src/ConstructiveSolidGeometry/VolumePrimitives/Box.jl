@@ -19,7 +19,7 @@ function Box(;xMin = -1, xMax = 1, yMin = -1, yMax = 1, zMin = -1, zMax = 1)
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     Box( T, x, y, z)
 end
-Box(xMin, xMax, yMin, yMax, zMin, zMax) = Box(;xMin, xMax, yMin, yMax, zMin, zMax)
+Box(xMin, xMax, yMin, yMax, zMin, zMax) = Box(; xMin = xMin, xMax = xMax, yMin = yMin, yMax = yMax, zMin = zMin, zMax = zMax)
 
 function Box(x::X, y::Y, z::Z) where {X<:Real, Y<:Real, Z<:Real}
     T = float(promote_type(X,Y,Z))

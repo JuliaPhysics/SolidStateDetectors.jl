@@ -13,7 +13,7 @@ function Sphere(; rMin = 0, rMax = 1)
     Sphere(T, r)
 end
 
-Sphere(rMin, rMax) = Sphere(;rMin, rMax)
+Sphere(rMin, rMax) = Sphere(; rMin = rMin, rMax = rMax)
 function Sphere(r::R) where {R <: Real}
     T = float(R)
     Sphere(T, T(r))

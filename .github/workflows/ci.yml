@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
+          #- '1.0'
           - '1.5'
           - 'nightly'
         os:
@@ -63,28 +63,28 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           file: lcov.info
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
-        with:
-          version: '1.5'
-      - name: Cache artifacts
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/docs/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@latest
-      - uses: julia-actions/julia-docdeploy@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Needed due to https://github.com/JuliaDocs/Documenter.jl/issues/1177
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+  # docs:
+  #   name: Documentation
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: julia-actions/setup-julia@latest
+  #       with:
+  #         version: '1.5'
+  #     - name: Cache artifacts
+  #       uses: actions/cache@v2
+  #       env:
+  #         cache-name: cache-artifacts
+  #       with:
+  #         path: ~/.julia/artifacts
+  #         key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/docs/Project.toml') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-test-${{ env.cache-name }}-
+  #           ${{ runner.os }}-test-
+  #           ${{ runner.os }}-
+  #     - uses: julia-actions/julia-buildpkg@latest
+  #     - uses: julia-actions/julia-docdeploy@latest
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         # Needed due to https://github.com/JuliaDocs/Documenter.jl/issues/1177
+  #         DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
