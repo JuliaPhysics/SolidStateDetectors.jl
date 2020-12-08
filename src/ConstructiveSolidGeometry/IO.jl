@@ -13,8 +13,8 @@ volume_primitive_dict = Dict{String, Any}(
 #### INTERNAL PARSE FUNCTIONS
 
 # parses dictionary entries of type Real or String to their value in internal units
-@inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = geom_round(to_internal_units(T(x) * unit))
-@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = geom_round(to_internal_units(T(uparse(s))))
+@inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = to_internal_units(T(x) * unit)
+@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = to_internal_units(T(uparse(s)))
 
 # parses dictionary entries of type {"from": ..., "to": ... } to respective AbstractFloat/Interval
 function _parse_interval_from_to(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
