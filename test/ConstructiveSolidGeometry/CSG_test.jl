@@ -15,19 +15,19 @@ T = Float64
     @test cp1 + cp1 == CartesianPoint{T}(2, 4, 6)
     @test cp1 - cp1 == CartesianPoint{T}(0, 0, 0)
     @test cp1 ⋅ cp1 == 14
-    @test norm(cp1) == sqrt(14)
+    @test norm(cp1) == sqrt(T(14))
 end
 
 @testset "Volume Primitives" begin
     @testset "Tube" begin
-        tube = Tube(0.2, 2.0) # r from 0..0.2, z from -1.0..1.0
+        tube = Tube(T(0.2), T(2.0)) # r from 0..0.2, z from -1.0..1.0
         @test CartesianPoint{T}(0, 0, 0) in tube
         @test CartesianPoint{T}(tube.r, 0, tube.z) in tube
         @test !(CartesianPoint{T}(tube.r, 0, 1.1*tube.z) in tube) 
         @test !(CartesianPoint{T}(1.1*tube.r, 0, tube.z) in tube) 
     end
     @testset "Box" begin
-        box = Box(1.0, 2.0, 3.0) # x from -0.5..0.5, y from -1.0..1.0, z from -1.5..1.5
+        box = Box(T(1.0), T(2.0), T(3.0)) # x from -0.5..0.5, y from -1.0..1.0, z from -1.5..1.5
         @test CartesianPoint{T}(0, 0, 0) in box
         @test CartesianPoint{T}(box.x, box.y, box.z) in box
         @test CartesianPoint{T}(-box.x, -box.y, -box.z) in box
@@ -35,7 +35,7 @@ end
         @test !(CartesianPoint{T}(box.y, box.y, box.y) in box)
     end
     @testset "Sphere" begin
-        sphere = Sphere(0.5) # r from 0..0.5
+        sphere = Sphere(T(0.5)) # r from 0..0.5
         @test CartesianPoint{T}(0, 0, 0) in sphere
         @test CartesianPoint{T}(sphere.r, 0, 0) in sphere
         @test CartesianPoint{T}(sphere.r/2, sphere.r/2, sphere.r/2) in sphere
@@ -44,7 +44,7 @@ end
         @test !(CartesianPoint{T}(0, 0.1*sphere.r, sphere.r) in sphere) 
     end
     @testset "HexagonalPrism" begin
-        hexagon = HexagonalPrism(1.0, 2.0) # outer radius from 0..1.0, z from -1.0..1.0
+        hexagon = HexagonalPrism(T(1.0), T(2.0)) # outer radius from 0..1.0, z from -1.0..1.0
         
     end
 end
@@ -52,7 +52,7 @@ end
 
 @testset "Transformations" begin 
     # test transformations on a Tube
-    tube = Tube(0, 0.5, 0, 0, 0, 1) # r from 0.0..0.5, z from 0.0..1.0
+    tube = Tube(T(0), T(0.5), T(0), T(0), T(0), T(1)) # r from 0.0..0.5, z from 0.0..1.0
     
     @testset "Rotations" begin
         @testset "Rotation around X" begin
@@ -200,7 +200,7 @@ end
     
     @testset "Scaling" begin
         @testset "Single scaling of a Tube along the axis" begin
-            scale0 = SVector(1.0, 1.0, 4.0)
+            scale0 = SVector{3,T}(1.0, 1.0, 4.0)
             scaled_tube = scale(tube, scale0) # Tube with z from 0..4.0 and distance to the z-axis of 0..0.5
             @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube)
             @test CartesianPoint{T}(0, 0, 0) in scaled_tube
@@ -214,7 +214,7 @@ end
             @test !(CartesianPoint{T}(0.5, 0.5, 4) in scaled_tube)
         end
         @testset "Repeated scaling of a Tube along the axis" begin
-            scale1 = SVector(1.0, 1.0, 2.0)
+            scale1 = SVector{3,T}(1.0, 1.0, 2.0)
             scaled_tube1 = scale(tube, scale1) 
             scaled_tube2 = scale(scaled_tube1, scale1) # same Tube as before
             @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube2)
@@ -229,7 +229,7 @@ end
             @test !(CartesianPoint{T}(0.5, 0.5, 4) in scaled_tube2)
         end
         @testset "Single scaling of a Tube perpendicular to the axis" begin
-            scale3 = SVector(2.0,0.5,1.0)
+            scale3 = SVector{3,T}(2.0,0.5,1.0)
             scaled_tube3 = scale(tube, scale3) # Tube with z from 0..1.0 and distance to the z-axis of 0..1.0 in x and 0..0.25 in y
             @test CartesianPoint{T}(0, 0, 0) in scaled_tube3
             @test CartesianPoint{T}(0.5, 0, 0) in scaled_tube3
@@ -243,8 +243,8 @@ end
             @test !(CartesianPoint{T}(0.2, 0.6, 0) in scaled_tube3)
         end
         @testset "Repeated scaling of a Tube perpendicular to the axis" begin
-            scale4 = SVector(2.0,1.0,1.0)
-            scale5 = SVector(1.0,0.5,1.0)
+            scale4 = SVector{3,T}(2.0,1.0,1.0)
+            scale5 = SVector{3,T}(1.0,0.5,1.0)
             scaled_tube4 = scale(tube, scale4)
             scaled_tube5 = scale(scaled_tube4, scale5) # same Tube as before
             @test CartesianPoint{T}(0, 0, 0) in scaled_tube5
@@ -264,8 +264,8 @@ end
 @testset "Sets" begin
     @testset "Union" begin
         @testset "Tube surrounded by Tube" begin
-            inner_tube = Tube(0.3,1.0) #radius 0..0.3, height -0.5..0.5
-            outer_tube = Tube(0.7,1.5,0,0,-0.5,0.5) #radius 0.7..1.0, height -0.5..0.5
+            inner_tube = Tube(T(0.3),T(1.0)) #radius 0..0.3, height -0.5..0.5
+            outer_tube = Tube(T(0.7),T(1.5),T(0),T(0),T(-0.5),T(0.5)) #radius 0.7..1.0, height -0.5..0.5
             union = inner_tube + outer_tube
             @test CartesianPoint{T}(0.2,0.0,0.0) in union
             @test CartesianPoint{T}(0.8,0.0,0.0) in union
@@ -277,8 +277,8 @@ end
     end
     @testset "Intersection" begin
         @testset "Intersection between two Tubes" begin
-            tube1 = Tube(0,0.5,0,0,-1,0.5) #radius 0..0.5, height -1.0..0.5
-            tube2 = Tube(0.3,1.0,0,0,-0.5,1.0) #radius 0.3..1.0, height -0.5..1.0
+            tube1 = Tube(T(0),T(0.5),T(0),T(0),T(-1),T(0.5)) #radius 0..0.5, height -1.0..0.5
+            tube2 = Tube(T(0.3),T(1.0),T(0),T(0),T(-0.5),T(1.0)) #radius 0.3..1.0, height -0.5..1.0
             intersection = tube1 & tube2 #should be tube with radius 0.3..0.5, height -0.5..0.5
             @test !(CartesianPoint{T}(0.0,0.0,0.0) in intersection)
             @test !(CartesianPoint{T}(0.2,0.0,0.0) in intersection)
@@ -293,8 +293,8 @@ end
     end
     @testset "Difference" begin
         @testset "Difference between two Tubes" begin
-            inner_tube = Tube(0,0.5,0,0,-0.5,1) # tube with radius 0..0.5, height -0.5..1.0
-            outer_tube = Tube(0.0,1.0,0,0,-1,1) # tube with radius 0.0..1.0, height -1.0..1.0
+            inner_tube = Tube(T(0),T(0.5),T(0),T(0),T(-0.5),T(1)) # tube with radius 0..0.5, height -0.5..1.0
+            outer_tube = Tube(T(0.0),T(1.0),T(0),T(0),T(-1),T(1)) # tube with radius 0.0..1.0, height -1.0..1.0
             difference = outer_tube - inner_tube # tube with radius 0.5..1.0, height -1.0..1.0
             @test !(CartesianPoint{T}(0.0,0.0,0.0) in difference)
             @test !(CartesianPoint{T}(0.5,0.0,0.0) in difference) #point on the surface should not be inside
