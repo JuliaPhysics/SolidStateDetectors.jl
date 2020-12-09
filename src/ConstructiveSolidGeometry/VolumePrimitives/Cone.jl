@@ -19,7 +19,7 @@ function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φ
     rMin_is_zero::Bool = rMin_is_equal && rbotMin == 0
     r = if rMax_is_equal
             if rMin_is_zero # Tube with rMin = 0
-                T(rbotMax) 
+                T(rbotMax)
             elseif rMin_is_equal # Tube
                 T(rbotMin)..T(rbotMax)
             else # Cone
@@ -44,7 +44,7 @@ end
 
 #Constructors for Tubes
 Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) = Cone(rMin, rMax, rMin, rMax, φMin, φMax, zMin, zMax)
-Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMin, zMax) 
+Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMin, zMax)
 
 function Tube(r::R, height::H) where {R<:Real, H<:Real}
     T = float(promote_type(R,H))
@@ -58,7 +58,7 @@ end
 
 
 # for Tubes
-get_r_at_z(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T} = c.r 
+get_r_at_z(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T} = c.r
 
 # for Cones
 get_r_at_z(c::Cone{T, Tuple{T,T}, <:Any, <:Any}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
@@ -69,7 +69,7 @@ function get_r_at_z(c::Cone{T, Tuple{I,I}, <:Any, <:Any}, z::Real) where {T, I<:
     r1..r2
 end
 
-function _get_r_at_z(rbot::TR, rtop::TR, cz::TZ, z::Real)::TR where {TR<:Real, TZ} 
+function _get_r_at_z(rbot::TR, rtop::TR, cz::TZ, z::Real)::TR where {TR<:Real, TZ}
     (rtop - rbot) * (z - _left_linear_interval(cz)) / _width_linear_interval(cz) + rbot
 end
 
@@ -81,50 +81,47 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any})
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 
-
-
-# plotting
-_get_plot_r(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
+get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
-_get_plot_r(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} = 
+get_r_limits(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r[1]),_right_radial_interval(c.r[1]),_left_radial_interval(c.r[2]),_right_radial_interval(c.r[2]))
 
-_get_plot_φ(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
-_get_plot_φ(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
+get_φ_limits(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
+get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
 
-_get_plot_z(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
+get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
-
+# plotting
 function get_plot_points(c::Cone{T}) where {T <: AbstractFloat}
-    
+
     plot_points = Vector{CartesianPoint{T}}[]
-    
-    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = _get_plot_r(c)
-    φMin::T, φMax::T, φ_is_full_2π::Bool = _get_plot_φ(c)
-    zMin::T, zMax::T = _get_plot_z(c)
-    
+
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    φMin::T, φMax::T, φ_is_full_2π::Bool = get_φ_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+
     φrange = range(φMin, φMax, length = 36)
-    
+
     #bottom circle(s)
     for r in [rbotMin, rbotMax]
         if r == 0 continue end
         push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * cos(φ), r * sin(φ), zMin) for φ in φrange]))
     end
-    
+
     #top circle(s)
     for r in [rtopMin, rtopMax]
         if r == 0 continue end
         push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * cos(φ), r * sin(φ), zMax) for φ in φrange]))
     end
-    
+
     #side line(s)
-    for φ in (φ_is_full_2π ? T(0) : [φMin, φMax])    
+    for φ in (φ_is_full_2π ? T(0) : [φMin, φMax])
         if rbotMin != 0 || rtopMin != 0
-        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)]))      
+        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)]))
         end
-        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax)]))       
+        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax)]))
     end
-    
+
     #for incomplete φ: lines of cross-sections
     if !φ_is_full_2π
         for φ in [φMin, φMax]

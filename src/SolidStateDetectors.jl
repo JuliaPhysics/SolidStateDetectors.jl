@@ -9,6 +9,7 @@ using Random
 using Statistics
 
 using ArraysOfArrays
+using Colors
 using FillArrays
 using Formatting
 using Interpolations
