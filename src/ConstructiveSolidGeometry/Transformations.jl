@@ -40,4 +40,4 @@ const CSGTransformation = Union{SVector{3}, RotMatrix3, CartesianVector}
 transform(g::AbstractGeometry, s::SVector{3}) =  scale(g, s)
 transform(g::AbstractGeometry, r::RotMatrix3) = rotate(g, r)
 transform(g::AbstractGeometry, t::CartesianVector) = translate(g, t)
-transform(g::AbstractGeometry, t::Vector{CSGTransformation}) = reduce(transform, t, init = g)
+transform(g::AbstractGeometry, t::Vector{CSGTransformation}) = reduce(transform, reverse(t), init = g)
