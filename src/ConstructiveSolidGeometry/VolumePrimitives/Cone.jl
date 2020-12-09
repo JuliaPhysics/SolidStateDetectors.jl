@@ -34,7 +34,7 @@ function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φ
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     Cone( T, r, φ, z)
 end
-Cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) = Cone(;rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+Cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) = Cone(; rbotMin = rbotMin, rbotMax = rbotMax, rtopMin = rtopMin, rtopMax = rtopMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
 
 function Cone(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1, R2, H))
@@ -44,7 +44,7 @@ end
 
 #Constructors for Tubes
 Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) = Cone(rMin, rMax, rMin, rMax, φMin, φMax, zMin, zMax)
-Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(;rMin, rMax, φMin, φMax, zMin, zMax)
+Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(; rMin = rMin, rMax = rMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
 
 function Tube(r::R, height::H) where {R<:Real, H<:Real}
     T = float(promote_type(R,H))
@@ -81,6 +81,18 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any})
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 
+# read-in
+function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    r = parse_r_of_primitive(T, dict, length_unit)
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    z = parse_height_of_primitive(T, dict, length_unit)
+    return Cone(T, r, φ, z)
+end
+
+
+# plotting
 get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
 get_r_limits(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =

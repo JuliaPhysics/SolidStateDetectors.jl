@@ -1,6 +1,6 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 using Test
-
+#=
 using SolidStateDetectors
 using SolidStateDetectors: SSDFloat
 
@@ -94,3 +94,7 @@ end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
 end
+=#
+
+include("ConstructiveSolidGeometry/CSG_test.jl")
+include("ConstructiveSolidGeometry/CSG_IO.jl")

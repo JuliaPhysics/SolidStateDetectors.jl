@@ -13,3 +13,6 @@
 
 @inline _right_radial_interval(r::Real) = r
 @inline _right_radial_interval(r::AbstractInterval) = r.right
+
+@inline _extend_number_to_zero_interval(r::T) where {T <: Real} = T(0)..r
+@inline _extend_number_to_zero_interval(r::AbstractInterval) = r

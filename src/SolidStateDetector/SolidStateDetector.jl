@@ -5,7 +5,7 @@ CS: Coordinate System: -> :cartesian / :cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     name::String  # optional
-    inputunits::Dict{String, Unitful.Units}
+    inputunits::NamedTuple
     world::World{T, 3}
 
     config_dict::Dict
@@ -30,7 +30,7 @@ function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat,
 
     return SolidStateDetector{T, S}(
         "EmptyDetector",
-        default_unit_dict(),
+        default_unit_tuple(),
         world,
         Dict(),
         material_properties[materials["vacuum"]],
@@ -49,61 +49,64 @@ function SolidStateDetector()::SolidStateDetector{Float32, :cartesian}
     return SolidStateDetector{Float32, :cartesian}()
 end
 
-function default_unit_dict()::Dict{String, Unitful.Units}
-    return Dict{String, Unitful.Units}(
-        "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V",
-        "angle" => u"°",
-        "temperature" => u"K"
+
+function default_unit_tuple()::NamedTuple{<:Any, <:NTuple{4, Unitful.Units}}
+    return (
+        length = u"m", # change this to u"m" ? SI Units
+        potential = u"V",
+        angle = u"°",
+        temperature = u"K"
     )
 end
 
 
 function construct_units(config_file_dict::Dict)
-    dunits::Dict{String, Unitful.Units} = default_unit_dict()
+    dunits::NamedTuple = default_unit_tuple()
     if haskey(config_file_dict, "units")
         d = config_file_dict["units"]
-        if haskey(d, "length") dunits["length"] = unit_conversion[d["length"]] end
-        if haskey(d, "angle") dunits["angle"] = unit_conversion[d["angle"]] end
-        if haskey(d, "potential") dunits["potential"] = unit_conversion[d["potential"]] end
-        if haskey(d, "temperature") dunits["temperature"] = unit_conversion[d["temperature"]] end
+        dunits = (
+            length = haskey(d, "length") ? unit_conversion[d["length"]] : dunits.length, 
+            angle  = haskey(d, "angle") ? unit_conversion[d["angle"]] : dunits.angle,
+            potential = haskey(d, "potential") ? unit_conversion[d["potential"]] : dunits.potential,
+            temperature = haskey(d, "temperature") ? unit_conversion[d["temperature"]] : dunits.temperature
+        )
     end
     dunits
 end
 
 
-function construct_semiconductor(T, sc::Dict, inputunit_dict::Dict{String, Unitful.Units})
-    Semiconductor{T}(sc, inputunit_dict)
+function construct_semiconductor(T, sc::Dict, input_units::NamedTuple)
+    Semiconductor{T}(sc, input_units)
 end
 
-function construct_passive(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units})
-    Passive{T}(pass, inputunit_dict)
+function construct_passive(T, pass::Dict, input_units::NamedTuple)
+    Passive{T}(pass, input_units)
 end
 
-function construct_contact(T, contact::Dict, inputunit_dict::Dict{String, Unitful.Units})
-    Contact{T}(contact, inputunit_dict)
+function construct_contact(T, contact::Dict, input_units::NamedTuple)
+    Contact{T}(contact, input_units)
 end
 
-function construct_virtual_volume(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units})
-    construct_virtual_volume(T, pass, inputunit_dict, Val{Symbol(pass["model"])} )
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple)
+    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])} )
 end
-function construct_virtual_volume(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units}, ::Type{Val{:dead}})
-    DeadVolume{T}(pass, inputunit_dict)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}})
+    DeadVolume{T}(pass, input_units)
 end
-function construct_virtual_volume(T, pass::Dict, inputunit_dict::Dict{String, Unitful.Units}, ::Type{Val{:arbitrary}})
-    ArbitraryDriftModificationVolume{T}(pass, inputunit_dict)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}})
+    ArbitraryDriftModificationVolume{T}(pass, input_units)
 end
 
-function construct_objects(T, objects::Vector, semiconductors, contacts, passives, virtual_drift_volumes, inputunit_dict)::Nothing
+function construct_objects(T, objects::Vector, semiconductors, contacts, passives, virtual_drift_volumes, input_units)::Nothing
     for obj in objects
         if obj["type"] == "semiconductor"
-            push!(semiconductors, construct_semiconductor(T, obj, inputunit_dict))
+            push!(semiconductors, construct_semiconductor(T, obj, input_units))
         elseif obj["type"] == "contact"
-            push!(contacts, construct_contact(T, obj, inputunit_dict))
+            push!(contacts, construct_contact(T, obj, input_units))
         elseif obj["type"] == "passive"
-            push!(passives, construct_passive(T, obj, inputunit_dict))
+            push!(passives, construct_passive(T, obj, input_units))
         elseif obj["type"] == "virtual_drift_volume"
-            push!(virtual_drift_volumes, construct_virtual_volume(T, obj, inputunit_dict))
+            push!(virtual_drift_volumes, construct_virtual_volume(T, obj, input_units))
         else
             @warn "please specify the class to be either a \"semiconductor\", a \"contact\", or \"passive\""
         end
@@ -187,12 +190,6 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
-    inputunits = dunits::Dict{String, Unitful.Units} = Dict{String, Unitful.Units}(
-        "length" => u"m", # change this to u"m" ? SI Units
-        "potential" => u"V",
-        "angle" => u"°",
-        "temperature" => u"K"
-    )
     inputunits = construct_units(config_file)
     if haskey(config_file, "medium")
         medium = material_properties[materials[config_file["medium"]]]

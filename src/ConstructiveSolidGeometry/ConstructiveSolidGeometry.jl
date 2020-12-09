@@ -11,6 +11,7 @@ module ConstructiveSolidGeometry
     using RecipesBase
     using Rotations
     using StaticArrays
+    using Unitful
 
     import Base: in, *, +, -, &, size
 
@@ -27,6 +28,7 @@ module ConstructiveSolidGeometry
 
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
 
+    include("Units.jl")
     include("PointsAndVectors.jl")
     include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
@@ -34,6 +36,8 @@ module ConstructiveSolidGeometry
     include("Transformations.jl")
     include("Intervals.jl")
     include("CSG.jl")
+    include("IO.jl")
+    include("Decompose.jl")
     include("plot_recipes.jl")
     include("Meshing.jl")
 
