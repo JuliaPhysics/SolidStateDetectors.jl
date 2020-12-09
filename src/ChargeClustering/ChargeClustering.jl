@@ -30,14 +30,17 @@ function cluster_detector_hits(
                 idxs = vcat(c.boundary_indices, c.core_indices)
                 @assert length(idxs) == c.size
                 c_hits = view(d_hits, idxs)
-                global c_hits = c_hits
                 
                 push!(r_detno, d_detno)
-                push!(r_edep, sum(c_hits.edep))
-                esum = ustrip(r_edep[end])
-                inv_e_sum = inv(esum)
-                weights = Weights(ustrip.(c_hits.edep), esum) .* inv_e_sum
-                push!(r_pos, sum(c_hits.pos .* weights))
+                esum_u = sum(c_hits.edep)
+                push!(r_edep, esum_u)
+                esum = ustrip(esum_u)
+                if esum ≈ 0
+                    push!(r_pos, mean(c_hits.pos))
+                else
+                    weights = ustrip.(c_hits.edep) .* inv(esum)
+                    push!(r_pos, sum(c_hits.pos .* weights))
+                end
             end
         else
             append!(r_detno, d_hits.detno)
