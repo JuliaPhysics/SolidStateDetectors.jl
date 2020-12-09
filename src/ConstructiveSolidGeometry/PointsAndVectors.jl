@@ -63,6 +63,9 @@ function CartesianPoint(pt::CylindricalPoint{T})::CartesianPoint{T} where {T}
     return CartesianPoint{T}(pt.r * cφ, pt.r * sφ, pt.z)
 end
 
+@inline CylindricalPoint(pt::CylindricalPoint) = pt
+@inline CartesianPoint(pt::CartesianPoint) = pt
+
 @inline _in_cyl_r(p::CylindricalPoint, r::Real) = p.r <= r
 @inline _in_cyl_r(p::CylindricalPoint, r::AbstractInterval) = p.r in r
 

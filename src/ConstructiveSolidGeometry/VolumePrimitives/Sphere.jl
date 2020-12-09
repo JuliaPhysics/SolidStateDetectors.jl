@@ -13,13 +13,21 @@ function Sphere(; rMin = 0, rMax = 1)
     Sphere(T, r)
 end
 
-Sphere(rMin, rMax) = Sphere(;rMin, rMax)
+Sphere(rMin, rMax) = Sphere(; rMin = rMin, rMax = rMax)
 function Sphere(r::R) where {R <: Real}
     T = float(R)
     Sphere(T, T(r))
 end
 
 in(p::AbstractCoordinatePoint, s::Sphere{<:Any, <:Any}) = _in_sph_r(p, s.r)
+
+
+# read-in
+function Geometry(::Type{T}, ::Type{Sphere}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+    length_unit = input_units.length
+    r = parse_r_of_primitive(T, dict, length_unit)
+    return Sphere(T, r)
+end
 
 
 # plotting
