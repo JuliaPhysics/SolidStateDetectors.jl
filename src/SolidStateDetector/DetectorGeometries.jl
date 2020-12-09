@@ -41,31 +41,40 @@ end
 
 function yaml2json_convert(filename::String)
     data = YAML.load(open(filename), dicttype = DataStructures.OrderedDict)
-    open(replace(filename, ".yaml" => ".json"),"w") do f
-        JSON.print(f, data, 4)
+    if isempty(data)
+        @warn "The file $(filename) is empty and will not be converted."
+    else
+        open(replace(filename, ".yaml" => ".json"),"w") do f 
+            JSON.print(f, data, 4) 
+        end
     end
 end
 function yaml2json(directory::String)# or filename
     if endswith(directory, ".yaml")
         yaml2json_convert(directory)
     else
-        yamlfiles = filter(x->endswith(x,".yaml"),readdir(directory))
+        yamlfiles = filter(x->endswith(x,".yaml"), joinpath.(directory, readdir(directory)))
         for filename in yamlfiles
             yaml2json_convert(filename)
         end
     end
 end
 
-function json2yaml_convert(filename::String)
+function json2yaml_convert(filename::String)::Nothing
     data = JSON.parsefile(filename, dicttype = DataStructures.OrderedDict)
-    YAML.write_file(replace(filename, ".json" => ".yaml"), data)
+    if isempty(data)
+        @warn "The file $(filename) is empty and will not be converted."
+    else
+        YAML.write_file(replace(filename, ".json" => ".yaml"), data)
+    end
+
 end
 function json2yaml(directory::String)# or filename
     if endswith(directory, ".json")
         json2yaml_convert(directory)
     else
-        yamlfiles = filter(x->endswith(x,".json"),readdir(directory))
-        for filename in yamlfiles
+        jsonfiles = filter(x->endswith(x,".json"), joinpath.(directory, readdir(directory)))
+        for filename in jsonfiles
             json2yaml_convert(filename)
         end
     end

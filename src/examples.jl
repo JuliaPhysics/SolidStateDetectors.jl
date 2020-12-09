@@ -2,10 +2,10 @@
 """
     get_path_to_example_config_files()::String
 
-Returns the path to example config files provided by the package.
+Returns the path to example detector config files provided by the package.
 """
 function get_path_to_example_config_files()::String
-    return joinpath(@__DIR__, "../examples/example_config_files")
+    return joinpath(@__DIR__, "../examples/example_detector_config_files")
 end
 
 const SSD_examples = Dict{Symbol,String}()
