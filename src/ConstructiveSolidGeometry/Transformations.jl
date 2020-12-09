@@ -34,3 +34,10 @@ translate(g::AbstractGeometry{T}, t::CartesianVector{T}) where {T} = (t == Carte
 translate(g::TranslatedGeometry{T}, t::CartesianVector{T}) where {T} = (g.t + t == CartesianVector{T}(0,0,0) ? g.p : TranslatedGeometry(g.p, g.t + t))
 (+)(g::AbstractGeometry{T}, t::CartesianVector{T}) where {T} = translate(g, t)
 get_plot_points(tg::TranslatedGeometry{T}) where {T} = translate!(get_plot_points(tg.p), tg.t)
+
+
+const CSGTransformation = Union{SVector{3}, RotMatrix3, CartesianVector}
+transform(g::AbstractGeometry, s::SVector{3}) =  scale(g, s)
+transform(g::AbstractGeometry, r::RotMatrix3) = rotate(g, r)
+transform(g::AbstractGeometry, t::CartesianVector) = translate(g, t)
+transform(g::AbstractGeometry, t::Vector{CSGTransformation}) = reduce(transform, t, init = g)
