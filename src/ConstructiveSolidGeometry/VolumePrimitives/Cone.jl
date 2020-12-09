@@ -56,7 +56,6 @@ function Tube(rMin::R1, rMax::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     Cone(T, rMin == 0 ? T(rMax) : T(rMin)..T(rMax), nothing, T(height)/2)
 end
 
-
 # for Tubes
 get_r_at_z(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T} = c.r
 
@@ -91,7 +90,6 @@ function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{
     return Cone(T, r, φ, z)
 end
 
-
 # plotting
 get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
@@ -102,6 +100,23 @@ get_φ_limits(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true
 get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
 
 get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
+
+#2π Cones
+function get_decomposed_surfaces(c::Cone{T, <:Any, Nothing, <:Any}) where {T}
+    surfaces = AbstractSurfacePrimitive[]
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    #top and bottom annulus
+    push!(surfaces, Annulus(rbotMin, rbotMax, 0, 2π, zMin), Annulus(rtopMin, rtopMax, 0, 2π, zMax))
+    #outer conemantle
+    push!(surfaces, ConeMantle(rbotMax, rtopMax, 0, 2π, zMin, zMax))
+    #inner conemantle
+    if rbotMin != 0 || rtopMin != 0
+        push!(surfaces, ConeMantle(rbotMin, rtopMin, 0, 2π, zMin, zMax))
+    end
+    surfaces
+end
+
 
 # plotting
 function get_plot_points(c::Cone{T}) where {T <: AbstractFloat}
@@ -129,7 +144,7 @@ function get_plot_points(c::Cone{T}) where {T <: AbstractFloat}
     #side line(s)
     for φ in (φ_is_full_2π ? T(0) : [φMin, φMax])
         if rbotMin != 0 || rtopMin != 0
-        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)]))
+            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)]))
         end
         push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax)]))
     end

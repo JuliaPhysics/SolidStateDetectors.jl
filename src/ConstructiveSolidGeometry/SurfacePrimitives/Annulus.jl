@@ -20,9 +20,9 @@ end
 
 Annulus(rMin, rMax, φMin, φMax, z) = Annulus(;rMin, rMax, φMin, φMax, z)
 
-function Annulus(r::R) where {R <: Real}
-    T = float(R)
-    Annulus(T, T(r), nothing, T(0))
+function Annulus(r::R, z::R) where {R <: Real}
+    T = float(promote_type(typeof.((r, z))...))
+    Annulus(T, T(r), nothing, T(z))
 end
 
 get_r_limits(a::Annulus{T, <:Union{T, AbstractInterval{T}}, <:Any}) where {T} =
@@ -31,7 +31,7 @@ get_r_limits(a::Annulus{T, <:Union{T, AbstractInterval{T}}, <:Any}) where {T} =
 get_φ_limits(a::Annulus{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
 get_φ_limits(a::Annulus{T, <:Any, <:AbstractInterval}) where {T} = (a.φ.left, a.φ.right, false)
 
-get_z_limits(a::Annulus{T}) where {T} = (a.z, a.z)
+get_z_limits(a::Annulus{T}) where {T} = (T(a.z), T(a.z))
 get_θ_limits(a::Annulus{T}) where {T} = nothing
 
 #plotting

@@ -38,7 +38,7 @@ module ConstructiveSolidGeometry
     include("CSG.jl")
     include("IO.jl")
     include("Decompose.jl")
-    include("plot_recipes.jl")
     include("Meshing.jl")
+    include("plot_recipes.jl")
 
 end

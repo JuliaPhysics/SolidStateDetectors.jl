@@ -29,7 +29,7 @@ end
 size(m::Mesh{T}) where {T} = size(m.x)
 
 function get_plot_meshes(v::AbstractVolumePrimitive{T}) where {T <: AbstractFloat}
-  surfaces = decompose_into_surfaces(v)
+  surfaces = get_decomposed_surfaces(v)
   meshes = Mesh{T}[]
   for surf in surfaces
       push!(meshes, mesh(surf))
@@ -41,13 +41,4 @@ function get_plot_meshes(s::AbstractSurfacePrimitive{T}) where {T <: AbstractFlo
   meshes = Mesh{T}[]
   push!(meshes, mesh(s))
   meshes
-end
-
-@recipe function f(m::Mesh{T}) where {T}
-    seriestype := :surface
-    linewidth --> 0.1
-    linecolor --> :white
-    seriescolor --> :blue
-    colorbar := false
-    m.x, m.y, m.z
 end
