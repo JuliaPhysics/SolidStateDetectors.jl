@@ -101,60 +101,42 @@ get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.le
 
 get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
-#2π Cones
-function get_decomposed_surfaces(c::Cone{T, <:Any, Nothing, <:Any}) where {T}
+function _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) where {T}
     surfaces = AbstractSurfacePrimitive[]
-    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
-    zMin::T, zMax::T = get_z_limits(c)
     #top and bottom annulus
-    push!(surfaces, Annulus(rbotMin, rbotMax, 0, 2π, zMin), Annulus(rtopMin, rtopMax, 0, 2π, zMax))
+    push!(surfaces, Annulus(rbotMin, rbotMax, φMin, φMax, zMin), Annulus(rtopMin, rtopMax, φMin, φMax, zMax))
     #outer conemantle
-    push!(surfaces, ConeMantle(rbotMax, rtopMax, 0, 2π, zMin, zMax))
-    #inner conemantle
-    if rbotMin != 0 || rtopMin != 0
-        push!(surfaces, ConeMantle(rbotMin, rtopMin, 0, 2π, zMin, zMax))
-    end
-    surfaces
+    push!(surfaces, ConeMantle(rbotMax, rtopMax, φMin, φMax, zMin, zMax))
 end
 
-
-# plotting
-function get_plot_points(c::Cone{T}) where {T <: AbstractFloat}
-
-    plot_points = Vector{CartesianPoint{T}}[]
-
+#2π Cones
+function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, Nothing, <:Any}) where {T}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
-    φMin::T, φMax::T, φ_is_full_2π::Bool = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+end
 
-    φrange = range(φMin, φMax, length = 36)
+function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    surfaces = _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    push!(surfaces, ConeMantle(rbotMin, rtopMin, φMin, φMax, zMin, zMax))
+end
 
-    #bottom circle(s)
-    for r in [rbotMin, rbotMax]
-        if r == 0 continue end
-        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * cos(φ), r * sin(φ), zMin) for φ in φrange]))
-    end
+#non 2π Cones
+function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, <:AbstractInterval{T}, <:Any}) where {T}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+end
 
-    #top circle(s)
-    for r in [rtopMin, rtopMax]
-        if r == 0 continue end
-        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(r * cos(φ), r * sin(φ), zMax) for φ in φrange]))
-    end
-
-    #side line(s)
-    for φ in (φ_is_full_2π ? T(0) : [φMin, φMax])
-        if rbotMin != 0 || rtopMin != 0
-            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)]))
-        end
-        push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax)]))
-    end
-
-    #for incomplete φ: lines of cross-sections
-    if !φ_is_full_2π
-        for φ in [φMin, φMax]
-            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin)]))
-            push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax)]))
-        end
-    end
-    plot_points
+function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, <:AbstractInterval{T}, <:Any}) where {T, I<:AbstractInterval{T}}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    surfaces = _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    push!(surfaces, ConeMantle(rbotMin, rtopMin, φMin, φMax, zMin, zMax))
 end

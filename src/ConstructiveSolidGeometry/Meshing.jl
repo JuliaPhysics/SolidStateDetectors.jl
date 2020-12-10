@@ -1,5 +1,5 @@
 """
-    struct Mesh{T}
+    struct Mesh{T, N}
 
 * `x`: X-coordinate mesh in meters
 * `y`: Y-coordinate mesh in meters
@@ -8,16 +8,16 @@
 (X[i,j], Y[i,j], Z[i,j]) is a cartesian point
 """
 
-struct Mesh{T}
-    x::Array{T,2}
-    y::Array{T,2}
-    z::Array{T,2}
+struct Mesh{T, N}
+    x::Array{T,N}
+    y::Array{T,N}
+    z::Array{T,N}
     function Mesh(
-        x::Array{T,2},
-        y::Array{T,2},
-        z::Array{T,2}) where {T}
+        x::Array{T,N},
+        y::Array{T,N},
+        z::Array{T,N}) where {T,N}
         @assert size(x) == size(y) && size(x) == size(z)
-        new{T}(x, y, z)
+        new{T,N}(x, y, z)
     end
 end
 

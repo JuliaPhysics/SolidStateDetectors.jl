@@ -1,5 +1,5 @@
 include("Annulus.jl")
 include("ConeMantle.jl")
-#include("Plane.jl")
+include("Plane.jl")
 #include("Sphere.jl")
 #include("Torus.jl")

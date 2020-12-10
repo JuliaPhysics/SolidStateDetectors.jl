@@ -34,7 +34,7 @@ get_φ_limits(c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c
 get_z_limits(c::ConeMantle{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
 # plotting
-function get_plot_points(c::ConeMantle{T}) where {T <: AbstractFloat}
+function get_plot_points(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
 
     plot_points = Vector{CartesianPoint{T}}[]
 
@@ -42,7 +42,7 @@ function get_plot_points(c::ConeMantle{T}) where {T <: AbstractFloat}
     φMin::T, φMax::T, φ_is_full_2π::Bool = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
 
-    φrange = range(φMin, φMax, length = 36)
+    φrange = range(φMin, φMax, length = n)
 
     #top and bottom circles
     rbot != 0 ? push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbot * cos(φ), rbot * sin(φ), zMin) for φ in φrange])) : nothing
@@ -67,9 +67,9 @@ function mesh(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
     φ = range(φMin, φMax, length = n+1)
     z = range(zMin, zMax, length = 2)
 
-    X = [(m*(z[j]-zMin)+rbot)*cos(φ_i) for φ_i in φ, j in 1:length(z)]
-    Y = [(m*(z[j]-zMin)+rbot)*sin(φ_i) for φ_i in φ, j in 1:length(z)]
-    Z = [j for i in 1:length(φ), j in z]
+    X::Array{T,2} = [(m*(z[j]-zMin)+rbot)*cos(φ_i) for φ_i in φ, j in 1:length(z)]
+    Y::Array{T,2} = [(m*(z[j]-zMin)+rbot)*sin(φ_i) for φ_i in φ, j in 1:length(z)]
+    Z::Array{T,2} = [j for i in 1:length(φ), j in z]
 
     Mesh(X, Y, Z)
 end
