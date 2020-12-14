@@ -101,7 +101,7 @@ get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.le
 
 get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
-function _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) where {T}
+function _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) where {T}
     surfaces = AbstractSurfacePrimitive[]
     #top and bottom annulus
     push!(surfaces, Annulus(rbotMin, rbotMax, φMin, φMax, zMin), Annulus(rtopMin, rtopMax, φMin, φMax, zMax))
@@ -114,14 +114,14 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, Nothing, <:A
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
     push!(surfaces, ConeMantle(rbotMin, rtopMin, φMin, φMax, zMin, zMax))
 end
 
@@ -130,13 +130,20 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, <:AbstractIn
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    for φ in [φMin, φMax]
+        push!(surfaces, Plane(unique([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)])...))
+    end
+    surfaces
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, <:AbstractInterval{T}, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    for φ in [φMin, φMax]
+        push!(surfaces, Plane(unique([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)])...))
+    end
     push!(surfaces, ConeMantle(rbotMin, rtopMin, φMin, φMax, zMin, zMax))
 end

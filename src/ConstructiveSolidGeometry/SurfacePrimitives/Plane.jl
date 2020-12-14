@@ -118,25 +118,30 @@ function Quadrilateral(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint
     T = float(promote_type(eltype.((p1, p2, p3))...))
     tri = Triangle(p1, p2, p3)
     #will return triangle if conditions are not met
-    if on_infinite_plane(p4, tri)
-        if !projection_in_triangle(p4, tri)
-            v = CartesianVector{T}(p4 - p1)
-            v2 = CartesianVector{T}(p3 - p1)
-            n = get_surface_vector_nonunitary(tri)
-            if geom_round(dot(n,cross(v2,v))) ≥ 0
-                return Plane(T, p1, p2, p3, p4)
+    if geom_round(p4) in [geom_round(p1), geom_round(p2), geom_round(p3)]
+        return tri
+    else
+        if on_infinite_plane(p4, tri)
+            if !projection_in_triangle(p4, tri)
+                v = CartesianVector{T}(p4 - p1)
+                v2 = CartesianVector{T}(p3 - p1)
+                n = get_surface_vector_nonunitary(tri)
+                if geom_round(dot(n,cross(v2,v))) ≥ 0
+                    return Plane(T, p1, p2, p3, p4)
+                else
+                    return tri
+                end
             else
-                return tri
+                return Plane(T, p1, p2, p3, p4)
             end
         else
-            return Plane(T, p1, p2, p3, p4)
+            return tri
         end
-    else
-        return tri
     end
 end
 
 Quadrilateral(p1, p2, p3, p4) = Quadrilateral(;p1, p2, p3, p4)
+Plane(p1, p2, p3, p4) = Quadrilateral(;p1, p2, p3, p4)
 Plane(p1, p2, p3) = Triangle(;p1, p2, p3)
 
 get_vertices(quad::Plane{T, CartesianPoint{T}, CartesianPoint{T}}) where {T} = [quad.p1, quad.p2, quad.p3, quad.p4]
