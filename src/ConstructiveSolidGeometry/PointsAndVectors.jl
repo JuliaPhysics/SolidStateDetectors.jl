@@ -26,7 +26,7 @@ end
 @inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
 @inline _in_cyl_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
 
-@inline _in_φ(p::CartesianPoint{T}, φ::AbstractInterval) where {T} = mod(atan(p.y, p.x), T(2π)) in φ    
+@inline _in_φ(p::CartesianPoint{T}, φ::AbstractInterval) where {T} = mod(atan(p.y, p.x), T(2π)) in φ
 
 @inline _in_x(p::CartesianPoint, x::Real) = abs(p.x) <= x
 @inline _in_x(p::CartesianPoint, x::AbstractInterval) = p.x in x
