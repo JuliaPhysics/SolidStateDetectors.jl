@@ -35,6 +35,11 @@ end
     map(p -> p.x, points), map(p -> p.y, points), map(p -> p.z, points)
 end
 
+@recipe function f(points::Vector{CylindricalPoint{T}}) where {T}
+    points = CartesianPoint.(points)
+    map(p -> p.x, points), map(p -> p.y, points), map(p -> p.z, points)
+end
+
 @recipe function f(m::Mesh{T}) where {T}
     seriestype := :surface
     linewidth --> 0.1

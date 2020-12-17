@@ -18,7 +18,7 @@ function ConeMantle(;rbot = 1, rtop = 0, φMin = 0, φMax = 2π, zMin = -1/2, zM
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     ConeMantle( T, r, φ, z)
 end
-ConeMantle(rbot, rtop, φMin, φMax, zMin, zMax) = ConeMantle(;rbot, rtop, φMin, φMax, zMin, zMax)
+ConeMantle(rbot, rtop, φMin, φMax, zMin, zMax) = ConeMantle(;rbot = rbot, rtop = rtop, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
 
 function ConeMantle(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     T = float(promote_type(R1, R2, H))

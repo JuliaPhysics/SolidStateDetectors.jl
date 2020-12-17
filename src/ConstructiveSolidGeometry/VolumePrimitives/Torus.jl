@@ -8,18 +8,17 @@ struct Torus{T,TR,TB,TP,TT} <: AbstractVolumePrimitive{T}
                    r_tube::Union{T, <:AbstractInterval{T}},
                    φ::Union{Nothing, <:AbstractInterval{T}},
                    θ::Union{Nothing, <:AbstractInterval{T}}) where {T}
-        new{T,typeof(r_torus),typeof(r_tube),typeof(φ),typeof(θ)}(r_torus, r_tube, φ, θ)
+        new{T,T,typeof(r_tube),typeof(φ),typeof(θ)}(r_torus, r_tube, φ, θ)
     end
 end
 
 #Constructors
 function Torus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π)
     T = float(promote_type(typeof.((r_torus, r_tubeMin, r_tubeMax, φMin, φMax, θMin, θMax))...))
-    r_torus = T(r_torus)
     r_tube = r_tubeMin == 0 ? T(r_tubeMax) : T(r_tubeMin)..T(r_tubeMax)
     φ = mod(T(φMax) - T(φMin), T(2π)) == 0 ? nothing : T(φMin)..T(φMax)
     θ = mod(T(θMax) - T(θMin), T(2π)) == 0 ? nothing : T(θMin)..T(θMax)
-    Torus( T, r_torus, r_tube, φ, θ)
+    Torus( T, T(r_torus), r_tube, φ, θ)
 end
 Torus(r_torus, r_tubeMin, r_tubeMax, φMin, φMax, θMin, θMax) = Torus(;r_torus, r_tubeMin, r_tubeMax, φMin, φMax, θMin, θMax)
 

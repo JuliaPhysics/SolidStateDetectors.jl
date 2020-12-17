@@ -104,7 +104,7 @@ get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_
 function _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) where {T}
     surfaces = AbstractSurfacePrimitive[]
     #top and bottom annulus
-    push!(surfaces, Annulus(rbotMin, rbotMax, φMin, φMax, zMin), Annulus(rtopMin, rtopMax, φMin, φMax, zMax))
+    push!(surfaces, CylindricalAnnulus(rbotMin, rbotMax, φMin, φMax, zMin), CylindricalAnnulus(rtopMin, rtopMax, φMin, φMax, zMax))
     #outer conemantle
     push!(surfaces, ConeMantle(rbotMax, rtopMax, φMin, φMax, zMin, zMax))
 end

@@ -18,7 +18,7 @@ function Triangle(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint{Floa
     Plane(T, p1, p2, p3, nothing)
 end
 
-Triangle(p1, p2, p3) = Triangle(;p1, p2, p3)
+Triangle(p1, p2, p3) = Triangle(;p1 = p1, p2 = p2, p3 = p3)
 
 get_vertices(tri::Plane{T, CartesianPoint{T}, Nothing}) where {T} = [tri.p1, tri.p2, tri.p3]
 
@@ -64,13 +64,13 @@ function _distance_to_line_segment(point::CartesianPoint{T}, seg::Tuple{Cartesia
     v12 = normalize(CartesianVector{T}(seg[2] - seg[1]))
     v_point_1 = CartesianVector{T}(point - seg[1])
     proj_on_v12 = dot(v12,v_point_1)
-    if geom_round(proj_on_v12) ≤ T(0) #projection of point not on side 2->3
+    if geom_round(proj_on_v12) ≤ T(0)
         return norm(seg[1] - point)
     else
         v_point_2 = CartesianVector{T}(point - seg[2])
-        if geom_round(dot(v12,v_point_2)) ≥ T(0) #projection of point not on side 2->3
+        if geom_round(dot(v12,v_point_2)) ≥ T(0)
             return norm(seg[2] - point)
-        else #projection of point on side 2->3
+        else
             return sqrt(dot(v_point_1,v_point_1) - proj_on_v12^2)
         end
     end
@@ -140,9 +140,9 @@ function Quadrilateral(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint
     end
 end
 
-Quadrilateral(p1, p2, p3, p4) = Quadrilateral(;p1, p2, p3, p4)
-Plane(p1, p2, p3, p4) = Quadrilateral(;p1, p2, p3, p4)
-Plane(p1, p2, p3) = Triangle(;p1, p2, p3)
+Quadrilateral(p1, p2, p3, p4) = Quadrilateral(;p1 = p1, p2 = p2, p3 = p3, p4 = p4)
+Plane(p1, p2, p3, p4) = Quadrilateral(;p1 = p1, p2 = p2, p3 = p3, p4 = p4)
+Plane(p1, p2, p3) = Triangle(;p1 = p1, p2 = p2, p3 = p3)
 
 get_vertices(quad::Plane{T, CartesianPoint{T}, CartesianPoint{T}}) where {T} = [quad.p1, quad.p2, quad.p3, quad.p4]
 

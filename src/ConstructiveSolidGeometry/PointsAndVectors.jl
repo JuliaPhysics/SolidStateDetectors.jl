@@ -23,10 +23,12 @@ end
 @inline scale!(vp::Vector{CartesianPoint{T}}, v::SVector{3,T}) where {T} = begin for i in eachindex(vp) vp[i] = scale(vp[i], v) end; vp end
 @inline scale!(vvp::Vector{Vector{CartesianPoint{T}}}, v::SVector{3,T}) where {T} = begin for i in eachindex(vvp) scale!(vvp[i], v) end; vvp end
 
-@inline _eq_cyl_r(p::CartesianPoint, r::Real) = geom_round(hypot(p.x, p.y)) == r
+@inline _eq_cyl_r(p::CartesianPoint{T}, r::Real) where {T} = hypot(p.x, p.y) == T(r)
 
 @inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
 @inline _in_cyl_r(p::CartesianPoint, r::AbstractInterval) = hypot(p.x, p.y) in r
+
+@inline _eq_φ(p::CartesianPoint{T}, φ::Real) where {T} = mod(atan(p.y, p.x), T(2π)) == T(φ)
 
 @inline _in_φ(p::CartesianPoint{T}, φ::AbstractInterval) where {T} = mod(atan(p.y, p.x), T(2π)) in φ
 
@@ -36,7 +38,7 @@ end
 @inline _in_y(p::CartesianPoint, y::Real) = abs(p.y) <= y
 @inline _in_y(p::CartesianPoint, y::AbstractInterval) = p.y in y
 
-@inline _eq_z(p::CartesianPoint, z::Real) = geom_round(p.z) == z
+@inline _eq_z(p::CartesianPoint{T}, z::Real) where {T} = p.z == T(z)
 
 @inline _in_z(p::CartesianPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CartesianPoint, z::AbstractInterval) = p.z in z
@@ -56,6 +58,7 @@ struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
     φ::T
     z::T
     CylindricalPoint{T}(r::T, φ::T, z::T) where {T} = new(r, mod(φ,T(2π)), z)
+    CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
 end
 
 function CylindricalPoint(pt::CartesianPoint{T})::CylindricalPoint{T} where {T}
@@ -70,10 +73,12 @@ end
 @inline CylindricalPoint(pt::CylindricalPoint) = pt
 @inline CartesianPoint(pt::CartesianPoint) = pt
 
-@inline _eq_cyl_r(p::CylindricalPoint, r::Real) = geom_round(p.r) == r
+@inline _eq_cyl_r(p::CylindricalPoint{T}, r::Real) where {T} = p.r == T(r)
 
 @inline _in_cyl_r(p::CylindricalPoint, r::Real) = p.r <= r
 @inline _in_cyl_r(p::CylindricalPoint, r::AbstractInterval) = p.r in r
+
+@inline _eq_φ(p::CylindricalPoint{T}, φ::Real) where {T} = p.φ == mod(T(φ), T(2π))
 
 @inline _in_φ(p::CylindricalPoint, φ::AbstractInterval) = p.φ in φ
 
@@ -83,7 +88,7 @@ end
 @inline _in_y(p::CylindricalPoint, y::Real) = abs(p.r * sin(p.φ)) <= y
 @inline _in_y(p::CylindricalPoint, y::AbstractInterval) = p.r * sin(p.φ) in y
 
-@inline _eq_z(p::CylindricalPoint, z::Real) = geom_round(p.z) == z
+@inline _eq_z(p::CylindricalPoint{T}, z::Real) where {T} = p.z == T(z)
 
 @inline _in_z(p::CylindricalPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CylindricalPoint, z::AbstractInterval) = p.z in z
