@@ -11,6 +11,11 @@ struct ConeMantle{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
     end
 end
 
+function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
+    r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
+    ConeMantle( T, r, c.φ, c.z)
+end
+
 function ConeMantle(;rbot = 1, rtop = 0, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2)
     T = float(promote_type(typeof.((rbot, rtop, φMin, φMax, zMin, zMax))...))
     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
@@ -25,6 +30,8 @@ function ConeMantle(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<
     ConeMantle( T, (T(rbot), T(rtop)), nothing, T(height)/2)
 end
 
+get_r_at_z(c::ConeMantle{T}, z::Real) where {T} = _get_r_at_z(get_r_limits(c)..., c.z, z)
+
 get_r_limits(c::ConeMantle{T, T, <:Any, <:Any}) where {T} = (T(c.r), T(c.r))
 get_r_limits(c::ConeMantle{T, <:Tuple, <:Any, <:Any}) where {T} = c.r
 
@@ -32,6 +39,31 @@ get_φ_limits(c::ConeMantle{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π)
 get_φ_limits(c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
 
 get_z_limits(c::ConeMantle{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
+
+in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, Nothing, <:Any}) =
+    _in_z(p, c.z) && _eq_cyl_r(p, get_r_at_z(c, p.z))
+
+in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, <:AbstractInterval, <:Any}) =
+    _in_z(p, c.z) && _in_φ(p, c.φ) && _eq_cyl_r(p, get_r_at_z(c, p.z))
+
+function sample(c::ConeMantle{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
+    samples = CylindricalPoint{T}[]
+    rbot::T, rtop::T = get_r_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    step = T(ustrip(uconvert(u"m", step)))
+    for z in zMin:step:zMax
+        r_at_z = get_r_at_z(c, z)
+        if r_at_z == 0
+            push!(samples, CylindricalPoint{T}(0,0,z))
+        else
+            for φ in φMin:step/r_at_z:φMax
+                push!(samples, CylindricalPoint{T}(r_at_z,φ,z))
+            end
+        end
+    end
+    samples
+end
 
 # plotting
 function get_plot_points(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}

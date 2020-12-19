@@ -13,6 +13,8 @@ struct ToroidalAnnulus{T,TR,TB,TP,TT} <: AbstractSurfacePrimitive{T}
 end
 
 #Constructors
+ToroidalAnnulus(t::Torus{T}; φ = 0) where {T} = ToroidalAnnulus( T, t.r_torus, t.r_tube, T(φ), t.θ)
+
 function ToroidalAnnulus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φ = 0, θMin = 0, θMax = 2π)
     T = float(promote_type(typeof.((r_torus, r_tubeMin, r_tubeMax, φ, θMin, θMax))...))
     r_tube = r_tubeMin == 0 ? T(r_tubeMax) : T(r_tubeMin)..T(r_tubeMax)

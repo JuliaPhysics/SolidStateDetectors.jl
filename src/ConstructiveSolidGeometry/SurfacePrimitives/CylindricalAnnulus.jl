@@ -11,6 +11,8 @@ struct CylindricalAnnulus{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
 end
 
 #Constructors
+CylindricalAnnulus(c::Cone{T}; z = 0) where {T} = CylindricalAnnulus(T, get_r_at_z(c,z), c.φ, T(z))
+
 function CylindricalAnnulus(; rMin = 0, rMax = 1, φMin = 0, φMax = 2π, z = 0)
     T = float(promote_type(typeof.((rMin, rMax, φMin, φMax, z))...))
     r = rMin == 0 ? T(rMax) : T(rMin)..T(rMax)
@@ -70,8 +72,12 @@ function sample(a::CylindricalAnnulus{T}, step::Quantity{<:Real, Unitful.𝐋}) 
     φMin::T, φMax::T, _ = get_φ_limits(a)
     step = T(ustrip(uconvert(u"m", step)))
     for r in rMin:step:rMax
-        for φ in φMin:step/r:φMax
-            push!(samples, CylindricalPoint{T}(r,φ,a.z))
+        if r == 0
+            push!(samples, CylindricalPoint{T}(0,0,a.z))
+        else
+            for φ in φMin:step/r:φMax
+                push!(samples, CylindricalPoint{T}(r,φ,a.z))
+            end
         end
     end
     samples

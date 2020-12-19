@@ -79,6 +79,13 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, Nothing, <:Any}) =
 in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
+function sample_surface(c::Cone{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
+    samples = CylindricalPoint{T}[]
+    for surf in get_decomposed_surfaces(c)
+        append!(samples, sample(surf, step))
+    end
+    samples
+end
 
 # read-in
 function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
@@ -101,28 +108,29 @@ get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.le
 
 get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
-function _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) where {T}
+function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMax, rtopMax, zMin, zMax) where {T}
     surfaces = AbstractSurfacePrimitive[]
     #top and bottom annulus
-    push!(surfaces, CylindricalAnnulus(rbotMin, rbotMax, φMin, φMax, zMin), CylindricalAnnulus(rtopMin, rtopMax, φMin, φMax, zMax))
+    push!(surfaces, CylindricalAnnulus(c, z = zMin), CylindricalAnnulus(c, z = zMax))
     #outer conemantle
-    push!(surfaces, ConeMantle(rbotMax, rtopMax, φMin, φMax, zMin, zMax))
+    push!(surfaces, ConeMantle(c, rbot = rbotMax, rtop = rtopMax))
+    unique(surfaces)
 end
 
 #2π Cones
 function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, Nothing, <:Any}) where {T}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    φMin::T, φMax::T, _ = get_φ_limits(c)
-    _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    unique(surfaces)
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
-    push!(surfaces, ConeMantle(rbotMin, rtopMin, φMin, φMax, zMin, zMax))
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
+    unique(surfaces)
 end
 
 #non 2π Cones
@@ -130,20 +138,21 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, <:AbstractIn
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
     for φ in [φMin, φMax]
-        push!(surfaces, Plane(unique([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)])...))
+        push!(surfaces, ConalPlane(c, φ = φ))
     end
-    surfaces
+    unique(surfaces)
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, <:AbstractInterval{T}, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
     for φ in [φMin, φMax]
-        push!(surfaces, Plane(unique([CartesianPoint{T}(rbotMin * cos(φ), rbotMin * sin(φ), zMin), CartesianPoint{T}(rbotMax * cos(φ), rbotMax * sin(φ), zMin), CartesianPoint{T}(rtopMax * cos(φ), rtopMax * sin(φ), zMax), CartesianPoint{T}(rtopMin * cos(φ), rtopMin * sin(φ), zMax)])...))
+        push!(surfaces, ConalPlane(c, φ = φ))
     end
-    push!(surfaces, ConeMantle(rbotMin, rtopMin, φMin, φMax, zMin, zMax))
+    push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
+    unique(surfaces)
 end
