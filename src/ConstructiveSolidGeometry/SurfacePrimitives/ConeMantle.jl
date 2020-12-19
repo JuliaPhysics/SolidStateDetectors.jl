@@ -52,13 +52,15 @@ function sample(c::ConeMantle{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T
     φMin::T, φMax::T, _ = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     step = T(ustrip(uconvert(u"m", step)))
-    for z in zMin:step:zMax
-        r_at_z = get_r_at_z(c, z)
-        if r_at_z == 0
-            push!(samples, CylindricalPoint{T}(0,0,z))
-        else
-            for φ in φMin:step/r_at_z:φMax
-                push!(samples, CylindricalPoint{T}(r_at_z,φ,z))
+    if zMin ≠ zMax
+        for z in zMin:step:zMax
+            r_at_z = get_r_at_z(c, z)
+            if r_at_z == 0
+                push!(samples, CylindricalPoint{T}(0,0,z))
+            else
+                for φ in φMin:step/r_at_z:φMax
+                    push!(samples, CylindricalPoint{T}(r_at_z,φ,z))
+                end
             end
         end
     end
