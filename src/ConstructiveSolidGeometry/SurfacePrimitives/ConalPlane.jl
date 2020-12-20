@@ -11,7 +11,7 @@ struct ConalPlane{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
     end
 end
 
-ConalPlane(c::Cone{T}; φ = 0) where {T} = ConalPlane( T, c.r, T(φ), c.z)
+ConalPlane(c::Cone{T}; φ = 0) where {T} = ConalPlane( T, c.r, T(mod(φ,2π)), c.z)
 
 function ConalPlane(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φ = 0, zMin = -1/2, zMax = 1/2)
     T = float(promote_type(typeof.((rtopMin, rtopMax, rbotMin, rbotMax, φ, zMin, zMax))...))
@@ -50,7 +50,7 @@ function get_vertices(c::ConalPlane{T}) where {T}
     CartesianPoint{T}(rtopMin * cos(c.φ), rtopMin * sin(c.φ), zMax)]
 end
 
-function get_plot_points(c::ConalPlane{T}) where {T <: AbstractFloat}
+function get_plot_points(c::ConalPlane{T}; n = 30) where {T <: AbstractFloat}
     plot_points = Vector{CartesianPoint{T}}[]
     v = get_vertices(c)
     push!(plot_points, Vector{CartesianPoint{T}}([v[1], v[2]]))
@@ -59,7 +59,7 @@ function get_plot_points(c::ConalPlane{T}) where {T <: AbstractFloat}
     push!(plot_points, Vector{CartesianPoint{T}}([v[4], v[1]]))
 end
 
-function mesh(c::ConalPlane{T}) where {T <: AbstractFloat}
+function mesh(c::ConalPlane{T}; n = 30) where {T <: AbstractFloat}
     v = unique(get_vertices(c))
     while length(v) < 3
         push!(v,v[1])

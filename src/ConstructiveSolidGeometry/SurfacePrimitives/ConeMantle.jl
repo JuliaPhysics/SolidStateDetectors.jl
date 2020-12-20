@@ -16,6 +16,28 @@ function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
     ConeMantle( T, r, c.φ, c.z)
 end
 
+function ConeMantle(t::Torus{T}; θ = π/2) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    θ = T(mod(θ,2π))
+    sθ, cθ = sincos(θ)
+    if θ > T(0) && θ < T(π)
+        rbot = t.r_torus + r_tubeMin*cθ
+        rtop = t.r_torus + r_tubeMax*cθ
+        zMin = r_tubeMin*sθ
+        zMax = r_tubeMax*sθ
+    elseif θ > T(π) && θ < T(2π)
+        rtop = t.r_torus + r_tubeMin*cθ
+        rbot = t.r_torus + r_tubeMax*cθ
+        zMax = r_tubeMin*sθ
+        zMin = r_tubeMax*sθ
+    else
+        @error "Cone Mantle not defined for torroidal cordinate θ = 0 or θ = π. Use Annulus"
+    end
+    r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
+    z = T(zMin)..T(zMax)
+    ConeMantle( T, r, t.φ, z)
+end
+
 function ConeMantle(;rbot = 1, rtop = 0, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2)
     T = float(promote_type(typeof.((rbot, rtop, φMin, φMax, zMin, zMax))...))
     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
@@ -76,7 +98,7 @@ function get_plot_points(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
     φMin::T, φMax::T, φ_is_full_2π::Bool = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
 
-    φrange = range(φMin, φMax, length = n)
+    φrange = range(φMin, φMax, length = n + 1)
 
     #top and bottom circles
     rbot != 0 ? push!(plot_points, Vector{CartesianPoint{T}}([CartesianPoint{T}(rbot * cos(φ), rbot * sin(φ), zMin) for φ in φrange])) : nothing

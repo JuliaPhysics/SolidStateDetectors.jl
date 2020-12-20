@@ -46,6 +46,13 @@ end
 @inline _in_sph_r(p::CartesianPoint, radius::Real) = hypot(p.x, p.y, p.z) <= radius
 @inline _in_sph_r(p::CartesianPoint, radius::AbstractInterval) = hypot(p.x, p.y, p.z) in radius
 
+@inline _eq_torr_r_tube(p::CartesianPoint{T}, r_torus::Real, r_tube::Real) where {T} = T(hypot(hypot(p.x, p.y) - r_torus, p.z)) == T(r_tube)
+
+@inline _in_torr_r_tube(p::CartesianPoint, r_torus::Real, r_tube::Real) = hypot(hypot(p.x, p.y) - r_torus, p.z) <= r_tube
+@inline _in_torr_r_tube(p::CartesianPoint, r_torus::Real, r_tube::AbstractInterval) = hypot(hypot(p.x, p.y) - r_torus, p.z) in r_tube
+
+@inline _in_torr_θ(p::CartesianPoint{T}, r_torus::Real, θ::AbstractInterval) where {T} = mod(atan(p.z, hypot(p.x, p.y) - r_torus), T(2π)) in θ
+
 """
     struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
 
@@ -96,6 +103,11 @@ end
 @inline _in_sph_r(p::CylindricalPoint, radius::Real) = hypot(p.r, p.z) <= radius
 @inline _in_sph_r(p::CylindricalPoint, radius::AbstractInterval) = hypot(p.r, p.z) in radius
 
+@inline _eq_torr_r_tube(p::CylindricalPoint{T}, r_torus::Real, r_tube::Real) where {T} = T(hypot(p.r - r_torus, p.z)) == T(r_tube)
+@inline _in_torr_r_tube(p::CylindricalPoint, r_torus::Real, r_tube::Real) = hypot(p.r - r_torus, p.z) <= r_tube
+@inline _in_torr_r_tube(p::CylindricalPoint, r_torus::Real, r_tube::AbstractInterval) = hypot(p.r - r_torus, p.z) in r_tube
+
+@inline _in_torr_θ(p::CylindricalPoint{T}, r_torus::Real, θ::AbstractInterval) where {T} = mod(atan(p.z, p.r - r_torus), T(2π)) in θ
 
 """
     struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}

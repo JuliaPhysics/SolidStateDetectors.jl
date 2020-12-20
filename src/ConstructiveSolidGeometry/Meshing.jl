@@ -28,17 +28,17 @@ end
 
 size(m::Mesh{T}) where {T} = size(m.x)
 
-function get_plot_meshes(v::AbstractVolumePrimitive{T}) where {T <: AbstractFloat}
+function get_plot_meshes(v::AbstractVolumePrimitive{T}; n = 30) where {T <: AbstractFloat}
   surfaces = get_decomposed_surfaces(v)
   meshes = Mesh{T}[]
   for surf in surfaces
-      push!(meshes, mesh(surf))
+      push!(meshes, mesh(surf; n = n))
   end
   meshes
 end
 
-function get_plot_meshes(s::AbstractSurfacePrimitive{T}) where {T <: AbstractFloat}
+function get_plot_meshes(s::AbstractSurfacePrimitive{T}; n = 30) where {T <: AbstractFloat}
   meshes = Mesh{T}[]
-  push!(meshes, mesh(s))
+  push!(meshes, mesh(s; n = n))
   meshes
 end

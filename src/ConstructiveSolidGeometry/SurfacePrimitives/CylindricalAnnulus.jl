@@ -13,6 +13,22 @@ end
 #Constructors
 CylindricalAnnulus(c::Cone{T}; z = 0) where {T} = CylindricalAnnulus(T, get_r_at_z(c,z), c.φ, T(z))
 
+function CylindricalAnnulus(t::Torus{T}; θ = 0) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    if θ == T(0)
+        rMin = t.r_torus + r_tubeMin
+        rMax = t.r_torus + r_tubeMax
+    elseif θ == T(π)
+        rMin = t.r_torus - r_tubeMax
+        rMax = t.r_torus - r_tubeMin
+    else
+        @error "CylindricalAnnulus not defined for torroidal cordinate θ ≠ 0 and θ ≠ π. Use ConeMantle"
+    end
+    r = rMin == 0 ? T(rMax) : T(rMin)..T(rMax)
+    CylindricalAnnulus( T, r, t.φ, T(0))
+end
+
+
 function CylindricalAnnulus(; rMin = 0, rMax = 1, φMin = 0, φMax = 2π, z = 0)
     T = float(promote_type(typeof.((rMin, rMax, φMin, φMax, z))...))
     r = rMin == 0 ? T(rMax) : T(rMin)..T(rMax)
@@ -90,7 +106,7 @@ function get_plot_points(a::CylindricalAnnulus{T}; n = 30) where {T <: AbstractF
 
     rMin::T, rMax::T = get_r_limits(a)
     φMin::T, φMax::T, φ_is_full_2π::Bool = get_φ_limits(a)
-    φrange = range(φMin, φMax, length = n)
+    φrange = range(φMin, φMax, length = n + 1)
 
     #circle(s)
     for r in [rMin, rMax]
@@ -110,15 +126,17 @@ end
 function mesh(a::CylindricalAnnulus{T}; n = 30) where {T <: AbstractFloat}
 
     rMin::T, rMax::T = get_r_limits(a)
-    φMin::T, φMax::T, φ_is_full_2π::Bool = get_φ_limits(a)
+    φMin::T, φMax::T, _ = get_φ_limits(a)
 
-    φ = range(φMin, φMax, length = n+1)
+    φrange = range(φMin, φMax, length = n+1)
+    sφrange = sin.(φrange)
+    cφrange = cos.(φrange)
     r = range(rMin, rMax, length = 2)
     z = fill(a.z, length(r))
 
-    X::Array{T,2} = [r[j]*cos(φ_i) for φ_i in φ, j in 1:length(r)]
-    Y::Array{T,2} = [r[j]*sin(φ_i) for φ_i in φ, j in 1:length(r)]
-    Z::Array{T,2} = [z_j for i in 1:length(φ), z_j in z]
+    X::Array{T,2} = [r_j*cφ for cφ in cφrange, r_j in r]
+    Y::Array{T,2} = [r_j*sφ for sφ in sφrange, r_j in r]
+    Z::Array{T,2} = [z_j for i in 1:n+1, z_j in z]
 
     Mesh(X, Y, Z)
 end

@@ -114,7 +114,7 @@ function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMax, rtopMax, zMin, zMax)
     push!(surfaces, CylindricalAnnulus(c, z = zMin), CylindricalAnnulus(c, z = zMax))
     #outer conemantle
     push!(surfaces, ConeMantle(c, rbot = rbotMax, rtop = rtopMax))
-    #need write a dedicated unique for surfaces which calls geom round 
+    #need write a dedicated unique for surfaces which calls geom round
     unique(surfaces)
 end
 

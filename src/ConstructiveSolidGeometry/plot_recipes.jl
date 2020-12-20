@@ -1,4 +1,4 @@
-@recipe function f(g::AbstractGeometry{T}; SSD_style = :wireframe) where {T}
+@recipe function f(g::AbstractGeometry{T}; SSD_style = :wireframe, n = 30) where {T}
 
     seriescolor --> :orange
 
@@ -12,7 +12,7 @@
     for p in pos
         if SSD_style == :wireframe
             linewidth --> 2
-            for points in get_plot_points(p)
+            for points in get_plot_points(p, n = n)
                 @series begin
                     label := ""
                     points
@@ -20,7 +20,7 @@
             end
         elseif SSD_style == :surface
             linewidth --> 0.1
-            for mesh in get_plot_meshes(p)
+            for mesh in get_plot_meshes(p, n = n)
                 @series begin
                     label := ""
                     mesh
