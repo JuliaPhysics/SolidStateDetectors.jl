@@ -50,7 +50,7 @@ function _get_decomposed_surfaces(t::Torus{T}) where {T}
         if r_tube == 0 continue end
         push!(surfaces, TorusMantle(t, r_tube = r_tube))
     end
-    surfaces
+    unique(surfaces)
 end
 
 get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, Nothing}) where {T} = _get_decomposed_surfaces(t)
@@ -61,7 +61,7 @@ function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, Nothi
     for φ in [φMin, φMax]
         push!(surfaces, ToroidalAnnulus(t, φ = φ))
     end
-    surfaces
+    unique(surfaces)
 end
 
 function get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, <:AbstractInterval}) where {T}
@@ -70,7 +70,7 @@ function get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, <:AbstractInterv
     for θ in [θMin, θMax]
         θ in [T(0),T(π)] ? push!(surfaces, CylindricalAnnulus(t, θ = θ)) : push!(surfaces, ConeMantle(t, θ = θ))
     end
-    surfaces
+    unique(surfaces)
 end
 
 function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, <:AbstractInterval}) where {T}
@@ -83,5 +83,5 @@ function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, <:Abs
     for φ in [φMin, φMax]
         push!(surfaces, ToroidalAnnulus(t, φ = φ))
     end
-    surfaces
+    unique(surfaces)
 end
