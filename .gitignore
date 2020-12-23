@@ -5,3 +5,4 @@
 Manifest.toml
 .ipynb_checkpoints
 *.ipynb
+.vscode*
