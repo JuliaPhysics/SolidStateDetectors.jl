@@ -70,5 +70,3 @@ include("BoundaryConditions/BoundaryConditions.jl")
 
 include("PotentialSimulationSetupRBCylindrical.jl")
 include("PotentialSimulationSetupRBCartesian3D.jl")
-
-include("plot_recipes.jl")

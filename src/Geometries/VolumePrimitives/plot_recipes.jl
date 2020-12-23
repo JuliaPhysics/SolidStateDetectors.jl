@@ -26,18 +26,6 @@ function LineSegments(t::Tube{T})::Vector{AbstractLine{T,3,:cartesian}} where {T
     return ls
 end
 
-@recipe function f(t::Tube{T}; n = 30, seriescolor = :green) where {T}
-    linewidth --> 2
-    n --> n
-    @series begin
-        seriescolor --> seriescolor
-        label --> "Tube"
-        []
-    end
-    label := ""
-    seriescolor := seriescolor
-    LineSegments(t)
-end
 
 
 function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where {T <: SSDFloat}
@@ -69,18 +57,7 @@ function LineSegments(c::Cone{T})::Vector{AbstractLine{T, 3, :cartesian}} where 
     return ls
 end
 
-@recipe function f(c::Cone{T}; n = 30, seriescolor = :orange) where {T}
-    linewidth --> 2
-    n --> n
-    @series begin
-        seriescolor --> seriescolor
-        label --> "Cone"
-        []
-    end
-    seriescolor := seriescolor
-    label := ""
-    LineSegments(c)
-end
+
 
 function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {T <: SSDFloat}
     ls = AbstractLine{T, 3, :cartesian}[]
@@ -108,15 +85,3 @@ function LineSegments(t::Torus{T})::Vector{AbstractLine{T,3,:cartesian}} where {
     return ls
 end
 
-@recipe function f(t::Torus{T}; n = 30, seriescolor = :green) where {T}
-    linewidth --> 2
-    n --> n
-    @series begin
-        seriescolor --> seriescolor
-        label --> "Torus"
-        []
-    end
-    label := ""
-    seriescolor := seriescolor
-    LineSegments(t)
-end

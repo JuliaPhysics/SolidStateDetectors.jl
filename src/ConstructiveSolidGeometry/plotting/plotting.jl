@@ -1,3 +1,7 @@
+include("PointsAndVectors.jl")
+
+include("VolumePrimitives/VolumePrimitives.jl")
+
 @recipe function f(g::AbstractGeometry{T}) where {T}
     
     seriescolor --> :orange
@@ -18,11 +22,6 @@
             end
         end
     end
-end
-
-
-@recipe function f(points::Vector{CartesianPoint{T}}) where {T}
-    map(p -> p.x, points), map(p -> p.y, points), map(p -> p.z, points)
 end
 
 

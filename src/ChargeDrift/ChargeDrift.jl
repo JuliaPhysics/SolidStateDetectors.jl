@@ -202,6 +202,3 @@ function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}
     end
     return point_mid, cd_point_type, contact_idx, surface_normal
 end
-
-
-include("plot_recipes.jl")

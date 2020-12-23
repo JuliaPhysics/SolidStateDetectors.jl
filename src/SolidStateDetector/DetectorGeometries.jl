@@ -634,6 +634,3 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end
-
-
-include("plot_recipes.jl")
