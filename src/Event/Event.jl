@@ -69,12 +69,6 @@ function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5
     nothing
 end
 
-@recipe function f(wvs::Vector{Union{Missing, RadiationDetectorSignals.RDWaveform}})
-    @series begin
-        RadiationDetectorSignals.RDWaveform[wv for wv in skipmissing(wvs)]
-    end
-end
-
 function simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     drift_charges!(event, sim, max_nsteps = max_nsteps, Δt = Δt, verbose = verbose)
     get_signals!(event, sim, Δt = Δt)

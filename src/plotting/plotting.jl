@@ -1,0 +1,6 @@
+include("Grids.jl")
+include("point_types.jl")
+include("Fields.jl")
+include("ElectricField.jl")
+include("PotentialSimulationSetup.jl")
+include("SolidStateDetector.jl")
