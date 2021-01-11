@@ -495,10 +495,10 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
         else
             error("This should not happen... World has no dimension")
         end
-        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[inds[1]], RoundUp))
-        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[inds[2]], RoundUp))
-        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[inds[3]], RoundUp))
-        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3][inds] )
+        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
+        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
+        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
+        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
     init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
@@ -605,10 +605,10 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
         else
             error("This should not happen... World has no dimension")
         end
-        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[inds[1]], RoundUp))
-        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[inds[2]], RoundUp))
-        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[inds[3]], RoundUp))
-        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3][inds] )
+        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
+        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
+        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
+        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
     important_x_points::Vector{T} = get_important_points(detector, :x)
