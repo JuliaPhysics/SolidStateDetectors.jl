@@ -221,7 +221,6 @@ function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) whe
     return velocity_field_itp
 end
 
-include("plot_recipes.jl")
 
 function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(ep.grid.axes[1])

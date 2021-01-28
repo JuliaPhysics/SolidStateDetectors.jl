@@ -1,3 +1,7 @@
+include("PointsAndVectors.jl")
+
+include("VolumePrimitives/VolumePrimitives.jl")
+
 @recipe function f(g::AbstractGeometry{T}; SSD_style = :wireframe, n = 30) where {T}
 
     seriescolor --> :orange

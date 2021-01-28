@@ -112,13 +112,6 @@ function LineSegments(cb::Box{T})::Vector{LineSegment{T, 3, :cartesian}} where {
     ]
 end
 
-@recipe function f(cb::Box{T}) where {T <: SSDFloat}
-    label-->"Box"
-    ls = LineSegments(cb)
-    @series begin
-        ls
-    end
-end
 
 function sample(cb::Box{T}, stepsize::Vector{T})  where {T <: SSDFloat}
     samples  = CartesianPoint{T}[]

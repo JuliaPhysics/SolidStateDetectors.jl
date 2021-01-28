@@ -26,47 +26,7 @@ function (+)(s::Sphere{T}, translate::Union{CartesianVector{T}, Missing})::Spher
     return ismissing(translate) ? s : Sphere{T}( s.org +  translate, s.r )
 end
 
-@recipe function f(s::Sphere{T};) where {T <: SSDFloat}
-    @series begin
-        pts = []
-        label --> ""
-        for φ in range(T(0), length = 36, stop = T(2π))
-            pt = s.org + CartesianVector{T}( s.r * cos(φ), s.r * sin(φ), 0  )
-            push!(pts, pt)
-        end
-        lines = LineSegment{T, 3, :cartesian}[]
-        for i in 1:length(pts)-1
-            push!(lines, LineSegment(pts[i+1], pts[i]))
-        end
-        lines
-    end
-    @series begin
-        label --> ""
-        pts = []
-        for φ in range(T(0), length = 36, stop = T(2π))
-            pt = s.org + CartesianVector{T}( s.r * cos(φ), 0, s.r * sin(φ) )
-            push!(pts, pt)
-        end
-        lines = LineSegment{T, 3, :cartesian}[]
-        for i in 1:length(pts)-1
-            push!(lines, LineSegment(pts[i+1], pts[i]))
-        end
-        lines
-    end
-    @series begin
-        pts = []
-        label --> ""      
-        for φ in range(T(0), length = 36, stop = T(2π))
-            pt = s.org + CartesianVector{T}( 0, s.r * cos(φ), s.r * sin(φ) )
-            push!(pts, pt)
-        end
-        lines = LineSegment{T, 3, :cartesian}[]
-        for i in 1:length(pts)-1
-            push!(lines, LineSegment(pts[i+1], pts[i]))
-        end
-        lines
-    end
-end
+
 
 # For proper grid creation we also need the function get_important_points:
 function get_important_points(s::Sphere{T}, ::Val{:r})::Vector{T} where {T <: SSDFloat}

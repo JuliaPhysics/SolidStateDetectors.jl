@@ -63,45 +63,6 @@ function (+)(hp::HexagonalPrism{T}, translate::Union{CartesianVector{T}, Missing
     end
 end
 
-# Also a plot recipe for this new primitive should be provided:
-@recipe function f(hp::HexagonalPrism{T}) where {T <: SSDFloat}
-    label --> "HexagonalPrism"
-    @series begin
-        pts_top_outer = []
-        pts_bottom_outer = []
-        pts_top_inner = []
-        pts_bottom_inner = []
-
-        #find all vertices, this loop has been tested and works
-        for φ in deg2rad.(30:60:330) .- hp.rotZ
-            pt_top_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z + hp.h/2)
-            push!(pts_top_outer, pt_top_outer)
-            pt_top_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z + hp.h/2)
-            push!(pts_top_inner, pt_top_inner)
-            pt_bottom_outer = CartesianPoint{T}(hp.translate.x + hp.rOuter * cos(φ), hp.translate.y + hp.rOuter * sin(φ), hp.translate.z -hp.h/2)
-            push!(pts_bottom_outer, pt_bottom_outer)
-            pt_bottom_inner = CartesianPoint{T}(hp.translate.x + hp.rInner * cos(φ), hp.translate.y + hp.rInner * sin(φ), hp.translate.z -hp.h/2)
-            push!(pts_bottom_inner, pt_bottom_inner)
-        end
-
-        #create Linesegments connecting the vertices
-        lines = LineSegment{T, 3, :cartesian}[]
-        N = length(pts_top_outer)
-        for i in 1:N
-            push!(lines, LineSegment(pts_top_outer[i%N+1], pts_top_outer[i])) #top outer hexagon
-            push!(lines, LineSegment(pts_bottom_outer[i%N+1], pts_bottom_outer[i])) #bottom outer hexagon
-            push!(lines, LineSegment(pts_bottom_outer[i], pts_top_outer[i])) #lines connecting outer hexagons
-            if hp.rInner > 0
-                push!(lines, LineSegment(pts_bottom_inner[i%N+1], pts_bottom_inner[i])) #bottom inner hexagon
-                push!(lines, LineSegment(pts_top_inner[i%N+1], pts_top_inner[i])) #top inner hexagon
-                push!(lines, LineSegment(pts_bottom_inner[i], pts_top_inner[i])) #lines connecting inner hexagons
-                push!(lines, LineSegment(pts_top_outer[i], pts_top_inner[i])) #lines connecting hexagons
-                push!(lines, LineSegment(pts_bottom_outer[i], pts_bottom_inner[i])) #lines connecting hexagons
-            end
-        end
-        lines
-    end
-end
 
 # For proper grid creation we also need the function get_important_points:
 # Radial

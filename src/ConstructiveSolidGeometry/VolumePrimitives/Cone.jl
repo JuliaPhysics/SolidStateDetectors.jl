@@ -97,7 +97,6 @@ function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{
     return Cone(T, r, φ, z)
 end
 
-# plotting
 get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
 get_r_limits(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =
