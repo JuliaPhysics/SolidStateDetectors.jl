@@ -1,6 +1,10 @@
 include("PointsAndVectors.jl")
 
-include("VolumePrimitives/VolumePrimitives.jl")
+include("Meshing.jl")
+
+include("Wireframe.jl")
+
+include("SurfacePrimitives/SurfacePrimitives.jl")
 
 @recipe function f(g::AbstractGeometry{T}; SSD_style = :wireframe, n = 30) where {T}
 
