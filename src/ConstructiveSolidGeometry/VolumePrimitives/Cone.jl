@@ -79,14 +79,6 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, Nothing, <:Any}) =
 in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
-function sample_surface(c::Cone{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
-    samples = CylindricalPoint{T}[]
-    for surf in get_decomposed_surfaces(c)
-        append!(samples, sample(surf, step))
-    end
-    samples
-end
-
 # read-in
 function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
     length_unit = input_units.length
@@ -110,7 +102,12 @@ get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_
 function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMax, rtopMax, zMin, zMax) where {T}
     surfaces = AbstractSurfacePrimitive[]
     #top and bottom annulus
-    push!(surfaces, CylindricalAnnulus(c, z = zMin), CylindricalAnnulus(c, z = zMax))
+    if rbotMax ≠ 0
+        push!(surfaces, CylindricalAnnulus(c, z = zMin))
+    end
+    if rtopMax ≠ 0
+        push!(surfaces, CylindricalAnnulus(c, z = zMax))
+    end
     #outer conemantle
     push!(surfaces, ConeMantle(c, rbot = rbotMax, rtop = rtopMax))
     #need write a dedicated unique for surfaces which calls geom round

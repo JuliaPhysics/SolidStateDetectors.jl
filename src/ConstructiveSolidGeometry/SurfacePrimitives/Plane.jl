@@ -93,16 +93,31 @@ function distance_to_surface(point::CartesianPoint{T}, tri::Plane{T, CartesianPo
     end
 end
 
-function sample(tri::Plane{T, CartesianPoint{T}, Nothing}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
+function sample(tri::Plane{T, CartesianPoint{T}, Nothing}, step::Real) where {T}
     samples = CartesianPoint{T}[]
     v1, v2 = get_spanning_vectors(tri)
     #u = range(0,1, length = n)
     #v = range(0,1, length = n)
-    step = T(ustrip(uconvert(u"m", step)))
     step_u = step/norm(v1)
     step_v = step/norm(v2)
     u = 0:step_u:1
     v = 0:step_v:1
+    for u_i in u
+        j = 1
+        while j <= length(v) && v[j] + u_i <= 1
+            v_t = CartesianPoint{T}(tri.p1 + u_i*v1 + v[j]*v2)
+            push!(samples, v_t)
+            j = j + 1
+        end
+    end
+    samples
+end
+
+function sample(tri::Plane{T, CartesianPoint{T}, Nothing}, Nsamps::NTuple{3,Int}) where {T}
+    samples = CartesianPoint{T}[]
+    v1, v2 = get_spanning_vectors(tri)
+    u = (Nsamps[1] ≤ 1 ? 0 : range(0, 1, length = Nsamps[1]))
+    v = (Nsamps[2] ≤ 1 ? 0 : range(0, 1, length = Nsamps[2]))
     for u_i in u
         j = 1
         while j <= length(v) && v[j] + u_i <= 1
@@ -162,8 +177,8 @@ function distance_to_surface(point::CartesianPoint{T}, quad::Plane{T, CartesianP
     min(distance_to_surface(point, tri1), distance_to_surface(point, tri2))
 end
 
-function sample(quad::Plane{T, CartesianPoint{T}, CartesianPoint{T}}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
+function sample(quad::Plane{T, CartesianPoint{T}, CartesianPoint{T}}, sampling::Union{Real, NTuple{3,Int}}) where {T}
     tri1, tri2 = decompose_into_tiangles(quad)
-    samples = sample(tri1, step)
-    append!(samples, sample(tri2, step))
+    samples = sample(tri1, sampling)
+    append!(samples, sample(tri2, sampling))
 end

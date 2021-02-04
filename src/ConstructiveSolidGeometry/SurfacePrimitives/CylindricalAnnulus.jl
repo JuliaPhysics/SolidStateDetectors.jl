@@ -82,11 +82,10 @@ function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnul
     d
 end
 
-function sample(a::CylindricalAnnulus{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
+function sample(a::CylindricalAnnulus{T}, step::Real) where {T}
     samples = CylindricalPoint{T}[]
     rMin::T, rMax::T = get_r_limits(a)
     φMin::T, φMax::T, _ = get_φ_limits(a)
-    step = T(ustrip(uconvert(u"m", step)))
     for r in rMin:step:rMax
         if r == 0
             push!(samples, CylindricalPoint{T}(0,0,a.z))
@@ -94,6 +93,18 @@ function sample(a::CylindricalAnnulus{T}, step::Quantity{<:Real, Unitful.𝐋}) 
             for φ in φMin:step/r:φMax
                 push!(samples, CylindricalPoint{T}(r,φ,a.z))
             end
+        end
+    end
+    samples
+end
+
+function sample(a::CylindricalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
+    samples = CylindricalPoint{T}[]
+    rMin::T, rMax::T = get_r_limits(a)
+    φMin::T, φMax::T, _ = get_φ_limits(a)
+    for r in (Nsamps[1] ≤ 1 ? rMin : range(rMin, rMax, length = Nsamps[1]))
+        for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+            push!(samples, CylindricalPoint{T}(r,φ,a.z))
         end
     end
     samples

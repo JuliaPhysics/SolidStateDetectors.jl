@@ -41,3 +41,27 @@ get_φ_limits(t::TorusMantle{T, <:Any, <:Any, <:AbstractInterval, <:Any}) where 
 
 get_θ_limits(t::TorusMantle{T, <:Any, <:Any, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
 get_θ_limits(t::TorusMantle{T, <:Any, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
+
+function sample(t::TorusMantle{T}, step::Real) where {T}
+    samples = CylindricalPoint{T}[]
+    φMin::T, φMax::T, _ = get_φ_limits(t)
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    for φ in φMin:step/t.r_tube:φMax
+        for θ in θMin:step/t.r_tube:θMax
+            push!(samples, CylindricalPoint{T}(t.r_torus+t.r_tube*cos(θ),φ,t.r_tube*sin(θ)))
+        end
+    end
+    samples
+end
+
+function sample(t::TorusMantle{T}, Nsamps::NTuple{3,Int}) where {T}
+    samples = CylindricalPoint{T}[]
+    φMin::T, φMax::T, _ = get_φ_limits(t)
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+        for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
+            push!(samples, CylindricalPoint{T}(t.r_torus+t.r_tube*cos(θ),φ,t.r_tube*sin(θ)))
+        end
+    end
+    samples
+end

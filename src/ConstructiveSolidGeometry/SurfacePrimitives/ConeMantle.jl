@@ -68,12 +68,11 @@ in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, Nothing, <:Any}) =
 in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _eq_cyl_r(p, get_r_at_z(c, p.z))
 
-function sample(c::ConeMantle{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
+function sample(c::ConeMantle{T}, step::Real) where {T}
     samples = CylindricalPoint{T}[]
     rbot::T, rtop::T = get_r_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    step = T(ustrip(uconvert(u"m", step)))
     if zMin ≠ zMax
         for z in zMin:step:zMax
             r_at_z = get_r_at_z(c, z)
@@ -84,6 +83,20 @@ function sample(c::ConeMantle{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T
                     push!(samples, CylindricalPoint{T}(r_at_z,φ,z))
                 end
             end
+        end
+    end
+    samples
+end
+
+function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int}) where {T}
+    samples = CylindricalPoint{T}[]
+    rbot::T, rtop::T = get_r_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
+        r_at_z = get_r_at_z(c, z)
+        for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+            push!(samples, CylindricalPoint{T}(r_at_z,φ,z))
         end
     end
     samples
