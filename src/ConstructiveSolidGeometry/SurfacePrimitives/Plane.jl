@@ -94,39 +94,23 @@ function distance_to_surface(point::CartesianPoint{T}, tri::Plane{T, CartesianPo
 end
 
 function sample(tri::Plane{T, CartesianPoint{T}, Nothing}, step::Real) where {T}
-    samples = CartesianPoint{T}[]
     v1, v2 = get_spanning_vectors(tri)
-    #u = range(0,1, length = n)
-    #v = range(0,1, length = n)
     step_u = step/norm(v1)
     step_v = step/norm(v2)
-    u = 0:step_u:1
-    v = 0:step_v:1
-    for u_i in u
-        j = 1
-        while j <= length(v) && v[j] + u_i <= 1
-            v_t = CartesianPoint{T}(tri.p1 + u_i*v1 + v[j]*v2)
-            push!(samples, v_t)
-            j = j + 1
-        end
-    end
-    samples
+    samples = [
+        CartesianPoint{T}(tri.p1 + u*v1 + v*v2)
+        for u in 0:step_u:1
+        for v in 0:step_v:1-u
+    ]
 end
 
 function sample(tri::Plane{T, CartesianPoint{T}, Nothing}, Nsamps::NTuple{3,Int}) where {T}
-    samples = CartesianPoint{T}[]
     v1, v2 = get_spanning_vectors(tri)
-    u = (Nsamps[1] ≤ 1 ? 0 : range(0, 1, length = Nsamps[1]))
-    v = (Nsamps[2] ≤ 1 ? 0 : range(0, 1, length = Nsamps[2]))
-    for u_i in u
-        j = 1
-        while j <= length(v) && v[j] + u_i <= 1
-            v_t = CartesianPoint{T}(tri.p1 + u_i*v1 + v[j]*v2)
-            push!(samples, v_t)
-            j = j + 1
-        end
-    end
-    samples
+    samples = [
+        CartesianPoint{T}(tri.p1 + u*v1 + v*v2)
+        for u in (Nsamps[1] ≤ 1 ? 0 : range(0, 1, length = Nsamps[1]))
+        for v in (Nsamps[2] ≤ 1 ? 0 : range(0, 1-u, length = Nsamps[2]))
+    ]
 end
 
 function Quadrilateral(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint{Float32}(1,0,0), p3 = CartesianPoint{Float32}(1,1,0), p4 = CartesianPoint{Float32}(0,1,0))

@@ -29,31 +29,22 @@ in(p::AbstractCoordinatePoint, c::ConalPlane) =
 
 #function sample(c::ConalPlane{T}, step::Quantity{<:Real, Unitful.𝐋}) where {T}
 function sample(c::ConalPlane{T}, step::Real) where {T}
-    samples = CylindricalPoint{T}[]
-    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     #step = T(ustrip(uconvert(u"m", step)))
-    for z in zMin:step:zMax
-        r_at_z = get_r_at_z(c, z)
-        for r in _left_radial_interval(r_at_z):step:_right_radial_interval(r_at_z)
-            push!(samples, CylindricalPoint{T}(r,c.φ,z))
-        end
-    end
-    samples
+    samples = [
+        CylindricalPoint{T}(r,c.φ,z)
+        for z in zMin:step:zMax
+        for r in _left_radial_interval(get_r_at_z(c, z)):step:_right_radial_interval(get_r_at_z(c, z))
+    ]
 end
 
 function sample(c::ConalPlane{T}, Nsamps::NTuple{3,Int}) where {T}
-    samples = CylindricalPoint{T}[]
-    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    #step = T(ustrip(uconvert(u"m", step)))
-    for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
-        r_at_z = get_r_at_z(c, z)
-        for r in (Nsamps[3] ≤ 1 ? _left_radial_interval(r_at_z) : range(_left_radial_interval(r_at_z), _right_radial_interval(r_at_z), length = Nsamps[1]))
-            push!(samples, CylindricalPoint{T}(r,c.φ,z))
-        end
-    end
-    samples
+    samples = [
+        CylindricalPoint{T}(r,c.φ,z)
+        for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
+        for r in (Nsamps[3] ≤ 1 ? _left_radial_interval(get_r_at_z(c, z)) : range(_left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c, z)), length = Nsamps[1]))
+    ]
 end
 
 function get_vertices(c::ConalPlane{T}) where {T}

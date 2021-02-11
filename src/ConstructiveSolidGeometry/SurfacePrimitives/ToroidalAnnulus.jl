@@ -36,29 +36,21 @@ get_θ_limits(t::ToroidalAnnulus{T, <:Any, <:Any, <:Any, Nothing}) where {T} = (
 get_θ_limits(t::ToroidalAnnulus{T, <:Any, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
 
 function sample(t::ToroidalAnnulus{T}, step::Real) where {T}
-    samples = CylindricalPoint{T}[]
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
-    for r_tube in r_tubeMin:step:r_tubeMax
-        if r_tube == 0
-            push!(samples, CylindricalPoint{T}(t.r_torus,t.φ,0))
-        else
-            for θ in θMin:step/r_tube:θMax
-                push!(samples, CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),t.φ,r_tube*sin(θ)))
-            end
-        end
-    end
-    samples
+    samples = [
+        CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),t.φ,r_tube*sin(θ))
+        for r_tube in r_tubeMin:step:r_tubeMax
+        for θ in (r_tube == 0 ? θMin : θMin:step/r_tube:θMax)
+    ]
 end
 
 function sample(t::ToroidalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
-    samples = CylindricalPoint{T}[]
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
-    for r_tube in (Nsamps[1] ≤ 1 ? r_tubeMin : range(r_tubeMin, r_tubeMax, length = Nsamps[1]))
+    samples = [
+        CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),t.φ,r_tube*sin(θ))
+        for r_tube in (Nsamps[1] ≤ 1 ? r_tubeMin : range(r_tubeMin, r_tubeMax, length = Nsamps[1]))
         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
-            push!(samples, CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),t.φ,r_tube*sin(θ)))
-        end
-    end
-    samples
+    ]
 end
