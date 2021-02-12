@@ -27,6 +27,10 @@ using StatsBase
 using Unitful
 using YAML
 
+include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
+using .ConstructiveSolidGeometry
+using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint
+
 import Clustering
 import DataStructures
 import Distributions
@@ -62,7 +66,6 @@ struct ConfigFileError <: Exception
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
-include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 # include("Geometries/Geometries.jl")
 
 include("Axes/DiscreteAxis.jl")
