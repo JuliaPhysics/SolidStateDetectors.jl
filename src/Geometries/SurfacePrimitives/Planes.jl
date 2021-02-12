@@ -17,13 +17,13 @@
 #         return false, CartesianPoint{T}(0, 0, 0)
 #     else
 #         u::T = f.normal ⋅ (f.points[1] - l.org) / denom
-#         int_p::CartesianPoint{T} = l.org + u * l.dir 
+#         int_p::CartesianPoint{T} = l.org + u * l.dir
 #         return true, int_p
 #     end
 # end
 
 # ToDo: use AbstractCoordinatePoint/Vector....
-struct Plane
+struct _Plane
     reference_point::AbstractArray
     n⃗::AbstractArray
 

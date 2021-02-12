@@ -9,6 +9,7 @@ using Random
 using Statistics
 
 using ArraysOfArrays
+using Colors
 using FillArrays
 using Formatting
 using Interpolations
@@ -40,7 +41,8 @@ import Base.convert
 export SolidStateDetector
 export SSD_examples
 
-export Grid, CylindricalPoint, CartesianPoint
+export Grid
+# export CylindricalPoint, CartesianPoint
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
@@ -60,7 +62,8 @@ struct ConfigFileError <: Exception
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
-include("Geometries/Geometries.jl")
+include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
+# include("Geometries/Geometries.jl")
 
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
@@ -73,7 +76,7 @@ include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
-include("GeometryRounding.jl")
+# include("GeometryRounding.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")
 
@@ -95,7 +98,7 @@ include("IO/IO.jl")
 
 include("examples.jl")
 
-include("PlotRecipes/PlotRecipes.jl")
+# include("plotting/plotting.jl")
 
 function __init__()
     @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
