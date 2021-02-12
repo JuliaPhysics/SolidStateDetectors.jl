@@ -14,7 +14,7 @@ mutable struct Passive{T} <: AbstractPassive{T}
     Passive{T}() where T <: SSDFloat = new{T}()
 end
 
-function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
+function Passive{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
     pass = Passive{T}()
     haskey(dict, "name") ? pass.name = dict["name"] : pass.name = "external part"
     haskey(dict, "id") ? pass.id = dict["id"] : pass.id = -1
@@ -34,7 +34,7 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     else
         ConstantChargeDensity{T}(0)
     end
-    pass.geometry = Geometry(T, dict["geometry"], inputunit_dict)
+    pass.geometry = Geometry(T, dict["geometry"], input_units)
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
     return pass
 end

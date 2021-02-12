@@ -106,14 +106,14 @@ end
 
 # You also have to implement the function to obtain the primitive from a config file (so an dic)
 # You also should provide a example config file containing this new primitive
-function NewPrimitive{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, inputunit_dict::Dict{String,Unitful.Units})::NewPrimitive{T} where {T <: SSDFloat}
+function NewPrimitive{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, input_units::NamedTuple)::NewPrimitive{T} where {T <: SSDFloat}
     # ... parse values from dict to NewPrimitive{T}(...)
     return NewPrimitive{T}(
         # ...
     )
 end
-function Geometry(T::DataType, t::Val{:newprimitive}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
-    return NewPrimitive{T}(dict, inputunit_dict)
+function Geometry(T::DataType, t::Val{:newprimitive}, dict::Dict{Any, Any}, input_units::NamedTuple)
+    return NewPrimitive{T}(dict, input_units)
 end
 
 # Also a plot recipe for this new primitive should be provided:

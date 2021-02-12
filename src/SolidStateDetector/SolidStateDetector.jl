@@ -5,7 +5,7 @@ CS: Coordinate System: -> :cartesian / :cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
     name::String  # optional
-    inputunits::NamedTuple
+    input_units::NamedTuple
     world::World{T, 3}
 
     config_dict::Dict
@@ -190,19 +190,19 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
-    inputunits = construct_units(config_file)
+    input_units = construct_units(config_file)
     if haskey(config_file, "medium")
         medium = material_properties[materials[config_file["medium"]]]
     end
 
     if haskey(config_file, "objects")
-        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, virtual_drift_volumes, inputunits)
+        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, virtual_drift_volumes, input_units)
     end
 
     world = if haskey(config_file, "grid")
         if isa(config_file["grid"], Dict)
             grid_type = Symbol(config_file["grid"]["coordinates"])
-            World(T, config_file["grid"], inputunits)
+            World(T, config_file["grid"], input_units)
         elseif isa(config_file["grid"], String)
             grid_type = Symbol(config_file["grid"])
             world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives)
@@ -219,7 +219,7 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     c.semiconductors = semiconductors
     c.contacts = contacts
     c.passives = passives
-    c.inputunits = inputunits
+    c.input_units = input_units
     c.medium = medium
     c.world = world
     c.virtual_drift_volumes = virtual_drift_volumes
@@ -239,7 +239,7 @@ function Base.sort!(v::AbstractVector{<:AbstractGeometry})
     return v_result
 end
 
-function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::Bool where T
+function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T})::Bool where T
     for contact in c.contacts
         if point in contact
             return true

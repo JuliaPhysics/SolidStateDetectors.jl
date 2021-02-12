@@ -9,8 +9,8 @@ and, thus, defines where the semiconductor is n-type or p-type.
 """
 abstract type AbstractImpurityDensity{T <: SSDFloat} end
 
-@inline function ImpurityDensity(T::DataType, dict::Union{Dict{String, Any}, Dict{Any, Any}}, inputunit_dict::Dict)
-    return ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, inputunit_dict)
+@inline function ImpurityDensity(T::DataType, dict::Union{Dict{String, Any}, Dict{Any, Any}}, input_units::NamedTuple)
+    return ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
 end
 
 include("ConstantImpurityDensity.jl")

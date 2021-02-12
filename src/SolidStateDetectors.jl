@@ -29,7 +29,10 @@ using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint
+using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint, AbstractCoordinatePoint,
+            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            AbstractGeometry
+            
 
 import Clustering
 import DataStructures
@@ -66,7 +69,7 @@ struct ConfigFileError <: Exception
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
-# include("Geometries/Geometries.jl")
+include("Geometries/Units.jl")
 
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
@@ -86,7 +89,7 @@ include("PotentialSimulation/PotentialSimulation.jl")
 include("ElectricField/ElectricField.jl")
 
 include("ChargeDriftModels/ChargeDriftModels.jl")
-include("ChargeCloudModels/ChargeCloudModels.jl")
+#include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")
 
