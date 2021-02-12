@@ -24,7 +24,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
     end
 end
 
-struct DummyChargeDensity{T} <: SolidStateDetectors.AbstractChargeDensity{T} end
+struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
 
 
 @testset "InfiniteCoaxialCapacitor" begin
@@ -81,7 +81,7 @@ struct DummyChargeDensity{T} <: SolidStateDetectors.AbstractChargeDensity{T} end
     rs_analytic = range(R1, stop = R2, length = 500);
     pot_analytic = map(r -> potential_analytic(r), rs_analytic)
 
-    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensity{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
+    function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
         if ustrip(R1) <= pt[1] <= ustrip(R2)
             return -ustrip(ρ1 / e) * pt[1]^2 
         else 
@@ -89,12 +89,12 @@ struct DummyChargeDensity{T} <: SolidStateDetectors.AbstractChargeDensity{T} end
         end
     end
 
-    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensity{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
-        SolidStateDetectors.get_charge_density(cdm, CylindricalPoint(pt))
+    function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
+        SolidStateDetectors.get_impurity_density(cdm, CylindricalPoint(pt))
     end
 
-    sim_cyl.detector.semiconductors[1].charge_density_model = DummyChargeDensity{T}()
-    sim_car.detector.semiconductors[1].charge_density_model = DummyChargeDensity{T}()
+    sim_cyl.detector.semiconductors[1].impurity_density_model = DummyImpurityDensity{T}()
+    sim_car.detector.semiconductors[1].impurity_density_model = DummyImpurityDensity{T}()
 
     calculate_electric_potential!(sim_cyl, 
         init_grid_size = (40, 2, 2), 

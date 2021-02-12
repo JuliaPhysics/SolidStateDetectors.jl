@@ -9,9 +9,9 @@ struct PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, 
     grid::Grid{T, N, S}
     potential::Array{T, N}
     pointtypes::Array{PointType, N}
-    ρ::Array{T, N}
-    ρ_fix::Array{T, N}
-    ϵ::Array{T, N}
+    q_eff_imp::Array{T, N}
+    q_eff_fix::Array{T, N}
+    ϵ_r::Array{T, N}
 end
 
 struct PotentialSimulationSetupRB{T, N1, N2, S, TGW, AT} <: AbstractPotentialSimulationSetup{T, N1}
@@ -19,10 +19,10 @@ struct PotentialSimulationSetupRB{T, N1, N2, S, TGW, AT} <: AbstractPotentialSim
     potential::Array{T, N2}
     pointtypes::Array{PointType, N2}
     volume_weights::Array{T, N2}
-    ρ::Array{T, N2}
-    ρ_fix::Array{T, N2}
-    ϵ::Array{T, N1}
-    geom_weights::TGW  
+    q_eff_imp::Array{T, N2}
+    q_eff_fix::Array{T, N2}
+    ϵ_r::Array{T, N1}
+    geom_weights::NTuple{N1, AbstractGeometricalAxisWeights{T}}        
     sor_const::Array{T, 1}
     bias_voltage::T
     maximum_applied_potential::T
@@ -35,9 +35,9 @@ function sizeof(fssrb::PotentialSimulationSetup{T, N})::Int where {T, N}
     s::Int = sizeof(fssrb.grid)
     s += sizeof(fssrb.pointtypes)
     s += sizeof(fssrb.potential)
-    s += sizeof(fssrb.ϵ)
-    s += sizeof(fssrb.ρ)
-    s += sizeof(fssrb.ρ_fix)
+    s += sizeof(fssrb.ϵ_r)
+    s += sizeof(fssrb.q_eff_imp)
+    s += sizeof(fssrb.q_eff_fix)
     return s
 end
 
@@ -46,9 +46,9 @@ function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1,
     s += sizeof(fssrb.pointtypes)
     s += sizeof(fssrb.potential)
     s += sizeof(fssrb.volume_weights)
-    s += sizeof(fssrb.ϵ)
-    s += sizeof(fssrb.ρ)
-    s += sizeof(fssrb.ρ_fix)
+    s += sizeof(fssrb.ϵ_r)
+    s += sizeof(fssrb.q_eff_imp)
+    s += sizeof(fssrb.q_eff_fix)
     for idim in 1:N1
         s += sizeof(fssrb.geom_weights[idim].weights)
     end

@@ -89,14 +89,14 @@ end
                 Δz_ext_inv_r::T = gw_z[4, inz + 1]
                 Δz_ext_inv_l::T = gw_z[4, inz]
 
-                ϵ_rrr::T = fssrb.ϵ[  ir,  iφ, inz + 1]
-                ϵ_rlr::T = fssrb.ϵ[  ir, inφ, inz + 1]
-                ϵ_rrl::T = fssrb.ϵ[  ir,  iφ, inz ]
-                ϵ_rll::T = fssrb.ϵ[  ir, inφ, inz ]
-                ϵ_lrr::T = fssrb.ϵ[ inr,  iφ, inz + 1]
-                ϵ_llr::T = fssrb.ϵ[ inr, inφ, inz + 1]
-                ϵ_lrl::T = fssrb.ϵ[ inr,  iφ, inz ] 
-                ϵ_lll::T = fssrb.ϵ[ inr, inφ, inz ] 
+                ϵ_rrr::T = fssrb.ϵ_r[  ir,  iφ, inz + 1]
+                ϵ_rlr::T = fssrb.ϵ_r[  ir, inφ, inz + 1]
+                ϵ_rrl::T = fssrb.ϵ_r[  ir,  iφ, inz ]
+                ϵ_rll::T = fssrb.ϵ_r[  ir, inφ, inz ]
+                ϵ_lrr::T = fssrb.ϵ_r[ inr,  iφ, inz + 1]
+                ϵ_llr::T = fssrb.ϵ_r[ inr, inφ, inz + 1]
+                ϵ_lrl::T = fssrb.ϵ_r[ inr,  iφ, inz ] 
+                ϵ_lll::T = fssrb.ϵ_r[ inr, inφ, inz ] 
 
                 pwwφr_pwwzr::T = pwwφr * pwwzr
                 pwwφl_pwwzr::T = pwwφl * pwwzr
@@ -154,7 +154,7 @@ end
                 vzr::T = fssrb.potential[    izr,     iφ,     ir, rb_src_idx] 
                 vzl::T = fssrb.potential[izr - 1,     iφ,     ir, rb_src_idx]
                 
-                new_potential::T = _is_weighting_potential ? 0 : (fssrb.ρ[iz, iφ, ir, rb_tar_idx] + fssrb.ρ_fix[iz, iφ, ir, rb_tar_idx])
+                new_potential::T = _is_weighting_potential ? 0 : (fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] + fssrb.q_eff_fix[iz, iφ, ir, rb_tar_idx])
 
                 new_potential = muladd( wrr, vrr, new_potential)
                 new_potential = muladd( wrl, vrl, new_potential)
@@ -171,16 +171,16 @@ end
                 if depletion_handling_enabled
                     if inr == 1 vrl = vrr end
                     if new_potential < fssrb.minimum_applied_potential || new_potential > fssrb.maximum_applied_potential
-                        new_potential -= fssrb.ρ[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
+                        new_potential -= fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
                         if (fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
-                    elseif fssrb.ρ[iz, iφ, ir, rb_tar_idx] < 0 # p-type material -> charge density is negative 
+                    elseif fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] < 0 # p-type material -> charge density is negative 
                         vmin::T = ifelse( vrr <  vrl, vrr,  vrl)
                         vmin    = ifelse( vφr < vmin, vφr, vmin)
                         vmin    = ifelse( vφl < vmin, vφl, vmin)
                         vmin    = ifelse( vzr < vmin, vzr, vmin)
                         vmin    = ifelse( vzl < vmin, vzl, vmin)
                         if new_potential <= vmin # bubble point
-                            new_potential -= fssrb.ρ[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
+                            new_potential -= fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
                             if (fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
                         else # normal point
                             if (fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0) fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] -= undepleted_bit end # unmark this point
@@ -192,7 +192,7 @@ end
                         vmax    = ifelse( vzr > vmax, vzr, vmax)
                         vmax    = ifelse( vzl > vmax, vzl, vmax)
                         if new_potential >= vmax # bubble point
-                            new_potential -= fssrb.ρ[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
+                            new_potential -= fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
                             if (fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
                         else # normal point -> unmark
                             if (fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0) fssrb.pointtypes[iz, iφ, ir, rb_tar_idx] -= undepleted_bit end # unmark this point

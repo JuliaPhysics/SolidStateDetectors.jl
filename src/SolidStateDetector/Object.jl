@@ -6,18 +6,6 @@ abstract type AbstractObject{T <: SSDFloat} end
     return in(pt, c.geometry)
 end
 
-# function in(p::AbstractCoordinatePoint{T}, c::AbstractObject{T}, rs::Vector{T}) where {T <: SSDFloat}
-#     rv = false
-#     for g in c.geometry_positive
-#         if typeof(g) in []#[ConeMantle{T}]
-#             in(p, g, rs) ? rv = true : nothing
-#         else
-#             (p in g) ? rv = true : nothing
-#         end
-#     end
-#     return rv
-# end
-
 function in(p::AbstractCoordinatePoint{T}, v::AbstractVector{<:AbstractObject{T}}) where {T <: SSDFloat}
     rv = false
     for object in v

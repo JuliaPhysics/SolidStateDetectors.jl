@@ -41,7 +41,7 @@
 			"type": "semiconductor",
 			"material": "Si",
 			"temperature": 140,
-			"charge_density_model": {
+			"impurity_density": {
 				"name": "linear",
 				"r": {
 					"init": 0.0,

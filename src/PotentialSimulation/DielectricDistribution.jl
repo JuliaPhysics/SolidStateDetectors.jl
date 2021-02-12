@@ -11,7 +11,7 @@ end
 
 
 function DielectricDistribution(fss::PotentialSimulationSetup{T, N, S})::DielectricDistribution{T, N, S} where {T, N, S}
-    return DielectricDistribution{T, N, S}( fss.ϵ, fss.grid )
+    return DielectricDistribution{T, N, S}( fss.ϵ_r, fss.grid )
 end
 
 

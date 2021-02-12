@@ -21,10 +21,18 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     haskey(dict,"potential") ? pass.potential = T(dict["potential"]) : pass.potential = :floating
     haskey(dict, "temperature") ? pass.temperature = T(dict["temperature"]) : pass.temperature = missing
     pass.material = material_properties[materials[dict["material"]]]
-    pass.charge_density_model = if haskey(dict, "charge_density_model") 
-        ChargeDensity(T, dict["charge_density_model"], inputunit_dict)
+    pass.charge_density_model = if haskey(dict, "charge_density") 
+        haskey(dict, "charge_density") 
+    elseif haskey(dict, "charge_density_model") 
+        @warn "Config file deprication: There was an internal change from v0.4.3 to v0.5.0 regarding the 
+            charge density of `Passive` objects. 
+            Since v0.5.0, the elementary charge is not automatically multiplied to the distribution as it
+            is a charge density and not an impurity density. The values in the config files should be adapted
+            and the name of the field should be changed from \"charge_density_model\" into \"charge_density\".
+            This warning will result in an error in later versions."
+       haskey(dict, "charge_density_model") 
     else
-        ZeroChargeDensity{T}()
+        ConstantChargeDensity{T}(0)
     end
     pass.geometry = Geometry(T, dict["geometry"], inputunit_dict)
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
