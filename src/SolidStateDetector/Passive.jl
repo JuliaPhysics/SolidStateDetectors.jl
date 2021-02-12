@@ -24,7 +24,7 @@ function Passive{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
     pass.charge_density_model = if haskey(dict, "charge_density") 
         haskey(dict, "charge_density") 
     elseif haskey(dict, "charge_density_model") 
-        @warn "Config file deprication: There was an internal change from v0.4.3 to v0.5.0 regarding the 
+        @warn "Config file deprication: There was an internal change from v0.5.1 to v0.6.0 regarding the 
             charge density of `Passive` objects. 
             Since v0.5.0, the elementary charge is not automatically multiplied to the distribution as it
             is a charge density and not an impurity density. The values in the config files should be adapted
