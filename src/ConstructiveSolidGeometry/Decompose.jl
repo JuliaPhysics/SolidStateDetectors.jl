@@ -44,3 +44,5 @@ end
 
 decompose_volume!(pos, neg, vol::AbstractVolumePrimitive, transformation, ::Type{Val{:PositiveVolume}}) = push!(pos, transform(vol, transformation))
 decompose_volume!(pos, neg, vol::AbstractVolumePrimitive, transformation, ::Type{Val{:NegativeVolume}}) = push!(neg, transform(vol, transformation))
+
+decompose_volume!(pos, neg, surf::AbstractSurfacePrimitive, transformation, ::Type{Val{:PositiveVolume}}) = push!(pos, surf)

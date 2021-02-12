@@ -19,7 +19,7 @@ function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φ
     rMin_is_zero::Bool = rMin_is_equal && rbotMin == 0
     r = if rMax_is_equal
             if rMin_is_zero # Tube with rMin = 0
-                T(rbotMax) 
+                T(rbotMax)
             elseif rMin_is_equal # Tube
                 T(rbotMin)..T(rbotMax)
             else # Cone
@@ -44,7 +44,7 @@ end
 
 #Constructors for Tubes
 Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) = Cone(rMin, rMax, rMin, rMax, φMin, φMax, zMin, zMax)
-Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(; rMin = rMin, rMax = rMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax) 
+Tube(rMin, rMax, φMin, φMax, zMin, zMax) = Tube(; rMin = rMin, rMax = rMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
 
 function Tube(r::R, height::H) where {R<:Real, H<:Real}
     T = float(promote_type(R,H))
@@ -56,9 +56,8 @@ function Tube(rMin::R1, rMax::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
     Cone(T, rMin == 0 ? T(rMax) : T(rMin)..T(rMax), nothing, T(height)/2)
 end
 
-
 # for Tubes
-get_r_at_z(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T} = c.r 
+get_r_at_z(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}, z::Real) where {T} = c.r
 
 # for Cones
 get_r_at_z(c::Cone{T, Tuple{T,T}, <:Any, <:Any}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
@@ -69,7 +68,7 @@ function get_r_at_z(c::Cone{T, Tuple{I,I}, <:Any, <:Any}, z::Real) where {T, I<:
     r1..r2
 end
 
-function _get_r_at_z(rbot::TR, rtop::TR, cz::TZ, z::Real)::TR where {TR<:Real, TZ} 
+function _get_r_at_z(rbot::TR, rtop::TR, cz::TZ, z::Real)::TR where {TR<:Real, TZ}
     (rtop - rbot) * (z - _left_linear_interval(cz)) / _width_linear_interval(cz) + rbot
 end
 
@@ -79,8 +78,7 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, Nothing, <:Any}) =
 
 in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
-    
-    
+
 # read-in
 function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
     length_unit = input_units.length
@@ -89,4 +87,91 @@ function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     z = parse_height_of_primitive(T, dict, length_unit)
     return Cone(T, r, φ, z)
+end
+
+get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
+    (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
+get_r_limits(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =
+    (_left_radial_interval(c.r[1]),_right_radial_interval(c.r[1]),_left_radial_interval(c.r[2]),_right_radial_interval(c.r[2]))
+
+get_φ_limits(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
+get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
+
+get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
+
+function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMax, rtopMax, zMin, zMax) where {T}
+    surfaces = AbstractSurfacePrimitive[]
+    #top and bottom annulus
+    if rbotMax ≠ 0
+        push!(surfaces, CylindricalAnnulus(c, z = zMin))
+    end
+    if rtopMax ≠ 0
+        push!(surfaces, CylindricalAnnulus(c, z = zMax))
+    end
+    #outer conemantle
+    push!(surfaces, ConeMantle(c, rbot = rbotMax, rtop = rtopMax))
+    #need write a dedicated unique for surfaces which calls geom round
+    unique(surfaces)
+end
+
+#2π Cones
+function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, Nothing, <:Any}) where {T}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    unique(surfaces)
+end
+
+function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
+    unique(surfaces)
+end
+
+#non 2π Cones
+function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, <:AbstractInterval{T}, <:Any}) where {T}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    for φ in [φMin, φMax]
+        push!(surfaces, ConalPlane(c, φ = φ))
+    end
+    unique(surfaces)
+end
+
+function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, <:AbstractInterval{T}, <:Any}) where {T, I<:AbstractInterval{T}}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    for φ in [φMin, φMax]
+        push!(surfaces, ConalPlane(c, φ = φ))
+    end
+    push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
+    unique(surfaces)
+end
+
+function sample(c::Cone{T}, step::Real) where {T}
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    samples = [
+        CylindricalPoint{T}(r,φ,z)
+        for z in zMin:step:zMax
+        for r in _left_radial_interval(get_r_at_z(c, z)):step:_right_radial_interval(get_r_at_z(c, z))
+        for φ in (r == 0 ? φMin : φMin:step/r:φMax)
+    ]
+end
+
+function sample(c::Cone{T}, Nsamps::NTuple{3,Int}) where {T}
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    samples = [
+        CylindricalPoint{T}(r,φ,z)
+        for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
+        for r in (Nsamps[1] ≤ 1 ? _left_radial_interval(get_r_at_z(c, z)) : range(_left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c, z)), length = Nsamps[1]))
+        for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+    ]
 end
