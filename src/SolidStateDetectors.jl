@@ -36,6 +36,7 @@ using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint, AbstractCoor
             get_decomposed_volumes,
             geom_round, geom_sigdigits, geom_atol_zero
             
+import .ConstructiveSolidGeometry: sample
 
 import Clustering
 import DataStructures
@@ -52,7 +53,6 @@ export SolidStateDetector
 export SSD_examples
 
 export Grid
-# export CylindricalPoint, CartesianPoint
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
@@ -107,7 +107,7 @@ include("IO/IO.jl")
 
 include("examples.jl")
 
-# include("plotting/plotting.jl")
+include("PlotRecipes/PlotRecipes.jl")
 
 function __init__()
     @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
