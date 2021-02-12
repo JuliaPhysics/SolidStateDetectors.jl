@@ -85,3 +85,27 @@ function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, <:Abs
     end
     unique(surfaces)
 end
+
+function sample(t::Torus{T}, step::Real) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    φMin::T, φMax::T, _ = get_φ_limits(t)
+    samples = [
+        CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),φ,r_tube*sin(θ))
+        for r_tube in r_tubeMin:step:r_tubeMax
+        for θ in (r_tube == 0 ? θMin : θMin:step/r_tube:θMax)
+        for φ in (r_tube == 0 ? φMin : φMin:step/r_tube:φMax)
+    ]
+end
+
+function sample(t::Torus{T}, Nsamps::NTuple{3,Int}) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    φMin::T, φMax::T, _ = get_φ_limits(t)
+    samples = [
+        CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),φ,r_tube*sin(θ))
+        for r_tube in (Nsamps[1] ≤ 1 ? r_tubeMin : range(r_tubeMin, r_tubeMax, length = Nsamps[1]))
+        for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
+        for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+    ]
+end

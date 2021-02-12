@@ -43,7 +43,7 @@ function sample(c::ConalPlane{T}, Nsamps::NTuple{3,Int}) where {T}
     samples = [
         CylindricalPoint{T}(r,c.φ,z)
         for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
-        for r in (Nsamps[3] ≤ 1 ? _left_radial_interval(get_r_at_z(c, z)) : range(_left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c, z)), length = Nsamps[1]))
+        for r in (Nsamps[1] ≤ 1 ? _left_radial_interval(get_r_at_z(c, z)) : range(_left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c, z)), length = Nsamps[1]))
     ]
 end
 

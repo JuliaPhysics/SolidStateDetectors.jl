@@ -153,3 +153,25 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple
     push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
     unique(surfaces)
 end
+
+function sample(c::Cone{T}, step::Real) where {T}
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    samples = [
+        CylindricalPoint{T}(r,φ,z)
+        for z in zMin:step:zMax
+        for r in _left_radial_interval(get_r_at_z(c, z)):step:_right_radial_interval(get_r_at_z(c, z))
+        for φ in (r == 0 ? φMin : φMin:step/r:φMax)
+    ]
+end
+
+function sample(c::Cone{T}, Nsamps::NTuple{3,Int}) where {T}
+    zMin::T, zMax::T = get_z_limits(c)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    samples = [
+        CylindricalPoint{T}(r,φ,z)
+        for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
+        for r in (Nsamps[1] ≤ 1 ? _left_radial_interval(get_r_at_z(c, z)) : range(_left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c, z)), length = Nsamps[1]))
+        for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+    ]
+end
