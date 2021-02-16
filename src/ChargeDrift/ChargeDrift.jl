@@ -65,9 +65,6 @@ function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
     return _drift_charges(detector, grid, CartesianPoint{T}.(point_types), [starting_point], velocity_field_e, velocity_field_h, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
 end
 
-@inline _convert_vector(pt::CartesianPoint, ::Type{Cylindrical}) = CylindricalPoint(pt)
-@inline _convert_vector(pt::CartesianPoint, ::Type{Cartesian}) = pt
-
 function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where {T <: SSDFloat}
     return p
 end
@@ -114,7 +111,7 @@ function _drift_charge!(
         if done == false
             last_real_step_index += 1
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
-            stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_vector(current_pos, Val(S))) * Δt
+            stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, Val(S))) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
             if geom_round.(stepvector) == null_step
                 done = true
@@ -178,7 +175,7 @@ end
 function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
-    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_vector(point_mid, Val(S)))
+    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_point(point_mid, Val(S)))
     for i in 1:max_n_iter
         if cd_point_type == CD_BULK
             point_in = point_mid
@@ -190,7 +187,7 @@ function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}
             break
         end
         point_mid = T(0.5) * (point_in + point_out)
-        cd_point_type, contact_idx, surface_normal = point_type(detector, grid, _convert_vector(point_mid, Val(S)))
+        cd_point_type, contact_idx, surface_normal = point_type(detector, grid, _convert_point(point_mid, Val(S)))
     end
     return point_mid, cd_point_type, contact_idx, surface_normal
 end

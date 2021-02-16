@@ -29,7 +29,8 @@ using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint, AbstractCoordinatePoint,
+using .ConstructiveSolidGeometry: 
+            CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry,

@@ -80,6 +80,9 @@ end
 @inline CylindricalPoint(pt::CylindricalPoint) = pt
 @inline CartesianPoint(pt::CartesianPoint) = pt
 
+@inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cylindrical}) = CylindricalPoint(pt)
+@inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cartesian}) = CartesianPoint(pt)
+
 @inline _eq_cyl_r(p::CylindricalPoint{T}, r::Real) where {T} = p.r == T(r)
 
 @inline _in_cyl_r(p::CylindricalPoint, r::Real) = p.r <= r
@@ -123,8 +126,10 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
 end
 
 @inline translate(p::CartesianPoint{T}, v::CartesianVector{T}) where {T} = p + v
-@inline translate!(vp::Vector{CartesianPoint{T}}, v::CartesianVector{T}) where {T} = begin for i in eachindex(vp) vp[i] = translate(vp[i], v) end; vp end
-@inline translate!(vvp::Vector{Vector{CartesianPoint{T}}}, v::CartesianVector{T}) where {T} = begin for i in eachindex(vvp) translate!(vvp[i], v) end; vvp end
+@inline translate(p::CylindricalPoint{T}, v::CartesianVector{T}) where {T} = CylindricalPoint(translate(CartesianPoint(p), v))
+@inline translate!(vp::Vector{<:AbstractCoordinatePoint{T}}, v::CartesianVector{T}) where {T} = begin for i in eachindex(vp) vp[i] = translate(vp[i], v) end; vp end
+@inline translate!(vvp::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::CartesianVector{T}) where {T} =  begin for i in eachindex(vvp) translate!(vvp[i], v) end; vvp end
+
 
 """
     struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
