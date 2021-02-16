@@ -200,7 +200,13 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
 
     world = if haskey(config_file, "grid")
         if isa(config_file["grid"], Dict)
-            #CS = Symbol(config_file["grid"]["coordinates"])
+            CS = if config_file["grid"]["coordinates"] == "cartesian" 
+                Cartesian
+            elseif config_file["grid"]["coordinates"]  == "cylindrical"
+                Cylindrical
+            else
+                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
+            end
             World(T, config_file["grid"], input_units)
         elseif isa(config_file["grid"], String)
             CS = if config_file["grid"] == "cartesian" 
