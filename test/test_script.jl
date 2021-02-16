@@ -29,7 +29,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     simulation = Simulation(det);
 
     apply_initial_state!(simulation, ElectricPotential)
-    p = if S == :cartesian
+    p = if S == SSD.Cartesian
         plot(
             plot(simulation.electric_potential, y = 0.002),
             plot(simulation.ρ, y = 0.002),
@@ -57,7 +57,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     end
     for nref in nrefs
         update_till_convergence!(simulation, ElectricPotential)
-        p = if S == :cartesian
+        p = if S == SSD.Cartesian
             plot(
                 plot(simulation.electric_potential, y = 0.002),
                 plot(simulation.ρ, y = 0.002),
@@ -82,7 +82,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     for contact in simulation.detector.contacts
         calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 1, verbose = true)
     end
-    wp_plots = if S != :cartesian
+    wp_plots = if S != SSD.Cartesian
         [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
     else
         [ plot(simulation.weighting_potentials[contact.id], y = 0.002) for contact in simulation.detector.contacts ]
@@ -96,7 +96,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
           st=:heatmap, title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
     savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
-    if S == :cylindrical
+    if S == SSD.Cylindrical
         plot_electric_field(simulation, φ=deg2rad(0), spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     else

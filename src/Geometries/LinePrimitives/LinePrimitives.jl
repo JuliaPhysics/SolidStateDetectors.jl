@@ -3,9 +3,9 @@
 
 T: eltype
 N: Dimension
-S: Coordinate System: `:cartesian` or `:cylindrical`
+S: Coordinate System: `Cartesian` or `Cylindrical`
 """
-abstract type AbstractLine{T, N, S} <: AbstractGeometry{T, N} end
+abstract type AbstractLine{T, N, S <: AbstractCoordinateSystem} <: AbstractGeometry{T, N} end
 
 """
     struct Line{T, N, S} <: AbstractLine{T, N, S}
@@ -17,10 +17,10 @@ struct Line{T, N, S} <: AbstractLine{T, N, S}
     dir::AbstractCoordinateVector{T, N, S}
 end
 
-function Line(p1::CartesianPoint{T}, p2::CartesianPoint{T})::Line{T, 3, :cartesian} where {T}
-    return Line{T, 3, :cartesian}(p1, p2 - p1)
+function Line(p1::CartesianPoint{T}, p2::CartesianPoint{T})::Line{T, 3, Cartesian} where {T}
+    return Line{T, 3, Cartesian}(p1, p2 - p1)
 end
-function in(pt::CartesianPoint{T}, l::Line{T, 3, :cartesian}; atol::Real = T(0))::Bool where {T}
+function in(pt::CartesianPoint{T}, l::Line{T, 3, Cartesian}; atol::Real = T(0))::Bool where {T}
     norm((pt - l.org) × l.dir) <= atol
 end
 
@@ -33,10 +33,10 @@ struct Ray{T, N, S} <: AbstractLine{T, N, S}
     org::AbstractCoordinatePoint{T, N, S}
     dir::AbstractCoordinateVector{T, N, S}
 end
-function Ray(p1::CartesianPoint{T}, p2::CartesianPoint{T})::Ray{T, 3, :cartesian} where {T}
-    return Ray{T, 3, :cartesian}(p1, p2 - p1)
+function Ray(p1::CartesianPoint{T}, p2::CartesianPoint{T})::Ray{T, 3, Cartesian} where {T}
+    return Ray{T, 3, Cartesian}(p1, p2 - p1)
 end
-function in(pt::CartesianPoint{T}, l::Ray{T, 3, :cartesian}; atol::Real = T(0))::Bool where {T}
+function in(pt::CartesianPoint{T}, l::Ray{T, 3, Cartesian}; atol::Real = T(0))::Bool where {T}
     d::CartesianVector{T} = pt - l.org
     if norm(d × l.dir) <= atol
         return d ⋅ l.dir >= 0
@@ -54,10 +54,10 @@ struct LineSegment{T, N, S} <: AbstractLine{T, N, S}
     dir::AbstractCoordinateVector{T, N, S}
 end
 
-function LineSegment(p1::CartesianPoint{T}, p2::CartesianPoint{T})::LineSegment{T, 3, :cartesian} where {T}
-    return LineSegment{T, 3, :cartesian}(p1, p2 - p1)
+function LineSegment(p1::CartesianPoint{T}, p2::CartesianPoint{T})::LineSegment{T, 3, Cartesian} where {T}
+    return LineSegment{T, 3, Cartesian}(p1, p2 - p1)
 end
-function in(pt::CartesianPoint{T}, l::LineSegment{T, 3, :cartesian}; atol::T = T(0))::Bool where {T}
+function in(pt::CartesianPoint{T}, l::LineSegment{T, 3, Cartesian}; atol::T = T(0))::Bool where {T}
     d::CartesianVector{T} = pt - l.org
     if norm(d × l.dir) <= atol
         d2::CartesianVector{T} = d - l.dir
@@ -67,7 +67,7 @@ function in(pt::CartesianPoint{T}, l::LineSegment{T, 3, :cartesian}; atol::T = T
 end
 
 
-function iscolinear(l1::AbstractLine{T, 3, :cartesian}, l2::AbstractLine{T, 3, :cartesian}, atol::Real = T(0))::Bool where {T}
+function iscolinear(l1::AbstractLine{T, 3, Cartesian}, l2::AbstractLine{T, 3, Cartesian}, atol::Real = T(0))::Bool where {T}
     return norm(l1.dir × l2.dir) <= atol # l1.dir == l2.dir || norm(l1.dir × l2.dir) == 0
 end
 
@@ -89,17 +89,17 @@ struct PartialCircle{T,N,S} <: AbstractLine{T,N,S}
 end
 
 function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T} = CartesianVector{T}([0,0,0]), Rotate::Rotation{3,T} = RotZ{T}(0)) where {T}
-    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate, Rotate)
+    PartialCircle{T, 3, Cartesian}(r, phiStart, phiStop, Translate, Rotate)
 end
 
 function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::CartesianVector{T}, Rotate::Missing) where {T}
-    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, Translate, RotZ{T}(0))
+    PartialCircle{T, 3, Cartesian}(r, phiStart, phiStop, Translate, RotZ{T}(0))
 end
 
 function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing, Rotate::Rotation{3,T}) where {T}
-    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]), Rotate)
+    PartialCircle{T, 3, Cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]), Rotate)
 end
 
 function PartialCircle(r::T, phiStart::T, phiStop::T, Translate::Missing, Rotate::Missing) where {T}
-    PartialCircle{T, 3, :cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]),  RotZ{T}(0))
+    PartialCircle{T, 3, Cartesian}(r, phiStart, phiStop, CartesianVector{T}([0,0,0]),  RotZ{T}(0))
 end

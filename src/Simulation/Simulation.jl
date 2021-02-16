@@ -191,10 +191,10 @@ function update_till_convergence!( sim::Simulation{T},
                                     )::T where {T <: SSDFloat}
     CS = get_coordinate_system(sim.detector)
     if ismissing(sor_consts)
-        sor_consts = CS == :cylindrical ? (T(1.4), T(1.85)) : T(1.4)
-    elseif length(sor_consts) == 1 && CS == :cylindrical
+        sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
+    elseif length(sor_consts) == 1 && CS == Cylindrical
         sor_consts = (T(sor_consts), T(sor_consts))
-    elseif length(sor_consts) > 1 && CS == :cartesian
+    elseif length(sor_consts) > 1 && CS == Cartesian
         sor_consts = T(sor_consts[1])
     end
     only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
@@ -283,10 +283,10 @@ function update_till_convergence!( sim::Simulation{T},
                                     )::T where {T <: SSDFloat}
     CS = get_coordinate_system(sim.detector)
     if ismissing(sor_consts)
-        sor_consts = CS == :cylindrical ? (T(1.4), T(1.85)) : T(1.4)
-    elseif length(sor_consts) == 1 && CS == :cylindrical
+        sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
+    elseif length(sor_consts) == 1 && CS == Cylindrical
         sor_consts = (T(sor_consts), T(sor_consts))
-    elseif length(sor_consts) > 1 && CS == :cartesian
+    elseif length(sor_consts) > 1 && CS == Cartesian
         sor_consts = T(sor_consts[1])
     end
 
@@ -370,17 +370,17 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
             grid = Grid(sim.detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing, for_weighting_potential = isWP)
         end
         if ismissing(sor_consts)
-            sor_consts = CS == :cylindrical ? (T(1.4), T(1.85)) : T(1.4)
-        elseif length(sor_consts) == 1 && CS == :cylindrical
+            sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
+        elseif length(sor_consts) == 1 && CS == Cylindrical
             sor_consts = (T(sor_consts), T(sor_consts))
-        elseif length(sor_consts) > 1 && CS == :cartesian
+        elseif length(sor_consts) > 1 && CS == Cartesian
             sor_consts = T(sor_consts[1])
         end
         if ismissing(refinement_limits)
-            refinement_limits::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            refinement_limits::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
         if ismissing(min_grid_spacing)
-            min_grid_spacing::NTuple{3, T} = CS == :cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            min_grid_spacing::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
         n_iterations_between_checks::Int = div(10^7, length(grid))
         if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
@@ -390,7 +390,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
         end
         refine::Bool = max_refinements > 0 ? true : false
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
-        if CS == :cylindrical
+        if CS == Cylindrical
             cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
             n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3))
             n_φ_sym_info_txt = if only_2d
@@ -406,7 +406,7 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
             println(
                 "$(isEP ? "Electric" : "Weighting") Potential Calculation\n",
                 if isEP "Bias voltage: $(bias_voltage) V\n" else "" end,
-                if CS == :cylindrical "$n_φ_sym_info_txt\n" else "" end,
+                if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
                 "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n",
                 "Threads: $use_nthreads\n",
@@ -535,7 +535,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     # S = get_coordinate_system(sim.detector)
     # periodicity::T = get_periodicity(sim.detector.world.intervals[2])
-    # if S == :cylindrical && periodicity == T(0)
+    # if S == Cylindrical && periodicity == T(0)
     #     if ismissing(n_points_in_φ)
     #         @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
     #         n_points_in_φ = 36
@@ -547,7 +547,7 @@ function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, arg
     #     end
     # end
     # wps = calculate_weighting_potential(sim.detector, contact_id, args...; kwargs...)
-    # if S == :cylindrical && size(wps.potential, 2) == 1 && !ismissing(n_points_in_φ)
+    # if S == Cylindrical && size(wps.potential, 2) == 1 && !ismissing(n_points_in_φ)
     #     wp = WeightingPotential(wps, n_points_in_φ = n_points_in_φ)
     # else
     #     wp = WeightingPotential(wps)
@@ -608,7 +608,7 @@ ToDo...
 function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
     S = get_coordinate_system(sim.detector)
     periodicity::T = get_periodicity(sim.detector.world.intervals[2])
-    e_pot, point_types = if S == :cylindrical && periodicity == T(0) # 2D, only one point in φ
+    e_pot, point_types = if S == Cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
             @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36
@@ -620,7 +620,7 @@ function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::
         end
         get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
         get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ);
-    elseif S == :cylindrical
+    elseif S == Cylindrical
         get_2π_potential(sim.electric_potential),
         get_2π_potential(sim.point_types)
     else
@@ -703,7 +703,7 @@ calculate_stored_energy(sim::Simulation) =
 function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistribution{T,3,S}) where {T <: SSDFloat, S}
     W::T = 0
 
-    cylindric::Bool = S == :cylindrical
+    cylindric::Bool = S == Cylindrical
     cartesian::Bool = !cylindric
     r0_handling::Bool = typeof(ef.grid.axes[1]).parameters[2] == :r0
 

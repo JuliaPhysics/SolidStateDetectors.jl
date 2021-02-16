@@ -130,7 +130,7 @@ function CylindricalWorld(T, dict::Dict, input_units::NamedTuple)::World
     r_int = get_r_SSDInterval(T, dict["r"], input_units)
     φ_int = get_φ_SSDInterval(T, dict, input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
-    return World{T, 3, :cylindrical}( r_int, φ_int, z_int )
+    return World{T, 3, Cylindrical}( r_int, φ_int, z_int )
 end
 
 
@@ -138,7 +138,7 @@ function CartesianWorld(T, dict::Dict, input_units::NamedTuple)::World
     x_int = get_cartesian_SSDInterval(T, dict["x"], input_units)
     y_int = get_cartesian_SSDInterval(T, dict["y"], input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
-    return World{T, 3, :cartesian}( x_int, y_int, z_int )
+    return World{T, 3, Cartesian}( x_int, y_int, z_int )
 end
 
 function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T)::World where {T <: SSDFloat}
@@ -148,7 +148,7 @@ function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T)::World where {
     x_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(xl - Δx, xr + Δx)
     y_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(yl - Δy, yr + Δy)
     z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - Δz, zr + Δz)
-    return World{T, 3, :cartesian}( x_int, y_int, z_int )
+    return World{T, 3, Cartesian}( x_int, y_int, z_int )
 end
 
 function CylindricalWorld(r_max::T, zl::T, zr::T)::World where {T <: SSDFloat}
@@ -156,12 +156,12 @@ function CylindricalWorld(r_max::T, zl::T, zr::T)::World where {T <: SSDFloat}
     φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(T(0), T(2π))
     Δz::T = zr - zl
     z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - (Δz / 10), zr + (Δz / 10))
-    return World{T, 3, :cylindrical}( r_int, φ_int, z_int )
+    return World{T, 3, Cylindrical}( r_int, φ_int, z_int )
 end
 
-function World(S::Val{:cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}
+function World(::Type{Cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}
     return CylindricalWorld(limits[2], limits[5], limits[6])
 end
-function World(S::Val{:cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
+function World(::Type{Cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
     return CartesianWorld(limits...)
 end

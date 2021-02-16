@@ -87,7 +87,7 @@ end
 
 
 
-function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, :cylindrical}, 
+function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, Cylindrical}, 
                 max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T <: SSDFloat}
     inds_r::Vector{Int} = Int[]
     inds_φ::Vector{Int} = Int[]
@@ -255,7 +255,7 @@ function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
 end
 
 
-function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, :cartesian}, 
+function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, Cartesian}, 
                                 max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T}
     inds_x::Vector{Int} = Int[]
     inds_y::Vector{Int} = Int[]

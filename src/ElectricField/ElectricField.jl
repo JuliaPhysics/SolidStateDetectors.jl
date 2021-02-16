@@ -54,7 +54,7 @@ function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, :cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = ep.data
     axr::Vector{T} = collect(ep.grid.axes[1])
     axφ::Vector{T} = collect(ep.grid.axes[2])
@@ -192,14 +192,14 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
 end
 
 
-function interpolated_scalarfield(ep::ScalarPotential{T, 3, :cylindrical}) where {T}
+function interpolated_scalarfield(ep::ScalarPotential{T, 3, Cylindrical}) where {T}
     @inbounds knots = ep.grid.axes[1].ticks, cat(ep.grid.axes[2].ticks,T(2π),dims=1), ep.grid.axes[3].ticks
     ext_data = cat(ep.data, ep.data[:,1:1,:], dims=2)
     i = interpolate(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
 end
-function interpolated_scalarfield(ep::ScalarPotential{T, 3, :cartesian}) where {T}
+function interpolated_scalarfield(ep::ScalarPotential{T, 3, Cartesian}) where {T}
     @inbounds knots = ep.grid.axes[1].ticks, ep.grid.axes[2].ticks, ep.grid.axes[3].ticks
     i = interpolate(knots, ep.data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
@@ -222,7 +222,7 @@ function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) whe
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, :cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, :cartesian} where {T <: SSDFloat}
+function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(ep.grid.axes[1])
     axy::Vector{T} = collect(ep.grid.axes[2])
     axz::Vector{T} = collect(ep.grid.axes[3])

@@ -65,8 +65,8 @@ function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
     return _drift_charges(detector, grid, CartesianPoint{T}.(point_types), [starting_point], velocity_field_e, velocity_field_h, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
 end
 
-@inline _convert_vector(pt::CartesianPoint, ::Val{:cylindrical}) = CylindricalPoint(pt)
-@inline _convert_vector(pt::CartesianPoint, ::Val{:cartesian}) = pt
+@inline _convert_vector(pt::CartesianPoint, ::Type{Cylindrical}) = CylindricalPoint(pt)
+@inline _convert_vector(pt::CartesianPoint, ::Type{Cartesian}) = pt
 
 function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where {T <: SSDFloat}
     return p
@@ -81,10 +81,10 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv
     return sv
 end
 
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cylindrical}, point_types::PointTypes{T, 3, :cylindrical})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, Cylindrical}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl in point_types || pt_cyl in det
 end
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cartesian}, point_types::PointTypes{T, 3, :cartesian})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, Cartesian}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
     pt_car in point_types || pt_car in det
 end
 

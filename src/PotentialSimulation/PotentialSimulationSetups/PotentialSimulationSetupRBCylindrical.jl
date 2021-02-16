@@ -1,4 +1,4 @@
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, grid::Grid{T, 3, :cylindrical} = Grid(ssd),
+function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, Cylindrical}, grid::Grid{T, 3, Cylindrical} = Grid(ssd),
                 potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = (1.0, 1.0),
                 weighting_potential_contact_id::Union{Missing, Int} = missing
                 )::PotentialSimulationSetupRB{T} where {T}
@@ -296,8 +296,8 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, :cylindrical}, gr
         pointtypes = clear(pointtypes)
     end # @inbounds
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical, typeof(geom_weights), typeof(grid.axes)} = 
-        PotentialSimulationSetupRB{T, 3, 4, :cylindrical, typeof(geom_weights), typeof(grid.axes)}(
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical, typeof(geom_weights), typeof(grid.axes)} = 
+        PotentialSimulationSetupRB{T, 3, 4, Cylindrical, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
         rbpointtypes,
@@ -323,7 +323,7 @@ function Grid(fssrb::PotentialSimulationSetupRB{T, N1, N2, S})::Grid{T, N1, S} w
     return fssrb.grid
 end
 
-function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical})::Array{T, 3} where {T}
+function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{T, 3} where {T}
     pot::Array{T, 3} = Array{T, 3}(undef, size(fssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = rbidx(iz)
@@ -341,7 +341,7 @@ function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cyli
 end
 
 
-function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical})::Array{PointType, 3} where {T}
+function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{PointType, 3} where {T}
     pointtypes::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
     for iz in axes(pointtypes, 3)
         irbz::Int = rbidx(iz)
@@ -358,13 +358,23 @@ function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical}
     return pointtypes
 end
 
+"""
+    PointTypes(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical}
+
+Extracts the point types from `setup` and extrapolates it to an 2π grid.
+
+For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
+"""
+function PointTypes(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical} where {T}
+    return get_2π_potential(PointTypes{T, 3, Cylindrical}(setup.pointtypes, setup.grid); kwargs...)
+end
 
 function PointTypes(fss::PotentialSimulationSetup{T, N, S})::PointTypes{T, N, S} where {T, N, S}
     return PointTypes{T, N, S}( fss.pointtypes, fss.grid )
 end
 
 
-function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical})::Array{T} where {T}
+function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
@@ -388,7 +398,7 @@ function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, 
     return ρ
 end
 
-function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, :cylindrical})::Array{T} where {T}
+function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)

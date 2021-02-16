@@ -56,7 +56,7 @@ end
 
 
 function _generate_waveform( drift_paths::Vector{EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
-                             wp::Interpolations.Extrapolation{T, 3}, S::Union{Val{:cylindrical}, Val{:cartesian}}) where {T <: SSDFloat}
+                             wp::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType) where {T <: SSDFloat}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))

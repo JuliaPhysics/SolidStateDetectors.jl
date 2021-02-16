@@ -236,13 +236,13 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
 end
 
 # go_to_nearest_gridpoint
-function searchsortednearest(grid::Grid{T, 3, :cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::Grid{T, 3, Cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.r)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.φ)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
     CylindricalPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
 end
-function searchsortednearest(grid::Grid{T, 3, :cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::Grid{T, 3, Cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.x)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.y)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
@@ -334,7 +334,7 @@ end
 
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, :cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -401,7 +401,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-    grid::Grid{T, N, :cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+    grid::Grid{T, N, Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -476,7 +476,7 @@ function json_to_dict(inputfile::String)::Dict
     return parsed_json_file
 end
 
-function Grid(  detector::SolidStateDetector{T, :cylindrical};
+function Grid(  detector::SolidStateDetector{T, Cylindrical};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
@@ -587,7 +587,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
 end
 
 
-function Grid(  detector::SolidStateDetector{T, :cartesian};
+function Grid(  detector::SolidStateDetector{T, Cartesian};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
                 min_n_ticks::Int = 10,

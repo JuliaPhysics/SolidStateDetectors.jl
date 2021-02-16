@@ -31,7 +31,10 @@ include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint, AbstractCoordinatePoint,
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
-            AbstractGeometry
+            Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
+            Geometry, AbstractGeometry,
+            get_decomposed_volumes,
+            geom_round, geom_sigdigits, geom_atol_zero
             
 
 import Clustering

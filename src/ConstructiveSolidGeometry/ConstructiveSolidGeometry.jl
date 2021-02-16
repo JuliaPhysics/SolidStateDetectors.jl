@@ -18,6 +18,13 @@ module ConstructiveSolidGeometry
     abstract type AbstractCoordinateSystem end
     abstract type Cartesian <: AbstractCoordinateSystem end
     abstract type Cylindrical <: AbstractCoordinateSystem end
+    const CoordinateSystemType = Union{Type{Cartesian}, Type{Cylindrical}}
+    
+    import Base: print, show
+    print(io::IO, ::Type{Cartesian}) = print(io, "Cartesian")
+    print(io::IO, ::Type{Cylindrical}) = print(io, "Cylindrical")
+    show(io::IO, CS::CoordinateSystemType) = print(io, CS) 
+    show(io::IO,::MIME"text/plain", CS::CoordinateSystemType) = show(io, CS)
 
     abstract type AbstractGeometry{T <: AbstractFloat} end
 
