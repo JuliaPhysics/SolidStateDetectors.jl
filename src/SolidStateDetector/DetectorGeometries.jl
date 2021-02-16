@@ -1,8 +1,9 @@
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
     "deg" => u"°","rad" => u"rad", #angle
-    "V" => u"V", "kV" => u"kV", #Potential
-    "K" => u"K", "Kelvic" => u"K", "C" => u"C")
+    "V" => u"V", "kV" => u"kV", #potential
+    "K" => u"K", "Kelvin" => u"K", "C" => u"°C", "Celsius" => u"°C", #temperature
+)
 
 include("Object.jl")
 include("Passive.jl")
