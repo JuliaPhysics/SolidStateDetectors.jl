@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Primitives · SolidStateDetectors.jl</title><link rel="canonical" href="https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/man/primitives/index.html"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="SolidStateDetectors.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit">SolidStateDetectors.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../installation/">Installation</a></li><li><input class="collapse-toggle" id="menuitem-2-2" type="checkbox"/><label class="tocitem" for="menuitem-2-2"><span class="docs-label">Detectors</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../config_files/">Config Files</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox" checked/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Geometries (CSG)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../csg/">CSG</a></li><li class="is-active"><a class="tocitem" href>Primitives</a><ul class="internal"><li><a class="tocitem" href="#Primitve:-Box-1"><span>Primitve: Box</span></a></li><li><a class="tocitem" href="#Primitve:-Tube-1"><span>Primitve: Tube</span></a></li><li><a class="tocitem" href="#Primitve:-Cone-1"><span>Primitve: Cone</span></a></li><li><a class="tocitem" href="#Primitve:-Sphere-1"><span>Primitve: Sphere</span></a></li><li><a class="tocitem" href="#Add-new-Primitive-1"><span>Add new Primitive</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../electric_potentials/">Electric Potentials</a></li><li><a class="tocitem" href="../weighting_potentials/">Weighting Potentials</a></li><li><a class="tocitem" href="../electric_fields/">Electric Fields</a></li><li><a class="tocitem" href="../drift_fields/">Drift Fields</a></li><li><a class="tocitem" href="../IO/">IO</a></li></ul></li><li><a class="tocitem" href="../../tutorial/">Tutorial</a></li><li><a class="tocitem" href="../../api/">API</a></li><li><a class="tocitem" href="../../LICENSE/">LICENSE</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li><a class="is-disabled">Geometries (CSG)</a></li><li class="is-active"><a href>Primitives</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Primitives</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaPhysics/SolidStateDetectors.jl/blob/master/docs/src/man/primitives.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="CSG-Primitives-1"><a class="docs-heading-anchor" href="#CSG-Primitives-1">CSG Primitives</a><a class="docs-heading-anchor-permalink" href="#CSG-Primitives-1" title="Permalink"></a></h1><p>CSG = Constructive Solid Geometries</p><h2 id="Primitve:-Box-1"><a class="docs-heading-anchor" href="#Primitve:-Box-1">Primitve: Box</a><a class="docs-heading-anchor-permalink" href="#Primitve:-Box-1" title="Permalink"></a></h2><pre><code class="language-json">{
+    &quot;type&quot;: &quot;box&quot;,
+    &quot;x&quot;: {
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;:  10.0
+    },
+    &quot;y&quot;:{
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;:  10.0
+    },
+    &quot;z&quot;: {
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;:  10.0
+    }
+}</code></pre><h2 id="Primitve:-Tube-1"><a class="docs-heading-anchor" href="#Primitve:-Tube-1">Primitve: Tube</a><a class="docs-heading-anchor-permalink" href="#Primitve:-Tube-1" title="Permalink"></a></h2><pre><code class="language-json">{
+    &quot;type&quot;: &quot;tube&quot;,
+    &quot;r&quot;: {
+        &quot;from&quot;: 3.0,
+        &quot;to&quot;:   7.0
+    },
+    &quot;phi&quot;: {
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;: 360.0
+    },
+    &quot;z&quot;: {
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;:  10.0
+    }
+}</code></pre><h2 id="Primitve:-Cone-1"><a class="docs-heading-anchor" href="#Primitve:-Cone-1">Primitve: Cone</a><a class="docs-heading-anchor-permalink" href="#Primitve:-Cone-1" title="Permalink"></a></h2><pre><code class="language-json">{
+    &quot;type&quot;: &quot;cone&quot;,
+    &quot;r&quot;: {
+        &quot;bottom&quot;: {
+            &quot;from&quot;: 10.0,
+            &quot;to&quot;: 20.0
+        },
+        &quot;top&quot;: {
+            &quot;from&quot;: 5.0,
+            &quot;to&quot;: 25.0
+        }
+    },
+    &quot;phi&quot;: {
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;: 360.0
+    },
+    &quot;z&quot;: {
+        &quot;from&quot;: 0.0,
+        &quot;to&quot;:  10.0
+    }
+}</code></pre><h2 id="Primitve:-Sphere-1"><a class="docs-heading-anchor" href="#Primitve:-Sphere-1">Primitve: Sphere</a><a class="docs-heading-anchor-permalink" href="#Primitve:-Sphere-1" title="Permalink"></a></h2><pre><code class="language-json">{
+    &quot;type&quot;: &quot;sphere&quot;,
+    &quot;r&quot;: 30,
+    &quot;translate&quot;: {
+        &quot;x&quot;: 0,
+        &quot;y&quot;: 0,
+        &quot;z&quot;: 0
+    }
+}</code></pre><h2 id="Add-new-Primitive-1"><a class="docs-heading-anchor" href="#Add-new-Primitive-1">Add new Primitive</a><a class="docs-heading-anchor-permalink" href="#Add-new-Primitive-1" title="Permalink"></a></h2><p>If you need a primitive which is not yet implemented you can implemented yourself and make a PR on GitHub :)</p><p>There are a few functions you will have to define for a new primitive. Here is a layout for a new primitive. Place the struct and all the functions in a file &#39;NewPrimitive.jl&#39; inside &#39;&lt;SSD&gt;/src/Geometries/VolumePrimitives&#39; and include it in the file &#39;&lt;SSD&gt;/src/Geometries/VolumePrimitives/VolumePrimitives.jl&#39;</p><p>Note that internally everything is in SI units. So please have a look in the already implemented primitives (<code>Box</code>, <code>Sphere</code>, <code>Tube</code>, ...) how the conversion from config file units to SI units is done. </p><pre><code class="language-julia">struct NewPrimitive{T} &lt;: AbstractVolumePrimitive{T, 3}
+    # fields of the new primitive
+end
+
+function in(pt::CartesianPoint{T}, g::NewPrimitive{T})::Bool where {T}
+    # pt in NewPrimitive?
+end
+function in(pt::CylindricalPoint{T}, g::NewPrimitive{T})::Bool where {T}
+    # pt in NewPrimitive?
+end
+
+# You also have to implement the function to obtain the primitive from a config file (so an dic)
+# You also should provide a example config file containing this new primitive
+function NewPrimitive{T}(dict::Union{Dict{Any, Any}, Dict{String, Any}}, inputunit_dict::Dict{String,Unitful.Units})::NewPrimitive{T} where {T &lt;: SSDFloat}
+    # ... parse values from dict to NewPrimitive{T}(...)
+    return NewPrimitive{T}(
+        # ...
+    )
+end
+function Geometry(T::DataType, t::Val{:newprimitive}, dict::Dict{Any, Any}, inputunit_dict::Dict{String,Unitful.Units})
+    return NewPrimitive{T}(dict, inputunit_dict)
+end
+
+# Also a plot recipe for this new primitive should be provided:
+@recipe function f(cb::NewPrimitive{T}) where {T &lt;: SSDFloat}
+    label --&gt; &quot;NewPrimitive&quot;
+    # ...
+end
+
+# For proper grid creation we also need the function get_important_points:
+function get_important_points(g::NewPrimitive{T}, ::Val{:r})::Vector{T} where {T &lt;: SSDFloat}
+    return T[ # ... ]
+end
+function get_important_points(g::NewPrimitive{T}, ::Val{:φ})::Vector{T} where {T &lt;: SSDFloat}
+    return T[ # ... ]
+end
+function get_important_points(g::NewPrimitive{T}, ::Val{:z})::Vector{T} where {T &lt;: SSDFloat}
+    return T[ # ... ]
+end
+function get_important_points(g::NewPrimitive{T}, ::Val{:x})::Vector{T} where {T &lt;: SSDFloat}
+    return T[ # ... ]
+end
+function get_important_points(g::NewPrimitive{T}, ::Val{:y})::Vector{T} where {T &lt;: SSDFloat}
+    return T[ # ... ]
+end
+
+# and a sample function to paint the primitive on the grid (necessary if the object is small)
+function sample(cb::NewPrimitive{T}, stepsize::Vector{T})  where {T &lt;: SSDFloat}
+    samples  = CartesianPoint{T}[]
+    # ...
+    return samples
+end
+
+# add a (+) method to shift the primitive 
+function (+)(b::NewPrimitive{T}, translate::Union{CartesianVector{T},Missing})::NewPrimitive{T} where {T &lt;: SSDFloat}
+    # ...
+    return NewPrimitive( # ...  )
+end</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../csg/">« CSG</a><a class="docs-footer-nextpage" href="../electric_potentials/">Electric Potentials »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 18 March 2020 00:11">Wednesday 18 March 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
