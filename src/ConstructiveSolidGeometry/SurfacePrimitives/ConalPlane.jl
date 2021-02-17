@@ -58,5 +58,5 @@ end
 
 function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConalPlane{T})::T where {T}
     point = CartesianPoint(point)
-    distance_to_surface(point, Plane(unique(geom_round(get_vertices(c)))...; p4_on_plane_check = false))
+    distance_to_surface(point, Plane(unique(get_vertices(c))..., p4_on_plane_check = false))
 end

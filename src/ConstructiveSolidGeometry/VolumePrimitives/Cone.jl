@@ -99,13 +99,13 @@ get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.le
 
 get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
-function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMax, rtopMax, zMin, zMax) where {T}
+function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax) where {T}
     surfaces = AbstractSurfacePrimitive[]
     #top and bottom annulus
-    if rbotMax ≠ 0
+    if rbotMax ≠ rbotMin
         push!(surfaces, CylindricalAnnulus(c, z = zMin))
     end
-    if rtopMax ≠ 0
+    if rtopMax ≠ rtopMin
         push!(surfaces, CylindricalAnnulus(c, z = zMax))
     end
     #outer conemantle
@@ -118,14 +118,14 @@ end
 function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, Nothing, <:Any}) where {T}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
     unique(surfaces)
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
     push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
     unique(surfaces)
 end
@@ -135,7 +135,7 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, <:AbstractIn
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
     for φ in [φMin, φMax]
         push!(surfaces, ConalPlane(c, φ = φ))
     end
@@ -146,7 +146,7 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(c, rbotMax, rtopMax, zMin, zMax)
+    surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
     for φ in [φMin, φMax]
         push!(surfaces, ConalPlane(c, φ = φ))
     end

@@ -8,5 +8,5 @@ function mesh(c::ConalPlane{T}; n = 30) where {T <: AbstractFloat}
     while length(v) < 3
         push!(v,v[1])
     end
-    mesh(Plane(v...))
+    mesh(Plane(v..., p4_on_plane_check = false))
  end
