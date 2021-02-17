@@ -68,7 +68,11 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAn
         return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
     else
         φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
-        return distance_to_line_segment(point, (CylindricalPoint{T}(rMin,φNear,a.z),CylindricalPoint{T}(rMax,φNear,a.z)))
+        if rMin == rMax
+            return norm(CartesianPoint(point)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
+        else
+            return distance_to_line_segment(point, (CylindricalPoint{T}(rMin,φNear,a.z),CylindricalPoint{T}(rMax,φNear,a.z)))
+        end
         #=Δφ = min(Δ_φ(T(point.φ),φMin),Δ_φ(T(point.φ),φMax))
         y, x = point.r .* sincos(Δφ)
         d = if x < rMin

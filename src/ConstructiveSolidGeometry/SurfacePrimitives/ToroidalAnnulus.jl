@@ -54,3 +54,13 @@ function sample(t::ToroidalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
     ]
 end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, t::ToroidalAnnulus{T})::T where {T}
+    point = CartesianPoint(point)
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    sφ, cφ = sincos(t.φ)
+    tri = Triangle(CartesianPoint{T}(t.r_torus*cφ, t.r_torus*sφ, 0), CartesianPoint{T}((t.r_torus+r_tubeMax)*cφ, (t.r_torus+r_tubeMax)*sφ, 0), CartesianPoint{T}(t.r_torus*cφ, t.r_torus*sφ, r_tubeMax))
+    point = CartesianPoint{T}((get_planar_coordinates(point, tri).*norm.(get_spanning_vectors(tri)))...,distance_to_infinite_plane(point, tri))
+    distance_to_surface(point, CylindricalAnnulus(r_tubeMin, r_tubeMax, θMin, θMax, T(0)))
+end

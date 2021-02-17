@@ -61,3 +61,21 @@ function sample(t::TorusMantle{T}, Nsamps::NTuple{3,Int}) where {T}
         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
     ]
 end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:Any, <:Any, Nothing, <:Any})::T where {T}
+    point = CylindricalPoint(point)
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    distance_to_surface(CartesianPoint{T}(point.r-t.r_torus,point.z,T(0)), CylindricalAnnulus(t.r_tube, t.r_tube, θMin, θMax, T(0)))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:Any, <:Any, <:AbstractInterval, <:Any})::T where {T}
+    θMin::T, θMax::T, _ = get_θ_limits(t)
+    if _in_φ(point, t.φ)
+        return distance_to_surface(CartesianPoint{T}(point.r-t.r_torus,point.z,T(0)), CylindricalAnnulus(t.r_tube, t.r_tube, θMin, θMax, T(0)))
+    else
+        φMin::T, φMax::T, _ = get_φ_limits(t)
+        pcy = CylindricalPoint(point)
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        return distance_to_surface(point, ToroidalAnnulus(t.r_torus, t.r_tube, t.r_tube, φNear, θMin, θMax))
+    end
+end
