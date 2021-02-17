@@ -35,7 +35,7 @@ end
 function distance_to_infinite_plane(point::CartesianPoint{T}, plane::Plane{T})::T where {T}
     n::CartesianVector{T} = get_surface_vector(plane)
     v = CartesianVector{T}(point - plane.p1)
-    geom_round(abs(dot(n,v)))
+    abs(dot(n,v))
 end
 
 function on_infinite_plane(point::CartesianPoint{T}, plane::Plane{T})::Bool where {T}
@@ -60,7 +60,9 @@ end
 in(point::CartesianPoint{T}, tri::Plane{T, CartesianPoint{T}, Nothing}) where {T} = projection_in_triangle(point, tri) && on_infinite_plane(point, tri)
 #Order of checks makes no difference in performance in all tested cases
 
-function _distance_to_line_segment(point::CartesianPoint{T}, seg::Tuple{CartesianPoint{T},CartesianPoint{T}})::T where {T}
+function distance_to_line_segment(point::AbstractCoordinatePoint{T}, seg::Tuple{AbstractCoordinatePoint{T},AbstractCoordinatePoint{T}})::T where {T}
+    point = CartesianPoint(point)
+    seg = (CartesianPoint(seg[1]), CartesianPoint(seg[2]))
     v12 = normalize(CartesianVector{T}(seg[2] - seg[1]))
     v_point_1 = CartesianVector{T}(point - seg[1])
     proj_on_v12 = dot(v12,v_point_1)
@@ -71,25 +73,26 @@ function _distance_to_line_segment(point::CartesianPoint{T}, seg::Tuple{Cartesia
         if geom_round(dot(v12,v_point_2)) ≥ T(0)
             return norm(seg[2] - point)
         else
-            return sqrt(dot(v_point_1,v_point_1) - proj_on_v12^2)
+            return sqrt(abs(dot(v_point_1,v_point_1) - proj_on_v12^2))
         end
     end
 end
 
-function distance_to_surface(point::CartesianPoint{T}, tri::Plane{T, CartesianPoint{T}, Nothing})::T where {T}
+function distance_to_surface(point::AbstractCoordinatePoint{T}, tri::Plane{T, CartesianPoint{T}, Nothing})::T where {T}
+    point = CartesianPoint(point)
     u, v = get_planar_coordinates(point, tri)
     if geom_round(u) ≥ T(0) && geom_round(v) ≥ T(0) #++ quadrant. Origin is tri.p1
         if geom_round(u+v) ≤ T(1) #in triangle
             return distance_to_infinite_plane(point, tri)
         else # on side 2_3 of tri
-            return _distance_to_line_segment(point, (tri.p2,tri.p3))
+            return distance_to_line_segment(point, (tri.p2,tri.p3))
         end
     elseif geom_round(u) ≤ T(0) && geom_round(v) ≤ T(0) #-- quadrant
         return norm(tri.p1 - point)
     elseif geom_round(u) > T(0) && geom_round(v) < T(0) #+- quadrant, on side 1_2 of tri
-        return _distance_to_line_segment(point, (tri.p1,tri.p2))
+        return distance_to_line_segment(point, (tri.p1,tri.p2))
     elseif geom_round(u) < T(0) && geom_round(v) > T(0) #-+ quadrant, on side 3_1 of tri
-        return _distance_to_line_segment(point, (tri.p3,tri.p1))
+        return distance_to_line_segment(point, (tri.p3,tri.p1))
     end
 end
 
@@ -113,13 +116,14 @@ function sample(tri::Plane{T, CartesianPoint{T}, Nothing}, Nsamps::NTuple{3,Int}
     ]
 end
 
-function Quadrilateral(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint{Float32}(1,0,0), p3 = CartesianPoint{Float32}(1,1,0), p4 = CartesianPoint{Float32}(0,1,0))
-    T = float(promote_type(eltype.((p1, p2, p3))...))
+function Quadrilateral(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint{Float32}(1,0,0), p3 = CartesianPoint{Float32}(1,1,0), p4 = CartesianPoint{Float32}(0,1,0), p4_on_plane_check = true)
+    T = float(promote_type(eltype.((p1, p2, p3, p4))...))
     tri = Triangle(p1, p2, p3)
-    #will return triangle if conditions are not met
+    #will return triangle if conditions are not met. Order of points matters, a continous non intersecting line needs to be drawn in p1->p2->p3->p4->p1
     if geom_round(p4) in [geom_round(p1), geom_round(p2), geom_round(p3)]
+        println("Identical vertex")
         return tri
-    else
+    elseif p4_on_plane_check
         if on_infinite_plane(p4, tri)
             if !projection_in_triangle(p4, tri)
                 v = CartesianVector{T}(p4 - p1)
@@ -127,21 +131,23 @@ function Quadrilateral(;p1 = CartesianPoint{Float32}(0,0,0), p2 = CartesianPoint
                 n = get_surface_vector_nonunitary(tri)
                 if geom_round(dot(n,cross(v2,v))) ≥ 0
                     return Plane(T, p1, p2, p3, p4)
-                else
+                else #intersecting segments
                     return tri
                 end
             else
                 return Plane(T, p1, p2, p3, p4)
             end
-        else
+        else #not on plane
             return tri
         end
+    else
+        return Plane(T, p1, p2, p3, p4)
     end
 end
 
-Quadrilateral(p1, p2, p3, p4) = Quadrilateral(;p1 = p1, p2 = p2, p3 = p3, p4 = p4)
-Plane(p1, p2, p3, p4) = Quadrilateral(;p1 = p1, p2 = p2, p3 = p3, p4 = p4)
-Plane(p1, p2, p3) = Triangle(;p1 = p1, p2 = p2, p3 = p3)
+Quadrilateral(p1, p2, p3, p4; p4_on_plane_check = true) = Quadrilateral(;p1 = p1, p2 = p2, p3 = p3, p4 = p4, p4_on_plane_check = p4_on_plane_check)
+Plane(p1, p2, p3, p4; p4_on_plane_check = true) = Quadrilateral(;p1 = p1, p2 = p2, p3 = p3, p4 = p4, p4_on_plane_check = p4_on_plane_check)
+Plane(p1, p2, p3; p4_on_plane_check = true) = Triangle(;p1 = p1, p2 = p2, p3 = p3)
 
 get_vertices(quad::Plane{T, CartesianPoint{T}, CartesianPoint{T}}) where {T} = [quad.p1, quad.p2, quad.p3, quad.p4]
 

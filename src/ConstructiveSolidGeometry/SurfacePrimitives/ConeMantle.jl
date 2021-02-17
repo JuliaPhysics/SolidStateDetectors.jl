@@ -87,3 +87,23 @@ function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int}) where {T}
         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
     ]
 end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    distance_to_line_segment(CartesianPoint{T}(pcy.r,0,pcy.z), (CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    if _in_φ(pcy, c.φ)
+        return distance_to_line_segment(CartesianPoint{T}(pcy.r,0,pcy.z), (CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+    else
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        return distance_to_line_segment(point, (CylindricalPoint{T}(rbot,φNear,zMin),CylindricalPoint{T}(rtop,φNear,zMax)))
+    end
+end

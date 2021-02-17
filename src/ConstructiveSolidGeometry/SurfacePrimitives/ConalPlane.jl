@@ -55,3 +55,8 @@ function get_vertices(c::ConalPlane{T}) where {T}
     CartesianPoint{T}(rtopMax * cos(c.φ), rtopMax * sin(c.φ), zMax),
     CartesianPoint{T}(rtopMin * cos(c.φ), rtopMin * sin(c.φ), zMax)]
 end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConalPlane{T})::T where {T}
+    point = CartesianPoint(point)
+    distance_to_surface(point, Plane(unique(geom_round(get_vertices(c)))...; p4_on_plane_check = false))
+end

@@ -34,6 +34,7 @@ module ConstructiveSolidGeometry
     include("VolumePrimitives/VolumePrimitives.jl")
     include("SurfacePrimitives/SurfacePrimitives.jl")
     include("Sampling.jl")
+    include("DistanceToSurface.jl")
     include("Transformations.jl")
     include("Intervals.jl")
     include("CSG.jl")

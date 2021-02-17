@@ -109,6 +109,11 @@ end
 
 @inline _in_torr_θ(p::CylindricalPoint{T}, r_torus::Real, θ::AbstractInterval) where {T} = mod(atan(p.z, p.r - r_torus), T(2π)) in θ
 
+function Δ_φ(φ1::T, φ2::T)::T where {T}
+    δφ = mod(φ2 - φ1, T(2π))
+    min(δφ, T(2π) - δφ)
+end
+
 """
     struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
 

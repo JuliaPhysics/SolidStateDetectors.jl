@@ -53,23 +53,23 @@ in(p::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, Nothing}) where {
 
 in(p::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval}) where {T} = _eq_z(p, a.z) && _in_φ(p, a.φ) && _in_cyl_r(p, a.r)
 
-function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
+function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
     point = CylindricalPoint(point)
     rMin::T, rMax::T = get_r_limits(a)
     _in_cyl_r(point, a.r) ? abs(point.z - a.z) : hypot(point.z - a.z, min(abs(point.r - rMin), abs(point.r - rMax)))
 end
 
-function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
-    point = CylindricalPoint(point)
+function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
+    pcy = CylindricalPoint(point)
     rMin::T, rMax::T = get_r_limits(a)
     φMin::T, φMax::T, _ = get_φ_limits(a)
-    Δz = abs(point.z - a.z)
-    if _in_φ(point, a.φ)
-        d = _in_cyl_r(point, a.r) ? Δz : hypot(Δz, min(abs(point.r - rMin), abs(point.r - rMax)))
+    if _in_φ(pcy, a.φ)
+        Δz = abs(pcy.z - a.z)
+        return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
     else
-        ΔφMin = mod(point.φ - φMin, T(2π))
-        ΔφMax = mod(point.φ - φMax, T(2π))
-        Δφ = min(min(ΔφMin, T(2π) - ΔφMin), min(ΔφMax, T(2π) - ΔφMax))
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        return distance_to_line_segment(point, (CylindricalPoint{T}(rMin,φNear,a.z),CylindricalPoint{T}(rMax,φNear,a.z)))
+        #=Δφ = min(Δ_φ(T(point.φ),φMin),Δ_φ(T(point.φ),φMax))
         y, x = point.r .* sincos(Δφ)
         d = if x < rMin
             sqrt((rMin - x)^2 + y^2 +  Δz^2)
@@ -77,9 +77,8 @@ function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnul
             sqrt((rMax - x)^2 + y^2 +  Δz^2)
         else
             hypot(y, Δz)
-        end
+        end=#
     end
-    d
 end
 
 function sample(a::CylindricalAnnulus{T}, step::Real) where {T}

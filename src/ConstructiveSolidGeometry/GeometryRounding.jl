@@ -20,3 +20,7 @@ end
 function geom_round(pt::CartesianPoint{T})::CartesianPoint{T} where {T <: Real}
     return CartesianPoint{T}( geom_round(pt.x), geom_round(pt.y), geom_round(pt.z)  )
 end
+
+function geom_round(vpt::Vector{CP}) where {CP <: AbstractCoordinatePoint}
+    [geom_round(pt) for pt in vpt]
+end
