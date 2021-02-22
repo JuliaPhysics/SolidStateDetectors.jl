@@ -140,24 +140,14 @@ end
 
 
 
-function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: SSDFloat}
-    imp::Vector{T} = []
-    for semiconductor in c.semiconductors
-        for g in vcat(semiconductor.geometry_positive,semiconductor.geometry_negative)
-            append!(imp, get_important_points(g, Val{s}()))
-        end
-    end
-    for contact in c.contacts
-        for g in vcat(contact.geometry_positive,contact.geometry_negative)
-            append!(imp, get_important_points(g, Val{s}()))
-        end
-    end
-    for passive in c.passives
-        for g in vcat(passive.geometry_positive, passive.geometry_negative)
-            append!(imp, get_important_points(g, Val{s}()))
-        end
-    end
-    return uniq(sort(imp))
+function sample(c::SolidStateDetector{T, Cartesian}, sampling)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+    unique!(imp)
+end
+
+function sample(c::SolidStateDetector{T, Cylindrical}, sampling)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CylindricalPoint{T}} = vcat([CylindricalPoint.(sample(g.geometry, sampling)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+    unique!(imp)
 end
 
 
@@ -507,20 +497,22 @@ function Grid(  detector::SolidStateDetector{T, Cylindrical};
     else
         missing, false
     end
+    
+    samples::Vector{CylindricalPoint{T}} = sample(detector, (3,3,3))
    
-    important_r_points::Vector{T} = get_important_points(detector, :r)
-    important_φ_points::Vector{T} = get_important_points(detector, :φ)
-    important_z_points::Vector{T} = get_important_points(detector, :z)
+    important_r_points::Vector{T} = map(p -> p.r, samples)
+    important_φ_points::Vector{T} = map(p -> p.φ, samples)
+    important_z_points::Vector{T} = map(p -> p.z, samples)
 
     push!(important_r_points, detector.world.intervals[1].left)
     push!(important_r_points, detector.world.intervals[1].right)
-    important_r_points = uniq(sort(important_r_points))
+    important_r_points = unique!(sort!(geom_round.(important_r_points)))
     push!(important_z_points, detector.world.intervals[3].left)
     push!(important_z_points, detector.world.intervals[3].right)
-    important_z_points = uniq(sort(important_z_points))
+    important_z_points = unique!(sort!(geom_round.(important_z_points)))
     push!(important_φ_points, detector.world.intervals[2].left)
     push!(important_φ_points, detector.world.intervals[2].right)
-    important_φ_points = uniq(sort(important_φ_points))
+    important_φ_points = unique!(sort!(geom_round.(important_φ_points)))
 
     # r
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
@@ -612,9 +604,11 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
         init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
-    important_x_points::Vector{T} = get_important_points(detector, :x)
-    important_y_points::Vector{T} = get_important_points(detector, :y)
-    important_z_points::Vector{T} = get_important_points(detector, :z)
+    samples::Vector{CartesianPoint{T}} = sample(detector, (3,3,3))
+    
+    important_x_points::Vector{T} = map(p -> p.x, samples)
+    important_y_points::Vector{T} = map(p -> p.y, samples)
+    important_z_points::Vector{T} = map(p -> p.z, samples)
 
     init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true
