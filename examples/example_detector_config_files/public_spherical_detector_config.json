@@ -15,7 +15,7 @@
             "temperature": 77.0,
             "impurity_density": {
                 "name": "constant",
-                "charge_density": -1e6
+                "charge_density": -1.0e6
             },
             "geometry": {
                 "type": "difference",
@@ -94,7 +94,7 @@
                             "x": 0,
                             "y": 0,
                             "z": 0
-                        }      
+                        }
                     },
                     {
                         "type": "box",
@@ -110,7 +110,7 @@
                             "from": 0.0,
                             "to": 30.0
                         }
-                    }                
+                    }
                 ]
             }
         }

@@ -15,7 +15,7 @@
             },
             "phi": {
                 "from": 0,
-                "to":0,
+                "to": 0,
                 "boundaries": "periodic"
             },
             "z": {
@@ -46,7 +46,7 @@
                     "gradient": 0.0
                 },
                 "z": {
-                    "init": -1e7,
+                    "init": -1.0e7,
                     "gradient": 0.0
                 }
             },
@@ -67,7 +67,6 @@
                 }
             }
         },
-
         {
             "name": "p contact",
             "type": "contact",
@@ -75,20 +74,20 @@
             "channel": 1,
             "potential": 0.0,
             "geometry": {
-              "type": "torus",
-              "r_torus": 10.0,
-              "r_tube": {
-                  "from": 2.0,
-                  "to": 2.0
-              },
-              "phi": {
-                  "from": 0.0,
-                  "to": 360.0
-              },
-              "theta": {
-                  "from": 0,
-                  "to": 360.0
-              }
+                "type": "torus",
+                "r_torus": 10.0,
+                "r_tube": {
+                    "from": 2.0,
+                    "to": 2.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "theta": {
+                    "from": 0,
+                    "to": 360.0
+                }
             }
         },
         {
@@ -98,20 +97,20 @@
             "channel": 2,
             "potential": 100.0,
             "geometry": {
-              "type": "torus",
-              "r_torus": 10.0,
-              "r_tube": {
-                  "from": 5.0,
-                  "to": 5.0
-              },
-              "phi": {
-                  "from": 0.0,
-                  "to": 360.0
-              },
-              "theta": {
-                  "from": 0.0,
-                  "to": 360.0
-              }
+                "type": "torus",
+                "r_torus": 10.0,
+                "r_tube": {
+                    "from": 5.0,
+                    "to": 5.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "theta": {
+                    "from": 0.0,
+                    "to": 360.0
+                }
             }
         }
     ]
