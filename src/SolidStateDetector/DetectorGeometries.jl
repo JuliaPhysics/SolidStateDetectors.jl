@@ -126,20 +126,6 @@ function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float3
     SolidStateDetector{Float32}(filename)
 end
 
-@inline in(point::CylindricalPoint, detector::SolidStateDetector) =
-    contains(detector, point)
-
-@inline in(point::StaticArray{Tuple{3}, <:Real}, detector::SolidStateDetector) =
-    convert(CartesianPoint, point) in detector
-
-@inline in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector) =
-    to_internal_units(u"m", point) in detector
-
-@inline in(point::CartesianPoint, detector::SolidStateDetector) =
-    convert(CylindricalPoint, point) in detector
-
-
-
 function sample(c::SolidStateDetector{T, Cartesian}, sampling)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
     imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
     unique!(imp)

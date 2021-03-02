@@ -250,18 +250,8 @@ function Base.sort!(v::AbstractVector{<:AbstractGeometry})
     return v_result
 end
 
-function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T})::Bool where T
-    for contact in c.contacts
-        if point in contact
-            return true
-        end
-    end
-    for sc in c.semiconductors
-        if point in sc
-            return true
-        end
-    end
-    return false
+function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T
+    reduce((x,semiconductor) -> x || in(pt,semiconductor), c.semiconductors, init = false) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
 end
 
 function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
@@ -307,7 +297,7 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
     positions = Vector{CartesianPoint{T}}(undef,n)
     while n_filled < n
         sample=CylindricalPoint{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:φ_range].left:0.00001:Volume[:φ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
-        if !(sample in d.contacts) && contains(d,sample) && contains(d,CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta))
+        if !(sample in d.contacts) && in(sample,d) && in(CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z),d) && in(CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z),d) && in(CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta),d) && in(CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta),d)
             n_filled += 1
             positions[n_filled]=CartesianPoint(sample)
         end

@@ -7,13 +7,7 @@ abstract type AbstractObject{T <: SSDFloat} end
 end
 
 function in(p::AbstractCoordinatePoint{T}, v::AbstractVector{<:AbstractObject{T}}) where {T <: SSDFloat}
-    rv = false
-    for object in v
-        if p in object
-            rv = true
-        end
-    end
-    return rv
+    reduce((x, object) -> x || in(p, object), v, init = false)
 end
 
 function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CylindricalGrid{T}) where {T <: SSDFloat}
