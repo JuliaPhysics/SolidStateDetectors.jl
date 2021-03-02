@@ -37,7 +37,8 @@ using .ConstructiveSolidGeometry:
             get_decomposed_volumes,
             geom_round, geom_sigdigits, geom_atol_zero
             
-import .ConstructiveSolidGeometry: sample
+import .ConstructiveSolidGeometry: sample, sample_surface
+#export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
 import DataStructures
@@ -46,9 +47,8 @@ import Tables
 import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
-             range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
-import Base: show, print, println, display, +, -, &
-import Base.convert
+             range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in, convert,
+             show, print, println, display, +, -, &
 
 export SolidStateDetector
 export SSD_examples

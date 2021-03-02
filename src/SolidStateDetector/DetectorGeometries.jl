@@ -380,12 +380,10 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        if !(haskey(ENV, "SSD_DISABLE_PAINTING"))
-            contact_gridpoints = paint_object(ssd, contact, grid)
-            for gridpoint in contact_gridpoints
-                potential[ gridpoint... ] = pot
-                pointtypes[ gridpoint... ] = zero(PointType)
-            end
+        contact_gridpoints = paint_object(ssd, contact, grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
@@ -446,12 +444,10 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        if !(haskey(ENV, "SSD_DISABLE_PAINTING"))
-            contact_gridpoints = paint_object(ssd, contact,grid)
-            for gridpoint in contact_gridpoints
-                potential[ gridpoint... ] = pot
-                pointtypes[ gridpoint... ] = zero(PointType)
-            end
+        contact_gridpoints = paint_object(ssd, contact, grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
@@ -606,9 +602,9 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
 
     samples::Vector{CartesianPoint{T}} = sample(detector, (3,3,3))
     
-    important_x_points::Vector{T} = map(p -> p.x, samples)
-    important_y_points::Vector{T} = map(p -> p.y, samples)
-    important_z_points::Vector{T} = map(p -> p.z, samples)
+    important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
+    important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
+    important_z_points::Vector{T} = geom_round.(map(p -> p.z, samples))
 
     init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true
