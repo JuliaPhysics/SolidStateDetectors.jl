@@ -35,10 +35,11 @@ using .ConstructiveSolidGeometry:
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry,
             get_decomposed_volumes,
+            get_decomposed_surfaces, AbstractSurfacePrimitive,
             geom_round, geom_sigdigits, geom_atol_zero
             
 import .ConstructiveSolidGeometry: sample, sample_surface
-#export CartesianPoint, CartesianVector, CylindricalPoint
+export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
 import DataStructures

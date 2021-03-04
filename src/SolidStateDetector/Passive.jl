@@ -10,7 +10,8 @@ mutable struct Passive{T} <: AbstractPassive{T}
     geometry::AbstractGeometry{T}
     geometry_positive::Vector{AbstractGeometry{T}}
     geometry_negative::Vector{AbstractGeometry{T}}
-
+    decomposed_surfaces::Vector{AbstractGeometry{T}}
+    
     Passive{T}() where T <: SSDFloat = new{T}()
 end
 
@@ -36,6 +37,7 @@ function Passive{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
     end
     pass.geometry = Geometry(T, dict["geometry"], input_units)
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
+    pass.decomposed_surfaces = vcat(get_decomposed_surfaces.(pass.geometry_positive)...)
     return pass
 end
 
