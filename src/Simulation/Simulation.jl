@@ -660,7 +660,7 @@ function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, ene
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, Val(get_coordinate_system(sim.detector)))
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, get_coordinate_system(sim.detector))
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal )
 end
 
