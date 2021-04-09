@@ -33,6 +33,7 @@ using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
+            CartesianTuple, CylindricalTuple,
             Geometry, AbstractGeometry,
             get_decomposed_volumes,
             get_decomposed_surfaces, AbstractSurfacePrimitive,

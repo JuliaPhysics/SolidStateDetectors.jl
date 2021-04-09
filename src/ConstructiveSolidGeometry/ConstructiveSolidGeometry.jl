@@ -25,6 +25,10 @@ module ConstructiveSolidGeometry
     print(io::IO, ::Type{Cylindrical}) = print(io, "Cylindrical")
     show(io::IO, CS::CoordinateSystemType) = print(io, CS) 
     show(io::IO,::MIME"text/plain", CS::CoordinateSystemType) = show(io, CS)
+    
+    # Tuples with ticks to sample with differently spaced ticks
+    const CartesianTuple{T} = NamedTuple{(:x,:y,:z), NTuple{3,Vector{T}}}
+    const CylindricalTuple{T} = NamedTuple{(:r,:φ,:z), NTuple{3,Vector{T}}}
 
     abstract type AbstractGeometry{T <: AbstractFloat} end
 
