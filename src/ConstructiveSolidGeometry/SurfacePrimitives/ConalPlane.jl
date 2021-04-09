@@ -47,6 +47,25 @@ function sample(c::ConalPlane{T}, Nsamps::NTuple{3,Int}) where {T}
     ]
 end
 
+function sample(c::ConalPlane{T}, g::CylindricalTuple{T}) where {T}
+    samples = [
+        CylindricalPoint{T}(r,c.φ,z)
+        for z in get_z_ticks(c, g)
+        for r in _get_ticks(g.r, _left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c,z)))
+    ]
+end
+        
+
+function sample(c::ConalPlane{T}, g::CartesianTuple{T}) where {T}
+    sφ::T, cφ::T = sincos(c.φ)
+    r_ticks = unique!(sort!(vcat((cφ == 0 ? [] : g.x./cφ), (sφ == 0 ? [] : g.y./sφ))))
+    samples = [
+        CartesianPoint{T}(r*cφ,r*sφ,z)
+        for z in get_z_ticks(c, g)
+        for r in _get_ticks(r_ticks, _left_radial_interval(c.r), _right_radial_interval(c.r))
+    ]
+end
+
 function get_vertices(c::ConalPlane{T}) where {T}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)

@@ -87,3 +87,23 @@ function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int}) where {T}
         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
     ]
 end
+
+function sample(c::ConeMantle{T}, g::CylindricalTuple{T}) where {T}
+    samples = [
+        CylindricalPoint{T}(get_r_at_z(c, z),φ,z)
+        for z in get_z_ticks(c, g)
+        for φ in get_φ_ticks(c, g)
+    ]
+end
+
+function sample(a::ConeMantle{T}, g::CartesianTuple{T}) where {T}
+    R::T = _right_radial_interval(a.r)
+    x_from_y::Vector{T} = sqrt.(R^2 .- filter(y -> abs(y) <= R, g.y).^2)
+    samples = [
+        CartesianPoint{T}(x,y,z)
+        for x in _get_ticks(sort!(vcat(g.x, x_from_y, -x_from_y)), -R, R)
+        for y in [-sqrt(R^2-x^2),sqrt(R^2-x^2)]    
+        for z in _get_ticks(g.z, _left_linear_interval(a.z), _right_linear_interval(a.z))
+        if isnothing(a.φ) || mod(atan(y, x), T(2π)) in a.φ
+    ]
+end

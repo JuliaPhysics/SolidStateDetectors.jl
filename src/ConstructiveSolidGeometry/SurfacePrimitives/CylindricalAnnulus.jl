@@ -101,3 +101,22 @@ function sample(a::CylindricalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
     ]
 end
+
+function sample(a::CylindricalAnnulus{T}, g::CylindricalTuple{T}) where {T}
+    samples = [
+        CylindricalPoint{T}(r,φ,a.z)
+        for r in get_r_ticks(a, g)
+        for φ in get_φ_ticks(a, g)
+    ]
+end
+
+function sample(a::CylindricalAnnulus{T}, g::CartesianTuple{T}) where {T}
+    L::T = _left_radial_interval(a.r)
+    R::T = _right_radial_interval(a.r)
+    samples = [
+        CartesianPoint{T}(x,y,a.z)
+        for x in _get_ticks(g.x, -R, R)
+        for y in (abs(x) > L ? _get_ticks(g.y, -sqrt(R^2 - x^2), sqrt(R^2 - x^2)) : vcat(_get_ticks(g.y, -sqrt(R^2 - x^2), -sqrt(L^2 - x^2)), _get_ticks(g.y, sqrt(L^2 - x^2), sqrt(R^2 - x^2))))
+        if isnothing(a.φ) || mod(atan(y, x), T(2π)) in a.φ
+    ]
+end
