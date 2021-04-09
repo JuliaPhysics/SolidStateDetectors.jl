@@ -305,13 +305,38 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
     positions
 end
 
+function sample(obj::AbstractObject{T}, g::Grid{T,3,S}) where {T,S}
+    g_mid = get_mid_ticks(g)
+    #filter!(p -> p in obj, 
+    unique!(vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...))
+    #)
+end
 
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::Grid{T, 3, S}) where {T <: SSDFloat, S}
-    #axes_syms = S == Cylindrical ? [:r, :φ, :z] : [:x, :y, :z]
-    #GENERIC CODE FOR THIS
-    xyticks = minimum(diff(grid.axes[1].ticks)) / 2
-    zticks = minimum(diff(grid[:z].ticks)) / 2
-    samples = vcat([_convert_point.(sample_surface(g, (ceil(Int,0.1/xyticks),ceil(Int,0.1/xyticks),ceil(Int,0.1/zticks))), S) for g in object.geometry_positive]...)
+function get_mid_ticks(g::Grid{T,3,Cartesian})::CartesianTuple{T} where {T}
+    (
+        x = _get_mid_ticks(g.x.ticks),
+        y = _get_mid_ticks(g.y.ticks),
+        z = _get_mid_ticks(g.z.ticks)
+    )
+end
+
+function get_mid_ticks(g::Grid{T,3,Cylindrical})::CylindricalTuple{T} where {T}
+    (
+        r = _get_mid_ticks(g.r.ticks),
+        φ = _get_mid_ticks(g.φ.ticks),
+        z = _get_mid_ticks(g.z.ticks)
+    )
+end
+
+function _get_mid_ticks(gr::Vector{T})::Vector{T} where {T}
+    gr_mid::Vector{T} = Vector{T}(undef, 2 * length(gr) - 1)
+    gr_mid[1:2:end] = gr
+    gr_mid[2:2:end] = midpoints(gr)
+    gr_mid
+end
+
+function paint_object(object::AbstractObject, grid::Grid{T, 3, S}) where {T <: SSDFloat, S}
+    samples = sample(object, grid)
     object_gridpoints = unique!([find_closest_gridpoint(sample_point, grid) for sample_point in samples])
     return object_gridpoints
 end
