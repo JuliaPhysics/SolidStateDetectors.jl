@@ -126,13 +126,13 @@ function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float3
     SolidStateDetector{Float32}(filename)
 end
 
-function sample(c::SolidStateDetector{T, Cartesian}, sampling)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
-    imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+function sample(c::SolidStateDetector{T, Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
-function sample(c::SolidStateDetector{T, Cylindrical}, sampling)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
-    imp::Vector{CylindricalPoint{T}} = vcat([CylindricalPoint.(sample(g.geometry, sampling)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+function sample(c::SolidStateDetector{T, Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CylindricalPoint{T}} = vcat([CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
@@ -480,7 +480,7 @@ function Grid(  detector::SolidStateDetector{T, Cylindrical};
         missing, false
     end
     
-    samples::Vector{CylindricalPoint{T}} = sample(detector, (3,3,3))
+    samples::Vector{CylindricalPoint{T}} = sample(detector)
    
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
@@ -586,7 +586,7 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
         init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
-    samples::Vector{CartesianPoint{T}} = sample(detector, (3,3,3))
+    samples::Vector{CartesianPoint{T}} = sample(detector)
     
     important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
     important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
