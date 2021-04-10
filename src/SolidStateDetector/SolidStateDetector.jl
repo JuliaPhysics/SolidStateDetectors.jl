@@ -305,27 +305,20 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
     positions
 end
 
-function sample(obj::AbstractObject{T}, g::Grid{T,3,S}) where {T,S}
-    g_mid = get_mid_ticks(g)
+function sample(obj::AbstractObject{T}, g::Grid{T,3,Cartesian,AT})::Vector{CartesianPoint{T}} where {T,AT}
+    g_mid::CartesianTuple{T} = ( x = _get_mid_ticks(g[1].ticks), y = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
     #filter!(p -> p in obj, 
-    unique!(vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...))
+    samples::Vector{CartesianPoint{T}} = vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...)
+    unique!(samples)
     #)
 end
 
-function get_mid_ticks(g::Grid{T,3,Cartesian})::CartesianTuple{T} where {T}
-    (
-        x = _get_mid_ticks(g.x.ticks),
-        y = _get_mid_ticks(g.y.ticks),
-        z = _get_mid_ticks(g.z.ticks)
-    )
-end
-
-function get_mid_ticks(g::Grid{T,3,Cylindrical})::CylindricalTuple{T} where {T}
-    (
-        r = _get_mid_ticks(g.r.ticks),
-        φ = _get_mid_ticks(g.φ.ticks),
-        z = _get_mid_ticks(g.z.ticks)
-    )
+function sample(obj::AbstractObject{T}, g::Grid{T,3,Cylindrical,AT})::Vector{CylindricalPoint{T}} where {T,AT}
+    g_mid::CylindricalTuple{T} = ( r = _get_mid_ticks(g[1].ticks), φ = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
+    #filter!(p -> p in obj, 
+    samples::Vector{CylindricalPoint{T}} = vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...)
+    unique!(samples)
+    #)
 end
 
 function _get_mid_ticks(gr::Vector{T})::Vector{T} where {T}
@@ -335,8 +328,8 @@ function _get_mid_ticks(gr::Vector{T})::Vector{T} where {T}
     gr_mid
 end
 
-function paint_object(object::AbstractObject, grid::Grid{T, 3, S}) where {T <: SSDFloat, S}
+function paint_object(object::AbstractObject, grid::Grid{T, 3, S})::Vector{NTuple{3,Int}} where {T <: SSDFloat, S}
     samples = sample(object, grid)
-    object_gridpoints = unique!([find_closest_gridpoint(sample_point, grid) for sample_point in samples])
-    return object_gridpoints
+    object_gridpoints::Vector{NTuple{3,Int}} = [find_closest_gridpoint(sample_point, grid) for sample_point in samples]
+    unique!(object_gridpoints)
 end

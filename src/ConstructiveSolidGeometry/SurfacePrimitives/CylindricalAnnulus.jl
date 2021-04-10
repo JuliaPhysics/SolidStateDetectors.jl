@@ -82,7 +82,8 @@ function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnul
     d
 end
 
-function sample(a::CylindricalAnnulus{T}, step::Real) where {T}
+#=
+function sample(a::CylindricalAnnulus{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
     rMin::T, rMax::T = get_r_limits(a)
     φMin::T, φMax::T, _ = get_φ_limits(a)
     samples = [
@@ -91,8 +92,9 @@ function sample(a::CylindricalAnnulus{T}, step::Real) where {T}
         for φ in (r == 0 ? φMin : φMin:step/r:φMax)
     ]
 end
+=#
 
-function sample(a::CylindricalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
+function sample(a::CylindricalAnnulus{T}, Nsamps::NTuple{3,Int})::Vector{CylindricalPoint{T}} where {T}
     rMin::T, rMax::T = get_r_limits(a)
     φMin::T, φMax::T, _ = get_φ_limits(a)
     samples = [
@@ -102,7 +104,7 @@ function sample(a::CylindricalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
     ]
 end
 
-function sample(a::CylindricalAnnulus{T}, g::CylindricalTuple{T}) where {T}
+function sample(a::CylindricalAnnulus{T}, g::CylindricalTuple{T})::Vector{CylindricalPoint{T}} where {T}
     samples = [
         CylindricalPoint{T}(r,φ,a.z)
         for r in get_r_ticks(a, g)
@@ -110,13 +112,13 @@ function sample(a::CylindricalAnnulus{T}, g::CylindricalTuple{T}) where {T}
     ]
 end
 
-function sample(a::CylindricalAnnulus{T}, g::CartesianTuple{T}) where {T}
+function sample(a::CylindricalAnnulus{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
     L::T = _left_radial_interval(a.r)
     R::T = _right_radial_interval(a.r)
     samples = [
         CartesianPoint{T}(x,y,a.z)
         for x in _get_ticks(g.x, -R, R)
         for y in (abs(x) > L ? _get_ticks(g.y, -sqrt(R^2 - x^2), sqrt(R^2 - x^2)) : vcat(_get_ticks(g.y, -sqrt(R^2 - x^2), -sqrt(L^2 - x^2)), _get_ticks(g.y, sqrt(L^2 - x^2), sqrt(R^2 - x^2))))
-        if isnothing(a.φ) || mod(atan(y, x), T(2π)) in a.φ
+        if a.φ === nothing || mod(atan(y, x), T(2π)) in a.φ
     ]
 end

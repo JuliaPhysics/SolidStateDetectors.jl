@@ -68,7 +68,8 @@ in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, Nothing, <:Any}) =
 in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _eq_cyl_r(p, get_r_at_z(c, p.z))
 
-function sample(c::ConeMantle{T}, step::Real) where {T}
+#=
+function sample(c::ConeMantle{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
     φMin::T, φMax::T, _ = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     samples = [
@@ -77,8 +78,9 @@ function sample(c::ConeMantle{T}, step::Real) where {T}
         for φ in (get_r_at_z(c, z) == 0 ? φMin : φMin:step/get_r_at_z(c, z):φMax)
     ]
 end
+=#
 
-function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int}) where {T}
+function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int})::Vector{CylindricalPoint{T}} where {T}
     φMin::T, φMax::T, _ = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     samples = [
@@ -88,7 +90,7 @@ function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int}) where {T}
     ]
 end
 
-function sample(c::ConeMantle{T}, g::CylindricalTuple{T}) where {T}
+function sample(c::ConeMantle{T}, g::CylindricalTuple{T})::Vector{CylindricalPoint{T}} where {T}
     samples = [
         CylindricalPoint{T}(get_r_at_z(c, z),φ,z)
         for z in get_z_ticks(c, g)
@@ -96,7 +98,7 @@ function sample(c::ConeMantle{T}, g::CylindricalTuple{T}) where {T}
     ]
 end
 
-function sample(a::ConeMantle{T}, g::CartesianTuple{T}) where {T}
+function sample(a::ConeMantle{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
     R::T = _right_radial_interval(a.r)
     x_from_y::Vector{T} = sqrt.(R^2 .- filter(y -> abs(y) <= R, g.y).^2)
     samples = [
@@ -104,6 +106,6 @@ function sample(a::ConeMantle{T}, g::CartesianTuple{T}) where {T}
         for x in _get_ticks(sort!(vcat(g.x, x_from_y, -x_from_y)), -R, R)
         for y in [-sqrt(R^2-x^2),sqrt(R^2-x^2)]    
         for z in _get_ticks(g.z, _left_linear_interval(a.z), _right_linear_interval(a.z))
-        if isnothing(a.φ) || mod(atan(y, x), T(2π)) in a.φ
+        if a.φ === nothing || mod(atan(y, x), T(2π)) in a.φ
     ]
 end
