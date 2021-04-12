@@ -9,6 +9,7 @@ using Documenter
 using Literate
 using Plots
 using SolidStateDetectors
+using SolidStateDetectors.ConstructiveSolidGeometry
 
 function fix_literate_output(content)
     content = replace(content, "EditURL = \"@__REPO_ROOT_URL__/\"" => "")
@@ -25,7 +26,7 @@ Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ss
 
 makedocs(
     sitename = "SolidStateDetectors.jl",
-    modules = [SolidStateDetectors],
+    modules = [SolidStateDetectors, SolidStateDetectors.ConstructiveSolidGeometry],
     pages=[
         "Home" => "index.md",
         "Manual" => Any[
