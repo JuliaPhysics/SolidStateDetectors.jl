@@ -52,7 +52,8 @@ function ConeMantle(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<
     ConeMantle( T, (T(rbot), T(rtop)), nothing, T(height)/2)
 end
 
-get_r_at_z(c::ConeMantle{T}, z::Real) where {T} = _get_r_at_z(get_r_limits(c)..., c.z, z)
+get_r_at_z(c::ConeMantle{T, T}, z::Real) where {T} = c.r
+get_r_at_z(c::ConeMantle{T, Tuple{T,T}}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
 
 get_r_limits(c::ConeMantle{T, T, <:Any, <:Any}) where {T} = (T(c.r), T(c.r))
 get_r_limits(c::ConeMantle{T, <:Tuple, <:Any, <:Any}) where {T} = c.r
@@ -98,14 +99,23 @@ function sample(c::ConeMantle{T}, g::CylindricalTuple{T})::Vector{CylindricalPoi
     ]
 end
 
-function sample(a::ConeMantle{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
-    R::T = _right_radial_interval(a.r)
+function _get_x_at_z(c::ConeMantle{T}, g::CartesianTuple, z::T) where {T}
+    R::T = get_r_at_z(c, z)
     x_from_y::Vector{T} = sqrt.(R^2 .- filter(y -> abs(y) <= R, g.y).^2)
+    _get_ticks(sort!(vcat(g.x, x_from_y, -x_from_y)), -R, R)
+end
+
+function _get_y_at_z(c::ConeMantle{T}, x::T, z::T) where {T}
+    R::T = get_r_at_z(c, z)
+    (-sqrt(R^2-x^2),sqrt(R^2-x^2))
+end
+
+function sample(c::ConeMantle{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
     samples = [
-        CartesianPoint{T}(x,y,z)
-        for x in _get_ticks(sort!(vcat(g.x, x_from_y, -x_from_y)), -R, R)
-        for y in [-sqrt(R^2-x^2),sqrt(R^2-x^2)]    
-        for z in _get_ticks(g.z, _left_linear_interval(a.z), _right_linear_interval(a.z))
-        if a.φ === nothing || mod(atan(y, x), T(2π)) in a.φ
+        CartesianPoint{T}(x,y,z)    
+        for z in _get_ticks(g.z, _left_linear_interval(c.z), _right_linear_interval(c.z))
+        for x in _get_x_at_z(c, g, z)
+        for y in _get_y_at_z(c, x, z)
+        if c.φ === nothing || mod(atan(y, x), T(2π)) in c.φ
     ]
 end
