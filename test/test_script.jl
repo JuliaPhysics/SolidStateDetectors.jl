@@ -9,7 +9,7 @@ mkpath(outputdir)
 @info "Test output dir: $outputdir"
 
 @info "Loading packages"
-using Plots; pyplot()
+using Plots
 using SolidStateDetectors; SSD = SolidStateDetectors
 
 T = Float32
@@ -19,7 +19,7 @@ plot() # creates a plot so that the plots during the following loop pop up.
 
 key = :CGD
 
-for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
+for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
 # for key in keys(SSD_examples)
     @info "Now test detector type: $key"
 
@@ -32,14 +32,14 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     p = if S == SSD.Cartesian
         plot(
             plot(simulation.electric_potential, y = 0.002),
-            plot(simulation.ρ, y = 0.002),
+            plot(simulation.q_eff_imp, y = 0.002),
             plot(simulation.point_types, y = 0.002),
             size = (1000, 600), layout= (1, 3)
         )
     else
         plot(
             plot(simulation.electric_potential),
-            plot(simulation.ρ),
+            plot(simulation.q_eff_imp),
             plot(simulation.point_types),
             size = (1000, 600), layout= (1, 3)
         )
@@ -60,14 +60,14 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
         p = if S == SSD.Cartesian
             plot(
                 plot(simulation.electric_potential, y = 0.002),
-                plot(simulation.ρ, y = 0.002),
+                plot(simulation.q_eff_imp, y = 0.002),
                 plot(simulation.point_types, y = 0.002),
                 size = (1000, 600), layout= (1, 3)
             )
         else
             plot(
                 plot(simulation.electric_potential),
-                plot(simulation.ρ),
+                plot(simulation.q_eff_imp),
                 plot(simulation.point_types),
                 size = (1000, 600), layout= (1, 3)
             )
@@ -97,10 +97,10 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
     if S == SSD.Cylindrical
-        plot_electric_field(simulation, φ=deg2rad(0), spacing = 3.0)
+        plot(simulation.electric_field, φ=deg2rad(0), spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     else
-        plot_electric_field(simulation, y = 0, spacing = 3.0)
+        plot(simulation.electric_field, y = 0, spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 
@@ -130,7 +130,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     savefig(joinpath(outputdir, "$(key)_4_charge_drift"))
 
     # signals[:, 2] *= -1
-    plot(event.waveforms, size = (1200, 600), lw = 1.5)
+    plot([event.waveforms...], size = (1200, 600), lw = 1.5)
     savefig(joinpath(outputdir, "$(key)_5_induced_signals"))
 
 end
