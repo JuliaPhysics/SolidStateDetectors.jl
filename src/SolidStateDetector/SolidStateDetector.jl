@@ -321,11 +321,13 @@ function sample(obj::AbstractObject{T}, g::Grid{T,3,Cylindrical,AT})::Vector{Cyl
     #)
 end
 
-function _get_mid_ticks(gr::Vector{T})::Vector{T} where {T}
-    gr_mid::Vector{T} = Vector{T}(undef, 2 * length(gr) - 1)
-    gr_mid[1:2:end] = gr
-    gr_mid[2:2:end] = midpoints(gr)
-    gr_mid
+# TODO: if mid ticks are needed: uncomment. If not: remove
+@inline function _get_mid_ticks(gr::Vector{T})::Vector{T} where {T}
+    gr
+    # gr_mid::Vector{T} = Vector{T}(undef, 2 * length(gr) - 1)
+    # gr_mid[1:2:end] = gr
+    # gr_mid[2:2:end] = midpoints(gr)
+    # gr_mid
 end
 
 function paint_object(object::AbstractObject, grid::Grid{T, 3, S})::Vector{NTuple{3,Int}} where {T <: SSDFloat, S}
