@@ -104,7 +104,7 @@ function sample(a::CylindricalAnnulus{T}, Nsamps::NTuple{3,Int})::Vector{Cylindr
     ]
 end
 
-function sample(a::CylindricalAnnulus{T}, g::CylindricalTuple{T})::Vector{CylindricalPoint{T}} where {T}
+function sample(a::CylindricalAnnulus{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
     samples = [
         CylindricalPoint{T}(r,φ,a.z)
         for r in get_r_ticks(a, g)
@@ -112,7 +112,7 @@ function sample(a::CylindricalAnnulus{T}, g::CylindricalTuple{T})::Vector{Cylind
     ]
 end
 
-function sample(a::CylindricalAnnulus{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
+function sample(a::CylindricalAnnulus{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
     L::T = _left_radial_interval(a.r)
     R::T = _right_radial_interval(a.r)
     samples = [

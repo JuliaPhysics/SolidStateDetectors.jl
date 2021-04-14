@@ -306,7 +306,7 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
 end
 
 function sample(obj::AbstractObject{T}, g::Grid{T,3,Cartesian,AT})::Vector{CartesianPoint{T}} where {T,AT}
-    g_mid::CartesianTuple{T} = ( x = _get_mid_ticks(g[1].ticks), y = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
+    g_mid::CartesianTicksTuple{T} = ( x = _get_mid_ticks(g[1].ticks), y = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
     #filter!(p -> p in obj, 
     samples::Vector{CartesianPoint{T}} = vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...)
     unique!(samples)
@@ -314,7 +314,7 @@ function sample(obj::AbstractObject{T}, g::Grid{T,3,Cartesian,AT})::Vector{Carte
 end
 
 function sample(obj::AbstractObject{T}, g::Grid{T,3,Cylindrical,AT})::Vector{CylindricalPoint{T}} where {T,AT}
-    g_mid::CylindricalTuple{T} = ( r = _get_mid_ticks(g[1].ticks), φ = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
+    g_mid::CylindricalTicksTuple{T} = ( r = _get_mid_ticks(g[1].ticks), φ = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
     #filter!(p -> p in obj, 
     samples::Vector{CylindricalPoint{T}} = vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...)
     unique!(samples)

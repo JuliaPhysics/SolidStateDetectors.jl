@@ -48,7 +48,7 @@ function sample(c::ConalPlane{T}, Nsamps::NTuple{3,Int})::Vector{CylindricalPoin
     ]
 end
 
-function sample(c::ConalPlane{T}, g::CylindricalTuple{T})::Vector{CylindricalPoint{T}} where {T}
+function sample(c::ConalPlane{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
     samples::Vector{CylindricalPoint{T}} = [
             CylindricalPoint{T}(r,c.φ,z)
             for φ in _get_ticks(g.φ, c.φ, c.φ) # only sample if c.φ is within the grid bounds
@@ -58,7 +58,7 @@ function sample(c::ConalPlane{T}, g::CylindricalTuple{T})::Vector{CylindricalPoi
 end
         
 
-function sample(c::ConalPlane{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
+function sample(c::ConalPlane{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
     sφ::T, cφ::T = sincos(c.φ)
     r_ticks = unique!(sort!(vcat((cφ == 0 ? [] : g.x./cφ), (sφ == 0 ? [] : g.y./sφ))))
     samples::Vector{CylindricalPoint{T}} = [

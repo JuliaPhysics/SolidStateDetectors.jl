@@ -91,7 +91,7 @@ function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int})::Vector{CylindricalPoin
     ]
 end
 
-function sample(c::ConeMantle{T}, g::CylindricalTuple{T})::Vector{CylindricalPoint{T}} where {T}
+function sample(c::ConeMantle{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
     samples = [
         CylindricalPoint{T}(get_r_at_z(c, z),φ,z)
         for z in get_z_ticks(c, g)
@@ -99,7 +99,7 @@ function sample(c::ConeMantle{T}, g::CylindricalTuple{T})::Vector{CylindricalPoi
     ]
 end
 
-function _get_x_at_z(c::ConeMantle{T}, g::CartesianTuple, z::T) where {T}
+function _get_x_at_z(c::ConeMantle{T}, g::CartesianTicksTuple, z::T) where {T}
     R::T = get_r_at_z(c, z)
     x_from_y::Vector{T} = sqrt.(R^2 .- filter(y -> abs(y) <= R, g.y).^2)
     _get_ticks(sort!(vcat(g.x, x_from_y, -x_from_y)), -R, R)
@@ -110,7 +110,7 @@ function _get_y_at_z(c::ConeMantle{T}, x::T, z::T) where {T}
     (-sqrt(R^2-x^2),sqrt(R^2-x^2))
 end
 
-function sample(c::ConeMantle{T}, g::CartesianTuple{T})::Vector{CartesianPoint{T}} where {T}
+function sample(c::ConeMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
     samples = [
         CartesianPoint{T}(x,y,z)    
         for z in _get_ticks(g.z, _left_linear_interval(c.z), _right_linear_interval(c.z))
