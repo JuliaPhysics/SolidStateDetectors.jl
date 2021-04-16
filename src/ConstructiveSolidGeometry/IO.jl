@@ -17,7 +17,7 @@ volume_primitive_dict = Dict{String, Any}(
 @inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = to_internal_units(T(uparse(s)))
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries
-function _parse_interval_from_to(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units)::Tuple{T,T} where {T}
+function _parse_interval_from_to(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units)::Tuple{T,T} where {T}
     To::T = _parse_value(T, dict["to"], unit)
     From::T = _parse_value(T, dict["from"], unit)
     @assert From <= To "Entry 'from' should be smaller than entry 'to' in $(dict)."
@@ -26,7 +26,7 @@ end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
 @inline _parse_radial_interval(::Type{T}, x::Union{Real, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)
-function _parse_radial_interval(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function _parse_radial_interval(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
     @assert From >= 0 && To >= 0 "Entries 'from' and 'to' of radial $(dict) should be non-zero."
@@ -35,7 +35,7 @@ end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
 @inline _parse_linear_interval(::Type{T}, x::Union{Real, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)/2
-function _parse_linear_interval(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function _parse_linear_interval(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
     To == -From ? To : From..To
@@ -43,7 +43,7 @@ end
 
 
 # parses dictionary entry for φ-interval that has {"from" ..., "to": ...} to the respective Nothing/Interval
-function _parse_angular_interval(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function _parse_angular_interval(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units) where {T}
     φTo::T = _parse_value(T, dict["to"], unit)
     φFrom::T = _parse_value(T, dict["from"], unit)
     if abs(rem2pi(φFrom - φTo, RoundNearest)) > 2*eps(T)
@@ -97,7 +97,7 @@ end
 
 
 # converts {"x": ..., "y": ..., "z": ... } to the respective CartesianVector
-function parse_translate_vector(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units)::CartesianVector{T} where {T}
+function parse_translate_vector(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units)::CartesianVector{T} where {T}
     x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], unit) : T(0)
     y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], unit) : T(0)
     z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], unit) : T(0)
