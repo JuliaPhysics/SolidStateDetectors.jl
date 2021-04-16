@@ -83,6 +83,7 @@ end
         # end
         # @test isapprox( signalsum, T(2), atol = 1e-2 )
     end 
+    =#
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation(SSD_examples[:SigGen])
         simulate!(sim, max_refinements = 0, verbose = true)
@@ -94,7 +95,6 @@ end
         end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
-    =#
 end
 
 include("ConstructiveSolidGeometry/CSG_test.jl")
