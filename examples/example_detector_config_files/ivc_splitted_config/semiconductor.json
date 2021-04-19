@@ -5,6 +5,6 @@
     "temperature": 77.0,
     "include" : [
         "detector_geometry.json",
-        "charge_density_model.json"
+        "impurity_density.json"
     ]
 }

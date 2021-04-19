@@ -3,7 +3,14 @@
 ```@meta
 DocTestSetup  = quote
     using SolidStateDetectors
+    using SolidStateDetectors.ConstructiveSolidGeometry
 end
+```
+
+## Modules
+
+```@index
+Order = [:module]
 ```
 
 ## Types
@@ -21,6 +28,6 @@ Order = [:function]
 # Documentation
 
 ```@autodocs
-Modules = [SolidStateDetectors]
-Order = [:type, :function]
+Modules = [SolidStateDetectors, SolidStateDetectors.ConstructiveSolidGeometry]
+Order = [:module, :type, :function]
 ```

@@ -10,11 +10,12 @@ mutable struct Passive{T} <: AbstractPassive{T}
     geometry::AbstractGeometry{T}
     geometry_positive::Vector{AbstractGeometry{T}}
     geometry_negative::Vector{AbstractGeometry{T}}
-
+    decomposed_surfaces::Vector{AbstractGeometry{T}}
+    
     Passive{T}() where T <: SSDFloat = new{T}()
 end
 
-function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
+function Passive{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
     pass = Passive{T}()
     haskey(dict, "name") ? pass.name = dict["name"] : pass.name = "external part"
     haskey(dict, "id") ? pass.id = dict["id"] : pass.id = -1
@@ -24,7 +25,7 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     pass.charge_density_model = if haskey(dict, "charge_density") 
         haskey(dict, "charge_density") 
     elseif haskey(dict, "charge_density_model") 
-        @warn "Config file deprication: There was an internal change from v0.4.3 to v0.5.0 regarding the 
+        @warn "Config file deprication: There was an internal change from v0.5.1 to v0.6.0 regarding the 
             charge density of `Passive` objects. 
             Since v0.5.0, the elementary charge is not automatically multiplied to the distribution as it
             is a charge density and not an impurity density. The values in the config files should be adapted
@@ -34,8 +35,9 @@ function Passive{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) wher
     else
         ConstantChargeDensity{T}(0)
     end
-    pass.geometry = Geometry(T, dict["geometry"], inputunit_dict)
+    pass.geometry = Geometry(T, dict["geometry"], input_units)
     pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
+    pass.decomposed_surfaces = vcat(get_decomposed_surfaces.(pass.geometry_positive)...)
     return pass
 end
 

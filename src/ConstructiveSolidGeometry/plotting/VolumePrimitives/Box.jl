@@ -1,4 +1,4 @@
-function get_plot_points(b::Box{T}) where {T <: AbstractFloat}
+function get_plot_points(b::Box{T}; kwargs...) where {T <: AbstractFloat}
     
     plot_points = Vector{CartesianPoint{T}}[]
     

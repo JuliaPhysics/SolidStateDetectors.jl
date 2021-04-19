@@ -37,4 +37,20 @@ function Geometry(::Type{T}, ::Type{Box}, dict::Union{Dict{String,Any}, Dict{Any
     y = parse_interval_of_primitive(T, "y", dict, length_unit)
     z = parse_interval_of_primitive(T, "z", dict, length_unit)
     return Box(T, x, y, z)
-end    
+end
+
+get_x_limits(b::Box{T}) where {T} = (_left_linear_interval(b.x), _right_linear_interval(b.x))
+get_y_limits(b::Box{T}) where {T} = (_left_linear_interval(b.y), _right_linear_interval(b.y))
+get_z_limits(b::Box{T}) where {T} = (_left_linear_interval(b.z), _right_linear_interval(b.z))
+
+function sample(b::Box{T}, Nsamps::NTuple{3,Int} = (2,2,2)) where {T}
+    xMin::T, xMax::T = get_x_limits(b)
+    yMin::T, yMax::T = get_y_limits(b)
+    zMin::T, zMax::T = get_z_limits(b)
+    samples = [
+        CartesianPoint{T}(x,y,z)
+        for x in (Nsamps[1] ≤ 1 ? xMin : range(xMin, xMax, length = Nsamps[1]))
+        for y in (Nsamps[2] ≤ 1 ? yMin : range(yMin, yMax, length = Nsamps[2]))
+        for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
+    ]
+end

@@ -98,7 +98,7 @@ function sample(t::Torus{T}, step::Real) where {T}
     ]
 end
 
-function sample(t::Torus{T}, Nsamps::NTuple{3,Int}) where {T}
+function sample(t::Torus{T}, Nsamps::NTuple{3,Int} = (2,5,3)) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
     φMin::T, φMax::T, _ = get_φ_limits(t)

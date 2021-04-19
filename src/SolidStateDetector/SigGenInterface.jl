@@ -156,7 +156,8 @@ function siggentodict(config::Dict;
                         "type"        => "tube",
                         "r"           => Dict("from" => 0.0, "to" => config["xtal_radius"]),
                         "phi"         => Dict("from" => 0.0, "to" => 360.0),
-                        "h"           => config["xtal_length"]);
+                        "h"           => config["xtal_length"],
+                        "translate"   => Dict("z"    => config["xtal_length"]/2));
 
     #>----------------Upper Cone / Taper on top--------------------------------<
     # If not existing, everything will be set to 0
@@ -170,7 +171,7 @@ function siggentodict(config::Dict;
                         "phi"         => Dict("from"   => 0.0, "to" => 360.0),
                         "h"           => config["outer_taper_length"],
                         "translate"   => Dict("z"      => config["xtal_length"] -
-                                                                config["outer_taper_length"]));
+                                                                config["outer_taper_length"]/2));
 
     #>----------------Lower Cone / Taper on bottom-----------------------------<
     # 45-degree taper at bottom of ORTEC-type crystal
@@ -183,7 +184,7 @@ function siggentodict(config::Dict;
                                                                "to"   => ceil(config["xtal_radius"] + 1.0))),
                         "phi"         => Dict("from"   => 0.0, "to" => 360.0),
                         "h"           => config["taper_length"],
-                        "translate"   => Dict("z"      => 0.0));
+                        "translate"   => Dict("z"      => config["taper_length"]/2));
 
     #>----------------Ditch around the bottom contact--------------------------<
     # If not existing, everything will be set to 0
@@ -193,7 +194,8 @@ function siggentodict(config::Dict;
                                                             config["ditch_thickness"],
                                               "to"   => config["wrap_around_radius"]),
                         "phi"         => Dict("from" => 0.0, "to" => 360.0),
-                        "h"           => config["ditch_depth"]);
+                        "h"           => config["ditch_depth"],
+                        "translate"   => Dict("z"    => config["ditch_depth"]/2));
 
     #>----------------Borehole on bottom as contact----------------------------<
     # If not existing, everything will be set to 0
@@ -201,7 +203,8 @@ function siggentodict(config::Dict;
                         "type"        => "tube",
                         "r"           => Dict("from" => 0.0, "to" => config["pc_radius"]),
                         "phi"         => Dict("from" => 0.0, "to" => 360.0),
-                        "h"           => config["pc_length"]);
+                        "h"           => config["pc_length"],
+                        "translate"   => Dict("z"    => config["pc_length"]/2));
 
     #>----------------Hole on top of the detector------------------------------<
     # If not existing, everything will be set to 0
@@ -217,7 +220,7 @@ function siggentodict(config::Dict;
                             "phi"         => Dict("from"   => 0.0, "to" => 360.0),
                             "h"           => config["inner_taper_length"],
                             "translate"   => Dict("z"      => config["xtal_length"] -
-                                                                config["inner_taper_length"]));
+                                                                config["inner_taper_length"]/2));
     else
         hole         = Dict("name"        => "Top Hole",
                             "type"        => "tube",
@@ -225,7 +228,7 @@ function siggentodict(config::Dict;
                             "phi"         => Dict("from" => 0.0, "to" => 360.0),
                             "h"           => config["hole_length"],
                             "translate"   => Dict("z"    => config["xtal_length"] -
-                                                            config["hole_length"]));
+                                                            config["hole_length"]/2));
     end
 
     #>----------------Subtract volumes-----------------------------------------<
@@ -263,7 +266,8 @@ function siggentodict(config::Dict;
                                    "to" => config["pc_radius"]),
              "phi"       => Dict("from" => 0.0,
                                    "to" => 360.0),
-             "h"         => config["pc_length"])
+             "h"         => config["pc_length"],
+             "translate" => Dict("z"    => config["pc_length"]/2))
         borehole_top = Dict(     "type" => "tube",
              "r"         => Dict("from" => 0.0,
                                    "to" => config["pc_radius"]),
@@ -276,8 +280,7 @@ function siggentodict(config::Dict;
                                    "to" => config["wrap_around_radius"] - config["ditch_thickness"]),
              "phi"       => Dict("from" => 0.0,
                                    "to" => 360.0),
-             "h"         => 0.0,
-             "translate" => Dict("z"    => 0.0))
+             "h"         => 0.0)
         push!(geometry_1, borehole_wall)
         push!(geometry_1, borehole_top)
         push!(geometry_1, borehole_around)
@@ -288,7 +291,8 @@ function siggentodict(config::Dict;
                                    "to" => config["pc_radius"]),
              "phi"       => Dict("from" => 0.0,
                                    "to" => 360.0),
-             "h"         => config["pc_length"])
+             "h"         => config["pc_length"],
+             "translate" => Dict("z"    => config["pc_length"]/2))
         push!(geometry_1, pc_vol)
     end
 
@@ -320,7 +324,7 @@ function siggentodict(config::Dict;
                   "phi"  => Dict("from" => 0.0,
                                    "to" => 360.0),
                   "h"    => config["xtal_length"] - config["taper_length"] - config["outer_taper_length"],
-                  "translate" => Dict("z" => config["taper_length"]))
+                  "translate" => Dict("z" => config["xtal_length"]/2 + config["taper_length"]/2 - config["outer_taper_length"]/2))
     push!(geometry_2, wall)
 
     top    = Dict("type" => "tube",
@@ -338,7 +342,7 @@ function siggentodict(config::Dict;
                       "phi"  => Dict("from" => 0.0,
                                        "to" => 360.0),
                       "h"    => config["hole_length"],
-                      "translate" => Dict("z" => config["xtal_length"] - config["hole_length"]))
+                      "translate" => Dict("z" => config["xtal_length"] - config["hole_length"]/2))
         inner_hole_bottom    =  Dict("type" => "tube",
                       "r"    => Dict("from" => 0.0,
                                        "to" => config["hole_radius"]),
@@ -360,7 +364,7 @@ function siggentodict(config::Dict;
                       "phi"       => Dict("from"   => 0.0, "to" => 360.0),
                       "h"         => config["inner_taper_length"],
                       "translate" => Dict("z"      => config["xtal_length"] -
-                                                        config["inner_taper_length"]));
+                                                        config["inner_taper_length"]/2));
         inner_hole_bottom   =  Dict("type" => "tube",
                       "r"    => Dict("from" => 0.0,
                                        "to" => config["hole_radius"]),
@@ -382,7 +386,7 @@ function siggentodict(config::Dict;
                       "phi"       => Dict("from"   => 0.0, "to" => 360.0),
                       "h"         => config["outer_taper_length"],
                       "translate" => Dict("z"      => config["xtal_length"] -
-                                                        config["outer_taper_length"]));
+                                                        config["outer_taper_length"]/2));
         push!(geometry_2, outer_taper)
     end
     if config["taper_length"] != 0
@@ -394,7 +398,8 @@ function siggentodict(config::Dict;
                                                            "to"   => config["xtal_radius"] -
                                                                         config["taper_length"])),
                       "phi"       => Dict("from"   => 0.0, "to" => 360.0),
-                      "h"         => config["taper_length"]);
+                      "h"         => config["taper_length"],
+                      "translate" => Dict("z"      => config["taper_length"]/2));
         push!(geometry_2, taper)
     end
 

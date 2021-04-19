@@ -27,11 +27,14 @@
                     "from": 35.0
                 },
                 "type": "tube",
-                "h": 20.0
+                "h": 20.0,
+                "translate": {
+                    "z": 10.0
+                }
             },
             {
                 "translate": {
-                    "z": 20.0
+                    "z": 50.0
                 },
                 "name": "Upper cone",
                 "phi": {
@@ -68,7 +71,7 @@
             },
             {
                 "translate": {
-                    "z": 25.0
+                    "z": 52.5
                 },
                 "phi": {
                     "to": 360.0,

@@ -7,9 +7,9 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, tl:
     return CartesianVector{T}(0,0,0)
 end
 
-function DeadVolume{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
+function DeadVolume{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
     n = haskey(dict, "name") ? dict["name"] : "external part"
-    g = Geometry(T, dict["geometry"], inputunit_dict)
+    g = Geometry(T, dict["geometry"], input_units)
     return DeadVolume{T}(n, g)
 end
 
@@ -32,9 +32,9 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, tl:
 end
 
 
-function ArbitraryDriftModificationVolume{T}(dict::Dict, inputunit_dict::Dict{String,Unitful.Units}) where T <: SSDFloat
+function ArbitraryDriftModificationVolume{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
     n = haskey(dict, "name") ? dict["name"] : "external part"
-    g = Geometry(T, dict["geometry"], inputunit_dict)
+    g = Geometry(T, dict["geometry"], input_units)
     id = Int(dict["id"])
     return ArbitraryDriftModificationVolume{T}(n, id, g)
 end

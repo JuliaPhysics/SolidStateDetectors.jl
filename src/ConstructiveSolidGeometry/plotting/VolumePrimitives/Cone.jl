@@ -10,7 +10,7 @@ _get_plot_φ(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.lef
 _get_plot_z(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
 
-function get_plot_points(c::Cone{T}) where {T <: AbstractFloat}
+function get_plot_points(c::Cone{T}; n = 30) where {T <: AbstractFloat}
     
     plot_points = Vector{CartesianPoint{T}}[]
     
@@ -18,7 +18,7 @@ function get_plot_points(c::Cone{T}) where {T <: AbstractFloat}
     φMin::T, φMax::T, φ_is_full_2π::Bool = _get_plot_φ(c)
     zMin::T, zMax::T = _get_plot_z(c)
     
-    φrange = range(φMin, φMax, length = 36)
+    φrange = range(φMin, φMax, length = n)
     
     #bottom circle(s)
     for r in [rbotMin, rbotMax]

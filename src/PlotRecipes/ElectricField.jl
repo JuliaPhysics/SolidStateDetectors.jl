@@ -1,11 +1,11 @@
-@recipe function f( ef::ElectricField{T, 3, :cylindrical};
+@recipe function f( ef::ElectricField{T, 3, Cylindrical};
                     r = missing,
                     φ = missing,
                     z = missing,
                     contours_equal_potential=false,
                     full_det = false ) where {T}
 
-    g::Grid{T, 3, :cylindrical} = ef.grid
+    g::Grid{T, 3, Cylindrical} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
@@ -19,13 +19,13 @@
 
 end
 
-@recipe function f(ef::ElectricField{T, 3, :cartesian};
+@recipe function f(ef::ElectricField{T, 3, Cartesian};
                     x = missing,
                     y = missing,
                     z = missing,
                     contours_equal_potential = false) where {T <: SSDFloat}
 
-    g::Grid{T, 3, :cartesian} = ef.grid
+    g::Grid{T, 3, Cartesian} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
@@ -55,12 +55,12 @@ end
     dim_array = [φ, r, x, y, z]
     dim_symbols_array = [:φ, :r, :x, :y, :z]
     if isempty(skipmissing(dim_array))
-        if S == :cylindrical
+        if S == Cartesian
             v::T = 0
             φ = 0
             dim_number = 2
             dim_symbol = :φ
-        elseif S == :cartesian
+        elseif S == Cylindrical
             dim_number = 1
             dim_symbol = :x
             v = sim.electric_field.grid[dim_number][ div(length(sim.electric_field.grid[dim_number]), 2) ]
@@ -76,12 +76,12 @@ end
 
     show_full_det = full_det == true && dim_symbol == :φ ? true : false # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
-    (dim_symbol != :r && !(dim_symbol == :z && S== :cylindrical) ) ? aspect_ratio --> 1 : nothing
+    (dim_symbol != :r && !(dim_symbol == :z && S == Cylindrical) ) ? aspect_ratio --> 1 : nothing
     title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°, (=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
-    xguide --> (S == :cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
+    xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
     yguide --> "z / m"
-    (S == :cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
-    (S == :cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
+    (S == Cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
+    (S == Cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
 
     contacts_to_spawn_charges_for = filter!(x -> x.id !=skip_contact, Contact{T}[c for c in sim.detector.contacts])
     spawn_positions = CartesianPoint{T}[]
@@ -134,8 +134,8 @@ end
                 @info("Scaling down sampling steps by a factor of $(2^exponent). Now using sampling steps of $(sampling_vector_pool./2^exponent) m. Also scaling down offset by a factor $(2^exponent).")
                 offset /= 2^exponent
             end
-            sample_pool = S == :cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : geom_round.(sample_pool)
-            sample_pool = S == :cartesian ? geom_round.(CartesianPoint.(sample_pool)) : geom_round.(sample_pool)
+            sample_pool = S == Cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : geom_round.(sample_pool)
+            sample_pool = S == Cartesian ? geom_round.(CartesianPoint.(sample_pool)) : geom_round.(sample_pool)
             sampled_planes = unique!(map(x->x[dim_number],sample_pool))
             v_Xsec_plane = sampled_planes[searchsortednearest(sampled_planes,v)]
             if abs(v-v_Xsec_plane) > sampling_vector_pool[dim_number] continue; end
@@ -181,7 +181,7 @@ end
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
                 seriescolor --> :white
-                if dim_symbol == :z && S == :cylindrical projection --> :polar end
+                if dim_symbol == :z && S == Cylindrical projection --> :polar end
                 label --> ""
                 x, y = if dim_symbol == :φ
                     map(x -> (pos in spawn_positions_mirror ? -1 : 1) * sqrt(x[1]^2+x[2]^2), path), # mirror the path for the charges that originate from v + 2 \pi
@@ -193,7 +193,7 @@ end
                     map(x -> x[1], path),
                     map(x -> x[3], path)
                 elseif dim_symbol == :z
-                    if S == :cylindrical
+                    if S == Cylindrical
                         path = CylindricalPoint.(path)
                         map(x -> x[2], path),
                         map(x -> x[1], path)
@@ -214,7 +214,7 @@ end
             filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
             @series begin
                 seriescolor --> :white
-                if dim_symbol == :z && S == :cylindrical projection --> :polar end
+                if dim_symbol == :z && S == Cylindrical projection --> :polar end
                 label --> ""
                 x, y = if dim_symbol == :φ
                     map(x -> (pos in spawn_positions_mirror ? -1 : 1) * sqrt(x[1]^2+x[2]^2), path),
@@ -226,7 +226,7 @@ end
                     map(x -> x[1], path),
                     map(x -> x[3], path)
                 elseif dim_symbol == :z
-                    if S == :cylindrical
+                    if S == Cylindrical
                         path = CylindricalPoint.(path)
                         ylims --> (0.0, sim.detector.world.intervals[1].right)
                         map(x -> x[2], path),

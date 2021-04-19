@@ -29,7 +29,18 @@ using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: CylindricalPoint, CartesianPoint
+using .ConstructiveSolidGeometry: 
+            CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
+            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
+            CartesianTicksTuple, CylindricalTicksTuple,
+            Geometry, AbstractGeometry,
+            get_decomposed_volumes,
+            get_decomposed_surfaces, AbstractSurfacePrimitive,
+            geom_round, geom_sigdigits, geom_atol_zero
+            
+import .ConstructiveSolidGeometry: sample, sample_surface
+export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
 import DataStructures
@@ -38,15 +49,13 @@ import Tables
 import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
-             range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
-import Base: show, print, println, display, +, -, &
-import Base.convert
+             range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in, convert,
+             show, print, println, display, +, -, &
 
 export SolidStateDetector
 export SSD_examples
 
 export Grid
-# export CylindricalPoint, CartesianPoint
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
@@ -66,7 +75,7 @@ struct ConfigFileError <: Exception
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
-# include("Geometries/Geometries.jl")
+include("Geometries/Units.jl")
 
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
@@ -86,7 +95,7 @@ include("PotentialSimulation/PotentialSimulation.jl")
 include("ElectricField/ElectricField.jl")
 
 include("ChargeDriftModels/ChargeDriftModels.jl")
-include("ChargeCloudModels/ChargeCloudModels.jl")
+#include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")
 
@@ -101,7 +110,7 @@ include("IO/IO.jl")
 
 include("examples.jl")
 
-# include("plotting/plotting.jl")
+include("PlotRecipes/PlotRecipes.jl")
 
 function __init__()
     @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin

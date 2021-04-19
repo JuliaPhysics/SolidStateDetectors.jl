@@ -41,7 +41,7 @@
                 "name": "cylindrical",
                 "r": {
                     "init": 0,
-                    "gradient": 0.000
+                    "gradient": 0.0
                 },
                 "z": {
                     "init": 0,
@@ -61,7 +61,7 @@
                 },
                 "h": 40.0,
                 "translate": {
-                    "z": 0.0
+                    "z": 20.0
                 }
             }
         },
@@ -81,8 +81,8 @@
                     "to": 360.0
                 },
                 "h": 0.3,
-                "translate":{
-                    "z": 39.7
+                "translate": {
+                    "z": 39.85
                 }
             }
         },
@@ -96,7 +96,7 @@
                 "type": "union",
                 "parts": [
                     {
-                        "name":"Seg1 bottom",
+                        "name": "Seg1 bottom",
                         "type": "tube",
                         "r": {
                             "from": 13.5,
@@ -119,7 +119,10 @@
                             "from": 0.3582,
                             "to": 59.6419
                         },
-                        "h": 40.0
+                        "h": 40.0,
+                        "translate": {
+                            "z": 20.0
+                        }
                     },
                     {
                         "name": "Seg1 top",
@@ -133,7 +136,7 @@
                             "to": 59.6419
                         },
                         "h": 0.0,
-                        "translate":{
+                        "translate": {
                             "z": 40.0
                         }
                     }
@@ -173,7 +176,10 @@
                             "from": 120.3581,
                             "to": 179.6419
                         },
-                        "h": 40.0
+                        "h": 40.0,
+                        "translate": {
+                            "z": 20.0
+                        }
                     },
                     {
                         "name": "Seg2 top",
@@ -227,7 +233,10 @@
                             "from": 240.3581,
                             "to": 299.6419
                         },
-                        "h": 40.0
+                        "h": 40.0,
+                        "translate": {
+                            "z": 20.0
+                        }
                     },
                     {
                         "name": "Seg3 top",
@@ -257,7 +266,6 @@
             "geometry": {
                 "type": "union",
                 "parts": [
-
                     {
                         "name": "Seg. 4 bottom",
                         "type": "tube",
@@ -282,7 +290,10 @@
                             "from": 60.3581,
                             "to": 119.6419
                         },
-                        "h": 40.0
+                        "h": 40.0,
+                        "translate": {
+                            "z": 20.0
+                        }
                     },
                     {
                         "name": "Seg. 4 top",
@@ -324,7 +335,10 @@
                             "from": 180.3581,
                             "to": 239.6419
                         },
-                        "h": 40.0
+                        "h": 40.0,
+                        "translate": {
+                            "z": 20.0
+                        }
                     },
                     {
                         "name": "Seg. 4 top",
@@ -366,7 +380,10 @@
                             "from": 300.3581,
                             "to": 359.6419
                         },
-                        "h": 40.0
+                        "h": 40.0,
+                        "translate": {
+                            "z": 20.0
+                        }
                     },
                     {
                         "name": "Seg. 4 top",

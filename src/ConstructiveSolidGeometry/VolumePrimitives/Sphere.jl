@@ -28,3 +28,16 @@ function Geometry(::Type{T}, ::Type{Sphere}, dict::Union{Dict{String,Any}, Dict{
     r = parse_r_of_primitive(T, dict, length_unit)
     return Sphere(T, r)
 end
+
+get_r_limits(s::Sphere{T}) where {T} = (_left_radial_interval(s.r), _right_radial_interval(s.r))
+
+function sample(s::Sphere{T}, Nsamps::NTuple{3,Int} = (2,5,3))::Vector{CylindricalPoint{T}} where {T}
+    rMin::T, rMax::T = get_r_limits(s)
+    samples = [
+        CylindricalPoint{T}(r,φ,z)
+        for z in (Nsamps[3] ≤ 1 ? rMax : range(-rMax, rMax, length = Nsamps[3]))
+        for r in (Nsamps[1] ≤ 1 ? rMax : range((abs(z) > rMin ? 0 : sqrt(rMin^2 - z^2)), sqrt(rMax^2 - z^2), length = Nsamps[1]))
+        for φ in (Nsamps[2] ≤ 1 ? 0 : range(0, 2π, length = Nsamps[2]))
+        
+    ]
+end

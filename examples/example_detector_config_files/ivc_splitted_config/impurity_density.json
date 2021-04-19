@@ -1,5 +1,5 @@
 {
-    "charge_density_model": {
+    "impurity_density": {
         "name": "linear",
         "phi": {
             "init": 0.0,

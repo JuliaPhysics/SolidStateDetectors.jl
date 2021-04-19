@@ -1,6 +1,6 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 using Test
-#=
+
 using SolidStateDetectors
 using SolidStateDetectors: SSDFloat
 
@@ -38,14 +38,14 @@ end
     @testset "Simulate example detector: Coax" begin
         sim = Simulation(SSD_examples[:Coax])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
-        # simulate!(sim, max_refinements = 0, verbose = true)
-        # evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
-        # simulate!(evt, sim)
-        # signalsum = T(0)
-        # for i in 1:length(evt.waveforms)
-        #     signalsum += abs(evt.waveforms[i].value[end])
-        # end
-        # @test isapprox( signalsum, T(2), atol = 5e-2 )
+        simulate!(sim, max_refinements = 0, verbose = true)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
+        simulate!(evt, sim)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @test isapprox( signalsum, T(2), atol = 5e-2 )
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation(SSD_examples[:BEGe])
@@ -56,8 +56,9 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
-        @test isapprox( signalsum, T(2), atol = 1e-2 )
+        @test isapprox( signalsum, T(2), atol = 5e-2 )
     end
+    #=
     @testset "Simulate example detector: CGD" begin
         sim = Simulation(SSD_examples[:CGD])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
@@ -82,6 +83,7 @@ end
         # end
         # @test isapprox( signalsum, T(2), atol = 1e-2 )
     end 
+    =#
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation(SSD_examples[:SigGen])
         simulate!(sim, max_refinements = 0, verbose = true)
@@ -94,7 +96,6 @@ end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
 end
-=#
 
 include("ConstructiveSolidGeometry/CSG_test.jl")
 include("ConstructiveSolidGeometry/CSG_IO.jl")

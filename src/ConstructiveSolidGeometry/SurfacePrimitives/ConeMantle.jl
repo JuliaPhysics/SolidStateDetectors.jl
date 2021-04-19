@@ -52,7 +52,8 @@ function ConeMantle(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<
     ConeMantle( T, (T(rbot), T(rtop)), nothing, T(height)/2)
 end
 
-get_r_at_z(c::ConeMantle{T}, z::Real) where {T} = _get_r_at_z(get_r_limits(c)..., c.z, z)
+get_r_at_z(c::ConeMantle{T, T}, z::Real) where {T} = c.r
+get_r_at_z(c::ConeMantle{T, Tuple{T,T}}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
 
 get_r_limits(c::ConeMantle{T, T, <:Any, <:Any}) where {T} = (T(c.r), T(c.r))
 get_r_limits(c::ConeMantle{T, <:Tuple, <:Any, <:Any}) where {T} = c.r
@@ -68,7 +69,8 @@ in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, Nothing, <:Any}) =
 in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _eq_cyl_r(p, get_r_at_z(c, p.z))
 
-function sample(c::ConeMantle{T}, step::Real) where {T}
+#=
+function sample(c::ConeMantle{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
     φMin::T, φMax::T, _ = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     samples = [
@@ -77,13 +79,43 @@ function sample(c::ConeMantle{T}, step::Real) where {T}
         for φ in (get_r_at_z(c, z) == 0 ? φMin : φMin:step/get_r_at_z(c, z):φMax)
     ]
 end
+=#
 
-function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int}) where {T}
+function sample(c::ConeMantle{T}, Nsamps::NTuple{3,Int})::Vector{CylindricalPoint{T}} where {T}
     φMin::T, φMax::T, _ = get_φ_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     samples = [
         CylindricalPoint{T}(get_r_at_z(c, z),φ,z)
         for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+    ]
+end
+
+function sample(c::ConeMantle{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
+    samples = [
+        CylindricalPoint{T}(get_r_at_z(c, z),φ,z)
+        for z in get_z_ticks(c, g)
+        for φ in get_φ_ticks(c, g)
+    ]
+end
+
+function _get_x_at_z(c::ConeMantle{T}, g::CartesianTicksTuple, z::T) where {T}
+    R::T = get_r_at_z(c, z)
+    x_from_y::Vector{T} = sqrt.(R^2 .- filter(y -> abs(y) <= R, g.y).^2)
+    _get_ticks(sort!(vcat(g.x, x_from_y, -x_from_y)), -R, R)
+end
+
+function _get_y_at_z(c::ConeMantle{T}, x::T, z::T) where {T}
+    R::T = get_r_at_z(c, z)
+    (-sqrt(R^2-x^2),sqrt(R^2-x^2))
+end
+
+function sample(c::ConeMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
+    samples = [
+        CartesianPoint{T}(x,y,z)    
+        for z in _get_ticks(g.z, _left_linear_interval(c.z), _right_linear_interval(c.z))
+        for x in _get_x_at_z(c, g, z)
+        for y in _get_y_at_z(c, x, z)
+        if c.φ === nothing || mod(atan(y, x), T(2π)) in c.φ
     ]
 end

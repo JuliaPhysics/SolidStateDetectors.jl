@@ -1,11 +1,11 @@
 """
     mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
 
-CS: Coordinate System: -> :cartesian / :cylindrical
+CS: Coordinate System: -> Cartesian / Cylindrical
 """
-mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
+mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractConfig{T}
     name::String  # optional
-    inputunits::NamedTuple
+    input_units::NamedTuple
     world::World{T, 3}
 
     config_dict::Dict
@@ -22,13 +22,13 @@ end
 get_precision_type(d::SolidStateDetector{T}) where {T} = T
 get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
 
-function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat, S}
+function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat, CS}
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    world_limits = get_world_limits_from_objects(Val(S), semiconductors, contacts, passives )
-    world = World(Val(S), world_limits)
+    world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives )
+    world = World(CS, world_limits)
 
-    return SolidStateDetector{T, S}(
+    return SolidStateDetector{T, CS}(
         "EmptyDetector",
         default_unit_tuple(),
         world,
@@ -42,11 +42,10 @@ function SolidStateDetector{T, S}()::SolidStateDetector{T} where {T <: SSDFloat,
 end
 
 function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
-    S::Symbol = :cartesian
-    return SolidStateDetector{T, S}()
+    return SolidStateDetector{T, Cartesian}()
 end
-function SolidStateDetector()::SolidStateDetector{Float32, :cartesian}
-    return SolidStateDetector{Float32, :cartesian}()
+function SolidStateDetector()::SolidStateDetector{Float32, Cartesian}
+    return SolidStateDetector{Float32, Cartesian}()
 end
 
 
@@ -114,7 +113,7 @@ function construct_objects(T, objects::Vector, semiconductors, contacts, passive
     nothing
 end
 
-function get_world_limits_from_objects(S::Val{:cylindrical}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
     imps_1::Vector{T} = []
     imps_3::Vector{T} = []
@@ -144,7 +143,7 @@ function get_world_limits_from_objects(S::Val{:cylindrical}, s::Vector{Semicondu
     end
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
-function get_world_limits_from_objects(S::Val{:cartesian}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cartesian}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
     imps_1::Vector{T} = []
     imps_2::Vector{T} = []
@@ -186,40 +185,52 @@ function get_world_limits_from_objects(S::Val{:cartesian}, s::Vector{Semiconduct
 end
 
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
-    grid_type::Symbol = :cartesian
+    CS::CoordinateSystemType = Cartesian
     semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
-    inputunits = construct_units(config_file)
+    input_units = construct_units(config_file)
     if haskey(config_file, "medium")
         medium = material_properties[materials[config_file["medium"]]]
     end
 
     if haskey(config_file, "objects")
-        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, virtual_drift_volumes, inputunits)
+        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, virtual_drift_volumes, input_units)
     end
 
     world = if haskey(config_file, "grid")
         if isa(config_file["grid"], Dict)
-            grid_type = Symbol(config_file["grid"]["coordinates"])
-            World(T, config_file["grid"], inputunits)
+            CS = if config_file["grid"]["coordinates"] == "cartesian" 
+                Cartesian
+            elseif config_file["grid"]["coordinates"]  == "cylindrical"
+                Cylindrical
+            else
+                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
+            end
+            World(T, config_file["grid"], input_units)
         elseif isa(config_file["grid"], String)
-            grid_type = Symbol(config_file["grid"])
-            world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives)
-            World(Val(grid_type), world_limits)
+            CS = if config_file["grid"] == "cartesian" 
+                Cartesian
+            elseif config_file["grid"] == "cylindrical"
+                Cylindrical
+            else
+                @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
+            end
+            world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives)
+            World(CS, world_limits)
         end
     else
-        world_limits = get_world_limits_from_objects(Val(grid_type), semiconductors, contacts, passives )
-        World(Val(grid_type), world_limits)
+        world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives )
+        World(CS, world_limits)
     end
 
-    c = SolidStateDetector{T, grid_type}()
+    c = SolidStateDetector{T, CS}()
     c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
     c.config_dict = config_file
     c.semiconductors = semiconductors
     c.contacts = contacts
     c.passives = passives
-    c.inputunits = inputunits
+    c.input_units = input_units
     c.medium = medium
     c.world = world
     c.virtual_drift_volumes = virtual_drift_volumes
@@ -239,18 +250,8 @@ function Base.sort!(v::AbstractVector{<:AbstractGeometry})
     return v_result
 end
 
-function contains(c::SolidStateDetector, point::AbstractCoordinatePoint{T,3})::Bool where T
-    for contact in c.contacts
-        if point in contact
-            return true
-        end
-    end
-    for sc in c.semiconductors
-        if point in sc
-            return true
-        end
-    end
-    return false
+function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T
+    reduce((x,semiconductor) -> x || in(pt,semiconductor), c.semiconductors, init = false) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
 end
 
 function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
@@ -296,7 +297,7 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
     positions = Vector{CartesianPoint{T}}(undef,n)
     while n_filled < n
         sample=CylindricalPoint{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:φ_range].left:0.00001:Volume[:φ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
-        if !(sample in d.contacts) && contains(d,sample) && contains(d,CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta))&& contains(d,CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta))
+        if !(sample in d.contacts) && in(sample,d) && in(CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z),d) && in(CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z),d) && in(CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta),d) && in(CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta),d)
             n_filled += 1
             positions[n_filled]=CartesianPoint(sample)
         end
@@ -304,80 +305,33 @@ function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume
     positions
 end
 
-
-
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject, grid::Grid{T, 3, S}) where {T <: SSDFloat, S}
-    samples = []
-    axes_syms = S == :cylindrical ? [:r, :φ, :z] : [:x, :y, :z]
-    all_imps = [get_important_points(det, s) for s in axes_syms]
-    for g in object.geometry_positive
-        stepsizes = T[]
-        for (iax, sax) in enumerate(axes_syms)
-            imps_ax = all_imps[iax]
-            ax::Vector{T} = grid.axes[iax].ticks
-            imin::Int = searchsortednearest(ax, minimum(imps_ax))
-            imax::Int = searchsortednearest(ax, maximum(imps_ax))
-            
-            ax = ax[imin:imax]
-            delete_inds::Vector{Int} = Int[]
-            for imp in imps_ax
-                push!(delete_inds, searchsortednearest(ax, imp))
-            end
-            unique!(sort!(delete_inds))
-            deleteat!(ax, delete_inds)
-            stepsize::T = length(ax) <= 1 ? T(1) : geom_round((minimum(diff(ax)) / 4))
-            imps_g = get_important_points(g, Val(sax))
-            unique!(sort!(imps_g))
-            if length(imps_g) > 1
-                min_imps_g::T = minimum(diff(imps_g)) / 4
-                if min_imps_g < stepsize
-                    stepsize = geom_round(min_imps_g)
-                end
-            end
-            imps_g_min::T, imps_g_max::T = if length(imps_g) > 0
-                minimum(imps_g), maximum(imps_g)
-            else
-                0, 0
-            end
-            Δg::T = (imps_g_max - imps_g_min)
-            if Δg > 0 
-                g_imin::Int = searchsortednearest(ax, imps_g_min)
-                g_imax::Int = searchsortednearest(ax, imps_g_max)
-                n_grid_points::Int = g_imax - g_imin + 1
-                n::Int = Int(round(Δg / stepsize))
-                if n > 2 * n_grid_points
-                    stepsize = Δg / (4 * n_grid_points)
-                end
-            else
-                stepsize = 1
-            end
-            if iszero(stepsize) stepsize = 1 end
-            push!(stepsizes, stepsize)
-        end
-        append!(samples, filter( x-> x in object.geometry, sample(g, stepsizes)) )
-    end
-    object_gridpoints = unique!([find_closest_gridpoint(sample_point, grid) for sample_point in samples])
-    return object_gridpoints
+function sample(obj::AbstractObject{T}, g::Grid{T,3,Cartesian,AT})::Vector{CartesianPoint{T}} where {T,AT}
+    g_mid::CartesianTicksTuple{T} = ( x = _get_mid_ticks(g[1].ticks), y = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
+    #filter!(p -> p in obj, 
+    samples::Vector{CartesianPoint{T}} = vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...)
+    unique!(samples)
+    #)
 end
 
+function sample(obj::AbstractObject{T}, g::Grid{T,3,Cylindrical,AT})::Vector{CylindricalPoint{T}} where {T,AT}
+    g_mid::CylindricalTicksTuple{T} = ( r = _get_mid_ticks(g[1].ticks), φ = _get_mid_ticks(g[2].ticks), z = _get_mid_ticks(g[3].ticks))
+    #filter!(p -> p in obj, 
+    samples::Vector{CylindricalPoint{T}} = vcat([sample(surf, g_mid) for surf in obj.decomposed_surfaces]...)
+    unique!(samples)
+    #)
+end
 
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:φ}, φ::T )  where {T <: SSDFloat}
-    closest_φ_idx=searchsortednearest(grid.axes[2].ticks, φ)
-    stepsize::Vector{T}= [minimum(diff(grid.axes[1].ticks)), IntervalSets.width(grid.axes[2].interval) == 0.0 ? 0.05236 : minimum(diff(grid.axes[2].ticks)), minimum(diff(grid.axes[3].ticks))]
-    stepsize /= 2
-    samples = filter(x-> x in object.geometry, vcat([sample(g, stepsize) for g in object.geometry_positive]...))
-    object_gridpoints = unique!([find_closest_gridpoint(sample_point,grid) for sample_point in samples])
-    return filter(x -> x[2]==closest_φ_idx, object_gridpoints)
+# TODO: if mid ticks are needed: uncomment. If not: remove
+@inline function _get_mid_ticks(gr::Vector{T})::Vector{T} where {T}
+    gr
+    # gr_mid::Vector{T} = Vector{T}(undef, 2 * length(gr) - 1)
+    # gr_mid[1:2:end] = gr
+    # gr_mid[2:2:end] = midpoints(gr)
+    # gr_mid
 end
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CylindricalGrid{T}, ::Val{:r}, r::T )  where {T <: SSDFloat}
-    return CartesianPoint{T}[]
-end
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::Grid{T}, ::Val{:z}, z::T )  where {T <: SSDFloat}
-    return CartesianPoint{T}[]
-end
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CartesianGrid{T}, ::Val{:x}, x::T )  where {T <: SSDFloat}
-    return CartesianPoint{T}[]
-end
-function paint_object(det::SolidStateDetector{T}, object::AbstractObject{T}, grid::CartesianGrid{T}, ::Val{:y}, y::T )  where {T <: SSDFloat}
-    return CartesianPoint{T}[]
+
+function paint_object(object::AbstractObject, grid::Grid{T, 3, S})::Vector{NTuple{3,Int}} where {T <: SSDFloat, S}
+    samples = sample(object, grid)
+    object_gridpoints::Vector{NTuple{3,Int}} = [find_closest_gridpoint(sample_point, grid) for sample_point in samples]
+    unique!(object_gridpoints)
 end

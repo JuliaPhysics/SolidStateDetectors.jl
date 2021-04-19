@@ -55,7 +55,7 @@ is_depleted(point_types::PointTypes)::Bool =
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
 all depleted cells.
 """
-function get_active_volume(pts::PointTypes{T, 3, :cylindrical}) where {T}
+function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
     active_volume::T = 0
 
     only_2d::Bool = length(pts.grid.axes[2]) == 1

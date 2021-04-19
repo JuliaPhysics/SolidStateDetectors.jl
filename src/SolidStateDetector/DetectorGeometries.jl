@@ -1,8 +1,9 @@
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
     "deg" => u"°","rad" => u"rad", #angle
-    "V" => u"V", "kV" => u"kV", #Potential
-    "K" => u"K", "Kelvic" => u"K", "C" => u"C")
+    "V" => u"V", "kV" => u"kV", #potential
+    "K" => u"K", "Kelvin" => u"K", "C" => u"°C", "Celsius" => u"°C", #temperature
+)
 
 include("Object.jl")
 include("Passive.jl")
@@ -125,38 +126,14 @@ function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float3
     SolidStateDetector{Float32}(filename)
 end
 
-@inline in(point::CylindricalPoint, detector::SolidStateDetector) =
-    contains(detector, point)
+function sample(c::SolidStateDetector{T, Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+    unique!(imp)
+end
 
-@inline in(point::StaticArray{Tuple{3}, <:Real}, detector::SolidStateDetector) =
-    convert(CartesianPoint, point) in detector
-
-@inline in(point::StaticArray{Tuple{3}, <:Quantity}, detector::SolidStateDetector) =
-    to_internal_units(u"m", point) in detector
-
-@inline in(point::CartesianPoint, detector::SolidStateDetector) =
-    convert(CylindricalPoint, point) in detector
-
-
-
-function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} where {T <: SSDFloat}
-    imp::Vector{T} = []
-    for semiconductor in c.semiconductors
-        for g in vcat(semiconductor.geometry_positive,semiconductor.geometry_negative)
-            append!(imp, get_important_points(g, Val{s}()))
-        end
-    end
-    for contact in c.contacts
-        for g in vcat(contact.geometry_positive,contact.geometry_negative)
-            append!(imp, get_important_points(g, Val{s}()))
-        end
-    end
-    for passive in c.passives
-        for g in vcat(passive.geometry_positive, passive.geometry_negative)
-            append!(imp, get_important_points(g, Val{s}()))
-        end
-    end
-    return uniq(sort(imp))
+function sample(c::SolidStateDetector{T, Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CylindricalPoint{T}} = vcat([CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+    unique!(imp)
 end
 
 
@@ -236,13 +213,13 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
 end
 
 # go_to_nearest_gridpoint
-function searchsortednearest(grid::Grid{T, 3, :cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::Grid{T, 3, Cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.r)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.φ)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
     CylindricalPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
 end
-function searchsortednearest(grid::Grid{T, 3, :cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::Grid{T, 3, Cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.x)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.y)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
@@ -334,7 +311,7 @@ end
 
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, :cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -389,19 +366,17 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        if !(haskey(ENV, "SSD_DISABLE_PAINTING"))
-            contact_gridpoints = paint_object(ssd, contact, grid)
-            for gridpoint in contact_gridpoints
-                potential[ gridpoint... ] = pot
-                pointtypes[ gridpoint... ] = zero(PointType)
-            end
+        contact_gridpoints = paint_object(contact, grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
 end
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-    grid::Grid{T, N, :cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+    grid::Grid{T, N, Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
     channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
         [weighting_potential_contact_id]
@@ -455,12 +430,10 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         else
             contact.id == weighting_potential_contact_id ? 1 : 0
         end
-        if !(haskey(ENV, "SSD_DISABLE_PAINTING"))
-            contact_gridpoints = paint_object(ssd, contact,grid)
-            for gridpoint in contact_gridpoints
-                potential[ gridpoint... ] = pot
-                pointtypes[ gridpoint... ] = zero(PointType)
-            end
+        contact_gridpoints = paint_object(contact, grid)
+        for gridpoint in contact_gridpoints
+            potential[ gridpoint... ] = pot
+            pointtypes[ gridpoint... ] = zero(PointType)
         end
     end
     nothing
@@ -476,7 +449,7 @@ function json_to_dict(inputfile::String)::Dict
     return parsed_json_file
 end
 
-function Grid(  detector::SolidStateDetector{T, :cylindrical};
+function Grid(  detector::SolidStateDetector{T, Cylindrical};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
@@ -506,20 +479,22 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
     else
         missing, false
     end
+    
+    samples::Vector{CylindricalPoint{T}} = sample(detector)
    
-    important_r_points::Vector{T} = get_important_points(detector, :r)
-    important_φ_points::Vector{T} = get_important_points(detector, :φ)
-    important_z_points::Vector{T} = get_important_points(detector, :z)
+    important_r_points::Vector{T} = map(p -> p.r, samples)
+    important_φ_points::Vector{T} = map(p -> p.φ, samples)
+    important_z_points::Vector{T} = map(p -> p.z, samples)
 
     push!(important_r_points, detector.world.intervals[1].left)
     push!(important_r_points, detector.world.intervals[1].right)
-    important_r_points = uniq(sort(important_r_points))
+    important_r_points = unique!(sort!(geom_round.(important_r_points)))
     push!(important_z_points, detector.world.intervals[3].left)
     push!(important_z_points, detector.world.intervals[3].right)
-    important_z_points = uniq(sort(important_z_points))
+    important_z_points = unique!(sort!(geom_round.(important_z_points)))
     push!(important_φ_points, detector.world.intervals[2].left)
     push!(important_φ_points, detector.world.intervals[2].right)
-    important_φ_points = uniq(sort(important_φ_points))
+    important_φ_points = unique!(sort!(geom_round.(important_φ_points)))
 
     # r
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
@@ -587,7 +562,7 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
 end
 
 
-function Grid(  detector::SolidStateDetector{T, :cartesian};
+function Grid(  detector::SolidStateDetector{T, Cartesian};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
                 min_n_ticks::Int = 10,
@@ -611,9 +586,11 @@ function Grid(  detector::SolidStateDetector{T, :cartesian};
         init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
-    important_x_points::Vector{T} = get_important_points(detector, :x)
-    important_y_points::Vector{T} = get_important_points(detector, :y)
-    important_z_points::Vector{T} = get_important_points(detector, :z)
+    samples::Vector{CartesianPoint{T}} = sample(detector)
+    
+    important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
+    important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
+    important_z_points::Vector{T} = geom_round.(map(p -> p.z, samples))
 
     init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true

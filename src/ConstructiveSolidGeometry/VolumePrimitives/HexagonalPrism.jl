@@ -45,35 +45,6 @@ in(p::CylindricalPoint, hp::HexagonalPrism{T, <:AbstractInterval, <:Any}) where 
     _in_z(p, hp.z) && p.r * T(2)/sqrt(T(3)) * cos(φ0) in hp.r
 end
 
-#=
-#The important points will change with transformations. This will be reworked
-
-# R
-function get_important_points(hp::HexagonalPrism{T, <:Any, <:Any}, ::Val{:r})::Vector{T} where {T}
-    return geom_round.(T[-_right_linear_interval_linear_interval(hp.r), -sqrt(T(3))/2*_right_linear_interval(hp.r), -_left_linear_interval(hp.r), -sqrt(T(3))/2*_left_linear_interval(hp.r), 0, sqrt(T(3))/2*_left_linear_interval(hp.r), _left_linear_interval(hp.r), sqrt(T(3))/2*_right_linear_interval(hp.r), _right_linear_interval(hp.r)])
-end
-
-# PHI
-function get_important_points(hp::HexagonalPrism{T, <:Any, <:Any}, ::Val{:φ})::Vector{T} where {T}
-    return geom_round.(T[π/6, 3π/6, 5π/6, 7π/6, 9π/6, 11π/6])
-end
-
-# Z
-function get_important_points(hp::HexagonalPrism{T, <:Any, <:Any}, ::Val{:z})::Vector{T} where {T}
-    return geom_round.(T[_left_linear_interval(hp.z), _right_linear_interval(hp.z)])
-end
-
-# X
-function get_important_points(hp::HexagonalPrism{T, <:Any, <:Any}, ::Val{:x})::Vector{T} where {T}
-    return geom_round.(T[-sqrt(T(3))/2*_right_linear_interval(hp.r), -sqrt(T(3))/2*_left_linear_interval(hp.r), 0, sqrt(T(3))/2*_left_linear_interval(hp.r), sqrt(T(3))/2*_right_linear_interval(hp.r)])
-end
-
-# Y
-function get_important_points(hp::HexagonalPrism{T, <:Any, <:Any}, ::Val{:y})::Vector{T} where {T}
-    return geom_round.(T[-_right_linear_interval(hp.r), -_right_linear_interval(hp.r)/2, -_left_linear_interval(hp.r), -_left_linear_interval(hp.r)/2, 0, _left_linear_interval(hp.r)/2, _left_linear_interval(hp.r), _right_linear_interval(hp.r)/2, _right_linear_interval(hp.r)])
-end
-=#
-    
 
 function sample(hp::HexagonalPrism{T, <:Any, <:Any}, stepsize::Vector{T}) where {T}
     samples = CartesianPoint{T}[]
