@@ -94,3 +94,7 @@ end
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
 end
+
+@testset "ADLChargeDriftModel" begin
+    include("ADLChargeDriftModel.jl")
+end
