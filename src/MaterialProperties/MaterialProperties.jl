@@ -6,31 +6,44 @@ const ϵ0  = Float64(8.8541878176e-12)
 
 const material_properties = Dict{Symbol, NamedTuple}()
 
+abstract type AbstractDriftMaterial end
+
 material_properties[:Vacuum] = (
     E_ionisation = 0.0u"eV",
     f_fano = 0.0,
     ϵ_r = 1.0,
     ρ = 0Unitful.g / (Unitful.cm^3),
-    name = "Vacuum"
+    name = "Vacuum",
+    ml = 1.0,
+    mt = 1.0
 )
 
+abstract type HPGe <: AbstractDriftMaterial end 
+Symbol(::Type{HPGe}) = :HPGe
 material_properties[:HPGe] = (
     E_ionisation = 2.95u"eV",
     f_fano = 0.13,
     ϵ_r = 16.0,
     ρ = 5.323Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
-    name = "High Purity Germanium"
+    name = "High Purity Germanium",
+    ml = 1.64,
+    mt = 0.0819
 )
 
 
-# These values might just be approximationsl
+# These values might just be approximations
+abstract type Si <: AbstractDriftMaterial end
+Symbol(::Type{Si}) = :Si
 material_properties[:Si] = (
     E_ionisation = 3.62u"eV",
     f_fano = 0.11,
     ϵ_r = 11.7,
     ρ = 2.3290Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
-    name = "Silicon"
+    name = "Silicon",
+    mt = 0.98,
+    ml = 0.19
 )
+
 material_properties[:Al] = (
     name = "Aluminium",
     ϵ_r = 10.8, # Aluminium Foil
