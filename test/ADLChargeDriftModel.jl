@@ -44,7 +44,7 @@ for material in keys(config_dict)
                     @testset "Holes <111>" begin
                         vh111_cdm = broadcast(E -> abs(getVh(E * r111, cdm) ⋅ r111), E)
                         vh111_true = map(E -> Vl(E,cdm.holes.axis111), E)
-                        @test isapprox(vh111_cdm, vh111_true, rtol = 5e-3) # higher rtol due to approximations in Λ, Ω or k0 ?
+                        @test isapprox(vh111_cdm, vh111_true, rtol = 10.0^(-geom_sigdigits(T)))
                     end
                 end
                 
@@ -77,7 +77,7 @@ for material in keys(config_dict)
                     @testset "Holes <111>" begin
                         vh111_cdm = broadcast(E -> abs(getVh(E * r111, cdm) ⋅ r111), E)
                         vh111_true = map(E -> Vl(E,cdm.holes.axis111), E)
-                        @test isapprox(vh111_cdm, vh111_true, rtol = 5e-3) # higher rtol due to approximations in Λ, Ω or k0
+                        @test isapprox(vh111_cdm, vh111_true, rtol = 10.0^(-geom_sigdigits(T)))
                     end
                 end
             end
