@@ -180,7 +180,7 @@ end
 
 
 
-# This should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
+# This function should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
 function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
     @warn "ADLChargeDriftModel does not have the same precision type as the electric field vector."
     cdmT = ADLChargeDriftModel{T}(cdm)
@@ -252,57 +252,28 @@ end
 
 
 
-# Hole model parametrization from [1] equations (22)-(26)
-@fastmath function k0func(vrel::T, ::Type{HPGe})::T where {T <: SSDFloat}
-    p0::T = 9.2652
-    p1::T = 26.3467
-    p2::T = 29.6137
-    p3::T = 12.3689
-    return @fastmath p0 - p1 * vrel + p2 * vrel^2 - p3 * vrel^3
+# Hole model parametrization from [1] equations (22)-(26), adjusted
+@fastmath Λ(vrel) = 0.75 * (1 - vrel)
+
+@fastmath function Ω(vrel, ::Type{HPGe})
+    p1 = -0.29711
+    p2 = -1.12082
+    p3 = 3.83929
+    p4 = 4.80825
+    x = 1.0 - vrel
+    p1 * x + p2 * x^2 + p3 * x^3 + p4 * x^4
 end
 
-@fastmath function k0func(vrel::T, ::Type{Si})::T where {T <: SSDFloat}
-    p0::T = 14.2579
-    p1::T = 42.3839
-    p2::T = 47.4626
-    p3::T = 19.1738
-    return @fastmath p0 - p1 * vrel + p2 * vrel^2 - p3 * vrel^3
+@fastmath function Ω(vrel, ::Type{Si})
+    p1 = -0.30565
+    p2 = -1.19650
+    p3 = 4.69001
+    p4 = -7.00635
+    x = 1.0 - vrel
+    p1 * x + p2 * x^2 + p3 * x^3 + p4 * x^4
 end
 
-@fastmath function lambda(k0::T, ::Type{HPGe})::T where {T <: SSDFloat}
-    p0::T = -0.01322
-    p1::T = 0.41145
-    p2::T = 0.23657
-    p3::T = 0.04077
-    return @fastmath p0 * k0 + p1 * k0^2 - p2 * k0^3 + p3 * k0^4
-end
-
-@fastmath function lambda(k0::T, ::Type{Si})::T where {T <: SSDFloat}
-    p0::T = -0.01687
-    p1::T = 0.34789
-    p2::T = 0.19211
-    p3::T = 0.03171
-    return @fastmath p0 * k0 + p1 * k0^2 - p2 * k0^3 + p3 * k0^4
-end
-
-@fastmath function omega(k0::T, ::Type{HPGe})::T where {T <: SSDFloat}
-    p0::T = 0.006550
-    p1::T = 0.19946
-    p2::T = 0.09859
-    p3::T = 0.01559
-    return @fastmath p0 * k0 - p1 * k0^2 + p2 * k0^3 - p3 * k0^4
-end
-
-@fastmath function omega(k0::T, ::Type{Si})::T where {T <: SSDFloat}
-    p0::T = 0.00670
-    p1::T = 0.16390
-    p2::T = 0.07575
-    p3::T = 0.01091
-    return @fastmath p0 * k0 - p1 * k0^2 + p2 * k0^3 - p3 * k0^4
-end
-
-
-# This function should never be called!
+# This function should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
 function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
     @warn "ADLChargeDriftModel does not have the same precision type as the electric field vector."
     cdmT = ADLChargeDriftModel{T}(cdm)
@@ -331,16 +302,16 @@ end
         Rz = SMatrix{3, 3, T}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1)
         a = Rz * fv
 
-        k0::T = k0func(V111h / V100h, material)
-        Λk0::T = lambda(k0, material)  # alternative without k0: 0.75 * (V100h - V11h) / V100h
-        Ωk0::T = omega(k0, material)
+        vrel::T = V111h/V100h
+        Λvrel::T = Λ(vrel)
+        Ωvrel::T = Ω(vrel, material)
         θ0::T = acos(a[3] / Emag)
         φ0::T = atan(a[2], a[1])
 
         vtmp = MVector{3, T}(0, 0, 0)
-        vtmp[3] = V100h * ( 1 - Λk0 * (sin(θ0)^4 * sin(2 * φ0)^2 + sin(2 * θ0)^2) )
-        vtmp[1] = V100h * Ωk0 * (2 * sin(θ0)^3 * cos(θ0) * sin(2 * φ0)^2 + sin(4 * θ0))
-        vtmp[2] = V100h * Ωk0 * sin(θ0)^3 * sin(4 * φ0)
+        vtmp[3] = V100h * ( 1 - Λvrel * (sin(θ0)^4 * sin(2 * φ0)^2 + sin(2 * θ0)^2) )
+        vtmp[1] = V100h * Ωvrel * (2 * sin(θ0)^3 * cos(θ0) * sin(2 * φ0)^2 + sin(4 * θ0))
+        vtmp[2] = V100h * Ωvrel * sin(θ0)^3 * sin(4 * φ0)
 
         Ry = SMatrix{3, 3, T}(cos(θ0),0,-sin(θ0), 0,1,0, sin(θ0),0,cos(θ0))
         b = φ0 + π / 4 + cdm.phi110
