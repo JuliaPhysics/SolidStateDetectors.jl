@@ -99,37 +99,44 @@ get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.le
 
 get_z_limits(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
-function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax) where {T}
+function _is_cone_collapsed(rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T, zMin::T, zMax::T) where {T}
+    tol = geom_atol_zero(T)
+    (isapprox(rbotMin, rbotMax, atol = tol) && isapprox(rtopMin, rtopMax, atol = tol)) || isapprox(zMin, zMax, atol = tol)
+end
+
+function _get_decomposed_surfaces_cone(c::Cone{T}, rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T, zMin::T, zMax::T) where {T}
     surfaces = AbstractSurfacePrimitive[]
     #top and bottom annulus
-    if rbotMin != rbotMax
+    tol = geom_atol_zero(T)
+    if !isapprox(rbotMin, rbotMax, atol = tol)
         push!(surfaces, CylindricalAnnulus(c, z = zMin))
     end
-    if zMin != zMax
-        if rtopMin != rtopMax 
+    if !isapprox(zMin, zMax, atol = tol)
+        if !isapprox(rtopMin, rtopMax, atol = tol)
             push!(surfaces, CylindricalAnnulus(c, z = zMax))
         end
         #outer conemantle
         push!(surfaces, ConeMantle(c, rbot = rbotMax, rtop = rtopMax))
     end
-    #need write a dedicated unique for surfaces which calls geom round
-    unique(surfaces)
+    surfaces
 end
 
 #2π Cones
 function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, Nothing, <:Any}) where {T}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
-    unique!(surfaces)
+    _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
+    tol = geom_atol_zero(T)
     surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
-    push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
-    unique!(surfaces)
+    if !_is_cone_collapsed(rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
+        push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
+    end
+    surfaces
 end
 
 #non 2π Cones
@@ -138,22 +145,33 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{T, Tuple{T,T}}, <:AbstractIn
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
     surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
-    for φ in [φMin, φMax]
-        push!(surfaces, ConalPlane(c, φ = φ))
+    if !_is_cone_collapsed(rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
+        if isapprox(φMin, φMax, atol = geom_atol_zero(T))
+            push!(surfaces, ConalPlane(c, φ = φMin))
+        else
+            push!(surfaces, ConalPlane(c, φ = φMin), ConalPlane(c, φ = φMax))
+        end
     end
-    unique!(surfaces)
+    surfaces
 end
 
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, <:AbstractInterval{T}, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
+    tol = geom_atol_zero(T)
     surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
-    for φ in [φMin, φMax]
-        push!(surfaces, ConalPlane(c, φ = φ))
+    if !_is_cone_collapsed(rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
+        if isapprox(φMin, φMax, atol = tol)
+            push!(surfaces, ConalPlane(c, φ = φMin))
+        else
+            push!(surfaces, ConalPlane(c, φ = φMin), ConalPlane(c, φ = φMax))
+        end
+        if !isapprox(rbotMin, rbotMax, atol = tol) || !isapprox(rtopMin, rtopMax, atol = tol)
+            push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
+        end
     end
-    push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
-    unique(surfaces)
+    surfaces
 end
 
 function sample(c::Cone{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
