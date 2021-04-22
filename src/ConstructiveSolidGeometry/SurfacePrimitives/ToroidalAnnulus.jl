@@ -26,12 +26,6 @@ end
 
 ToroidalAnnulus(r_torus, r_tubeMin, r_tubeMax, φ, θMin, θMax, z) = ToroidalAnnulus(;r_torus = r_torus, r_tubeMin = r_tubeMin, r_tubeMax = r_tubeMax, φ = φ, θMin = θMin, θMax = θMax, z = z)
 
-in(p::PlanarPoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, Nothing}) =
-    _in_planar_r(p - PlanarPoint(t.r_torus, t.z), t.r_tube)
-
-in(p::PlanarPoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, <:AbstractInterval}) =
-    _in_planar_r(p - PlanarPoint(t.r_torus, t.z), t.r_tube) && _in_planar_α(p - PlanarPoint(t.r_torus, t.z), t.θ)
-
 in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, Nothing}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _eq_φ(p, t.φ)
 

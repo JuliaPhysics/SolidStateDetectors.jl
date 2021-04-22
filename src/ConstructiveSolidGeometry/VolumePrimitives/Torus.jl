@@ -55,47 +55,76 @@ get_φ_limits(t::Torus{T, <:Any, <:Any, <:AbstractInterval, <:Any}) where {T} = 
 get_θ_limits(t::Torus{T, <:Any, <:Any, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
 get_θ_limits(t::Torus{T, <:Any, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
 
-function _get_decomposed_surfaces(t::Torus{T}) where {T}
-    surfaces = AbstractSurfacePrimitive[]
+function _is_torus_collapsed(t::Torus{T}) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
-    for r_tube in [r_tubeMin, r_tubeMax]
-        if r_tube == 0 continue end
-        push!(surfaces, TorusMantle(t, r_tube = r_tube))
-    end
-    unique(surfaces)
+    isapprox(r_tubeMin, r_tubeMax, atol = geom_atol_zero(T))
 end
 
-get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, Nothing}) where {T} = _get_decomposed_surfaces(t)
+function _get_decomposed_surfaces_torus(t::Torus{T, <:Any, T}) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    AbstractSurfacePrimitive[TorusMantle(t, r_tube = r_tubeMax)]
+end
+
+function _get_decomposed_surfaces_torus(t::Torus{T, <:Any, <:AbstractInterval{T}}) where {T}
+    surfaces = AbstractSurfacePrimitive[]
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    if isapprox(r_tubeMin, r_tubeMax, atol = geom_atol_zero(T))
+        push!(surfaces, TorusMantle(t, r_tube = r_tubeMax))
+    else
+        push!(surfaces, TorusMantle(t, r_tube = r_tubeMin), TorusMantle(t, r_tube = r_tubeMax))
+    end
+    surfaces
+end
+
+get_decomposed_surfaces(t::Torus{T, <:Any, <:Any, Nothing, Nothing}) where {T} = _get_decomposed_surfaces_torus(t)
 
 function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, Nothing}) where {T}
     φMin::T, φMax::T, _ = get_φ_limits(t)
-    surfaces = _get_decomposed_surfaces(t)
-    for φ in [φMin, φMax]
-        push!(surfaces, ToroidalAnnulus(t, φ = φ))
+    surfaces = _get_decomposed_surfaces_torus(t)
+    if !_is_torus_collapsed(t)
+        push!(surfaces, ToroidalAnnulus(t, φ = φMin), ToroidalAnnulus(t, φ = φMax))
     end
-    unique(surfaces)
+    surfaces
 end
 
 function get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, <:AbstractInterval}) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
-    surfaces = _get_decomposed_surfaces(t)
-    for θ in [θMin, θMax]
-        θ in [T(0),T(π)] ? push!(surfaces, CylindricalAnnulus(t, θ = θ)) : push!(surfaces, ConeMantle(t, θ = θ))
+    surfaces = _get_decomposed_surfaces_torus(t)
+    if !_is_torus_collapsed(t)
+        if r_tubeMin == T(0) && minmax(mod.((θMin, θMax), T(2π))...) == (T(0),T(π))
+            rMin = t.r_torus - r_tubeMax
+            rMax = t.r_torus + r_tubeMax
+            r = rMin == T(0) ? T(rMax) : T(rMin)..T(rMax)
+            push!(surfaces, CylindricalAnnulus(T, r, t.φ, t.z))
+        else
+            for θ in [θMin, θMax]
+                mod(θ, T(2π)) in [T(0),T(π)] ? push!(surfaces, CylindricalAnnulus(t, θ = θ)) : push!(surfaces, ConeMantle(t, θ = θ))
+            end
+        end
     end
-    unique(surfaces)
+    surfaces
 end
 
 function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, <:AbstractInterval}) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
     φMin::T, φMax::T, _ = get_φ_limits(t)
-    surfaces = _get_decomposed_surfaces(t)
-    for θ in [θMin, θMax]
-        θ in [T(0),T(π)] ? push!(surfaces, CylindricalAnnulus(t, θ = θ)) : push!(surfaces, ConeMantle(t, θ = θ))
+    surfaces = _get_decomposed_surfaces_torus(t)
+    if !_is_torus_collapsed(t)
+        if r_tubeMin == T(0) && minmax(mod.((θMin, θMax), T(2π))...) == (T(0),T(π))
+            rMin = t.r_torus - r_tubeMax
+            rMax = t.r_torus + r_tubeMax
+            r = rMin == T(0) ? T(rMax) : T(rMin)..T(rMax)
+            push!(surfaces, CylindricalAnnulus(T, r, t.φ, t.z))
+        else
+            for θ in [θMin, θMax]
+                mod(θ, T(2π)) in [T(0),T(π)] ? push!(surfaces, CylindricalAnnulus(t, θ = θ)) : push!(surfaces, ConeMantle(t, θ = θ))
+            end
+        end
+        push!(surfaces, ToroidalAnnulus(t, φ = φMin), ToroidalAnnulus(t, φ = φMax))
     end
-    for φ in [φMin, φMax]
-        push!(surfaces, ToroidalAnnulus(t, φ = φ))
-    end
-    unique(surfaces)
+    surfaces
 end
 
 function sample(t::Torus{T}, step::Real) where {T}

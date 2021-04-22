@@ -15,6 +15,7 @@ CylindricalAnnulus(c::Cone{T}; z = 0) where {T} = CylindricalAnnulus(T, get_r_at
 
 function CylindricalAnnulus(t::Torus{T}; θ = 0) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    θ = T(mod(θ,2π))
     if θ == T(0)
         rMin = t.r_torus + r_tubeMin
         rMax = t.r_torus + r_tubeMax
@@ -25,7 +26,7 @@ function CylindricalAnnulus(t::Torus{T}; θ = 0) where {T}
         @error "CylindricalAnnulus not defined for torroidal cordinate θ ≠ 0 and θ ≠ π. Use ConeMantle"
     end
     r = rMin == 0 ? T(rMax) : T(rMin)..T(rMax)
-    CylindricalAnnulus( T, r, t.φ, T(0))
+    CylindricalAnnulus( T, r, t.φ, t.z)
 end
 
 
@@ -40,7 +41,7 @@ CylindricalAnnulus(rMin, rMax, φMin, φMax, z) = CylindricalAnnulus(;rMin = rMi
 
 function CylindricalAnnulus(r::Real, z::Real)
     T = float(promote_type(typeof.((r, z))...))
-    CylindricalAnnulus(T, T(r), nothing, T(z), nothing)
+    CylindricalAnnulus(T, T(r), nothing, T(z))
 end
 
 get_r_limits(a::CylindricalAnnulus{T, <:Union{T, AbstractInterval{T}}, <:Any}) where {T} =
@@ -52,35 +53,6 @@ get_φ_limits(a::CylindricalAnnulus{T, <:Any, <:AbstractInterval}) where {T} = (
 in(p::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, Nothing}) where {T} = _eq_z(p, a.z) && _in_cyl_r(p, a.r)
 
 in(p::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval}) where {T} = _eq_z(p, a.z) && _in_φ(p, a.φ) && _in_cyl_r(p, a.r)
-
-function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
-    point = CylindricalPoint(point)
-    rMin::T, rMax::T = get_r_limits(a)
-    _in_cyl_r(point, a.r) ? abs(point.z - a.z) : hypot(point.z - a.z, min(abs(point.r - rMin), abs(point.r - rMax)))
-end
-
-function distance_to_surface(point::AbstractCoordinatePoint, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
-    point = CylindricalPoint(point)
-    rMin::T, rMax::T = get_r_limits(a)
-    φMin::T, φMax::T, _ = get_φ_limits(a)
-    Δz = abs(point.z - a.z)
-    if _in_φ(point, a.φ)
-        d = _in_cyl_r(point, a.r) ? Δz : hypot(Δz, min(abs(point.r - rMin), abs(point.r - rMax)))
-    else
-        ΔφMin = mod(point.φ - φMin, T(2π))
-        ΔφMax = mod(point.φ - φMax, T(2π))
-        Δφ = min(min(ΔφMin, T(2π) - ΔφMin), min(ΔφMax, T(2π) - ΔφMax))
-        y, x = point.r .* sincos(Δφ)
-        d = if x < rMin
-            sqrt((rMin - x)^2 + y^2 +  Δz^2)
-        elseif x > rMax
-            sqrt((rMax - x)^2 + y^2 +  Δz^2)
-        else
-            hypot(y, Δz)
-        end
-    end
-    d
-end
 
 #=
 function sample(a::CylindricalAnnulus{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}

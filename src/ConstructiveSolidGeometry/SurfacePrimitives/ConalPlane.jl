@@ -56,7 +56,7 @@ function sample(c::ConalPlane{T}, g::CylindricalTicksTuple{T})::Vector{Cylindric
             for r in _get_ticks(g.r, _left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c,z)))
         ]
 end
-        
+
 
 function sample(c::ConalPlane{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
     sφ::T, cφ::T = sincos(c.φ)
