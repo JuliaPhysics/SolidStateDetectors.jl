@@ -20,8 +20,10 @@
 @inline get_angular_interval(::Type{T}, α::AbstractInterval{T}) where {T} = α
 @inline get_angular_interval(::Type{T}, α::Nothing) where {T} = T(0)..T(2π)
 
-@inline _in_angular_interval_closed(α::T, α_int::Nothing; tol = 0) where {T<:Real} = true
+@inline _in_angular_interval_closed(α::Real, α_int::Nothing) = true
+@inline _in_angular_interval_closed(α::Real, α_int::Nothing, tol::Real) = true
 @inline _in_angular_interval_closed(α::Real, α_int::AbstractInterval{T}) where {T} = mod(α - α_int.left, T(2π)) ≤ α_int.right - α_int.left
+@inline _in_angular_interval_closed(α::Real, α_int::AbstractInterval{T}, tol::Real) where {T} = mod(α - (α_int.left-tol), T(2π)) ≤ (α_int.right+tol) - (α_int.left-tol)
 
 @inline _in_angular_interval_open(α::T, α_int::Nothing) where {T<:Real} = 0 < mod(α, T(2π)) < 2π
 @inline _in_angular_interval_open(α::Real, α_int::AbstractInterval{T}) where {T} = 0 < mod(α - α_int.left, T(2π)) < α_int.right - α_int.left
