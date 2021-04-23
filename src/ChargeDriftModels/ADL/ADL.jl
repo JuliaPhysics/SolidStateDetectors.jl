@@ -34,21 +34,21 @@ end
 
 @fastmath function γj(j::Integer, phi110::T, γ0::SArray{Tuple{3,3},T,2,9}, ::Type{Si})::SArray{Tuple{3,3},T,2,9} where {T <: SSDFloat}
     b::T = phi110 + T(π/4) * (-1)^j
-    Rj::SArray{Tuple{3,3},T,2,9} = (j == 3 ? SMatrix{3,3,T}(1, 0, 0, 0, 0, 1, 0, -1, 0)  : I) * SMatrix{3,3,T}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1) 
+    Rj::SArray{Tuple{3,3},T,2,9} = (j == 3 ? SMatrix{3,3,T,9}(1, 0, 0, 0, 0, 1, 0, -1, 0)  : I) * SMatrix{3,3,T,9}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1) 
     transpose(Rj) * γ0 * Rj
 end
 
-@fastmath function setup_gamma_matrices(phi110::T, masses::MassParameters{T}, material::Type{HPGe})::SVector{4, SMatrix{3,3,T}} where {T <: SSDFloat}
+@fastmath function setup_gamma_matrices(phi110::T, masses::MassParameters{T}, material::Type{HPGe})::SVector{4, SMatrix{3,3,T,9}} where {T <: SSDFloat}
     ml::T = masses.ml
     mt::T = masses.mt
     γ0 = SMatrix{3,3,T}(1. / mt, 0, 0, 0, 1. / ml, 0, 0, 0, 1. / mt)
     SVector{4, SArray{Tuple{3,3},T,2,9}}([γj(i, phi110, γ0, material) for i in Base.OneTo(4)]...)
 end
 
-@fastmath function setup_gamma_matrices(phi110::T, masses::MassParameters{T}, material::Type{Si})::SVector{3, SMatrix{3,3,T}} where {T <: SSDFloat}
+@fastmath function setup_gamma_matrices(phi110::T, masses::MassParameters{T}, material::Type{Si})::SVector{3, SMatrix{3,3,T,9}} where {T <: SSDFloat}
     ml::T = masses.ml
     mt::T = masses.mt
-    γ0 = SMatrix{3,3,T}(1. / mt, 0, 0, 0, 1. / ml, 0, 0, 0, 1. / mt)
+    γ0 = SMatrix{3,3,T,9}(1. / mt, 0, 0, 0, 1. / ml, 0, 0, 0, 1. / mt)
     SVector{3, SArray{Tuple{3,3},T,2,9}}([γj(i, phi110, γ0, material) for i in Base.OneTo(3)]...)
 end
 
@@ -59,7 +59,7 @@ end
 
 
 """
-    ADLChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel
+    ADLChargeDriftModel{T <: SSDFloat, N, TM} <: AbstractChargeDriftModel
 
 # Fields
 - `material::Type{<:AbstractDriftMaterial}`
@@ -67,20 +67,20 @@ end
 - `holes::CarrierParameters{T}`
 - `masses::MassParameters{T}`
 - `phi110::T
-- `gammas::Vector{SMatrix{3,3,T}}`
-- `temperaturemodel::AbstractTemperatureModel{T}`
+- `gammas::SVector{N,SMatrix{3,3,T}}`
+- `temperaturemodel::TM`
 """
-struct ADLChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
+struct ADLChargeDriftModel{T <: SSDFloat, N, TM <: AbstractTemperatureModel{T}} <: AbstractChargeDriftModel{T}
     material::Type{<:AbstractDriftMaterial}
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
     masses::MassParameters{T}
     phi110::T
-    gammas::Vector{SMatrix{3,3,T}}
-    temperaturemodel::AbstractTemperatureModel{T}
+    gammas::SVector{N,SMatrix{3,3,T,9}}
+    temperaturemodel::TM
 end
 
-function ADLChargeDriftModel{T}(chargedriftmodel::ADLChargeDriftModel)::ADLChargeDriftModel{T} where {T <: SSDFloat}
+function ADLChargeDriftModel{T,N,TM}(chargedriftmodel::ADLChargeDriftModel{<:Any,N,TM})::ADLChargeDriftModel{T,N,TM} where {T <: SSDFloat, N, TM}
     cdmf64 = chargedriftmodel
     e100 = VelocityParameters{T}(cdmf64.electrons.axis100.mu0, cdmf64.electrons.axis100.beta, cdmf64.electrons.axis100.E0, cdmf64.electrons.axis100.mun)
     e111 = VelocityParameters{T}(cdmf64.electrons.axis111.mu0, cdmf64.electrons.axis111.beta, cdmf64.electrons.axis111.E0, cdmf64.electrons.axis111.mun)
@@ -95,7 +95,7 @@ function ADLChargeDriftModel{T}(chargedriftmodel::ADLChargeDriftModel)::ADLCharg
     gammas = Vector{SArray{Tuple{3,3},T,2,9}}( cdmf64.gammas )
     temperaturemodel::AbstractTemperatureModel{T} = cdmf64.temperaturemodel
     material = cdmf64.material
-    ADLChargeDriftModel{T}(material, electrons, holes, masses, phi110, gammas, temperaturemodel)
+    ADLChargeDriftModel{T,N,TM}(material, electrons, holes, masses, phi110, gammas, temperaturemodel)
 end
 
 function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
@@ -174,16 +174,15 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
         temperaturemodel = VacuumModel{T}(config)
         # println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
     end
-
-    return ADLChargeDriftModel{T}(material, electrons, holes, masses, phi110, gammas, temperaturemodel)
+    return ADLChargeDriftModel{T,length(gammas),typeof(temperaturemodel)}(material, electrons, holes, masses, phi110, gammas, temperaturemodel)
 end
 
 
 
 # This function should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
-function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
+function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{<:Any,N,TM}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat, N, TM}
     @warn "ADLChargeDriftModel does not have the same precision type as the electric field vector."
-    cdmT = ADLChargeDriftModel{T}(cdm)
+    cdmT = ADLChargeDriftModel{T,N,TM}(cdm)
     getVe(fv, cdmT, Emag_threshold)
 end
 
@@ -220,7 +219,7 @@ function _get_AE_and_RE(cdm::ADLChargeDriftModel{T}, ::Type{Si}, V100e::T, V111e
 end
 
 
-@fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat}
+@fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T,N}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat, N}
     @inbounds begin
         Emag::T = norm(fv)
         Emag_inv::T = inv(Emag)
@@ -236,14 +235,12 @@ end
         AE::T, RE::T = get_AE_and_RE(cdm, V100e, V111e)
 
         e0 = SVector{3, T}(fv * Emag_inv)
-        
-        N::Int = length(cdm.gammas) # number of degenerate conduction band minima
-        oneOverSqrtEgE::SVector{N, T} = [1 / sqrt( cdm.gammas[j] * e0 ⋅ e0 ) for j in eachindex(cdm.gammas)] # setup.gammas[j] * e0 ⋅ e0 -> causes allocations
+        oneOverSqrtEgEs::SVector{N,T} = [T(1/sqrt(g * e0 ⋅ e0)) for g in cdm.gammas]
 
-        g0 = MVector{3, T}(0,0,0)
+        g0::SVector{3,T} = @SVector T[0,0,0]
         for j in eachindex(cdm.gammas)
-            NiOverNj::T = RE * (oneOverSqrtEgE[j] / sum(oneOverSqrtEgE) - T(1/N)) + T(1/N)
-            g0 += cdm.gammas[j] * e0 * NiOverNj * oneOverSqrtEgE[j]
+            NiOverNj::T = RE * (oneOverSqrtEgEs[j] / sum(oneOverSqrtEgEs) - T(1/N)) + T(1/N)
+            g0 += cdm.gammas[j] * e0 * NiOverNj * oneOverSqrtEgEs[j]
         end
 
         return g0 * -AE
@@ -253,38 +250,34 @@ end
 
 
 # Hole model parametrization from [1] equations (22)-(26), adjusted
-@fastmath Λ(vrel) = 0.75 * (1 - vrel)
+@fastmath Λ(vrel::T) where {T} = T(0.75 * (1.0 - vrel))
 
-@fastmath function Ω(vrel, ::Type{HPGe})
-    p1 = -0.29711
-    p2 = -1.12082
-    p3 = 3.83929
-    p4 = 4.80825
-    x = 1.0 - vrel
+@fastmath function Ω(vrel::T, ::Type{HPGe})::T where {T}
+    p1::T = -0.29711
+    p2::T = -1.12082
+    p3::T = 3.83929
+    p4::T = 4.80825
+    x::T = 1 - vrel
     p1 * x + p2 * x^2 + p3 * x^3 + p4 * x^4
 end
 
-@fastmath function Ω(vrel, ::Type{Si})
-    p1 = -0.30565
-    p2 = -1.19650
-    p3 = 4.69001
-    p4 = -7.00635
-    x = 1.0 - vrel
+@fastmath function Ω(vrel::T, ::Type{Si})::T where {T}
+    p1::T = -0.30565
+    p2::T = -1.19650
+    p3::T = 4.69001
+    p4::T = -7.00635
+    x::T = 1 - vrel
     p1 * x + p2 * x^2 + p3 * x^3 + p4 * x^4
 end
 
 # This function should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
-function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
+function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{<:Any,N,TM}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, N, TM}
     @warn "ADLChargeDriftModel does not have the same precision type as the electric field vector."
-    cdmT = ADLChargeDriftModel{T}(cdm)
+    cdmT = ADLChargeDriftModel{T,N,TM}(cdm)
     getVh(fv, cdmT, Emag_threshold)
 end
 
-@inline function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
-    getVh(fv, cdm, cdm.material, Emag_threshold)
-end
-
-@fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, material::Type{<:AbstractDriftMaterial}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
+@fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat}
     @inbounds begin
         Emag::T = norm(fv)
         Emag_inv::T = inv(Emag)
@@ -298,25 +291,22 @@ end
         V100h::T = Vl(Emag, cdm.holes.axis100) * f100h
         V111h::T = Vl(Emag, cdm.holes.axis111) * f111h
 
-        b::T = π / 4 + cdm.phi110
-        Rz = SMatrix{3, 3, T}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1)
-        a = Rz * fv
+        Rz_inv::RotZ{T} = RotZ{T}(-(cdm.phi110 + π / 4))
+        tmp::SVector{3,T} = Rz_inv * fv
 
-        vrel::T = V111h/V100h
+        vrel::T = V111h / V100h
         Λvrel::T = Λ(vrel)
-        Ωvrel::T = Ω(vrel, material)
-        θ0::T = acos(a[3] / Emag)
-        φ0::T = atan(a[2], a[1])
+        Ωvrel::T = Ω(vrel, cdm.material)
+        θ0::T = acos(tmp[3] / Emag)
+        φ0::T = atan(tmp[2], tmp[1])
 
-        vtmp = MVector{3, T}(0, 0, 0)
-        vtmp[3] = V100h * ( 1 - Λvrel * (sin(θ0)^4 * sin(2 * φ0)^2 + sin(2 * θ0)^2) )
-        vtmp[1] = V100h * Ωvrel * (2 * sin(θ0)^3 * cos(θ0) * sin(2 * φ0)^2 + sin(4 * θ0))
-        vtmp[2] = V100h * Ωvrel * sin(θ0)^3 * sin(4 * φ0)
+        vr::T = V100h * ( 1 - Λvrel * (sin(θ0)^4 * sin(2 * φ0)^2 + sin(2 * θ0)^2) )
+        vΩ::T = V100h * Ωvrel * (2 * sin(θ0)^3 * cos(θ0) * sin(2 * φ0)^2 + sin(4 * θ0))
+        vφ::T = V100h * Ωvrel * sin(θ0)^3 * sin(4 * φ0)
 
-        Ry = SMatrix{3, 3, T}(cos(θ0),0,-sin(θ0), 0,1,0, sin(θ0),0,cos(θ0))
-        b = φ0 + π / 4 + cdm.phi110
-        Rz = SMatrix{3, 3, T}(cos(b), sin(b), 0, -sin(b), cos(b), 0, 0, 0, 1)
-        Rz * (Ry * vtmp)
+        Ry::RotY{T} = RotY{T}(θ0)
+        Rz::RotZ{T} = RotZ{T}(φ0 + cdm.phi110 + π / 4)
+        Rz * (Ry * @SVector T[vΩ, vφ, vr])
     end
 end
 
