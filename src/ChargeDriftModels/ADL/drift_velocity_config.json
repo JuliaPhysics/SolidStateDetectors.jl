@@ -1,5 +1,6 @@
 {
 	"phi110": -0.785398,
+	"material": "HPGe",
 	"drift": {
 		"velocity": {
 			"model": "Bruyneel2006",
