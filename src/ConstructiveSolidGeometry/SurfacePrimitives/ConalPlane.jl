@@ -25,7 +25,7 @@ get_r_limits(c::ConalPlane{T}) where {T} = get_r_limits(Cone(T, c.r, nothing, c.
 get_z_limits(c::ConalPlane{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
 in(p::AbstractCoordinatePoint, c::ConalPlane) =
-    _in_z(p, c.z) && _eq_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
+    _in_z(p, c.z) && _isapprox_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 #=
 function sample(c::ConalPlane{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}

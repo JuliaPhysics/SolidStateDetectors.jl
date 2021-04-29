@@ -2,16 +2,19 @@ using Test
 using SolidStateDetectors
 using LinearAlgebra
 using Rotations
+using IntervalSets
 using StaticArrays
 
-using SolidStateDetectors.ConstructiveSolidGeometry: 
+using SolidStateDetectors.ConstructiveSolidGeometry:
     CartesianPoint, CartesianVector, CylindricalPoint, scale,
-    Tube, Cone, Box, Sphere, HexagonalPrism
+    _in_angular_interval_closed, _in_angular_interval_open,
+    ConalPlane, ConeMantle, CylindricalAnnulus, ToroidalAnnulus, TorusMantle,
+    Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
 @testset "Test CSG" begin
-    
+
     for T in [Float64, Float32]
-    
+
         @testset  "Precision type: $(T)" begin
 
             @testset "Points" begin
@@ -22,13 +25,123 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                 @test norm(cp1) == sqrt(T(14))
             end
 
+            @testset "Angular Intervals" begin
+                @testset "FullCircle" begin
+                    full_2π = T(0)..T(2π)
+                    @test _in_angular_interval_closed(T(0), full_2π)
+                    @test _in_angular_interval_closed(T(2π), full_2π)
+                    @test _in_angular_interval_closed(T(4π), full_2π)
+                    @test _in_angular_interval_closed(T(-π), full_2π)
+                    @test _in_angular_interval_closed(T(-2π), full_2π)
+                    @test !_in_angular_interval_open(T(0), full_2π)
+                    @test !_in_angular_interval_open(T(2π), full_2π)
+                    @test !_in_angular_interval_open(T(4π), full_2π)
+                    @test _in_angular_interval_open(T(-π), full_2π)
+                    @test !_in_angular_interval_open(T(-2π), full_2π)
+                end
+                @testset "Partial Circle" begin
+                    partial_2π = T(0)..T(π)
+                    @test _in_angular_interval_closed(T(0), partial_2π)
+                    @test _in_angular_interval_closed(T(2π), partial_2π)
+                    @test _in_angular_interval_closed(T(π), partial_2π)
+                    @test _in_angular_interval_closed(T(3π), partial_2π)
+                    @test _in_angular_interval_closed(T(-π), partial_2π)
+                    @test !_in_angular_interval_closed(T(-π/2), partial_2π)
+                    @test _in_angular_interval_closed(T(π/2), partial_2π)
+                    @test _in_angular_interval_closed(T(-3π/2), partial_2π)
+                    @test !_in_angular_interval_open(T(0), partial_2π)
+                    @test !_in_angular_interval_open(T(π), partial_2π)
+                    #@test !_in_angular_interval_open(T(3π), partial_2π)
+                    @test !_in_angular_interval_open(T(-π), partial_2π)
+                    @test _in_angular_interval_open(T(π/2), partial_2π)
+                    @test _in_angular_interval_open(T(-3π/2), partial_2π)
+                end
+                @testset "Negative Interval" begin
+                    neg_interval = -T(π/2)..T(π/2)
+                    @test _in_angular_interval_closed(T(0), neg_interval)
+                    @test _in_angular_interval_closed(T(2π), neg_interval)
+                    @test !_in_angular_interval_closed(T(π), neg_interval)
+                    @test !_in_angular_interval_closed(T(3π), neg_interval)
+                    @test !_in_angular_interval_closed(T(-π), neg_interval)
+                    @test _in_angular_interval_closed(T(-π/2), neg_interval)
+                    #@test _in_angular_interval_closed(T(-3π/2), neg_interval)
+                    @test _in_angular_interval_closed(T(3π/2), neg_interval)
+                    @test _in_angular_interval_closed(T(π/2), neg_interval)
+                    @test _in_angular_interval_open(T(0), neg_interval)
+                    @test !_in_angular_interval_open(T(π/2), neg_interval)
+                    @test !_in_angular_interval_open(T(-π/2), neg_interval)
+                    @test !_in_angular_interval_open(T(3π/2), neg_interval)
+                    @test !_in_angular_interval_open(T(-3π/2), neg_interval)
+                end
+            end
+
+            @testset "Surface Primitives" begin
+                @testset "ConalPlane" begin
+                    cplane = ConalPlane()
+                    @test CartesianPoint{T}(0, 0, 0) in cplane
+                    @test CartesianPoint{T}(1, 0, 0) in cplane
+                    @test CartesianPoint{T}(1, 0, 0.5) in cplane
+                    @test !(CartesianPoint{T}(1, 0.1, 0.5) in cplane)
+                end
+                @testset "ConeMantle" begin
+                    cmantle = ConeMantle(T(0.0), T(2.0), T(2.0))
+                    @test CartesianPoint{T}(0, 0, -1) in cmantle
+                    @test CartesianPoint{T}(2, 0, 1) in cmantle
+                    @test CartesianPoint{T}(0, 1, 0) in cmantle
+                    @test !(CartesianPoint{T}(0, 0, 0) in cmantle)
+                end
+                @testset "CylindricalAnnulus" begin
+                    cannulus = CylindricalAnnulus(T(2.0), T(0.0))
+                    @test CartesianPoint{T}(0, 0, 0) in cannulus
+                    @test CartesianPoint{T}(2, 0, 0) in cannulus
+                    @test CartesianPoint{T}(0, -2, 0) in cannulus
+                    @test !(CartesianPoint{T}(2, 2, 0) in cannulus)
+                    @test !(CartesianPoint{T}(0, 0, 0.1) in cannulus)
+                end
+                @testset "ToroidalAnnulus" begin
+                    tannulus = ToroidalAnnulus()
+                    @test CartesianPoint{T}(0, 0, 0) in tannulus
+                    @test CartesianPoint{T}(2, 0, 0) in tannulus
+                    @test CartesianPoint{T}(1, 0, 1) in tannulus
+                    @test CartesianPoint{T}(1, 0, -1) in tannulus
+                    @test !(CartesianPoint{T}(0, 0.1, 0) in tannulus)
+                    @test !(CartesianPoint{T}(2, 0, 0.1) in tannulus)
+                end
+                @testset "TorusMantle" begin
+                    tmantle = TorusMantle()
+                    @test CartesianPoint{T}(0, 0, 0) in tmantle
+                    @test CartesianPoint{T}(2, 0, 0) in tmantle
+                    @test CartesianPoint{T}(1, 0, 1) in tmantle
+                    @test CartesianPoint{T}(1, 0, -1) in tmantle
+                    @test CartesianPoint{T}(0, 2, 0) in tmantle
+                    @test CartesianPoint{T}(0, 1, 1) in tmantle
+                    @test CartesianPoint{T}(0, 1, -1) in tmantle
+                    @test !(CartesianPoint{T}(0, 0.1, 0) in tmantle)
+                    @test !(CartesianPoint{T}(2, 0, 0.1) in tmantle)
+                end
+            end
+
             @testset "Volume Primitives" begin
                 @testset "Tube" begin
                     tube = Tube(T(0.2), T(2.0)) # r from 0..0.2, z from -1.0..1.0
                     @test CartesianPoint{T}(0, 0, 0) in tube
                     @test CartesianPoint{T}(tube.r, 0, tube.z) in tube
-                    @test !(CartesianPoint{T}(tube.r, 0, 1.1*tube.z) in tube) 
-                    @test !(CartesianPoint{T}(1.1*tube.r, 0, tube.z) in tube) 
+                    @test !(CartesianPoint{T}(tube.r, 0, 1.1*tube.z) in tube)
+                    @test !(CartesianPoint{T}(1.1*tube.r, 0, tube.z) in tube)
+                end
+                @testset "Torus" begin
+                    torus = Torus(T(2.0), T(1.0), T(0.0)) # r_torus = 2, r_tube = 1, z = 0
+                    @test CartesianPoint{T}(torus.r_torus, 0, 0) in torus
+                    @test CartesianPoint{T}(torus.r_torus + torus.r_tube, 0, 0) in torus
+                    @test CartesianPoint{T}(torus.r_torus - torus.r_tube, 0, 0) in torus
+                    @test CartesianPoint{T}(0, torus.r_torus + torus.r_tube, 0) in torus
+                    @test CartesianPoint{T}(0, torus.r_torus - torus.r_tube, 0) in torus
+                    @test CartesianPoint{T}(torus.r_torus, 0, torus.r_tube) in torus
+                    @test CartesianPoint{T}(torus.r_torus, 0, -torus.r_tube) in torus
+                    @test CartesianPoint{T}(0, torus.r_torus, torus.r_tube) in torus
+                    @test CartesianPoint{T}(0, torus.r_torus, -torus.r_tube) in torus
+                    @test !(CartesianPoint{T}(torus.r_torus + torus.r_tube, 0, 0.1) in torus)
+                    @test !(CartesianPoint{T}(torus.r_torus + torus.r_tube + 0.1, 0, 0) in torus)
                 end
                 @testset "Box" begin
                     box = Box(T(1.0), T(2.0), T(3.0)) # x from -0.5..0.5, y from -1.0..1.0, z from -1.5..1.5
@@ -44,8 +157,8 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test CartesianPoint{T}(sphere.r, 0, 0) in sphere
                     @test CartesianPoint{T}(sphere.r/2, sphere.r/2, sphere.r/2) in sphere
                     @test !(CartesianPoint{T}(sphere.r, sphere.r, 0) in sphere)
-                    @test !(CartesianPoint{T}(1.1*sphere.r, 0, 0) in sphere) 
-                    @test !(CartesianPoint{T}(0, 0.1*sphere.r, sphere.r) in sphere) 
+                    @test !(CartesianPoint{T}(1.1*sphere.r, 0, 0) in sphere)
+                    @test !(CartesianPoint{T}(0, 0.1*sphere.r, sphere.r) in sphere)
                 end
                 @testset "HexagonalPrism" begin
                     hexagon = HexagonalPrism(T(1.0), T(2.0), T(-1.0), T(1.0)) # outer radius from 1.0..2.0, z from -1.0..1.0
@@ -73,10 +186,10 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
             end
 
 
-            @testset "Transformations" begin 
+            @testset "Transformations" begin
                 # test transformations on a Tube
                 tube = Tube(T(0), T(0.5), T(0), T(0), T(0), T(1)) # r from 0.0..0.5, z from 0.0..1.0
-                
+
                 @testset "Rotations" begin
                     RT = Float64
                     @testset "Rotation around X" begin
@@ -156,7 +269,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                         @test !(CartesianPoint{T}(0, 1, -0.5) in rot_tube_yzx)
                     end
                 end
-                
+
                 @testset "Translations" begin
                     @testset "Single translation of a Tube along the axis" begin
                         translate1 = CartesianVector{T}(0, 0, -1)
@@ -221,7 +334,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                         @test CartesianPoint{T}(1, 0.5, 0) in translate_tube2
                     end
                 end
-                
+
                 @testset "Scaling" begin
                     @testset "Single scaling of a Tube along the axis" begin
                         scale0 = SVector{3,T}(1.0, 1.0, 4.0)
@@ -239,7 +352,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     end
                     @testset "Repeated scaling of a Tube along the axis" begin
                         scale1 = SVector{3,T}(1.0, 1.0, 2.0)
-                        scaled_tube1 = scale(tube, scale1) 
+                        scaled_tube1 = scale(tube, scale1)
                         scaled_tube2 = scale(scaled_tube1, scale1) # same Tube as before
                         @test !(CartesianPoint{T}(0, 0, -1) in scaled_tube2)
                         @test CartesianPoint{T}(0, 0, 0) in scaled_tube2
@@ -339,6 +452,6 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     end
                 end
             end
-        end 
+        end
     end
 end

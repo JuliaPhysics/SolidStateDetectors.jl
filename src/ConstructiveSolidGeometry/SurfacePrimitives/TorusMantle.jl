@@ -33,16 +33,16 @@ function get_surface_vector(t::TorusMantle{T}, point::AbstractCoordinatePoint)::
 end
 
 in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, Nothing, Nothing}) =
-    _eq_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
+    _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
 
 in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, <:AbstractInterval, Nothing}) =
-    _eq_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
+    _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
 
 in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, Nothing, <:AbstractInterval}) =
-    _eq_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
+    _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
-    _eq_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
+    _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 
 get_φ_limits(t::TorusMantle{T, <:Any, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)

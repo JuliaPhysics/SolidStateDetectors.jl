@@ -27,10 +27,10 @@ end
 ToroidalAnnulus(r_torus, r_tubeMin, r_tubeMax, φ, θMin, θMax, z) = ToroidalAnnulus(;r_torus = r_torus, r_tubeMin = r_tubeMin, r_tubeMax = r_tubeMax, φ = φ, θMin = θMin, θMax = θMax, z = z)
 
 in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, Nothing}) =
-    _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _eq_φ(p, t.φ)
+    _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _isapprox_φ(p, t.φ)
 
 in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, <:AbstractInterval}) =
-    _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _eq_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
+    _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _isapprox_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 get_r_tube_limits(t::ToroidalAnnulus{T}) where {T} =
     (_left_radial_interval(t.r_tube),_right_radial_interval(t.r_tube))
