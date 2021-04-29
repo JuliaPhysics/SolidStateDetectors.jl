@@ -1,16 +1,16 @@
-struct ToroidalAnnulus{T,TR,TB,TP,TT,TZ} <: AbstractSurfacePrimitive{T}
-    r_torus::TR
+struct ToroidalAnnulus{T,TB,TT} <: AbstractSurfacePrimitive{T}
+    r_torus::T
     r_tube::TB
-    φ::TP
+    φ::T
     θ::TT
-    z::TZ
+    z::T
     function ToroidalAnnulus( ::Type{T},
                    r_torus::T,
                    r_tube::Union{T, <:AbstractInterval{T}},
                    φ::T,
                    θ::Union{Nothing, <:AbstractInterval{T}},
                    z::T) where {T}
-        new{T,T,typeof(r_tube),T,typeof(θ),T}(r_torus, r_tube, φ, θ, z)
+        new{T,typeof(r_tube),typeof(θ)}(r_torus, r_tube, φ, θ, z)
     end
 end
 
@@ -26,17 +26,17 @@ end
 
 ToroidalAnnulus(r_torus, r_tubeMin, r_tubeMax, φ, θMin, θMax, z) = ToroidalAnnulus(;r_torus = r_torus, r_tubeMin = r_tubeMin, r_tubeMax = r_tubeMax, φ = φ, θMin = θMin, θMax = θMax, z = z)
 
-in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, Nothing}) =
+in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, Nothing}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _isapprox_φ(p, t.φ)
 
-in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, <:Any, <:Any, <:AbstractInterval}) =
+in(p::AbstractCoordinatePoint, t::ToroidalAnnulus{<:Any, <:Any, <:AbstractInterval}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _isapprox_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 get_r_tube_limits(t::ToroidalAnnulus{T}) where {T} =
     (_left_radial_interval(t.r_tube),_right_radial_interval(t.r_tube))
 
-get_θ_limits(t::ToroidalAnnulus{T, <:Any, <:Any, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
-get_θ_limits(t::ToroidalAnnulus{T, <:Any, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
+get_θ_limits(t::ToroidalAnnulus{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
+get_θ_limits(t::ToroidalAnnulus{T, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
 
 function sample(t::ToroidalAnnulus{T}, step::Real) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)

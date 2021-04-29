@@ -1,16 +1,16 @@
-struct Torus{T,TR,TB,TP,TT,TZ} <: AbstractVolumePrimitive{T}
-    r_torus::TR
+struct Torus{T,TB,TP,TT} <: AbstractVolumePrimitive{T}
+    r_torus::T
     r_tube::TB
     φ::TP
     θ::TT
-    z::TZ
+    z::T
     function Torus( ::Type{T},
                    r_torus::T,
                    r_tube::Union{T, <:AbstractInterval{T}},
                    φ::Union{Nothing, <:AbstractInterval{T}},
                    θ::Union{Nothing, <:AbstractInterval{T}},
                    z::T) where {T}
-        new{T,T,typeof(r_tube),typeof(φ),typeof(θ),T}(r_torus, r_tube, φ, θ, z)
+        new{T,typeof(r_tube),typeof(φ),typeof(θ)}(r_torus, r_tube, φ, θ, z)
     end
 end
 
@@ -35,37 +35,37 @@ function RoundChamfer(r_torus::R1, r_tube::R2, z::TZ) where {R1<:Real, R2<:Real,
     Torus( T, T(r_torus), T(r_tube), nothing, T(0)..T(π/2), T(z))
 end
 
-in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:Any, Nothing, Nothing}) =
+in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, Nothing}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
 
-in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:Any, <:AbstractInterval, Nothing}) =
+in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, Nothing}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
 
-in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:Any, Nothing, <:AbstractInterval}) =
+in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, <:AbstractInterval}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
-in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
+in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 get_r_tube_limits(t::Torus{T}) where {T} = (_left_radial_interval(t.r_tube),_right_radial_interval(t.r_tube))
 
-get_φ_limits(t::Torus{T, <:Any, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
-get_φ_limits(t::Torus{T, <:Any, <:Any, <:AbstractInterval, <:Any}) where {T} = (t.φ.left, t.φ.right, false)
+get_φ_limits(t::Torus{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
+get_φ_limits(t::Torus{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (t.φ.left, t.φ.right, false)
 
-get_θ_limits(t::Torus{T, <:Any, <:Any, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
-get_θ_limits(t::Torus{T, <:Any, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
+get_θ_limits(t::Torus{T, <:Any, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
+get_θ_limits(t::Torus{T, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
 
 function _is_torus_collapsed(t::Torus{T}) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     isapprox(r_tubeMin, r_tubeMax, atol = geom_atol_zero(T))
 end
 
-function _get_decomposed_surfaces_torus(t::Torus{T, <:Any, T}) where {T}
+function _get_decomposed_surfaces_torus(t::Torus{T, T}) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     AbstractSurfacePrimitive[TorusMantle(t, r_tube = r_tubeMax)]
 end
 
-function _get_decomposed_surfaces_torus(t::Torus{T, <:Any, <:AbstractInterval{T}}) where {T}
+function _get_decomposed_surfaces_torus(t::Torus{T, <:AbstractInterval{T}}) where {T}
     surfaces = AbstractSurfacePrimitive[]
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     if isapprox(r_tubeMin, r_tubeMax, atol = geom_atol_zero(T))
@@ -76,9 +76,9 @@ function _get_decomposed_surfaces_torus(t::Torus{T, <:Any, <:AbstractInterval{T}
     surfaces
 end
 
-get_decomposed_surfaces(t::Torus{T, <:Any, <:Any, Nothing, Nothing}) where {T} = _get_decomposed_surfaces_torus(t)
+get_decomposed_surfaces(t::Torus{T, <:Any, Nothing, Nothing}) where {T} = _get_decomposed_surfaces_torus(t)
 
-function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, Nothing}) where {T}
+function get_decomposed_surfaces(t::Torus{T, <:Any, <:AbstractInterval, Nothing}) where {T}
     φMin::T, φMax::T, _ = get_φ_limits(t)
     surfaces = _get_decomposed_surfaces_torus(t)
     if !_is_torus_collapsed(t)
@@ -87,7 +87,7 @@ function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, Nothi
     surfaces
 end
 
-function get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, <:AbstractInterval}) where {T}
+function get_decomposed_surfaces(t::Torus{T, <:Any, Nothing, <:AbstractInterval}) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
     surfaces = _get_decomposed_surfaces_torus(t)
@@ -106,7 +106,7 @@ function get_decomposed_surfaces(t::Torus{T, T, <:Any, Nothing, <:AbstractInterv
     surfaces
 end
 
-function get_decomposed_surfaces(t::Torus{T, T, <:Any, <:AbstractInterval, <:AbstractInterval}) where {T}
+function get_decomposed_surfaces(t::Torus{T, <:Any, <:AbstractInterval, <:AbstractInterval}) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
     θMin::T, θMax::T, _ = get_θ_limits(t)
     φMin::T, φMax::T, _ = get_φ_limits(t)

@@ -1,16 +1,16 @@
-struct TorusMantle{T,TR,TB,TP,TT,TZ} <: AbstractSurfacePrimitive{T}
-    r_torus::TR
-    r_tube::TB
+struct TorusMantle{T,TP,TT} <: AbstractSurfacePrimitive{T}
+    r_torus::T
+    r_tube::T
     φ::TP
     θ::TT
-    z::TZ
+    z::T
     function TorusMantle( ::Type{T},
                    r_torus::T,
                    r_tube::T,
                    φ::Union{Nothing, <:AbstractInterval{T}},
                    θ::Union{Nothing, <:AbstractInterval{T}},
                    z::T) where {T}
-        new{T,T,T,typeof(φ),typeof(θ),T}(r_torus, r_tube, φ, θ, z)
+        new{T,typeof(φ),typeof(θ)}(r_torus, r_tube, φ, θ, z)
     end
 end
 
@@ -32,24 +32,24 @@ function get_surface_vector(t::TorusMantle{T}, point::AbstractCoordinatePoint)::
     CartesianVector{T}(r*cφ, r*sφ, pcy.z - t.z)
 end
 
-in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, Nothing, Nothing}) =
+in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, Nothing, Nothing}) =
     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
 
-in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, <:AbstractInterval, Nothing}) =
+in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:AbstractInterval, Nothing}) =
     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
 
-in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, Nothing, <:AbstractInterval}) =
+in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, Nothing, <:AbstractInterval}) =
     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
-in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
+in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:AbstractInterval, <:AbstractInterval}) =
     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 
-get_φ_limits(t::TorusMantle{T, <:Any, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
-get_φ_limits(t::TorusMantle{T, <:Any, <:Any, <:AbstractInterval, <:Any}) where {T} = (t.φ.left, t.φ.right, false)
+get_φ_limits(t::TorusMantle{T, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
+get_φ_limits(t::TorusMantle{T, <:AbstractInterval, <:Any}) where {T} = (t.φ.left, t.φ.right, false)
 
-get_θ_limits(t::TorusMantle{T, <:Any, <:Any, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
-get_θ_limits(t::TorusMantle{T, <:Any, <:Any, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
+get_θ_limits(t::TorusMantle{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
+get_θ_limits(t::TorusMantle{T, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
 
 
 function sample(t::TorusMantle{T}, step::Real) where {T}

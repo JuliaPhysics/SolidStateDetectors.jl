@@ -1,12 +1,12 @@
-struct CylindricalAnnulus{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
+struct CylindricalAnnulus{T,TR,TP} <: AbstractSurfacePrimitive{T}
     r::TR
     φ::TP
-    z::TZ
+    z::T
     function CylindricalAnnulus( ::Type{T},
                    r::Union{T, <:AbstractInterval{T}},
                    φ::Union{Nothing, <:AbstractInterval{T}},
                    z::T) where {T}
-        new{T,typeof(r),typeof(φ),T}(r, φ, z)
+        new{T,typeof(r),typeof(φ)}(r, φ, z)
     end
 end
 

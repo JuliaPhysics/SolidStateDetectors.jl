@@ -1,13 +1,13 @@
-struct ConalPlane{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
+struct ConalPlane{T,TR,TZ} <: AbstractSurfacePrimitive{T}
     r::TR #if tupple trapezoid/triangle, or else rectangle
-    φ::TP
+    φ::T
     z::TZ
     #if r is a Tuple, the first entry refers to the r-interval at the bottom, the second one to the r-interval at the top
     function ConalPlane( ::Type{T},
                    r::Union{T, <:AbstractInterval{T}, Tuple{T,T}, Tuple{I,I}},
                    φ::T,
                    z::Union{T, <:AbstractInterval{T}}) where {T, I<:AbstractInterval{T}}
-        new{T,typeof(r),T,typeof(z)}(r, φ, z)
+        new{T,typeof(r),typeof(z)}(r, φ, z)
     end
 end
 
