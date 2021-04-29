@@ -9,7 +9,6 @@ using Random
 using Statistics
 
 using ArraysOfArrays
-using Colors
 using FillArrays
 using Formatting
 using Interpolations
@@ -29,7 +28,7 @@ using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: 
+using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
@@ -38,7 +37,7 @@ using .ConstructiveSolidGeometry:
             get_decomposed_volumes,
             get_decomposed_surfaces, AbstractSurfacePrimitive,
             geom_round, geom_sigdigits, geom_atol_zero
-            
+
 import .ConstructiveSolidGeometry: sample, sample_surface
 export CartesianPoint, CartesianVector, CylindricalPoint
 

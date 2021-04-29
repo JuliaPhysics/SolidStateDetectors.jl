@@ -1,13 +1,13 @@
-struct ConalPlane{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
+struct ConalPlane{T,TR,TZ} <: AbstractSurfacePrimitive{T}
     r::TR #if tupple trapezoid/triangle, or else rectangle
-    φ::TP
+    φ::T
     z::TZ
     #if r is a Tuple, the first entry refers to the r-interval at the bottom, the second one to the r-interval at the top
     function ConalPlane( ::Type{T},
                    r::Union{T, <:AbstractInterval{T}, Tuple{T,T}, Tuple{I,I}},
                    φ::T,
                    z::Union{T, <:AbstractInterval{T}}) where {T, I<:AbstractInterval{T}}
-        new{T,typeof(r),T,typeof(z)}(r, φ, z)
+        new{T,typeof(r),typeof(z)}(r, φ, z)
     end
 end
 
@@ -25,7 +25,7 @@ get_r_limits(c::ConalPlane{T}) where {T} = get_r_limits(Cone(T, c.r, nothing, c.
 get_z_limits(c::ConalPlane{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
 in(p::AbstractCoordinatePoint, c::ConalPlane) =
-    _in_z(p, c.z) && _eq_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
+    _in_z(p, c.z) && _isapprox_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 #=
 function sample(c::ConalPlane{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
@@ -56,7 +56,7 @@ function sample(c::ConalPlane{T}, g::CylindricalTicksTuple{T})::Vector{Cylindric
             for r in _get_ticks(g.r, _left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c,z)))
         ]
 end
-        
+
 
 function sample(c::ConalPlane{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
     sφ::T, cφ::T = sincos(c.φ)

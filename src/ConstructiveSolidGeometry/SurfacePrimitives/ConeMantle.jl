@@ -21,20 +21,20 @@ function ConeMantle(t::Torus{T}; θ = π/2) where {T}
     θ = T(mod(θ,2π))
     sθ, cθ = sincos(θ)
     if θ > T(0) && θ < T(π)
-        rbot = t.r_torus + r_tubeMin*cθ
-        rtop = t.r_torus + r_tubeMax*cθ
-        zMin = r_tubeMin*sθ
-        zMax = r_tubeMax*sθ
+        rbot = geom_round(t.r_torus + r_tubeMin*cθ)
+        rtop = geom_round(t.r_torus + r_tubeMax*cθ)
+        zMin = geom_round(t.z + r_tubeMin*sθ)
+        zMax = geom_round(t.z + r_tubeMax*sθ)
     elseif θ > T(π) && θ < T(2π)
-        rtop = t.r_torus + r_tubeMin*cθ
-        rbot = t.r_torus + r_tubeMax*cθ
-        zMax = r_tubeMin*sθ
-        zMin = r_tubeMax*sθ
+        rtop = geom_round(t.r_torus + r_tubeMin*cθ)
+        rbot = geom_round(t.r_torus + r_tubeMax*cθ)
+        zMax = geom_round(t.z + r_tubeMin*sθ)
+        zMin = geom_round(t.z + r_tubeMax*sθ)
     else
         @error "Cone Mantle not defined for torroidal cordinate θ = 0 or θ = π. Use Annulus"
     end
     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
-    z = T(zMin)..T(zMax)
+    z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
     ConeMantle( T, r, t.φ, z)
 end
 
@@ -43,7 +43,7 @@ function ConeMantle(;rbot = 1, rtop = 0, φMin = 0, φMax = 2π, zMin = -1/2, zM
     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
     φ = mod(T(φMax) - T(φMin), T(2π)) == 0 ? nothing : T(φMin)..T(φMax)
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
-    ConeMantle( T, r, φ, z)
+    ConeMantle(T, r, φ, z)
 end
 ConeMantle(rbot, rtop, φMin, φMax, zMin, zMax) = ConeMantle(;rbot = rbot, rtop = rtop, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
 
@@ -51,6 +51,7 @@ function ConeMantle(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<
     T = float(promote_type(R1, R2, H))
     ConeMantle( T, (T(rbot), T(rtop)), nothing, T(height)/2)
 end
+
 
 get_r_at_z(c::ConeMantle{T, T}, z::Real) where {T} = c.r
 get_r_at_z(c::ConeMantle{T, Tuple{T,T}}, z::Real) where {T} = _get_r_at_z(c.r[1], c.r[2], c.z, z)
@@ -112,7 +113,7 @@ end
 
 function sample(c::ConeMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
     samples = [
-        CartesianPoint{T}(x,y,z)    
+        CartesianPoint{T}(x,y,z)
         for z in _get_ticks(g.z, _left_linear_interval(c.z), _right_linear_interval(c.z))
         for x in _get_x_at_z(c, g, z)
         for y in _get_y_at_z(c, x, z)

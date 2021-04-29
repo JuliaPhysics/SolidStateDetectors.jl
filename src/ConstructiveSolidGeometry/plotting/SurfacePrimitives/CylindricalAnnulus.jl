@@ -25,7 +25,8 @@ function mesh(a::CylindricalAnnulus{T}; n = 30) where {T <: AbstractFloat}
 
     rMin::T, rMax::T = get_r_limits(a)
     φMin::T, φMax::T, _ = get_φ_limits(a)
-
+    f = (φMax - φMin)/(2π)
+    n = Int(ceil(n*f))
     φrange = range(φMin, φMax, length = n+1)
     sφrange = sin.(φrange)
     cφrange = cos.(φrange)
