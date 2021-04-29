@@ -77,21 +77,21 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
 
             @testset "Surface Primitives" begin
                 @testset "ConalPlane" begin
-                    cplane = ConalPlane()
+                    cplane = ConalPlane() #ConalPlane(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φ = 0, zMin = -1/2, zMax = 1/2)
                     @test CartesianPoint{T}(0, 0, 0) in cplane
                     @test CartesianPoint{T}(1, 0, 0) in cplane
                     @test CartesianPoint{T}(1, 0, 0.5) in cplane
                     @test !(CartesianPoint{T}(1, 0.1, 0.5) in cplane)
                 end
                 @testset "ConeMantle" begin
-                    cmantle = ConeMantle(T(0.0), T(2.0), T(2.0))
+                    cmantle = ConeMantle(T(0.0), T(2.0), T(2.0)) #ConeMantle(rbot::R1, rtop::R2, height::H)
                     @test CartesianPoint{T}(0, 0, -1) in cmantle
                     @test CartesianPoint{T}(2, 0, 1) in cmantle
                     @test CartesianPoint{T}(0, 1, 0) in cmantle
                     @test !(CartesianPoint{T}(0, 0, 0) in cmantle)
                 end
                 @testset "CylindricalAnnulus" begin
-                    cannulus = CylindricalAnnulus(T(2.0), T(0.0))
+                    cannulus = CylindricalAnnulus(T(2.0), T(0.0)) #CylindricalAnnulus(r::Real, z::Real)
                     @test CartesianPoint{T}(0, 0, 0) in cannulus
                     @test CartesianPoint{T}(2, 0, 0) in cannulus
                     @test CartesianPoint{T}(0, -2, 0) in cannulus
@@ -99,7 +99,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test !(CartesianPoint{T}(0, 0, 0.1) in cannulus)
                 end
                 @testset "ToroidalAnnulus" begin
-                    tannulus = ToroidalAnnulus()
+                    tannulus = ToroidalAnnulus() #ToroidalAnnulus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φ = 0, θMin = 0, θMax = 2π, z = 0)
                     @test CartesianPoint{T}(0, 0, 0) in tannulus
                     @test CartesianPoint{T}(2, 0, 0) in tannulus
                     @test CartesianPoint{T}(1, 0, 1) in tannulus
@@ -108,7 +108,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test !(CartesianPoint{T}(2, 0, 0.1) in tannulus)
                 end
                 @testset "TorusMantle" begin
-                    tmantle = TorusMantle()
+                    tmantle = TorusMantle() #TorusMantle(;r_torus = 1, r_tube = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π, z = 0)
                     @test CartesianPoint{T}(0, 0, 0) in tmantle
                     @test CartesianPoint{T}(2, 0, 0) in tmantle
                     @test CartesianPoint{T}(1, 0, 1) in tmantle
