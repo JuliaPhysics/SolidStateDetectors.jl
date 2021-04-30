@@ -8,7 +8,7 @@ using StaticArrays
 using SolidStateDetectors.ConstructiveSolidGeometry:
     CartesianPoint, CartesianVector, CylindricalPoint, scale,
     _in_angular_interval_closed, _in_angular_interval_open,
-    ConalPlane, ConeMantle, CylindricalAnnulus, ToroidalAnnulus, TorusMantle,
+    ConalPlane, ConeMantle, CylindricalAnnulus, ToroidalAnnulus, TorusMantle, SphereMantle,
     Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
 @testset "Test CSG" begin
@@ -118,6 +118,18 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test CartesianPoint{T}(0, 1, -1) in tmantle
                     @test !(CartesianPoint{T}(0, 0.1, 0) in tmantle)
                     @test !(CartesianPoint{T}(2, 0, 0.1) in tmantle)
+                end
+                @testset "SphereMantle" begin
+                    sphere = SphereMantle{T}(T(0.5)) # r from 0..0.5
+                    @test !(CartesianPoint{T}(0, 0, 0) in sphere)
+                    @test CartesianPoint{T}(sphere.r, 0, 0) in sphere
+                    @test CartesianPoint{T}(0, sphere.r, 0) in sphere
+                    @test CartesianPoint{T}(0, 0, sphere.r) in sphere
+                    @test !(CartesianPoint{T}(sphere.r/2, sphere.r/2, sphere.r/2) in sphere)
+                    @test !(CartesianPoint{T}(sphere.r, sphere.r, 0) in sphere)
+                    @test !(CartesianPoint{T}(1.1*sphere.r, 0, 0) in sphere)
+                    @test !(CartesianPoint{T}(0.9*sphere.r, 0, 0) in sphere)
+                    @test !(CartesianPoint{T}(0, 0.1*sphere.r, sphere.r) in sphere)
                 end
             end
 

@@ -42,3 +42,12 @@ function get_plot_meshes(s::AbstractSurfacePrimitive{T}; n = 30) where {T <: Abs
   push!(meshes, mesh(s; n = n))
   meshes
 end
+
+@recipe function f(m::Mesh{T}) where {T}
+    seriestype := :surface
+    linewidth --> 0.1
+    linecolor --> :white
+    seriescolor --> :blue
+    colorbar := false
+    m.x, m.y, m.z
+end

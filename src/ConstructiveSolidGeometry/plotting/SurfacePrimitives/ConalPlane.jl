@@ -4,9 +4,9 @@ function get_plot_points(c::ConalPlane{T}; n = 30) where {T <: AbstractFloat}
 end
 
 function mesh(c::ConalPlane{T}; n = 30) where {T <: AbstractFloat}
-    v = unique(get_vertices(c))
-    while length(v) < 3
-        push!(v,v[1])
+    vertices = unique(get_vertices(c))
+    while length(vertices) < 4
+        insert!(vertices, 1, vertices[1])
     end
-    mesh(Plane(v..., p4_on_plane_check = false))
+    Mesh(reshape(map(p -> p.x, vertices), (2,2)),reshape(map(p -> p.y, vertices), (2,2)),reshape(map(p -> p.z, vertices), (2,2)))
  end
