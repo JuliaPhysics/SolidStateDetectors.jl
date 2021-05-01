@@ -156,7 +156,7 @@ function get_important_points(c::SolidStateDetector{T}, s::Symbol)::Vector{T} wh
             append!(imp, get_important_points(g, Val{s}()))
         end
     end
-    return uniq(sort(imp))
+    return unique!(sort!(imp))
 end
 
 
@@ -513,13 +513,13 @@ function Grid(  detector::SolidStateDetector{T, :cylindrical};
 
     push!(important_r_points, detector.world.intervals[1].left)
     push!(important_r_points, detector.world.intervals[1].right)
-    important_r_points = uniq(sort(important_r_points))
+    unique!(sort!(important_r_points))
     push!(important_z_points, detector.world.intervals[3].left)
     push!(important_z_points, detector.world.intervals[3].right)
-    important_z_points = uniq(sort(important_z_points))
+    unique!(sort!(important_z_points))
     push!(important_φ_points, detector.world.intervals[2].left)
     push!(important_φ_points, detector.world.intervals[2].right)
-    important_φ_points = uniq(sort(important_φ_points))
+    unique!(sort!(important_φ_points))
 
     # r
     L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
