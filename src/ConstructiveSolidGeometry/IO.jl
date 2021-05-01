@@ -3,6 +3,7 @@ volume_primitive_dict = Dict{String, Any}(
     "cone" => Cone,
     "sphere" => Sphere,
     "box" => Box,
+    "torus" => Torus,
     "HexagonalPrism" => HexagonalPrism,
     "union" => CSGUnion,
     "difference" => CSGDifference,
@@ -80,6 +81,15 @@ function parse_φ_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any
         nothing
     else #haskey(dict, "phi")
         _parse_angular_interval(T, dict["phi"], unit)
+    end
+end
+
+function parse_θ_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+    θ = if !haskey(dict,"theta")
+        @info "No 'theta' is specified in the '$(dict["type"])'. Assuming 'theta' to go from 0 to 360°."
+        nothing
+    else #haskey(dict, "theta")
+        _parse_angular_interval(T, dict["theta"], unit)
     end
 end
 
