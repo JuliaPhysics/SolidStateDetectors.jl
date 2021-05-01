@@ -37,6 +37,7 @@ get_r_tube_limits(t::ToroidalAnnulus{T}) where {T} =
 
 get_θ_limits(t::ToroidalAnnulus{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
 get_θ_limits(t::ToroidalAnnulus{T, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
+get_z_limits(t::ToroidalAnnulus{T}) where {T} = (t.z - _right_radial_interval(t.r_tube), t.z + _right_radial_interval(t.r_tube))
 
 function sample(t::ToroidalAnnulus{T}, step::Real) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
@@ -81,18 +82,19 @@ function sample(t::ToroidalAnnulus{T}, g::CylindricalTicksTuple{T})::Vector{Cyli
             for φ in _get_ticks(g.φ, t.φ, t.φ) # only sample if t.φ is within the grid bounds
             for r in _get_ticks(g.r, t.r_torus - r_tubeMax, t.r_torus + r_tubeMax)
             for z in _get_z_at_r(t, g, r)
+            if t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, r - t.r_torus), T(2π)), t.θ)
         ]
-    filter!(pt -> _in_torr_θ(pt, t.r_torus, t.θ, t.z), samples)
 end
 
-#=
 function sample(t::ToroidalAnnulus{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
-    sφ::T, cφ::T = sincos(c.φ)
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    sφ::T, cφ::T = sincos(t.φ)
     r_ticks = unique!(sort!(vcat((cφ == 0 ? [] : g.x./cφ), (sφ == 0 ? [] : g.y./sφ))))
-    samples::Vector{CylindricalPoint{T}} = [
+    samples::Vector{CartesianPoint{T}} = [
         CartesianPoint{T}(r*cφ,r*sφ,z)
-        for z in get_z_ticks(c, g)
-        for r in _get_ticks(r_ticks, _left_radial_interval(c.r), _right_radial_interval(c.r))
+        for z in get_z_ticks(t, g)
+        for r in _get_ticks(r_ticks, t.r_torus - r_tubeMax, t.r_torus + r_tubeMax)
+        if (r_tubeMin <= hypot(r - t.r_torus, z - t.z) <= r_tubeMax) &&
+           (t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, r - t.r_torus), T(2π)), t.θ))
     ]
 end
-=#

@@ -72,18 +72,57 @@ function sample(t::TorusMantle{T}, Nsamps::NTuple{3,Int}) where {T}
     ]
 end
 
-function _get_r_ticks(t::TorusMantle{T}, g::CylindricalTicksTuple{T}) where {T}
-    r_from_z::Vector{T} = sqrt.(t.r_tube.^2 .- (filter(z -> abs(z - t.z) < t.r_tube, g.z).- t.z).^2)
-    filter!(r -> t.r_tube^2 - (r - t.r_torus)^2 >= 0,_get_ticks(sort!(vcat(g.r, t.r_torus .- r_from_z, t.r_torus .+ r_from_z)), t.r_torus - t.r_tube, t.r_torus + t.r_tube))
+
+function _get_z_ticks(t::TorusMantle{T}, g::CylindricalTicksTuple{T}) where {T}
+    z_from_r::Vector{T} = sqrt.(t.r_tube.^2 .- (filter(r -> abs(r - t.r_torus) < t.r_tube, g.r).- t.r_torus).^2)
+    filter!(z -> t.r_tube^2 - (z - t.z)^2 >= 0,_get_ticks(sort!(vcat(g.z, t.z .- z_from_r, t.z .+ z_from_r)), t.z - t.r_tube, t.z + t.r_tube))
 end
 
 function sample(t::TorusMantle{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
     samples::Vector{CylindricalPoint{T}} = [
             CylindricalPoint{T}(r,φ,z)
+            for z in _get_z_ticks(t, g)
             for φ in get_φ_ticks(t, g)
-            for r in _get_r_ticks(t, g)
-            for z in (t.z - sqrt(t.r_tube^2 - (r - t.r_torus)^2), t.z + sqrt(t.r_tube^2 - (r - t.r_torus)^2))
+            for r in (t.r_torus - sqrt(t.r_tube^2 - (z - t.z)^2), t.r_torus + sqrt(t.r_tube^2 - (z - t.z)^2))
+            if t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, r - t.r_torus), T(2π)), t.θ)
         ]
-    t.θ === nothing ? samples : filter!(pt -> _in_torr_θ(pt, t.r_torus, t.θ, t.z), samples)
+end
+
+
+function _get_z_ticks(t::TorusMantle{T}, g::CartesianTicksTuple{T}) where {T}
+    z_from_x::Vector{T} = t.z .+ sqrt.(t.r_tube.^2 .- (filter(x -> abs(x - t.r_torus) < t.r_tube, g.x).- t.r_torus).^2)
+    z_from_y::Vector{T} = t.z .+ sqrt.(t.r_tube.^2 .- (filter(y -> abs(y - t.r_torus) < t.r_tube, g.y).- t.r_torus).^2)
+    filter!(z -> t.r_tube^2 - (z - t.z)^2 >= 0,_get_ticks(unique!(sort!(vcat(g.z, t.z .- z_from_x, t.z .+ z_from_x, t.z .- z_from_y, t.z .+ z_from_y))), t.z - t.r_tube, t.z + t.r_tube))
+end
+
+function _get_x_at_z(t::TorusMantle{T}, g::CartesianTicksTuple{T}, z::T) where {T}
+    R::T = sqrt(t.r_tube^2 - (z - t.z)^2)
+    xMax_from_y::Vector{T} = sqrt.((t.r_torus + R)^2 .- filter(y -> abs(y) <= t.r_torus + R, g.y).^2)
+    xMin_from_y::Vector{T} = sqrt.((t.r_torus - R)^2 .- filter(y -> abs(y) <= t.r_torus - R, g.y).^2)
+    _get_ticks(sort!(vcat(-xMax_from_y, -xMin_from_y, g.x, xMin_from_y, xMax_from_y)), -t.r_torus - t.r_tube, t.r_torus + t.r_tube)
+end
+
+function _get_y_at_z(t::TorusMantle{T}, x::T, z::T) where {T}
+    R::T = sqrt(t.r_tube^2 - (z - t.z)^2)
+    tmp::T = (t.r_torus + R)^2 - x^2
+    tmp2::T = (t.r_torus - R)^2 - x^2
+    if tmp < 0 
+        ()
+    elseif tmp2 < 0 
+        (-sqrt(tmp), sqrt(tmp))
+    else 
+        (-sqrt(tmp), -sqrt(tmp2), sqrt(tmp2), sqrt(tmp))
+    end
+end
+
+function sample(t::TorusMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
+    samples::Vector{CartesianPoint{T}} = [
+            CartesianPoint{T}(x,y,z)
+            for z in _get_z_ticks(t, g)
+            for x in _get_x_at_z(t, g, z)
+            for y in _get_y_at_z(t, x, z)
+            if (t.φ === nothing || mod(atan(y, x), T(2π)) in t.φ) && 
+               (t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, hypot(x, y) - t.r_torus), T(2π)), t.θ))
+        ]
 end
 
