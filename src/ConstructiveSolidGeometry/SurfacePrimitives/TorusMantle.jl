@@ -84,6 +84,6 @@ function sample(t::TorusMantle{T}, g::CylindricalTicksTuple{T})::Vector{Cylindri
             for r in _get_r_ticks(t, g)
             for z in (t.z - sqrt(t.r_tube^2 - (r - t.r_torus)^2), t.z + sqrt(t.r_tube^2 - (r - t.r_torus)^2))
         ]
-    isnothing(t.θ) ? samples : filter!(pt -> _in_torr_θ(pt, t.r_torus, t.θ, t.z), samples)
+    t.θ === nothing ? samples : filter!(pt -> _in_torr_θ(pt, t.r_torus, t.θ, t.z), samples)
 end
 
