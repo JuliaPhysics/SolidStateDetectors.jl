@@ -45,8 +45,8 @@ in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:AbstractInterval, <:Abstr
     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
 
-get_φ_limits(t::TorusMantle{T, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
-get_φ_limits(t::TorusMantle{T, <:AbstractInterval, <:Any}) where {T} = (t.φ.left, t.φ.right, false)
+get_φ_limits(t::TorusMantle{T, Nothing}) where {T} = (T(0), T(2π), true)
+get_φ_limits(t::TorusMantle{T, <:AbstractInterval}) where {T} = (t.φ.left, t.φ.right, false)
 
 get_θ_limits(t::TorusMantle{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
 get_θ_limits(t::TorusMantle{T, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
@@ -71,3 +71,19 @@ function sample(t::TorusMantle{T}, Nsamps::NTuple{3,Int}) where {T}
         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
     ]
 end
+
+function _get_r_ticks(t::TorusMantle{T}, g::CylindricalTicksTuple{T}) where {T}
+    r_from_z::Vector{T} = sqrt.(t.r_tube.^2 .- (filter(z -> abs(z - t.z) < t.r_tube, g.z).- t.z).^2)
+    filter!(r -> t.r_tube^2 - (r - t.r_torus)^2 >= 0,_get_ticks(sort!(vcat(g.r, t.r_torus .- r_from_z, t.r_torus .+ r_from_z)), t.r_torus - t.r_tube, t.r_torus + t.r_tube))
+end
+
+function sample(t::TorusMantle{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
+    samples::Vector{CylindricalPoint{T}} = [
+            CylindricalPoint{T}(r,φ,z)
+            for φ in get_φ_ticks(t, g)
+            for r in _get_r_ticks(t, g)
+            for z in (t.z - sqrt(t.r_tube^2 - (r - t.r_torus)^2), t.z + sqrt(t.r_tube^2 - (r - t.r_torus)^2))
+        ]
+    isnothing(t.θ) ? samples : filter!(pt -> _in_torr_θ(pt, t.r_torus, t.θ, t.z), samples)
+end
+

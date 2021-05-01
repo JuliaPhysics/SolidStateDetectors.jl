@@ -57,3 +57,42 @@ function sample(t::ToroidalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
     ]
 end
+
+function _get_z_at_r(t::ToroidalAnnulus{T,T}, g::CylindricalTicksTuple{T}, r::T) where {T}
+    tmp::T = t.r_tube^2 - (r - t.r_torus)^2 
+    if tmp < 0 return (t.z,) end
+    _get_ticks(g.z, t.z - sqrt(tmp), t.z + sqrt(tmp))
+end
+
+function _get_z_at_r(t::ToroidalAnnulus{T,<:AbstractInterval{T}}, g::CylindricalTicksTuple{T}, r::T) where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    tmp::T = r_tubeMax^2 - (r - t.r_torus)^2 
+    if tmp < 0 return (t.z,) end
+    tmp2::T = r_tubeMin^2 - (r - t.r_torus)^2 
+    if tmp2 < 0 return _get_ticks(g.z, t.z - sqrt(tmp), t.z + sqrt(tmp)) end
+    vcat(_get_ticks(g.z, t.z - sqrt(tmp), t.z - sqrt(tmp2)),_get_ticks(g.z, t.z + sqrt(tmp2), t.z + sqrt(tmp)))
+end
+    
+
+function sample(t::ToroidalAnnulus{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
+    r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
+    samples::Vector{CylindricalPoint{T}} = [
+            CylindricalPoint{T}(r,t.φ,z)
+            for φ in _get_ticks(g.φ, t.φ, t.φ) # only sample if t.φ is within the grid bounds
+            for r in _get_ticks(g.r, t.r_torus - r_tubeMax, t.r_torus + r_tubeMax)
+            for z in _get_z_at_r(t, g, r)
+        ]
+    filter!(pt -> _in_torr_θ(pt, t.r_torus, t.θ, t.z), samples)
+end
+
+#=
+function sample(t::ToroidalAnnulus{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
+    sφ::T, cφ::T = sincos(c.φ)
+    r_ticks = unique!(sort!(vcat((cφ == 0 ? [] : g.x./cφ), (sφ == 0 ? [] : g.y./sφ))))
+    samples::Vector{CylindricalPoint{T}} = [
+        CartesianPoint{T}(r*cφ,r*sφ,z)
+        for z in get_z_ticks(c, g)
+        for r in _get_ticks(r_ticks, _left_radial_interval(c.r), _right_radial_interval(c.r))
+    ]
+end
+=#
