@@ -163,18 +163,18 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                 @testset "HexagonalPrism" begin
                     hexagon = HexagonalPrism(T(1.0), T(2.0), T(-1.0), T(1.0)) # outer radius from 1.0..2.0, z from -1.0..1.0
                     @test !(CartesianPoint{T}(0,0,0) in hexagon)
-                    #in x: from sqrt(3)/2 to sqrt(3)
-                    @test !(CartesianPoint{T}(0.5,0,0) in hexagon)
-                    @test CartesianPoint{T}(sqrt(T(3))/2,0,0) in hexagon
+                    #in x: from 1 to 2
+                    @test !(CartesianPoint{T}(sqrt(T(3))/2,0,0) in hexagon)
                     @test CartesianPoint{T}(1,0,0) in hexagon
                     @test CartesianPoint{T}(sqrt(T(3)),0,0) in hexagon
-                    @test !(CartesianPoint{T}(2,0,0) in hexagon)
-                    #in y: from 1 to 2
-                    @test !(CartesianPoint{T}(0,sqrt(T(3))/2,0) in hexagon)
+                    @test CartesianPoint{T}(2,0,0) in hexagon
+                    @test !(CartesianPoint{T}(2.01,0,0) in hexagon)
+                    #in y: from sqrt(3)/2 to sqrt(3)
+                    @test !(CartesianPoint{T}(0,0.5,0) in hexagon)
+                    @test CartesianPoint{T}(0,sqrt(T(3))/2,0) in hexagon
                     @test CartesianPoint{T}(0,1,0) in hexagon
                     @test CartesianPoint{T}(0,sqrt(T(3)),0) in hexagon
-                    @test CartesianPoint{T}(0,2,0) in hexagon
-                    @test !(CartesianPoint{T}(0,2.01,0) in hexagon)
+                    @test !(CartesianPoint{T}(0,2,0) in hexagon)
                     #in z: from -1 to 1
                     @test !(CartesianPoint{T}(0,1.5,-1.1) in hexagon)
                     @test CartesianPoint{T}(0,1.5,-1) in hexagon
