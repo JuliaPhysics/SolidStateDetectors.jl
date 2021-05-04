@@ -14,17 +14,17 @@ end
 
 # Convenience functions
 const TriangularPrism{T,TR,TZ} = RegularPrism{3,T,TR,TZ}
-const QuadraticPrism{T,TR,TZ}  = RegularPrism{4,T,TR,TZ}
+const SquarePrism{T,TR,TZ}  = RegularPrism{4,T,TR,TZ}
 const PentagonalPrism{T,TR,TZ} = RegularPrism{5,T,TR,TZ}
 const HexagonalPrism{T,TR,TZ}  = RegularPrism{6,T,TR,TZ}
 
 TriangularPrism(args...) = RegularPrism(3, args...)
-QuadraticPrism(args...)  = RegularPrism(4, args...)
+SquarePrism(args...)  = RegularPrism(4, args...)
 PentagonalPrism(args...) = RegularPrism(5, args...)
 HexagonalPrism(args...)  = RegularPrism(6, args...)
 
 print(io::IO, rp::TriangularPrism{T, TR, TZ}) where {T,TR,TZ} = print(io, "TriangularPrism{$(T), $(TR), $(TZ)}($(rp.r), $(rp.z))")
-print(io::IO, rp::QuadraticPrism{T, TR, TZ})  where {T,TR,TZ} = print(io, "QuadraticPrism{$(T), $(TR), $(TZ)}($(rp.r), $(rp.z))")
+print(io::IO, rp::SquarePrism{T, TR, TZ})  where {T,TR,TZ} = print(io, "SquarePrism{$(T), $(TR), $(TZ)}($(rp.r), $(rp.z))")
 print(io::IO, rp::PentagonalPrism{T, TR, TZ}) where {T,TR,TZ} = print(io, "PentagonalPrism{$(T), $(TR), $(TZ)}($(rp.r), $(rp.z))")
 print(io::IO, rp::HexagonalPrism{T, TR, TZ})  where {T,TR,TZ} = print(io, "HexagonalPrism{$(T), $(TR), $(TZ)}($(rp.r), $(rp.z))")
 
@@ -68,7 +68,7 @@ end
 
 # read-in
 function Geometry(::Type{T}, ::Type{P}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple
-            ) where {T, P <: Union{TriangularPrism, QuadraticPrism, PentagonalPrism, HexagonalPrism}}
+            ) where {T, P <: Union{TriangularPrism, SquarePrism, PentagonalPrism, HexagonalPrism}}
     length_unit = input_units.length
     r = parse_r_of_primitive(T, dict, length_unit)
     z = parse_height_of_primitive(T, dict, length_unit)
