@@ -46,6 +46,20 @@ in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, <:AbstractInterva
 
 in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
+    
+
+# read-in
+function Geometry(T::DataType, ::Type{Torus}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple)
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    r_torus::T = _parse_value(T, dict["r_torus"], length_unit)
+    r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    θ = parse_θ_of_primitive(T, dict, angle_unit)
+    z::T = ("z" in keys(dict) ? _parse_value(T, dict["z"], length_unit) : T(0))
+    Torus(T, r_torus, r_tube, φ, θ, z)
+end
+
 
 get_r_tube_limits(t::Torus{T}) where {T} = (_left_radial_interval(t.r_tube),_right_radial_interval(t.r_tube))
 

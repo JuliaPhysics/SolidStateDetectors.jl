@@ -8,7 +8,7 @@ using YAML
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
 using SolidStateDetectors.ConstructiveSolidGeometry: 
     internal_unit_length, internal_unit_angle,
-    Box, Cone, HexagonalPrism, Sphere, Tube
+    Box, Cone, HexagonalPrism, Sphere, Torus, Tube
 
 T = Float64
 
@@ -31,5 +31,6 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Cone.yaml"))) <: Cone{T, <:Tuple}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "HexagonalPrism.yaml"))) <: HexagonalPrism{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Sphere.yaml"))) <: Sphere{T}
+    @test typeof(Geometry(T, joinpath(example_primitive_dir, "Torus.yaml"))) <: Torus{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Tube.yaml"))) <: Cone{T, <:Union{T, AbstractInterval{T}}}
 end
