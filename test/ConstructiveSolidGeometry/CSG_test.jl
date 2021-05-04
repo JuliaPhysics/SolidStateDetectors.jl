@@ -8,7 +8,7 @@ using StaticArrays
 using SolidStateDetectors.ConstructiveSolidGeometry:
     CartesianPoint, CartesianVector, CylindricalPoint, scale,
     _in_angular_interval_closed, _in_angular_interval_open,
-    ConalPlane, ConeMantle, CylindricalAnnulus, ToroidalAnnulus, TorusMantle, SphereMantle,
+    ConalPlane, ConeMantle, CylindricalAnnulus, ToroidalAnnulus, TorusMantle, SphereMantle, RegularPolygon, RegularPrismMantle,
     Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
 @testset "Test CSG" begin
@@ -130,6 +130,26 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test !(CartesianPoint{T}(1.1*sphere.r, 0, 0) in sphere)
                     @test !(CartesianPoint{T}(0.9*sphere.r, 0, 0) in sphere)
                     @test !(CartesianPoint{T}(0, 0.1*sphere.r, sphere.r) in sphere)
+                end
+                @testset "RegularPolygon" begin
+                    pentagon = RegularPolygon(5, 0, 2, 0) # r from 0..2, z = 0
+                    @test CartesianPoint{T}(0, 0, 0) in pentagon
+                    @test CartesianPoint{T}(2, 0, 0) in pentagon
+                    @test !(CartesianPoint{T}(0, 2, 0) in pentagon)
+                    @test !(CartesianPoint{T}(0, 0, 0.1) in pentagon)
+                    @test !(CartesianPoint{T}(2.1, 0, 0) in pentagon)
+                end
+                @testset "RegularPrismMantle" begin
+                    prism = RegularPrismMantle(4, 1, 0, 1) # z from 0..1, r = 1
+                    @test !(CartesianPoint{T}(0, 0, 0) in prism)
+                    @test CartesianPoint{T}(1, 0, 0) in prism
+                    #@test CartesianPoint{T}(-1, 0, 0) in prism
+                    #@test CartesianPoint{T}(0, 1, 0) in prism
+                    #@test CartesianPoint{T}(0, -1, 0) in prism
+                    #@test CartesianPoint{T}(0.5, 0.5, 0.5) in prism
+                    @test !(CartesianPoint{T}(0, 2, 0) in prism)
+                    @test !(CartesianPoint{T}(1, 0, -0.1) in prism)
+                    @test !(CartesianPoint{T}(1, 0, 1.1) in prism)
                 end
             end
 

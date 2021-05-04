@@ -22,6 +22,8 @@ RegularPentagon(args...) = RegularPolygon(5, args...)
 RegularHexagon(args...)  = RegularPolygon(6, args...)
 
 #Constructors
+RegularPolygon(p::RegularPrism{N,T}; z = 0) where {N,T} = RegularPolygon(N, T, p.r, T(z))
+
 function RegularPolygon(N::Integer; rInner = 0, rOuter = 1, z = 0)
     T = float(promote_type(typeof.((rInner, rOuter, z))...))
     r = rInner == 0 ? T(rOuter) : T(rInner)..T(rOuter)

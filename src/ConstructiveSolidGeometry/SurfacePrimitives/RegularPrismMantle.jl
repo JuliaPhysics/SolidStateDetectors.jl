@@ -22,6 +22,8 @@ PentagonalPrismMantle(args...) = RegularPrismMantle(5, args...)
 HexagonalPrismMantle(args...)  = RegularPrismMantle(6, args...)
 
 #Constructors
+RegularPrismMantle(p::RegularPrism{N,T}; r = 1) where {N,T} = RegularPrismMantle(N, T, T(r), p.z)
+
 function RegularPrismMantle(N::Integer; r = 1, zMin = -1, zMax = 1)
     T = float(promote_type(typeof.((r, zMin, zMax))...))
     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
@@ -36,7 +38,7 @@ end
 
 
 @inline in(p::CylindricalPoint, rp::RegularPrismMantle{N, T}) where {N,T} = begin
-    _in_z(p, rp.z) && is_approx(p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)), rp.r, atol = geom_atol_zero(T))
+    _in_z(p, rp.z) && isapprox(p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)), rp.r, atol = geom_atol_zero(T))
 end
 
 @inline in(p::CartesianPoint, rp::RegularPrismMantle) = in(CylindricalPoint(p), rp)
