@@ -71,8 +71,9 @@ end
 function get_vertices(c::ConalPlane{T}) where {T}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    [CartesianPoint{T}(rbotMin * cos(c.φ), rbotMin * sin(c.φ), zMin),
-    CartesianPoint{T}(rbotMax * cos(c.φ), rbotMax * sin(c.φ), zMin),
-    CartesianPoint{T}(rtopMax * cos(c.φ), rtopMax * sin(c.φ), zMax),
-    CartesianPoint{T}(rtopMin * cos(c.φ), rtopMin * sin(c.φ), zMax)]
+    sφ, cφ = sincos(c.φ)
+    (CartesianPoint{T}(rbotMin * cφ, rbotMin * sφ, zMin),
+    CartesianPoint{T}(rbotMax * cφ, rbotMax * sφ, zMin),
+    CartesianPoint{T}(rtopMin * cφ, rtopMin * sφ, zMax),
+    CartesianPoint{T}(rtopMax * cφ, rtopMax * sφ, zMax))
 end

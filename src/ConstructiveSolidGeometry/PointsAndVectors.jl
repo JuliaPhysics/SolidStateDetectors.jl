@@ -35,6 +35,8 @@ end
 @inline _in_z(p::CartesianPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CartesianPoint, z::AbstractInterval) = p.z in z
 
+@inline _isapprox_sph_r(p::CartesianPoint{T}, radius::Real) where {T} = isapprox(hypot(p.x, p.y, p.z), radius, atol = geom_atol_zero(T))
+
 @inline _in_sph_r(p::CartesianPoint, radius::Real) = hypot(p.x, p.y, p.z) <= radius
 @inline _in_sph_r(p::CartesianPoint, radius::AbstractInterval) = hypot(p.x, p.y, p.z) in radius
 
@@ -94,6 +96,8 @@ end
 
 @inline _in_z(p::CylindricalPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CylindricalPoint, z::AbstractInterval) = p.z in z
+
+@inline _isapprox_sph_r(p::CylindricalPoint{T}, radius::Real) where {T} = isapprox(hypot(p.r, p.z), radius, atol = geom_atol_zero(T))
 
 @inline _in_sph_r(p::CylindricalPoint, radius::Real) = hypot(p.r, p.z) <= radius
 @inline _in_sph_r(p::CylindricalPoint, radius::AbstractInterval) = hypot(p.r, p.z) in radius

@@ -43,5 +43,5 @@ SSD_examples[:Hexagon] = (
     joinpath(@__DIR__, "../examples/example_detector_config_files/minimum_hexagon_config.json")
 )
 SSD_examples[:CoaxialTorus] = (
-    joinpath(@__DIR__, "../examples/example_detector_config_files/coaxial_torus_config.json")
+    joinpath(@__DIR__, "../examples/example_detector_config_files/public_coaxial_torus_config.json")
 )
