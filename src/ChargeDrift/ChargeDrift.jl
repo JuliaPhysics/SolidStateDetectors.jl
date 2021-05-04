@@ -143,7 +143,11 @@ function _drift_charge!(
                         next_pos -= small_projected_vector
                         i += 1
                     end
-                    if i == 1000 && verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
+                    if i == 1000
+                        if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
+                        done = true
+                        continue
+                    end
                     drift_path[istep] = next_pos
                     drifttime += Δt * (1 - i * T(0.001))
                     timestamps[istep] = drifttime
