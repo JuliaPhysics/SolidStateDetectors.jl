@@ -112,7 +112,6 @@ function _drift_charge!(
     last_real_step_index::Int = 1
     @inbounds for istep in eachindex(drift_path)[2:end]
         if done == false
-            last_real_step_index += 1
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_vector(current_pos, Val(S))) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
@@ -125,12 +124,14 @@ function _drift_charge!(
                 drift_path[istep] = next_pos
                 drifttime += Δt
                 timestamps[istep] = drifttime
+                last_real_step_index += 1
             else
                 crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, boundary_index::Int, surface_normal::CartesianVector{T} = get_crossing_pos(det, grid, current_pos, next_pos)
                 if cd_point_type == CD_ELECTRODE
                     drift_path[istep] = crossing_pos
                     drifttime += Δt
                     timestamps[istep] = drifttime
+                    last_real_step_index += 1
                     done = true
                 elseif cd_point_type == CD_FLOATING_BOUNDARY
                     projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(stepvector, surface_normal))
@@ -143,24 +144,24 @@ function _drift_charge!(
                         next_pos -= small_projected_vector
                         i += 1
                     end
-                    if i == 1000 && verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
+                    if i == 1000
+                        if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $startpos") end
+                        done = true
+                        continue
+                    end
                     drift_path[istep] = next_pos
                     drifttime += Δt * (1 - i * T(0.001))
                     timestamps[istep] = drifttime
+                    last_real_step_index += 1
                     if geom_round.(next_pos - current_pos) == null_step
                         done = true
                     end
-                elseif cd_point_type == CD_BULK
+                else # elseif cd_point_type == CD_BULK  -- or -- cd_point_type == CD_OUTSIDE
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
                     drifttime += Δt
                     timestamps[istep] = drifttime
-                    done = true
-                else # elseif cd_point_type == CD_OUTSIDE
-                    if verbose @warn ("Internal error for charge starting at $startpos") end
-                    drift_path[istep] = current_pos
-                    drifttime += Δt
-                    timestamps[istep] = drifttime
+                    last_real_step_index += 1
                     done = true
                 end
             end
