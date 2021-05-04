@@ -45,7 +45,7 @@ end
 
 
 @inline in(p::CylindricalPoint, hp::RegularPrism{N, T, <:Real}) where {N,T} = begin
-    _in_z(p, hp.z) && abs(p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N))) <= hp.r
+    _in_z(p, hp.z) && p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)) <= hp.r
 end
 
 @inline in(p::CylindricalPoint, hp::RegularPrism{N, T, <:AbstractInterval}) where {N,T} = begin
@@ -78,13 +78,13 @@ end
 get_r_limits(rp::RegularPrism) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_z_limits(rp::RegularPrism) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))
 
-function sample(rp::RegularPrism{N,T}, Nsamps::NTuple{3,Int} = (2,N,2))::Vector{CylindricalPoint{T}} where {N,T}
+function sample(rp::RegularPrism{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}
     rMin::T, rMax::T = get_r_limits(rp)
     zMin::T, zMax::T = get_z_limits(rp)
     samples = [
-        CylindricalPoint{T}(r,φ,z)
+        CylindricalPoint{T}(r*cos(π/N)/cos(π/N - mod(φ, 2π/N)),φ,z)
         for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
-        for φ in 0:2π/N:2π-π/N #ignore the N given in Nsamps and sample with N
-        for r in (Nsamps[1] ≤ 1 ? _right_radial_interval(rp.r) : range(rMin, rMax, length = Nsamps[1]))
+        for φ in (Nsamps[2] ≤ 1 ? 0 : range(0, 2π, length = Nsamps[2])) 
+        for r in (Nsamps[1] ≤ 1 ? rMax : range(rMin, rMax, length = Nsamps[1]))
     ]
 end
