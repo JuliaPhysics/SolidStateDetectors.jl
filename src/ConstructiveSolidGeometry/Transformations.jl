@@ -29,7 +29,7 @@ struct TranslatedGeometry{T,P<:AbstractGeometry{T}} <: AbstractGeometry{T}
     t::CartesianVector{T}
 end
 in(p::CartesianPoint, g::TranslatedGeometry) = in(p - g.t, g.p)
-in(p::CylindricalPoint, g::TranslatedGeometry) = in(CartesianPoint(p), g)
+in(p::CylindricalPoint, g::TranslatedGeometry) = (g.t[1] == 0 && g.t[2] == 0) ? in(p -g.t, g.p) : in(CartesianPoint(p), g)
 translate(g::AbstractGeometry{T}, t::CartesianVector{T}) where {T} = (t == CartesianVector{T}(0,0,0) ? g : TranslatedGeometry(g, t))
 translate(g::TranslatedGeometry{T}, t::CartesianVector{T}) where {T} = (g.t + t == CartesianVector{T}(0,0,0) ? g.p : TranslatedGeometry(g.p, g.t + t))
 (+)(g::AbstractGeometry{T}, t::CartesianVector{T}) where {T} = translate(g, t)
