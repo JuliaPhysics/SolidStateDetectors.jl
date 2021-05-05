@@ -78,32 +78,24 @@ end
 get_r_limits(rp::RegularPrism) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_z_limits(rp::RegularPrism) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))
 
-function get_decomposed_surfaces(rp::RegularPrism{N,T,T}) where {N, T}
-    zMin::T, zMax::T = get_z_limits(rp)
-    surfaces = AbstractSurfacePrimitive[]
-    if !isapprox(zMin, zMax, atol = geom_atol_zero(T))
-        push!(surfaces, RegularPolygon(rp, z = zMin), RegularPolygon(rp, z = zMax), RegularPrismMantle(rp, r = rp.r))
-    else
-        push!(surfaces, RegularPolygon(rp, z = zMin))
-    end
-    surfaces
-end
-
-function get_decomposed_surfaces(rp::RegularPrism{N,T,<:AbstractInterval}) where {N, T}
+function get_decomposed_surfaces(rp::RegularPrism{N,T}) where {N, T}
     rMin::T, rMax::T = get_r_limits(rp)
     zMin::T, zMax::T = get_z_limits(rp)
     surfaces = AbstractSurfacePrimitive[]
     tol = geom_atol_zero(T)
     if !isapprox(zMin, zMax, atol = tol)
         if !isapprox(rMin, rMax, atol = tol)
-            push!(surfaces, RegularPolygon(rp, z = zMin), RegularPolygon(rp, z = zMax), RegularPrismMantle(rp, r = rMin), RegularPrismMantle(rp, r = rMax))
+            if rMin == 0
+                return AbstractSurfacePrimitive[RegularPolygon(rp, z = zMin), RegularPolygon(rp, z = zMax), RegularPrismMantle(rp, r = rMax)]
+            else
+                return AbstractSurfacePrimitive[RegularPolygon(rp, z = zMin), RegularPolygon(rp, z = zMax), RegularPrismMantle(rp, r = rMin), RegularPrismMantle(rp, r = rMax)]
+            end
         else
-            push!(surfaces, RegularPrismMantle(rp, r = rMin))
+            return AbstractSurfacePrimitive[RegularPrismMantle(rp, r = rMin)]
         end
     else
-        push!(surfaces, RegularPolygon(rp, z = zMin))
+        return AbstractSurfacePrimitive[RegularPolygon(rp, z = zMin)]
     end
-    surfaces
 end
 
 function sample(rp::RegularPrism{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}

@@ -8,7 +8,7 @@ using StaticArrays
 using SolidStateDetectors.ConstructiveSolidGeometry:
     CartesianPoint, CartesianVector, CylindricalPoint, scale,
     _in_angular_interval_closed, _in_angular_interval_open,
-    ConalPlane, ConeMantle, CylindricalAnnulus, ToroidalAnnulus, TorusMantle, SphereMantle, RegularPolygon, RegularPrismMantle,
+    ConalPlane, ConeMantle, CylindricalAnnulus, RegularPolygon, SphereMantle, RegularPrismMantle, ToroidalAnnulus, TorusMantle,
     Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
 @testset "Test CSG" begin

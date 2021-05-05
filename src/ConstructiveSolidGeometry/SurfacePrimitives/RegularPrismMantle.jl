@@ -11,10 +11,10 @@ struct RegularPrismMantle{N,T,TZ} <: AbstractSurfacePrimitive{T}
 end
 
 # Convenience functions
-const TriangularPrismMantle{T,TR} = RegularPrismMantle{3,T,TR}
-const SquarePrismMantle{T,TR}  = RegularPrismMantle{4,T,TR}
-const PentagonalPrismMantle{T,TR} = RegularPrismMantle{5,T,TR}
-const HexagonalPrismMantle{T,TR}  = RegularPrismMantle{6,T,TR}
+const TriangularPrismMantle{T,TZ} = RegularPrismMantle{3,T,TZ}
+const SquarePrismMantle{T,TZ}  = RegularPrismMantle{4,T,TZ}
+const PentagonalPrismMantle{T,TZ} = RegularPrismMantle{5,T,TZ}
+const HexagonalPrismMantle{T,TZ}  = RegularPrismMantle{6,T,TZ}
 
 TriangularPrismMantle(args...) = RegularPrismMantle(3, args...)
 SquarePrismMantle(args...)  = RegularPrismMantle(4, args...)
