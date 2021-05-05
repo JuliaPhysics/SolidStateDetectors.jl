@@ -43,6 +43,15 @@ end
 
 @inline in(p::CartesianPoint, rp::RegularPrismMantle) = in(CylindricalPoint(p), rp)
 
+@inline in(p::CartesianPoint, rp::HexagonalPrismMantle{T}) where {T} = begin
+    tol = geom_atol_zero(T)
+    _in_z(p, rp.z) && abs(p.y) ≤ rp.r * sqrt(T(3))/2 &&
+    (
+        ( abs(p.y) == rp.r * sqrt(T(3))/2 && _in_x(p, rp.r * T(0.5)) ) ||
+        ( abs(p.x) == rp.r - abs(p.y)/sqrt(T(3)) &&  T(0.5) ≤ abs(p.x) ≤ rp.r )
+    )
+end
+
 get_z_limits(rp::RegularPrismMantle) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))
 
 function sample(rp::RegularPrismMantle{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}

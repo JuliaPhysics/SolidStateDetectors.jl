@@ -69,7 +69,6 @@ end
         abs(p.x) in (hp.r.left - abs(p.y) /sqrt(T(3)))..(hp.r.right - abs(p.y)/sqrt(T(3)))
     )
 
-
 # read-in
 function Geometry(::Type{T}, ::Type{P}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple
             ) where {T, P <: Union{TriangularPrism, SquarePrism, PentagonalPrism, HexagonalPrism}}
