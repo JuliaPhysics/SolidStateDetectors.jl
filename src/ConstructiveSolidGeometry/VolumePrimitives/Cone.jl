@@ -131,7 +131,6 @@ end
 function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple{I,I}}, Nothing, <:Any}) where {T, I<:AbstractInterval{T}}
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
-    tol = geom_atol_zero(T)
     surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
     if !_is_cone_collapsed(rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
         push!(surfaces, ConeMantle(c, rbot = rbotMin, rtop = rtopMin))
@@ -155,7 +154,6 @@ function get_decomposed_surfaces(c::Cone{T, <:Union{<:AbstractInterval{T}, Tuple
     rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
     zMin::T, zMax::T = get_z_limits(c)
     φMin::T, φMax::T, _ = get_φ_limits(c)
-    tol = geom_atol_zero(T)
     surfaces = _get_decomposed_surfaces_cone(c, rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
     if !_is_cone_collapsed(rbotMin, rbotMax, rtopMin, rtopMax, zMin, zMax)
         push!(surfaces, ConalPlane(c, φ = φMin), ConalPlane(c, φ = φMax))

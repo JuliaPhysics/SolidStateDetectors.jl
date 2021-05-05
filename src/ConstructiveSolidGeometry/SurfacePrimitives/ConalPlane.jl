@@ -15,9 +15,26 @@ ConalPlane(c::Cone{T}; φ = 0) where {T} = ConalPlane( T, c.r, T(mod(φ,2π)), c
 
 function ConalPlane(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φ = 0, zMin = -1/2, zMax = 1/2)
     T = float(promote_type(typeof.((rtopMin, rtopMax, rbotMin, rbotMax, φ, zMin, zMax))...))
-    c = Cone(rbotMin, rbotMax, rtopMin, rtopMax, 0, 2π, zMin, zMax)
-    ConalPlane( T, c.r, T(φ), c.z)
+    rMin_is_equal::Bool = rbotMin == rtopMin
+    rMax_is_equal::Bool = rbotMax == rtopMax
+    rMin_is_zero::Bool = rMin_is_equal && rbotMin == 0
+    r = if rMax_is_equal
+            if rMin_is_zero # Tube with rMin = 0
+                T(rbotMax)
+            elseif rMin_is_equal # Tube
+                T(rbotMin)..T(rbotMax)
+            else # Cone
+                (T(rbotMin)..T(rbotMax), T(rtopMin)..T(rtopMax))
+            end
+        elseif rMin_is_zero #Cone with rMin = 0
+            (T(rbotMax), T(rtopMax))
+        else # Cone
+            (T(rbotMin)..T(rbotMax), T(rtopMin)..T(rtopMax))
+        end
+    z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
+    ConalPlane( T, r, T(φ), z)
 end
+
 ConalPlane(rbotMin, rbotMax, rtopMin, rtopMax, φ, zMin, zMax) = ConalPlane(; rbotMin = rbotMin, rbotMax = rbotMax, rtopMin = rtopMin, rtopMax = rtopMax, φ = φ, zMin = zMin, zMax = zMax)
 
 get_r_at_z(c::ConalPlane{T}, z::Real) where {T} = get_r_at_z(Cone(T, c.r, nothing, c.z), z::Real)

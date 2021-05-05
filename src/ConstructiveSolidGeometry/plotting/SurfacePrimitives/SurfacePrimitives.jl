@@ -1,10 +1,12 @@
-include("Plane.jl")
 include("ConalPlane.jl")
-include("CylindricalAnnulus.jl")
 include("ConeMantle.jl")
+include("CylindricalAnnulus.jl")
+include("RegularPolygon.jl")
+include("RegularPrismMantle.jl")
+include("SphereMantle.jl")
 include("ToroidalAnnulus.jl")
 include("TorusMantle.jl")
-include("SphereMantle.jl")
+#include("Plane.jl")
 
 @recipe function f(g::AbstractSurfacePrimitive; SSD_style = :wireframe, n = 30)
     if SSD_style == :wireframe #update to only plot real surfaces

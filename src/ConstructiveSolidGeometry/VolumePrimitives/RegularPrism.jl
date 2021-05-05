@@ -1,7 +1,7 @@
 struct RegularPrism{N,T,TR,TZ} <: AbstractVolumePrimitive{T}
     r::TR
     z::TZ
-    
+
     function RegularPrism(  N::Integer,
                             ::Type{T},
                              r::Union{T, <:AbstractInterval{T}},
@@ -56,15 +56,14 @@ end
 
 # Special case: CartesianPoint in HexagonalPrism: use analytical formulas
 @inline in(p::CartesianPoint, hp::HexagonalPrism{T, <:Real}) where {T} =
-    _in_z(p, hp.z) && _in_x(p, hp.r * sqrt(T(3))/2) && _in_y(p, hp.r - abs(p.x)/sqrt(T(3)))
-    
-@inline in(p::CartesianPoint, hp::HexagonalPrism{T, <:AbstractInterval{T}}) where {T} = 
-    _in_z(p, hp.z) && abs(p.y) <= hp.r.right * sqrt(T(3))/2 && 
+     _in_z(p, hp.z) && _in_y(p, hp.r * sqrt(T(3))/2) && _in_x(p, hp.r - abs(p.y)/sqrt(T(3)))
+
+@inline in(p::CartesianPoint, hp::HexagonalPrism{T, <:AbstractInterval{T}}) where {T} =
+    _in_z(p, hp.z) && abs(p.y) <= hp.r.right * sqrt(T(3))/2 &&
     (
-        abs(p.y) >= hp.r.left * sqrt(T(3))/2 && _in_x(p, hp.r.right * T(0.5)) || 
+        abs(p.y) >= hp.r.left * sqrt(T(3))/2 && _in_x(p, hp.r.right * T(0.5)) ||
         abs(p.x) in (hp.r.left - abs(p.y) /sqrt(T(3)))..(hp.r.right - abs(p.y)/sqrt(T(3)))
     )
-
 
 # read-in
 function Geometry(::Type{T}, ::Type{P}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple
@@ -78,13 +77,33 @@ end
 get_r_limits(rp::RegularPrism) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_z_limits(rp::RegularPrism) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))
 
+function get_decomposed_surfaces(rp::RegularPrism{N,T}) where {N, T}
+    rMin::T, rMax::T = get_r_limits(rp)
+    zMin::T, zMax::T = get_z_limits(rp)
+    surfaces = AbstractSurfacePrimitive[]
+    tol = geom_atol_zero(T)
+    if !isapprox(zMin, zMax, atol = tol)
+        if !isapprox(rMin, rMax, atol = tol)
+            if rMin == 0
+                return AbstractSurfacePrimitive[RegularPolygon(rp, z = zMin), RegularPolygon(rp, z = zMax), RegularPrismMantle(rp, r = rMax)]
+            else
+                return AbstractSurfacePrimitive[RegularPolygon(rp, z = zMin), RegularPolygon(rp, z = zMax), RegularPrismMantle(rp, r = rMin), RegularPrismMantle(rp, r = rMax)]
+            end
+        else
+            return AbstractSurfacePrimitive[RegularPrismMantle(rp, r = rMin)]
+        end
+    else
+        return AbstractSurfacePrimitive[RegularPolygon(rp, z = zMin)]
+    end
+end
+
 function sample(rp::RegularPrism{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}
     rMin::T, rMax::T = get_r_limits(rp)
     zMin::T, zMax::T = get_z_limits(rp)
     samples = [
         CylindricalPoint{T}(r*cos(π/N)/cos(π/N - mod(φ, 2π/N)),φ,z)
         for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
-        for φ in (Nsamps[2] ≤ 1 ? 0 : range(0, 2π, length = Nsamps[2])) 
+        for φ in (Nsamps[2] ≤ 1 ? 0 : range(0, 2π, length = Nsamps[2]))
         for r in (Nsamps[1] ≤ 1 ? rMax : range(rMin, rMax, length = Nsamps[1]))
     ]
 end
