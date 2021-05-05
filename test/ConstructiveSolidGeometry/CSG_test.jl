@@ -8,7 +8,8 @@ using StaticArrays
 using SolidStateDetectors.ConstructiveSolidGeometry:
     CartesianPoint, CartesianVector, CylindricalPoint, scale,
     _in_angular_interval_closed, _in_angular_interval_open,
-    ConalPlane, ConeMantle, CylindricalAnnulus, RegularHexagon, RegularPolygon, RegularPrismMantle, SphereMantle, ToroidalAnnulus, TorusMantle,
+    ConalPlane, ConeMantle, CylindricalAnnulus, RegularHexagon, HexagonalPrismMantle, RegularPolygon, RegularPrismMantle,
+    SphereMantle, ToroidalAnnulus, TorusMantle,
     Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
 @testset "Test CSG" begin
@@ -77,7 +78,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
 
             @testset "Surface Primitives" begin
                 @testset "ConalPlane" begin
-                    cplane = ConalPlane() #ConalPlane(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φ = 0, zMin = -1/2, zMax = 1/2)
+                    cplane = ConalPlane(rbotMin = T(0), rbotMax = T(1), rtopMin = T(0), rtopMax = T(1), φ = T(0), zMin = T(-1/2), zMax = T(1/2))
                     @test CartesianPoint{T}(0, 0, 0) in cplane
                     @test CartesianPoint{T}(1, 0, 0) in cplane
                     @test CartesianPoint{T}(1, 0, 0.5) in cplane
@@ -99,7 +100,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test !(CartesianPoint{T}(0, 0, 0.1) in cannulus)
                 end
                 @testset "ToroidalAnnulus" begin
-                    tannulus = ToroidalAnnulus() #ToroidalAnnulus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φ = 0, θMin = 0, θMax = 2π, z = 0)
+                    tannulus = ToroidalAnnulus(r_torus = T(1), r_tubeMin = T(0), r_tubeMax = T(1), φ = T(0), θMin = T(0), θMax = T(2π), z = T(0))
                     @test CartesianPoint{T}(0, 0, 0) in tannulus
                     @test CartesianPoint{T}(2, 0, 0) in tannulus
                     @test CartesianPoint{T}(1, 0, 1) in tannulus
@@ -108,7 +109,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test !(CartesianPoint{T}(2, 0, 0.1) in tannulus)
                 end
                 @testset "TorusMantle" begin
-                    tmantle = TorusMantle() #TorusMantle(;r_torus = 1, r_tube = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π, z = 0)
+                    tmantle = TorusMantle(r_torus = T(1), r_tube = T(1), φMin = T(0), φMax = T(2π), θMin = T(0), θMax = T(2π), z = T(0))
                     @test CartesianPoint{T}(0, 0, 0) in tmantle
                     @test CartesianPoint{T}(2, 0, 0) in tmantle
                     @test CartesianPoint{T}(1, 0, 1) in tmantle
@@ -144,8 +145,24 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test CartesianPoint{T}(0, 0, 0) in hexagon
                     @test CartesianPoint{T}(2, 0, 0) in hexagon
                     @test CartesianPoint{T}(-2, 0, 0) in hexagon
+                    @test CartesianPoint{T}(0, sqrt(T(3)), 0) in hexagon
+                    @test CartesianPoint{T}(0, 0.9*sqrt(T(3)), 0) in hexagon
+                    @test !(CartesianPoint{T}(0, 1.1*sqrt(T(3)), 0) in hexagon)
                     @test !(CartesianPoint{T}(0, 2, 0) in hexagon)
                     @test !(CartesianPoint{T}(0, 0, 0.1) in hexagon)
+                    @test !(CartesianPoint{T}(2.1, 0, 0) in hexagon)
+                end
+                @testset "HexagonalPrismMantle" begin
+                    hexagon = HexagonalPrismMantle(T(2), T(0), T(1)) # z from 0..1, r = 2
+                    @test !(CartesianPoint{T}(0, 0, 0) in hexagon)
+                    @test CartesianPoint{T}(2, 0, 0.1) in hexagon
+                    @test CartesianPoint{T}(-2, 0, 0) in hexagon
+                    @test CartesianPoint{T}(0, sqrt(T(3)), 0) in hexagon
+                    @test CartesianPoint{T}(1, -sqrt(T(3)), 0) in hexagon
+                    @test CartesianPoint{T}(2 - 0.5/sqrt(T(3)), 0.5, 0) in hexagon
+                    @test !(CartesianPoint{T}(0, 0.9*sqrt(T(3)), 0) in hexagon)
+                    @test !(CartesianPoint{T}(0, 1.1*sqrt(T(3)), 0) in hexagon)
+                    @test !(CartesianPoint{T}(0, 2, 0) in hexagon)
                     @test !(CartesianPoint{T}(2.1, 0, 0) in hexagon)
                 end
                 @testset "RegularPrismMantle" begin

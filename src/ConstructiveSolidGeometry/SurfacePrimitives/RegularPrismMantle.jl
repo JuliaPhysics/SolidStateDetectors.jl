@@ -43,12 +43,12 @@ end
 
 @inline in(p::CartesianPoint, rp::RegularPrismMantle) = in(CylindricalPoint(p), rp)
 
-@inline in(p::CartesianPoint, rp::HexagonalPrismMantle{T}) where {T} = begin
+@inline in(p::CartesianPoint, hp::HexagonalPrismMantle{T}) where {T} = begin
     tol = geom_atol_zero(T)
-    _in_z(p, rp.z) && abs(p.y) ≤ rp.r * sqrt(T(3))/2 &&
+    _in_z(p, hp.z) && abs(p.y) ≤ hp.r * sqrt(T(3))/2 &&
     (
-        ( abs(p.y) == rp.r * sqrt(T(3))/2 && _in_x(p, rp.r * T(0.5)) ) ||
-        ( abs(p.x) == rp.r - abs(p.y)/sqrt(T(3)) &&  T(0.5) ≤ abs(p.x) ≤ rp.r )
+        ( isapprox(abs(p.y), hp.r * sqrt(T(3))/2, atol = tol) && _in_x(p, hp.r * T(0.5)) ) ||
+        ( isapprox(abs(p.x), hp.r - abs(p.y)/sqrt(T(3)), atol = tol) &&  T(0.5) ≤ abs(p.x) ≤ hp.r )
     )
 end
 

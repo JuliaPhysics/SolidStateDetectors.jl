@@ -49,18 +49,14 @@ end
 @inline in(p::CartesianPoint, rp::RegularPolygon) = in(CylindricalPoint(p), rp)
 
 # Special case: CartesianPoint in RegularHexagon: use analytical formulas
-@inline in(p::CartesianPoint, rp::RegularHexagon{T, <:Real}) where {T} =
-    _eq_z(p, rp.z) && abs(p.y) ≤ rp.r * sqrt(T(3))/2 &&
-    (
-        _in_x(p, rp.r * T(0.5)) ||
-        abs(p.x) ≤ rp.r - abs(p.y)/sqrt(T(3))
-    )
+@inline in(p::CartesianPoint, hp::RegularHexagon{T, <:Real}) where {T} =
+    _eq_z(p, hp.z) && _in_y(p, hp.r * sqrt(T(3))/2) && _in_x(p, hp.r - abs(p.y)/sqrt(T(3)))
 
-@inline in(p::CartesianPoint, rp::RegularHexagon{T, <:AbstractInterval{T}}) where {T} =
-    _eq_z(p, rp.z) && abs(p.y) <= rp.r.right * sqrt(T(3))/2 &&
+@inline in(p::CartesianPoint, hp::RegularHexagon{T, <:AbstractInterval{T}}) where {T} =
+    _eq_z(p, hp.z) && abs(p.y) <= hp.r.right * sqrt(T(3))/2 &&
     (
-        abs(p.y) >= rp.r.left * sqrt(T(3))/2 && _in_x(p, rp.r.right * T(0.5)) ||
-        abs(p.x) in (rp.r.left - abs(p.y) /sqrt(T(3)))..(rp.r.right - abs(p.y)/sqrt(T(3)))
+        abs(p.y) >= hp.r.left * sqrt(T(3))/2 && _in_x(p, hp.r.right * T(0.5)) ||
+        abs(p.x) in (hp.r.left - abs(p.y) /sqrt(T(3)))..(hp.r.right - abs(p.y)/sqrt(T(3)))
     )
 
 get_r_limits(rp::RegularPolygon) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
