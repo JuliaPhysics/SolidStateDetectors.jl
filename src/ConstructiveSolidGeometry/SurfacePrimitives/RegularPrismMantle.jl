@@ -53,6 +53,7 @@ end
 end
 
 get_z_limits(rp::RegularPrismMantle) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))
+get_r_at_φ(rp::RegularPrismMantle{N,T}, φ::T) where {N,T} = rp.r * T(cos(π/N)/cos(π/N - mod(φ, 2π/N)))
 
 function sample(rp::RegularPrismMantle{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}
     zMin::T, zMax::T = get_z_limits(rp)
@@ -62,3 +63,13 @@ function sample(rp::RegularPrismMantle{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2)):
         for φ in (Nsamps[2] ≤ 1 ? 0 : range(0, 2π, length = Nsamps[2]))
         ]
 end
+
+
+function sample(rp::RegularPrismMantle{N,T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {N,T}
+    samples = [
+        CylindricalPoint{T}(get_r_at_φ(rp,φ),φ,z)
+        for φ in _get_ticks(g.φ, T(0), T(2π))
+        for z in get_z_ticks(rp, g)
+    ]
+end
+

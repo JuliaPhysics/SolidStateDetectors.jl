@@ -60,6 +60,7 @@ end
     )
 
 get_r_limits(rp::RegularPolygon) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
+get_r_at_φ(rp::RegularPolygon{N,T}, φ::T) where {N,T} = get_r_limits(rp) .* T(cos(π/N)/cos(π/N - mod(φ, 2π/N)))
 
 function sample(rp::RegularPolygon{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}
     rMin::T, rMax::T = get_r_limits(rp)
@@ -68,4 +69,12 @@ function sample(rp::RegularPolygon{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vec
         for φ in (Nsamps[2] ≤ 1 ? 0 : range(0, 2π, length = Nsamps[2])) #ignore the N given in Nsamps and sample with N
         for r in (Nsamps[1] ≤ 1 ? rMax : range(rMin, rMax, length = Nsamps[1]))
         ]
+end
+
+function sample(rp::RegularPolygon{N,T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {N,T}
+    samples = [
+        CylindricalPoint{T}(r,φ,rp.z)
+        for φ in _get_ticks(g.φ, T(0), T(2π))
+        for r in _get_ticks(g.r, get_r_at_φ(rp,φ)...)
+    ]
 end
