@@ -62,7 +62,7 @@ end
 get_r_limits(rp::RegularPolygon) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_r_at_φ(rp::RegularPolygon{N,T}, φ::T) where {N,T} = get_r_limits(rp) .* T(cos(π/N)/cos(π/N - mod(φ, 2π/N)))
 
-function get_y_at_x(r::T, corners, g::CartesianTicksTuple{T}, x::T)::T where {T}
+function get_y_at_x(r::T, corners::SVector{N, Tuple{T,T}}, g::CartesianTicksTuple{T}, x::T)::T where {N,T}
     for i in eachindex(corners)[1:end-1]
         s1,c1 = r .* corners[i]
         s2,c2 = r .* corners[i+1]
@@ -72,8 +72,15 @@ function get_y_at_x(r::T, corners, g::CartesianTicksTuple{T}, x::T)::T where {T}
         t = (x-c1)/(c2-c1)
         if t in 0..1 return s1 + t * (s2-s1) end
     end
-    ()
+    NaN # If there is no point of RegularPolygon at x (used for the inner cutout of polygons)
 end
+
+function get_y_ticks(rMin::T, rMax::T, corners::SVector{N, Tuple{T,T}}, g::CartesianTicksTuple{T}, x::T) where {N,T}
+    yMin::T = rMin == 0 ? NaN : get_y_at_x(rMin, corners, g, x)
+    yMax::T = get_y_at_x(rMax, corners, g, x)
+    isnan(yMin) ? _get_ticks(g.y, -yMax, yMax) : vcat(_get_ticks(g.y, -yMax, -yMin), _get_ticks(g.y, yMin, yMax))
+end
+    
 
 function get_missing_x_at_y(r::T, corners::SVector{N, Tuple{T,T}}, g::CartesianTicksTuple{T}, y::T) where {N,T}
     x = []
@@ -114,8 +121,7 @@ function sample(rp::RegularPolygon{N,T}, g::CartesianTicksTuple{T})::Vector{Cart
     [   # sample all points on the x-grid lines
         CartesianPoint{T}(x,y,rp.z)
         for x in _get_ticks(g.x, rMax * minimum(broadcast(p -> p[2], corners)), rMax * maximum(broadcast(p -> p[2], corners)))
-        for y in _get_ticks(g.y, -get_y_at_x(rMax, corners, g, x), get_y_at_x(rMax, corners, g, x))
-        if hypot(x,y) ≥ get_r_at_φ(rp, atan(y,x))[1]
+        for y in get_y_ticks(rMin, rMax, corners, g, x)
     ] , 
     [   # sample the missing points on y-grid lines
         CartesianPoint{T}(x,y,rp.z)
