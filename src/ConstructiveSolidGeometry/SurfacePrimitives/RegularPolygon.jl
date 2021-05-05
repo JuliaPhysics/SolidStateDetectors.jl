@@ -75,7 +75,7 @@ function get_y_at_x(r::T, corners, g::CartesianTicksTuple{T}, x::T)::T where {T}
     ()
 end
 
-function get_missing_x_at_y(r::T, corners, g::CartesianTicksTuple{T}, y::T) where {T}
+function get_missing_x_at_y(r::T, corners::SVector{N, Tuple{T,T}}, g::CartesianTicksTuple{T}, y::T) where {N,T}
     x = []
     for i in eachindex(corners)[1:end-1]
         s1,c1 = r .* corners[i]
@@ -108,7 +108,7 @@ function sample(rp::RegularPolygon{N,T}, g::CylindricalTicksTuple{T})::Vector{Cy
 end
 
 function sample(rp::RegularPolygon{N,T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {N,T}
-    corners = sincos.(2π/N .* (0:N))
+    corners = SVector{N+1,Tuple{T,T}}(sincos.(T(2π/N) .* (0:N)))
     rMin::T, rMax::T = get_r_limits(rp)
     samples = vcat(
     [   # sample all points on the x-grid lines

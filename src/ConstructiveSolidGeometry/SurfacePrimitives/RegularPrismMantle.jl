@@ -74,7 +74,7 @@ function sample(rp::RegularPrismMantle{N,T}, g::CylindricalTicksTuple{T})::Vecto
 end
 
 function sample(rp::RegularPrismMantle{N,T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {N,T}
-    corners = sincos.(2π/N .* (0:N))
+    corners = SVector{N+1,Tuple{T,T}}(sincos.(T(2π/N) .* (0:N)))
     samples = vcat(
     [   # sample all points on the x-grid lines
         CartesianPoint{T}(x,y,rp.z)
