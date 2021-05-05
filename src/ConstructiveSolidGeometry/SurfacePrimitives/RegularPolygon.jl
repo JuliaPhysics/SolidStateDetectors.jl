@@ -62,6 +62,33 @@ end
 get_r_limits(rp::RegularPolygon) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_r_at_φ(rp::RegularPolygon{N,T}, φ::T) where {N,T} = get_r_limits(rp) .* T(cos(π/N)/cos(π/N - mod(φ, 2π/N)))
 
+function get_y_at_x(r::T, corners, g::CartesianTicksTuple{T}, x::T)::T where {T}
+    for i in eachindex(corners)[1:end-1]
+        s1,c1 = r .* corners[i]
+        s2,c2 = r .* corners[i+1]
+        if isapprox(c1, c2, atol = geom_atol_zero(T))
+            return isapprox(x, c1, atol = geom_atol_zero(T)) ? max(s1,s2) : T(0)
+        end
+        t = (x-c1)/(c2-c1)
+        if t in 0..1 return s1 + t * (s2-s1) end
+    end
+    ()
+end
+
+function get_missing_x_at_y(r::T, corners, g::CartesianTicksTuple{T}, y::T) where {T}
+    x = []
+    for i in eachindex(corners)[1:end-1]
+        s1,c1 = r .* corners[i]
+        s2,c2 = r .* corners[i+1]
+        if ! isapprox(s1, s2, atol = geom_atol_zero(T))
+            t = (y-s1)/(s2-s1)
+            if t in 0..1 push!(x, c1 + t * (c2-c1)) end
+        end
+    end
+    x
+end
+
+
 function sample(rp::RegularPolygon{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vector{CylindricalPoint{T}} where {N,T}
     rMin::T, rMax::T = get_r_limits(rp)
     samples = [
@@ -71,10 +98,29 @@ function sample(rp::RegularPolygon{N,T}, Nsamps::NTuple{3,Int} = (2,N+1,2))::Vec
         ]
 end
 
+
 function sample(rp::RegularPolygon{N,T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {N,T}
     samples = [
         CylindricalPoint{T}(r,φ,rp.z)
         for φ in _get_ticks(g.φ, T(0), T(2π))
         for r in _get_ticks(g.r, get_r_at_φ(rp,φ)...)
     ]
+end
+
+function sample(rp::RegularPolygon{N,T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {N,T}
+    corners = sincos.(2π/N .* (0:N))
+    rMin::T, rMax::T = get_r_limits(rp)
+    samples = vcat(
+    [   # sample all points on the x-grid lines
+        CartesianPoint{T}(x,y,rp.z)
+        for x in _get_ticks(g.x, rMax * minimum(broadcast(p -> p[2], corners)), rMax * maximum(broadcast(p -> p[2], corners)))
+        for y in _get_ticks(g.y, -get_y_at_x(rMax, corners, g, x), get_y_at_x(rMax, corners, g, x))
+        if hypot(x,y) ≥ get_r_at_φ(rp, atan(y,x))[1]
+    ] , 
+    [   # sample the missing points on y-grid lines
+        CartesianPoint{T}(x,y,rp.z)
+        for y in _get_ticks(g.y, rMax * minimum(broadcast(p -> p[1], corners)), rMax * maximum(broadcast(p -> p[1], corners)))
+        for x in vcat(get_missing_x_at_y(rMin, corners, g, y), get_missing_x_at_y(rMax, corners, g, y))
+    ]
+    )
 end
