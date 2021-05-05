@@ -50,7 +50,11 @@ end
 
 # Special case: CartesianPoint in RegularHexagon: use analytical formulas
 @inline in(p::CartesianPoint, rp::RegularHexagon{T, <:Real}) where {T} =
-    _eq_z(p, rp.z) && _in_x(p, rp.r * sqrt(T(3))/2) && _in_y(p, rp.r - abs(p.x)/sqrt(T(3)))
+    _eq_z(p, rp.z) && abs(p.y) ≤ rp.r * sqrt(T(3))/2 &&
+    (
+        _in_x(p, rp.r * T(0.5)) ||
+        abs(p.x) ≤ rp.r - abs(p.y)/sqrt(T(3))
+    )
 
 @inline in(p::CartesianPoint, rp::RegularHexagon{T, <:AbstractInterval{T}}) where {T} =
     _eq_z(p, rp.z) && abs(p.y) <= rp.r.right * sqrt(T(3))/2 &&

@@ -56,7 +56,11 @@ end
 
 # Special case: CartesianPoint in HexagonalPrism: use analytical formulas
 @inline in(p::CartesianPoint, hp::HexagonalPrism{T, <:Real}) where {T} =
-    _in_z(p, hp.z) && _in_x(p, hp.r * sqrt(T(3))/2) && _in_y(p, hp.r - abs(p.x)/sqrt(T(3)))
+    _in_z(p, hp.z) && abs(p.y) ≤ hp.r * sqrt(T(3))/2 &&
+    (
+        _in_x(p, hp.r * T(0.5)) ||
+        abs(p.x) ≤ hp.r - abs(p.y)/sqrt(T(3))
+    )
 
 @inline in(p::CartesianPoint, hp::HexagonalPrism{T, <:AbstractInterval{T}}) where {T} =
     _in_z(p, hp.z) && abs(p.y) <= hp.r.right * sqrt(T(3))/2 &&
