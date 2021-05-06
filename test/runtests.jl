@@ -58,6 +58,17 @@ end
         end
         @test isapprox( signalsum, T(2), atol = 5e-2 )
     end
+    @testset "Simulate example detector: HexagonalPrism" begin
+        sim = Simulation(SSD_examples[:Hexagon])
+        simulate!(sim, max_refinements = 0, verbose = true)
+        evt = Event([CartesianPoint{T}(0, 5e-4, 1e-3)])
+        simulate!(evt, sim)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @test isapprox( signalsum, T(2), atol = 5e-4 )
+    end
     #=
     @testset "Simulate example detector: CGD" begin
         sim = Simulation(SSD_examples[:CGD])

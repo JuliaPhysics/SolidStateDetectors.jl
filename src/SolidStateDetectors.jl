@@ -74,7 +74,7 @@ struct ConfigFileError <: Exception
 end
 Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
-include("Geometries/Units.jl")
+include("Units.jl")
 
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
