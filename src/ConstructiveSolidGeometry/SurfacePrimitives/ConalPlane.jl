@@ -103,19 +103,23 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConalPlane{T}
     d, r_on_plane = pcy.r .* sincos(Δφ)
     if point.z ≥ zMax
         if r_on_plane ≥ rtopMax
-            return hypot(d, point.z-zMax, r_on_plane-rtopMax)
+            line = LineSegment(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
         elseif r_on_plane ≤ rtopMin
-            return hypot(d, point.z-zMax, rtopMin - r_on_plane)
+            line = LineSegment(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
         else
             return hypot(d, point.z-zMax)
         end
     elseif point.z ≤ zMin
         if r_on_plane ≥ rbotMax
-            return hypot(d, zMin-point.z, r_on_plane-rbotMax)
-        elseif r_on_plane ≤ rtopMin
-            return hypot(d, zMin-point.z, rbotMin - r_on_plane)
+            line = LineSegment(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
+        elseif r_on_plane ≤ rbotMin
+            line = LineSegment(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
         else
-            return hypot(d, zMax-point.z)
+            return hypot(d, zMin-point.z)
         end
     else
         r_at_z = get_r_at_z(c, point.z)
@@ -124,9 +128,8 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConalPlane{T}
         if rMin ≤ r_on_plane ≤ rMax
             return abs(d)
         else
-            line = r_on_plane ≥ rMax ? Line(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax)) : Line(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
-            point = PlanarPoint{T}(r_on_plane,point.z)
-            return sqrt(d^2 + distance_to_line(point, line)^2)
+            line = r_on_plane ≥ rMax ? LineSegment(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax)) : LineSegment(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
         end
     end
 end
