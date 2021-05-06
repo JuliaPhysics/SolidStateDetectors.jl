@@ -1,4 +1,4 @@
-volume_primitive_dict = Dict{String, Any}(
+const CSG_dict = Dict{String, Any}(
     "tube" => Cone,
     "cone" => Cone,
     "sphere" => Sphere,
@@ -10,8 +10,12 @@ volume_primitive_dict = Dict{String, Any}(
     "HexagonalPrism"  => HexagonalPrism,
     "union" => CSGUnion,
     "difference" => CSGDifference,
-    "intersection" => CSGIntersection
+    "intersection" => CSGIntersection,
+    "translate" => TranslatedGeometry,
+    "rotate" => RotatedGeometry,
+    "scale" => ScaledGeometry
 )
+
 
 
 #### INTERNAL PARSE FUNCTIONS
@@ -126,6 +130,6 @@ function Geometry(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input
         gdict::Dict{Any,Any} = filter(p -> first(p) != "translate", dict)
         return Geometry(T, gdict, input_units) + t
     end
-    Geometry(T, volume_primitive_dict[dict["type"]], dict, input_units)
+    Geometry(T, CSG_dict[dict["type"]], dict, input_units)
 end
 
