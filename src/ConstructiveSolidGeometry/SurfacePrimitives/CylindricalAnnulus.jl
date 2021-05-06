@@ -94,3 +94,30 @@ function sample(a::CylindricalAnnulus{T}, g::CartesianTicksTuple{T})::Vector{Car
         if a.φ === nothing || mod(atan(y, x), T(2π)) in a.φ
     ]
 end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
+    point = CylindricalPoint(point)
+    rMin::T, rMax::T = get_r_limits(a)
+    _in_cyl_r(point, a.r) ? abs(point.z - a.z) : hypot(point.z - a.z, min(abs(point.r - rMin), abs(point.r - rMax)))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
+    pcy = CylindricalPoint(point)
+    rMin::T, rMax::T = get_r_limits(a)
+    φMin::T, φMax::T, _ = get_φ_limits(a)
+    if _in_φ(pcy, a.φ)
+        Δz = abs(pcy.z - a.z)
+        return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
+    else
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        if rMin == rMax
+            return norm(CartesianPoint(point)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
+        else
+            return distance_to_line(CartesianPoint(point),
+                                    LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)),
+                                                CartesianPoint(CylindricalPoint{T}(rMax,φNear,a.z))
+                                                )
+                                    )
+        end
+    end
+end
