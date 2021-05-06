@@ -70,6 +70,19 @@ in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, Nothing, <:Any}) =
 in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, <:AbstractInterval, <:Any}) =
     _in_z(p, c.z) && _in_φ(p, c.φ) && _eq_cyl_r(p, get_r_at_z(c, p.z))
 
+function LineSegment(c::ConeMantle{T}) where {T}
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    LineSegment(T, PlanarPoint{T}(rbot,zMin), PlanarPoint{T}(rtop,zMax))
+end
+
+function LineSegment(c::ConeMantle{T}, φ::Real) where {T}
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    sφ::T, cφ::T = sincos(φ)
+    LineSegment(T, CartesianPoint{T}(rbot*cφ,rbot*sφ,zMin), CartesianPoint{T}(rtop*cφ,rtop*sφ,zMax))
+end
+
 #=
 function sample(c::ConeMantle{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
     φMin::T, φMax::T, _ = get_φ_limits(c)
@@ -119,4 +132,20 @@ function sample(c::ConeMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianPo
         for y in _get_y_at_z(c, x, z)
         if c.φ === nothing || mod(atan(y, x), T(2π)) in c.φ
     ]
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    φMin::T, φMax::T, _ = get_φ_limits(c)
+    if _in_φ(pcy, c.φ)
+        return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
+    else
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        return distance_to_line(CartesianPoint(point), LineSegment(c, φNear))
+    end
 end
