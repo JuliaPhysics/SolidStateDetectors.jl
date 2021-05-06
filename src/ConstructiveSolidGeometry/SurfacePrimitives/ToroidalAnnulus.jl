@@ -60,20 +60,20 @@ function sample(t::ToroidalAnnulus{T}, Nsamps::NTuple{3,Int}) where {T}
 end
 
 function _get_z_at_r(t::ToroidalAnnulus{T,T}, g::CylindricalTicksTuple{T}, r::T) where {T}
-    tmp::T = t.r_tube^2 - (r - t.r_torus)^2 
+    tmp::T = t.r_tube^2 - (r - t.r_torus)^2
     if tmp < 0 return (t.z,) end
     _get_ticks(g.z, t.z - sqrt(tmp), t.z + sqrt(tmp))
 end
 
 function _get_z_at_r(t::ToroidalAnnulus{T,<:AbstractInterval{T}}, g::CylindricalTicksTuple{T}, r::T) where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
-    tmp::T = r_tubeMax^2 - (r - t.r_torus)^2 
+    tmp::T = r_tubeMax^2 - (r - t.r_torus)^2
     if tmp < 0 return (t.z,) end
-    tmp2::T = r_tubeMin^2 - (r - t.r_torus)^2 
+    tmp2::T = r_tubeMin^2 - (r - t.r_torus)^2
     if tmp2 < 0 return _get_ticks(g.z, t.z - sqrt(tmp), t.z + sqrt(tmp)) end
     vcat(_get_ticks(g.z, t.z - sqrt(tmp), t.z - sqrt(tmp2)),_get_ticks(g.z, t.z + sqrt(tmp2), t.z + sqrt(tmp)))
 end
-    
+
 
 function sample(t::ToroidalAnnulus{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
     r_tubeMin::T, r_tubeMax::T = get_r_tube_limits(t)
@@ -97,4 +97,13 @@ function sample(t::ToroidalAnnulus{T}, g::CartesianTicksTuple{T})::Vector{Cartes
         if (r_tubeMin <= hypot(r - t.r_torus, z - t.z) <= r_tubeMax) &&
            (t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, r - t.r_torus), T(2π)), t.θ))
     ]
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, t::ToroidalAnnulus{T})::T where {T}
+    pcy = CylindricalPoint(point)
+    Δφ = pcy.φ - t.φ
+    z, r_on_plane = pcy.r .* sincos(Δφ)
+    pp = PlanarPoint{T}(r_on_plane, pcy.z) - PlanarVector{T}(t.r_torus, t.z)
+    pct_transformed = CartesianPoint{T}(pp.u, pp.v, z)
+    distance_to_surface(pct_transformed, CylindricalAnnulus(T, t.r_tube, t.θ, T(0)))
 end
