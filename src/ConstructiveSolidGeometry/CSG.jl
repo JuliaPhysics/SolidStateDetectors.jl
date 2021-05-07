@@ -12,9 +12,8 @@ in(p::AbstractCoordinatePoint, csg::CSGUnion) = in(p, csg.a) || in(p, csg.b)
 (+)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGUnion{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, t::Type{CSGUnion}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
-    @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
-    sum( map(x-> Geometry(T, x, input_units), dict["parts"]) )
+function Geometry(::Type{T}, t::Type{CSGUnion}, v::Vector{<:Union{Dict{String,Any},Dict{Any,Any}}}, input_units::NamedTuple) where {T}
+    sum( broadcast(x-> Geometry(T, x, input_units), v) )
 end
 
 
@@ -32,9 +31,8 @@ in(p::AbstractCoordinatePoint, csg::CSGIntersection) = in(p, csg.a) && in(p, csg
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, ::Type{CSGIntersection}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
-    @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
-    parts = map(x-> Geometry(T, x, input_units), dict["parts"]) 
+function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:Union{Dict{String,Any},Dict{Any,Any}}}, input_units::NamedTuple) where {T}
+    parts = broadcast(x-> Geometry(T, x, input_units), v) 
     reduce(&, parts)
 end
 
@@ -53,8 +51,7 @@ in(p::AbstractCoordinatePoint, csg::CSGDifference) = in(p, csg.a) && !in(p, csg.
 (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGDifference{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, ::Type{CSGDifference}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
-    @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
-    Geometry(T, dict["parts"][1], input_units) - sum( map(x-> Geometry(T, x, input_units), dict["parts"][2:end]) )
+function Geometry(::Type{T}, ::Type{CSGDifference}, v::Vector{<:Union{Dict{String,Any},Dict{Any,Any}}}, input_units::NamedTuple) where {T}
+    Geometry(T, v[1], input_units) - sum( map(x-> Geometry(T, x, input_units), v[2:end]) )
 end
 
