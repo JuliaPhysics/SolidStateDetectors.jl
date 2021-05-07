@@ -1,12 +1,12 @@
-struct Arc{T,TP,TH} <: AbstractLinePrimitive{T}
+struct Arc{T,TH} <: AbstractLinePrimitive{T}
     r::T
-    center::TP
+    center::PlanarPoint{T}
     α::TH
     function Arc( ::Type{T},
                    r::T,
                    center::PlanarPoint{T},
                    α::Union{Nothing, <:AbstractInterval{T}}) where {T}
-        new{T,typeof(center),typeof(α)}(r, center, α)
+        new{T,typeof(α)}(r, center, α)
     end
 end
 
@@ -23,36 +23,19 @@ Circle(a::Arc{T}) where {T} = Arc(T, a.r, a.center, nothing)
 
 get_α_at_u_v(a::Arc{T}, u::Real, v::Real) where {T} = mod(atan(v - a.center.v, u - a.center.u), 2π) #u,v are planar coordinates
 
-get_α_limits(a::Arc{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
-get_α_limits(a::Arc{T, <:Any, <:AbstractInterval}) where {T} = (a.α.left, a.α.right, false)
+get_α_limits(a::Arc{T, Nothing}) where {T} = (T(0), T(2π), true)
+get_α_limits(a::Arc{T, <:AbstractInterval}) where {T} = (a.α.left, a.α.right, false)
 
+distance_to_line(point::PlanarPoint{T}, a::Arc{T, Nothing}) where {T} = abs(norm(point - a.center) - a.r)
 
-function sample(a::Arc{T}, step::AbstractFloat) where {T}
-    αMin::T, αMax::T, _ = get_α_limits(a)
-    samples = [PlanarPoint{T}(a.r*cos(α)+a.center.u,a.r*sin(α)+a.center.v) for α in (a.r == 0 ? αMin : αMin:step/a.r:αMax)]
-end
-
-function sample(a::Arc{T}, Nsamps::Int) where {T}
-    αMin::T, αMax::T, _ = get_α_limits(a)
-    samples = [PlanarPoint{T}(a.r*cos(α)+a.center.u,a.r*sin(α)+a.center.v) for α in range(αMin, αMax, length = Nsamps)]
-end
-
-function distance_to_line(point::PlanarPoint{T}, a::Arc{T, <:Any, Nothing}) where {T}
-    p_t = point - a.center
-    r = hypot(p_t.u, p_t.v)
-    abs(a.r - r)
-end
-
-function distance_to_line(point::PlanarPoint{T}, a::Arc{T, <:Any, <:AbstractInterval}) where {T}
+function distance_to_line(point::PlanarPoint{T}, a::Arc{T, <:AbstractInterval})::T where {T}
     αMin::T, αMax::T, _ = get_α_limits(a)
     p_t = point - a.center
-    r = hypot(p_t.u, p_t.v)
     α = atan(p_t.v, p_t.u)
     if _in_angular_interval_closed(α, a.α)
-        return abs(a.r - r)
+        return abs(norm(p_t) - a.r)
     else
-        αNear = Δ_φ(T(α),αMin) ≤ Δ_φ(T(α),αMax) ? αMin : αMax
-        sαNear, cαNear = sincos(αNear)
+        sαNear, cαNear = sincos(_φNear(α, αMin, αMax))
         return norm(p_t - PlanarPoint{T}(a.r*cαNear, a.r*sαNear))
     end
 end

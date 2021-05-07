@@ -138,8 +138,7 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T
         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
     else
         φMin::T, φMax::T, _ = get_φ_limits(t)
-        φNear::T = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
-        Δφ = pcy.φ - φNear
+        Δφ = pcy.φ - _φNear(pcy.φ, φMin, φMax)
         d, r_on_plane = pcy.r .* sincos(Δφ)
         return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane, pcy.z), Arc(t)))
     end

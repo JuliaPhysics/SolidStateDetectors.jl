@@ -129,6 +129,8 @@ function Δ_φ(φ1::T, φ2::T)::T where {T}
     min(δφ, T(2π) - δφ)
 end
 
+_φNear(φ::Real, φMin::T, φMax::T) where {T} = Δ_φ(T(φ),φMin) ≤ Δ_φ(T(φ),φMax) ? φMin : φMax
+
 struct PlanarVector{T} <: AbstractPlanarVector{T}
     u::T
     v::T

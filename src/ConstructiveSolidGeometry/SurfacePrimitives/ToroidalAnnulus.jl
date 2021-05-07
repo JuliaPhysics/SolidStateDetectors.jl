@@ -103,7 +103,6 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, t::ToroidalAnnul
     pcy = CylindricalPoint(point)
     Δφ = pcy.φ - t.φ
     z, r_on_plane = pcy.r .* sincos(Δφ)
-    pp = PlanarPoint{T}(r_on_plane, pcy.z) - PlanarVector{T}(t.r_torus, t.z)
-    pct_transformed = CartesianPoint{T}(pp.u, pp.v, z)
+    pct_transformed = CartesianPoint{T}(r_on_plane - t.r_torus, pcy.z - t.z, z)
     distance_to_surface(pct_transformed, CylindricalAnnulus(T, t.r_tube, t.θ, T(0)))
 end

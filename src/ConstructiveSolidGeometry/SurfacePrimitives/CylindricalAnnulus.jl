@@ -109,7 +109,7 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAn
         Δz = abs(pcy.z - a.z)
         return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
     else
-        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        φNear = _φNear(pcy.φ, φMin, φMax)
         if rMin == rMax
             return norm(CartesianPoint(point)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
         else
