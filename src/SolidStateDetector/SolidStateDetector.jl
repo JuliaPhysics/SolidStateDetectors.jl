@@ -96,22 +96,6 @@ function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type
     ArbitraryDriftModificationVolume{T}(pass, input_units)
 end
 
-function construct_objects(T, objects::Vector, semiconductors, contacts, passives, virtual_drift_volumes, input_units)::Nothing
-    for obj in objects
-        if obj["type"] == "semiconductor"
-            push!(semiconductors, construct_semiconductor(T, obj, input_units))
-        elseif obj["type"] == "contact"
-            push!(contacts, construct_contact(T, obj, input_units))
-        elseif obj["type"] == "passive"
-            push!(passives, construct_passive(T, obj, input_units))
-        elseif obj["type"] == "virtual_drift_volume"
-            push!(virtual_drift_volumes, construct_virtual_volume(T, obj, input_units))
-        else
-            @warn "please specify the class to be either a \"semiconductor\", a \"contact\", or \"passive\""
-        end
-    end
-    nothing
-end
 
 function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
@@ -195,7 +179,18 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     end
 
     if haskey(config_file, "objects")
-        construct_objects(T, config_file["objects"], semiconductors, contacts, passives, virtual_drift_volumes, input_units)
+        if haskey(config_file["objects"], "semiconductors")        
+            semiconductors = broadcast(s -> construct_semiconductor(T, s, input_units), config_file["objects"]["semiconductors"])  
+        end
+        if haskey(config_file["objects"], "contacts")              
+            contacts = broadcast(c -> construct_contact(T, c, input_units), config_file["objects"]["contacts"]) 
+        end
+        if haskey(config_file["objects"], "passives")              
+            passives = broadcast(p -> construct_passive(T, p, input_units), config_file["objects"]["passives"])       
+        end
+        if haskey(config_file["objects"], "virtual_drift_volumes")  
+            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units), config_file["objects"]["virtual_drift_volumes"]) 
+        end
     end
 
     world = if haskey(config_file, "grid")
