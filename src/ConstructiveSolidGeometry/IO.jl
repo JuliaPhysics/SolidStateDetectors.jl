@@ -16,9 +16,10 @@ const CSG_dict = Dict{String, Any}(
     "scale" => ScaledGeometry
 )
 
-function get_geometry_key(dict::Union{Dict{String,Any}, Dict{Any,Any}})::String
+function get_geometry_key(dict::AbstractDict)::String
     dict_keys = filter(k -> k in keys(CSG_dict), keys(dict))
-    @assert length(dict_keys) == 1 "Too many geometry entries in dictionary."
+    @assert length(dict_keys) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
+    @assert length(dict_keys) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
     first(dict_keys)
 end
 
@@ -32,7 +33,7 @@ end
 @inline _parse_value(::Type{T}, a::Vector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries
-function _parse_interval_from_to(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units)::Tuple{T,T} where {T}
+function _parse_interval_from_to(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::Tuple{T,T} where {T}
     To::T = _parse_value(T, dict["to"], unit)
     From::T = _parse_value(T, dict["from"], unit)
     @assert From <= To "Entry 'from' should be smaller than entry 'to' in $(dict)."
@@ -41,7 +42,7 @@ end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
 @inline _parse_radial_interval(::Type{T}, x::Union{Real, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)
-function _parse_radial_interval(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units) where {T}
+function _parse_radial_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
     @assert From >= 0 && To >= 0 "Entries 'from' and 'to' of radial $(dict) should be non-zero."
@@ -50,7 +51,7 @@ end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
 @inline _parse_linear_interval(::Type{T}, x::Union{Real, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)/2
-function _parse_linear_interval(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units) where {T}
+function _parse_linear_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
     To == -From ? To : From..To
@@ -58,7 +59,7 @@ end
 
 
 # parses dictionary entry for φ-interval that has {"from" ..., "to": ...} to the respective Nothing/Interval
-function _parse_angular_interval(::Type{T}, dict::Union{Dict{String,<:Any}, Dict{Any,<:Any}}, unit::Unitful.Units) where {T}
+function _parse_angular_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     φTo::T = _parse_value(T, dict["to"], unit)
     φFrom::T = _parse_value(T, dict["from"], unit)
     if abs(rem2pi(φFrom - φTo, RoundNearest)) > 2*eps(T)
@@ -72,7 +73,7 @@ end
 ### ADAPTED FOR PRIMITIVES (should throw Errors if something is not defined!)
 
 # converts "r" to the respective AbstractFloat/Interval/Tuple for Cone
-function parse_r_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "r") "Please specify 'r'."
     dictr = dict["r"]
     # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
@@ -89,7 +90,7 @@ end
 
 # converts "phi" : {...} to the respective Nothing/Interval
 # if no φ is given, then a full 360° interval (i.e. φ = nothing) is assumed
-function parse_φ_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function parse_φ_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     φ = if !haskey(dict,"phi")
         @info "No 'phi' is specified. Assuming 'phi' to go from 0 to 360°."
         nothing
@@ -98,7 +99,7 @@ function parse_φ_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any
     end
 end
 
-function parse_θ_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function parse_θ_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     θ = if !haskey(dict,"theta")
         @info "No 'theta' is specified. Assuming 'theta' to go from 0 to 360°."
         nothing
@@ -108,41 +109,41 @@ function parse_θ_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any
 end
 
 # converts either "h" or "z" to the respective AbstractFloat/Interval
-function parse_height_of_primitive(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function parse_height_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict,"h") || haskey(dict,"z") "Please specify 'h' or 'z'."
     haskey(dict,"h") ? _parse_linear_interval(T, dict["h"], unit) : _parse_linear_interval(T, dict["z"], unit)
 end
 
 # converts the content of the dictionary to respective AbstractFloat/Interval.
-function parse_interval_of_primitive(::Type{T}, s::String, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units) where {T}
+function parse_interval_of_primitive(::Type{T}, s::String, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, s) "Please specify '$(s)'."
     _parse_linear_interval(T, dict[s], unit)
 end
 
 
 # converts {"x": ..., "y": ..., "z": ... } to the respective CartesianVector
-function parse_translate_vector(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units)::CartesianVector{T} where {T}
+function parse_translate_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::CartesianVector{T} where {T}
     x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], unit) : T(0)
     y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], unit) : T(0)
     z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], unit) : T(0)
     CartesianVector{T}(x,y,z)
 end
 
-function Geometry(::Type{T}, ::Type{TranslatedGeometry}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{TranslatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     translate_vector::CartesianVector{T} = parse_translate_vector(T, dict, length_unit)
     key::String = get_geometry_key(dict)
     translate(Geometry(T, CSG_dict[key], dict[key], input_units), translate_vector)
 end
 
-function parse_scale_vector(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units)::SVector{3,T} where {T}
+function parse_scale_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::SVector{3,T} where {T}
     x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], unit) : T(1)
     y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], unit) : T(1)
     z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], unit) : T(1)
     SVector{3,T}(x,y,z)
 end
 
-function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
     key::String = get_geometry_key(dict)
@@ -150,7 +151,7 @@ function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::Union{Dict{String,Any
 end
 
 _rot_keys = ["X","Y","Z","XY","XZ","YX","YZ","ZX","ZY","XYX","XYZ","XZX","XZY","YXY","YXZ","YZX","YZY","ZXY","ZXZ","ZYX","ZYZ"]
-function parse_rotation_matrix(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, unit::Unitful.Units)::RotMatrix3{T} where {T}
+function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::RotMatrix3{T} where {T}
     dict_keys = keys(dict)
     if "M" in keys(dict)
         R = RotMatrix3{T}(dict["M"])
@@ -165,7 +166,7 @@ function parse_rotation_matrix(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any
     end
 end
 
-function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
     angle_unit = input_units.angle
     rotation_matrix = parse_rotation_matrix(T, dict, angle_unit)
     key::String = get_geometry_key(dict)
@@ -173,8 +174,7 @@ function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::Union{Dict{String,An
 end
 
 
-# parses a geometry (with possible translate vector) into the respective AbstractGeometry
-function Geometry(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
     key::String = get_geometry_key(dict)
     Geometry(T, CSG_dict[key], dict[key], input_units)
 end

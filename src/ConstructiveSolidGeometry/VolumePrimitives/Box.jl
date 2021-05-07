@@ -31,7 +31,7 @@ in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
     
     
 # read-in
-function Geometry(::Type{T}, ::Type{Box}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     x = parse_interval_of_primitive(T, "x", dict, length_unit)
     y = parse_interval_of_primitive(T, "y", dict, length_unit)

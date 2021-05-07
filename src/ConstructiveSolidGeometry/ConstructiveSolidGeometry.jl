@@ -12,6 +12,8 @@ module ConstructiveSolidGeometry
     using Rotations
     using StaticArrays
     using Unitful
+    
+    using DataStructures: OrderedDict
 
     import Base: in, *, +, -, &, size
 

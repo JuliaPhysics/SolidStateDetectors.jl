@@ -49,7 +49,7 @@ in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, <:Abst
     
 
 # read-in
-function Geometry(T::DataType, ::Type{Torus}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple)
+function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)
     length_unit = input_units.length
     angle_unit = input_units.angle
     r_torus::T = _parse_value(T, dict["r_torus"], length_unit)

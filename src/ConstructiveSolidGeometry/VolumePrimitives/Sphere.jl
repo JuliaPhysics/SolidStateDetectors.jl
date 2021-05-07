@@ -22,7 +22,7 @@ end
 in(p::AbstractCoordinatePoint, s::Sphere) = _in_sph_r(p, s.r)
 
 # read-in
-function Geometry(::Type{T}, ::Type{Sphere}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{Sphere}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     r = parse_r_of_primitive(T, dict, length_unit)
     return Sphere(T, r)

@@ -66,7 +66,7 @@ end
     )
 
 # read-in
-function Geometry(::Type{T}, ::Type{P}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple
+function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTuple
             ) where {T, P <: Union{TriangularPrism, SquarePrism, PentagonalPrism, HexagonalPrism}}
     length_unit = input_units.length
     r = parse_r_of_primitive(T, dict, length_unit)

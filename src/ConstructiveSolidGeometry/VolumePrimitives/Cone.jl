@@ -80,7 +80,7 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any})
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 # read-in
-function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     angle_unit = input_units.angle
     r = parse_r_of_primitive(T, dict, length_unit)
