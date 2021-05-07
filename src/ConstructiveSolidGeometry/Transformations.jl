@@ -1,4 +1,4 @@
-struct ScaledGeometry{T,P<:AbstractGeometry{T}} <: AbstractGeometry{T}
+struct ScaledGeometry{T,P<:AbstractGeometry{T}} <: AbstractTransformedGeometry{T}
     p::P
     inv_s::SVector{3,T}
     ScaledGeometry(p::P, s::SVector{3,T}) where {T,P} = new{T,P}(p, inv.(s))
@@ -11,7 +11,7 @@ scale(g::ScaledGeometry{T}, s::SVector{3,T}) where {T} = (inv.(g.inv_s) .* s == 
 get_plot_points(sg::ScaledGeometry{T}; n = 30) where {T} = scale!(get_plot_points(sg.p, n = n), inv.(sg.inv_s))
 
 
-struct RotatedGeometry{T,P<:AbstractGeometry{T},RT} <: AbstractGeometry{T}
+struct RotatedGeometry{T,P<:AbstractGeometry{T},RT} <: AbstractTransformedGeometry{T}
     p::P
     inv_r::RotMatrix3{RT}
     RotatedGeometry(p::AbstractGeometry{T}, r::RotMatrix3{RT}) where {T,RT} = new{T,typeof(p),RT}(p, inv(r))
@@ -24,7 +24,7 @@ rotate(g::RotatedGeometry{T,<:Any,RT}, r::RotMatrix3{RT}) where {T,RT} = ( tr(r 
 get_plot_points(rg::RotatedGeometry{T}; n = 30) where {T} = rotate!(get_plot_points(rg.p, n = n), inv(rg.inv_r))
 
 
-struct TranslatedGeometry{T,P<:AbstractGeometry{T}} <: AbstractGeometry{T}
+struct TranslatedGeometry{T,P<:AbstractGeometry{T}} <: AbstractTransformedGeometry{T}
     p::P
     t::CartesianVector{T}
 end

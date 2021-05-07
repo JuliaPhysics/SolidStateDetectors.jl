@@ -38,6 +38,7 @@ module ConstructiveSolidGeometry
     abstract type AbstractLinePrimitive{T} <: AbstractPrimitive{T} end
 
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
+    abstract type AbstractTransformedGeometry{T} <: AbstractGeometry{T} end
 
     include("Units.jl")
     include("PointsAndVectors.jl")
