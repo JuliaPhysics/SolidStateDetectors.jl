@@ -124,12 +124,12 @@ end
 
 @inline _in_torr_θ(p::CylindricalPoint{T}, r_torus::Real, θ::AbstractInterval, z_torus::Real) where {T} = _in_angular_interval_closed(mod(atan(p.z - z_torus, p.r - r_torus), T(2π)), θ)
 
-function Δ_φ(φ1::T, φ2::T)::T where {T}
+function _Δφ(φ1::T, φ2::T)::T where {T}
     δφ = mod(φ2 - φ1, T(2π))
     min(δφ, T(2π) - δφ)
 end
 
-_φNear(φ::Real, φMin::T, φMax::T) where {T} = Δ_φ(T(φ),φMin) ≤ Δ_φ(T(φ),φMax) ? φMin : φMax
+_φNear(φ::Real, φMin::T, φMax::T) where {T} = _Δφ(T(φ),φMin) ≤ _Δφ(T(φ),φMax) ? φMin : φMax
 
 struct PlanarVector{T} <: AbstractPlanarVector{T}
     u::T

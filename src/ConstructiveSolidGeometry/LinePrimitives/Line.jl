@@ -11,18 +11,6 @@ struct Line{T,TP,TL} <: AbstractLinePrimitive{T}
     end
 end
 
-function Line( ::Type{T},
-               p1::PT,
-               p2::PT) where {T, PT <: Union{CartesianPoint{T}, PlanarPoint{T}}} #if (inf)Line there are no endpoints
-    Line(T, p1, p2, Val(:inf))
-end
-
-function Ray( ::Type{T},
-               p1::PT,
-               p2::PT) where {T, PT <: Union{CartesianPoint{T}, PlanarPoint{T}}} #if Ray endpoint is p1
-    Line(T, p1, p2, Val(:ray))
-end
-
 function LineSegment( ::Type{T},
                p1::PT,
                p2::PT) where {T, PT <: Union{CartesianPoint{T}, PlanarPoint{T}}} #if LineSegment endpoints are p1, and p2
