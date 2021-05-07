@@ -179,3 +179,24 @@ function Geometry(::Type{T}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input
     Geometry(T, CSG_dict[key], dict[key], input_units)
 end
 
+
+function show_CSG_tree(csgtree; start = "", tab = "", CSG = false)
+    CT = typeof(csgtree)
+    if CT <: AbstractConstructiveGeometry
+        if !CSG 
+            println(start*" $(CT.name.name){$(CT.parameters[1])}")
+            tab *= "\t"
+        end
+        next_CSG::Bool = typeof(csgtree.a).name == CT.name
+        show_CSG_tree(csgtree.a, start = tab*"├"*(CT <: CSGDifference ? " +" : "──"), tab = tab*(next_CSG ? "" : "│"), CSG = next_CSG)
+        show_CSG_tree(csgtree.b, start = tab*(CSG ? "├" : "└")*(CT <: CSGDifference ? " ─" : "──"), tab = tab*(CSG ? "│" : " "))
+    end
+    if CT <: AbstractTransformedGeometry
+        println(start*" $(CT.name.name){$(CT.parameters[1])}")
+        tab *= "\t"
+        show_CSG_tree(csgtree.p, start = tab*"└──", tab = tab)
+    end
+    if CT <: AbstractPrimitive
+        println(start*" $(CT.name.name){$(CT.parameters[1])}")
+    end
+end
