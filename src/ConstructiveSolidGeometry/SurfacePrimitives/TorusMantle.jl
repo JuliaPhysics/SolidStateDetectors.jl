@@ -44,7 +44,6 @@ in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, Nothing, <:AbstractInterval
 in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:AbstractInterval, <:AbstractInterval}) =
     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
 
-
 get_φ_limits(t::TorusMantle{T, Nothing}) where {T} = (T(0), T(2π), true)
 get_φ_limits(t::TorusMantle{T, <:AbstractInterval}) where {T} = (t.φ.left, t.φ.right, false)
 
@@ -106,11 +105,11 @@ function _get_y_at_z(t::TorusMantle{T}, x::T, z::T) where {T}
     R::T = sqrt(t.r_tube^2 - (z - t.z)^2)
     tmp::T = (t.r_torus + R)^2 - x^2
     tmp2::T = (t.r_torus - R)^2 - x^2
-    if tmp < 0 
+    if tmp < 0
         ()
-    elseif tmp2 < 0 
+    elseif tmp2 < 0
         (-sqrt(tmp), sqrt(tmp))
-    else 
+    else
         (-sqrt(tmp), -sqrt(tmp2), sqrt(tmp2), sqrt(tmp))
     end
 end
@@ -121,8 +120,26 @@ function sample(t::TorusMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianP
             for z in _get_z_ticks(t, g)
             for x in _get_x_at_z(t, g, z)
             for y in _get_y_at_z(t, x, z)
-            if (t.φ === nothing || mod(atan(y, x), T(2π)) in t.φ) && 
+            if (t.φ === nothing || mod(atan(y, x), T(2π)) in t.φ) &&
                (t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, hypot(x, y) - t.r_torus), T(2π)), t.θ))
         ]
 end
 
+Arc(t::TorusMantle{T}) where {T} = Arc(T, t.r_tube, PlanarPoint{T}(t.r_torus,t.z), t.θ)
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
+    pcy = CylindricalPoint(point)
+    return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:AbstractInterval})::T where {T}
+    pcy = CylindricalPoint(point)
+    if _in_φ(point, t.φ)
+        return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
+    else
+        φMin::T, φMax::T, _ = get_φ_limits(t)
+        Δφ = pcy.φ - _φNear(pcy.φ, φMin, φMax)
+        d, r_on_plane = pcy.r .* sincos(Δφ)
+        return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane, pcy.z), Arc(t)))
+    end
+end

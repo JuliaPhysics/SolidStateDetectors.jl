@@ -94,3 +94,42 @@ function get_vertices(c::ConalPlane{T}) where {T}
     CartesianPoint{T}(rtopMin * cφ, rtopMin * sφ, zMax),
     CartesianPoint{T}(rtopMax * cφ, rtopMax * sφ, zMax))
 end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConalPlane{T})::T where {T}
+    rbotMin::T, rbotMax::T, rtopMin::T, rtopMax::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    pcy = CylindricalPoint(point)
+    Δφ = pcy.φ - c.φ
+    d, r_on_plane = pcy.r .* sincos(Δφ)
+    if point.z ≥ zMax
+        if r_on_plane ≥ rtopMax
+            line = LineSegment(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
+        elseif r_on_plane ≤ rtopMin
+            line = LineSegment(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
+        else
+            return hypot(d, point.z-zMax)
+        end
+    elseif point.z ≤ zMin
+        if r_on_plane ≥ rbotMax
+            line = LineSegment(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
+        elseif r_on_plane ≤ rbotMin
+            line = LineSegment(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
+        else
+            return hypot(d, zMin-point.z)
+        end
+    else
+        r_at_z = get_r_at_z(c, point.z)
+        rMin  = _left_radial_interval(r_at_z)
+        rMax = _right_radial_interval(r_at_z)
+        if rMin ≤ r_on_plane ≤ rMax
+            return abs(d)
+        else
+            line = r_on_plane ≥ rMax ? LineSegment(T, PlanarPoint{T}(rbotMax,zMin), PlanarPoint{T}(rtopMax,zMax)) : LineSegment(T, PlanarPoint{T}(rbotMin,zMin), PlanarPoint{T}(rtopMin,zMax))
+            return hypot(d, distance_to_line(PlanarPoint{T}(r_on_plane,point.z), line))
+        end
+    end
+end

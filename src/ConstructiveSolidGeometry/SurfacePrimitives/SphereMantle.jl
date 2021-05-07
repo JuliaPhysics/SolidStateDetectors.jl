@@ -55,3 +55,7 @@ function sample(s::SphereMantle{T}, g::CartesianTicksTuple{T})::Vector{Cartesian
         for y in _get_y_at_z(s, z, x)
     ]
 end
+
+distance_to_surface(point::CylindricalPoint{T}, s::SphereMantle{T}) where {T} = abs(hypot(point.r, point.z) - s.r)
+
+distance_to_surface(point::CartesianPoint{T}, s::SphereMantle{T}) where {T} = abs(norm(point) - s.r)

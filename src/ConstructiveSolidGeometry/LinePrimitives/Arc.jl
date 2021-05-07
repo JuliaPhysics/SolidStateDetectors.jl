@@ -1,0 +1,41 @@
+struct Arc{T,TH} <: AbstractLinePrimitive{T}
+    r::T
+    center::PlanarPoint{T}
+    α::TH
+    function Arc( ::Type{T},
+                   r::T,
+                   center::PlanarPoint{T},
+                   α::Union{Nothing, <:AbstractInterval{T}}) where {T}
+        new{T,typeof(α)}(r, center, α)
+    end
+end
+
+function Arc(; r = 0, center = PlanarPoint(0,0), αMin = 0, αMax = 2π)
+    T = float(promote_type(typeof.((r, αMin, αMax))..., eltype(center)))
+    α = mod(T(αMax) - T(αMin), T(2π)) == 0 ? nothing : T(αMin)..T(αMax)
+    Arc(T, T(r), PlanarPoint{T}(center), α)
+end
+
+Arc(r, center, αMin, αMax) = Arc(; r = r, center = center, αMin = αMin, αMax = αMax)
+
+Circle(r::T, center::PlanarPoint{T}) where {T} = Arc(T, r, center, nothing)
+Circle(a::Arc{T}) where {T} = Arc(T, a.r, a.center, nothing)
+
+get_α_at_u_v(a::Arc{T}, u::Real, v::Real) where {T} = mod(atan(v - a.center.v, u - a.center.u), 2π) #u,v are planar coordinates
+
+get_α_limits(a::Arc{T, Nothing}) where {T} = (T(0), T(2π), true)
+get_α_limits(a::Arc{T, <:AbstractInterval}) where {T} = (a.α.left, a.α.right, false)
+
+distance_to_line(point::PlanarPoint{T}, a::Arc{T, Nothing}) where {T} = abs(norm(point - a.center) - a.r)
+
+function distance_to_line(point::PlanarPoint{T}, a::Arc{T, <:AbstractInterval})::T where {T}
+    αMin::T, αMax::T, _ = get_α_limits(a)
+    p_t = point - a.center
+    α = atan(p_t.v, p_t.u)
+    if _in_angular_interval_closed(α, a.α)
+        return abs(norm(p_t) - a.r)
+    else
+        sαNear, cαNear = sincos(_φNear(α, αMin, αMax))
+        return norm(p_t - PlanarPoint{T}(a.r*cαNear, a.r*sαNear))
+    end
+end
