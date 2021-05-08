@@ -39,6 +39,14 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     return Box(T, x, y, z)
 end
 
+function Dictionary(b::Box{T}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["x"] = typeof(b.x) == T ? b.x : OrderedDict{String,Any}("from" => b.x.left, "to" => b.x.right)
+    dict["y"] = typeof(b.y) == T ? b.y : OrderedDict{String,Any}("from" => b.y.left, "to" => b.y.right)
+    dict["z"] = typeof(b.z) == T ? b.z : OrderedDict{String,Any}("from" => b.z.left, "to" => b.z.right)
+    OrderedDict{String,Any}("box" => dict)
+end
+
 get_x_limits(b::Box{T}) where {T} = (_left_linear_interval(b.x), _right_linear_interval(b.x))
 get_y_limits(b::Box{T}) where {T} = (_left_linear_interval(b.y), _right_linear_interval(b.y))
 get_z_limits(b::Box{T}) where {T} = (_left_linear_interval(b.z), _right_linear_interval(b.z))

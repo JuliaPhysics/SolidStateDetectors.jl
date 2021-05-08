@@ -11,6 +11,12 @@ struct RegularPrism{N,T,TR,TZ} <: AbstractVolumePrimitive{T}
     end
 end
 
+const PrismAliases = Dict{Int, String}(
+    3 => "TriangularPrism", 
+    4 => "SquarePrism", 
+    5 => "PentagonalPrism", 
+    6 => "HexagonalPrism"
+)
 
 # Convenience functions
 const TriangularPrism{T,TR,TZ} = RegularPrism{3,T,TR,TZ}
@@ -73,6 +79,15 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     z = parse_height_of_primitive(T, dict, length_unit)
     return P(T, r, z)
 end
+
+function Dictionary(rp::RegularPrism{N,T}) where {N,T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = typeof(rp.r) == T ? rp.r : OrderedDict{String,Any}("from" => rp.r.left, "to" => rp.r.right)
+    typeof(rp.z) == T ? dict["h"] = rp.z * 2 : dict["z"] = OrderedDict{String,Any}("from" => rp.z.left, "to" => rp.z.right)
+    OrderedDict{String,Any}(PrismAliases[N] => dict)
+end
+
+
 
 get_r_limits(rp::RegularPrism) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_z_limits(rp::RegularPrism) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))

@@ -28,6 +28,12 @@ function Geometry(::Type{T}, ::Type{Sphere}, dict::AbstractDict, input_units::Na
     return Sphere(T, r)
 end
 
+function Dictionary(s::Sphere{T}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = typeof(s.r) == T ? s.r : OrderedDict{String,Any}("from" => s.r.left, "to" => s.r.right)
+    OrderedDict{String,Any}("sphere" => dict)
+end
+
 get_r_limits(s::Sphere{T}) where {T} = (_left_radial_interval(s.r), _right_radial_interval(s.r))
 
 get_decomposed_surfaces(s::Sphere{T, T}) where {T} = AbstractSurfacePrimitive[SphereMantle{T}(s.r)]

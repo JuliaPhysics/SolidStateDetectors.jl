@@ -60,6 +60,16 @@ function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::N
     Torus(T, r_torus, r_tube, φ, θ, z)
 end
 
+function Dictionary(t::Torus{T}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r_torus"] = t.r_torus
+    dict["r_tube"] = typeof(t.r_tube) == T ? t.r_tube : OrderedDict{String,Any}("from" => t.r_tube.left, "to" => t.r_tube.right)
+    if !isnothing(t.φ) dict["phi"] = OrderedDict{String,Any}("from" => t.φ.left, "to" => t.φ.right) end
+    if !isnothing(t.θ) dict["theta"] = OrderedDict{String,Any}("from" => t.θ.left, "to" => t.θ.right) end
+    if t.z != 0 dict["z"] = t.z end
+    OrderedDict{String,Any}("torus" => dict)
+end
+
 
 get_r_tube_limits(t::Torus{T}) where {T} = (_left_radial_interval(t.r_tube),_right_radial_interval(t.r_tube))
 

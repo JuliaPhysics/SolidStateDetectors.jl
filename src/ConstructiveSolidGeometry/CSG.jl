@@ -16,6 +16,8 @@ function Geometry(::Type{T}, t::Type{CSGUnion}, v::Vector{<:AbstractDict}, input
     sum( broadcast(x-> Geometry(T, x, input_units), v) )
 end
 
+Dictionary(g::CSGUnion{T}) where {T} = OrderedDict{String,Any}("union" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
+
 
 """
     struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
@@ -36,6 +38,8 @@ function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:AbstractDict},
     reduce(&, parts)
 end
 
+Dictionary(g::CSGIntersection{T}) where {T} = OrderedDict{String,Any}("intersection" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
+
 
 """
     struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
@@ -54,5 +58,7 @@ in(p::AbstractCoordinatePoint, csg::CSGDifference) = in(p, csg.a) && !in(p, csg.
 function Geometry(::Type{T}, ::Type{CSGDifference}, v::Vector{<:AbstractDict}, input_units::NamedTuple) where {T}
     Geometry(T, v[1], input_units) - sum( broadcast(x-> Geometry(T, x, input_units), v[2:end]) )
 end
+
+Dictionary(g::CSGDifference{T}) where {T} = OrderedDict{String,Any}("difference" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
 
 Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, input_units::NamedTuple) where {T} = Geometry(T, CSG, [g for g in v], input_units)

@@ -10,6 +10,15 @@ scale(g::ScaledGeometry{T}, s::SVector{3,T}) where {T} = (inv.(g.inv_s) .* s == 
 #(*)(g::AbstractGeometry{T}, s::SVector{3,T}) where {T} = scale(g, s)
 get_plot_points(sg::ScaledGeometry{T}; n = 30) where {T} = scale!(get_plot_points(sg.p, n = n), inv.(sg.inv_s))
 
+function Dictionary(g::ScaledGeometry{T}) where {T}
+    dict = Dictionary(g.p)
+    s = inv.(g.inv_s)
+    if s[1] != 1 dict["x"] = s[1] end
+    if s[2] != 1 dict["y"] = s[2] end
+    if s[3] != 1 dict["z"] = s[3] end
+    OrderedDict{String,Any}("scale" => dict)
+end
+
 
 struct RotatedGeometry{T,P<:AbstractGeometry{T},RT} <: AbstractTransformedGeometry{T}
     p::P
@@ -23,6 +32,13 @@ rotate(g::RotatedGeometry{T,<:Any,RT}, r::RotMatrix3{RT}) where {T,RT} = ( tr(r 
 (*)(r::RotMatrix3{RT}, g::AbstractGeometry{T}) where {T,RT} = rotate(g, r)
 get_plot_points(rg::RotatedGeometry{T}; n = 30) where {T} = rotate!(get_plot_points(rg.p, n = n), inv(rg.inv_r))
 
+function Dictionary(g::RotatedGeometry{T}) where {T}
+    dict = Dictionary(g.p)
+    dict["M"] = inv.(g.inv_r)[:]
+    OrderedDict{String,Any}("rotate" => dict)
+end
+
+
 
 struct TranslatedGeometry{T,P<:AbstractGeometry{T}} <: AbstractTransformedGeometry{T}
     p::P
@@ -34,6 +50,16 @@ translate(g::AbstractGeometry{T}, t::CartesianVector{T}) where {T} = (t == Carte
 translate(g::TranslatedGeometry{T}, t::CartesianVector{T}) where {T} = (g.t + t == CartesianVector{T}(0,0,0) ? g.p : TranslatedGeometry(g.p, g.t + t))
 (+)(g::AbstractGeometry{T}, t::CartesianVector{T}) where {T} = translate(g, t)
 get_plot_points(tg::TranslatedGeometry{T}; n = 30) where {T} = translate!(get_plot_points(tg.p, n = n), tg.t)
+
+function Dictionary(g::TranslatedGeometry{T}) where {T}
+    dict = Dictionary(g.p)
+    t = g.t
+    if t.x != 0 dict["x"] = t.x end
+    if t.y != 0 dict["y"] = t.y end
+    if t.z != 0 dict["z"] = t.z end
+    OrderedDict{String,Any}("translate" => dict)
+end
+
 
 
 const CSGTransformation = Union{SVector{3}, RotMatrix3, CartesianVector}

@@ -89,6 +89,25 @@ function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::AbstractDic
     return Cone(T, r, φ, z)
 end
 
+function Dictionary(g::Cone{T,<:Union{T, AbstractInterval}}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = typeof(g.r) == T ? g.r : OrderedDict{String,Any}("from" => g.r.left, "to" => g.r.right)
+    if !isnothing(g.φ) dict["phi"] = OrderedDict{String,Any}("from" => g.φ.left, "to" => g.φ.right) end
+    typeof(g.z) == T ? dict["h"] = g.z * 2 : dict["z"] = OrderedDict{String,Any}("from" => g.z.left, "to" => g.z.right) 
+    OrderedDict{String,Any}("tube" => dict)
+end
+
+function Dictionary(g::Cone{T,<:Tuple}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = OrderedDict{String,Any}()
+    dict["r"]["bottom"] = typeof(g.r[1]) == T ? g.r[1] : OrderedDict{String,Any}("from" => g.r[1].left, "to" => g.r[1].right)
+    dict["r"]["top"] = typeof(g.r[2]) == T ? g.r[2] : OrderedDict{String,Any}("from" => g.r[2].left, "to" => g.r[2].right)
+    if !isnothing(g.φ) dict["phi"] = OrderedDict{String,Any}("from" => g.φ.left, "to" => g.φ.right) end
+    typeof(g.z) == T ? dict["h"] = g.z * 2 : dict["z"] = OrderedDict{String,Any}("from" => g.z.left, "to" => g.z.right) 
+    OrderedDict{String,Any}("cone" => dict)
+end
+
+
 get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
 get_r_limits(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =
