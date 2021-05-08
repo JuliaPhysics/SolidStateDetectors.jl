@@ -92,7 +92,7 @@ end
 # if no φ is given, then a full 360° interval (i.e. φ = nothing) is assumed
 function parse_φ_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     φ = if !haskey(dict,"phi")
-        @info "No 'phi' is specified. Assuming 'phi' to go from 0 to 360°."
+        #@info "No 'phi' is specified. Assuming 'phi' to go from 0 to 360°."
         nothing
     else #haskey(dict, "phi")
         _parse_angular_interval(T, dict["phi"], unit)
@@ -101,7 +101,7 @@ end
 
 function parse_θ_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     θ = if !haskey(dict,"theta")
-        @info "No 'theta' is specified. Assuming 'theta' to go from 0 to 360°."
+        #@info "No 'theta' is specified. Assuming 'theta' to go from 0 to 360°."
         nothing
     else #haskey(dict, "theta")
         _parse_angular_interval(T, dict["theta"], unit)
@@ -153,15 +153,15 @@ end
 _rot_keys = ["X","Y","Z","XY","XZ","YX","YZ","ZX","ZY","XYX","XYZ","XZX","XZY","YXY","YXZ","YZX","YZY","ZXY","ZXZ","ZYX","ZYZ"]
 function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::RotMatrix3{T} where {T}
     dict_keys = keys(dict)
-    if "M" in keys(dict)
+    if "M" in dict_keys
         R = RotMatrix3{T}(dict["M"])
         @assert isrotation(R) "R is not a Rotation Matrix."
         return R
     else 
-        rotation = filter(k -> uppercase(k) in _rot_keys, dict_keys)
-        @assert length(rotation) == 1 "Rotations must be defined using one of the following keywords:\n$(rot_keys)"
+        rotation = filter(k -> k in _rot_keys, uppercase.(dict_keys))
+        @assert length(rotation) == 1 "Rotations must be defined using exactly one of the following keywords:\n$(vcat("M",_rot_keys))"
         key = first(rotation)
-        R = getfield(Rotations, Symbol("Rot"*uppercase(key)))
+        R = getfield(Rotations, Symbol("Rot"*key))
         RotMatrix3{T}(R{Float64}(_parse_value(Float64,dict[key],unit)...)) # parse rotations matrix values as Float64 to minimize rounding errors
     end
 end
