@@ -34,7 +34,7 @@ get_plot_points(rg::RotatedGeometry{T}; n = 30) where {T} = rotate!(get_plot_poi
 
 function Dictionary(g::RotatedGeometry{T}) where {T}
     dict = Dictionary(g.p)
-    dict["M"] = inv.(g.inv_r)[:]
+    dict["M"] = inv(g.inv_r)[:]
     OrderedDict{String,Any}("rotate" => dict)
 end
 
