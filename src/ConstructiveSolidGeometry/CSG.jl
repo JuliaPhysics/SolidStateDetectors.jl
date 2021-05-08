@@ -16,8 +16,9 @@ function Geometry(::Type{T}, t::Type{CSGUnion}, v::Vector{<:AbstractDict}, input
     sum( broadcast(x-> Geometry(T, x, input_units), v) )
 end
 
-Dictionary(g::CSGUnion{T}) where {T} = OrderedDict{String,Any}("union" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
-
+Dictionary(g::CSGUnion{T}) where {T} = OrderedDict{String,Any}("union" => vcat(UnionDictionary(g.a), UnionDictionary(g.b)))
+UnionDictionary(g::CSGUnion{T}) where {T} = vcat(UnionDictionary(g.a), UnionDictionary(g.b))
+UnionDictionary(g::AbstractGeometry{T}) where {T} = OrderedDict[Dictionary(g)]
 
 """
     struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
@@ -38,8 +39,9 @@ function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:AbstractDict},
     reduce(&, parts)
 end
 
-Dictionary(g::CSGIntersection{T}) where {T} = OrderedDict{String,Any}("intersection" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
-
+Dictionary(g::CSGIntersection{T}) where {T} = OrderedDict{String,Any}("intersection" => vcat(IntersectionDictionary(g.a), IntersectionDictionary(g.b)))
+IntersectionDictionary(g::CSGIntersection{T}) where {T} = vcat(IntersectionDictionary(g.a), IntersectionDictionary(g.b))
+IntersectionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
 
 """
     struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
