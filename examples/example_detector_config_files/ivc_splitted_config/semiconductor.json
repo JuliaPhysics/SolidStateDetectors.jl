@@ -1,7 +1,5 @@
 {
-    "type": "semiconductor",
     "material": "HPGe",
-    "bulk_type": "p",
     "temperature": 77.0,
     "include" : [
         "detector_geometry.json",
