@@ -26,7 +26,7 @@ function Box(x::X, y::Y, z::Z) where {X<:Real, Y<:Real, Z<:Real}
     Box( T, T(x/2), T(y/2), T(z/2))
 end
 
-in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
+in(p::AbstractCoordinatePoint, b::Box) =
     _in_x(p, b.x) && _in_y(p, b.y) && _in_z(p, b.z)
     
     
@@ -42,6 +42,26 @@ end
 get_x_limits(b::Box{T}) where {T} = (_left_linear_interval(b.x), _right_linear_interval(b.x))
 get_y_limits(b::Box{T}) where {T} = (_left_linear_interval(b.y), _right_linear_interval(b.y))
 get_z_limits(b::Box{T}) where {T} = (_left_linear_interval(b.z), _right_linear_interval(b.z))
+
+function get_decomposed_surfaces(b::Box{T}) where {T}
+    xMin::T, xMax::T = get_x_limits(b)
+    yMin::T, yMax::T = get_y_limits(b)
+    zMin::T, zMax::T = get_z_limits(b)
+    tol = geom_atol_zero(T)
+    if isapprox(xMin, xMax, atol = tol)
+        return AbstractSurfacePrimitive[Rectangle(b, Val(:x), xMin)]
+    elseif isapprox(yMin, yMax, atol = tol)
+        return AbstractSurfacePrimitive[Rectangle(b, Val(:y), yMin)]
+    elseif isapprox(zMin, zMax, atol = tol)
+        return AbstractSurfacePrimitive[Rectangle(b, Val(:z), zMin)]
+    else
+        return AbstractSurfacePrimitive[
+                                            Rectangle(b, Val(:x), xMin), Rectangle(b, Val(:x), xMax), 
+                                            Rectangle(b, Val(:y), yMin), Rectangle(b, Val(:y), yMax), 
+                                            Rectangle(b, Val(:z), zMin), Rectangle(b, Val(:z), zMax)
+                                        ]
+    end
+end
 
 function sample(b::Box{T}, Nsamps::NTuple{3,Int} = (2,2,2)) where {T}
     xMin::T, xMax::T = get_x_limits(b)

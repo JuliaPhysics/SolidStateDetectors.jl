@@ -1,6 +1,7 @@
 include("ConalPlane.jl")
 include("ConeMantle.jl")
 include("CylindricalAnnulus.jl")
+include("Rectangle.jl")
 include("RegularPolygon.jl")
 include("RegularPrismMantle.jl")
 include("SphereMantle.jl")

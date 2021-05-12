@@ -36,10 +36,14 @@ end
 
 @inline _in_planar_α(p::PlanarPoint{T}, α::AbstractInterval) where {T} = _in_angular_interval_closed(mod(atan(p.v, p.u), T(2π)), α)
 
+@inline _isapprox_x(p::CartesianPoint{T}, x::Real) where {T} = isapprox(p.x, x, atol = geom_atol_zero(T))
+
 @inline _in_x(p::CartesianPoint, x::Real) = abs(p.x) <= x
 @inline _in_x(p::CartesianPoint, x::AbstractInterval) = p.x in x
 
 @inline _in_planar_u(p::PlanarPoint, u::AbstractInterval) = p.u in u
+
+@inline _isapprox_y(p::CartesianPoint{T}, y::Real) where {T} = isapprox(p.y, y, atol = geom_atol_zero(T))
 
 @inline _in_y(p::CartesianPoint, y::Real) = abs(p.y) <= y
 @inline _in_y(p::CartesianPoint, y::AbstractInterval) = p.y in y
@@ -102,8 +106,12 @@ end
 
 @inline _in_φ(p::CylindricalPoint, φ::AbstractInterval) = _in_angular_interval_closed(p.φ, φ)
 
+@inline _isapprox_x(p::CylindricalPoint{T}, x::Real) where {T} = isapprox(p.r * cos(p.φ), x, atol = geom_atol_zero(T))
+
 @inline _in_x(p::CylindricalPoint, x::Real) = abs(p.r * cos(p.φ)) <= x
 @inline _in_x(p::CylindricalPoint, x::AbstractInterval) = p.r * cos(p.φ) in x
+
+@inline _isapprox_y(p::CylindricalPoint{T}, y::Real) where {T} = isapprox(p.r * sin(p.φ), y, atol = geom_atol_zero(T))
 
 @inline _in_y(p::CylindricalPoint, y::Real) = abs(p.r * sin(p.φ)) <= y
 @inline _in_y(p::CylindricalPoint, y::AbstractInterval) = p.r * sin(p.φ) in y
