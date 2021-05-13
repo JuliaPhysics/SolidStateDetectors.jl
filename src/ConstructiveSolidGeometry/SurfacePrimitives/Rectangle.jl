@@ -73,3 +73,30 @@ function sample(r::Rectangle{T, <:Any, <:Any, Val{:z}}, Nsamps::NTuple{3,Int} = 
         for y in (Nsamps[2] ≤ 1 ? wMin : range(wMin, wMax, length = Nsamps[2]))
     ]
 end
+
+function get_vertices(r::Rectangle{T, <:Any, <:Any, Val{:x}}) where {T}
+    lMin::T, lMax::T = get_l_limits(r)
+    wMin::T, wMax::T = get_w_limits(r)
+    (CartesianPoint{T}(r.loc, lMin, wMin),
+    CartesianPoint{T}(r.loc, lMax, wMin),
+    CartesianPoint{T}(r.loc, lMin, wMax),
+    CartesianPoint{T}(r.loc, lMax, wMax))
+end
+
+function get_vertices(r::Rectangle{T, <:Any, <:Any, Val{:y}}) where {T}
+    lMin::T, lMax::T = get_l_limits(r)
+    wMin::T, wMax::T = get_w_limits(r)
+    (CartesianPoint{T}(lMin, r.loc, wMin),
+    CartesianPoint{T}(lMax, r.loc, wMin),
+    CartesianPoint{T}(lMin, r.loc, wMax),
+    CartesianPoint{T}(lMax, r.loc, wMax))
+end
+
+function get_vertices(r::Rectangle{T, <:Any, <:Any, Val{:z}}) where {T}
+    lMin::T, lMax::T = get_l_limits(r)
+    wMin::T, wMax::T = get_w_limits(r)
+    (CartesianPoint{T}(lMin, wMin, r.loc),
+    CartesianPoint{T}(lMax, wMin, r.loc),
+    CartesianPoint{T}(lMin, wMax, r.loc),
+    CartesianPoint{T}(lMax, wMax, r.loc))
+end
