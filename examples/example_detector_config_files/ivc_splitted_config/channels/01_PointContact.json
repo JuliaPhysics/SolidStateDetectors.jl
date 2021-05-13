@@ -1,21 +1,21 @@
-{
-    "type": "contact",
-    "potential": 0.0,
-    "channel": 1,
+{    
     "material": "HPGe",
+    "channel": 1,
+    "potential": 0.0,
     "geometry": {
-        "phi": {
-            "to": 360.0,
-            "from": 0.0
-        },
-        "r": {
-            "to": 3.0,
-            "from": 0.0
-        },
-        "type": "tube",
-        "h": 2.0,
         "translate": {
-            "z": 1.0
+            "z": 1.0,
+            "tube": {
+                "r": {
+                    "from": 0.0,
+                    "to": 3.0
+                },
+                "phi": {
+                    "from": 0.0,
+                    "to": 360.0
+                },
+                "h": 2.0
+            }
         }
     }
 }

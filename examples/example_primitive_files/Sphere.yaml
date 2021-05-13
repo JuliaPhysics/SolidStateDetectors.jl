@@ -1,4 +1,4 @@
-type: "sphere"
-r:
-  from: 0.5
-  to: 2.0
+sphere:
+  r:
+    from: 0.5
+    to: 2.0

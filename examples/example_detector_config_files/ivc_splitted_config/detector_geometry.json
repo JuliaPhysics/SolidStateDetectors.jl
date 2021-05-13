@@ -1,64 +1,65 @@
 {
     "geometry": {
-        "type": "difference",
-        "parts": [
+        "difference": [
             {
-                "type": "difference",
-                "parts": [
+                "difference": [
                     {
                         "name": "Initial Cylinder",
-                        "type": "tube",
-                        "r": {
-                            "from": 0.0,
-                            "to": 35.0
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "h": 80.0,
                         "translate": {
-                            "z": 40.0
+                            "z": 40.0,
+                            "tube": {
+                                "r": {
+                                    "from": 0.0,
+                                    "to": 35.0
+                                },
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 80.0            
+                            }
                         }
                     },
                     {
                         "name": "Upper cone",
-                        "type": "cone",
-                        "r": {
-                            "bottom": {
-                                "from": 35.0,
-                                "to": 36.0
-                            },
-                            "top": {
-                                "from": 24.42,
-                                "to": 36.0
-                            }
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "h": 60.0,
                         "translate": {
-                            "z": 50.0
-                        }
+                            "z": 50.0,
+                            "cone": {
+                                "r": {
+                                    "bottom": {
+                                        "from": 35.0,
+                                        "to": 36.0
+                                    },
+                                    "top": {
+                                        "from": 24.42,
+                                        "to": 36.0
+                                    }
+                                },
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 60.0
+                            }
+                        }  
                     }
                 ]
             },
             {
                 "name": "borehole",
-                "type": "tube",
-                "r": {
-                    "from": 0.0,
-                    "to": 5.0
-                },
-                "phi": {
-                    "from": 0.0,
-                    "to": 360.0
-                },
-                "h": 80.0,
-                "translate": {
-                    "z": 65.0
+                  "translate": {
+                      "z": 65.0,
+                      "tube": {
+                        "r": {
+                            "from": 0.0,
+                            "to": 5.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 80.0
+                    }
                 }
             }
         ]

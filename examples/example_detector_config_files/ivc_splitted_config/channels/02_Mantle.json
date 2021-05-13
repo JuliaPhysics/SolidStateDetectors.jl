@@ -1,105 +1,109 @@
 {
-    "type": "contact",
-    "potential": 3500.0,
-    "channel": 2,
     "material": "HPGe",
+    "channel": 2,
+    "potential": 3500.0,
     "geometry": {
-        "parts": [
+        "union": [
             {
-                "phi": {
-                    "to": 360.0,
-                    "from": 0.0
-                },
-                "r": {
-                    "to": 35.0,
-                    "from": 15.0
-                },
-                "type": "tube",
-                "h": 0.0
-            },
-            {
-                "phi": {
-                    "to": 360.0,
-                    "from": 0.0
-                },
-                "r": {
-                    "to": 35.0,
-                    "from": 35.0
-                },
-                "type": "tube",
-                "h": 20.0,
-                "translate": {
-                    "z": 10.0
+                "tube": {
+                    "r": {
+                        "from": 15.0,
+                        "to": 35.0
+                    },
+                    "phi": {
+                        "from": 0.0,
+                        "to": 360.0
+                    },
+                    "h": 0.0
                 }
             },
             {
                 "translate": {
-                    "z": 50.0
-                },
-                "name": "Upper cone",
-                "phi": {
-                    "to": 360.0,
-                    "from": 0.0
-                },
-                "r": {
-                    "bottom": {
-                        "to": 35.0,
-                        "from": 35.0
-                    },
-                    "top": {
-                        "to": 24.42,
-                        "from": 24.42
+                    "z": 10.0,
+                    "tube": {
+                        "r": {
+                            "from": 35.0,
+                            "to": 35.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 20.0
                     }
-                },
-                "type": "cone",
-                "h": 60.0
+                }
             },
             {
                 "translate": {
-                    "z": 80.0
-                },
-                "phi": {
-                    "to": 360.0,
-                    "from": 0.0
-                },
-                "r": {
-                    "to": 24.42,
-                    "from": 5.0
-                },
-                "type": "tube",
-                "h": 0.0
+                    "z": 50.0,
+                    "cone": {
+                        "name": "Upper cone",
+                        "r": {
+                            "bottom": {
+                                "from": 35.0,
+                                "to": 35.0
+                            },
+                            "top": {
+                                "from": 24.42,
+                                "to": 24.42
+                            }
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 60.0
+                    }
+                }
             },
             {
                 "translate": {
-                    "z": 52.5
-                },
-                "phi": {
-                    "to": 360.0,
-                    "from": 0.0
-                },
-                "r": {
-                    "to": 5.0,
-                    "from": 5.0
-                },
-                "type": "tube",
-                "h": 55.0
+                    "z": 80.0,
+                    "tube": {
+                        "r": {
+                            "from": 5.0,
+                            "to": 24.42
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },  
+                        "h": 0.0
+                    }
+                }
             },
             {
                 "translate": {
-                    "z": 25.0
-                },
-                "phi": {
-                    "to": 360.0,
-                    "from": 0.0
-                },
-                "r": {
-                    "to": 5.0,
-                    "from": 0.0
-                },
-                "type": "tube",
-                "h": 0.0
+                    "z": 52.5,
+                    "tube": {
+                        "r": {
+                            "from": 5.0,
+                            "to": 5.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 55.0
+                    }
+                }
+            },
+            {
+                "translate": {
+                    "z": 25.0,
+                    "tube": {
+                        "r": {
+                            "from": 0.0,
+                            "to": 5.0
+                        },
+                        "phi": {
+                            "from": 0.0,
+                            "to": 360.0
+                        },
+                        "h": 0.0  
+                    }
+                }
             }
-        ],
-        "type": "union"
+        ]
     }
 }

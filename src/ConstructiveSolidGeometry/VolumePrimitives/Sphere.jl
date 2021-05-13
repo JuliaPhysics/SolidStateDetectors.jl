@@ -22,10 +22,16 @@ end
 in(p::AbstractCoordinatePoint, s::Sphere) = _in_sph_r(p, s.r)
 
 # read-in
-function Geometry(::Type{T}, ::Type{Sphere}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{Sphere}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     r = parse_r_of_primitive(T, dict, length_unit)
     return Sphere(T, r)
+end
+
+function Dictionary(s::Sphere{T}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = typeof(s.r) == T ? s.r : OrderedDict{String,Any}("from" => s.r.left, "to" => s.r.right)
+    OrderedDict{String,Any}("sphere" => dict)
 end
 
 get_r_limits(s::Sphere{T}) where {T} = (_left_radial_interval(s.r), _right_radial_interval(s.r))

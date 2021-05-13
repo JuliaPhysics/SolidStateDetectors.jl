@@ -14,31 +14,27 @@
             }
         }
     },
-    "objects": [
-        {
-            "type": "semiconductor",
-            "material": "HPGe",
-            "geometry": {
-                "type": "difference",
-                "parts": [
-                    {
-                        "type": "tube",
-                        "r": 40,
-                        "h": 60,
-                        "translate": {
-                            "z": 30.0
+    "objects": {
+        "semiconductors": [
+            {
+                "material": "HPGe",
+                "geometry": {
+                    "difference": [
+                        {
+                            "tube": {
+                                "r": 40.0,
+                                "h": 60.0
+                            }
+                        },
+                        {
+                            "tube": {
+                                "r": 5.0,
+                                "h": 60.0
+                            }
                         }
-                    },
-                    {
-                        "type": "tube",
-                        "r": 5,
-                        "h": 60,
-                        "translate": {
-                            "z": 30.0
-                        }
-                    }
-                ]
+                    ]
+                }
             }
-        }
-    ] 
+        ]
+    }
 }

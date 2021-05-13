@@ -31,12 +31,20 @@ in(p::AbstractCoordinatePoint, b::Box{<:Any, <:Any, <:Any, <:Any}) =
     
     
 # read-in
-function Geometry(::Type{T}, ::Type{Box}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     x = parse_interval_of_primitive(T, "x", dict, length_unit)
     y = parse_interval_of_primitive(T, "y", dict, length_unit)
     z = parse_interval_of_primitive(T, "z", dict, length_unit)
     return Box(T, x, y, z)
+end
+
+function Dictionary(b::Box{T}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["x"] = typeof(b.x) == T ? b.x : OrderedDict{String,Any}("from" => b.x.left, "to" => b.x.right)
+    dict["y"] = typeof(b.y) == T ? b.y : OrderedDict{String,Any}("from" => b.y.left, "to" => b.y.right)
+    dict["z"] = typeof(b.z) == T ? b.z : OrderedDict{String,Any}("from" => b.z.left, "to" => b.z.right)
+    OrderedDict{String,Any}("box" => dict)
 end
 
 get_x_limits(b::Box{T}) where {T} = (_left_linear_interval(b.x), _right_linear_interval(b.x))

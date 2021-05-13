@@ -80,7 +80,7 @@ in(p::AbstractCoordinatePoint, c::Cone{<:Any, <:Any, <:AbstractInterval, <:Any})
     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 # read-in
-function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     angle_unit = input_units.angle
     r = parse_r_of_primitive(T, dict, length_unit)
@@ -88,6 +88,25 @@ function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::Union{Dict{
     z = parse_height_of_primitive(T, dict, length_unit)
     return Cone(T, r, φ, z)
 end
+
+function Dictionary(g::Cone{T,<:Union{T, AbstractInterval}}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = typeof(g.r) == T ? g.r : OrderedDict{String,Any}("from" => g.r.left, "to" => g.r.right)
+    if !isnothing(g.φ) dict["phi"] = OrderedDict{String,Any}("from" => g.φ.left, "to" => g.φ.right) end
+    typeof(g.z) == T ? dict["h"] = g.z * 2 : dict["z"] = OrderedDict{String,Any}("from" => g.z.left, "to" => g.z.right) 
+    OrderedDict{String,Any}("tube" => dict)
+end
+
+function Dictionary(g::Cone{T,<:Tuple}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r"] = OrderedDict{String,Any}()
+    dict["r"]["bottom"] = typeof(g.r[1]) == T ? g.r[1] : OrderedDict{String,Any}("from" => g.r[1].left, "to" => g.r[1].right)
+    dict["r"]["top"] = typeof(g.r[2]) == T ? g.r[2] : OrderedDict{String,Any}("from" => g.r[2].left, "to" => g.r[2].right)
+    if !isnothing(g.φ) dict["phi"] = OrderedDict{String,Any}("from" => g.φ.left, "to" => g.φ.right) end
+    typeof(g.z) == T ? dict["h"] = g.z * 2 : dict["z"] = OrderedDict{String,Any}("from" => g.z.left, "to" => g.z.right) 
+    OrderedDict{String,Any}("cone" => dict)
+end
+
 
 get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))

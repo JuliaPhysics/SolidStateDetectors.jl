@@ -27,85 +27,89 @@
         }
     },
     "medium": "vacuum",
-    "objects": [
-        {
-            "type": "semiconductor",
-            "material": "HPGe",
-            "temperature": 77,
-            "impurity_density": {
-                "name": "linear",
-                "x": {
-                    "init": 0.0,
-                    "gradient": 0.0
+    "objects": {
+        "semiconductors": [
+            {
+                "material": "HPGe",
+                "impurity_density": {
+                    "name": "linear",
+                    "x": {
+                        "init": 0.0,
+                        "gradient": 0.0
+                    },
+                    "y": {
+                        "init": 0.0,
+                        "gradient": 0.0
+                    },
+                    "z": {
+                        "init": 1.0e7,
+                        "gradient": 50000.0
+                    }
                 },
-                "y": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                },
-                "z": {
-                    "init": 1.0e7,
-                    "gradient": 50000.0
+                "temperature": 77,
+                "geometry": {
+                    "box": {
+                        "x": {
+                            "from": 0.0,
+                            "to": 10.0
+                        },
+                        "y": {
+                            "from": 0.0,
+                            "to": 10.0
+                        },
+                        "z": {
+                            "from": 0.0,
+                            "to": 10.0
+                        }
+                    }
+                }
+            }
+        ],
+        "contacts": [
+            {
+                "material": "HPGe",
+                "name": "n+ contact",
+                "potential": 2000.0,
+                "channel": 1,
+                "geometry": {
+                    "box": {
+                        "x": {
+                            "from": 0.0,
+                            "to": 0.1
+                        },
+                        "y": {
+                            "from": 0.0,
+                            "to": 10.0
+                        },
+                        "z": {
+                            "from": 0.0,
+                            "to": 10.0
+                        }
+                    }
                 }
             },
-            "geometry": {
-                "type": "box",
-                "x": {
-                    "from": 0.0,
-                    "to": 10.0
-                },
-                "y": {
-                    "from": 0.0,
-                    "to": 10.0
-                },
-                "z": {
-                    "from": 0.0,
-                    "to": 10.0
+            {
+                "material": "HPGe",
+                "name": "p+ contact",
+                "potential": 0.0,
+                "channel": 2,
+                "geometry": {
+                    "box": {
+                        "x": {
+                            "from": 9.9,
+                            "to": 10.0
+                        },
+                        "y": {
+                            "from": 0.0,
+                            "to": 10.0
+                        },
+                        "z": {
+                            "from": 0.0,
+                            "to": 10.0
+                        }
+                    }
                 }
             }
-        },
-        {
-            "type": "contact",
-            "material": "HPGe",
-            "name": "n+ contact",
-            "potential": 2000.0,
-            "channel": 1,
-            "geometry": {
-                "type": "box",
-                "x": {
-                    "from": 0,
-                    "to": 0.1
-                },
-                "y": {
-                    "from": 0.0,
-                    "to": 10.0
-                },
-                "z": {
-                    "from": 0.0,
-                    "to": 10.0
-                }
-            }
-        },
-        {
-            "type": "contact",
-            "material": "HPGe",
-            "name": "p+ contact",
-            "potential": 0.0,
-            "channel": 2,
-            "geometry": {
-                "type": "box",
-                "x": {
-                    "from": 9.9,
-                    "to": 10.0
-                },
-                "y": {
-                    "from": 0.0,
-                    "to": 10.0
-                },
-                "z": {
-                    "from": 0.0,
-                    "to": 10.0
-                }
-            }
-        }
-    ]
+        ]
+    }
 }

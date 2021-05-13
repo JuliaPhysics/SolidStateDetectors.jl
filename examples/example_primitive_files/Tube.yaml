@@ -1,8 +1,8 @@
-type: "tube"
-r:
-  from: 1.0
-  to: 2.0
-phi:
-  from: 0.0
-  to: 6.283185307179586
-h: 2.0
+tube:
+  r:
+    from: 1.0
+    to: 2.0
+  phi:
+    from: 0.0
+    to: 6.283185307179586
+  h: 2.0

@@ -49,7 +49,7 @@ in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, <:Abst
     
 
 # read-in
-function Geometry(T::DataType, ::Type{Torus}, dict::Union{Dict{String,Any}, Dict{Any,Any}}, input_units::NamedTuple)
+function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)
     length_unit = input_units.length
     angle_unit = input_units.angle
     r_torus::T = _parse_value(T, dict["r_torus"], length_unit)
@@ -58,6 +58,16 @@ function Geometry(T::DataType, ::Type{Torus}, dict::Union{Dict{String,Any}, Dict
     θ = parse_θ_of_primitive(T, dict, angle_unit)
     z::T = ("z" in keys(dict) ? _parse_value(T, dict["z"], length_unit) : T(0))
     Torus(T, r_torus, r_tube, φ, θ, z)
+end
+
+function Dictionary(t::Torus{T}) where {T}
+    dict = OrderedDict{String,Any}()
+    dict["r_torus"] = t.r_torus
+    dict["r_tube"] = typeof(t.r_tube) == T ? t.r_tube : OrderedDict{String,Any}("from" => t.r_tube.left, "to" => t.r_tube.right)
+    if !isnothing(t.φ) dict["phi"] = OrderedDict{String,Any}("from" => t.φ.left, "to" => t.φ.right) end
+    if !isnothing(t.θ) dict["theta"] = OrderedDict{String,Any}("from" => t.θ.left, "to" => t.θ.right) end
+    if t.z != 0 dict["z"] = t.z end
+    OrderedDict{String,Any}("torus" => dict)
 end
 
 

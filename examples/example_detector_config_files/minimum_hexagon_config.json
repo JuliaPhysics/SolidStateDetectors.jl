@@ -36,73 +36,71 @@
         }
     },
     "medium": "vacuum",
-    "objects": [
-        {
-            "type": "semiconductor",
-            "material": "Si",
-            "temperature": 140,
-            "impurity_density": {
-                "name": "linear",
-                "r": {
-                    "init": 0.0,
-                    "gradient": 0.0
+    "objects": {
+        "semiconductors": [
+            {
+                "material": "Si",
+                "impurity_density": {
+                    "name": "linear",
+                    "r": {
+                        "init": 0.0,
+                        "gradient": 0.0
+                    },
+                    "phi": {
+                        "init": 0.0,
+                        "gradient": 0.0
+                    },
+                    "z": {
+                        "init": 1.0e7,
+                        "gradient": 100000.0
+                    }
                 },
-                "phi": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                },
-                "z": {
-                    "init": 1.0e7,
-                    "gradient": 1.0e5
+                "temperature": 140,
+                "geometry": {
+                    "translate": {
+                        "HexagonalPrism": {
+                            "r": 1.0,
+                            "h": 2.0
+                        },
+                        "z": 1.0
+                    }
+                }
+            }
+        ],
+        "contacts": [
+            {
+                "material": "Si",
+                "name": "n+ contact",
+                "potential": 0.0,
+                "channel": 1,
+                "geometry": {
+                    "translate": {
+                        "HexagonalPrism": {
+                            "r": {
+                                "from": 0.5,
+                                "to": 1.0
+                            },
+                            "h": 0.01
+                        },
+                        "z": 2.005
+                    }
                 }
             },
-            "geometry": {
-                "type": "HexagonalPrism",
-                "r": {
-                    "from": 0.0,
-                    "to": 1.0
-                },
-                "h": 2.0,
-                "translate": {
-                    "z": 1.0
+            {
+                "material": "Si",
+                "name": "p+ contact",
+                "potential": -150.0,
+                "channel": 2,
+                "geometry": {
+                    "translate": {
+                        "HexagonalPrism": {
+                            "r": 1.0,
+                            "h": 0.01
+                        },
+                        "z": -0.005
+                    }
                 }
             }
-        },
-        {
-            "type": "contact",
-            "material": "Si",
-            "name": "n+ contact",
-            "potential": 0.0,
-            "channel": 1,
-            "geometry": {
-                "type": "HexagonalPrism",
-                "r": {
-                    "from": 0.5,
-                    "to": 1.0
-                },
-                "h": 0.01,
-                "translate": {
-                    "z": 2.005
-                }
-            }
-        },
-        {
-            "type": "contact",
-            "material": "Si",
-            "name": "p+ contact",
-            "potential": -150.0,
-            "channel": 2,
-            "geometry": {
-                "type": "HexagonalPrism",
-                "r": {
-                    "from": 0.0,
-                    "to": 1.0
-                },
-                "h": 0.01,
-                "translate": {
-                    "z": -0.005
-                }
-            }
-        }
-    ]
+        ]
+    }
 }
