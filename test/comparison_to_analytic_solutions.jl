@@ -1,7 +1,7 @@
 ϵ0 = SolidStateDetectors.ϵ0 * u"F / m"
 e = SolidStateDetectors.elementary_charge * u"C"
 
-#=
+
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
     calculate_electric_potential!(sim, 
@@ -10,7 +10,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
     )
     calculate_electric_field!(sim)
     BV_true = SolidStateDetectors._get_abs_bias_voltage(sim.detector) 
-    Δd = (sim.detector.contacts[2].geometry.x[2] - sim.detector.contacts[1].geometry.x[2]) * u"m"
+    Δd = (sim.detector.contacts[2].decomposed_surfaces[1].loc - sim.detector.contacts[1].decomposed_surfaces[1].loc) * u"m"
     Δx = (sim.detector.world.intervals[2].right - sim.detector.world.intervals[2].left) * u"m"
     A = Δx * Δx 
     V = A * Δd
@@ -24,7 +24,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
         @test isapprox(C_ssd, C_true, rtol = 0.001) 
     end
 end
-=#
+
 
 struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
 
