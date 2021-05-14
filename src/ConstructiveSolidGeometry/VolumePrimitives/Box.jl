@@ -41,9 +41,9 @@ end
 
 function Dictionary(b::Box{T}) where {T}
     dict = OrderedDict{String,Any}()
-    dict["x"] = typeof(b.x) == T ? b.x : OrderedDict{String,Any}("from" => b.x.left, "to" => b.x.right)
-    dict["y"] = typeof(b.y) == T ? b.y : OrderedDict{String,Any}("from" => b.y.left, "to" => b.y.right)
-    dict["z"] = typeof(b.z) == T ? b.z : OrderedDict{String,Any}("from" => b.z.left, "to" => b.z.right)
+    dict["x"] = typeof(b.x) == T ? b.x * 2 : OrderedDict{String,Any}("from" => b.x.left, "to" => b.x.right)
+    dict["y"] = typeof(b.y) == T ? b.y * 2 : OrderedDict{String,Any}("from" => b.y.left, "to" => b.y.right)
+    dict["z"] = typeof(b.z) == T ? b.z * 2 : OrderedDict{String,Any}("from" => b.z.left, "to" => b.z.right)
     OrderedDict{String,Any}("box" => dict)
 end
 
