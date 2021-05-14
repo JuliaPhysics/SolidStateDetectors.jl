@@ -84,7 +84,7 @@ function sample(r::RectangleZ{T}, Nsamps::NTuple{3,Int} = (2,2,2)) where {T}
     ]
 end
 
-function get_r(r::Rectangle{T, Val{:x}}, φ::T) where {T}
+function get_r(r::RectangleX{T}, φ::T) where {T}
     atol = geom_atol_zero(T)
     x::T = r.loc
     yMin::T, yMax::T = get_l_limits(r)
@@ -94,7 +94,7 @@ function get_r(r::Rectangle{T, Val{:x}}, φ::T) where {T}
     yMin - atol ≤ x * tanφ ≤ yMax + atol ? (x / cφ,) : ()
 end
 
-function get_r(r::Rectangle{T, Val{:y}}, φ::T) where {T}
+function get_r(r::RectangleY{T}, φ::T) where {T}
     atol = geom_atol_zero(T)
     y::T = r.loc
     xMin::T, xMax::T = get_l_limits(r)
@@ -104,7 +104,7 @@ function get_r(r::Rectangle{T, Val{:y}}, φ::T) where {T}
     xMin - atol ≤ y * cotφ ≤ xMax + atol ? (y / sφ,) : ()
 end
 
-function sample(r::Union{Rectangle{T, Val{:x}}, Rectangle{T, Val{:y}}}, g::CylindricalTicksTuple{T}) where {T}
+function sample(r::Union{RectangleX{T}, RectangleY{T}}, g::CylindricalTicksTuple{T}) where {T}
     samples = [
         CylindricalPoint{T}(R, φ, z)
         for φ in g.φ
@@ -113,7 +113,7 @@ function sample(r::Union{Rectangle{T, Val{:x}}, Rectangle{T, Val{:y}}}, g::Cylin
     ]
 end
 
-function get_r_ticks(r::Rectangle{T, Val{:z}}, g::CylindricalTicksTuple{T}, φ::T)::Vector{T} where {T}
+function get_r_ticks(r::RectangleZ{T}, g::CylindricalTicksTuple{T}, φ::T)::Vector{T} where {T}
     xMin::T, xMax::T = get_l_limits(r)
     yMin::T, yMax::T = get_w_limits(r)
     sφ::T, cφ::T = sincos(φ)
@@ -136,7 +136,7 @@ function get_r_ticks(r::Rectangle{T, Val{:z}}, g::CylindricalTicksTuple{T}, φ::
     end
 end
 
-function sample(r::Rectangle{T, Val{:z}}, g::CylindricalTicksTuple{T}) where {T}
+function sample(r::RectangleZ{T}, g::CylindricalTicksTuple{T}) where {T}
     samples = [
         CylindricalPoint{T}(R, φ, z)
         for z in _get_ticks(g.z, r.loc, r.loc)
@@ -145,7 +145,7 @@ function sample(r::Rectangle{T, Val{:z}}, g::CylindricalTicksTuple{T}) where {T}
     ]
 end
 
-function sample(r::Rectangle{T, Val{:x}}, g::CartesianTicksTuple{T}) where {T}
+function sample(r::RectangleX{T}, g::CartesianTicksTuple{T}) where {T}
     samples = [
         CartesianPoint{T}(r.loc,y,z)
         for y in _get_ticks(g.y, get_l_limits(r)...)
@@ -153,7 +153,7 @@ function sample(r::Rectangle{T, Val{:x}}, g::CartesianTicksTuple{T}) where {T}
     ]
 end
 
-function sample(r::Rectangle{T, Val{:y}}, g::CartesianTicksTuple{T}) where {T}
+function sample(r::RectangleY{T}, g::CartesianTicksTuple{T}) where {T}
     samples = [
         CartesianPoint{T}(x,r.loc,z)
         for x in _get_ticks(g.x, get_l_limits(r)...)
@@ -161,7 +161,7 @@ function sample(r::Rectangle{T, Val{:y}}, g::CartesianTicksTuple{T}) where {T}
     ]
 end
 
-function sample(r::Rectangle{T, Val{:z}}, g::CartesianTicksTuple{T}) where {T}
+function sample(r::RectangleZ{T}, g::CartesianTicksTuple{T}) where {T}
     samples = [
         CartesianPoint{T}(x,y,r.loc)
         for x in _get_ticks(g.x, get_l_limits(r)...)
