@@ -31,10 +31,10 @@ function mesh(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
     m = (rtop-rbot)/(zMax-zMin)
     φrange = range(φMin, φMax, length = n+1)
     scφrange = sincos.(φrange)
-    z = range(zMin, zMax, length = 2)
+    z = (zMin, zMax)
 
-    X::Array{T,2} = [(m*(z[j]-zMin)+rbot)*cφ for (_,cφ) in scφrange, j in 1:length(z)]
-    Y::Array{T,2} = [(m*(z[j]-zMin)+rbot)*sφ for (sφ,_) in scφrange, j in 1:length(z)]
+    X::Array{T,2} = [(m*(z_i-zMin)+rbot)*cφ for (_,cφ) in scφrange, z_i in z]
+    Y::Array{T,2} = [(m*(z_i-zMin)+rbot)*sφ for (sφ,_) in scφrange, z_i in z]
     Z::Array{T,2} = [j for i in φrange, j in z]
 
     Mesh(X, Y, Z)

@@ -49,16 +49,16 @@ function get_decomposed_surfaces(b::Box{T}) where {T}
     zMin::T, zMax::T = get_z_limits(b)
     tol = geom_atol_zero(T)
     if isapprox(xMin, xMax, atol = tol)
-        return AbstractSurfacePrimitive[Rectangle(b, Val(:x), xMin)]
+        return AbstractSurfacePrimitive[RectangleX(b, xMin)]
     elseif isapprox(yMin, yMax, atol = tol)
-        return AbstractSurfacePrimitive[Rectangle(b, Val(:y), yMin)]
+        return AbstractSurfacePrimitive[RectangleY(b, yMin)]
     elseif isapprox(zMin, zMax, atol = tol)
-        return AbstractSurfacePrimitive[Rectangle(b, Val(:z), zMin)]
+        return AbstractSurfacePrimitive[RectangleZ(b, zMin)]
     else
         return AbstractSurfacePrimitive[
-                                            Rectangle(b, Val(:x), xMin), Rectangle(b, Val(:x), xMax), 
-                                            Rectangle(b, Val(:y), yMin), Rectangle(b, Val(:y), yMax), 
-                                            Rectangle(b, Val(:z), zMin), Rectangle(b, Val(:z), zMax)
+                                            RectangleX(b, xMin), RectangleX(b, xMax), 
+                                            RectangleY(b, yMin), RectangleY(b, yMax), 
+                                            RectangleZ(b, zMin), RectangleZ(b, zMax)
                                         ]
     end
 end
