@@ -84,6 +84,91 @@ function sample(r::RectangleZ{T}, Nsamps::NTuple{3,Int} = (2,2,2)) where {T}
     ]
 end
 
+function get_r(r::Rectangle{T, Val{:x}}, φ::T) where {T}
+    atol = geom_atol_zero(T)
+    x::T = r.loc
+    yMin::T, yMax::T = get_l_limits(r)
+    sφ::T, cφ::T = sincos(φ)
+    if x * cφ < 0 return () end
+    tanφ::T = tan(φ)
+    yMin - atol ≤ x * tanφ ≤ yMax + atol ? (x / cφ,) : ()
+end
+
+function get_r(r::Rectangle{T, Val{:y}}, φ::T) where {T}
+    atol = geom_atol_zero(T)
+    y::T = r.loc
+    xMin::T, xMax::T = get_l_limits(r)
+    sφ::T, cφ::T = sincos(φ)
+    if y * sφ < 0 return () end
+    cotφ::T = cot(φ)
+    xMin - atol ≤ y * cotφ ≤ xMax + atol ? (y / sφ,) : ()
+end
+
+function sample(r::Union{Rectangle{T, Val{:x}}, Rectangle{T, Val{:y}}}, g::CylindricalTicksTuple{T}) where {T}
+    samples = [
+        CylindricalPoint{T}(R, φ, z)
+        for φ in g.φ
+        for R in get_r(r,φ)
+        for z in _get_ticks(g.z, get_w_limits(r)...)
+    ]
+end
+
+function get_r_ticks(r::Rectangle{T, Val{:z}}, g::CylindricalTicksTuple{T}, φ::T)::Vector{T} where {T}
+    xMin::T, xMax::T = get_l_limits(r)
+    yMin::T, yMax::T = get_w_limits(r)
+    sφ::T, cφ::T = sincos(φ)
+    tanφ::T = tan(φ)
+    cotφ::T = inv(tanφ)
+    R = sort!(filter!(R -> R > 0,
+        [
+            (xMin ≤ yMin * cotφ ≤ xMax ? yMin / sφ : T(NaN)),
+            (xMin ≤ yMax * cotφ ≤ xMax ? yMax / sφ : T(NaN)),
+            (yMin ≤ xMin * tanφ ≤ yMax ? xMin / cφ : T(NaN)),
+            (yMin ≤ xMax * tanφ ≤ yMax ? xMax / cφ : T(NaN))
+        ]
+    ))
+    ticks = if length(R) == 2
+        _get_ticks(g.r, R...)
+    elseif length(R) == 1
+        _get_ticks(g.r, T(0), R[1])
+    else
+        []
+    end
+end
+
+function sample(r::Rectangle{T, Val{:z}}, g::CylindricalTicksTuple{T}) where {T}
+    samples = [
+        CylindricalPoint{T}(R, φ, z)
+        for z in _get_ticks(g.z, r.loc, r.loc)
+        for φ in g.φ
+        for R in get_r_ticks(r, g, φ)
+    ]
+end
+
+function sample(r::Rectangle{T, Val{:x}}, g::CartesianTicksTuple{T}) where {T}
+    samples = [
+        CartesianPoint{T}(r.loc,y,z)
+        for y in _get_ticks(g.y, get_l_limits(r)...)
+        for z in _get_ticks(g.z, get_w_limits(r)...)
+    ]
+end
+
+function sample(r::Rectangle{T, Val{:y}}, g::CartesianTicksTuple{T}) where {T}
+    samples = [
+        CartesianPoint{T}(x,r.loc,z)
+        for x in _get_ticks(g.x, get_l_limits(r)...)
+        for z in _get_ticks(g.z, get_w_limits(r)...)
+    ]
+end
+
+function sample(r::Rectangle{T, Val{:z}}, g::CartesianTicksTuple{T}) where {T}
+    samples = [
+        CartesianPoint{T}(x,y,r.loc)
+        for x in _get_ticks(g.x, get_l_limits(r)...)
+        for y in _get_ticks(g.y, get_w_limits(r)...)
+    ]
+end
+
 function get_vertices(r::RectangleX{T}) where {T}
     lMin::T, lMax::T = get_l_limits(r)
     wMin::T, wMax::T = get_w_limits(r)

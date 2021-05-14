@@ -69,19 +69,19 @@ end
         end
         @test isapprox( signalsum, T(2), atol = 5e-4 )
     end
-    #=
     @testset "Simulate example detector: CGD" begin
         sim = Simulation(SSD_examples[:CGD])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
-        # simulate!(sim, max_refinements = 0, verbose = true)
-        # evt = Event([CartesianPoint{T}(5e-3, 5e-3, 5e-3)])
-        # simulate!(evt, sim)
-        # signalsum = T(0)
-        # for i in 1:length(evt.waveforms)
-        #     signalsum += abs(evt.waveforms[i].value[end])
-        # end
-        # @test isapprox( signalsum, T(2), atol = 1e-2 )
+        simulate!(sim, max_refinements = 0, verbose = true)
+        evt = Event([CartesianPoint{T}(5e-3, 5e-3, 5e-3)])
+        simulate!(evt, sim)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @test isapprox( signalsum, T(2), atol = 1e-2 )
     end
+    #=
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation(SSD_examples[:Spherical])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
