@@ -84,6 +84,7 @@ function sample(r::RectangleZ{T}, Nsamps::NTuple{3,Int} = (2,2,2)) where {T}
     ]
 end
 
+
 function get_r(r::RectangleX{T}, φ::T) where {T}
     atol = geom_atol_zero(T)
     x::T = r.loc
@@ -104,13 +105,28 @@ function get_r(r::RectangleY{T}, φ::T) where {T}
     xMin - atol ≤ y * cotφ ≤ xMax + atol ? (y / sφ,) : ()
 end
 
+function get_φ_at_loc(r::RectangleX{T}, R::T) where {T}
+    yMin::T, yMax::T = get_l_limits(r)
+    φ = R ≥ abs(r.loc) ? [atan(y,r.loc) for y in (-1,+1) .* sqrt(R^2 - r.loc^2) if yMin ≤ y ≤ yMax] : []
+end
+
+function get_φ_at_loc(r::RectangleY{T}, R::T) where {T}
+    xMin::T, xMax::T = get_l_limits(r)
+    φ = R ≥ abs(r.loc) ? [atan(r.loc,x) for x in (-1,+1) .* sqrt(R^2 - r.loc^2) if xMin ≤ x ≤ xMax] : []
+end
+
 function sample(r::Union{RectangleX{T}, RectangleY{T}}, g::CylindricalTicksTuple{T}) where {T}
-    samples = [
+    samples = vcat([
         CylindricalPoint{T}(R, φ, z)
         for φ in g.φ
         for R in get_r(r,φ)
         for z in _get_ticks(g.z, get_w_limits(r)...)
-    ]
+    ],[
+        CylindricalPoint{T}(R, φ, z)
+        for R in g.r
+        for φ in get_φ_at_loc(r, R)    
+        for z in _get_ticks(g.z, get_w_limits(r)...)
+    ])
 end
 
 function get_r_ticks(r::RectangleZ{T}, g::CylindricalTicksTuple{T}, φ::T)::Vector{T} where {T}
@@ -136,15 +152,31 @@ function get_r_ticks(r::RectangleZ{T}, g::CylindricalTicksTuple{T}, φ::T)::Vect
     end
 end
 
+function get_φ_at_x(r::RectangleZ{T}, R::T) where {T}
+    yMin::T, yMax::T = get_w_limits(r)
+    φ = [atan(y,x) for x in get_l_limits(r) if R ≥ abs(x) for y in (-1,+1) .* sqrt(R^2 - x^2) if yMin ≤ y ≤ yMax]
+end
+
+function get_φ_at_y(r::RectangleZ{T}, R::T) where {T}
+    xMin::T, xMax::T = get_l_limits(r)
+    φ = [atan(y,x) for y in get_w_limits(r) if R ≥ abs(y) for x in (-1,+1) .* sqrt(R^2 - y^2) if xMin ≤ x ≤ xMax]
+end
+
+@inline get_φ_at_xy(r::RectangleZ{T}, R::T) where {T} = vcat(get_φ_at_x(r,R), get_φ_at_y(r,R))
+
 function sample(r::RectangleZ{T}, g::CylindricalTicksTuple{T}) where {T}
-    samples = [
+    samples = vcat([
         CylindricalPoint{T}(R, φ, z)
         for z in _get_ticks(g.z, r.loc, r.loc)
         for φ in g.φ
         for R in get_r_ticks(r, g, φ)
-    ]
+    ],[
+        CylindricalPoint{T}(R, φ, z)
+        for z in _get_ticks(g.z, r.loc, r.loc)
+        for R in g.r
+        for φ in get_φ_at_xy(r, R)
+    ])
 end
-
 function sample(r::RectangleX{T}, g::CartesianTicksTuple{T}) where {T}
     samples = [
         CartesianPoint{T}(r.loc,y,z)
