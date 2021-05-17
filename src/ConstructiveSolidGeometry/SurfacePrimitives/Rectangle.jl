@@ -238,7 +238,7 @@ function distance_to_surface(point::AbstractCoordinatePoint{T}, r::Rectangle{<:A
     l, w, d = _get_rectangle_coordinates(point, r)
     lMin::T, lMax::T = get_l_limits(r)
     wMin::T, wMax::T = get_w_limits(r)
-    if l in lMin..lMax && w in wMin..wMax
+    if lMin ≤ l ≤ lMax && wMin ≤ w ≤ wMax
         return abs(d - r.loc)
     else 
         if lMin ≤ l ≤ lMax
