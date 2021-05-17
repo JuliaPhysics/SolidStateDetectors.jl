@@ -25,14 +25,14 @@ RectangleX(b::Box{T}, x::Real) where {T} = RectangleX(T, b.y, b.z, T(x))
 RectangleY(b::Box{T}, y::Real) where {T} = RectangleY(T, b.x, b.z, T(y))
 RectangleZ(b::Box{T}, z::Real) where {T} = RectangleZ(T, b.x, b.y, T(z))
 
-function Rectangle(;normal = Val(:z), lMin = -1, lMax = 1, wMin = -1, wMax = 1, loc = 0)
+function Rectangle(normal = Val(:z); lMin = -1, lMax = 1, wMin = -1, wMax = 1, loc = 0)
     T = float(promote_type(typeof.((lMin, lMax, wMin, wMax, loc))...))
     l = lMax == -lMin ? T(lMax) : T(lMin)..T(lMax)
     w = wMax == -wMin ? T(wMax) : T(wMin)..T(wMax)
     Rectangle(normal, T, l, w, T(loc))
 end
 
-Rectangle(normal, lMin, lMax, wMin, wMax, loc) = Rectangle(; normal = normal, lMin = lMin, lMax = lMax, wMin = wMin, wMax = wMax, loc = loc)
+Rectangle(normal, lMin, lMax, wMin, wMax, loc) = Rectangle(normal; lMin = lMin, lMax = lMax, wMin = wMin, wMax = wMax, loc = loc)
 
 function Rectangle(normal::Union{Val{:x}, Val{:y}, Val{:z}}, l::L, w::W, loc::C) where {L<:Real, W<:Real, C<:Real}
     T = float(promote_type(L,W,C))
