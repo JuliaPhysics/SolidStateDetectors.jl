@@ -89,3 +89,18 @@ function sample(rp::RegularPrismMantle{N,T}, g::CartesianTicksTuple{T})::Vector{
     )
 end
 
+function distance_to_surface(point::AbstractCoordinatePoint{T}, rp::RegularPrismMantle{N,T})::T where {N,T}
+    pcy = CylindricalPoint(point)
+    zMin::T, zMax::T = get_z_limits(rp)
+    φ = mod(pcy.φ, T(2π/N))
+    sn, cn = sincos(2π/N)
+    line = LineSegment(T, PlanarPoint{T}(rp.r, 0), PlanarPoint{T}(rp.r*cn, rp.r*sn))
+    sφ, cφ = sincos(φ)
+    d = distance_to_line(PlanarPoint{T}(pcy.r*cφ, pcy.r*sφ), line)
+    if zMin ≤ pcy.z ≤ zMax
+        return d
+    else
+        z = pcy.z < zMin ? zMin : zMax
+        return hypot(d, pcy.z - z)
+    end
+end
