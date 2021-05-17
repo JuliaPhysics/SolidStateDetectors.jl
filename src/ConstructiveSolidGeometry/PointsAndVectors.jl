@@ -50,7 +50,7 @@ end
 
 @inline _in_planar_v(p::PlanarPoint, v::AbstractInterval) = p.v in v
 
-@inline _eq_z(p::CartesianPoint{T}, z::Real) where {T} = p.z == T(z)
+@inline _isapprox_z(p::CartesianPoint{T}, z::Real) where {T} = isapprox(p.z, z, atol = geom_atol_zero(T))
 
 @inline _in_z(p::CartesianPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CartesianPoint, z::AbstractInterval) = p.z in z
@@ -116,7 +116,7 @@ end
 @inline _in_y(p::CylindricalPoint, y::Real) = abs(p.r * sin(p.φ)) <= y
 @inline _in_y(p::CylindricalPoint, y::AbstractInterval) = p.r * sin(p.φ) in y
 
-@inline _eq_z(p::CylindricalPoint{T}, z::Real) where {T} = p.z == T(z)
+@inline _isapprox_z(p::CylindricalPoint{T}, z::Real) where {T} = isapprox(p.z, z, atol = geom_atol_zero(T))
 
 @inline _in_z(p::CylindricalPoint, z::Real) = abs(p.z) <= z
 @inline _in_z(p::CylindricalPoint, z::AbstractInterval) = p.z in z

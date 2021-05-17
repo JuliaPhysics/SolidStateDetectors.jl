@@ -48,7 +48,7 @@ end
 end
 
 @inline in(p::AbstractCoordinatePoint, r::RectangleZ) = begin
-    _in_x(p, r.l) && _in_y(p, r.w) && _eq_z(p, r.loc)
+    _in_x(p, r.l) && _in_y(p, r.w) && _isapprox_z(p, r.loc)
 end    
 
 get_l_limits(r::Rectangle) = (_left_linear_interval(r.l), _right_linear_interval(r.l))
