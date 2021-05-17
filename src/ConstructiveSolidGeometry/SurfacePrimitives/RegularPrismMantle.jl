@@ -77,14 +77,16 @@ function sample(rp::RegularPrismMantle{N,T}, g::CartesianTicksTuple{T})::Vector{
     corners = SVector{N+1,Tuple{T,T}}(sincos.(T(2π/N) .* (0:N)))
     samples = vcat(
     [   # sample all points on the x-grid lines
-        CartesianPoint{T}(x,y,rp.z)
+        CartesianPoint{T}(x,y,z)
         for x in _get_ticks(g.x, rp.r * minimum(broadcast(p -> p[2], corners)), rp.r * maximum(broadcast(p -> p[2], corners)))
         for y in (-get_y_at_x(rp.r, corners, g, x), get_y_at_x(rp.r, corners, g, x))
+        for z in get_z_ticks(rp, g)
     ] , 
     [   # sample the missing points on y-grid lines
-        CartesianPoint{T}(x,y,rp.z)
+        CartesianPoint{T}(x,y,z)
         for y in _get_ticks(g.y, rp.r * minimum(broadcast(p -> p[1], corners)), rp.r * maximum(broadcast(p -> p[1], corners)))
         for x in get_missing_x_at_y(rp.r, corners, g, y)
+        for z in get_z_ticks(rp, g)
     ]
     )
 end
