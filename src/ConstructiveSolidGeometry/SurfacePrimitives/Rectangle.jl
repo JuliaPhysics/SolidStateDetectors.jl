@@ -227,3 +227,31 @@ function get_vertices(r::RectangleZ{T}) where {T}
     CartesianPoint{T}(lMin, wMax, r.loc),
     CartesianPoint{T}(lMax, wMax, r.loc))
 end
+
+_get_rectangle_coordinates(point::CartesianPoint, r::RectangleX) = (point.y, point.z, point.x)
+_get_rectangle_coordinates(point::CartesianPoint, r::RectangleY) = (point.x, point.z, point.y)
+_get_rectangle_coordinates(point::CartesianPoint, r::RectangleZ) = (point.x, point.y, point.z)
+
+_get_rectangle_coordinates(point::CylindricalPoint, r::Rectangle) = _get_rectangle_coordinates(CartesianPoint(point), r)
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, r::Rectangle{<:Any, T})::T where {T}
+    l, w, d = _get_rectangle_coordinates(point, r)
+    lMin::T, lMax::T = get_l_limits(r)
+    wMin::T, wMax::T = get_w_limits(r)
+    if lMin ≤ l ≤ lMax && wMin ≤ w ≤ wMax
+        return abs(d - r.loc)
+    else 
+        if lMin ≤ l ≤ lMax
+            y = w < wMin ? wMin : wMax
+            return hypot(w - y, d - r.loc)
+        elseif wMin ≤ w ≤ wMax
+            x = l < lMin ? lMin : lMax
+            return hypot(l - x, d - r.loc)
+        else
+            lnear = l < lMin ? lMin : lMax
+            wnear = w < wMin ? wMin : wMax
+            return hypot(l - lnear, w - wnear, d - r.loc)
+        end
+    end
+            
+end

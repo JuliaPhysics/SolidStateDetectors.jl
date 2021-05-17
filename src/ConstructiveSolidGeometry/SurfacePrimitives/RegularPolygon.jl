@@ -37,7 +37,6 @@ function RegularPolygon(N::Integer, rOuter::R, z::Z) where {R<:Real, Z<:Real}
     RegularPolygon( N, T, T(rOuter), T(z))
 end
 
-
 @inline in(p::CylindricalPoint, rp::RegularPolygon{N, T, <:Real}) where {N,T} = begin
     _isapprox_z(p, rp.z) && p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)) <= rp.r
 end
@@ -129,4 +128,21 @@ function sample(rp::RegularPolygon{N,T}, g::CartesianTicksTuple{T})::Vector{Cart
         for x in vcat(get_missing_x_at_y(rMin, corners, g, y), get_missing_x_at_y(rMax, corners, g, y))
     ]
     )
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, rp::RegularPolygon{N,T})::T where {N,T}
+    pcy = CylindricalPoint(point)
+    rMin::T, rMax::T = get_r_limits(rp)
+    φ = mod(pcy.φ, T(2π/N))
+    r_poly = pcy.r * cos(T(π/N) - φ) / cos(T(π/N))
+    if rMin ≤ r_poly ≤ rMax
+        return abs(pcy.z - rp.z)
+    else
+        sn, cn = sincos(2π/N)
+        r = r_poly < rMin ? rMin : rMax
+        line = LineSegment(T, PlanarPoint{T}(r, 0), PlanarPoint{T}(r*cn, r*sn))
+        sφ, cφ = sincos(φ)
+        d = distance_to_line(PlanarPoint{T}(pcy.r*cφ, pcy.r*sφ), line)
+        return hypot(d, pcy.z - rp.z)    
+    end
 end
