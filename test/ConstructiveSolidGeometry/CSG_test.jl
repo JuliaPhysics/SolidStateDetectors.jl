@@ -8,7 +8,7 @@ using StaticArrays
 using SolidStateDetectors.ConstructiveSolidGeometry:
     CartesianPoint, CartesianVector, CylindricalPoint, scale,
     _in_angular_interval_closed, _in_angular_interval_open,
-    ConalPlane, ConeMantle, CylindricalAnnulus, RegularHexagon, HexagonalPrismMantle, RegularPolygon, RegularPrismMantle,
+    ConalPlane, ConeMantle, CylindricalAnnulus, RectangleZ, RegularHexagon, HexagonalPrismMantle, RegularPolygon, RegularPrismMantle,
     SphereMantle, ToroidalAnnulus, TorusMantle,
     Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
@@ -176,6 +176,17 @@ using SolidStateDetectors.ConstructiveSolidGeometry:
                     @test !(CartesianPoint{T}(0, 2, 0) in prism)
                     @test !(CartesianPoint{T}(1, 0, -0.1) in prism)
                     @test !(CartesianPoint{T}(1, 0, 1.1) in prism)
+                end
+                @testset "Rectangle" begin
+                    rectangle = RectangleZ(T(1.0), T(2.0), T(3.0)) # x from -0.5..0.5, y from -1.0..1.0, z = 3
+                    @test !(CartesianPoint{T}(0, 0, 0) in rectangle)
+                    @test CartesianPoint{T}(rectangle.l, rectangle.w, rectangle.loc) in rectangle
+                    @test CartesianPoint{T}(-rectangle.l, -rectangle.w, rectangle.loc) in rectangle
+                    @test CartesianPoint{T}(rectangle.l, -rectangle.w, rectangle.loc) in rectangle
+                    @test CartesianPoint{T}(-rectangle.l, rectangle.w, rectangle.loc) in rectangle
+                    @test CartesianPoint{T}(0, rectangle.w, rectangle.loc) in rectangle
+                    @test CartesianPoint{T}(-rectangle.l, 0, rectangle.loc) in rectangle
+                    @test !(CartesianPoint{T}(rectangle.l, -rectangle.w, 1.1*rectangle.loc) in rectangle)
                 end
             end
 
