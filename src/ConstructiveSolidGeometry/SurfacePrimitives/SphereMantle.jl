@@ -2,6 +2,11 @@ struct SphereMantle{T} <: AbstractSurfacePrimitive{T}
     r::T
 end
 
+function SphereMantle(r::R = 1) where {R <: Real}
+    T = float(R)
+    SphereMantle{T}(T(r))
+end
+
 get_r_limits(s::SphereMantle{T}) where {T} = (_left_radial_interval(s.r), _right_radial_interval(s.r))
 get_φ_limits(s::SphereMantle{T}) where {T} = (T(0), T(2π), true)
 get_z_limits(s::SphereMantle{T}) where {T} = (-_right_linear_interval(s.r), _right_linear_interval(s.r))
