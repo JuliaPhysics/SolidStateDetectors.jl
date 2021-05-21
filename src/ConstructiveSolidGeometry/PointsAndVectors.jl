@@ -22,7 +22,7 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     z::T
 end
 
-@inline _eq_cyl_r(p::CartesianPoint{T}, r::Real) where {T} = hypot(p.x, p.y) == T(r)
+@inline _isapprox_cyl_r(p::CartesianPoint{T}, r::Real) where {T} = isapprox(hypot(p.x, p.y), r, atol = geom_atol_zero(T))
 
 @inline _in_planar_r(p::PlanarPoint, r::Real) = hypot(p.u, p.v) <= r
 @inline _in_planar_r(p::PlanarPoint, r::AbstractInterval) = hypot(p.u, p.v) in r
@@ -97,7 +97,7 @@ end
 @inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cylindrical}) = CylindricalPoint(pt)
 @inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cartesian}) = CartesianPoint(pt)
 
-@inline _eq_cyl_r(p::CylindricalPoint{T}, r::Real) where {T} = p.r == T(r)
+@inline _isapprox_cyl_r(p::CylindricalPoint{T}, r::Real) where {T} = isapprox(p.r, r, atol = geom_atol_zero(T))
 
 @inline _in_cyl_r(p::CylindricalPoint, r::Real) = p.r <= r
 @inline _in_cyl_r(p::CylindricalPoint, r::AbstractInterval) = p.r in r

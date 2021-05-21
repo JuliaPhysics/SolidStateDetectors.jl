@@ -65,10 +65,10 @@ get_φ_limits(c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c
 get_z_limits(c::ConeMantle{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
 
 in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, Nothing, <:Any}) =
-    _in_z(p, c.z) && _eq_cyl_r(p, get_r_at_z(c, p.z))
+    _in_z(p, c.z) && _isapprox_cyl_r(p, get_r_at_z(c, p.z))
 
 in(p::AbstractCoordinatePoint, c::ConeMantle{<:Any, <:Any, <:AbstractInterval, <:Any}) =
-    _in_z(p, c.z) && _in_φ(p, c.φ) && _eq_cyl_r(p, get_r_at_z(c, p.z))
+    _in_z(p, c.z) && _in_φ(p, c.φ) && _isapprox_cyl_r(p, get_r_at_z(c, p.z))
 
 #=
 function sample(c::ConeMantle{T}, step::Real)::Vector{CylindricalPoint{T}} where {T}
