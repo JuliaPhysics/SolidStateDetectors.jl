@@ -43,6 +43,7 @@ end
 
 @inline in(p::CartesianPoint, rp::RegularPrismMantle) = in(CylindricalPoint(p), rp)
 
+#=
 @inline in(p::CartesianPoint, hp::HexagonalPrismMantle{T}) where {T} = begin
     tol = geom_atol_zero(T)
     _in_z(p, hp.z) && abs(p.y) ≤ hp.r * sqrt(T(3))/2 &&
@@ -51,6 +52,7 @@ end
         ( isapprox(abs(p.x), hp.r - abs(p.y)/sqrt(T(3)), atol = tol) &&  T(0.5) ≤ abs(p.x) ≤ hp.r )
     )
 end
+=#
 
 get_z_limits(rp::RegularPrismMantle) = (_left_linear_interval(rp.z), _right_linear_interval(rp.z))
 get_r_at_φ(rp::RegularPrismMantle{N,T}, φ::T) where {N,T} = rp.r * T(cos(π/N)/cos(π/N - mod(φ, 2π/N)))
