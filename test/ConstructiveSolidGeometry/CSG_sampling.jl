@@ -3,7 +3,7 @@ using Test
 using SolidStateDetectors.ConstructiveSolidGeometry: sample,
     ConalPlane, ConeMantle, CylindricalAnnulus, 
     RectangleX, RectangleY, RectangleZ, 
-    RegularHexagon, HexagonalPrismMantle, RegularPolygon, RegularPrismMantle,
+    RegularPolygon, RegularPrismMantle,
     SphereMantle, ToroidalAnnulus, TorusMantle,
     Tube, Cone, Torus, Box, Sphere, HexagonalPrism
 
@@ -23,8 +23,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry: sample,
     
     @testset "SurfacePrimitives" begin
         
-        surface_primitives = [ConalPlane, CylindricalAnnulus,
-                    #ConeMantle, RegularHexagon, HexagonalPrismMantle,
+        surface_primitives = [ConalPlane, CylindricalAnnulus, ConeMantle,
                     RectangleX, RectangleY, RectangleZ, 
                     SphereMantle, ToroidalAnnulus, TorusMantle]
         
@@ -35,11 +34,23 @@ using SolidStateDetectors.ConstructiveSolidGeometry: sample,
                     p = P(); @test all(broadcast(pt -> pt in p, sample(p, cart)))
                 end
             end
+            
+            for N in 4:8
+                #= 
+                # There are still rounding errors if r is slightly outside of the r-interval of RegularPolygon
+                @testset "RegularPolygon{$N}" begin
+                    p = RegularPolygon(N); @test all(broadcast(pt -> pt in p, sample(p, cart)))
+                end
+                =#
+                @testset "RegularPrismMantle{$N}" begin
+                    p = RegularPrismMantle(N); @test all(broadcast(pt -> pt in p, sample(p, cart)))
+                end
+            end
+            
         end
         
-        surface_primitives = [ConalPlane, CylindricalAnnulus,
-                    ConeMantle, RegularHexagon, HexagonalPrismMantle,
-                    #RectangleX, RectangleY, RectangleZ, 
+        surface_primitives = [ConalPlane, CylindricalAnnulus, ConeMantle,
+                    # RectangleX, RectangleY, RectangleZ, # Rounding errors at the edges
                     SphereMantle, ToroidalAnnulus, TorusMantle]
         
         @testset "Cylindrical Grid" begin
@@ -47,6 +58,14 @@ using SolidStateDetectors.ConstructiveSolidGeometry: sample,
             for P in surface_primitives
                 @testset "$P" begin
                     p = P(); @test all(broadcast(pt -> pt in p, sample(p, cylt)))
+                end
+            end
+            for N in 4:8
+                @testset "RegularPolygon{$N}" begin
+                    p = RegularPolygon(N); @test all(broadcast(pt -> pt in p, sample(p, cylt)))
+                end
+                @testset "RegularPrismMantle{$N}" begin
+                    p = RegularPrismMantle(N); @test all(broadcast(pt -> pt in p, sample(p, cylt)))
                 end
             end
         end
