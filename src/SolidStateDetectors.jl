@@ -36,7 +36,8 @@ using .ConstructiveSolidGeometry:
             Geometry, AbstractGeometry,
             get_decomposed_volumes,
             get_decomposed_surfaces, AbstractSurfacePrimitive,
-            geom_round, geom_sigdigits, geom_atol_zero
+            geom_round, geom_sigdigits, geom_atol_zero,
+            parse_rotation_matrix
 
 import .ConstructiveSolidGeometry: sample, sample_surface
 export CartesianPoint, CartesianVector, CylindricalPoint
