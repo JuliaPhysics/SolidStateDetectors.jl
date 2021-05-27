@@ -37,36 +37,34 @@
     },
     "medium": "vacuum",
     "objects": {
-        "semiconductors": [
-            {
-                "material": "Si",
-                "impurity_density": {
-                    "name": "linear",
-                    "r": {
-                        "init": 0.0,
-                        "gradient": 0.0
-                    },
-                    "phi": {
-                        "init": 0.0,
-                        "gradient": 0.0
-                    },
-                    "z": {
-                        "init": 1.0e7,
-                        "gradient": 100000.0
-                    }
+        "semiconductor": {
+            "material": "Si",
+            "impurity_density": {
+                "name": "linear",
+                "r": {
+                    "init": 0.0,
+                    "gradient": 0.0
                 },
-                "temperature": 140,
-                "geometry": {
-                    "translate": {
-                        "HexagonalPrism": {
-                            "r": 1.0,
-                            "h": 2.0
-                        },
-                        "z": 1.0
-                    }
+                "phi": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "z": {
+                    "init": 1.0e7,
+                    "gradient": 100000.0
+                }
+            },
+            "temperature": 140,
+            "geometry": {
+                "translate": {
+                    "HexagonalPrism": {
+                        "r": 1.0,
+                        "h": 2.0
+                    },
+                    "z": 1.0
                 }
             }
-        ],
+        },
         "contacts": [
             {
                 "material": "Si",

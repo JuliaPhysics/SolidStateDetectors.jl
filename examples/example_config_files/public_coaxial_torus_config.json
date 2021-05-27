@@ -30,44 +30,42 @@
     },
     "medium": "vacuum",
     "objects": {
-        "semiconductors": [
-            {
-                "material": "HPGe",
-                "impurity_density": {
-                    "name": "linear",
-                    "r": {
-                        "init": 0,
-                        "gradient": 0
+        "semiconductor": {
+            "material": "HPGe",
+            "impurity_density": {
+                "name": "linear",
+                "r": {
+                    "init": 0,
+                    "gradient": 0
+                },
+                "phi": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "z": {
+                    "init": -1.0e7,
+                    "gradient": 0.0
+                }
+            },
+            "temperature": 77.0,
+            "geometry": {
+                "torus": {
+                    "r_torus": 10.0,
+                    "r_tube": {
+                        "from": 2.0,
+                        "to": 5.0
                     },
                     "phi": {
-                        "init": 0.0,
-                        "gradient": 0.0
+                        "from": 0.0,
+                        "to": 360.0
                     },
-                    "z": {
-                        "init": -1.0e7,
-                        "gradient": 0.0
-                    }
-                },
-                "temperature": 77.0,
-                "geometry": {
-                    "torus": {
-                        "r_torus": 10.0,
-                        "r_tube": {
-                            "from": 2.0,
-                            "to": 5.0
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "theta": {
-                            "from": 0.0,
-                            "to": 360.0
-                        }
+                    "theta": {
+                        "from": 0.0,
+                        "to": 360.0
                     }
                 }
             }
-        ],
+        },
         "contacts": [
             {
                 "name": "p contact",

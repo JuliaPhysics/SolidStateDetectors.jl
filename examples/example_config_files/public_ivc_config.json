@@ -30,79 +30,77 @@
     },
     "medium": "vacuum",
     "objects": {
-        "semiconductors": [
-            {
-                "material": "HPGe",
-                "impurity_density": {
-                    "name": "cylindrical",
-                    "r": {
-                        "init": 0,
-                        "gradient": 0
-                    },
-                    "z": {
-                        "init": -1.0e7,
-                        "gradient": -1.0e5
-                    }
+        "semiconductor": {
+            "material": "HPGe",
+            "impurity_density": {
+                "name": "cylindrical",
+                "r": {
+                    "init": 0,
+                    "gradient": 0
                 },
-                "temperature": 77.0,
-                "geometry": {
-                    "difference": [
-                        {
-                            "difference": [
-                                {
-                                    "translate": {
-                                        "tube": {
-                                            "r": 35.0,
-                                            "phi": {
-                                                "from": 0.0,
-                                                "to": 360.0
-                                            },
-                                            "h": 80.0
-                                        },
-                                        "z": 40.0
-                                    }
-                                },
-                                {
-                                    "translate": {
-                                        "cone": {
-                                            "r": {
-                                                "bottom": {
-                                                    "from": 35.0,
-                                                    "to": 36.0
-                                                },
-                                                "top": {
-                                                    "from": 24.42,
-                                                    "to": 36.0
-                                                }
-                                            },
-                                            "phi": {
-                                                "from": 0.0,
-                                                "to": 360.0
-                                            },
-                                            "h": 60.0
-                                        },
-                                        "z": 50.0
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "translate": {
-                                "tube": {
-                                    "r": 5.0,
-                                    "phi": {
-                                        "from": 0.0,
-                                        "to": 360.0
-                                    },
-                                    "h": 80.0
-                                },
-                                "z": 65.0
-                            }
-                        }
-                    ]
+                "z": {
+                    "init": -1.0e7,
+                    "gradient": -1.0e5
                 }
+            },
+            "temperature": 77.0,
+            "geometry": {
+                "difference": [
+                    {
+                        "difference": [
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": 35.0,
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 80.0
+                                    },
+                                    "z": 40.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "cone": {
+                                        "r": {
+                                            "bottom": {
+                                                "from": 35.0,
+                                                "to": 36.0
+                                            },
+                                            "top": {
+                                                "from": 24.42,
+                                                "to": 36.0
+                                            }
+                                        },
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 60.0
+                                    },
+                                    "z": 50.0
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "translate": {
+                            "tube": {
+                                "r": 5.0,
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 80.0
+                            },
+                            "z": 65.0
+                        }
+                    }
+                ]
             }
-        ],
+        },
         "contacts": [
             {
                 "material": "HPGe",

@@ -28,53 +28,51 @@
     },
     "medium": "HPGe",
     "objects": {
-        "semiconductors": [
-            {
-                "material": "HPGe",
-                "impurity_density": {
-                    "name": "cylindrical",
-                    "r": {
-                        "init": 0.0,
-                        "gradient": 0.0
-                    },
-                    "z": {
-                        "init": 0.0,
-                        "gradient": 0.0
-                    }
+        "semiconductor": {
+            "material": "HPGe",
+            "impurity_density": {
+                "name": "cylindrical",
+                "r": {
+                    "init": 0.0,
+                    "gradient": 0.0
                 },
-                "temperature": 77.0,
-                "geometry": {
-                    "difference": [
-                        {
-                            "tube": {
-                                "r": 35.0,
-                                "phi": {
-                                    "from": 0.0,
-                                    "to": 360.0
-                                },
-                                "z": {
-                                    "from": -40.0,
-                                    "to": 80.0
-                                }
-                            }
-                        },
-                        {
-                            "tube": {
-                                "r": 5.0,
-                                "phi": {
-                                    "from": 0.0,
-                                    "to": 360.0
-                                },
-                                "z": {
-                                    "from": -40.0,
-                                    "to": 80.0
-                                }
+                "z": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                }
+            },
+            "temperature": 77.0,
+            "geometry": {
+                "difference": [
+                    {
+                        "tube": {
+                            "r": 35.0,
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "z": {
+                                "from": -40.0,
+                                "to": 80.0
                             }
                         }
-                    ]
-                }
+                    },
+                    {
+                        "tube": {
+                            "r": 5.0,
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "z": {
+                                "from": -40.0,
+                                "to": 80.0
+                            }
+                        }
+                    }
+                ]
             }
-        ],
+        },
         "contacts": [
             {
                 "material": "HPGe",

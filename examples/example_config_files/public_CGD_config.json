@@ -28,43 +28,41 @@
     },
     "medium": "vacuum",
     "objects": {
-        "semiconductors": [
-            {
-                "material": "HPGe",
-                "impurity_density": {
-                    "name": "linear",
+        "semiconductor": {
+            "material": "HPGe",
+            "impurity_density": {
+                "name": "linear",
+                "x": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "y": {
+                    "init": 0.0,
+                    "gradient": 0.0
+                },
+                "z": {
+                    "init": 1.0e7,
+                    "gradient": 50000.0
+                }
+            },
+            "temperature": 77,
+            "geometry": {
+                "box": {
                     "x": {
-                        "init": 0.0,
-                        "gradient": 0.0
+                        "from": 0.0,
+                        "to": 10.0
                     },
                     "y": {
-                        "init": 0.0,
-                        "gradient": 0.0
+                        "from": 0.0,
+                        "to": 10.0
                     },
                     "z": {
-                        "init": 1.0e7,
-                        "gradient": 50000.0
-                    }
-                },
-                "temperature": 77,
-                "geometry": {
-                    "box": {
-                        "x": {
-                            "from": 0.0,
-                            "to": 10.0
-                        },
-                        "y": {
-                            "from": 0.0,
-                            "to": 10.0
-                        },
-                        "z": {
-                            "from": 0.0,
-                            "to": 10.0
-                        }
+                        "from": 0.0,
+                        "to": 10.0
                     }
                 }
             }
-        ],
+        },
         "contacts": [
             {
                 "material": "HPGe",

@@ -6,9 +6,9 @@
     "name": "Public Inverted Coax",
     "medium": "vacuum",
     "objects": {
-        "semiconductors": [
-            {"include" : "semiconductor.json"}
-        ],
+        "semiconductor": {
+            "include" : "semiconductor.json"
+        },
         "contacts": [
             {"include" : "channels/01_PointContact.json"},
             {"include" : "channels/02_Mantle.json"}
