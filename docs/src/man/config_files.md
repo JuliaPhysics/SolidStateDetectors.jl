@@ -14,7 +14,7 @@ The fourth one is in cartesian coordinates:
     * simple cube detector (CGD)
 
 They are all specified in their JSON config files, which can be found under:
-`<package_directory>/examples/example_detector_config_files/<config_filename>.json`.
+`<package_directory>/examples/example_config_files/<config_filename>.json`.
 
 In Julia, their path is already saved in the SolidStateDetectors.jl package in a dictionary:
 ```julia
