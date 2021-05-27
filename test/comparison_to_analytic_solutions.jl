@@ -15,7 +15,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
     A = Δx * Δx 
     V = A * Δd
     E_true = BV_true / Δd
-    ϵr = sim.detector.semiconductors[1].material.ϵ_r
+    ϵr = sim.detector.semiconductor.material.ϵ_r
     W_true = uconvert(u"J", (ϵr * ϵ0 * E_true^2 / 2) * A * Δd)
     W_ssd = SolidStateDetectors.calculate_stored_energy(sim);
     C_true = uconvert(u"pF", 2 * W_true / (BV_true^2))
@@ -33,7 +33,7 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     sim_cyl = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
     sim_car = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords])
     BV_true = SolidStateDetectors._get_abs_bias_voltage(sim_cyl.detector)
-    ϵr = sim_cyl.detector.semiconductors[1].material.ϵ_r
+    ϵr = sim_cyl.detector.semiconductor.material.ϵ_r
     R1 = sim_cyl.detector.contacts[1].geometry.r.right * u"m"
     R2 = sim_cyl.detector.contacts[2].geometry.r.left * u"m"
     V1 = sim_cyl.detector.contacts[1].potential * u"V"
@@ -95,8 +95,8 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
         SolidStateDetectors.get_impurity_density(cdm, CylindricalPoint(pt))
     end
 
-    sim_cyl.detector.semiconductors[1].impurity_density_model = DummyImpurityDensity{T}()
-    sim_car.detector.semiconductors[1].impurity_density_model = DummyImpurityDensity{T}()
+    sim_cyl.detector.semiconductor.impurity_density_model = DummyImpurityDensity{T}()
+    sim_car.detector.semiconductor.impurity_density_model = DummyImpurityDensity{T}()
 
     calculate_electric_potential!(sim_cyl, 
         init_grid_size = (40, 2, 2), 

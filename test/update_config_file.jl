@@ -1,10 +1,11 @@
 using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, CSGDifference,
         parse_translate_vector, internal_unit_length, internal_unit_angle, CSG_dict, geom_round
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
-using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry, TranslatedGeometry,
-    ScaledGeometry, RotatedGeometry, CSGUnion, CSGDifference, CSGIntersection, Cone, Dictionary
+using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry, TranslatedGeometry, ScaledGeometry, RotatedGeometry, 
+    CSGUnion, CSGDifference, CSGIntersection, Cone, Dictionary, CartesianVector
 using DataStructures: OrderedDict
 using IntervalSets
+using Unitful
 using JSON
 using YAML
 
@@ -85,9 +86,12 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
     update_primitives!(config_file_dict)
 
     t = broadcast(obj -> obj["type"], config_file_dict["objects"])
-
-    semiconductors = [
-        begin 
+    
+    semiconductors = config_file_dict["objects"][findall(t .== "semiconductor")]
+    @assert length(semiconductors) == 1 "Config files need exactly one semiconductor per detector. This one has $(length(semiconductors)) semiconductors."
+    semiconductor = semiconductors[1]
+    
+    semiconductor = begin 
         delete!(semiconductor, "type")
         if "charge_density_model" in keys(semiconductor)
             semiconductor["impurity_density"] = semiconductor["charge_density_model"]
@@ -95,9 +99,7 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
         end
         update_geometry!(semiconductor, T)
         semiconductor
-        end
-        for semiconductor in config_file_dict["objects"][findall(t .== "semiconductor")]
-    ]
+    end
 
     contacts = [
         begin 
@@ -127,7 +129,7 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
     ]
 
     config_file_dict["objects"] = Dict{String,Any}()
-    if length(semiconductors) > 0 config_file_dict["objects"]["semiconductors"] = semiconductors end
+    config_file_dict["objects"]["semiconductor"] = semiconductor
     if length(contacts) > 0 config_file_dict["objects"]["contacts"] = contacts end
     if length(passives) > 0 config_file_dict["objects"]["passives"] = passives end
     if length(virtual_drift_volumes) > 0 config_file_dict["objects"]["virtual_drift_volumes"] = virtual_drift_volumes end

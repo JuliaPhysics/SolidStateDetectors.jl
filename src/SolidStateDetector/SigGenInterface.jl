@@ -416,7 +416,7 @@ function siggentodict(config::Dict;
         impurity_gradient  *= 1e8
     end
     
-    objects = Dict("semiconductors" => [ Dict(
+    objects = Dict("semiconductor" => Dict(
                     "material"    => "HPGe",
                     "temperature" => config["xtal_temp"],
                     "impurity_density" => Dict(
@@ -425,7 +425,7 @@ function siggentodict(config::Dict;
                                                    "gradient" => 0.0),
                                 "z"        => Dict("init"     => impurity_z0,
                                                    "gradient" => impurity_gradient)),
-                    "geometry"    => geometry)],
+                    "geometry"    => geometry),
                     "contacts" => [ contact_1, contact_2 ]);
 
     conf = Dict("name"    => config["name"],

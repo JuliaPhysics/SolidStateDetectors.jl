@@ -127,12 +127,16 @@ function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float3
 end
 
 function sample(c::SolidStateDetector{T, Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
-    imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+    imp::Vector{CartesianPoint{T}} = vcat(
+        CartesianPoint.(sample(c.semiconductor.geometry, sampling...)),
+        [CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
 function sample(c::SolidStateDetector{T, Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
-    imp::Vector{CylindricalPoint{T}} = vcat([CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+    imp::Vector{CylindricalPoint{T}} = vcat(
+    CylindricalPoint.(sample(c.semiconductor.geometry, sampling...)),
+    [CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
@@ -289,14 +293,9 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     ρ_semiconductor::T = 0
     q_eff_fix::T = 0
     ϵ::T = ssd.medium.ϵ_r
-    if in(pt,ssd.semiconductors)
-        for sc in ssd.semiconductors
-            if in(pt, sc)
-                ρ_semiconductor = get_charge_density(sc, pt) 
-                ϵ = sc.material.ϵ_r
-                break
-            end
-        end
+    if pt in ssd.semiconductor
+        ρ_semiconductor = get_charge_density(ssd.semiconductor, pt) 
+        ϵ = ssd.semiconductor.material.ϵ_r
     elseif in(pt, ssd.passives)
         for ep in ssd.passives
             if pt in ep

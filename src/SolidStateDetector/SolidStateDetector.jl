@@ -12,7 +12,7 @@ mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
     medium::NamedTuple # this should become a struct at some point
 
-    semiconductors::Vector{Semiconductor{T}}
+    semiconductor::Semiconductor{T}
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
 
@@ -23,9 +23,10 @@ get_precision_type(d::SolidStateDetector{T}) where {T} = T
 get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
 
 function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat, CS}
-    semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    semiconductor::Semiconductor{T} = Semiconductor{T}()
+    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives )
+    world_limits = get_world_limits_from_objects(CS, semiconductor, contacts, passives )
     world = World(CS, world_limits)
 
     return SolidStateDetector{T, CS}(
@@ -34,7 +35,7 @@ function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat
         world,
         Dict(),
         material_properties[materials["vacuum"]],
-        semiconductors,
+        semiconductor,
         contacts,
         passives,
         virtual_drift_volumes
@@ -97,12 +98,12 @@ function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type
 end
 
 
-function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cylindrical}, s::Semiconductor{T}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
     imps_1::Vector{T} = []
     imps_3::Vector{T} = []
-    for objects in [s, c, p]
-        for object in objects
+    for objects in [c, p]
+        for object in vcat(objects)
             for posgeo in object.geometry_positive
                 append!(imps_1, get_important_points( posgeo, Val{:r}()))
                 append!(imps_3, get_important_points( posgeo, Val{:z}()))
@@ -127,13 +128,13 @@ function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconduc
     end
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
-function get_world_limits_from_objects(::Type{Cartesian}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
     imps_1::Vector{T} = []
     imps_2::Vector{T} = []
     imps_3::Vector{T} = []
-    for objects in [s, c, p]
-        for object in objects
+    for objects in [c, p]
+        for object in vcat(objects)
             for posgeo in object.geometry_positive
                 append!(imps_1, get_important_points( posgeo, Val{:x}()))
                 append!(imps_2, get_important_points( posgeo, Val{:y}()))
@@ -170,7 +171,7 @@ end
 
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
-    semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
     input_units = construct_units(config_file)
@@ -179,8 +180,8 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
     end
 
     if haskey(config_file, "objects")
-        if haskey(config_file["objects"], "semiconductors")        
-            semiconductors = broadcast(s -> construct_semiconductor(T, s, input_units), config_file["objects"]["semiconductors"])  
+        if haskey(config_file["objects"], "semiconductor")        
+            semiconductor = construct_semiconductor(T, config_file["objects"]["semiconductor"], input_units)
         end
         if haskey(config_file["objects"], "contacts")              
             contacts = broadcast(c -> construct_contact(T, c, input_units), config_file["objects"]["contacts"]) 
@@ -211,18 +212,18 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
             else
                 @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
             end
-            world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives)
+            world_limits = get_world_limits_from_objects(CS, semiconductor, contacts, passives)
             World(CS, world_limits)
         end
     else
-        world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives )
+        world_limits = get_world_limits_from_objects(CS, semiconductor, contacts, passives )
         World(CS, world_limits)
     end
 
     c = SolidStateDetector{T, CS}()
     c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
     c.config_dict = config_file
-    c.semiconductors = semiconductors
+    c.semiconductor = semiconductor
     c.contacts = contacts
     c.passives = passives
     c.input_units = input_units
@@ -246,7 +247,7 @@ function Base.sort!(v::AbstractVector{<:AbstractGeometry})
 end
 
 function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T
-    reduce((x,semiconductor) -> x || in(pt,semiconductor), c.semiconductors, init = false) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
+    in(pt,c.semiconductor) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
 end
 
 function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
@@ -257,11 +258,8 @@ function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
     println("- Environment Material: $(d.medium.name)")
     println("- Grid Type: $(CS)")
     println()
-    println("# Semiconductors: $(length(d.semiconductors))")
-    for (isc, sc)  in enumerate(d.semiconductors)
-        println("\t_____Semiconductor $(isc)_____\n")
-        println(sc)
-    end
+    println("\t_____Semiconductor _____\n")
+    println(d.semiconductor)
     println()
     println("# Contacts: $(length(d.contacts))")
     if length(d.contacts)<=5
