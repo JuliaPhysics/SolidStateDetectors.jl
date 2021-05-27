@@ -87,6 +87,7 @@ include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
+include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 # include("GeometryRounding.jl")
 
@@ -94,7 +95,6 @@ include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
 
-include("ChargeDriftModels/ChargeDriftModels.jl")
 #include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")

@@ -14,9 +14,6 @@ mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     electric_potential::Union{ElectricPotential{T}, Missing}
     weighting_potentials::Vector{Any}
     electric_field::Union{ElectricField{T}, Missing}
-
-    charge_drift_model::Union{<:AbstractChargeDriftModel{T}, Missing}
-
     electron_drift_field::Union{ElectricField{T}, Missing}
     hole_drift_field::Union{ElectricField{T}, Missing}
 end
@@ -31,7 +28,6 @@ function Simulation{T}() where {T <: SSDFloat}
         missing,
         [missing],
         missing,
-        ElectricFieldChargeDriftModel{T}(),
         missing,
         missing
     )
@@ -88,8 +84,6 @@ function Simulation(nt::NamedTuple)
     end
     if !ismissing(nt.electron_drift_field) sim.electron_drift_field = ElectricField(nt.electron_drift_field) end
     if !ismissing(nt.hole_drift_field) sim.hole_drift_field = ElectricField(nt.hole_drift_field) end
-    sim.charge_drift_model = ADLChargeDriftModel(T=T)
-    @info "I/O of charge drift model not yet supported. Loading default: ADLChargeDriftModel"
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -111,7 +105,6 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
         print("    Contact $(contact.id): ")
         println(!ismissing(sim.weighting_potentials[contact.id]) ? size(sim.weighting_potentials[contact.id]) : missing)
     end
-    println("  Charge drift model: ", !ismissing(sim.electric_field) ? typeof(sim.charge_drift_model) : missing)
     println("  Electron drift field: ", !ismissing(sim.electron_drift_field) ? size(sim.electron_drift_field) : missing)
     println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
@@ -632,14 +625,14 @@ function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::
 end
 
 function set_charge_drift_model!(sim::Simulation{T}, charge_drift_model::AbstractChargeDriftModel{T})::Nothing where {T <: SSDFloat}
-    sim.charge_drift_model = charge_drift_model
+    sim.detector.semiconductors[1].charge_drift_model = charge_drift_model
     nothing
 end
 
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
-    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
-    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
+    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductors[1].charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
+    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.detector.semiconductors[1].charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     nothing
 end
 @deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
@@ -684,7 +677,6 @@ function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool 
                 verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
-    set_charge_drift_model!(sim, sim.charge_drift_model)
     calculate_drift_fields!(sim)
     @info "Detector simulation done"
 end

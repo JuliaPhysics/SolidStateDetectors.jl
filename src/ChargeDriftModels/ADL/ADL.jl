@@ -117,6 +117,7 @@ function ADLChargeDriftModel{T,M,N,TM}(chargedriftmodel::ADLChargeDriftModel{<:A
 end
 
 
+ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDriftModel(args..., T=T, kwargs...)
 function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
                              temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
 

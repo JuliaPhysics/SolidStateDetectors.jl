@@ -6,6 +6,7 @@ mutable struct Semiconductor{T} <: AbstractSemiconductor{T}
     temperature::T
     material::NamedTuple
     impurity_density_model::AbstractImpurityDensity{T}
+    charge_drift_model::AbstractChargeDriftModel{T}
     geometry::AbstractGeometry{T}
     geometry_positive::Vector{AbstractGeometry{T}}
     geometry_negative::Vector{AbstractGeometry{T}}
@@ -25,6 +26,12 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFlo
         ImpurityDensity(T, dict["charge_density_model"], input_units)
     else
         ConstantImpurityDensity{T}(0)
+    end
+    sc.charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
+        cdm = getfield(Main, Symbol(dict["charge_drift_model"]["model"])){T}
+        cdm <: AbstractChargeDriftModel{T} ? cdm() : ElectricFieldChargeDriftModel{T}()
+    else
+        ElectricFieldChargeDriftModel{T}()
     end
     sc.material = material_properties[materials[dict["material"]]]
     sc.geometry = Geometry(T, dict["geometry"], input_units)
