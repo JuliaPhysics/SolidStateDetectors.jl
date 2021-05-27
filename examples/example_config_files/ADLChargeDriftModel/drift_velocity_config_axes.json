@@ -1,4 +1,5 @@
 {
+	"model": "ADLChargeDriftModel",
 	"X": 0.7853981633974483,
 	"material": "HPGe",
 	"drift": {
