@@ -43,6 +43,9 @@
                     "gradient": -1.0e5
                 }
             },
+            "charge_drift_model":{
+                "include": "ADLChargeDriftModel/drift_velocity_config.json"
+            },
             "temperature": 77.0,
             "geometry": {
                 "difference": [

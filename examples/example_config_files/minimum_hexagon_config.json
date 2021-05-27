@@ -54,6 +54,10 @@
                     "gradient": 100000.0
                 }
             },
+            
+            "charge_drift_model":{
+                "include": "ADLChargeDriftModel/drift_velocity_Si_300K.json"
+            },
             "temperature": 140,
             "geometry": {
                 "translate": {
