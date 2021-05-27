@@ -109,8 +109,8 @@ function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconduc
             end
         end
     end
-    imps_1 = uniq(sort(imps_1))
-    imps_3 = uniq(sort(imps_3))
+    unique!(sort!(imps_1))
+    unique!(sort!(imps_3))
     if length(imps_1) > 1
         ax1l = minimum(imps_1)
         ax1r = maximum(imps_1)
@@ -141,9 +141,9 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Vector{Semiconducto
             end
         end
     end
-    imps_1 = uniq(sort(imps_1))
-    imps_2 = uniq(sort(imps_2))
-    imps_3 = uniq(sort(imps_3))
+    unique!(sort!(imps_1))
+    unique!(sort!(imps_2))
+    unique!(sort!(imps_3))
     if length(imps_1) > 1
         ax1l = minimum(imps_1)
         ax1r = maximum(imps_1)
@@ -239,7 +239,7 @@ end
 function Base.sort!(v::AbstractVector{<:AbstractGeometry})
     hierarchies::Vector{Int} = map(x->x.hierarchy,v)
     v_result::typeof(v) = []
-    for idx in sort!(unique!(hierarchies))
+    for idx in unique!(sort!(hierarchies))
         push!(v_result,filter(x->x.hierarchy == hierarchies[idx],v)...)
     end
     return v_result

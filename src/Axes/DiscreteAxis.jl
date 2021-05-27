@@ -65,28 +65,11 @@ function get_boundary_types(ax::DiscreteAxis{T,LB,RB})::NTuple{4, Symbol} where 
     return LB, RB, get_boundary_types(ax.interval)...
 end
 
-
-function uniq(v::Vector{T})::Vector{T} where {T <: Real}
-    v1::Vector{T} = Vector{T}()
-    if length(v) > 0
-        laste::T = v[1]
-        push!(v1, laste)
-        for e in v
-            if e != laste
-                laste = e
-                push!(v1, laste)
-            end
-        end
-    end
-    return v1
-end
-
 function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
     v::Vector{T} = T[]
     for r in impticks if in(r, ax.interval) push!(v, r) end end
     for r in ax push!(v, r) end
-    sort!(v)
-    v = uniq(v)
+    unique!(sort!(v))
     delete_idcs::Vector{Int} = Int[]
     for i in 1:(length(v) - 1)
         if (v[i + 1] - v[i]) < atol
@@ -94,7 +77,7 @@ function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Ve
             if !in(v[i + 1], impticks) push!(delete_idcs, i + 1) end
         end
     end
-    delete_idcs = sort(uniq(delete_idcs))
+    unique!(sort!(delete_idcs))
     deleteat!(v, delete_idcs) 
     for impv in impticks
         if !in(impv, v) && in(impv, ax.interval)

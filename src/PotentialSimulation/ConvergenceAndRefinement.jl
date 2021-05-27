@@ -251,7 +251,7 @@ function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, Cylindri
     if isodd(length(inds_z)) inds_z = inds_z[1:end-1] end
     @assert iseven(length(inds_z)) "Refinement would result in uneven grid in z."
 
-    return sort(inds_r), sort(inds_φ), sort(inds_z)
+    return sort!(inds_r), sort!(inds_φ), sort!(inds_z)
 end
 
 
@@ -356,7 +356,7 @@ function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, Cartesi
     @assert iseven(length(inds_x)) "Refinement would result in uneven grid in x. This is not allowed since this is the red black dimension."
     
 
-    return sort(inds_x), sort(inds_y), sort(inds_z)
+    return sort!(inds_x), sort!(inds_y), sort!(inds_z)
 end
 
 function refine(p::ScalarPotential, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})::typeof(p) 
