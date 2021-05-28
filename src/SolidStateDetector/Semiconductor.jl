@@ -44,6 +44,7 @@ end
 function println(io::IO, d::Semiconductor{T}) where {T <: SSDFloat}
     println("\t---General Properties---")
     println("\t-Detector Material: \t $(d.material.name)")
+    println("\t-Charge Drift Model:\t $(typeof(d.charge_drift_model).name.name)")
 end
 
 print(io::IO, d::Semiconductor{T}) where {T} = print(io, "Semiconductor{$T} - $(d.material.name)")

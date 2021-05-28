@@ -103,7 +103,7 @@ function get_world_limits_from_objects(::Type{Cylindrical}, s::Semiconductor{T},
     imps_1::Vector{T} = []
     imps_3::Vector{T} = []
     for objects in [c, p]
-        for object in vcat(objects)
+        for object in objects
             for posgeo in object.geometry_positive
                 append!(imps_1, get_important_points( posgeo, Val{:r}()))
                 append!(imps_3, get_important_points( posgeo, Val{:z}()))
@@ -134,7 +134,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c
     imps_2::Vector{T} = []
     imps_3::Vector{T} = []
     for objects in [c, p]
-        for object in vcat(objects)
+        for object in objects
             for posgeo in object.geometry_positive
                 append!(imps_1, get_important_points( posgeo, Val{:x}()))
                 append!(imps_2, get_important_points( posgeo, Val{:y}()))
@@ -258,7 +258,7 @@ function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
     println("- Environment Material: $(d.medium.name)")
     println("- Grid Type: $(CS)")
     println()
-    println("\t_____Semiconductor _____\n")
+    println("\t_____Semiconductor_____\n")
     println(d.semiconductor)
     println()
     println("# Contacts: $(length(d.contacts))")
