@@ -36,12 +36,9 @@ using SolidStateDetectors.ConstructiveSolidGeometry: sample,
             end
             
             for N in 4:8
-                #= 
-                # There are still rounding errors if r is slightly outside of the r-interval of RegularPolygon
                 @testset "RegularPolygon{$N}" begin
                     p = RegularPolygon(N); @test all(broadcast(pt -> pt in p, sample(p, cart)))
                 end
-                =#
                 @testset "RegularPrismMantle{$N}" begin
                     p = RegularPrismMantle(N); @test all(broadcast(pt -> pt in p, sample(p, cart)))
                 end

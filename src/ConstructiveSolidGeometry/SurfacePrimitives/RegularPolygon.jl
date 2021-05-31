@@ -39,16 +39,18 @@ end
 
 
 @inline in(p::CylindricalPoint, rp::RegularPolygon{N, T, <:Real}) where {N,T} = begin
-    _isapprox_z(p, rp.z) && p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)) <= rp.r
+    _isapprox_z(p, rp.z) && p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)) <= rp.r +  geom_atol_zero(T)
 end
 
 @inline in(p::CylindricalPoint, rp::RegularPolygon{N, T, <:AbstractInterval}) where {N,T} = begin
-    _isapprox_z(p, rp.z) && p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N)) in rp.r
+    _isapprox_z(p, rp.z) && let rr = p.r * cos(T(π/N) - mod(p.φ, T(2π/N))) / cos(T(π/N))
+         rr in rp.r || isapprox(rr, rp.r.left, tol = geom_atol_zero(T)) || isapprox(rr, rp.r.left, tol = geom_atol_zero(T))
+     end
 end
 
 @inline in(p::CartesianPoint, rp::RegularPolygon) = in(CylindricalPoint(p), rp)
 
-# Special case: CartesianPoint in RegularHexagon: use analytical formulas
+#= Special case: CartesianPoint in RegularHexagon: use analytical formulas
 @inline in(p::CartesianPoint, hp::RegularHexagon{T, <:Real}) where {T} =
     _isapprox_z(p, hp.z) && _in_y(p, hp.r * sqrt(T(3))/2) && _in_x(p, hp.r - abs(p.y)/sqrt(T(3)))
 
@@ -58,6 +60,7 @@ end
         abs(p.y) >= hp.r.left * sqrt(T(3))/2 && _in_x(p, hp.r.right * T(0.5)) ||
         abs(p.x) in (hp.r.left - abs(p.y) /sqrt(T(3)))..(hp.r.right - abs(p.y)/sqrt(T(3)))
     )
+=#
 
 get_r_limits(rp::RegularPolygon) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
 get_r_at_φ(rp::RegularPolygon{N,T}, φ::T) where {N,T} = get_r_limits(rp) .* T(cos(π/N)/cos(π/N - mod(φ, 2π/N)))
