@@ -108,18 +108,18 @@ end
 
 @inline _isapprox_x(p::CylindricalPoint{T}, x::Real) where {T} = isapprox(p.r * cos(p.φ), x, atol = geom_atol_zero(T))
 
-@inline _in_x(p::CylindricalPoint, x::Real) = abs(p.r * cos(p.φ)) <= x
-@inline _in_x(p::CylindricalPoint, x::AbstractInterval) = p.r * cos(p.φ) in x
+@inline _in_x(p::CylindricalPoint{T}, x::Real) where {T} = abs(p.r * cos(p.φ)) <= x + geom_atol_zero(T)
+@inline _in_x(p::CylindricalPoint, x::AbstractInterval) = p.r * cos(p.φ) in x || _isapprox_x(p, x.left) || _isapprox_x(p, x.right)
 
 @inline _isapprox_y(p::CylindricalPoint{T}, y::Real) where {T} = isapprox(p.r * sin(p.φ), y, atol = geom_atol_zero(T))
 
-@inline _in_y(p::CylindricalPoint, y::Real) = abs(p.r * sin(p.φ)) <= y
-@inline _in_y(p::CylindricalPoint, y::AbstractInterval) = p.r * sin(p.φ) in y
+@inline _in_y(p::CylindricalPoint{T}, y::Real) where {T} = abs(p.r * sin(p.φ)) <= y + geom_atol_zero(T)
+@inline _in_y(p::CylindricalPoint, y::AbstractInterval) = p.r * sin(p.φ) in y || _isapprox_y(p, y.left) || _isapprox_y(p, y.right)
 
 @inline _isapprox_z(p::CylindricalPoint{T}, z::Real) where {T} = isapprox(p.z, z, atol = geom_atol_zero(T))
 
-@inline _in_z(p::CylindricalPoint, z::Real) = abs(p.z) <= z
-@inline _in_z(p::CylindricalPoint, z::AbstractInterval) = p.z in z
+@inline _in_z(p::CylindricalPoint{T}, z::Real) where {T} = abs(p.z) <= z + geom_atol_zero(T)
+@inline _in_z(p::CylindricalPoint, z::AbstractInterval) = p.z in z || _isapprox_z(p, z.left) || _isapprox_z(p, z.right)
 
 @inline _isapprox_sph_r(p::CylindricalPoint{T}, radius::Real) where {T} = isapprox(hypot(p.r, p.z), radius, atol = geom_atol_zero(T))
 

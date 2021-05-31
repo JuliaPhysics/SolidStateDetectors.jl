@@ -47,7 +47,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry: sample,
         end
         
         surface_primitives = [ConalPlane, CylindricalAnnulus, ConeMantle,
-                    # RectangleX, RectangleY, RectangleZ, # Rounding errors at the edges
+                    RectangleX, RectangleY, RectangleZ,
                     SphereMantle, ToroidalAnnulus, TorusMantle]
         
         @testset "Cylindrical Grid" begin
