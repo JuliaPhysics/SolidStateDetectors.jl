@@ -86,23 +86,21 @@ end
 
 
 function get_r(r::RectangleX{T}, φ::T) where {T}
-    atol = geom_atol_zero(T)
     x::T = r.loc
     yMin::T, yMax::T = get_l_limits(r)
     sφ::T, cφ::T = sincos(φ)
     if x * cφ < 0 return () end
     tanφ::T = tan(φ)
-    yMin - atol ≤ x * tanφ ≤ yMax + atol ? (x / cφ,) : ()
+    prevfloat(yMin,2) ≤ x * tanφ ≤ nextfloat(yMax,2) ? (x / cφ,) : ()
 end
 
 function get_r(r::RectangleY{T}, φ::T) where {T}
-    atol = geom_atol_zero(T)
     y::T = r.loc
     xMin::T, xMax::T = get_l_limits(r)
     sφ::T, cφ::T = sincos(φ)
     if y * sφ < 0 return () end
     cotφ::T = cot(φ)
-    xMin - atol ≤ y * cotφ ≤ xMax + atol ? (y / sφ,) : ()
+    prevfloat(xMin,2) ≤ y * cotφ ≤ nextfloat(xMax,2) ? (y / sφ,) : ()
 end
 
 function get_φ_at_loc(r::RectangleX{T}, R::T) where {T}
