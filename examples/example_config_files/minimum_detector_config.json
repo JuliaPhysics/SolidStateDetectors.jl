@@ -14,25 +14,27 @@
             }
         }
     },
-    "objects": {
-        "semiconductor": {
-            "material": "HPGe",
-            "geometry": {
-                "difference": [
-                    {
-                        "tube": {
-                            "r": 40.0,
-                            "h": 60.0
+    "detectors": [
+        {
+            "bulk": {
+                "material": "HPGe",
+                "geometry": {
+                    "difference": [
+                        {
+                            "tube": {
+                                "r": 40.0,
+                                "h": 60.0
+                            }
+                        },
+                        {
+                            "tube": {
+                                "r": 5.0,
+                                "h": 60.0
+                            }
                         }
-                    },
-                    {
-                        "tube": {
-                            "r": 5.0,
-                            "h": 60.0
-                        }
-                    }
-                ]
+                    ]
+                }
             }
         }
-    }
+    ]
 }

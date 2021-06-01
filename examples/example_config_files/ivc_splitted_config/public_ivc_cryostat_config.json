@@ -5,16 +5,18 @@
     ],
     "name": "Public Inverted Coax",
     "medium": "vacuum",
-    "objects": {
-        "semiconductor": {
-            "include" : "semiconductor.json"
-        },
-        "contacts": [
-            {"include" : "channels/01_PointContact.json"},
-            {"include" : "channels/02_Mantle.json"}
-        ],
-        "passives" : [
-            {"include" : "cryostat.json"}
-        ]
-    }
+    "detectors": [
+        {
+            "bulk": {
+                "include" : "semiconductor.json"
+            },
+            "contacts": [
+                {"include" : "channels/01_PointContact.json"},
+                {"include" : "channels/02_Mantle.json"}
+            ],
+            "passives" : [
+                {"include" : "cryostat.json"}
+            ]
+        }
+    ]
 }

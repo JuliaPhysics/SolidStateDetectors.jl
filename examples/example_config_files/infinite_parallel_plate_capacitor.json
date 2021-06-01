@@ -27,74 +27,30 @@
         }
     },
     "medium": "HPGe",
-    "objects": {
-        "semiconductor": {
-            "material": "HPGe",
-            "impurity_density": {
-                "name": "linear",
-                "x": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                },
-                "y": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                },
-                "z": {
-                    "init": 0.0,
-                    "gradient": 0.0
-                }
-            },
-            "temperature": 77,
-            "geometry": {
-                "box": {
+    "detectors": [
+        {
+            "bulk": {
+                "material": "HPGe",
+                "temperature": 78,
+                "impurity_density": {
+                    "name": "linear",
                     "x": {
-                        "from": -0.5,
-                        "to": 0.5
+                        "init": 0.0,
+                        "gradient": 0.0
                     },
                     "y": {
-                        "from": -6.0,
-                        "to": 6.0
+                        "init": 0.0,
+                        "gradient": 0.0
                     },
                     "z": {
-                        "from": -6.0,
-                        "to": 6.0
+                        "init": 0.0,
+                        "gradient": 0.0
                     }
-                }
-            }
-        },
-        "contacts": [
-            {
-                "material": "HPGe",
-                "name": "n+ contact",
-                "potential": 10.0,
-                "channel": 1,
+                },
                 "geometry": {
                     "box": {
                         "x": {
                             "from": -0.5,
-                            "to": -0.5
-                        },
-                        "y": {
-                            "from": -6.0,
-                            "to": 6.0
-                        },
-                        "z": {
-                            "from": -6.0,
-                            "to": 6.0
-                        }
-                    }
-                }
-            },
-            {
-                "material": "HPGe",
-                "name": "p+ contact",
-                "potential": 0.0,
-                "channel": 2,
-                "geometry": {
-                    "box": {
-                        "x": {
-                            "from": 0.5,
                             "to": 0.5
                         },
                         "y": {
@@ -107,7 +63,53 @@
                         }
                     }
                 }
-            }
-        ]
-    }
+            },
+            "contacts": [
+                {
+                    "material": "HPGe",
+                    "name": "n+ contact",
+                    "potential": 10.0,
+                    "channel": 1,
+                    "geometry": {
+                        "box": {
+                            "x": {
+                                "from": -0.5,
+                                "to": -0.5
+                            },
+                            "y": {
+                                "from": -6.0,
+                                "to": 6.0
+                            },
+                            "z": {
+                                "from": -6.0,
+                                "to": 6.0
+                            }
+                        }
+                    }
+                },
+                {
+                    "material": "HPGe",
+                    "name": "p+ contact",
+                    "potential": 0.0,
+                    "channel": 2,
+                    "geometry": {
+                        "box": {
+                            "x": {
+                                "from": 0.5,
+                                "to": 0.5
+                            },
+                            "y": {
+                                "from": -6.0,
+                                "to": 6.0
+                            },
+                            "z": {
+                                "from": -6.0,
+                                "to": 6.0
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
 }

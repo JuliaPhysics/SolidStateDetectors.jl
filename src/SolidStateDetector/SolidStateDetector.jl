@@ -171,7 +171,7 @@ end
 
 function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
-    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     medium::NamedTuple = material_properties[materials["vacuum"]]
     input_units = construct_units(config_file)
@@ -179,18 +179,20 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
         medium = material_properties[materials[config_file["medium"]]]
     end
 
-    if haskey(config_file, "objects")
-        if haskey(config_file["objects"], "semiconductor")        
-            semiconductor = construct_semiconductor(T, config_file["objects"]["semiconductor"], input_units)
+    if haskey(config_file, "detectors")
+        config_detector = config_file["detectors"][1] # still only one detector
+        
+        @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."      
+        semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units)
+
+        if haskey(config_detector, "contacts")              
+            contacts = broadcast(c -> construct_contact(T, c, input_units), config_detector["contacts"]) 
         end
-        if haskey(config_file["objects"], "contacts")              
-            contacts = broadcast(c -> construct_contact(T, c, input_units), config_file["objects"]["contacts"]) 
+        if haskey(config_detector, "passives")              
+            passives = broadcast(p -> construct_passive(T, p, input_units), config_detector["passives"])       
         end
-        if haskey(config_file["objects"], "passives")              
-            passives = broadcast(p -> construct_passive(T, p, input_units), config_file["objects"]["passives"])       
-        end
-        if haskey(config_file["objects"], "virtual_drift_volumes")  
-            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units), config_file["objects"]["virtual_drift_volumes"]) 
+        if haskey(config_detector, "virtual_drift_volumes")  
+            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units), config_detector["virtual_drift_volumes"]) 
         end
     end
 
