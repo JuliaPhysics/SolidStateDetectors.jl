@@ -120,15 +120,16 @@ function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFlo
 end
 
 
-function Simulation(detector::SolidStateDetector{T})::Simulation{T} where {T <: SSDFloat}
+function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim::Simulation{T} = Simulation{T}()
-    sim.detector = detector
+    sim.detector = SolidStateDetector{T}(parsed_dict) 
     sim.weighting_potentials = Missing[ missing for i in 1:length(sim.detector.contacts)]
     return sim
 end
 
 function Simulation{T}(config_file::AbstractString)::Simulation{T} where{T <: SSDFloat}
-    return Simulation( SolidStateDetector{T}(config_file) )
+    parsed_dict = parse_config_file(config_file)
+    return Simulation{T}( parsed_dict )
 end
 function Simulation(config_file::AbstractString)::Simulation{Float32}
     return Simulation{Float32}( config_file )

@@ -105,20 +105,6 @@ function scan_and_merge_included_json_files!(parsed_dict, config_filename::Abstr
     end
 end
 
-
-function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
-    parsed_dict = parse_config_file(filename)
-    return SolidStateDetector{T}(parsed_dict)
-end
-
-# function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
-#     SolidStateDetector{T}(filename)
-# end
-
-function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float32}
-    SolidStateDetector{Float32}(filename)
-end
-
 function sample(c::SolidStateDetector{T, Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
     imp::Vector{CartesianPoint{T}} = vcat(
         CartesianPoint.(sample(c.semiconductor.geometry, sampling...)),

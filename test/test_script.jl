@@ -23,10 +23,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
 # for key in keys(SSD_examples)
     @info "Now test detector type: $key"
 
-    det = SolidStateDetector{T}(SSD_examples[key])
-    S = SSD.get_coordinate_system(det)
-
-    simulation = Simulation(det);
+    simulation = Simulation(SSD_examples[key]);
 
     apply_initial_state!(simulation, ElectricPotential)
     p = if S == SSD.Cartesian
