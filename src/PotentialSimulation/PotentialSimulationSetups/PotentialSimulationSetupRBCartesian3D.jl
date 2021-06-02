@@ -1,4 +1,4 @@
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, Cartesian}, grid::Grid{T, 3, Cartesian} = Grid(ssd),
+function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, Cartesian}, grid::Grid{T, 3, Cartesian} = Grid(ssd), medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing,
                 sor_consts::T = T(1)) where {T}#::PotentialSimulationSetupRB{T} where {T}
                 is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
@@ -109,7 +109,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, Cartesian}, grid:
                 for ix in 1:size(ϵ, 1)
                     pos_x = mpx[ix]
                     pt::CartesianPoint{T} = CartesianPoint{T}(pos_x, pos_y, pos_z)
-                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd)
+                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd, medium)
                 end
             end
         end

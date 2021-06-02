@@ -5,17 +5,10 @@ CS: Coordinate System: -> Cartesian / Cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractConfig{T}
     name::String  # optional
-    input_units::NamedTuple
-    world::World{T, 3}
-
-    config_dict::Dict
-
-    medium::NamedTuple # this should become a struct at some point
-
+    world::World{T, 3, CS}
     semiconductor::Semiconductor{T}
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
-
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}}
 end
 
@@ -31,10 +24,7 @@ function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat
 
     return SolidStateDetector{T, CS}(
         "EmptyDetector",
-        default_unit_tuple(),
         world,
-        Dict(),
-        material_properties[materials["vacuum"]],
         semiconductor,
         contacts,
         passives,
@@ -143,15 +133,10 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
+function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where{T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
     contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    medium::NamedTuple = material_properties[materials["vacuum"]]
-    input_units = construct_units(config_file)
-    if haskey(config_file, "medium")
-        medium = material_properties[materials[config_file["medium"]]]
-    end
 
     if haskey(config_file, "detectors")
         config_detector = config_file["detectors"][1] # still only one detector
@@ -198,12 +183,9 @@ function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T
 
     c = SolidStateDetector{T, CS}()
     c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
-    c.config_dict = config_file
     c.semiconductor = semiconductor
     c.contacts = contacts
     c.passives = passives
-    c.input_units = input_units
-    c.medium = medium
     c.world = world
     c.virtual_drift_volumes = virtual_drift_volumes
     return c
@@ -228,10 +210,8 @@ end
 
 function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
     println("________"*d.name*"________\n")
-    # println("Class: ",d.class)
     println("---General Properties---")
     println("- Precision type: $(T)")
-    println("- Environment Material: $(d.medium.name)")
     println("- Grid Type: $(CS)")
     println()
     println("\t_____Semiconductor_____\n")

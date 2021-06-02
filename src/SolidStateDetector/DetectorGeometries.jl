@@ -9,7 +9,7 @@ include("SolidStateDetector.jl")
 
 
 """
-    SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
+    parse_config_file(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
 
 Reads in a config file and returns an Detector struct which holds all information specified in the config file.
 Currently supported formats for the config file: .json, .yaml
@@ -268,10 +268,10 @@ function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T wh
     get_charge_density(p.charge_density_model, pt)
 end
 
-function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T, T} where {T <: SSDFloat}
+function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T}, medium::NamedTuple = material_properties[materials["vacuum"]])::Tuple{T, T, T} where {T <: SSDFloat}
     ρ_semiconductor::T = 0
     q_eff_fix::T = 0
-    ϵ::T = ssd.medium.ϵ_r
+    ϵ::T = medium.ϵ_r
     if pt in ssd.semiconductor
         ρ_semiconductor = get_charge_density(ssd.semiconductor, pt) 
         ϵ = ssd.semiconductor.material.ϵ_r
@@ -286,7 +286,6 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     end
     return ρ_semiconductor, ϵ, q_eff_fix
 end
-
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
