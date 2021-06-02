@@ -105,14 +105,14 @@ function scan_and_merge_included_json_files!(parsed_dict, config_filename::Abstr
     end
 end
 
-function sample(c::SolidStateDetector{T, Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
+function sample(c::SolidStateDetector{T}, ::Type{Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
     imp::Vector{CartesianPoint{T}} = vcat(
         CartesianPoint.(sample(c.semiconductor.geometry, sampling...)),
         [CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
-function sample(c::SolidStateDetector{T, Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
+function sample(c::SolidStateDetector{T}, ::Type{Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
     imp::Vector{CylindricalPoint{T}} = vcat(
     CylindricalPoint.(sample(c.semiconductor.geometry, sampling...)),
     [CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)

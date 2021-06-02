@@ -78,10 +78,10 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv
     return sv
 end
 
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, Cylindrical}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl in point_types || pt_cyl in det
 end
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, Cartesian}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
     pt_car in point_types || pt_car in det
 end
 
@@ -101,7 +101,7 @@ Before calling this function one should check that `startpos` is inside `det`: `
 function _drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
                             timestamps::Vector{T},
-                            det::SolidStateDetector{T, S},
+                            det::SolidStateDetector{T},
                             point_types::PointTypes{T, 3, S},
                             grid::Grid{T, 3, S},
                             startpos::CartesianPoint{T},
@@ -181,7 +181,7 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
+function get_crossing_pos(  detector::SolidStateDetector{T}, grid::Grid{T, 3, S}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
     cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_point(point_mid, S))

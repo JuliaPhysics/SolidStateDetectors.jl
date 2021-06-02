@@ -1,4 +1,4 @@
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T, Cartesian}, grid::Grid{T, 3, Cartesian} = Grid(ssd), medium::NamedTuple = material_properties[materials["vacuum"]],
+function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, Cartesian}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing,
                 sor_consts::T = T(1)) where {T}#::PotentialSimulationSetupRB{T} where {T}
                 is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)

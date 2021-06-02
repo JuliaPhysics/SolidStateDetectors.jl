@@ -1,6 +1,6 @@
 @recipe function f(det::SolidStateDetector{T}; SSD_style = :wireframe, n = 30, φ = missing, seriescolor = missing, label = missing, alpha_factor = 1) where {T}
-    if !(SSD_style in [:wireframe, :samplesurface])
-        @warn "Chose SSD_style from [:wireframe, :samplesurface]. Defaulting to :wireframe"
+    if !(SSD_style in [:wireframe])#, :samplesurface])
+        #@warn "Chose SSD_style from [:wireframe, :samplesurface]. Defaulting to :wireframe"
         SSD_style = :wireframe
     end
     clabel = (ismissing(label) ? map(c -> (c.name == "" ? c.id : c.name), det.contacts) : label)
@@ -8,9 +8,10 @@
     ccolor = (ismissing(seriescolor) ? map(c -> c.id, det.contacts) : seriescolor)
     if !(typeof(ccolor) <: AbstractArray) ccolor = [ccolor] end
     world_size = missing
+    #=
     if SSD_style == :samplesurface
-        grid = Grid(det)
-        CS = get_coordinate_system(det)
+        grid = Grid(det) # DOES NOT WORK ANYMORE
+        CS = get_coordinate_system(det) # DOES NOT WORK ANYMORE
         if CS == Cylindrical
             world_size = CylindricalVector{T}(width(grid.r.interval), π, width(grid.z.interval))
         elseif CS == Cartesian
@@ -19,6 +20,7 @@
             @error "Could not determine the world size, try SSD_style = :wireframe"
         end
     end
+    =#
     if ismissing(φ)
         xguide --> "x / m"
         yguide --> "y / m"

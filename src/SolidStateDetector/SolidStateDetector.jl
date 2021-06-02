@@ -1,9 +1,8 @@
 """
-    mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
+    mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
 
-CS: Coordinate System: -> Cartesian / Cylindrical
 """
-mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractConfig{T}
+mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
     name::String  # optional
     semiconductor::Semiconductor{T}
     contacts::Vector{Contact{T}}
@@ -12,14 +11,13 @@ mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem}
 end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
-get_coordinate_system(::SolidStateDetector{T, CS}) where {T, CS} = CS
 
-function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat, CS}
+function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
     semiconductor::Semiconductor{T} = Semiconductor{T}()
     contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     
-    return SolidStateDetector{T, CS}(
+    return SolidStateDetector{T}(
         "EmptyDetector",
         semiconductor,
         contacts,
@@ -122,7 +120,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T,CS}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
+function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where {T <: SSDFloat}
     contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
 
@@ -143,7 +141,7 @@ function SolidStateDetector{T,CS}(config_file::Dict, input_units::NamedTuple)::S
         end
     end
 
-    c = SolidStateDetector{T, CS}()
+    c = SolidStateDetector{T}()
     c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
     c.semiconductor = semiconductor
     c.contacts = contacts
@@ -169,11 +167,10 @@ function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool wher
     in(pt,c.semiconductor) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
 end
 
-function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
+function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
     println("________"*d.name*"________\n")
     println("---General Properties---")
     println("- Precision type: $(T)")
-    println("- Grid Type: $(CS)")
     println()
     println("\t_____Semiconductor_____\n")
     println(d.semiconductor)

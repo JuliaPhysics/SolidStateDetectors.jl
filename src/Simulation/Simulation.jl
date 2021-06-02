@@ -27,7 +27,7 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         Dict(),
         default_unit_tuple(),
         material_properties[materials["vacuum"]],
-        SolidStateDetector{T,CS}(),
+        SolidStateDetector{T}(),
         World(CS,(T(0),T(1),T(0),T(1),T(0),T(1))),
         missing,
         missing,
@@ -153,7 +153,7 @@ function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim.config_dict = parsed_dict
     sim.input_units = construct_units(parsed_dict)
     sim.medium = material_properties[materials[haskey(parsed_dict, "medium") ? parsed_dict["medium"] : "vacuum"]]
-    sim.detector = SolidStateDetector{T,CS}(parsed_dict, sim.input_units) 
+    sim.detector = SolidStateDetector{T}(parsed_dict, sim.input_units) 
     sim.world = if haskey(parsed_dict, "grid") && isa(parsed_dict["grid"], Dict)
             World(T, parsed_dict["grid"], sim.input_units)
         else let ssd = sim.detector 
@@ -206,7 +206,7 @@ function Grid(  sim::Simulation{T, Cylindrical};
         missing, false
     end
     
-    samples::Vector{CylindricalPoint{T}} = sample(sim.detector)
+    samples::Vector{CylindricalPoint{T}} = sample(sim.detector, Cylindrical)
    
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
@@ -312,7 +312,7 @@ function Grid(  sim::Simulation{T, Cartesian};
         init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
-    samples::Vector{CartesianPoint{T}} = sample(sim.detector)
+    samples::Vector{CartesianPoint{T}} = sample(sim.detector, Cartesian)
     
     important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
     important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
