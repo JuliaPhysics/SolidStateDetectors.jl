@@ -1,15 +1,16 @@
 abstract type AbstractSimulation{T <: SSDFloat} end
 
 """
-    mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
+    mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
 
 Collection of all parts of a Simulation of a Solid State Detector.
 """
-mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
+mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
     config_dict::Dict
     input_units::NamedTuple
     medium::NamedTuple # this should become a struct at some point
     detector::Union{SolidStateDetector{T}, Missing}
+    world::World{T, 3, CS}
     q_eff_imp::Union{EffectiveChargeDensity{T}, Missing} # Effective charge coming from the impurites of the semiconductors
     q_eff_fix::Union{EffectiveChargeDensity{T}, Missing} # Fixed charge coming from fixed space charges, e.g. charged up surface layers
     ϵ_r::Union{DielectricDistribution{T}, Missing}
@@ -21,12 +22,13 @@ mutable struct Simulation{T <: SSDFloat} <: AbstractSimulation{T}
     hole_drift_field::Union{ElectricField{T}, Missing}
 end
 
-function Simulation{T}() where {T <: SSDFloat}
-    Simulation{T}(
+function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
+    Simulation{T, CS}(
         Dict(),
         default_unit_tuple(),
         material_properties[materials["vacuum"]],
-        SolidStateDetector{T}(),
+        SolidStateDetector{T,CS}(),
+        World(CS,(T(0),T(1),T(0),T(1),T(0),T(1))),
         missing,
         missing,
         missing,
@@ -39,9 +41,8 @@ function Simulation{T}() where {T <: SSDFloat}
     )
 end
 
-function get_precision_type(sim::Simulation{T}) where {T}
-    typeof(sim).parameters[1]
-end
+get_precision_type(::Simulation{T}) where {T} = T
+get_coordinate_system(::Simulation{T, CS}) where {T, CS} = CS
 
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     wps_strings = AbstractString[]
@@ -98,7 +99,7 @@ Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
 
 
 function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
-    println(typeof(sim), " - Coordinate system: ", get_coordinate_system(sim.detector))
+    println(typeof(sim), " - Coordinate system: ", get_coordinate_system(sim))
     println("  Environment Material: $(sim.medium.name)")
     println("  Detector: $(sim.detector.name)")
     println("  Electric potential: ", !ismissing(sim.electric_potential) ? size(sim.electric_potential) : missing)
@@ -128,11 +129,38 @@ end
 
 
 function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
-    sim::Simulation{T} = Simulation{T}()
+    CS::CoordinateSystemType = Cartesian
+    if haskey(parsed_dict, "grid")
+        if isa(parsed_dict["grid"], Dict)
+            CS = if parsed_dict["grid"]["coordinates"] == "cartesian" 
+                Cartesian
+            elseif parsed_dict["grid"]["coordinates"]  == "cylindrical"
+                Cylindrical
+            else
+                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
+            end
+        elseif isa(parsed_dict["grid"], String)
+            CS = if parsed_dict["grid"] == "cartesian" 
+                Cartesian
+            elseif parsed_dict["grid"] == "cylindrical"
+                Cylindrical
+            else
+                @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
+            end
+        end
+    end
+    sim::Simulation{T,CS} = Simulation{T,CS}()
     sim.config_dict = parsed_dict
-    sim.medium::NamedTuple = material_properties[materials[haskey(parsed_dict, "medium") ? parsed_dict["medium"] : "vacuum"]]
     sim.input_units = construct_units(parsed_dict)
-    sim.detector = SolidStateDetector{T}(parsed_dict, sim.input_units) 
+    sim.medium = material_properties[materials[haskey(parsed_dict, "medium") ? parsed_dict["medium"] : "vacuum"]]
+    sim.detector = SolidStateDetector{T,CS}(parsed_dict, sim.input_units) 
+    sim.world = if haskey(parsed_dict, "grid") && isa(parsed_dict["grid"], Dict)
+            World(T, parsed_dict["grid"], sim.input_units)
+        else let ssd = sim.detector 
+            world_limits = get_world_limits_from_objects(CS, ssd.semiconductor, ssd.contacts, ssd.passives)
+            World(CS, world_limits)
+        end
+    end
     sim.weighting_potentials = Missing[ missing for i in 1:length(sim.detector.contacts)]
     return sim
 end
@@ -147,13 +175,13 @@ end
 
 # Functions
 """
-    function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim.detector))::Nothing
+    function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing
 
 Applies the initial state of the electric potential calculation.
 It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`.
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} =
+function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing where {T <: SSDFloat}
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
         PotentialSimulationSetupRB(sim.detector, grid, sim.medium);
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
@@ -165,13 +193,13 @@ function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, gri
 end
 
 """
-    function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim.detector))::Nothing
+    function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing
 
 Applies the initial state of the weighting potential calculation for the contact with the id `contact_id`.
 It overwrites `sim.weighting_potentials[contact_id]`.
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim.detector))::Nothing where {T <: SSDFloat}
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.detector)} =
+function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing where {T <: SSDFloat}
+    fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
         PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id);
 
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(fssrb), grid)
@@ -184,7 +212,7 @@ end
 
 Takes the current state of `sim.electric_potential` and updates it until it has converged.
 """
-function update_till_convergence!( sim::Simulation{T},
+function update_till_convergence!( sim::Simulation{T,CS},
                                    ::Type{ElectricPotential},
                                    convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
@@ -192,8 +220,7 @@ function update_till_convergence!( sim::Simulation{T},
                                    depletion_handling::Bool = false,
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    sor_consts::Union{Missing, T, NTuple{2, T}} = missing
-                                    )::T where {T <: SSDFloat}
-    CS = get_coordinate_system(sim.detector)
+                                    )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
         sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
     elseif length(sor_consts) == 1 && CS == Cylindrical
@@ -275,7 +302,7 @@ end
 
 Takes the current state of `sim.weighting_potentials[contact_id]` and updates it until it has converged.
 """
-function update_till_convergence!( sim::Simulation{T},
+function update_till_convergence!( sim::Simulation{T, CS},
                                    ::Type{WeightingPotential},
                                    contact_id::Int,
                                    convergence_limit::Real;
@@ -284,8 +311,7 @@ function update_till_convergence!( sim::Simulation{T},
                                    depletion_handling::Bool = false,
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    sor_consts::Union{Missing, T, NTuple{2, T}} = missing
-                                    )::T where {T <: SSDFloat}
-    CS = get_coordinate_system(sim.detector)
+                                    )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
         sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
     elseif length(sor_consts) == 1 && CS == Cylindrical
@@ -349,7 +375,7 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
 end
 
 
-function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
+function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
         init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
         init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         grid::Union{Missing, Grid{T}} = missing,
@@ -362,16 +388,15 @@ function _calculate_potential!( sim::Simulation{T}, potential_type::UnionAll, co
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
         verbose::Bool = true,
-    )::Nothing where {T <: SSDFloat}
+    )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
     begin # preperations
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
         if isWP depletion_handling = false end
-        CS = get_coordinate_system(sim.detector)
         if ismissing(grid)
-            grid = Grid(sim.detector, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing, for_weighting_potential = isWP)
+            grid = Grid(sim, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing, for_weighting_potential = isWP)
         end
         if ismissing(sor_consts)
             sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -522,7 +547,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
     For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
     It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
+- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim, init_grid_spacing=init_grid_spacing)`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
@@ -537,8 +562,8 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    # S = get_coordinate_system(sim.detector)
-    # periodicity::T = get_periodicity(sim.detector.world.intervals[2])
+    # S = get_coordinate_system(sim)
+    # periodicity::T = get_periodicity(sim.world.intervals[2])
     # if S == Cylindrical && periodicity == T(0)
     #     if ismissing(n_points_in_φ)
     #         @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
@@ -585,7 +610,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
     For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
     It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(detector, init_grid_spacing=init_grid_spacing)`.
+- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim, init_grid_spacing=init_grid_spacing)`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
@@ -609,10 +634,9 @@ end
 
 ToDo...
 """
-function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    S = get_coordinate_system(sim.detector)
-    periodicity::T = get_periodicity(sim.detector.world.intervals[2])
-    e_pot, point_types = if S == Cylindrical && periodicity == T(0) # 2D, only one point in φ
+function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat, CS}
+    periodicity::T = get_periodicity(sim.world.intervals[2])
+    e_pot, point_types = if CS == Cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
             @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36
@@ -624,7 +648,7 @@ function calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::
         end
         get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
         get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ);
-    elseif S == Cylindrical
+    elseif CS == Cylindrical
         get_2π_potential(sim.electric_potential),
         get_2π_potential(sim.point_types)
     else
@@ -659,12 +683,12 @@ function drift_charges( sim::Simulation{T}, starting_positions::Vector{Cartesian
                              Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
 end
 
-function get_signal(sim::Simulation{T}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, TT}
+function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
     dt::T = to_internal_units(internal_time_unit, Δt)
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, get_coordinate_system(sim.detector))
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, CS)
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal )
 end
 

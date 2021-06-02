@@ -5,38 +5,27 @@ CS: Coordinate System: -> Cartesian / Cylindrical
 """
 mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractConfig{T}
     name::String  # optional
-    world::World{T, 3, CS}
     semiconductor::Semiconductor{T}
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}}
 end
 
-get_precision_type(d::SolidStateDetector{T}) where {T} = T
-get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
+get_precision_type(::SolidStateDetector{T}) where {T} = T
+get_coordinate_system(::SolidStateDetector{T, CS}) where {T, CS} = CS
 
 function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat, CS}
     semiconductor::Semiconductor{T} = Semiconductor{T}()
     contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    world_limits = get_world_limits_from_objects(CS, semiconductor, contacts, passives )
-    world = World(CS, world_limits)
-
+    
     return SolidStateDetector{T, CS}(
         "EmptyDetector",
-        world,
         semiconductor,
         contacts,
         passives,
         virtual_drift_volumes
     )
-end
-
-function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
-    return SolidStateDetector{T, Cartesian}()
-end
-function SolidStateDetector()::SolidStateDetector{Float32, Cartesian}
-    return SolidStateDetector{Float32, Cartesian}()
 end
 
 function construct_semiconductor(T, sc::Dict, input_units::NamedTuple)
@@ -133,8 +122,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where{T <: SSDFloat}
-    CS::CoordinateSystemType = Cartesian
+function SolidStateDetector{T,CS}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
 
@@ -155,38 +143,11 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::Soli
         end
     end
 
-    world = if haskey(config_file, "grid")
-        if isa(config_file["grid"], Dict)
-            CS = if config_file["grid"]["coordinates"] == "cartesian" 
-                Cartesian
-            elseif config_file["grid"]["coordinates"]  == "cylindrical"
-                Cylindrical
-            else
-                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
-            end
-            World(T, config_file["grid"], input_units)
-        elseif isa(config_file["grid"], String)
-            CS = if config_file["grid"] == "cartesian" 
-                Cartesian
-            elseif config_file["grid"] == "cylindrical"
-                Cylindrical
-            else
-                @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
-            end
-            world_limits = get_world_limits_from_objects(CS, semiconductor, contacts, passives)
-            World(CS, world_limits)
-        end
-    else
-        world_limits = get_world_limits_from_objects(CS, semiconductor, contacts, passives )
-        World(CS, world_limits)
-    end
-
     c = SolidStateDetector{T, CS}()
     c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
     c.semiconductor = semiconductor
     c.contacts = contacts
     c.passives = passives
-    c.world = world
     c.virtual_drift_volumes = virtual_drift_volumes
     return c
 end

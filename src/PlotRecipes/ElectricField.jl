@@ -228,7 +228,7 @@ end
                 elseif dim_symbol == :z
                     if S == Cylindrical
                         path = CylindricalPoint.(path)
-                        ylims --> (0.0, sim.detector.world.intervals[1].right)
+                        ylims --> (0.0, sim.world.intervals[1].right)
                         map(x -> x[2], path),
                         map(x -> x[1], path)
                     else
@@ -236,7 +236,7 @@ end
                         map(x -> x[2], path)
                     end
                 elseif dim_symbol == :r
-                    ylims --> (sim.detector.world.intervals[3].left, sim.detector.world.intervals[3].right)
+                    ylims --> (sim.world.intervals[3].left, sim.world.intervals[3].right)
                     path = CylindricalPoint.(path)
                     map(x -> x[2], path),
                     map(x -> x[3], path)

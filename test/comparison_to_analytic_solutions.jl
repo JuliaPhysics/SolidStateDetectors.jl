@@ -11,7 +11,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
     calculate_electric_field!(sim)
     BV_true = SolidStateDetectors._get_abs_bias_voltage(sim.detector) 
     Δd = (sim.detector.contacts[2].decomposed_surfaces[1].loc - sim.detector.contacts[1].decomposed_surfaces[1].loc) * u"m"
-    Δx = (sim.detector.world.intervals[2].right - sim.detector.world.intervals[2].left) * u"m"
+    Δx = (sim.world.intervals[2].right - sim.world.intervals[2].left) * u"m"
     A = Δx * Δx 
     V = A * Δd
     E_true = BV_true / Δd
@@ -38,7 +38,7 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     R2 = sim_cyl.detector.contacts[2].geometry.r.left * u"m"
     V1 = sim_cyl.detector.contacts[1].potential * u"V"
     V2 = sim_cyl.detector.contacts[2].potential * u"V"
-    L = (sim_cyl.detector.world.intervals[3].right - sim_cyl.detector.world.intervals[3].left) * u"m"
+    L = (sim_cyl.world.intervals[3].right - sim_cyl.world.intervals[3].left) * u"m"
     V = π * R2^2 * L
     intV = (R2^2 - R1^2) * π * L
 

@@ -426,15 +426,15 @@ function json_to_dict(inputfile::String)::Dict
     return parsed_json_file
 end
 
-function Grid(  detector::SolidStateDetector{T, Cylindrical};
+function Grid(  sim::Simulation{T, Cylindrical};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
                 min_n_ticks::Int = 10,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
     if ismissing(init_grid_size)
-        world_diffs = [(getproperty.(detector.world.intervals, :right) .- getproperty.(detector.world.intervals, :left))...]
-        world_diffs[2] = world_diffs[2] * 0.3 * detector.world.intervals[1].right # in radiance
+        world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
+        world_diffs[2] = world_diffs[2] * 0.3 * sim.world.intervals[1].right # in radiance
         inds::Vector{Int} = sortperm([world_diffs...])
         ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
             inv(world_diffs[inds[1]])
@@ -457,25 +457,25 @@ function Grid(  detector::SolidStateDetector{T, Cylindrical};
         missing, false
     end
     
-    samples::Vector{CylindricalPoint{T}} = sample(detector)
+    samples::Vector{CylindricalPoint{T}} = sample(sim.detector)
    
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
 
-    push!(important_r_points, detector.world.intervals[1].left)
-    push!(important_r_points, detector.world.intervals[1].right)
+    push!(important_r_points, sim.world.intervals[1].left)
+    push!(important_r_points, sim.world.intervals[1].right)
     important_r_points = unique!(sort!(geom_round.(important_r_points)))
-    push!(important_z_points, detector.world.intervals[3].left)
-    push!(important_z_points, detector.world.intervals[3].right)
+    push!(important_z_points, sim.world.intervals[3].left)
+    push!(important_z_points, sim.world.intervals[3].right)
     important_z_points = unique!(sort!(geom_round.(important_z_points)))
-    push!(important_φ_points, detector.world.intervals[2].left)
-    push!(important_φ_points, detector.world.intervals[2].right)
+    push!(important_φ_points, sim.world.intervals[2].left)
+    push!(important_φ_points, sim.world.intervals[2].right)
     important_φ_points = unique!(sort!(geom_round.(important_φ_points)))
 
     # r
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
-    int_r = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
+    int_r = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
     ax_r::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
     else
@@ -486,9 +486,9 @@ function Grid(  detector::SolidStateDetector{T, Cylindrical};
 
 
     # φ
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
-    int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    if full_2π == true || (for_weighting_potential && (detector.world.intervals[2].left != detector.world.intervals[2].right))
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[2])
+    int_φ = Interval{L, R, T}(sim.world.intervals[2].left, sim.world.intervals[2].right)
+    if full_2π == true || (for_weighting_potential && (sim.world.intervals[2].left != sim.world.intervals[2].right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
         int_φ = Interval{L, R, T}(0, 2π)
     end
@@ -517,8 +517,8 @@ function Grid(  detector::SolidStateDetector{T, Cylindrical};
     end
 
     #z
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
-    int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[3])
+    int_z = Interval{L, R, T}(sim.world.intervals[3].left, sim.world.intervals[3].right)
     ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
     else
@@ -539,14 +539,14 @@ function Grid(  detector::SolidStateDetector{T, Cylindrical};
 end
 
 
-function Grid(  detector::SolidStateDetector{T, Cartesian};
+function Grid(  sim::Simulation{T, Cartesian};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
                 min_n_ticks::Int = 10,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
     if ismissing(init_grid_size)
-        world_diffs = [(getproperty.(detector.world.intervals, :right) .- getproperty.(detector.world.intervals, :left))...]
+        world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
         inds::Vector{Int} = sortperm([world_diffs...])
         ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
             inv(world_diffs[inds[1]])
@@ -563,7 +563,7 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
         init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
     end
 
-    samples::Vector{CartesianPoint{T}} = sample(detector)
+    samples::Vector{CartesianPoint{T}} = sample(sim.detector)
     
     important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
     important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
@@ -576,8 +576,8 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
     end
 
     # x
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
-    int_x = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
+    int_x = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
     ax_x::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
     else
@@ -594,8 +594,8 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
     @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
 
     # y
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
-    int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[2])
+    int_y = Interval{L, R, T}(sim.world.intervals[2].left, sim.world.intervals[2].right)
     ax_y::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
     else
@@ -605,8 +605,8 @@ function Grid(  detector::SolidStateDetector{T, Cartesian};
     ax_y = typeof(ax_y)(int_y, yticks)
 
     # z
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
-    int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[3])
+    int_z = Interval{L, R, T}(sim.world.intervals[3].left, sim.world.intervals[3].right)
     ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
         DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
     else
