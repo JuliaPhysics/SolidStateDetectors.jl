@@ -174,6 +174,200 @@ function Simulation(config_file::AbstractString)::Simulation{Float32}
 end
 
 # Functions
+
+function Grid(  sim::Simulation{T, Cylindrical};
+                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
+                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
+                for_weighting_potential::Bool = false,
+                min_n_ticks::Int = 10,
+                full_2π::Bool = false)::CylindricalGrid{T} where {T}
+    if ismissing(init_grid_size)
+        world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
+        world_diffs[2] = world_diffs[2] * 0.3 * sim.world.intervals[1].right # in radiance
+        inds::Vector{Int} = sortperm([world_diffs...])
+        ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
+            inv(world_diffs[inds[1]])
+        elseif world_diffs[inds[2]] > 0
+            inv(world_diffs[inds[2]])
+        elseif world_diffs[inds[3]] > 0
+            inv(world_diffs[inds[3]])
+        else
+            error("This should not happen... World has no dimension")
+        end
+        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
+        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
+        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
+        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
+    end
+
+    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
+        T.(init_grid_spacing), true
+    else
+        missing, false
+    end
+    
+    samples::Vector{CylindricalPoint{T}} = sample(sim.detector)
+   
+    important_r_points::Vector{T} = map(p -> p.r, samples)
+    important_φ_points::Vector{T} = map(p -> p.φ, samples)
+    important_z_points::Vector{T} = map(p -> p.z, samples)
+
+    push!(important_r_points, sim.world.intervals[1].left)
+    push!(important_r_points, sim.world.intervals[1].right)
+    important_r_points = unique!(sort!(geom_round.(important_r_points)))
+    push!(important_z_points, sim.world.intervals[3].left)
+    push!(important_z_points, sim.world.intervals[3].right)
+    important_z_points = unique!(sort!(geom_round.(important_z_points)))
+    push!(important_φ_points, sim.world.intervals[2].left)
+    push!(important_φ_points, sim.world.intervals[2].right)
+    important_φ_points = unique!(sort!(geom_round.(important_φ_points)))
+
+    # r
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
+    int_r = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
+    ax_r::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
+    else
+        DiscreteAxis{BL, BR}(int_r, length = init_grid_size[1])
+    end
+    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
+    ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
+
+
+    # φ
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[2])
+    int_φ = Interval{L, R, T}(sim.world.intervals[2].left, sim.world.intervals[2].right)
+    if full_2π == true || (for_weighting_potential && (sim.world.intervals[2].left != sim.world.intervals[2].right))
+        L, R, BL, BR = :closed, :open, :periodic, :periodic
+        int_φ = Interval{L, R, T}(0, 2π)
+    end
+    ax_φ = if int_φ.left == int_φ.right
+        DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
+    else
+        if use_spacing
+            DiscreteAxis{BL, BR}(int_φ, step = init_grid_spacing[2])
+        else
+            DiscreteAxis{BL, BR}(int_φ, length = init_grid_size[2])
+        end
+    end
+    if length(ax_φ) > 1
+        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
+        ax_φ = typeof(ax_φ)(int_φ, φticks)
+    end
+    if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
+        int_φ = ax_φ.interval
+        φticks = ax_φ.ticks
+        push!(φticks, geom_round((φticks[end] + φticks[end-1]) * 0.5))
+        sort!(φticks)
+        ax_φ = typeof(ax_φ)(int_φ, φticks) # must be even
+    end
+    if length(ax_φ) > 1
+        @assert iseven(length(ax_φ)) "CylindricalGrid must have even number of points in φ."
+    end
+
+    #z
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[3])
+    int_z = Interval{L, R, T}(sim.world.intervals[3].left, sim.world.intervals[3].right)
+    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
+    else
+        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
+    end
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=minimum(diff(ax_z.ticks))/2)
+    ax_z = typeof(ax_z)(int_z, zticks)
+    if isodd(length(ax_z)) # must be even
+        int_z = ax_z.interval
+        zticks = ax_z.ticks
+        push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
+        sort!(zticks)
+        ax_z = typeof(ax_z)(int_z, zticks) # must be even
+    end
+    @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
+
+    return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
+end
+
+
+function Grid(  sim::Simulation{T, Cartesian};
+                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
+                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
+                min_n_ticks::Int = 10,
+                for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
+
+    if ismissing(init_grid_size)
+        world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
+        inds::Vector{Int} = sortperm([world_diffs...])
+        ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
+            inv(world_diffs[inds[1]])
+        elseif world_diffs[inds[2]] > 0
+            inv(world_diffs[inds[2]])
+        elseif world_diffs[inds[3]] > 0
+            inv(world_diffs[inds[3]])
+        else
+            error("This should not happen... World has no dimension")
+        end
+        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
+        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
+        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
+        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
+    end
+
+    samples::Vector{CartesianPoint{T}} = sample(sim.detector)
+    
+    important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
+    important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
+    important_z_points::Vector{T} = geom_round.(map(p -> p.z, samples))
+
+    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
+        T.(init_grid_spacing), true
+    else
+        missing, false
+    end
+
+    # x
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
+    int_x = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
+    ax_x::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
+    else
+        DiscreteAxis{BL, BR}(int_x, length = init_grid_size[1])
+    end
+    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = minimum(diff(ax_x.ticks)) / 2)
+    ax_x = typeof(ax_x)(int_x, xticks)
+    if isodd(length(ax_x)) # RedBlack dimension must be of even length
+        xticks = ax_x.ticks
+        push!(xticks, geom_round((xticks[end] + xticks[end-1]) * 0.5))
+        sort!(xticks)
+        ax_x = DiscreteAxis{T, BL, BR}(int_x, xticks) # must be even
+    end
+    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
+
+    # y
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[2])
+    int_y = Interval{L, R, T}(sim.world.intervals[2].left, sim.world.intervals[2].right)
+    ax_y::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
+    else
+        DiscreteAxis{BL, BR}(int_y, length = init_grid_size[2])
+    end
+    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = minimum(diff(ax_y.ticks)) / 2)
+    ax_y = typeof(ax_y)(int_y, yticks)
+
+    # z
+    L, R, BL, BR = get_boundary_types(sim.world.intervals[3])
+    int_z = Interval{L, R, T}(sim.world.intervals[3].left, sim.world.intervals[3].right)
+    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
+        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
+    else
+        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
+    end
+    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = minimum(diff(ax_z.ticks)) / 2)
+    ax_z = typeof(ax_z)(int_z, zticks)
+
+    return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
+end
+
+
 """
     function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing
 
