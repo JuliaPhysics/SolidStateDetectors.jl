@@ -49,10 +49,8 @@ get_active_volume(simulation.point_types) # approximation (sum of the volume of 
 
 # SolidStateDetectors.jl can also calculate the electric potential of a partially depleted detector:
 
-detector_undep = deepcopy(simulation.detector)
-detector_undep.contacts[end].potential = 500; # V  <-- Bias Voltage of Mantle
-
-simulation_undep = Simulation(detector_undep);
+simulation_undep = deepcopy(simulation)
+simulation_undep.detector.contacts[end].potential = 500; # V  <-- Bias Voltage of Mantle
 
 calculate_electric_potential!( simulation_undep,
                                depletion_handling = true,
