@@ -49,32 +49,6 @@ function SolidStateDetector()::SolidStateDetector{Float32, Cartesian}
     return SolidStateDetector{Float32, Cartesian}()
 end
 
-
-function default_unit_tuple()::NamedTuple{<:Any, <:NTuple{4, Unitful.Units}}
-    return (
-        length = u"m", # change this to u"m" ? SI Units
-        potential = u"V",
-        angle = u"°",
-        temperature = u"K"
-    )
-end
-
-
-function construct_units(config_file_dict::Dict)
-    dunits::NamedTuple = default_unit_tuple()
-    if haskey(config_file_dict, "units")
-        d = config_file_dict["units"]
-        dunits = (
-            length = haskey(d, "length") ? unit_conversion[d["length"]] : dunits.length, 
-            angle  = haskey(d, "angle") ? unit_conversion[d["angle"]] : dunits.angle,
-            potential = haskey(d, "potential") ? unit_conversion[d["potential"]] : dunits.potential,
-            temperature = haskey(d, "temperature") ? unit_conversion[d["temperature"]] : dunits.temperature
-        )
-    end
-    dunits
-end
-
-
 function construct_semiconductor(T, sc::Dict, input_units::NamedTuple)
     Semiconductor{T}(sc, input_units)
 end
