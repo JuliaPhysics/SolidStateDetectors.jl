@@ -15,7 +15,7 @@ mutable struct Semiconductor{T} <: AbstractSemiconductor{T}
     Semiconductor{T}() where T <: SSDFloat = new{T}()
 end
 
-function Semiconductor{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFloat
+function Semiconductor{T}(dict::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation} = []) where T <: SSDFloat
     sc = Semiconductor{T}()
     sc.impurity_density_model = if haskey(dict, "impurity_density") 
         ImpurityDensity(T, dict["impurity_density"], input_units)
@@ -34,7 +34,7 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple) where T <: SSDFlo
         ElectricFieldChargeDriftModel{T}()
     end
     sc.material = material_properties[materials[dict["material"]]]
-    sc.geometry = Geometry(T, dict["geometry"], input_units)
+    sc.geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
     sc.geometry_positive, sc.geometry_negative = get_decomposed_volumes(sc.geometry)
     sc.decomposed_surfaces = vcat(get_decomposed_surfaces.(sc.geometry_positive)...)
     return sc

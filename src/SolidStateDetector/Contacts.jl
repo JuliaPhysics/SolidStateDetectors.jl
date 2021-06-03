@@ -18,11 +18,11 @@ mutable struct Contact{T} <: AbstractContact{T}
 end
 
 
-function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, input_units::NamedTuple)::Contact{T} where {T <: SSDFloat}
+function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, input_units::NamedTuple, transformations::Vector{CSGTransformation})::Contact{T} where {T <: SSDFloat}
     haskey(dict, "channel") ? channel = dict["channel"] : channel = -1
     haskey(dict, "material") ? material = material_properties[materials[dict["material"]]] : material = material_properties[materials["HPGe"]]
     haskey(dict,"name") ? name = dict["name"] : name = ""
-    geometry =  Geometry(T, dict["geometry"], input_units)
+    geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
     geometry_positive, geometry_negative = get_decomposed_volumes(geometry)
     decomposed_surfaces = vcat(get_decomposed_surfaces.(geometry_positive)...)
     return Contact{T}( dict["potential"], material, channel, name, geometry, geometry_positive, geometry_negative, decomposed_surfaces )

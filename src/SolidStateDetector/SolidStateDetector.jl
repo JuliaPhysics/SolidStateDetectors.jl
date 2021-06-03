@@ -26,26 +26,26 @@ function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
     )
 end
 
-function construct_semiconductor(T, sc::Dict, input_units::NamedTuple)
-    Semiconductor{T}(sc, input_units)
+function construct_semiconductor(T, sc::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    Semiconductor{T}(sc, input_units, transformations)
 end
 
-function construct_passive(T, pass::Dict, input_units::NamedTuple)
-    Passive{T}(pass, input_units)
+function construct_passive(T, pass::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    Passive{T}(pass, input_units, transformations)
 end
 
-function construct_contact(T, contact::Dict, input_units::NamedTuple)
-    Contact{T}(contact, input_units)
+function construct_contact(T, contact::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    Contact{T}(contact, input_units, transformations)
 end
 
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple)
-    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])} )
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
 end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}})
-    DeadVolume{T}(pass, input_units)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Vector{CSGTransformation}= [])
+    DeadVolume{T}(pass, input_units, transformations)
 end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}})
-    ArbitraryDriftModificationVolume{T}(pass, input_units)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Vector{CSGTransformation}= [])
+    ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
 end
 
 
@@ -127,17 +127,27 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::Soli
     if haskey(config_file, "detectors")
         config_detector = config_file["detectors"][1] # still only one detector
         
+        transformations = CSGTransformation[]
+        if haskey(config_detector, "rotate") 
+            @info "ROTATE!"
+            push!(transformations, parse_rotation_matrix(T, config_detector["rotate"], input_units.angle)) 
+        end
+        if haskey(config_detector, "translate") 
+            @info "TRANSLATE!"
+            push!(transformations, parse_translate_vector(T, config_detector["translate"], input_units.length))
+        end
+        
         @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."      
-        semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units)
+        semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units, transformations)
 
         if haskey(config_detector, "contacts")              
-            contacts = broadcast(c -> construct_contact(T, c, input_units), config_detector["contacts"]) 
+            contacts = broadcast(c -> construct_contact(T, c, input_units, transformations), config_detector["contacts"])
         end
         if haskey(config_detector, "passives")              
-            passives = broadcast(p -> construct_passive(T, p, input_units), config_detector["passives"])       
+            passives = broadcast(p -> construct_passive(T, p, input_units, transformations), config_detector["passives"])
         end
         if haskey(config_detector, "virtual_drift_volumes")  
-            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units), config_detector["virtual_drift_volumes"]) 
+            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
         end
     end
 
