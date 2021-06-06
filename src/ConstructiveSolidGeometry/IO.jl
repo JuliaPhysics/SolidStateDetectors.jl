@@ -18,8 +18,11 @@ const CSG_dict = Dict{String, Any}(
 
 function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple)::Tuple{String, Vector{CSGTransformation}} where {T}
     dict_keys = filter(k -> k in keys(CSG_dict), keys(dict))
-    transformations = filter(k -> (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) || 
-                                  (k == "rotate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dicŧ["rotate"])))), dict_keys)
+    transformations = sort!(filter(k -> 
+                                (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) || 
+                                (k == "rotate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["rotate"])))), 
+                            collect(dict_keys)), 
+                      rev = true) #this will ensure that the rotation is parsed first and the translation is parsed second
     primitives = setdiff(dict_keys, transformations)
     @assert length(primitives) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
     @assert length(primitives) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
@@ -173,7 +176,7 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
 end
 
 function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{RotatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
-    parse_translate_vector(T, dict["rotate"], input_units.angle)
+    parse_rotation_matrix(T, dict["rotate"], input_units.angle)
 end
 
 function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
