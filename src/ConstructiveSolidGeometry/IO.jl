@@ -16,13 +16,15 @@ const CSG_dict = Dict{String, Any}(
     "scale" => ScaledGeometry
 )
 
-function get_geometry_key(dict::AbstractDict)::String
+function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple)::Tuple{String, Vector{CSGTransformation}} where {T}
     dict_keys = filter(k -> k in keys(CSG_dict), keys(dict))
-    @assert length(dict_keys) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
-    @assert length(dict_keys) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
-    first(dict_keys)
+    transformations = filter(k -> (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) || 
+                                  (k == "rotate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dicŧ["rotate"])))), dict_keys)
+    primitives = setdiff(dict_keys, transformations)
+    @assert length(primitives) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
+    @assert length(primitives) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
+    first(primitives), broadcast(t -> parse_CSG_transformation(T, dict, CSG_dict[t], input_units), transformations)
 end
-
 
 
 #### INTERNAL PARSE FUNCTIONS
@@ -129,11 +131,15 @@ function parse_translate_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Uni
     CartesianVector{T}(x,y,z)
 end
 
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{TranslatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
+    parse_translate_vector(T, dict["translate"], input_units.length)
+end
+
 function Geometry(::Type{T}, ::Type{TranslatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     translate_vector::CartesianVector{T} = parse_translate_vector(T, dict, length_unit)
-    key::String = get_geometry_key(dict)
-    translate(Geometry(T, CSG_dict[key], dict[key], input_units), translate_vector)
+    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
+    translate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), translate_vector)
 end
 
 function parse_scale_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::SVector{3,T} where {T}
@@ -146,8 +152,8 @@ end
 function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
-    key::String = get_geometry_key(dict)
-    scale(Geometry(T, CSG_dict[key], dict[key], input_units), scale_vector)
+    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
+    scale(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), scale_vector)
 end
 
 _rot_keys = ["X","Y","Z","XY","XZ","YX","YZ","ZX","ZY","XYX","XYZ","XZX","XZY","YXY","YXZ","YZX","YZY","ZXY","ZXZ","ZYX","ZYZ"]
@@ -166,17 +172,21 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
     end
 end
 
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{RotatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
+    parse_translate_vector(T, dict["rotate"], input_units.angle)
+end
+
 function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
     angle_unit = input_units.angle
     rotation_matrix = parse_rotation_matrix(T, dict, angle_unit)
-    key::String = get_geometry_key(dict)
-    rotate(Geometry(T, CSG_dict[key], dict[key], input_units), rotation_matrix)
+    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
+    rotate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), rotation_matrix)
 end
 
 
 function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    key::String = get_geometry_key(dict)
-    Geometry(T, CSG_dict[key], dict[key], input_units)
+    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
+    transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations)
 end
 
 

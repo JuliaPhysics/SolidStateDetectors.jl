@@ -127,15 +127,8 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::Soli
     if haskey(config_file, "detectors")
         config_detector = config_file["detectors"][1] # still only one detector
         
-        transformations = CSGTransformation[]
-        if haskey(config_detector, "rotate") 
-            @info "ROTATE!"
-            push!(transformations, parse_rotation_matrix(T, config_detector["rotate"], input_units.angle)) 
-        end
-        if haskey(config_detector, "translate") 
-            @info "TRANSLATE!"
-            push!(transformations, parse_translate_vector(T, config_detector["translate"], input_units.length))
-        end
+        transformation_keys = filter(k -> k in ("translate", "rotate"), keys(config_detector))
+        transformations::Vector{CSGTransformation} = broadcast(t -> parse_CSG_transformation(T, config_detector, CSG_dict[t], input_units), transformation_keys)
         
         @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."      
         semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units, transformations)
