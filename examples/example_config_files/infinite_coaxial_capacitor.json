@@ -7,17 +7,16 @@
         "temperature": "K"
     },
     "grid": {
-        "coordinates": "cartesian",
+        "coordinates": "cylindrical",
         "axes": {
-            "x": {
-                "from": -35.0,
+            "r": {
                 "to": 35.0,
-                "boundaries": "reflecting"
+                "boundaries": "inf"
             },
-            "y": {
-                "from": -35.0,
-                "to": 35.0,
-                "boundaries": "reflecting"
+            "phi": {
+                "from": 0,
+                "to": 0,
+                "boundaries": "periodic"
             },
             "z": {
                 "from": 0,
@@ -27,10 +26,11 @@
         }
     },
     "medium": "HPGe",
-    "objects": {
-        "semiconductors": [
-            {
+    "detectors": [
+        {
+            "bulk": {
                 "material": "HPGe",
+                "temperature": 78.0,
                 "impurity_density": {
                     "name": "cylindrical",
                     "r": {
@@ -42,7 +42,6 @@
                         "gradient": 0.0
                     }
                 },
-                "temperature": 77.0,
                 "geometry": {
                     "difference": [
                         {
@@ -73,51 +72,51 @@
                         }
                     ]
                 }
-            }
-        ],
-        "contacts": [
-            {
-                "material": "HPGe",
-                "channel": 1,
-                "potential": 0.0,
-                "geometry": {
-                    "tube": {
-                        "r": {
-                            "from": 5.0,
-                            "to": 5.0
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "z": {
-                            "from": -40.0,
-                            "to": 80.0
-                        }
-                    }
-                }
             },
-            {
-                "material": "HPGe",
-                "channel": 2,
-                "potential": 10.0,
-                "geometry": {
-                    "tube": {
-                        "r": {
-                            "from": 35.0,
-                            "to": 35.0
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "z": {
-                            "from": -40.0,
-                            "to": 80.0
+            "contacts": [
+                {
+                    "material": "HPGe",
+                    "channel": 1,
+                    "potential": 0.0,
+                    "geometry": {
+                        "tube": {
+                            "r": {
+                                "from": 5.0,
+                                "to": 5.0
+                            },
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "z": {
+                                "from": -40.0,
+                                "to": 80.0
+                            }
+                        }
+                    }
+                },
+                {
+                    "material": "HPGe",
+                    "channel": 2,
+                    "potential": 10.0,
+                    "geometry": {
+                        "tube": {
+                            "r": {
+                                "from": 35.0,
+                                "to": 35.0
+                            },
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "z": {
+                                "from": -40.0,
+                                "to": 80.0
+                            }
                         }
                     }
                 }
-            }
-        ]
-    }
+            ]
+        }
+    ]
 }

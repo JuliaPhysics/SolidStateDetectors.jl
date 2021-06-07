@@ -1,4 +1,5 @@
 {
+	"model": "ADLChargeDriftModel",
 	"phi110": -0.785398,
 	"drift": {
 		"velocity": {
@@ -27,7 +28,6 @@
 					"E0": 10000.0
 				}
 			}
-		},
-		"chrystaltemp": 100
+		}
 	}
 }

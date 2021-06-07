@@ -1,0 +1,410 @@
+{
+    "name": "Public Segmented BEGe",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "r": {
+                "to": 50.0,
+                "boundaries": "inf"
+            },
+            "phi": {
+                "from": 0,
+                "to": 120,
+                "boundaries": {
+                    "left": "periodic",
+                    "right": "periodic"
+                }
+            },
+            "z": {
+                "from": -10,
+                "to": 60.0,
+                "boundaries": {
+                    "left": "inf",
+                    "right": "inf"
+                }
+            }
+        }
+    },
+    "medium": "vacuum",
+    "detectors": [
+        {
+            "bulk": {
+                "material": "HPGe",
+                "temperature": 78.0,
+                "impurity_density": {
+                    "name": "cylindrical",
+                    "r": {
+                        "init": 0,
+                        "gradient": 0.0
+                    },
+                    "z": {
+                        "init": 0,
+                        "gradient": 0
+                    }
+                },
+                "charge_drift_model": {
+                    "include": "ADLChargeDriftModel/drift_velocity_config.json"
+                },
+                "geometry": {
+                    "translate": {
+                        "tube": {
+                            "r": 39.5,
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "h": 40.0
+                        },
+                        "z": 20.0
+                    }
+                }
+            },
+            "contacts": [
+                {
+                    "material": "HPGe",
+                    "channel": 1,
+                    "potential": 4500.0,
+                    "geometry": {
+                        "translate": {
+                            "tube": {
+                                "r": 7.5,
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 0.3
+                            },
+                            "z": 39.85
+                        }
+                    }
+                },
+                {
+                    "name": "Seg. 1",
+                    "material": "HPGe",
+                    "channel": 2,
+                    "potential": 0.0,
+                    "geometry": {
+                        "union": [
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 13.5,
+                                        "to": 39.5
+                                    },
+                                    "phi": {
+                                        "from": 0.3582,
+                                        "to": 59.6419
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 39.5,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 0.3582,
+                                            "to": 59.6419
+                                        },
+                                        "h": 40.0
+                                    },
+                                    "z": 20.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 17.0,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 0.3582,
+                                            "to": 59.6419
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 40.0
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Seg. 2",
+                    "material": "HPGe",
+                    "channel": 3,
+                    "potential": 0.0,
+                    "geometry": {
+                        "union": [
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 13.5,
+                                        "to": 39.5
+                                    },
+                                    "phi": {
+                                        "from": 120.3581,
+                                        "to": 179.6419
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 39.5,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 120.3581,
+                                            "to": 179.6419
+                                        },
+                                        "h": 40.0
+                                    },
+                                    "z": 20.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 17.0,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 120.3581,
+                                            "to": 179.6419
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 40.0
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Seg. 3",
+                    "material": "HPGe",
+                    "channel": 4,
+                    "potential": 0.0,
+                    "geometry": {
+                        "union": [
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 13.5,
+                                        "to": 39.5
+                                    },
+                                    "phi": {
+                                        "from": 240.3581,
+                                        "to": 299.6419
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 39.5,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 240.3581,
+                                            "to": 299.6419
+                                        },
+                                        "h": 40.0
+                                    },
+                                    "z": 20.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 17.0,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 240.3581,
+                                            "to": 299.6419
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 40.0
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Seg. 4",
+                    "material": "HPGe",
+                    "channel": 5,
+                    "potential": 0.0,
+                    "geometry": {
+                        "union": [
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 13.0,
+                                        "to": 39.5
+                                    },
+                                    "phi": {
+                                        "from": 60.3581,
+                                        "to": 119.6419
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 39.5,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 60.3581,
+                                            "to": 119.6419
+                                        },
+                                        "h": 40.0
+                                    },
+                                    "z": 20.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 17.0,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 60.3581,
+                                            "to": 119.6419
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 40.0
+                                }
+                            },
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 13.0,
+                                        "to": 39.5
+                                    },
+                                    "phi": {
+                                        "from": 180.3581,
+                                        "to": 239.6419
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 39.5,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 180.3581,
+                                            "to": 239.6419
+                                        },
+                                        "h": 40.0
+                                    },
+                                    "z": 20.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 17.0,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 180.3581,
+                                            "to": 239.6419
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 40.0
+                                }
+                            },
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 13.0,
+                                        "to": 39.5
+                                    },
+                                    "phi": {
+                                        "from": 300.3581,
+                                        "to": 359.6419
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 39.5,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 300.3581,
+                                            "to": 359.6419
+                                        },
+                                        "h": 40.0
+                                    },
+                                    "z": 20.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 17.0,
+                                            "to": 39.5
+                                        },
+                                        "phi": {
+                                            "from": 300.3581,
+                                            "to": 359.6419
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 40.0
+                                }
+                            },
+                            {
+                                "tube": {
+                                    "r": 13.0,
+                                    "phi": {
+                                        "from": 0.0,
+                                        "to": 360.0
+                                    },
+                                    "h": 0.0
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

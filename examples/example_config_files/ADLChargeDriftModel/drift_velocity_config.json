@@ -1,5 +1,7 @@
 {
+	"model": "ADLChargeDriftModel",
 	"phi110": -0.785398,
+	"material": "HPGe",
 	"drift": {
 		"velocity": {
 			"model": "Bruyneel2006",
@@ -27,10 +29,6 @@
 					"E0": 18200.0
 				}
 			}
-		},
-		"masses": {
-			"ml": 1.64,
-			"mt": 0.0819
 		}
 	}
 }

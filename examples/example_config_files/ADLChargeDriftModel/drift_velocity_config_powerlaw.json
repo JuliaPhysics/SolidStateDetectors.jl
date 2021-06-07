@@ -1,4 +1,5 @@
 {
+	  "model": "ADLChargeDriftModel",
 		"phi110": 1.25664,
 		"drift": {
 				"velocity": {

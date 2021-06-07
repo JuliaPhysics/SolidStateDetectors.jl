@@ -14,9 +14,9 @@
             }
         }
     },
-    "objects": {
-        "semiconductors": [
-            {
+    "detectors": [
+        {
+            "bulk": {
                 "material": "HPGe",
                 "geometry": {
                     "difference": [
@@ -35,6 +35,6 @@
                     ]
                 }
             }
-        ]
-    }
+        }
+    ]
 }

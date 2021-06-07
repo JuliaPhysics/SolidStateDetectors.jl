@@ -37,7 +37,9 @@ using .ConstructiveSolidGeometry:
             get_decomposed_volumes,
             get_decomposed_surfaces, AbstractSurfacePrimitive,
             geom_round, geom_sigdigits, geom_atol_zero,
-            parse_rotation_matrix
+            parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
+            CSGTransformation, transform, CSG_dict
+            
 
 import .ConstructiveSolidGeometry: sample, sample_surface
 export CartesianPoint, CartesianVector, CylindricalPoint
@@ -87,6 +89,7 @@ include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
+include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 # include("GeometryRounding.jl")
 
@@ -94,7 +97,6 @@ include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
 
-include("ChargeDriftModels/ChargeDriftModels.jl")
 #include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")

@@ -29,10 +29,11 @@
         }
     },
     "medium": "vacuum",
-    "objects": {
-        "semiconductors": [
-            {
+    "detectors": [
+        {
+            "bulk": {
                 "material": "HPGe",
+                "temperature": 78.0,
                 "impurity_density": {
                     "name": "linear",
                     "r": {
@@ -48,38 +49,15 @@
                         "gradient": 0.0
                     }
                 },
-                "temperature": 77.0,
+                "charge_drift_model": {
+                    "include": "ADLChargeDriftModel/drift_velocity_config.json"
+                },
                 "geometry": {
                     "torus": {
                         "r_torus": 10.0,
                         "r_tube": {
                             "from": 2.0,
                             "to": 5.0
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "theta": {
-                            "from": 0.0,
-                            "to": 360.0
-                        }
-                    }
-                }
-            }
-        ],
-        "contacts": [
-            {
-                "name": "p contact",
-                "material": "HPGe",
-                "channel": 1,
-                "potential": 0.0,
-                "geometry": {
-                    "torus": {
-                        "r_torus": 10.0,
-                        "r_tube": {
-                            "from": 2.0,
-                            "to": 2.0
                         },
                         "phi": {
                             "from": 0.0,
@@ -92,29 +70,54 @@
                     }
                 }
             },
-            {
-                "name": "n contact",
-                "material": "HPGe",
-                "channel": 2,
-                "potential": 100.0,
-                "geometry": {
-                    "torus": {
-                        "r_torus": 10.0,
-                        "r_tube": {
-                            "from": 5.0,
-                            "to": 5.0
-                        },
-                        "phi": {
-                            "from": 0.0,
-                            "to": 360.0
-                        },
-                        "theta": {
-                            "from": 0.0,
-                            "to": 360.0
+            "contacts": [
+                {
+                    "name": "p contact",
+                    "material": "HPGe",
+                    "channel": 1,
+                    "potential": 0.0,
+                    "geometry": {
+                        "torus": {
+                            "r_torus": 10.0,
+                            "r_tube": {
+                                "from": 2.0,
+                                "to": 2.0
+                            },
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "theta": {
+                                "from": 0.0,
+                                "to": 360.0
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "n contact",
+                    "material": "HPGe",
+                    "channel": 2,
+                    "potential": 100.0,
+                    "geometry": {
+                        "torus": {
+                            "r_torus": 10.0,
+                            "r_tube": {
+                                "from": 5.0,
+                                "to": 5.0
+                            },
+                            "phi": {
+                                "from": 0.0,
+                                "to": 360.0
+                            },
+                            "theta": {
+                                "from": 0.0,
+                                "to": 360.0
+                            }
                         }
                     }
                 }
-            }
-        ]
-    }
+            ]
+        }
+    ]
 }

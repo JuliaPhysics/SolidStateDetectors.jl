@@ -1,107 +1,59 @@
 """
-    mutable struct SolidStateDetector{T <: SSDFloat, CS} <: AbstractConfig{T}
+    mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
 
-CS: Coordinate System: -> Cartesian / Cylindrical
 """
-mutable struct SolidStateDetector{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractConfig{T}
+mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
     name::String  # optional
-    input_units::NamedTuple
-    world::World{T, 3}
-
-    config_dict::Dict
-
-    medium::NamedTuple # this should become a struct at some point
-
-    semiconductors::Vector{Semiconductor{T}}
+    semiconductor::Semiconductor{T}
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
-
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}}
 end
 
-get_precision_type(d::SolidStateDetector{T}) where {T} = T
-get_coordinate_system(d::SolidStateDetector{T, CS}) where {T, CS} = CS
+get_precision_type(::SolidStateDetector{T}) where {T} = T
 
-function SolidStateDetector{T, CS}()::SolidStateDetector{T} where {T <: SSDFloat, CS}
-    semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
+    semiconductor::Semiconductor{T} = Semiconductor{T}()
+    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives )
-    world = World(CS, world_limits)
-
-    return SolidStateDetector{T, CS}(
+    
+    return SolidStateDetector{T}(
         "EmptyDetector",
-        default_unit_tuple(),
-        world,
-        Dict(),
-        material_properties[materials["vacuum"]],
-        semiconductors,
+        semiconductor,
         contacts,
         passives,
         virtual_drift_volumes
     )
 end
 
-function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
-    return SolidStateDetector{T, Cartesian}()
-end
-function SolidStateDetector()::SolidStateDetector{Float32, Cartesian}
-    return SolidStateDetector{Float32, Cartesian}()
+function construct_semiconductor(T, sc::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    Semiconductor{T}(sc, input_units, transformations)
 end
 
-
-function default_unit_tuple()::NamedTuple{<:Any, <:NTuple{4, Unitful.Units}}
-    return (
-        length = u"m", # change this to u"m" ? SI Units
-        potential = u"V",
-        angle = u"°",
-        temperature = u"K"
-    )
+function construct_passive(T, pass::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    Passive{T}(pass, input_units, transformations)
 end
 
+function construct_contact(T, contact::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    Contact{T}(contact, input_units, transformations)
+end
 
-function construct_units(config_file_dict::Dict)
-    dunits::NamedTuple = default_unit_tuple()
-    if haskey(config_file_dict, "units")
-        d = config_file_dict["units"]
-        dunits = (
-            length = haskey(d, "length") ? unit_conversion[d["length"]] : dunits.length, 
-            angle  = haskey(d, "angle") ? unit_conversion[d["angle"]] : dunits.angle,
-            potential = haskey(d, "potential") ? unit_conversion[d["potential"]] : dunits.potential,
-            temperature = haskey(d, "temperature") ? unit_conversion[d["temperature"]] : dunits.temperature
-        )
-    end
-    dunits
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
+end
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Vector{CSGTransformation}= [])
+    DeadVolume{T}(pass, input_units, transformations)
+end
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Vector{CSGTransformation}= [])
+    ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
 end
 
 
-function construct_semiconductor(T, sc::Dict, input_units::NamedTuple)
-    Semiconductor{T}(sc, input_units)
-end
-
-function construct_passive(T, pass::Dict, input_units::NamedTuple)
-    Passive{T}(pass, input_units)
-end
-
-function construct_contact(T, contact::Dict, input_units::NamedTuple)
-    Contact{T}(contact, input_units)
-end
-
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple)
-    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])} )
-end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}})
-    DeadVolume{T}(pass, input_units)
-end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}})
-    ArbitraryDriftModificationVolume{T}(pass, input_units)
-end
-
-
-function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cylindrical}, s::Semiconductor{T}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
     imps_1::Vector{T} = []
     imps_3::Vector{T} = []
-    for objects in [s, c, p]
+    for objects in [c, p]
         for object in objects
             for posgeo in object.geometry_positive
                 append!(imps_1, get_important_points( posgeo, Val{:r}()))
@@ -127,12 +79,12 @@ function get_world_limits_from_objects(::Type{Cylindrical}, s::Vector{Semiconduc
     end
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
-function get_world_limits_from_objects(::Type{Cartesian}, s::Vector{Semiconductor{T}}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
     imps_1::Vector{T} = []
     imps_2::Vector{T} = []
     imps_3::Vector{T} = []
-    for objects in [s, c, p]
+    for objects in [c, p]
         for object in objects
             for posgeo in object.geometry_positive
                 append!(imps_1, get_important_points( posgeo, Val{:x}()))
@@ -168,66 +120,35 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Vector{Semiconducto
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T}(config_file::Dict)::SolidStateDetector{T} where{T <: SSDFloat}
-    CS::CoordinateSystemType = Cartesian
-    semiconductors::Vector{Semiconductor{T}}, contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], [], []
+function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where {T <: SSDFloat}
+    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    medium::NamedTuple = material_properties[materials["vacuum"]]
-    input_units = construct_units(config_file)
-    if haskey(config_file, "medium")
-        medium = material_properties[materials[config_file["medium"]]]
+
+    if haskey(config_file, "detectors")
+        config_detector = config_file["detectors"][1] # still only one detector
+        
+        transformation_keys = filter(k -> k in ("translate", "rotate"), keys(config_detector))
+        transformations::Vector{CSGTransformation} = broadcast(t -> parse_CSG_transformation(T, config_detector, CSG_dict[t], input_units), transformation_keys)
+        
+        @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."      
+        semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units, transformations)
+
+        if haskey(config_detector, "contacts")              
+            contacts = broadcast(c -> construct_contact(T, c, input_units, transformations), config_detector["contacts"])
+        end
+        if haskey(config_detector, "passives")              
+            passives = broadcast(p -> construct_passive(T, p, input_units, transformations), config_detector["passives"])
+        end
+        if haskey(config_detector, "virtual_drift_volumes")  
+            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
+        end
     end
 
-    if haskey(config_file, "objects")
-        if haskey(config_file["objects"], "semiconductors")        
-            semiconductors = broadcast(s -> construct_semiconductor(T, s, input_units), config_file["objects"]["semiconductors"])  
-        end
-        if haskey(config_file["objects"], "contacts")              
-            contacts = broadcast(c -> construct_contact(T, c, input_units), config_file["objects"]["contacts"]) 
-        end
-        if haskey(config_file["objects"], "passives")              
-            passives = broadcast(p -> construct_passive(T, p, input_units), config_file["objects"]["passives"])       
-        end
-        if haskey(config_file["objects"], "virtual_drift_volumes")  
-            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units), config_file["objects"]["virtual_drift_volumes"]) 
-        end
-    end
-
-    world = if haskey(config_file, "grid")
-        if isa(config_file["grid"], Dict)
-            CS = if config_file["grid"]["coordinates"] == "cartesian" 
-                Cartesian
-            elseif config_file["grid"]["coordinates"]  == "cylindrical"
-                Cylindrical
-            else
-                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
-            end
-            World(T, config_file["grid"], input_units)
-        elseif isa(config_file["grid"], String)
-            CS = if config_file["grid"] == "cartesian" 
-                Cartesian
-            elseif config_file["grid"] == "cylindrical"
-                Cylindrical
-            else
-                @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
-            end
-            world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives)
-            World(CS, world_limits)
-        end
-    else
-        world_limits = get_world_limits_from_objects(CS, semiconductors, contacts, passives )
-        World(CS, world_limits)
-    end
-
-    c = SolidStateDetector{T, CS}()
+    c = SolidStateDetector{T}()
     c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
-    c.config_dict = config_file
-    c.semiconductors = semiconductors
+    c.semiconductor = semiconductor
     c.contacts = contacts
     c.passives = passives
-    c.input_units = input_units
-    c.medium = medium
-    c.world = world
     c.virtual_drift_volumes = virtual_drift_volumes
     return c
 end
@@ -246,22 +167,16 @@ function Base.sort!(v::AbstractVector{<:AbstractGeometry})
 end
 
 function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T
-    reduce((x,semiconductor) -> x || in(pt,semiconductor), c.semiconductors, init = false) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
+    in(pt,c.semiconductor) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
 end
 
-function println(io::IO, d::SolidStateDetector{T, CS}) where {T <: SSDFloat, CS}
+function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
     println("________"*d.name*"________\n")
-    # println("Class: ",d.class)
     println("---General Properties---")
     println("- Precision type: $(T)")
-    println("- Environment Material: $(d.medium.name)")
-    println("- Grid Type: $(CS)")
     println()
-    println("# Semiconductors: $(length(d.semiconductors))")
-    for (isc, sc)  in enumerate(d.semiconductors)
-        println("\t_____Semiconductor $(isc)_____\n")
-        println(sc)
-    end
+    println("\t_____Semiconductor_____\n")
+    println(d.semiconductor)
     println()
     println("# Contacts: $(length(d.contacts))")
     if length(d.contacts)<=5

@@ -1,0 +1,235 @@
+{
+    "name": "Public Inverted Coax",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "r": {
+                "to": 40.0,
+                "boundaries": "inf"
+            },
+            "phi": {
+                "from": 0,
+                "to": 0,
+                "boundaries": "periodic"
+            },
+            "z": {
+                "from": -10,
+                "to": 90.0,
+                "boundaries": {
+                    "left": "inf",
+                    "right": "inf"
+                }
+            }
+        }
+    },
+    "medium": "vacuum",
+    "detectors": [
+        {
+            "bulk": {
+                "material": "HPGe",
+                "temperature": 78.0,
+                "impurity_density": {
+                    "name": "cylindrical",
+                    "r": {
+                        "init": 0,
+                        "gradient": 0
+                    },
+                    "z": {
+                        "init": -1.0e7,
+                        "gradient": -100000.0
+                    }
+                },
+                "charge_drift_model": {
+                    "include": "ADLChargeDriftModel/drift_velocity_config.json"
+                },
+                "geometry": {
+                    "difference": [
+                        {
+                            "difference": [
+                                {
+                                    "translate": {
+                                        "tube": {
+                                            "r": 35.0,
+                                            "phi": {
+                                                "from": 0.0,
+                                                "to": 360.0
+                                            },
+                                            "h": 80.0
+                                        },
+                                        "z": 40.0
+                                    }
+                                },
+                                {
+                                    "translate": {
+                                        "cone": {
+                                            "r": {
+                                                "bottom": {
+                                                    "from": 35.0,
+                                                    "to": 36.0
+                                                },
+                                                "top": {
+                                                    "from": 24.42,
+                                                    "to": 36.0
+                                                }
+                                            },
+                                            "phi": {
+                                                "from": 0.0,
+                                                "to": 360.0
+                                            },
+                                            "h": 60.0
+                                        },
+                                        "z": 50.0
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "translate": {
+                                "tube": {
+                                    "r": 5.0,
+                                    "phi": {
+                                        "from": 0.0,
+                                        "to": 360.0
+                                    },
+                                    "h": 80.0
+                                },
+                                "z": 65.0
+                            }
+                        }
+                    ]
+                }
+            },
+            "contacts": [
+                {
+                    "material": "HPGe",
+                    "channel": 1,
+                    "potential": 0.0,
+                    "geometry": {
+                        "translate": {
+                            "tube": {
+                                "r": 3.0,
+                                "phi": {
+                                    "from": 0.0,
+                                    "to": 360.0
+                                },
+                                "h": 2.0
+                            },
+                            "z": 1.0
+                        }
+                    }
+                },
+                {
+                    "material": "HPGe",
+                    "channel": 2,
+                    "potential": 3500.0,
+                    "geometry": {
+                        "union": [
+                            {
+                                "tube": {
+                                    "r": {
+                                        "from": 15.0,
+                                        "to": 35.0
+                                    },
+                                    "phi": {
+                                        "from": 0.0,
+                                        "to": 360.0
+                                    },
+                                    "h": 0.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 35.0,
+                                            "to": 35.0
+                                        },
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 20.0
+                                    },
+                                    "z": 10.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "cone": {
+                                        "r": {
+                                            "bottom": {
+                                                "from": 35.0,
+                                                "to": 35.0
+                                            },
+                                            "top": {
+                                                "from": 24.42,
+                                                "to": 24.42
+                                            }
+                                        },
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 60.0
+                                    },
+                                    "z": 50.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 5.0,
+                                            "to": 24.42
+                                        },
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 80.0
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": {
+                                            "from": 5.0,
+                                            "to": 5.0
+                                        },
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 55.0
+                                    },
+                                    "z": 52.5
+                                }
+                            },
+                            {
+                                "translate": {
+                                    "tube": {
+                                        "r": 5.0,
+                                        "phi": {
+                                            "from": 0.0,
+                                            "to": 360.0
+                                        },
+                                        "h": 0.0
+                                    },
+                                    "z": 25.0
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

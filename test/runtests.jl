@@ -44,7 +44,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
-        @test isapprox( signalsum, T(2), atol = 2e-3 )
+        @test isapprox( signalsum, T(2), atol = 4e-3 )
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation{T}(SSD_examples[:BEGe])

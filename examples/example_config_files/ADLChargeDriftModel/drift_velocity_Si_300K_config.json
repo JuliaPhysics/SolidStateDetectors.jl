@@ -1,4 +1,5 @@
 {
+	  "model": "ADLChargeDriftModel",
 		"phi110": 0.0,
 		"material": "Si",
 		"drift": {

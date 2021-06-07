@@ -52,5 +52,5 @@ end
 
 decompose!(pos, neg, vol::AbstractVolumePrimitive, transformation, ::Type{Val{:PositiveVolume}}, ::Type{AbstractVolumePrimitive}) = push!(pos, transform(vol, transformation))
 decompose!(pos, neg, vol::AbstractVolumePrimitive, transformation, ::Type{Val{:NegativeVolume}}, ::Type{AbstractVolumePrimitive}) = push!(neg, transform(vol, transformation))
-decompose!(pos, neg, vol::AbstractVolumePrimitive, transformation, ::Type{Val{:PositiveVolume}}, ::Type{AbstractSurfacePrimitive}) = append!(pos, transform.(get_decomposed_surfaces(vol), transformation))
+decompose!(pos, neg, vol::AbstractVolumePrimitive, transformation, ::Type{Val{:PositiveVolume}}, ::Type{AbstractSurfacePrimitive}) = append!(pos, broadcast(surf -> transform(surf, transformation), get_decomposed_surfaces(vol)))
 #decompose!(pos, neg, surf::AbstractSurfacePrimitive, transformation, ::Type{Val{:PositiveVolume}}) = push!(pos, surf)

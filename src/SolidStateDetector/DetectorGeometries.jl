@@ -1,10 +1,3 @@
-unit_conversion = Dict{String, Unitful.Units}(
-    "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
-    "deg" => u"°","rad" => u"rad", #angle
-    "V" => u"V", "kV" => u"kV", #potential
-    "K" => u"K", "Kelvin" => u"K", "C" => u"°C", "Celsius" => u"°C", #temperature
-)
-
 include("Object.jl")
 include("Passive.jl")
 include("Contacts.jl")
@@ -16,7 +9,7 @@ include("SolidStateDetector.jl")
 
 
 """
-    SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
+    parse_config_file(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
 
 Reads in a config file and returns an Detector struct which holds all information specified in the config file.
 Currently supported formats for the config file: .json, .yaml
@@ -112,27 +105,17 @@ function scan_and_merge_included_json_files!(parsed_dict, config_filename::Abstr
     end
 end
 
-
-function SolidStateDetector{T}(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
-    parsed_dict = parse_config_file(filename)
-    return SolidStateDetector{T}(parsed_dict)
-end
-
-# function SolidStateDetector(T::Type{<:AbstractFloat} = Float32, filename::AbstractString = SSD_examples[:InvertedCoax])::SolidStateDetector{T}
-#     SolidStateDetector{T}(filename)
-# end
-
-function SolidStateDetector(filename::AbstractString)::SolidStateDetector{Float32}
-    SolidStateDetector{Float32}(filename)
-end
-
-function sample(c::SolidStateDetector{T, Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
-    imp::Vector{CartesianPoint{T}} = vcat([CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+function sample(c::SolidStateDetector{T}, ::Type{Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CartesianPoint{T}} = vcat(
+        CartesianPoint.(sample(c.semiconductor.geometry, sampling...)),
+        [CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
-function sample(c::SolidStateDetector{T, Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
-    imp::Vector{CylindricalPoint{T}} = vcat([CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.semiconductors, c.contacts, c.passives) for g in object]...)
+function sample(c::SolidStateDetector{T}, ::Type{Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
+    imp::Vector{CylindricalPoint{T}} = vcat(
+    CylindricalPoint.(sample(c.semiconductor.geometry, sampling...)),
+    [CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
     unique!(imp)
 end
 
@@ -285,18 +268,13 @@ function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T wh
     get_charge_density(p.charge_density_model, pt)
 end
 
-function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T})::Tuple{T, T, T} where {T <: SSDFloat}
+function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T}, medium::NamedTuple = material_properties[materials["vacuum"]])::Tuple{T, T, T} where {T <: SSDFloat}
     ρ_semiconductor::T = 0
     q_eff_fix::T = 0
-    ϵ::T = ssd.medium.ϵ_r
-    if in(pt,ssd.semiconductors)
-        for sc in ssd.semiconductors
-            if in(pt, sc)
-                ρ_semiconductor = get_charge_density(sc, pt) 
-                ϵ = sc.material.ϵ_r
-                break
-            end
-        end
+    ϵ::T = medium.ϵ_r
+    if pt in ssd.semiconductor
+        ρ_semiconductor = get_charge_density(ssd.semiconductor, pt) 
+        ϵ = ssd.semiconductor.material.ϵ_r
     elseif in(pt, ssd.passives)
         for ep in ssd.passives
             if pt in ep
@@ -308,7 +286,6 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     end
     return ρ_semiconductor, ϵ, q_eff_fix
 end
-
 
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
@@ -447,196 +424,4 @@ function json_to_dict(inputfile::String)::Dict
         parsed_json_file = JSON.parse(dicttext)
     end
     return parsed_json_file
-end
-
-function Grid(  detector::SolidStateDetector{T, Cylindrical};
-                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
-                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
-                for_weighting_potential::Bool = false,
-                min_n_ticks::Int = 10,
-                full_2π::Bool = false)::CylindricalGrid{T} where {T}
-    if ismissing(init_grid_size)
-        world_diffs = [(getproperty.(detector.world.intervals, :right) .- getproperty.(detector.world.intervals, :left))...]
-        world_diffs[2] = world_diffs[2] * 0.3 * detector.world.intervals[1].right # in radiance
-        inds::Vector{Int} = sortperm([world_diffs...])
-        ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
-            inv(world_diffs[inds[1]])
-        elseif world_diffs[inds[2]] > 0
-            inv(world_diffs[inds[2]])
-        elseif world_diffs[inds[3]] > 0
-            inv(world_diffs[inds[3]])
-        else
-            error("This should not happen... World has no dimension")
-        end
-        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
-        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
-        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
-        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
-    end
-
-    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
-        T.(init_grid_spacing), true
-    else
-        missing, false
-    end
-    
-    samples::Vector{CylindricalPoint{T}} = sample(detector)
-   
-    important_r_points::Vector{T} = map(p -> p.r, samples)
-    important_φ_points::Vector{T} = map(p -> p.φ, samples)
-    important_z_points::Vector{T} = map(p -> p.z, samples)
-
-    push!(important_r_points, detector.world.intervals[1].left)
-    push!(important_r_points, detector.world.intervals[1].right)
-    important_r_points = unique!(sort!(geom_round.(important_r_points)))
-    push!(important_z_points, detector.world.intervals[3].left)
-    push!(important_z_points, detector.world.intervals[3].right)
-    important_z_points = unique!(sort!(geom_round.(important_z_points)))
-    push!(important_φ_points, detector.world.intervals[2].left)
-    push!(important_φ_points, detector.world.intervals[2].right)
-    important_φ_points = unique!(sort!(geom_round.(important_φ_points)))
-
-    # r
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
-    int_r = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
-    ax_r::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
-    else
-        DiscreteAxis{BL, BR}(int_r, length = init_grid_size[1])
-    end
-    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
-    ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
-
-
-    # φ
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
-    int_φ = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    if full_2π == true || (for_weighting_potential && (detector.world.intervals[2].left != detector.world.intervals[2].right))
-        L, R, BL, BR = :closed, :open, :periodic, :periodic
-        int_φ = Interval{L, R, T}(0, 2π)
-    end
-    ax_φ = if int_φ.left == int_φ.right
-        DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
-    else
-        if use_spacing
-            DiscreteAxis{BL, BR}(int_φ, step = init_grid_spacing[2])
-        else
-            DiscreteAxis{BL, BR}(int_φ, length = init_grid_size[2])
-        end
-    end
-    if length(ax_φ) > 1
-        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
-        ax_φ = typeof(ax_φ)(int_φ, φticks)
-    end
-    if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
-        int_φ = ax_φ.interval
-        φticks = ax_φ.ticks
-        push!(φticks, geom_round((φticks[end] + φticks[end-1]) * 0.5))
-        sort!(φticks)
-        ax_φ = typeof(ax_φ)(int_φ, φticks) # must be even
-    end
-    if length(ax_φ) > 1
-        @assert iseven(length(ax_φ)) "CylindricalGrid must have even number of points in φ."
-    end
-
-    #z
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
-    int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
-    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
-    else
-        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
-    end
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=minimum(diff(ax_z.ticks))/2)
-    ax_z = typeof(ax_z)(int_z, zticks)
-    if isodd(length(ax_z)) # must be even
-        int_z = ax_z.interval
-        zticks = ax_z.ticks
-        push!(zticks, geom_round((zticks[end] + zticks[end-1]) * 0.5))
-        sort!(zticks)
-        ax_z = typeof(ax_z)(int_z, zticks) # must be even
-    end
-    @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
-
-    return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
-end
-
-
-function Grid(  detector::SolidStateDetector{T, Cartesian};
-                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
-                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
-                min_n_ticks::Int = 10,
-                for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
-
-    if ismissing(init_grid_size)
-        world_diffs = [(getproperty.(detector.world.intervals, :right) .- getproperty.(detector.world.intervals, :left))...]
-        inds::Vector{Int} = sortperm([world_diffs...])
-        ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
-            inv(world_diffs[inds[1]])
-        elseif world_diffs[inds[2]] > 0
-            inv(world_diffs[inds[2]])
-        elseif world_diffs[inds[3]] > 0
-            inv(world_diffs[inds[3]])
-        else
-            error("This should not happen... World has no dimension")
-        end
-        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
-        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
-        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
-        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
-    end
-
-    samples::Vector{CartesianPoint{T}} = sample(detector)
-    
-    important_x_points::Vector{T} = geom_round.(map(p -> p.x, samples))
-    important_y_points::Vector{T} = geom_round.(map(p -> p.y, samples))
-    important_z_points::Vector{T} = geom_round.(map(p -> p.z, samples))
-
-    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
-        T.(init_grid_spacing), true
-    else
-        missing, false
-    end
-
-    # x
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[1])
-    int_x = Interval{L, R, T}(detector.world.intervals[1].left, detector.world.intervals[1].right)
-    ax_x::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
-    else
-        DiscreteAxis{BL, BR}(int_x, length = init_grid_size[1])
-    end
-    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = minimum(diff(ax_x.ticks)) / 2)
-    ax_x = typeof(ax_x)(int_x, xticks)
-    if isodd(length(ax_x)) # RedBlack dimension must be of even length
-        xticks = ax_x.ticks
-        push!(xticks, geom_round((xticks[end] + xticks[end-1]) * 0.5))
-        sort!(xticks)
-        ax_x = DiscreteAxis{T, BL, BR}(int_x, xticks) # must be even
-    end
-    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
-
-    # y
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[2])
-    int_y = Interval{L, R, T}(detector.world.intervals[2].left, detector.world.intervals[2].right)
-    ax_y::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
-    else
-        DiscreteAxis{BL, BR}(int_y, length = init_grid_size[2])
-    end
-    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = minimum(diff(ax_y.ticks)) / 2)
-    ax_y = typeof(ax_y)(int_y, yticks)
-
-    # z
-    L, R, BL, BR = get_boundary_types(detector.world.intervals[3])
-    int_z = Interval{L, R, T}(detector.world.intervals[3].left, detector.world.intervals[3].right)
-    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
-    else
-        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
-    end
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = minimum(diff(ax_z.ticks)) / 2)
-    ax_z = typeof(ax_z)(int_z, zticks)
-
-    return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end

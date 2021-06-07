@@ -1,8 +1,0 @@
-{
-    "material": "HPGe",
-    "temperature": 77.0,
-    "include" : [
-        "detector_geometry.json",
-        "impurity_density.json"
-    ]
-}
