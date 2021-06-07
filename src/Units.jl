@@ -41,7 +41,7 @@ function default_unit_tuple()::NamedTuple{<:Any, <:NTuple{4, Unitful.Units}}
     )
 end
 
-function construct_units(config_file_dict::Dict)
+function construct_units(config_file_dict::AbstractDict)
     dunits::NamedTuple = default_unit_tuple()
     if haskey(config_file_dict, "units")
         d = config_file_dict["units"]

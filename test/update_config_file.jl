@@ -1,10 +1,13 @@
 using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, CSGDifference,
-        parse_translate_vector, internal_unit_length, internal_unit_angle, CSG_dict, geom_round
-import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
+        internal_unit_length, internal_unit_angle, CSG_dict, geom_round,
+        parse_r_of_primitive, parse_height_of_primitive, parse_translate_vector, parse_rotation_matrix
+using SolidStateDetectors: construct_units
+import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
 using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry, TranslatedGeometry, ScaledGeometry, RotatedGeometry, 
-    CSGUnion, CSGDifference, CSGIntersection, Cone, Dictionary, CartesianVector
+    CSGUnion, CSGDifference, CSGIntersection, Cone, CartesianVector, HexagonalPrism
 using DataStructures: OrderedDict
 using IntervalSets
+using Rotations
 using Unitful
 using JSON
 using YAML
@@ -51,23 +54,30 @@ end
 
 
 # UPDATE DUE TO BREAKING CHANGES TO TUBE/CONE: CENTERED AROUND ZERO
-function update_primitives!(dict::AbstractDict)
+# AND REDEFINITION OF HEXAGONALPRISM
+function update_primitives!(dict::AbstractDict, input_units::NamedTuple)
     dict_keys = keys(dict)
     #Translate all Tubes and Cone that are defined via "h" and where h is not zero
-    if "type" in dict_keys && dict["type"] in ["tube", "cone"] && "h" in dict_keys && dict["h"] != 0
+    if "type" in dict_keys && dict["type"] == "HexagonalPrism"
+        rotZ = haskey(dict, "rotZ") ? dict["rotZ"] : 0
+        rotZ -= input_units.angle == u"°" ? 30 : π/6
+        rotZ = ustrip(uconvert(u"rad", rotZ * input_units.angle))
+        delete!(dict, "rotZ")
+        if rotZ != 0 dict["rotate"] = Dict("Z" => rotZ) end
+    elseif "type" in dict_keys && dict["type"] in ["tube", "cone"] && "h" in dict_keys && dict["h"] != 0
         #add translate vector with z=0 if it does not exist
         if !("translate" in dict_keys) dict["translate"] = Dict{String,Any}("z" => 0) end
         dict["translate"]["z"] = geom_round(dict["translate"]["z"] + Float64(dict["h"] / 2))
-        if dict["translate"]["z"] == 0 pop!(dict["translate"]["z"]) end
-        if prod(values(dict["translate"]) .== 0) pop!(dict["translate"]) end
+        if dict["translate"]["z"] == 0 delete!(dict["translate"], "z") end
+        if length(keys(dict["translate"])) == 0 delete!(dict, "translate") end
     end
     for k in dict_keys
         if typeof(dict[k]) <: AbstractDict
-            dict[k] = update_primitives!(dict[k])
+            dict[k] = update_primitives!(dict[k], input_units)
         elseif typeof(dict[k]) <: Array
             for i in eachindex(dict[k])
                 if typeof(dict[k][i]) <: AbstractDict
-                    dict[k][i] = update_primitives!(dict[k][i])
+                    dict[k][i] = update_primitives!(dict[k][i], input_units)
                 end
             end
         end
@@ -75,15 +85,39 @@ function update_primitives!(dict::AbstractDict)
     dict
 end
 
-function update_geometry!(g::AbstractDict, T::DataType)
-    g["geometry"] = Dictionary(Geometry(T, g["geometry"], (length = NoUnits, angle = NoUnits)))
+function update_geometry!(g::AbstractDict, T::DataType, input_units = (length = NoUnits, angle = NoUnits))
+    g["geometry"] = Dictionary(Geometry(T, g["geometry"], input_units))
     return g
+end
+
+# HexagonalPrism (#146)
+function Geometry(::Type{T}, ::Type{HexagonalPrism}, dict::AbstractDict, input_units::NamedTuple) where {T}
+    length_unit = input_units.length
+    r = parse_r_of_primitive(T, dict, length_unit)
+    z = parse_height_of_primitive(T, dict, length_unit)
+    rot = haskey(dict, "rotate") ? parse_rotation_matrix(T, dict["rotate"], u"rad") : one(RotMatrix{3,T})
+    return RotatedGeometry(HexagonalPrism(T, r, z), rot)
+end
+
+function Dictionary(g::RotatedGeometry{T}) where {T}
+    dict = Dictionary(g.p)
+    mat = RotXYZ(inv(g.inv_r))
+    if mat.theta1 == 0 && mat.theta2 == 0
+        if mat.theta3 != 0 
+            dict["Z"] = geom_round(HexagonalPrismAngleUnit == u"°" ? rad2deg(mat.theta3) : mat.theta3)
+        end
+    else
+        dict["M"] = inv(g.inv_r)[:]
+    end
+    OrderedDict{String,Any}("rotate" => dict)
 end
 
 
 function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataType = Float64)
 
-    update_primitives!(config_file_dict)
+    input_units = construct_units(config_file_dict)
+    update_primitives!(config_file_dict, input_units)
+    global HexagonalPrismAngleUnit = input_units.angle
 
     t = broadcast(obj -> obj["type"], config_file_dict["objects"])
     
@@ -128,11 +162,11 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
         for virtual_volume in config_file_dict["objects"][findall(t .== "virtual_drift_volume")]
     ]
 
-    config_file_dict["objects"] = Dict{String,Any}()
-    config_file_dict["objects"]["semiconductor"] = semiconductor
-    if length(contacts) > 0 config_file_dict["objects"]["contacts"] = contacts end
-    if length(passives) > 0 config_file_dict["objects"]["passives"] = passives end
-    if length(virtual_drift_volumes) > 0 config_file_dict["objects"]["virtual_drift_volumes"] = virtual_drift_volumes end
+    config_file_dict["detectors"] = []
+    push!(config_file_dict["detectors"], Dict("bulk" => semiconductor) )
+    if length(contacts) > 0 push!(config_file_dict["detectors"], Dict("contacts" => contacts)) end
+    if length(passives) > 0 push!(config_file_dict["detectors"], Dict("passives" => passives)) end
+    if length(virtual_drift_volumes) > 0 push!(config_file_dict["detectors"], Dict("virtual_drift_volumes" => virtual_drift_volumes)) end
     
     config_file_dict
     
