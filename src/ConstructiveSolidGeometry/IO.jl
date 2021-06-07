@@ -167,10 +167,10 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
         @assert isrotation(R) "R is not a Rotation Matrix."
         return R
     else 
-        rotation = filter(k -> k in _rot_keys, uppercase.(dict_keys))
+        rotation = filter(k -> uppercase(k) in _rot_keys, dict_keys)
         @assert length(rotation) == 1 "Rotations must be defined using exactly one of the following keywords:\n$(vcat("M",_rot_keys))"
         key = first(rotation)
-        R = getfield(Rotations, Symbol("Rot"*key))
+        R = getfield(Rotations, Symbol("Rot"*uppercase(key)))
         RotMatrix3{T}(R{Float64}(_parse_value(Float64,dict[key],unit)...)) # parse rotations matrix values as Float64 to minimize rounding errors
     end
 end
