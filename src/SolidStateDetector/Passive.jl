@@ -19,11 +19,11 @@ function Passive{T}(dict::Dict, input_units::NamedTuple, transformations::Vector
     pass = Passive{T}()
     haskey(dict, "name") ? pass.name = dict["name"] : pass.name = "external part"
     haskey(dict, "id") ? pass.id = dict["id"] : pass.id = -1
-    haskey(dict,"potential") ? pass.potential = T(dict["potential"]) : pass.potential = :floating
+    haskey(dict, "potential") ? pass.potential = T(dict["potential"]) : pass.potential = :floating
     haskey(dict, "temperature") ? pass.temperature = T(dict["temperature"]) : pass.temperature = missing
     pass.material = material_properties[materials[dict["material"]]]
     pass.charge_density_model = if haskey(dict, "charge_density") 
-        haskey(dict, "charge_density") 
+        ChargeDensity(T, dict["charge_density"], input_units)
     elseif haskey(dict, "charge_density_model") 
         @warn "Config file deprication: There was an internal change from v0.5.1 to v0.6.0 regarding the 
             charge density of `Passive` objects. 
@@ -31,7 +31,7 @@ function Passive{T}(dict::Dict, input_units::NamedTuple, transformations::Vector
             is a charge density and not an impurity density. The values in the config files should be adapted
             and the name of the field should be changed from \"charge_density_model\" into \"charge_density\".
             This warning will result in an error in later versions."
-       haskey(dict, "charge_density_model") 
+        ChargeDensity(T, dict["charge_density_model"], input_units)
     else
         ConstantChargeDensity{T}(0)
     end
