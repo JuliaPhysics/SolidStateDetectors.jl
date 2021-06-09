@@ -12,7 +12,7 @@ const CSG_dict = Dict{String, Any}(
     # "difference" => CSGDifference,
     # "intersection" => CSGIntersection,
     "translate" => CartesianVector,
-    # "rotate" => RotatedGeometry,
+    "rotate" => Rotation, # type from Rotations.jl: Rotation.Rotation
     # "scale" => ScaledGeometry
 )
 
@@ -176,9 +176,9 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
     end
 end
 
-# function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{RotatedGeometry}, input_units::NamedTuple) where {T}
-#     parse_rotation_matrix(T, dict["rotate"], input_units.angle)
-# end
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{Rotation}, input_units::NamedTuple) where {T}
+    parse_rotation_matrix(T, dict["rotate"], input_units.angle)
+end
 
 # function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
 #     angle_unit = input_units.angle
