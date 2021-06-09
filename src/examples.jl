@@ -22,7 +22,7 @@ SSD_examples[:BEGe] = (
     joinpath(@__DIR__, "../examples/example_config_files/public_SegBEGe_config.json")
 )
 SSD_examples[:CGD] = (
-    joinpath(@__DIR__, "../examples/example_config_files/public_CGD_config.json")
+    joinpath(@__DIR__, "../examples/example_config_files/public_CGD_config.yaml")
 )
 SSD_examples[:Spherical] = (
     joinpath(@__DIR__, "../examples/example_config_files/public_spherical_detector_config.json")
