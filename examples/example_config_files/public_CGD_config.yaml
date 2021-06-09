@@ -9,11 +9,11 @@ grid:
   axes:
     x:
       from: -5
-      to: 15 
+      to: 15
       boundaries: inf
     y:
       from: -5
-      to: 15 
+      to: 15
       boundaries: inf
     z:
       from: -5
@@ -21,76 +21,76 @@ grid:
       boundaries: inf
 medium: vacuum
 detectors:
-- bulk:
-    material: HPGe
-    temperature: 78
-    impurity_density:
-      name: linear
-      x:
-        init: 0
-        gradient: 0
-      y:
-        init: 0
-        gradient: 0
-      z:
-        init: 10000000
-        gradient: 50000
-    charge_drift_model:
-      include: ADLChargeDriftModel/drift_velocity_config.json
-    geometry:
-      box:
+  - bulk:
+      material: HPGe
+      temperature: 78
+      impurity_density:
+        name: linear
         x:
-          from: 0
-          to: 10
+          init: 0
+          gradient: 0
         y:
-          from: 0
-          to: 10
+          init: 0
+          gradient: 0
         z:
-          from: 0
-          to: 10
-  contacts:
-  - material: HPGe
-    name: n+ contact
-    potential: 2000
-    channel: 1
-    geometry:
-      box:
-        x:
-          from: 0
-          to: 0.1
-        y:
-          from: 0
-          to: 10
-        z:
-          from: 0
-          to: 10
-  - material: HPGe
-    name: p+ contact
-    potential: 0
-    channel: 2
-    geometry:
-      box:
-        x:
-          from: 9.9
-          to: 10
-        y:
-          from: 0
-          to: 10
-        z:
-          from: 0
-          to: 10
+          init: 10000000
+          gradient: 50000
+      charge_drift_model:
+        include: ADLChargeDriftModel/drift_velocity_config.json
+      geometry:
+        box:
+          x:
+            from: 0
+            to: 10
+          y:
+            from: 0
+            to: 10
+          z:
+            from: 0
+            to: 10
+    contacts:
+      - material: HPGe
+        name: n+ contact
+        potential: 2000
+        channel: 1
+        geometry:
+          box:
+            x:
+              from: 0
+              to: 0.1
+            y:
+              from: 0
+              to: 10
+            z:
+              from: 0
+              to: 10
+      - material: HPGe
+        name: p+ contact
+        potential: 0
+        channel: 2
+        geometry:
+          box:
+            x:
+              from: 9.9
+              to: 10
+            y:
+              from: 0
+              to: 10
+            z:
+              from: 0
+              to: 10
 surroundings:
-- name: Base
-  material: Copper
-  potential: 1000
-  geometry:
-    box:
-      x:
-        from: -5
-        to: 15
-      y:
-        from: -5
-        to: 15
-      z:
-        from: -2
-        to: -1
+  - name: Base
+    material: Copper
+    potential: 1000
+    geometry:
+      box:
+        x:
+          from: -5
+          to: 15
+        y:
+          from: -5
+          to: 15
+        z:
+          from: -2
+          to: -1
