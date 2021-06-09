@@ -16,12 +16,12 @@ function fix_literate_output(content)
     return content
 end
 
-gen_content_dir = joinpath(@__DIR__, "src")
-tutorial_src = joinpath(@__DIR__, "src", "tutorial_lit.jl")
-Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", documenter = true, credit = true, postprocess = fix_literate_output)
-#Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", codefence = "```@repl tutorial" => "```", documenter = true, credit = true)
-Literate.notebook(tutorial_src, gen_content_dir, execute = false, name = "ssd_tutorial", documenter = true, credit = true)
-Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ssd_tutorial", documenter = true, credit = false)
+# gen_content_dir = joinpath(@__DIR__, "src")
+# tutorial_src = joinpath(@__DIR__, "src", "tutorial_lit.jl")
+# Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", documenter = true, credit = true, postprocess = fix_literate_output)
+# #Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", codefence = "```@repl tutorial" => "```", documenter = true, credit = true)
+# Literate.notebook(tutorial_src, gen_content_dir, execute = false, name = "ssd_tutorial", documenter = true, credit = true)
+# Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ssd_tutorial", documenter = true, credit = false)
 
 
 makedocs(
@@ -44,7 +44,7 @@ makedocs(
             "Drift Fields" => "man/drift_fields.md",
             "IO" => "man/IO.md",
         ],
-        "Tutorial" => "tutorial.md",
+        # "Tutorial" => "tutorial.md",
         "API" => "api.md",
         "LICENSE" => "LICENSE.md",
     ],
