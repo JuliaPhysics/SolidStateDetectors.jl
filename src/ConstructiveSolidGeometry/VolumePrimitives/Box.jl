@@ -38,9 +38,7 @@ _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
     abs(pt.x) <= b.hX && abs(pt.y) <= b.hY && abs(pt.z) <= b.hZ
 _in(pt::CartesianPoint, b::Box{<:Any, :OpenPrimitive}) = 
     abs(pt.x) < b.hX && abs(pt.y) < b.hY && abs(pt.z) < b.hZ
-
-   
-
+ 
 function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple) where {T}
     length_unit = input_units.length
     x = parse_interval_of_primitive(T, "x", dict, length_unit)
@@ -73,3 +71,18 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
         origin, rot
     )
 end
+
+function vertices(b::Box{T}) where {T}
+    return SVector{8, CartesianPoint{T}}(
+        b.rotation * SVector{3,T}(-b.hX, -b.hY, -b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(+b.hX, -b.hY, -b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(+b.hX, +b.hY, -b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(-b.hX, +b.hY, -b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(-b.hX, -b.hY, +b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(+b.hX, -b.hY, +b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(+b.hX, +b.hY, +b.hZ) .+ b.origin,
+        b.rotation * SVector{3,T}(-b.hX, +b.hY, +b.hZ) .+ b.origin,
+    )
+end
+
+sample(b::Box) = vertices(b)
