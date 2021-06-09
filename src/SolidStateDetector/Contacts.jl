@@ -6,21 +6,21 @@ abstract type AbstractContact{T} <: AbstractObject{T} end
 
 T: Type of precision.
 """
-mutable struct Contact{T} <: AbstractContact{T}
+struct Contact{T,G,MT} <: AbstractContact{T}
     potential::T
-    material::NamedTuple
+    material::MT
     id::Int
     name::String
-    geometry::AbstractGeometry{T}
+    geometry::G
 end
 
 
 function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, input_units::NamedTuple, transformations::Vector{CSGTransformation})::Contact{T} where {T <: SSDFloat}
-    haskey(dict, "channel") ? channel = dict["channel"] : channel = -1
-    haskey(dict, "material") ? material = material_properties[materials[dict["material"]]] : material = material_properties[materials["HPGe"]]
-    haskey(dict,"name") ? name = dict["name"] : name = ""
+    id::Int = haskey(dict, "channel") ? dict["channel"] : -1
+    material = haskey(dict, "material") ? material_properties[materials[dict["material"]]] : material_properties[materials["HPGe"]]
+    name = haskey(dict,"name") ? dict["name"] : ""
     geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
-    return Contact{T}( dict["potential"], material, channel, name, geometry )
+    return Contact( T(dict["potential"]), material, id, name, geometry )
 end
 
 function println(io::IO, d::Contact) 
