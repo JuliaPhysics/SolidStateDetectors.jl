@@ -8,9 +8,6 @@ mutable struct Semiconductor{T} <: AbstractSemiconductor{T}
     impurity_density_model::AbstractImpurityDensity{T}
     charge_drift_model::AbstractChargeDriftModel{T}
     geometry::AbstractGeometry{T}
-    geometry_positive::Vector{AbstractGeometry{T}}
-    geometry_negative::Vector{AbstractGeometry{T}}
-    decomposed_surfaces::Vector{AbstractGeometry{T}}
 
     Semiconductor{T}() where T <: SSDFloat = new{T}()
 end
@@ -35,8 +32,6 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple, transformations::
     end
     sc.material = material_properties[materials[dict["material"]]]
     sc.geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
-    sc.geometry_positive, sc.geometry_negative = get_decomposed_volumes(sc.geometry)
-    sc.decomposed_surfaces = vcat(get_decomposed_surfaces.(sc.geometry_positive)...)
     return sc
 end
 
