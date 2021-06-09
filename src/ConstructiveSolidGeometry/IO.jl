@@ -33,8 +33,8 @@ end
 #### INTERNAL PARSE FUNCTIONS
 
 # parses dictionary entries of type Real or String to their value in internal units
-@inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = to_internal_units(T(x) * unit)
-@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = to_internal_units(T(uparse(s)))
+@inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = T(to_internal_units(x * unit))
+@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = T(to_internal_units(uparse(s)))
 @inline _parse_value(::Type{T}, a::Vector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries
