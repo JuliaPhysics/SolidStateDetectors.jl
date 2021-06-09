@@ -11,12 +11,12 @@ const CSG_dict = Dict{String, Any}(
     # "union" => CSGUnion,
     # "difference" => CSGDifference,
     # "intersection" => CSGIntersection,
-    # "translate" => TranslatedGeometry,
+    "translate" => CartesianVector,
     # "rotate" => RotatedGeometry,
     # "scale" => ScaledGeometry
 )
 
-function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple)::Tuple{String, Vector{CSGTransformation}} where {T}
+function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
     dict_keys = filter(k -> k in keys(CSG_dict), keys(dict))
     transformations = sort!(filter(k -> 
                                 (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) || 
@@ -26,7 +26,8 @@ function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple
     primitives = setdiff(dict_keys, transformations)
     @assert length(primitives) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
     @assert length(primitives) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
-    first(primitives), broadcast(t -> parse_CSG_transformation(T, dict, CSG_dict[t], input_units), transformations)
+    transformations = broadcast(t -> parse_CSG_transformation(T, dict, CSG_dict[t], input_units), transformations)
+    first(primitives), isempty(transformations) ? missing : transformations
 end
 
 
@@ -134,16 +135,16 @@ function parse_translate_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Uni
     CartesianVector{T}(x,y,z)
 end
 
-function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{TranslatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{CartesianVector}, input_units::NamedTuple) where {T}
     parse_translate_vector(T, dict["translate"], input_units.length)
 end
 
-function Geometry(::Type{T}, ::Type{TranslatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    length_unit = input_units.length
-    translate_vector::CartesianVector{T} = parse_translate_vector(T, dict, length_unit)
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    translate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), translate_vector)
-end
+# function Geometry(::Type{T}, ::Type{CartesianVector}, dict::AbstractDict, input_units::NamedTuple) where {T}
+#     length_unit = input_units.length
+#     translate_vector::CartesianVector{T} = parse_translate_vector(T, dict, length_unit)
+#     key::String, transformations = get_geometry_key(T, dict, input_units)
+#     translate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), translate_vector)
+# end
 
 function parse_scale_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::SVector{3,T} where {T}
     x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], unit) : T(1)
@@ -152,12 +153,12 @@ function parse_scale_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units):
     SVector{3,T}(x,y,z)
 end
 
-function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    length_unit = input_units.length
-    scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    scale(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), scale_vector)
-end
+# function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
+#     length_unit = input_units.length
+#     scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
+#     key::String, transformations = get_geometry_key(T, dict, input_units)
+#     scale(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), scale_vector)
+# end
 
 _rot_keys = ["X","Y","Z","XY","XZ","YX","YZ","ZX","ZY","XYX","XYZ","XZX","XZY","YXY","YXZ","YZX","YZY","ZXY","ZXZ","ZYX","ZYZ"]
 function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::RotMatrix3{T} where {T}
@@ -175,20 +176,20 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
     end
 end
 
-function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{RotatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
-    parse_rotation_matrix(T, dict["rotate"], input_units.angle)
-end
+# function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{RotatedGeometry}, input_units::NamedTuple) where {T}
+#     parse_rotation_matrix(T, dict["rotate"], input_units.angle)
+# end
 
-function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    angle_unit = input_units.angle
-    rotation_matrix = parse_rotation_matrix(T, dict, angle_unit)
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    rotate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), rotation_matrix)
-end
+# function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
+#     angle_unit = input_units.angle
+#     rotation_matrix = parse_rotation_matrix(T, dict, angle_unit)
+#     key::String, transformations = get_geometry_key(T, dict, input_units)
+#     rotate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), rotation_matrix)
+# end
 
 
 function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
+    key::String, transformations = get_geometry_key(T, dict, input_units)
     transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations)
 end
 
@@ -204,11 +205,11 @@ function show_CSG_tree(csgtree; start = "", tab = "", CSG = false)
         show_CSG_tree(csgtree.a, start = tab*"├"*(CT <: CSGDifference ? " +" : "──"), tab = tab*(next_CSG ? "" : "│"), CSG = next_CSG)
         show_CSG_tree(csgtree.b, start = tab*(CSG ? "├" : "└")*(CT <: CSGDifference ? " ─" : "──"), tab = tab*(CSG ? "│" : " "))
     end
-    if CT <: AbstractTransformedGeometry
-        println(start*" $(CT.name.name){$(CT.parameters[1])}")
-        tab *= "\t"
-        show_CSG_tree(csgtree.p, start = tab*"└──", tab = tab)
-    end
+    # if CT <: AbstractTransformedGeometry
+    #     println(start*" $(CT.name.name){$(CT.parameters[1])}")
+    #     tab *= "\t"
+    #     show_CSG_tree(csgtree.p, start = tab*"└──", tab = tab)
+    # end
     if CT <: AbstractPrimitive
         println(start*" $(CT.name.name){$(CT.parameters[1])}")
     end

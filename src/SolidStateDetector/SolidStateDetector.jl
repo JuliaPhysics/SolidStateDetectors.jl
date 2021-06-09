@@ -15,25 +15,25 @@ end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 
-function construct_semiconductor(T, sc::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+function construct_semiconductor(T, sc::Dict, input_units::NamedTuple, transformations = missing)
     Semiconductor{T}(sc, input_units, transformations)
 end
 
-function construct_passive(T, pass::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+function construct_passive(T, pass::Dict, input_units::NamedTuple, transformations = missing)
     Passive{T}(pass, input_units, transformations)
 end
 
-function construct_contact(T, contact::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+function construct_contact(T, contact::Dict, input_units::NamedTuple, transformations = missing)
     Contact{T}(contact, input_units, transformations)
 end
 
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations = missing)
     construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
 end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Vector{CSGTransformation}= [])
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations = missing)
     DeadVolume{T}(pass, input_units, transformations)
 end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Vector{CSGTransformation}= [])
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations = missing)
     ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
 end
 
@@ -114,9 +114,10 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
         config_detector = config_file["detectors"][1] # still only one detector
         
         transformation_keys = filter(k -> k in ("translate", "rotate"), keys(config_detector))
-        transformations::Vector{CSGTransformation} = broadcast(t -> parse_CSG_transformation(T, config_detector, CSG_dict[t], input_units), transformation_keys)
-        
-        @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."      
+        transformations = broadcast(t -> parse_CSG_transformation(T, config_detector, CSG_dict[t], input_units), transformation_keys)
+        if isempty(transformations) transformations = missing end
+
+        @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."     
         semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units, transformations)
 
         @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    

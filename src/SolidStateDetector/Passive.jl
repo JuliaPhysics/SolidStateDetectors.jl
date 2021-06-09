@@ -10,7 +10,7 @@ mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
     geometry::G
 end
 
-function Passive{T}(dict::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}) where T <: SSDFloat
+function Passive{T}(dict::Dict, input_units::NamedTuple, transformations = missing) where T <: SSDFloat
     name = haskey(dict, "name") ? dict["name"] : "external part"
     id::Int = haskey(dict, "id") ? dict["id"] : -1
     potential = haskey(dict, "potential") ? T(dict["potential"]) : :floating

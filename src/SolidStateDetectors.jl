@@ -37,7 +37,7 @@ using .ConstructiveSolidGeometry:
             AbstractSurfacePrimitive,
             geom_round, geom_sigdigits, geom_atol_zero,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
-            CSGTransformation, transform, CSG_dict
+            transform, CSG_dict
             
 
 import .ConstructiveSolidGeometry: sample, sample_surface
