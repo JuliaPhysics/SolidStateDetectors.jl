@@ -86,3 +86,15 @@ function vertices(b::Box{T}) where {T}
 end
 
 sample(b::Box) = vertices(b)
+
+function faces(b::Box{T}) where {T}
+    vs = vertices(b)
+    return SVector{6, Quadrangle{T}}(
+        Quadrangle{T}((vs[1], vs[2], vs[3], vs[4])),
+        Quadrangle{T}((vs[5], vs[6], vs[2], vs[1])),
+        Quadrangle{T}((vs[8], vs[7], vs[6], vs[5])),
+        Quadrangle{T}((vs[6], vs[7], vs[3], vs[2])),
+        Quadrangle{T}((vs[7], vs[8], vs[4], vs[3])),
+        Quadrangle{T}((vs[8], vs[5], vs[1], vs[4])),
+    )
+end
