@@ -35,7 +35,10 @@ module ConstructiveSolidGeometry
     abstract type AbstractGeometry{T <: AbstractFloat} end
 
     abstract type AbstractPrimitive{T} <: AbstractGeometry{T} end
-    abstract type AbstractVolumePrimitive{T} <: AbstractPrimitive{T} end
+    abstract type ClosedPrimitive end
+    abstract type OpenPrimitive end
+
+    abstract type AbstractVolumePrimitive{T, CO} <: AbstractPrimitive{T} end
     abstract type AbstractSurfacePrimitive{T} <: AbstractPrimitive{T} end
     abstract type AbstractLinePrimitive{T} <: AbstractPrimitive{T} end
 
