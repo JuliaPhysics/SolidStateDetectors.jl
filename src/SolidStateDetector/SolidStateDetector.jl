@@ -4,7 +4,7 @@
 """
 mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
     name::String  # optional
-    semiconductor::Semiconductor{T}
+    semiconductor::Any
     contacts::Vector{Contact{T}}
     passives::Vector{Passive{T}}
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}}
@@ -13,7 +13,7 @@ end
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 
 function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
-    semiconductor::Semiconductor{T} = Semiconductor{T}()
+    semiconductor = missing
     contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
     virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
     
