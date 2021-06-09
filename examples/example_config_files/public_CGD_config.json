@@ -114,5 +114,28 @@
                 }
             ]
         }
+    ],
+    "surroundings": [
+        {
+            "name": "Base",
+             "material": "Copper",
+             "potential": 1000,
+             "geometry": {
+                "box": {
+                    "x": {
+                        "from": -5,
+                        "to": 15
+                    },
+                    "y": {
+                        "from": -5,
+                        "to": 15.0
+                    },
+                    "z": {
+                        "from": -2,
+                        "to": -1
+                    }
+                }
+             }             
+        }
     ]
 }
