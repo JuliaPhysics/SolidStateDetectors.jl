@@ -136,12 +136,12 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::Soli
         if haskey(config_detector, "contacts")              
             contacts = broadcast(c -> construct_contact(T, c, input_units, transformations), config_detector["contacts"])
         end
-        if haskey(config_detector, "passives")              
-            passives = broadcast(p -> construct_passive(T, p, input_units, transformations), config_detector["passives"])
-        end
         if haskey(config_detector, "virtual_drift_volumes")  
             virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
         end
+    end
+    if haskey(config_file, "surroundings")     
+        passives = broadcast(p -> construct_passive(T, p, input_units, transformations), config_file["surroundings"])
     end
 
     c = SolidStateDetector{T}()
