@@ -62,7 +62,6 @@ module ConstructiveSolidGeometry
     include("Intervals.jl")
     include("CSG.jl")
     include("IO.jl")
-    include("Decompose.jl")
     include("Sampling.jl")
 
     # Plotting
