@@ -130,6 +130,11 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
         end
     end
     passives = if haskey(config_file, "surroundings")
+        config_surroundings = config_file["surroundings"]
+        transformation_keys = filter(k -> k in ("translate", "rotate"), keys(config_surroundings))
+        transformations = broadcast(t -> parse_CSG_transformation(T, config_surroundings, CSG_dict[t], input_units), transformation_keys)
+        if isempty(transformations) transformations = missing end
+        
         broadcast(p -> construct_passive(T, p, input_units, transformations), config_file["surroundings"])
     else
         missing
