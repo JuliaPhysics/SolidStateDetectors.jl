@@ -24,7 +24,7 @@ extremum(b::Box{T}) where {T} = norm(CartesianPoint{T}(b.hX, b.hY, b.hZ))
 rotation(p::AbstractVolumePrimitive) = p.rotation
 origin(p::AbstractVolumePrimitive) = p.origin
 
-scale(b::Box{T, CO}, s::SVector{3, <:Any}) where {T, CO} = Box{T, CO}( b.hX * s[1], b.hY * s[2], b.hZ * s[3], b.origin, b.rotation )
+scale(b::Box{T, CO}, s::SVector{3, <:Any}) where {T, CO} = Box{T, CO}( b.hX * s[1], b.hY * s[2], b.hZ * s[3], scale(b.origin, s), b.rotation )
 (*)(s::SVector{3, <:Any}, b::Box) = scale(b, s)
 
 translate(b::Box{T, CO}, v::CartesianVector) where {T, CO} = Box{T, CO}(b.hX, b.hY, b.hZ, b.origin + v, b.rotation)
