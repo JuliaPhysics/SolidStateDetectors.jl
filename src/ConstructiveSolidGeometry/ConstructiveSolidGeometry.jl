@@ -43,7 +43,7 @@ module ConstructiveSolidGeometry
     abstract type AbstractTransformedGeometry{T} <: AbstractGeometry{T} end
 
     include("Units.jl")
-    include("PointsAndVectors.jl")
+    include("PointsAndVectors/PointsAndVectors.jl")
     include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
     include("LinePrimitives/LinePrimitives.jl")
