@@ -2,29 +2,18 @@
     mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
 
 """
-mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
+struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
     name::String  # optional
-    semiconductor::Any
-    contacts::Vector{Contact{T}}
-    passives::Vector{Passive{T}}
-    virtual_drift_volumes::Vector{AbstractVirtualVolume{T}}
+    semiconductor::SC
+    contacts::CT
+    passives::PT
+    virtual_drift_volumes::VDM
+    
+    SolidStateDetector{T}(n::AbstractString,s::SC,c::C,p::P,v::VDM) where {T,SC,C,P,VDM}= new{T,SC,C,P,VDM}(n,s,c,p,v)
 end
+
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
-
-function SolidStateDetector{T}()::SolidStateDetector{T} where {T <: SSDFloat}
-    semiconductor = missing
-    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
-    virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-    
-    return SolidStateDetector{T}(
-        "EmptyDetector",
-        semiconductor,
-        contacts,
-        passives,
-        virtual_drift_volumes
-    )
-end
 
 function construct_semiconductor(T, sc::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}= [])
     Semiconductor{T}(sc, input_units, transformations)
@@ -120,10 +109,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::SolidStateDetector{T} where {T <: SSDFloat}
-    contacts::Vector{Contact{T}}, passives::Vector{Passive{T}} = [], []
-    virtual_drift_volumes::Vector{AbstractVirtualVolume{T}} = []
-
+function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where {T <: SSDFloat}
     if haskey(config_file, "detectors")
         config_detector = config_file["detectors"][1] # still only one detector
         
@@ -133,24 +119,23 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple)::Soli
         @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."      
         semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units, transformations)
 
-        if haskey(config_detector, "contacts")              
-            contacts = broadcast(c -> construct_contact(T, c, input_units, transformations), config_detector["contacts"])
-        end
-        if haskey(config_detector, "virtual_drift_volumes")  
-            virtual_drift_volumes = broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
+        @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
+        contacts = broadcast(c -> construct_contact(T, c, input_units, transformations), config_detector["contacts"])
+        
+        virtual_drift_volumes = if haskey(config_detector, "virtual_drift_volumes")  
+            broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
+        else
+            missing
         end
     end
-    if haskey(config_file, "surroundings")     
-        passives = broadcast(p -> construct_passive(T, p, input_units, transformations), config_file["surroundings"])
+    passives = if haskey(config_file, "surroundings")
+        broadcast(p -> construct_passive(T, p, input_units, transformations), config_file["surroundings"])
+    else
+        missing
     end
 
-    c = SolidStateDetector{T}()
-    c.name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
-    c.semiconductor = semiconductor
-    c.contacts = contacts
-    c.passives = passives
-    c.virtual_drift_volumes = virtual_drift_volumes
-    return c
+    name = haskey(config_file, "name") ? config_file["name"] : "NoNameDetector"
+    SolidStateDetector{T}( name, semiconductor, contacts, passives, virtual_drift_volumes )
 end
 
 function SolidStateDetector(parsed_dict::Dict)

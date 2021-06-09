@@ -27,7 +27,7 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         Dict(),
         default_unit_tuple(),
         material_properties[materials["vacuum"]],
-        SolidStateDetector{T}(),
+        missing,
         World(CS,(T(0),T(1),T(0),T(1),T(0),T(1))),
         missing,
         missing,
