@@ -98,3 +98,8 @@ function faces(b::Box{T}) where {T}
         Quadrangle{T}((vs[8], vs[5], vs[1], vs[4])),
     )
 end
+
+function distance(b::Box{T}, pt::CartesianPoint{T}) where {T}
+    planes = Plane.(faces(b))
+    minimum(map(p -> distance(p, pt), planes))
+end
