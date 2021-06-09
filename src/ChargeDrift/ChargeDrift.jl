@@ -77,6 +77,7 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv
     end
     return sv
 end
+modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
 @inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl in point_types || pt_cyl in det

@@ -8,16 +8,16 @@ grid:
   coordinates: cartesian
   axes:
     x:
-      from: -15
-      to: 15
+      from: -7
+      to: 7
       boundaries: inf
     y:
-      from: -15
-      to: 15
+      from: -7
+      to: 7
       boundaries: inf
     z:
-      from: -15
-      to: 15
+      from: -7
+      to: 7
       boundaries: inf
 medium: vacuum
 detectors:
@@ -55,7 +55,7 @@ detectors:
           box:
             x: 
               from: -5
-              to: -4.9
+              to: -4.5
             y: 10
             z: 10
       - material: HPGe
@@ -65,8 +65,8 @@ detectors:
         geometry:
           box:
             x: 
-              from: 4.9
-              to: 5
+              from: 4
+              to: 4.5
             y: 10
             z: 10
 
@@ -77,11 +77,11 @@ surroundings:
     geometry:
       box:
         x:
-          from: -15
-          to: 15
+          from: -7
+          to: 7
         y:
-          from: -15
-          to: 15
+          from: -7
+          to: 7
         z:
           from: -7
           to: -6
