@@ -90,3 +90,4 @@ include("VolumePrimitives/VolumePrimitives.jl")
 #     points = CartesianPoint.(points)
 #     map(p -> p.x, points), map(p -> p.y, points), map(p -> p.z, points)
 # end
+include("CSG/CSG.jl")
