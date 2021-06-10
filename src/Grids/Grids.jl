@@ -113,7 +113,8 @@ function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
    return get_boundary_types.(grid.axes)
 end
 
-CartesianTicksTuple(g::Grid{T, 3, Cartesian}) where {T} = (x = g.axes[1].ticks, y = g.axes[2].ticks, z = g.axes[3].ticks)
+TicksTuple(g::Grid{T, 3, Cartesian}) where {T} = (x = g.axes[1].ticks, y = g.axes[2].ticks, z = g.axes[3].ticks)
+TicksTuple(g::Grid{T, 3, Cylindrical}) where {T} = (r = g.axes[1].ticks, φ = g.axes[2].ticks, z = g.axes[3].ticks)
 
 function Grid(nt::NamedTuple)
     if nt.coordtype == "cylindrical"

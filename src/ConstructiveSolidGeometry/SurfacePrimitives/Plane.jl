@@ -38,3 +38,25 @@ function evaluate(p::Plane{T}, y, z, ::Val{:yz}) where {T}
 end
 
 
+function evaluate(p::Plane{T}, r, φ, ::Val{:rφ}) where {T}
+    # plane.normal may not be perpendicular to the z-axis
+    car_pt = CartesianPoint(CylindricalPoint{T}(r, φ, zero(T)))
+    line = Line{T}(CartesianPoint{T}(car_pt.x, car_pt.y, zero(T)), CartesianVector{T}(zero(T), zero(T), one(T)))
+    z = (p.normal ⋅ p.origin - p.normal ⋅ line.origin) / (p.normal ⋅ line.normal)
+    CylindricalPoint(CartesianPoint{T}(car_pt.x, car_pt.y, z))
+end
+function evaluate(p::Plane{T}, r, z, ::Val{:rz}) where {T}
+    #= 
+        We need a function to calculate the crosssection 
+        of a CylindricalVector{T}(0, 1, 0) with a polygon
+    =#
+    φ = 0
+    CylindricalPoint{T}(r, φ, z)
+end
+function evaluate(p::Plane{T}, φ, z, ::Val{:φz}) where {T}
+    # plane.normal may not be perpendicular to the z-axis
+    car_pt = CartesianPoint(CylindricalPoint{T}(zero(T), φ, z))
+    line = Line{T}(CartesianPoint{T}(zero(T), car_pt.y, car_pt.z), CartesianVector(CylindricalVector{T}(one(T), zero(T), zero(T))))
+    r = (p.normal ⋅ p.origin - p.normal ⋅ line.origin) / (p.normal ⋅ line.normal)
+    CylindricalPoint{T}(r, φ, z)
+end

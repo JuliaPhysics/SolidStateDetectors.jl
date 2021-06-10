@@ -141,6 +141,42 @@ function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CartesianTicksTuple{T})
     end
     return t1, t2, proj
 end
+function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T}) where {N, T}
+    # This method would actually work for any flat surface, e.g. elipse
+    cyls = CylindricalPoint.(p.points)
+    rs, φs, zs = getindex.(cyls, 1), getindex.(cyls, 2), getindex.(cyls, 3)
+    rmin_idx = searchsortedfirst(t[1], minimum(rs))
+    φmin_idx = searchsortedfirst(t[2], minimum(φs))
+    zmin_idx = searchsortedfirst(t[3], minimum(zs))
+    rmax_idx = searchsortedfirst(t[1], maximum(rs))
+    φmax_idx = searchsortedfirst(t[2], maximum(φs))
+    zmax_idx = searchsortedfirst(t[3], maximum(zs))
+    ls = (length(t[1]), length(t[2]), length(t[3]))
+    if rmax_idx > ls[1] rmax_idx = ls[1] end
+    if φmax_idx > ls[2] φmax_idx = ls[2] end
+    if zmax_idx > ls[3] zmax_idx = ls[3] end
+    t_idx_range_r = rmin_idx:rmax_idx
+    t_idx_range_φ = φmin_idx:φmax_idx
+    t_idx_range_z = zmin_idx:zmax_idx
+    ls = (length(t_idx_range_r), length(t_idx_range_φ), length(t_idx_range_z))
+    ls = (
+        ls[1] == 1 ? typemax(eltype(ls)) : ls[1],
+        ls[2] == 1 ? typemax(eltype(ls)) : ls[2],
+        ls[3] == 1 ? typemax(eltype(ls)) : ls[3]
+    )
+    n = normal(p)
+    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && 
+                      (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
+        Val{:rφ}(), t_idx_range_r, t_idx_range_φ
+    # elseif ls[1] < ls[2] && ls[3] < ls[2] # for a polygon we do not need Val{:rz}
+    #     Val{:rz}(), t_idx_range_r, t_idx_range_z
+    else
+        Val{:φz}(), t_idx_range_φ, t_idx_range_z
+    end
+    return t1, t2, proj
+end
+
+
 
 
 function sample(p::Polygon{N, T}, t::CartesianTicksTuple{T}) where {N, T}

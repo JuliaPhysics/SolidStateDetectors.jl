@@ -46,3 +46,6 @@ struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
     φ::T
     z::T
 end
+
+CartesianVector(v::CylindricalVector{T}) where {T} = 
+    CartesianVector{T}(CartesianPoint(CylindricalPoint{T}(v)))
