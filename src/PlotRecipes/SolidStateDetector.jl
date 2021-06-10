@@ -1,71 +1,45 @@
-@recipe function f(det::SolidStateDetector{T}; SSD_style = :wireframe, n = 30, φ = missing, seriescolor = missing, label = missing, alpha_factor = 1) where {T}
-    if !(SSD_style in [:wireframe])#, :samplesurface])
-        #@warn "Chose SSD_style from [:wireframe, :samplesurface]. Defaulting to :wireframe"
-        SSD_style = :wireframe
-    end
-    clabel = (ismissing(label) ? map(c -> (c.name == "" ? c.id : c.name), det.contacts) : label)
-    if !(typeof(clabel) <: AbstractArray) clabel = [clabel] end
-    ccolor = (ismissing(seriescolor) ? map(c -> c.id, det.contacts) : seriescolor)
-    if !(typeof(ccolor) <: AbstractArray) ccolor = [ccolor] end
-    world_size = missing
-    #=
-    if SSD_style == :samplesurface
-        grid = Grid(det) # DOES NOT WORK ANYMORE
-        CS = get_coordinate_system(det) # DOES NOT WORK ANYMORE
-        if CS == Cylindrical
-            world_size = CylindricalVector{T}(width(grid.r.interval), π, width(grid.z.interval))
-        elseif CS == Cartesian
-            world_size = CartesianVector{T}(width(grid.x.interval), width(grid.y.interval), width(grid.z.interval))
-        else
-            @error "Could not determine the world size, try SSD_style = :wireframe"
-        end
-    end
-    =#
-    if ismissing(φ)
-        xguide --> "x / m"
-        yguide --> "y / m"
-        zguide --> "z / m"
-
-        for (cn,contact) in enumerate(det.contacts)
-            linewidth --> 2
-            seriescolor := ccolor[(cn-1)%length(ccolor)+1]
-            @series begin
-                label := ""
-                n --> n
-                SSD_style --> SSD_style
-                world_size --> world_size
-                alpha_factor --> alpha_factor
-                contact
-            end
-            @series begin
-                label := clabel[(cn-1)%length(clabel)+1]
-                seriescolor := ccolor[(cn-1)%length(ccolor)+1]
-                []
-            end
-        end
-    else
-        @info "2D plotting of the detector not yet implemented."
-    end
+@recipe function f(p::Passive)
+    linecolor --> :grey
+    l = p.name != "" ? p.name : "Passive $(p.id)"
+    label --> l
+    p.geometry
+end
+@recipe function f(sc::Semiconductor)
+    linecolor --> :black
+    label --> "Semiconductor"
+    sc.geometry
 end
 
+@recipe function f(contact::Contact)
+    linecolor --> contact.id
+    l = contact.name != "" ? contact.name : "Contact $(contact.id)"
+    label --> l
+    contact.geometry
+end
 
-@recipe function f(contact::Contact{T}; SSD_style = :wireframe, n = 30, seriescolor = missing, world_size = missing, alpha_factor = 1) where {T}
-    ccolor = (ismissing(seriescolor) ? contact.id : seriescolor)
+@recipe function f(contact::Contact)
+    linecolor --> contact.id
+    l = contact.name != "" ? contact.name : "Contact $(contact.id)"
+    label --> l
+    contact.geometry
+end
+
+@recipe function f(det::SolidStateDetector)
+    xguide --> "x / m"
+    yguide --> "y / m"
+    zguide --> "z / m"
+
     @series begin
-        seriescolor := ccolor
-        label --> (contact.name == "" ? contact.id : contact.name)
-        []
+        det.semiconductor
     end
-    for (cn,c) in enumerate(contact.geometry_positive)
+    for c in det.contacts
         @series begin
-            seriescolor := ccolor
-            label := ""
-            n --> n
-            SSD_style --> SSD_style
-            world_size --> world_size
-            geometry_negative --> contact.geometry_negative
-            alpha_factor --> alpha_factor
             c
+        end
+    end
+    for p in det.passives
+        @series begin
+            p
         end
     end
 end
