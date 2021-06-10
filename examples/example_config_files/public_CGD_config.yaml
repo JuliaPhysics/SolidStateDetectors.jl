@@ -8,16 +8,16 @@ grid:
   coordinates: cartesian
   axes:
     x:
-      from: -7
-      to: 7
+      from: -9
+      to: 9
       boundaries: inf
     y:
-      from: -7
-      to: 7
+      from: -9
+      to: 9
       boundaries: inf
     z:
-      from: -7
-      to: 7
+      from: -9
+      to: 9
       boundaries: inf
 medium: vacuum
 detectors:
@@ -65,8 +65,8 @@ detectors:
         geometry:
           box:
             x: 
-              from: 4
-              to: 4.5
+              from: 4.5
+              to: 5
             y: 10
             z: 10
 
@@ -77,11 +77,11 @@ surroundings:
     geometry:
       box:
         x:
-          from: -7
-          to: 7
+          from: -9
+          to: 9
         y:
-          from: -7
-          to: 7
+          from: -9
+          to: 9
         z:
-          from: -7
-          to: -6
+          from: -9
+          to: -7
