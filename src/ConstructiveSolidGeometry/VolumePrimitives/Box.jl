@@ -87,7 +87,7 @@ end
 
 sample(b::Box) = vertices(b)
 
-function faces(b::Box{T}) where {T}
+function surfaces(b::Box{T}) where {T}
     vs = vertices(b)
     return SVector{6, Quadrangle{T}}(
         Quadrangle{T}((vs[1], vs[2], vs[3], vs[4])),
@@ -100,6 +100,6 @@ function faces(b::Box{T}) where {T}
 end
 
 function distance(b::Box{T}, pt::CartesianPoint{T}) where {T}
-    planes = Plane.(faces(b))
+    planes = Plane.(surfaces(b))
     minimum(map(p -> distance(p, pt), planes))
 end

@@ -1,5 +1,5 @@
 @recipe function f(p::AbstractVolumePrimitive)
-    fs = faces(p)
+    fs = surfaces(p)
     # In principle it would be better to directly get the edges of the primitive
     # Can be improved later...
     linecolor --> :black
@@ -10,8 +10,8 @@
 end
 
 @recipe function f(p1::AbstractVolumePrimitive, p2::AbstractVolumePrimitive)
-    fs1 = faces(p1)
-    fs2 = faces(p2)
+    fs1 = surfaces(p1)
+    fs2 = surfaces(p2)
     # In principle it would be better to directly get the edges of the primitive
     # Can be improved later...
     linecolor --> :black

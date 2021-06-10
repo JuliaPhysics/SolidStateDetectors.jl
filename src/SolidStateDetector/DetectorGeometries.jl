@@ -348,7 +348,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         #     potential[ gridpoint... ] = pot
         #     pointtypes[ gridpoint... ] = zero(PointType)
         # end
-        fs = ConstructiveSolidGeometry.faces(contact.geometry)
+        fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
         for face in fs
             paint!(pointtypes, potential, face, contact.geometry, pot, grid)
         end
@@ -416,7 +416,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         #     potential[ gridpoint... ] = pot
         #     pointtypes[ gridpoint... ] = zero(PointType)
         # end
-        fs = ConstructiveSolidGeometry.faces(contact.geometry)
+        fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
         for face in fs
             paint!(pointtypes, potential, face, contact.geometry, pot, grid)
         end

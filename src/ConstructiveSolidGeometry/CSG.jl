@@ -73,4 +73,4 @@ scale(csg::A, s::SVector{3}) where {A <: AbstractConstructiveGeometry} = A(scale
 (*)(s::SVector{3}, csg::A) where {A <: AbstractConstructiveGeometry} = A(scale(csg.a, s), scale(csg.b, s))
 (*)(csg::A, s::SVector{3}) where {A <: AbstractConstructiveGeometry} = A(scale(csg.a, s), scale(csg.b, s))
 
-faces(csg::AbstractConstructiveGeometry) = vcat(faces(csg.a)..., faces(csg.b)...)
+surfaces(csg::AbstractConstructiveGeometry) = vcat(surfaces(csg.a)..., surfaces(csg.b)...)
