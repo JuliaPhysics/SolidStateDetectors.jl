@@ -1,5 +1,0 @@
-include("Cone.jl")
-include("Box.jl")
-include("RegularPrism.jl")
-include("Sphere.jl")
-include("Torus.jl")

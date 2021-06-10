@@ -1,19 +1,19 @@
 const CSG_dict = Dict{String, Any}(
-    "tube" => Cone,
-    "cone" => Cone,
-    "sphere" => Sphere,
-    "box" => Box,
-    "torus" => Torus,
-    "TriangularPrism" => TriangularPrism,
-    "SquarePrism"  => SquarePrism,
-    "PentagonalPrism" => PentagonalPrism,
-    "HexagonalPrism"  => HexagonalPrism,
-    "union" => CSGUnion,
-    "difference" => CSGDifference,
-    "intersection" => CSGIntersection,
-    "translate" => TranslatedGeometry,
-    "rotate" => RotatedGeometry,
-    "scale" => ScaledGeometry
+    # "tube" => Cone,
+    # "cone" => Cone,
+    # "sphere" => Sphere,
+    # "box" => Box,
+    # "torus" => Torus,
+    # "TriangularPrism" => TriangularPrism,
+    # "SquarePrism"  => SquarePrism,
+    # "PentagonalPrism" => PentagonalPrism,
+    # "HexagonalPrism"  => HexagonalPrism,
+    # "union" => CSGUnion,
+    # "difference" => CSGDifference,
+    # "intersection" => CSGIntersection,
+    # "translate" => TranslatedGeometry,
+    # "rotate" => RotatedGeometry,
+    # "scale" => ScaledGeometry
 )
 
 function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple)::Tuple{String, Vector{CSGTransformation}} where {T}
