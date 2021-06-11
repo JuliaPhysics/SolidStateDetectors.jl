@@ -22,13 +22,15 @@ end
 
 
 function parse_CSG_transformation(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    r = if haskey(dict, "rotation")
-        parse_rotation_vector(T, dict["rotation"], input_units.length)
+    r = if haskey(dict, "rotate")
+        SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict["rotate"], input_units.angle))
+        # We might want to improve this to avoid numerical precision errors. 
+        # For now this is fine. 
     else
         one(SMatrix{3, 3, T, 9})
     end
     s = if haskey(dict, "scale")
-        parse_translate_vector(T, dict["scale"], input_units.length)
+        error("Not yet implemented")
     else
         ones(SVector{3,T})
     end
