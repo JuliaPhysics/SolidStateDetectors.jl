@@ -1,10 +1,10 @@
 struct Line{T} <: AbstractLinePrimitive{T}
     origin::CartesianPoint{T}
-    normal::CartesianVector{T}
+    direction::CartesianVector{T}
 end
 
 function distance(A::CartesianPoint, l::Line)
     B = l.origin 
-    C = B + l.normal
-    return norm((A - B) × l.normal) / norm(l.normal)
+    C = B + l.direction
+    return norm((A - B) × l.direction) / norm(l.direction)
 end
