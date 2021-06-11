@@ -6,5 +6,5 @@ end
 function distance(A::CartesianPoint, l::Line)
     B = l.origin 
     C = B + l.normal
-    return norm((A - B) × (C - B)) / norm(C - B)
+    return norm((A - B) × l.normal) / norm(l.normal)
 end
