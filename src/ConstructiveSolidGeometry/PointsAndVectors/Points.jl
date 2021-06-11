@@ -20,7 +20,7 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     z::T
 end
 
-zero(PT::AbstractCoordinatePoint{T}) where {T} = PT(zero(T),zero(T),zero(T))
+zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
 
 scale(pt::CartesianPoint{T}, s::SVector{3}) where {T} = CartesianPoint{T}(pt .* s)
 

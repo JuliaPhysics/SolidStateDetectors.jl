@@ -17,7 +17,7 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     z::T
 end
 
-zero(VT::AbstractCoordinateVector{T}) where {T} = VT(zero(T),zero(T),zero(T))
+zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zero(T))
 
 scale(v::CartesianVector{T}, s::SVector{3}) where {T} = CartesianVector{T}(v .* s)
 
