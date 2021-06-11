@@ -10,7 +10,7 @@ mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
     geometry::G
 end
 
-function Passive{T}(dict::Dict, input_units::NamedTuple, transformations = missing) where T <: SSDFloat
+function Passive{T}(dict::Dict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
     name = haskey(dict, "name") ? dict["name"] : "external part"
     id::Int = haskey(dict, "id") ? dict["id"] : -1
     potential = haskey(dict, "potential") ? T(dict["potential"]) : :floating
@@ -29,7 +29,9 @@ function Passive{T}(dict::Dict, input_units::NamedTuple, transformations = missi
     else
         ConstantChargeDensity{T}(0)
     end
-    geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
+    inner_transformations = parse_CSG_transformation(T, dict, input_units)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    geometry = Geometry(T, dict["geometry"], input_units, transformations)
     return Passive(name, id, potential, temperature, material, charge_density_model, geometry)
 end
 

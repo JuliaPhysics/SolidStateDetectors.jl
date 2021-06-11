@@ -8,7 +8,7 @@ struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
     geometry::G
 end
 
-function Semiconductor{T}(dict::Dict, input_units::NamedTuple, transformations = missing) where T <: SSDFloat
+function Semiconductor{T}(dict::Dict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
     impurity_density_model = if haskey(dict, "impurity_density") 
         ImpurityDensity(T, dict["impurity_density"], input_units)
     elseif haskey(dict, "charge_density_model") 
@@ -27,7 +27,10 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple, transformations =
     end
     temperature = haskey(dict, "temperature") ? T(dict["temperature"]) : T(80)
     material = material_properties[materials[dict["material"]]]
-    geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
+
+    inner_transformations = parse_CSG_transformation(T, dict, input_units)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    geometry = Geometry(T, dict["geometry"], input_units, transformations)
     return Semiconductor(temperature, material, impurity_density_model, charge_drift_model, geometry)
 end
 

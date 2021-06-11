@@ -11,25 +11,34 @@ const CSG_dict = Dict{String, Any}(
     # "union" => CSGUnion,
     # "difference" => CSGDifference,
     # "intersection" => CSGIntersection,
-    "translate" => CartesianVector,
-    "rotate" => Rotation, # type from Rotations.jl: Rotation.Rotation
-    # "scale" => ScaledGeometry
 )
 
 function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    dict_keys = filter(k -> k in keys(CSG_dict), keys(dict))
-    transformations = sort!(filter(k -> 
-                                (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) || 
-                                (k == "rotate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["rotate"])))), 
-                            collect(dict_keys)), 
-                      rev = true) #this will ensure that the rotation is parsed first and the translation is parsed second
-    primitives = setdiff(dict_keys, transformations)
-    @assert length(primitives) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
-    @assert length(primitives) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
-    transformations = broadcast(t -> parse_CSG_transformation(T, dict, CSG_dict[t], input_units), transformations)
-    first(primitives), isempty(transformations) ? missing : transformations
+    g = collect(filter(k -> k in keys(CSG_dict), keys(dict)))
+    @assert !(length(g) > 1) "Too many geometry entries in dictionary: $(length(g))."
+    @assert !(length(g) == 0) "None of the entries $(keys(dict)) describes a Geometry."
+    g[1]
 end
 
+
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
+    r = if haskey(dict, "rotation")
+        parse_rotation_vector(T, dict["rotation"], input_units.length)
+    else
+        one(SMatrix{3, 3, T, 9})
+    end
+    s = if haskey(dict, "scale")
+        parse_translate_vector(T, dict["scale"], input_units.length)
+    else
+        ones(SVector{3,T})
+    end
+    t = if haskey(dict, "translate")
+        parse_translate_vector(T, dict["translate"], input_units.length)
+    else
+        zero(CartesianVector{T})
+    end
+    (scale = s, rotation = r, translation = t)
+end
 
 #### INTERNAL PARSE FUNCTIONS
 
@@ -188,9 +197,11 @@ end
 # end
 
 
-function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    key::String, transformations = get_geometry_key(T, dict, input_units)
-    transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations)
+function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T}
+    key = get_geometry_key(T, dict, input_units)
+    inner_transformations = parse_CSG_transformation(T, dict, input_units)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end
 
 

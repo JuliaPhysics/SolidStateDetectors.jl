@@ -15,25 +15,13 @@ end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 
-function construct_semiconductor(T, sc::Dict, input_units::NamedTuple, transformations = missing)
-    Semiconductor{T}(sc, input_units, transformations)
-end
-
-function construct_passive(T, pass::Dict, input_units::NamedTuple, transformations = missing)
-    Passive{T}(pass, input_units, transformations)
-end
-
-function construct_contact(T, contact::Dict, input_units::NamedTuple, transformations = missing)
-    Contact{T}(contact, input_units, transformations)
-end
-
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations = missing)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Transformations)
     construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
 end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations = missing)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Transformations)
     DeadVolume{T}(pass, input_units, transformations)
 end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations = missing)
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Transformations)
     ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
 end
 
@@ -112,16 +100,14 @@ end
 function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where {T <: SSDFloat}
     if haskey(config_file, "detectors")
         config_detector = config_file["detectors"][1] # still only one detector
-        
-        transformation_keys = filter(k -> k in ("translate", "rotate"), keys(config_detector))
-        transformations = broadcast(t -> parse_CSG_transformation(T, config_detector, CSG_dict[t], input_units), transformation_keys)
-        if isempty(transformations) transformations = missing end
 
+        transformations = parse_CSG_transformation(T, config_detector, input_units)
+        
         @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."     
-        semiconductor = construct_semiconductor(T, config_detector["bulk"], input_units, transformations)
+        semiconductor = Semiconductor{T}(config_detector["bulk"], input_units, transformations)
 
         @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
-        contacts = broadcast(c -> construct_contact(T, c, input_units, transformations), config_detector["contacts"])
+        contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
         
         virtual_drift_volumes = if haskey(config_detector, "virtual_drift_volumes")  
             broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
@@ -131,11 +117,7 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     end
     passives = if haskey(config_file, "surroundings")
         config_surroundings = config_file["surroundings"]
-        transformation_keys = filter(k -> k in ("translate", "rotate"), keys(config_surroundings))
-        transformations = broadcast(t -> parse_CSG_transformation(T, config_surroundings, CSG_dict[t], input_units), transformation_keys)
-        if isempty(transformations) transformations = missing end
-        
-        broadcast(p -> construct_passive(T, p, input_units, transformations), config_file["surroundings"])
+        broadcast(p -> Passive{T}(p, input_units, parse_CSG_transformation(T, p, input_units)), config_file["surroundings"])
     else
         missing
     end

@@ -39,7 +39,7 @@ _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
 _in(pt::CartesianPoint, b::Box{<:Any, :OpenPrimitive}) = 
     abs(pt.x) < b.hX && abs(pt.y) < b.hY && abs(pt.z) < b.hZ
  
-function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple, transformations) where {T}
     length_unit = input_units.length
     x = parse_interval_of_primitive(T, "x", dict, length_unit)
     y = parse_interval_of_primitive(T, "y", dict, length_unit)
@@ -48,28 +48,17 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     μy = typeof(y) <: Real ? zero(T) : mean(y)
     μz = typeof(z) <: Real ? zero(T) : mean(z)
     origin = CartesianPoint{T}(μx, μy, μz)
-    if haskey(dict, "translate")
-        origin += parse_translate_vector(T, dict["translate"], length_unit)
-    end
-    scale = SVector{3, T}(1, 1, 1)
-    if haskey(dict, "scale")
-        # scale = parse_translate_vector(T, dict["translate"], length_unit)
-        @info "Scale not yet implemented"
-    end
-    rot = if haskey(dict, "rotation")
-        parse_rotation_matrix(T, dict["rotate"], length_unit)
-    else
-        one(SMatrix{3, 3, T, 9})
-    end
+    scale = ones(SVector{3,T})
     hX = typeof(x) <: Real ? x : width(x)/2
     hY = typeof(y) <: Real ? y : width(y)/2
     hZ = typeof(z) <: Real ? z : width(z)/2
-    return Box{T, ClosedPrimitive}(
+    box = Box{T, ClosedPrimitive}(
         scale[1] * hX, 
         scale[2] * hY, 
         scale[3] * hZ, 
-        origin, rot
+        origin
     )
+    transform(box, transformations)
 end
 
 function vertices(b::Box{T}) where {T}
