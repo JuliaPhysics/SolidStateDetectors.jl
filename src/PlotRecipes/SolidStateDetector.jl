@@ -12,14 +12,7 @@ end
 
 @recipe function f(contact::Contact)
     linecolor --> contact.id
-    l = contact.name != "" ? contact.name : "Contact $(contact.id)"
-    label --> l
-    contact.geometry
-end
-
-@recipe function f(contact::Contact)
-    linecolor --> contact.id
-    l = contact.name != "" ? contact.name : "Contact $(contact.id)"
+    l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     label --> l
     contact.geometry
 end
