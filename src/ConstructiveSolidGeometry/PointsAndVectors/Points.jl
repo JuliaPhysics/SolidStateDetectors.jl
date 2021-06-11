@@ -20,7 +20,9 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     z::T
 end
 
-scale(pt::CartesianPoint{T}, s::SVector{3}) where {T} = CartesianPoint{T}(pt.x * s[1], pt.y * s[2], pt.z * s[3])
+zero(PT::AbstractCoordinatePoint{T}) where {T} = PT(zero(T),zero(T),zero(T))
+
+scale(pt::CartesianPoint{T}, s::SVector{3}) where {T} = CartesianPoint{T}(pt .* s)
 
 @inline _eq_cyl_r(p::CartesianPoint{T}, r::Real) where {T} = hypot(p.x, p.y) == T(r)
 

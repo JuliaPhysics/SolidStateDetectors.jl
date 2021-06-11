@@ -16,7 +16,7 @@ module ConstructiveSolidGeometry
 
     using DataStructures: OrderedDict
 
-    import Base: in, *, +, -, &, size
+    import Base: in, *, +, -, &, size, zero
 
     abstract type AbstractCoordinateSystem end
     abstract type Cartesian <: AbstractCoordinateSystem end

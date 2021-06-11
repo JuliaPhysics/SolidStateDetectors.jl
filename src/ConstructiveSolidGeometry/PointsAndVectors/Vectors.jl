@@ -17,6 +17,9 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     z::T
 end
 
+zero(VT::AbstractCoordinateVector{T}) where {T} = VT(zero(T),zero(T),zero(T))
+
+scale(v::CartesianVector{T}, s::SVector{3}) where {T} = CartesianVector{T}(v .* s)
 
 @inline rotate(p::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * p
 @inline rotate(p::CylindricalPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = CylindricalPoint(rotate(CartesianPoint(p), r))
