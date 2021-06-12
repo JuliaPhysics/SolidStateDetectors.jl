@@ -8,11 +8,12 @@ module ConstructiveSolidGeometry
 
     # # Other Packages
     using IntervalSets
+    using PolygonOps
     using RecipesBase
     using Rotations
     using StaticArrays
-    using Unitful
     using Statistics
+    using Unitful
 
     using DataStructures: OrderedDict
 
