@@ -88,7 +88,3 @@ function surfaces(b::Box{T}) where {T}
     )
 end
 
-function distance(b::Box{T}, pt::CartesianPoint{T}) where {T}
-    planes = Plane.(surfaces(b))
-    minimum(map(p -> distance(p, pt), planes))
-end
