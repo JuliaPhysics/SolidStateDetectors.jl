@@ -5,7 +5,7 @@ end
 
 direction(e::Edge) = e.b - e.a
 
-Line(e::Edge)  = Line(e.a, direction(e))
+Line(e::Edge{T}) where {T} = Line{T}(e.a, direction(e))
 
 function distance(pt::CartesianPoint{T}, e::Edge{T}) where {T}
     return if (pt - e.b) ⋅ direction(e) >= 0
