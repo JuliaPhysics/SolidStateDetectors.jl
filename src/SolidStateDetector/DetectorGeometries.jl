@@ -477,13 +477,13 @@ function paint!(pointtypes, potential, face::ConstructiveSolidGeometry.Polygon, 
                     pointtypes[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 elseif proj == Val{:φz}() 
-                    i3 = searchsortednearest(ticks[2], pt[2])
-                    pointtypes[i1, i3, i2] = zero(PointType)
-                    potential[i1, i3, i2] = pot_value
-                else
                     i3 = searchsortednearest(ticks[1], pt[1])
                     pointtypes[i3, i1, i2] = zero(PointType)
                     potential[i3, i1, i2] = pot_value
+                else # proj == Val{:rz}() # Do we need this case? I will leave it for now. 
+                    i3 = searchsortednearest(ticks[2], pt[2])
+                    pointtypes[i1, i3, i2] = zero(PointType)
+                    potential[i1, i3, i2] = pot_value
                 end
             end
         end
