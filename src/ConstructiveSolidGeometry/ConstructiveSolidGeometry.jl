@@ -8,6 +8,7 @@ module ConstructiveSolidGeometry
 
     # # Other Packages
     using IntervalSets
+    using Parameters
     using PolygonOps
     using RecipesBase
     using Rotations
