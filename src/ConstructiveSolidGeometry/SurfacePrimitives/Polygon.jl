@@ -90,21 +90,6 @@ function distance(pt::CartesianPoint, p::Polygon)
     end
 end
 
-function _filter_points(pts::AbstractArray, p::Quadrangle{T}) where {T}
-    # this functions assume that the points, pts, all lie in the plane of the Quadrangle, p
-    rot = _get_rot_for_rotation_on_xy_plane(p)
-    vs = vertices(p)
-    pts2d = SVector{5, SVector{2, T}}(
-        view(rot * vs[1], 1:2), 
-        view(rot * vs[2], 1:2), 
-        view(rot * vs[3], 1:2), 
-        view(rot * vs[4], 1:2), 
-        view(rot * vs[1], 1:2), 
-    )
-    # PolygonOps.inpolygon -> in = 1, on = -1, out = 0)
-    filter(pt -> PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0, pts)
-end
-
 function get_min_max_index_ranges(a::Union{
         <:Tuple{AbstractVector{<:CartesianPoint{T}}, CartesianTicksTuple{T}},
         <:Tuple{AbstractVector{<:CylindricalPoint{T}}, CylindricalTicksTuple{T}}
