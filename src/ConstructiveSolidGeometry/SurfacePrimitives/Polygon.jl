@@ -169,7 +169,7 @@ E.g. `r` & `φ` -> `proj = Val{:rφ}()`.
 The dimensions are picked such that the number of points to evaluate is minimal. 
 However, the polygon is not allowed to be parallel to the remaining dimension, e.g. `z`,
 because, than, there would not be a single value, but infinite ones, for `z` in the evalution.
-The Val{:rz}-case is excluded as there are two crossections with the arc-line and the polygon. 
+The Val{:rz}-case is excluded as there are two intersections with the arc-line and the polygon. 
 """
 function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T}) where {N, T}
     # This method would actually work for any flat surface, e.g. elipse
@@ -181,20 +181,12 @@ function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T
         ls[3] == 1 ? typemax(eltype(ls)) : ls[3]
     )
     n = normal(p)
-    n_cyl = CylindricalVector{T}(CylindricalPoint(CartesianPoint{T}(n)))
-    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
+    # We skip the `:rz`-case as there could be two intersections with the arc and the polygon.
+    proj, t1, t2 = if ls[1] < ls[3] && (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
         # evaluate the z value -> same as for the cartesian case
         Val{:rφ}(), t_idx_range_r, t_idx_range_φ
-    elseif n_cyl ⋅ CylindricalVector{T}(one(T),zero(T),zero(T)) != 0
-        # evaluate the r value 
+    else # evaluate the r value 
         Val{:φz}(), t_idx_range_φ, t_idx_range_z
-    else#if ls[1] < ls[2] && ls[3] < ls[2] && (n ⋅ CylindricalVector{T}(zero(T),one(T),zero(T)) != 0)
-        # evaluate the φ value -> Issue, there are two solution for φ 
-        # Thus, evaluate(p, r, z, Val{:rz}()) will (or might?) return two points. 
-        # Therefore we try so skip this by not demanding that 
-        # ls[2] < ls[1] && ls[3] < ls[1] for the Val{:φz}()-case.  
-        error("Sampling Error. Have to extend cases")
-        Val{:rz}(), t_idx_range_r, t_idx_range_z
     end
     return t1, t2, proj
 end
