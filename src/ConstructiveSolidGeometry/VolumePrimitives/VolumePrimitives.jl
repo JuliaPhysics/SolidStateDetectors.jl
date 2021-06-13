@@ -4,7 +4,7 @@ OpenPrimitive(p::VP) where {VP <: AbstractVolumePrimitive} = VP(p, COT = OpenPri
 rotation(p::AbstractVolumePrimitive) = p.rotation
 origin(p::AbstractVolumePrimitive) = p.origin
 
-scale(p::VP, s::SVector{3, <:Any}) where {VP <: AbstractVolumePrimitive} = VP(p, scale = s, origin = scale(p.origin, s), rotation = p.rotation)
+scale(p::VP, s::SVector{3, <:Any}) where {VP <: AbstractVolumePrimitive} = VP(p, scaling = s, origin = p.origin, rotation = p.rotation)
 (*)(s::SVector{3, <:Any}, p::AbstractVolumePrimitive) = scale(p, s)
 
 rotate(p::VP, r::AbstractMatrix) where {VP <: AbstractVolumePrimitive} = VP(p, origin = r * p.origin, rotation = r * p.rotation)

@@ -14,10 +14,10 @@ end
 
 Box{T, CO}( b::Box{T, CO}; 
             COT = CO,
-            scale::SVector{3,T} = ones(SVector{3,T}),
+            scaling::SVector{3,T} = ones(SVector{3,T}),
             origin::CartesianPoint{T} = zero(CartesianPoint{T}),
             rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} = 
-    Box{T, COT}(b.hX * scale[1], b.hY * scale[2], b.hZ * scale[3], origin, rotation)
+    Box{T, COT}(b.hX * scaling[1], b.hY * scaling[2], b.hZ * scaling[3], scale(origin, scaling), rotation)
 
 extremum(b::Box{T}) where {T} = norm(CartesianPoint{T}(b.hX, b.hY, b.hZ))
 
