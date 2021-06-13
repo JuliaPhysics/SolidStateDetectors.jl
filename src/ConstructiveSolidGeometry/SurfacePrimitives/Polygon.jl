@@ -198,19 +198,3 @@ function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T
     end
     return t1, t2, proj
 end
-
-
-
-
-function sample(p::Polygon{N, T}, t::CartesianTicksTuple{T}) where {N, T}
-    plane = Plane(p)
-    t1, t2, proj  = get_2d_grid_ticks_and_proj(p, t)
-    samples = Array{CartesianPoint{T}}(undef, length(t1), length(t2))
-    for j in eachindex(t2)
-        for i in eachindex(t1)
-            samples[i, j] = evaluate(plane, t1[i], t2[j], proj)
-        end
-    end
-    _filter_points(Base.ReshapedArray(samples, (length(samples),), ()), p)
-end
-
