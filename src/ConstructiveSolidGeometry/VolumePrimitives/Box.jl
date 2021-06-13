@@ -4,35 +4,22 @@
 T: Type of values, e.g. Float64
 CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
 """
-struct Box{T, CO} <: AbstractVolumePrimitive{T, CO}
-    hX::T
-    hY::T
-    hZ::T
-    origin::CartesianPoint{T}
-    rotation::SMatrix{3,3,T,9}
+@with_kw struct Box{T, CO} <: AbstractVolumePrimitive{T, CO}
+    hX::T = 1
+    hY::T = 1
+    hZ::T = 1
+    origin::CartesianPoint{T} = zero(CartesianPoint{T})
+    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-Box{T, CO}(hX::Real, hY::Real, hZ::Real) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} = 
-    Box{T, CO}(T(hX), T(hY), T(hZ), CartesianPoint{T}(0,0,0), one(SMatrix{3, 3, T, 9}))
-Box{T, CO}(hX::Real, hY::Real, hZ::Real, origin::CartesianPoint{T}) where {T, CO} = 
-    Box{T, CO}(T(hX), T(hY), T(hZ), origin, one(SMatrix{3, 3, T, 9}))
-   
-ClosedPrimitive(b::Box{T}) where {T} = Box{T, ClosedPrimitive}(b.hX, b.hY, b.hZ, b.origin, b.rotation)
-OpenPrimitive(b::Box{T}) where {T} = Box{T, OpenPrimitive}(b.hX, b.hY, b.hZ, b.origin, b.rotation)
+Box{T, CO}( b::Box{T, CO}; 
+            COT = CO,
+            scale::SVector{3,T} = ones(SVector{3,T}),
+            origin::CartesianPoint{T} = zero(CartesianPoint{T}),
+            rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} = 
+    Box{T, COT}(b.hX * scale[1], b.hY * scale[2], b.hZ * scale[3], origin, rotation)
 
 extremum(b::Box{T}) where {T} = norm(CartesianPoint{T}(b.hX, b.hY, b.hZ))
-rotation(p::AbstractVolumePrimitive) = p.rotation
-origin(p::AbstractVolumePrimitive) = p.origin
-
-scale(b::Box{T, CO}, s::SVector{3, <:Any}) where {T, CO} = Box{T, CO}( b.hX * s[1], b.hY * s[2], b.hZ * s[3], scale(b.origin, s), b.rotation )
-(*)(s::SVector{3, <:Any}, b::Box) = scale(b, s)
-
-translate(b::Box{T, CO}, v::CartesianVector) where {T, CO} = Box{T, CO}(b.hX, b.hY, b.hZ, b.origin + v, b.rotation)
-(+)(b::Box, v::CartesianVector) = translate(b, v)
-
-rotate(b::Box{T, CO}, r::AbstractMatrix{T}) where {T, CO} = Box{T, CO}(b.hX, b.hY, b.hZ, r * b.origin, r * b.rotation)
-# rotate_aroud_own_center(b::Box{T, CO}, r::AbstractMatrix{T}) where {T, CO} = Box{T, CO}(b.hX, b.hY, b.hZ, b.origin, r * b.rotation)
-(*)(r::AbstractMatrix, b::Box) = rotate(b, r)
 
 _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
     abs(pt.x) <= b.hX && abs(pt.y) <= b.hY && abs(pt.z) <= b.hZ
@@ -53,10 +40,10 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     hY = typeof(y) <: Real ? y : width(y)/2
     hZ = typeof(z) <: Real ? z : width(z)/2
     box = Box{T, ClosedPrimitive}(
-        scale[1] * hX, 
-        scale[2] * hY, 
-        scale[3] * hZ, 
-        origin
+        hX = scale[1] * hX, 
+        hY = scale[2] * hY, 
+        hZ = scale[3] * hZ, 
+        origin = origin
     )
     transform(box, transformations)
 end
