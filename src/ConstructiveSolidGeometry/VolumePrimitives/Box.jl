@@ -36,7 +36,6 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     hX = typeof(x) <: Real ? x : width(x)/2
     hY = typeof(y) <: Real ? y : width(y)/2
     hZ = typeof(z) <: Real ? z : width(z)/2
-    @show origin[2]
     box = Box{T, ClosedPrimitive}(
         hX = hX, 
         hY = hY, 

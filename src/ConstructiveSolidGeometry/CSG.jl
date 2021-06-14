@@ -12,8 +12,8 @@ in(p::AbstractCoordinatePoint, csg::CSGUnion) = in(p, csg.a) || in(p, csg.b)
 (+)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGUnion{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, t::Type{CSGUnion}, v::Vector{<:AbstractDict}, input_units::NamedTuple) where {T}
-    sum( broadcast(x-> Geometry(T, x, input_units), v) )
+function Geometry(::Type{T}, t::Type{CSGUnion}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformations) where {T}
+    sum( broadcast(x-> Geometry(T, x, input_units, transformations), v) )
 end
 
 Dictionary(g::CSGUnion{T}) where {T} = OrderedDict{String,Any}("union" => vcat(UnionDictionary(g.a), UnionDictionary(g.b)))
@@ -34,8 +34,8 @@ in(p::AbstractCoordinatePoint, csg::CSGIntersection) = in(p, csg.a) && in(p, csg
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:AbstractDict}, input_units::NamedTuple) where {T}
-    parts = broadcast(x-> Geometry(T, x, input_units), v) 
+function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformation) where {T}
+    parts = broadcast(x-> Geometry(T, x, input_units, transformation), v) 
     reduce(&, parts)
 end
 
@@ -58,7 +58,7 @@ in(p::AbstractCoordinatePoint, csg::CSGDifference) = in(p, csg.a) && !in(p, csg.
 
 # read-in
 function Geometry(::Type{T}, ::Type{CSGDifference}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformations) where {T}
-    transform(Geometry(T, v[1], input_units, Transformations{T}()) - sum(broadcast(x-> Geometry(T, x, input_units, Transformations{T}()), v[2:end])), transformations)
+    Geometry(T, v[1], input_units, transformations) - sum(broadcast(x-> Geometry(T, x, input_units, transformations), v[2:end]))
 end
 
 Dictionary(g::CSGDifference{T}) where {T} = OrderedDict{String,Any}("difference" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])

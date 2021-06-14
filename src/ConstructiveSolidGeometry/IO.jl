@@ -8,9 +8,9 @@ const CSG_dict = Dict{String, Any}(
     # "SquarePrism"  => SquarePrism,
     # "PentagonalPrism" => PentagonalPrism,
     # "HexagonalPrism"  => HexagonalPrism,
-    # "union" => CSGUnion,
+    "union" => CSGUnion,
     "difference" => CSGDifference,
-    # "intersection" => CSGIntersection,
+    "intersection" => CSGIntersection,
     "translate" => CartesianVector, # we just ne some type to dispatch on
     "rotate" => Rotations.Rotation  # we just ne some type to dispatch on
 )
@@ -212,13 +212,6 @@ function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_
     key = get_geometry_key(T, dict, input_units)
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)
-    if key == "translate"
-        @show key
-        @show inner_transformations.translation
-        @show transformations.translation
-        @show CSG_dict[key]
-        println("-...")
-    end
     Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end
 

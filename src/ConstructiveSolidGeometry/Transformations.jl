@@ -4,7 +4,7 @@ const Transformations{T} = NamedTuple{(:rotation, :translation), Tuple{SMatrix{3
 #   2. Translate
 # Not sure yet if Rotations will always be of type SMatrix{3, 3, T, 9} -> Any
 
-Transformations{T}() where {T} = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
+# Transformations{T}() where {T} = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
 
 rotate(p::VP, r::AbstractMatrix) where {VP <: AbstractVolumePrimitive} = VP(p, origin = r * p.origin, rotation = r * p.rotation)
 (*)(r::AbstractMatrix, p::AbstractVolumePrimitive) = rotate(p, r)
