@@ -4,6 +4,7 @@ end
 
 include("RedBlack/RedBlack.jl")
 include("GeometricalWeights/GeometricalWeights.jl")
+include("Painting/Painting.jl")
 include("PotentialSimulationSetups/PotentialSimulationSetups.jl")
 
 include("EffectiveChargeDensity.jl")

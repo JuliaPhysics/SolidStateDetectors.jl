@@ -1,3 +1,73 @@
+function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
+        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+
+    channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
+        [weighting_potential_contact_id]
+    else
+        Int[]
+    end
+
+    axr::Vector{T} = grid.axes[1].ticks
+    axφ::Vector{T} = grid.axes[2].ticks
+    axz::Vector{T} = grid.axes[3].ticks
+
+    for iz in axes(potential, 3)
+        z::T = axz[iz]
+        for iφ in axes(potential, 2)
+            φ::T = axφ[iφ]
+            for ir in axes(potential, 1)
+                r::T = axr[ir]
+                pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
+
+                for passive in ssd.passives
+                    if passive.potential != :floating
+                        if pt in passive
+                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                                passive.potential
+                            else
+                                0
+                            end
+                            pointtypes[ ir, iφ, iz ] = zero(PointType)
+                        end
+                    end
+                end
+                if in(pt, ssd)
+                    pointtypes[ ir, iφ, iz ] += pn_junction_bit
+                end
+                for contact in ssd.contacts
+                    if pt in contact
+                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                            contact.potential
+                        else
+                            contact.id == weighting_potential_contact_id ? 1 : 0
+                        end
+                        pointtypes[ ir, iφ, iz ] = zero(PointType)
+                    end
+                end
+            end
+        end
+    end
+
+    for contact in ssd.contacts
+        pot::T = if ismissing(weighting_potential_contact_id)
+            contact.potential
+        else
+            contact.id == weighting_potential_contact_id ? 1 : 0
+        end
+        # contact_gridpoints = paint_object(contact, grid)
+        # for gridpoint in contact_gridpoints
+        #     potential[ gridpoint... ] = pot
+        #     pointtypes[ gridpoint... ] = zero(PointType)
+        # end
+        fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
+        for face in fs
+            paint!(pointtypes, potential, face, contact.geometry, pot, grid)
+        end
+    end
+    nothing
+end
+
+
 function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, Cylindrical}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = (1.0, 1.0),
                 weighting_potential_contact_id::Union{Missing, Int} = missing
