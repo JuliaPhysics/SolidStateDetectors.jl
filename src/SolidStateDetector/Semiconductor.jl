@@ -25,9 +25,14 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple, outer_transformat
     else
         ElectricFieldChargeDriftModel{T}()
     end
-    temperature = haskey(dict, "temperature") ? T(dict["temperature"]) : T(80)
     material = material_properties[materials[dict["material"]]]
-
+    temperature = if haskey(dict, "temperature") 
+        T(dict["temperature"])
+    elseif material.name == "High Purity Germanium"
+        T(78)
+    else
+        T(293)
+    end
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)
     geometry = Geometry(T, dict["geometry"], input_units, transformations)

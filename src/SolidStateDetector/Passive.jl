@@ -14,8 +14,8 @@ function Passive{T}(dict::Dict, input_units::NamedTuple, outer_transformations) 
     name = haskey(dict, "name") ? dict["name"] : "external part"
     id::Int = haskey(dict, "id") ? dict["id"] : -1
     potential = haskey(dict, "potential") ? T(dict["potential"]) : :floating
-    temperature = haskey(dict, "temperature") ? T(dict["temperature"]) : T(80)
     material = material_properties[materials[dict["material"]]]
+    temperature = haskey(dict, "temperature") ? T(dict["temperature"]) : T(293)
     charge_density_model = if haskey(dict, "charge_density") 
         ChargeDensity(T, dict["charge_density"], input_units)
     elseif haskey(dict, "charge_density_model") 
