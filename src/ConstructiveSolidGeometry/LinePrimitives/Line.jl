@@ -3,8 +3,4 @@ struct Line{T} <: AbstractLinePrimitive{T}
     direction::CartesianVector{T}
 end
 
-function distance(A::CartesianPoint, l::Line)
-    B = l.origin 
-    C = B + l.direction
-    return norm((A - B) × l.direction) / norm(l.direction)
-end
+distance(pt::CartesianPoint, l::Line) = norm((pt - l.origin) × l.direction) / norm(l.direction)
