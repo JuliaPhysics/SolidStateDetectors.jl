@@ -24,7 +24,7 @@ detectors:
   - translate: 
       x: 0
     rotate: 
-      Z: 0
+      Z: 45
     bulk:
       material: HPGe
       temperature: 78
