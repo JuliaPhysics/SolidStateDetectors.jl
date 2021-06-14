@@ -57,8 +57,8 @@ in(p::AbstractCoordinatePoint, csg::CSGDifference) = in(p, csg.a) && !in(p, csg.
 (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGDifference{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, ::Type{CSGDifference}, v::Vector{<:AbstractDict}, input_units::NamedTuple) where {T}
-    Geometry(T, v[1], input_units) - sum( broadcast(x-> Geometry(T, x, input_units), v[2:end]) )
+function Geometry(::Type{T}, ::Type{CSGDifference}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformations) where {T}
+    transform(Geometry(T, v[1], input_units, Transformations{T}()) - sum(broadcast(x-> Geometry(T, x, input_units, Transformations{T}()), v[2:end])), transformations)
 end
 
 Dictionary(g::CSGDifference{T}) where {T} = OrderedDict{String,Any}("difference" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])

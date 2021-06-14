@@ -9,7 +9,7 @@ const CSG_dict = Dict{String, Any}(
     # "PentagonalPrism" => PentagonalPrism,
     # "HexagonalPrism"  => HexagonalPrism,
     # "union" => CSGUnion,
-    # "difference" => CSGDifference,
+    "difference" => CSGDifference,
     # "intersection" => CSGIntersection,
     "translate" => CartesianVector, # we just ne some type to dispatch on
     "rotate" => Rotations.Rotation  # we just ne some type to dispatch on
@@ -155,9 +155,9 @@ end
 function Geometry(::Type{T}, ::Type{CartesianVector}, dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T}
     translate_vector = parse_translate_vector(T, dict, input_units.length)
     key = get_geometry_key(T, dict, input_units)
-    inner_transformations = (rotation = one(SMatrix{3, 3, T, 9}), translation = translate_vector)
-    transformations = combine_transformations(inner_transformations, outer_transformations)
-    Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
+    # inner_transformations = (rotation = one(SMatrix{3, 3, T, 9}), translation = translate_vector)
+    # transformations = combine_transformations(inner_transformations, outer_transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, outer_transformations)
 end
 
 function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {T}
@@ -204,9 +204,7 @@ end
 function Geometry(::Type{T}, ::Type{Rotations.Rotation}, dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T}
     rotation_matrix = SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict["rotate"], input_units.angle))
     key = get_geometry_key(T, dict, input_units)
-    inner_transformations = (rotation = rotation_matrix, translation = zero(CartesianVector{T}))
-    transformations = combine_transformations(inner_transformations, outer_transformations)
-    Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, outer_transformations)
 end
 
 
@@ -214,6 +212,13 @@ function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_
     key = get_geometry_key(T, dict, input_units)
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)
+    if key == "translate"
+        @show key
+        @show inner_transformations.translation
+        @show transformations.translation
+        @show CSG_dict[key]
+        println("-...")
+    end
     Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end
 

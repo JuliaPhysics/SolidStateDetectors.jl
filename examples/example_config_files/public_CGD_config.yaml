@@ -24,7 +24,7 @@ detectors:
   - translate: 
       x: 0
     rotate: 
-      Z: 45
+      Z: 0
     bulk:
       material: HPGe
       temperature: 78
@@ -64,15 +64,20 @@ detectors:
         channel: 2
         geometry:
           translate:
-            y: -5
-            box:
-              x: 
-                from: 4.5
-                to: 5
-              y: 
-                from: 0
-                to: 10
-              z: 10
+            y: 0
+            difference:
+              - box:
+                  x: 
+                    from: 4.5
+                    to: 5
+                  y: 10
+                  z: 10
+              - box:
+                  x: 
+                    from: 4 
+                    to: 5.5
+                  y: 4
+                  z: 4
 
 surroundings:
   - name: Base
