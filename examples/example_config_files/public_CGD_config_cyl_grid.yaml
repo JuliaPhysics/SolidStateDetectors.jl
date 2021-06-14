@@ -51,23 +51,41 @@ detectors:
         potential: 2000
         channel: 1
         geometry:
-          box:
-            x: 
-              from: -5
-              to: -4.5
-            y: 10
-            z: 10
+          union:
+            - box:
+                x: 
+                  from: -5
+                  to: -4.5
+                y: 10
+                z: 10
+            - translate:
+                z: 4.5
+                box:
+                  x: 
+                    from: -4.5
+                    to: -4
+                  y: 10
+                  z: 1
       - material: HPGe
         name: p+ contact
         potential: 0
         channel: 2
         geometry:
-          box:
-            x: 
-              from: 4.5
-              to: 5
-            y: 10
-            z: 10
+          translate:
+            y: 0
+            difference:
+              - box:
+                  x: 
+                    from: 4.5
+                    to: 5
+                  y: 10
+                  z: 10
+              - box:
+                  x: 
+                    from: 4 
+                    to: 5.5
+                  y: 4
+                  z: 4
 
 surroundings:
   - name: Base
