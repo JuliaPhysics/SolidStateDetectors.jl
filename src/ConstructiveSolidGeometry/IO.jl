@@ -11,6 +11,8 @@ const CSG_dict = Dict{String, Any}(
     # "union" => CSGUnion,
     # "difference" => CSGDifference,
     # "intersection" => CSGIntersection,
+    "translate" => CartesianVector, # we just ne some type to dispatch on
+    "rotate" => Rotations.Rotation  # we just ne some type to dispatch on
 )
 
 function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
@@ -150,12 +152,13 @@ function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{Cartesia
     parse_translate_vector(T, dict["translate"], input_units.length)
 end
 
-# function Geometry(::Type{T}, ::Type{CartesianVector}, dict::AbstractDict, input_units::NamedTuple) where {T}
-#     length_unit = input_units.length
-#     translate_vector::CartesianVector{T} = parse_translate_vector(T, dict, length_unit)
-#     key::String, transformations = get_geometry_key(T, dict, input_units)
-#     translate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), translate_vector)
-# end
+function Geometry(::Type{T}, ::Type{CartesianVector}, dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T}
+    translate_vector = parse_translate_vector(T, dict, input_units.length)
+    key = get_geometry_key(T, dict, input_units)
+    inner_transformations = (rotation = one(SMatrix{3, 3, T, 9}), translation = translate_vector)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
+end
 
 function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {T}
     x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
@@ -197,6 +200,14 @@ end
 #     key::String, transformations = get_geometry_key(T, dict, input_units)
 #     rotate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), rotation_matrix)
 # end
+
+function Geometry(::Type{T}, ::Type{Rotations.Rotation}, dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T}
+    rotation_matrix = SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict["rotate"], input_units.angle))
+    key = get_geometry_key(T, dict, input_units)
+    inner_transformations = (rotation = rotation_matrix, translation = zero(CartesianVector{T}))
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
+end
 
 
 function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T}
