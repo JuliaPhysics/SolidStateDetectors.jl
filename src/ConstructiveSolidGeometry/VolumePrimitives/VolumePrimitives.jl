@@ -1,5 +1,5 @@
-ClosedPrimitive(p::VP) where {VP <:AbstractVolumePrimitive} = VP(p, COT = ClosedPrimitive, origin = p.origin, rotation = p.rotation)
-OpenPrimitive(p::VP) where {VP <: AbstractVolumePrimitive} = VP(p, COT = OpenPrimitive, origin = p.origin, rotation = p.rotation)
+ClosedPrimitive(p::VP) where {VP <:AbstractVolumePrimitive} = VP(p, COT = ClosedPrimitive)
+OpenPrimitive(p::VP) where {VP <: AbstractVolumePrimitive} = VP(p, COT = OpenPrimitive)
 
 rotation(p::AbstractVolumePrimitive) = p.rotation
 origin(p::AbstractVolumePrimitive) = p.origin

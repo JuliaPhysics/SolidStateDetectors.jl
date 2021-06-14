@@ -29,17 +29,17 @@ function parse_CSG_transformation(::Type{T}, dict::AbstractDict, input_units::Na
     else
         one(SMatrix{3, 3, T, 9})
     end
-    s = if haskey(dict, "scale")
-        error("Not yet implemented")
-    else
-        ones(SVector{3,T})
-    end
+    # s = if haskey(dict, "scale")
+    #     _s = parse_scale_vector(T, dict["scale"])
+    # else
+    #     ones(SVector{3,T})
+    # end
     t = if haskey(dict, "translate")
         parse_translate_vector(T, dict["translate"], input_units.length)
     else
         zero(CartesianVector{T})
     end
-    (scale = s, rotation = r, translation = t)
+    (rotation = r, translation = t)
 end
 
 #### INTERNAL PARSE FUNCTIONS
@@ -157,10 +157,10 @@ end
 #     translate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), translate_vector)
 # end
 
-function parse_scale_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::SVector{3,T} where {T}
-    x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], unit) : T(1)
-    y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], unit) : T(1)
-    z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], unit) : T(1)
+function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {T}
+    x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
+    y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
+    z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
     SVector{3,T}(x,y,z)
 end
 

@@ -12,12 +12,10 @@ CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-Box{T, CO}( b::Box{T, CO}; 
-            COT = CO,
-            scaling::SVector{3,T} = ones(SVector{3,T}),
-            origin::CartesianPoint{T} = zero(CartesianPoint{T}),
-            rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} = 
-    Box{T, COT}(b.hX * scaling[1], b.hY * scaling[2], b.hZ * scaling[3], scale(origin, scaling), rotation)
+Box{T, CO}( b::Box{T, CO}; COT = CO,
+            origin::CartesianPoint{T} = b.origin,
+            rotation::SMatrix{3,3,T,9} = b.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} =
+    Box{T, COT}(b.hX, b.hY, b.hZ, origin, rotation)
 
 extremum(b::Box{T}) where {T} = norm(CartesianPoint{T}(b.hX, b.hY, b.hZ))
 
@@ -35,14 +33,13 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     μy = typeof(y) <: Real ? zero(T) : mean(y)
     μz = typeof(z) <: Real ? zero(T) : mean(z)
     origin = CartesianPoint{T}(μx, μy, μz)
-    scale = ones(SVector{3,T})
     hX = typeof(x) <: Real ? x : width(x)/2
     hY = typeof(y) <: Real ? y : width(y)/2
     hZ = typeof(z) <: Real ? z : width(z)/2
     box = Box{T, ClosedPrimitive}(
-        hX = scale[1] * hX, 
-        hY = scale[2] * hY, 
-        hZ = scale[3] * hZ, 
+        hX = hX, 
+        hY = hY, 
+        hZ = hZ, 
         origin = origin
     )
     transform(box, transformations)

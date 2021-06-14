@@ -69,8 +69,4 @@ Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, i
 
 (*)(r::AbstractMatrix, csg::A) where {A <: AbstractConstructiveGeometry} = A(r * csg.a, r * csg.b)
 
-scale(csg::A, s::SVector{3}) where {A <: AbstractConstructiveGeometry} = A(scale(csg.a, s), scale(csg.b, s))
-(*)(s::SVector{3}, csg::A) where {A <: AbstractConstructiveGeometry} = A(scale(csg.a, s), scale(csg.b, s))
-(*)(csg::A, s::SVector{3}) where {A <: AbstractConstructiveGeometry} = A(scale(csg.a, s), scale(csg.b, s))
-
 surfaces(csg::AbstractConstructiveGeometry) = vcat(surfaces(csg.a)..., surfaces(csg.b)...)

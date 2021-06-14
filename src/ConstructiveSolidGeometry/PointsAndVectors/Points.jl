@@ -22,8 +22,6 @@ end
 
 zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
 
-scale(pt::CartesianPoint{T}, s::SVector{3}) where {T} = CartesianPoint{T}(pt .* s)
-
 @inline _eq_cyl_r(p::CartesianPoint{T}, r::Real) where {T} = hypot(p.x, p.y) == T(r)
 
 @inline _in_planar_r(p::PlanarPoint, r::Real) = hypot(p.u, p.v) <= r
