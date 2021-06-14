@@ -5,12 +5,17 @@ const Transformations{T} = NamedTuple{(:scale, :rotation, :translation),
 #   2. Rotate
 #   3. Translate
 
-transform(g::AbstractPrimitive, t::Transformations) =
-    transform(transform(transform(g, t.scale), t.rotation), t.translation)
+scale(p::VP, s::SVector{3, <:Any}) where {VP <: AbstractVolumePrimitive} = VP(p, scaling = s, origin = p.origin, rotation = p.rotation)
+(*)(s::SVector{3, <:Any}, p::AbstractVolumePrimitive) = scale(p, s)
 
-transform(p::AbstractVolumePrimitive, v::CartesianVector) = p + v
-transform(p::AbstractVolumePrimitive, r::AbstractMatrix) = r * p
-transform(p::AbstractVolumePrimitive, s::SVector{3}) = s * p
+rotate(p::VP, r::AbstractMatrix) where {VP <: AbstractVolumePrimitive} = VP(p, origin = r * p.origin, rotation = r * p.rotation)
+(*)(r::AbstractMatrix, p::AbstractVolumePrimitive) = rotate(p, r)
+
+translate(p::VP, v::CartesianVector) where {VP <: AbstractVolumePrimitive} = VP(p, origin = p.origin + v, rotation = p.rotation)
+(+)(p::AbstractVolumePrimitive, v::CartesianVector) = translate(p, v)
+
+transform(g::AbstractPrimitive, t::Transformations) =
+    translate(rotate(scale(g, t.scale), t.rotation), t.translation)
 
 transform(csg::G, t::Transformations) where {G <: AbstractConstructiveGeometry} = G(transform(csg.a, t), transform(csg.b, t))
 

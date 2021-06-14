@@ -4,15 +4,6 @@ OpenPrimitive(p::VP) where {VP <: AbstractVolumePrimitive} = VP(p, COT = OpenPri
 rotation(p::AbstractVolumePrimitive) = p.rotation
 origin(p::AbstractVolumePrimitive) = p.origin
 
-scale(p::VP, s::SVector{3, <:Any}) where {VP <: AbstractVolumePrimitive} = VP(p, scaling = s, origin = p.origin, rotation = p.rotation)
-(*)(s::SVector{3, <:Any}, p::AbstractVolumePrimitive) = scale(p, s)
-
-rotate(p::VP, r::AbstractMatrix) where {VP <: AbstractVolumePrimitive} = VP(p, origin = r * p.origin, rotation = r * p.rotation)
-(*)(r::AbstractMatrix, p::AbstractVolumePrimitive) = rotate(p, r)
-
-translate(p::VP, v::CartesianVector) where {VP <: AbstractVolumePrimitive} = VP(p, origin = p.origin + v, rotation = p.rotation)
-(+)(p::AbstractVolumePrimitive, v::CartesianVector) = translate(p, v)
-
 distance(pt::CartesianPoint, vp::AbstractVolumePrimitive) = 
     minimum(map(p -> distance(pt, p), surfaces(vp)))
 
