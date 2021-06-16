@@ -1,15 +1,35 @@
-# struct ConeMantle{T,TR,TP,TZ} <: AbstractSurfacePrimitive{T}
-#     r::TR #if not a Tuple, then ConeMantle is a Tube
-#     φ::TP
-#     z::TZ
-#     #if r is a Tuple, the first entry refers to the r at the bottom, the second one to the r at the top
-#     function ConeMantle( ::Type{T},
-#                    r::Union{T, Tuple{T,T}},
-#                    φ::Union{Nothing, <:AbstractInterval{T}},
-#                    z::Union{T, <:AbstractInterval{T}}) where {T, I<:AbstractInterval{T}}
-#         new{T,typeof(r),typeof(φ),typeof(z)}(r, φ, z)
-#     end
-# end
+"""
+    struct ConeMantle{T,RT,TP} <: AbstractSurfacePrimitive{T}
+
+T: Type of values, e.g. Float64
+
+* `r::TR`: 
+    * TR = Real -> Tube Mantle (a = b = r)
+    * TR = (Real, Real) -> Cone Mantle (r_bot = r[1], r_top = r[2])
+    * TR = ((Real,), (Real,)) -> Elliptical Tube Mantle (a = r[1][1], b = r[2][1])
+    * TR = ((Real, Real),(Real, Real)) -> Elliptical Cone Mantle \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
+    * Not all are implemented yet
+
+* `φ::TP`: 
+    * TP = Nothing <-> Full in φ
+    * ...
+* `zH::T`: half hight/length of the cone mantle
+
+* `axis::Line{T}`: The axis of the Cone mantle. Going from the bottom center point to the top center point. 
+"""
+@with_kw struct ConeMantle{T,RT,TP} <: AbstractSurfacePrimitive{T}
+    r::RT = 1
+    φ::TP = nothing
+    hZ::T = 1 # maybe we don't need this. I will leave it for now...
+
+    axis::Line{T} = Line{T}(CartesianPoint{T}(zero(T), zero(T), -hZ), CartesianVector{T}(zero(T), zero(T), 2hZ))
+end
+
+function ConeMantle(t::Tube{T}) where {T}
+    bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
+    top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
+    ConeMantle{T,T,Nothing}(t.r, t.φ, t.hZ, Line{T}(bot_center_pt, top_center_pt - bot_center_pt))
+end
 
 # function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
 #     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
