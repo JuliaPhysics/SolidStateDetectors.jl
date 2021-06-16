@@ -6,11 +6,11 @@ const Transformations{T} = NamedTuple{(:rotation, :translation), Tuple{SMatrix{3
 
 # Transformations{T}() where {T} = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
 
-rotate(p::VP, r::AbstractMatrix) where {VP <: AbstractVolumePrimitive} = VP(p, origin = r * p.origin, rotation = r * p.rotation)
-(*)(r::AbstractMatrix, p::AbstractVolumePrimitive) = rotate(p, r)
+rotate(p::P, r::AbstractMatrix) where {P <: AbstractPrimitive} = P(p, origin = r * p.origin, rotation = r * p.rotation)
+(*)(r::AbstractMatrix, p::AbstractPrimitive) = rotate(p, r)
 
-translate(p::VP, v::CartesianVector) where {VP <: AbstractVolumePrimitive} = VP(p, origin = p.origin + v, rotation = p.rotation)
-(+)(p::AbstractVolumePrimitive, v::CartesianVector) = translate(p, v)
+translate(p::P, v::CartesianVector) where {P <: AbstractPrimitive} = P(p, origin = p.origin + v, rotation = p.rotation)
+(+)(p::AbstractPrimitive, v::CartesianVector) = translate(p, v)
 
 transform(g::AbstractPrimitive, t::Transformations) =
     translate(rotate(g, t.rotation), t.translation)

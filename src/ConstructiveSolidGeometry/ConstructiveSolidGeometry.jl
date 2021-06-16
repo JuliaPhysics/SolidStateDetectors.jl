@@ -49,6 +49,16 @@ module ConstructiveSolidGeometry
 
     include("Units.jl")
     include("PointsAndVectors/PointsAndVectors.jl")
+
+    rotation(p::AbstractPrimitive) = p.rotation
+    origin(p::AbstractPrimitive) = p.origin
+    _transform_into_global_coordinate_system(pt::CartesianPoint, p::AbstractPrimitive) = (rotation(p) * pt) + origin(p)
+    _transform_into_object_coordinate_system(pt::CartesianPoint, p::AbstractPrimitive) = inv(rotation(p)) * (pt - origin(p)) 
+    in(pt::CartesianPoint, p::AbstractPrimitive) = _in(_transform_into_object_coordinate_system(pt, p), p)
+    in(pt::CylindricalPoint, p::AbstractPrimitive) = in(CartesianPoint(pt), p)
+    # Do we want to store the rotation matrix permanently in the primitive?
+    # We should do tests regarding the performance. It can be easily added later.     
+
     include("Transformations.jl")
     include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
