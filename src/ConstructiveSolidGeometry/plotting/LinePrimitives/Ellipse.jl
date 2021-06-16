@@ -4,3 +4,13 @@ function edges(e::Ellipse{T,T,Nothing}; n = 4) where {T}
     pts = map(p -> _transform_into_global_coordinate_system(p, e), pts)
     edges = [Edge(pts[i], pts[i+1]) for i in 1:n]
 end
+
+@recipe function f(e::Ellipse; n = 40)
+    @series begin
+        label --> "Ellipse"
+        @info n
+        edges(e, n = n)
+    end
+end
+
+
