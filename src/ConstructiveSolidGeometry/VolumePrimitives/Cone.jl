@@ -86,6 +86,13 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     return Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = h/2)
 end
 
+function surfaces(t::Tube{T}) where {T}
+    mantle = ConeMantle(t)
+    e_bot = Ellipse{T,T,Nothing}(r = t.r, φ = nothing, origin = mantle.axis.origin, rotation = t.rotation)
+    e_top = Ellipse{T,T,Nothing}(r = t.r, φ = nothing, origin = mantle.axis.origin + mantle.axis.direction, rotation = t.rotation)
+    e_top, e_bot, mantle
+end
+
 # function Dictionary(g::Cone{T,<:Union{T, AbstractInterval}}) where {T}
 #     dict = OrderedDict{String,Any}()
 #     dict["r"] = typeof(g.r) == T ? g.r : OrderedDict{String,Any}("from" => g.r.left, "to" => g.r.right)
