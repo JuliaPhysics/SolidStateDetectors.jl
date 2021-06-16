@@ -5,7 +5,7 @@
     linecolor --> :black
     @series begin
         label --> "$(nameof(typeof(p)))"
-        fs
+        [fs...]
     end
 end
 

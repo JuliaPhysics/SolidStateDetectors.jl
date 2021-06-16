@@ -62,7 +62,7 @@ sample(b::Box) = vertices(b)
 
 function surfaces(b::Box{T}) where {T}
     vs = vertices(b)
-    return SVector{6, Quadrangle{T}}(
+    return (
         Quadrangle{T}((vs[1], vs[2], vs[3], vs[4])),
         Quadrangle{T}((vs[5], vs[6], vs[2], vs[1])),
         Quadrangle{T}((vs[8], vs[7], vs[6], vs[5])),
