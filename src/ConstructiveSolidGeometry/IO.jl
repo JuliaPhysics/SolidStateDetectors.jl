@@ -1,6 +1,6 @@
 const CSG_dict = Dict{String, Any}(
-    # "tube" => Cone,
-    # "cone" => Cone,
+    "tube" => Cone,
+    "cone" => Cone,
     # "sphere" => Sphere,
     "box" => Box,
     # "torus" => Torus,
