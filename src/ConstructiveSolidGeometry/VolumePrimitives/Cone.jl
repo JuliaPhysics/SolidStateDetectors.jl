@@ -1,45 +1,42 @@
-# struct Cone{T,TR,TP,TZ} <: AbstractVolumePrimitive{T}
-#     r::TR #if not a Tuple, then Cone is a Tube
-#     φ::TP
-#     z::TZ
-#     #if r is a Tuple, the first entry refers to the r-interval at the bottom, the second one to the r-interval at the top
-#     function Cone( ::Type{T},
-#                    r::Union{T, <:AbstractInterval{T}, Tuple{T,T}, Tuple{I,I}},
-#                    φ::Union{Nothing, <:AbstractInterval{T}},
-#                    z::Union{T, <:AbstractInterval{T}}) where {T, I<:AbstractInterval{T}}
-#         new{T,typeof(r),typeof(φ),typeof(z)}(r, φ, z)
-#     end
-# end
+"""
+    struct Cone{T,CO,RT,TP} <: AbstractVolumePrimitive{T, CO}
 
-# #Constructors
-# function Cone(;rbotMin = 0, rbotMax = 1, rtopMin = 0, rtopMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2)
-#     T = float(promote_type(typeof.((rtopMin, rtopMax, rbotMin, rbotMax, φMin, φMax, zMin, zMax))...))
-#     rMin_is_equal::Bool = rbotMin == rtopMin
-#     rMax_is_equal::Bool = rbotMax == rtopMax
-#     rMin_is_zero::Bool = rMin_is_equal && rbotMin == 0
-#     r = if rMax_is_equal
-#             if rMin_is_zero # Tube with rMin = 0
-#                 T(rbotMax)
-#             elseif rMin_is_equal # Tube
-#                 T(rbotMin)..T(rbotMax)
-#             else # Cone
-#                 (T(rbotMin)..T(rbotMax), T(rtopMin)..T(rtopMax))
-#             end
-#         elseif rMin_is_zero #Cone with rMin = 0
-#             (T(rbotMax), T(rtopMax))
-#         else # Cone
-#             (T(rbotMin)..T(rbotMax), T(rtopMin)..T(rtopMax))
-#         end
-#     φ = mod(T(φMax) - T(φMin), T(2π)) == 0 ? nothing : T(φMin)..T(φMax)
-#     z = zMax == -zMin ? T(zMax) : T(zMin)..T(zMax)
-#     Cone( T, r, φ, z)
-# end
-# Cone(rbotMin, rbotMax, rtopMin, rtopMax, φMin, φMax, zMin, zMax) = Cone(; rbotMin = rbotMin, rbotMax = rbotMax, rtopMin = rtopMin, rtopMax = rtopMax, φMin = φMin, φMax = φMax, zMin = zMin, zMax = zMax)
+T: Type of values, e.g. Float64
+CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
 
-# function Cone(rbot::R1, rtop::R2, height::H) where {R1<:Real, R2<:Real, H<:Real}
-#     T = float(promote_type(R1, R2, H))
-#     Cone( T, (T(rbot), T(rtop)), nothing, T(height)/2)
-# end
+* `r::TR`: 
+    * TR = Real -> Solid Tube 
+    * TR = (Real, Real) -> Pipe (r_in = r[1], r_out = r[2])
+    * TR = ((Real,), (Real,)) Solid widening Tube  -> (r_bot = r[1][1], r_top = r[1][2])
+    * TR = ((Real,Real), (Real,Real)) Solid widening Pipe ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r[2][1], r_top_out = r[2][2])
+    * TR = (Nothing, (Real,Real)) Cone ->\n(r_bot_in = r_bot_out = 0, r_top_in = r[2][1], r_top_out = r[2][2])
+    * TR = ((Real,Real), Nothing) Cone ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r_top_out = 0)
+    * ... (+ elliptical cases -> (a, b))
+    * Not all are implemented yet
+
+* `φ::TP`: 
+    * TP = Nothing <-> Full in φ
+    * ...
+* `zH::T`: half hight/length of the cone
+"""
+@with_kw struct Cone{T,CO,RT,TP} <: AbstractVolumePrimitive{T, CO}
+    r::RT = 1
+    φ::TP = nothing
+    hZ::T = 1
+
+    origin::CartesianPoint{T} = zero(CartesianPoint{T})
+    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+end
+
+Cone{T,CO,RT,TP}( c::Cone{T,CO,RT,TP}; COT = CO,
+            origin::CartesianPoint{T} = b.origin,
+            rotation::SMatrix{3,3,T,9} = b.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,TP} =
+    Cone{T,CO,RT,TP}(c.r, c.φ, c.hZ, origin, rotation)
+
+const Tube{T,CO} = Cone{T,CO,T,Nothing}
+
+_in(pt::CartesianPoint, c::Tube{<:Real, ClosedPrimitive}) = abs(pt.z) <= c.hZ && hypot(pt.x, pt.y) <= c.r
+_in(pt::CartesianPoint, c::Tube{<:Real, OpenPrimitive})   = abs(pt.z) <  c.hZ && hypot(pt.x, pt.y) <  c.r
 
 
 # #Constructors for Tubes
