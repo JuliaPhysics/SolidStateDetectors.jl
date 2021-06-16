@@ -6,3 +6,4 @@ distance(pt::CartesianPoint, vp::AbstractVolumePrimitive) =
 minimum(map(p -> distance(pt, p), surfaces(vp)))
 
 include("Box.jl")
+include("Cone.jl")
