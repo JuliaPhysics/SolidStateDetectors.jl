@@ -1,5 +1,3 @@
-include("Edge.jl")
-
 @recipe function f(ls::AbstractVector{<:AbstractLinePrimitive})
     linecolor --> :black
     @series begin
@@ -15,3 +13,6 @@ include("Edge.jl")
         end
     end
 end
+
+include("Edge.jl")
+include("Ellipse.jl")
