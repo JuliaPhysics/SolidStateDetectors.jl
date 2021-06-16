@@ -77,14 +77,14 @@ _in(pt::CartesianPoint, c::Tube{<:Real, OpenPrimitive})   = abs(pt.z) <  c.hZ &&
 #     _in_z(p, c.z) && _in_φ(p, c.φ) && _in_cyl_r(p, get_r_at_z(c, p.z))
 
 # # read-in
-# function Geometry(::Type{T}, t::Union{Type{Cone}, Type{Tube}}, dict::AbstractDict, input_units::NamedTuple) where {T}
-#     length_unit = input_units.length
-#     angle_unit = input_units.angle
-#     r = parse_r_of_primitive(T, dict, length_unit)
-#     φ = parse_φ_of_primitive(T, dict, angle_unit)
-#     z = parse_height_of_primitive(T, dict, length_unit)
-#     return Cone(T, r, φ, z)
-# end
+function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    r = parse_r_of_primitive(T, dict, length_unit)
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    h = parse_height_of_primitive(T, dict, length_unit)
+    return Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = h/2)
+end
 
 # function Dictionary(g::Cone{T,<:Union{T, AbstractInterval}}) where {T}
 #     dict = OrderedDict{String,Any}()
