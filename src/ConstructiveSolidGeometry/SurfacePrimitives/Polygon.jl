@@ -166,12 +166,15 @@ function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T
         ls[3] == 1 ? typemax(eltype(ls)) : ls[3]
     )
     n = normal(p)
+    p_r = p.points[findmax(broadcast(p -> abs(p[1]), p.points))[2]]
     # We skip the `:rz`-case as there could be two intersections with the arc and the polygon.
-    proj, t1, t2 = if ls[1] < ls[3] && (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
+    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
         # evaluate the z value -> same as for the cartesian case
         Val{:rφ}(), t_idx_range_r, t_idx_range_φ
-    else # evaluate the r value 
+    elseif ls[2] < ls[1] && ls[3] < ls[1] && (n ⋅ p_r != 0)
         Val{:φz}(), t_idx_range_φ, t_idx_range_z
+    else
+        Val{:rz}(), t_idx_range_r, t_idx_range_z
     end
     return t1, t2, proj
 end
