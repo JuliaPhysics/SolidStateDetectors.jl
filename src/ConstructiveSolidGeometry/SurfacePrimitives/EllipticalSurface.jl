@@ -1,4 +1,4 @@
-struct CylindricalAnnulus{T,TR,TP} <: AbstractSurfacePrimitive{T}
+struct EllipticalSurface{T,TR,TP} <: AbstractSurfacePrimitive{T}
     r::TR
     φ::TP
     z::T
