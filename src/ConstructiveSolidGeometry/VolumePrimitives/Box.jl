@@ -24,7 +24,7 @@ _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
 _in(pt::CartesianPoint, b::Box{<:Any, :OpenPrimitive}) = 
     abs(pt.x) < b.hX && abs(pt.y) < b.hY && abs(pt.z) < b.hZ
  
-function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple, transformations) where {T}
+function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     length_unit = input_units.length
     x = parse_interval_of_primitive(T, "x", dict, length_unit)
     y = parse_interval_of_primitive(T, "y", dict, length_unit)
