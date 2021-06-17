@@ -82,14 +82,19 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     angle_unit = input_units.angle
     r = parse_r_of_primitive(T, dict, length_unit)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
-    h = parse_height_of_primitive(T, dict, length_unit)
-    return Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = h/2)
+    hZ = parse_height_of_primitive(T, dict, length_unit)
+    cone = Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = hZ)
+    return transform(cone, transformations)
 end
 
 function surfaces(t::Tube{T}) where {T}
-    mantle = ConeMantle(t)
-    e_bot = Ellipse{T,T,Nothing}(r = t.r, φ = nothing, origin = mantle.axis.origin, rotation = t.rotation)
-    e_top = Ellipse{T,T,Nothing}(r = t.r, φ = nothing, origin = mantle.axis.origin + mantle.axis.direction, rotation = t.rotation)
+    bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
+    top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
+    mantle = ConeMantle{T,T,Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
+    bot_normal = top_center_pt - bot_center_pt
+    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation = t.rotation)
+    e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = t.rotation)
+    # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle
 end
 
