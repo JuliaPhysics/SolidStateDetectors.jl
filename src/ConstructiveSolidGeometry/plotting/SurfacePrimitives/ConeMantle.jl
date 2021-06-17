@@ -18,14 +18,6 @@
     end
 end
 
-get_top_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
-    Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ),  cm.rotation)
-get_bot_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
-    Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), -cm.rotation)
-get_top_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
-    Ellipse(cm.r[2], cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), cm.rotation)
-get_bot_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
-    Ellipse(cm.r[1], cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ(π) * -cm.rotation)
     # RotZ(π) * -cm.rotation such that the normal vector points inside the cone (Convention)
 
 
