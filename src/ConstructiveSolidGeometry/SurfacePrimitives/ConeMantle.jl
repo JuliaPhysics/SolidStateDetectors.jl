@@ -117,6 +117,64 @@ function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
 end
 
 
+get_top_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
+    Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ),  cm.rotation)
+get_bot_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
+    Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ(π) * -cm.rotation)
+get_top_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
+    Ellipse(cm.r[2], cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), cm.rotation)
+get_bot_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
+    Ellipse(cm.r[1], cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ(π) * -cm.rotation)
+
+
+
+function get_2d_grid_ticks_and_proj(cm::ConeMantle{T}, t) where {T}
+    et = get_top_ellipse(cm)
+    eb = get_bot_ellipse(cm)
+    pts = [extreme_points(et)..., extreme_points(eb)...]
+    
+    t_idx_range_x, t_idx_range_y, t_idx_range_z = get_min_max_index_ranges((pts, t))
+    ls = (length(t_idx_range_x), length(t_idx_range_y), length(t_idx_range_z))
+    ls = (
+        ls[1] == 1 ? typemax(eltype(ls)) : ls[1],
+        ls[2] == 1 ? typemax(eltype(ls)) : ls[2],
+        ls[3] == 1 ? typemax(eltype(ls)) : ls[3]
+    )
+    eX = CartesianVector{T}(one(T),zero(T),zero(T))
+    eY = CartesianVector{T}(zero(T),one(T),zero(T))
+    eZ = CartesianVector{T}(zero(T),zero(T),one(T))
+    axis = cm.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
+
+    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && (axis × eZ != zero(CartesianVector{T}))
+        Val{:xy}(), t_idx_range_x, t_idx_range_y
+    elseif ls[1] < ls[2] && ls[3] < ls[2] && (axis × eY != zero(CartesianVector{T}))
+        Val{:xz}(), t_idx_range_x, t_idx_range_z
+    elseif (axis × eX != zero(CartesianVector{T}))
+        Val{:yz}(), t_idx_range_y, t_idx_range_z
+    else
+        error("Sampling Error. Have to extend cases")
+        # Should never happen. This else case can be removed after testing.
+    end
+
+    return t1, t2, proj
+end
+
+
+function evaluate(cm::ConeMantle{T}, x, y, ::Val{:xy}) where {T}
+    # plane.normal may not be perpendicular to the z-axis
+    line = Line{T}(CartesianPoint{T}(x, y, zero(T)), CartesianVector{T}(zero(T), zero(T), one(T)))
+    intersection(cm, line)
+end
+function evaluate(cm::ConeMantle{T}, x, z, ::Val{:xz}) where {T}
+    # plane.normal may not be perpendicular to the y-axis
+    line = Line{T}(CartesianPoint{T}(x, zero(T), z), CartesianVector{T}(zero(T), one(T), zero(T)))
+    intersection(cm, line)
+end
+function evaluate(cm::ConeMantle{T}, y, z, ::Val{:yz}) where {T}
+    # plane.normal may not be perpendicular to the x-axis
+    line = Line{T}(CartesianPoint{T}(zero(T), y, z), CartesianVector{T}(one(T), zero(T), zero(T)))
+    intersection(cm, line)
+end
 # function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
 #     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
 #     ConeMantle( T, r, c.φ, c.z)
