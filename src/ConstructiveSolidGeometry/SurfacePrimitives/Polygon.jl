@@ -9,6 +9,7 @@ normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.p
 
 vertices(p::Polygon) = p.points
 
+extreme_points(p::Polygon) = p.points
 
 function edges(p::Triangle{T}) where {T}
     vs = vertices(p)
@@ -113,18 +114,19 @@ function get_min_max_index_ranges(a::Union{
 end
 
 """
-    get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CartesianTicksTuple{T}) where {N, T}
+    get_2d_grid_ticks_and_proj(pts::AbstractVector{CartesianPoint{T}}, t::CartesianTicksTuple{T}) where {N, T}
 
-This function determines the two best dimensions to sample/paint the surface. 
+This function determines the two best dimensions to sample/paint a surface to which the points `pts` belong. 
 E.g. `x` & `y` -> `proj = Val{:xy}()`.
 The dimensions are picked such that the number of points to evaluate is minimal. 
 However, the polygon is not allowed to be parallel to the remaining dimension, e.g. `z`,
 because, than, there would not be a single value, but infinite ones,
 for `z` in the evalution.
 """
-function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CartesianTicksTuple{T}) where {N, T}
+function get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CartesianTicksTuple{T}) where {N, T}
     # This method would actually work for any flat surface, e.g. elipse
-    t_idx_range_x, t_idx_range_y, t_idx_range_z = get_min_max_index_ranges((p.points, t))
+    pts = extreme_points(p)
+    t_idx_range_x, t_idx_range_y, t_idx_range_z = get_min_max_index_ranges((pts, t))
     ls = (length(t_idx_range_x), length(t_idx_range_y), length(t_idx_range_z))
     ls = (
         ls[1] == 1 ? typemax(eltype(ls)) : ls[1],
@@ -147,18 +149,18 @@ end
 
 
 """
-    get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T}) where {N, T}
+    get_2d_grid_ticks_and_proj(pts::AbstractVector{CartesianPoint{T}}, t::CylindricalTicksTuple{T}) where {N, T}
 
-This function determines the two best dimensions to sample/paint the surface. 
+This function determines the two best dimensions to sample/paint a surface to which the points `pts` belong. 
 E.g. `r` & `φ` -> `proj = Val{:rφ}()`.
 The dimensions are picked such that the number of points to evaluate is minimal. 
 However, the polygon is not allowed to be parallel to the remaining dimension, e.g. `z`,
 because, than, there would not be a single value, but infinite ones, for `z` in the evalution.
-The Val{:rz}-case is excluded as there are two intersections with the arc-line and the polygon. 
 """
-function get_2d_grid_ticks_and_proj(p::Polygon{N, T}, t::CylindricalTicksTuple{T}) where {N, T}
+function get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CylindricalTicksTuple{T}) where {N, T}
     # This method would actually work for any flat surface, e.g. elipse
-    t_idx_range_r, t_idx_range_φ, t_idx_range_z = get_min_max_index_ranges((CylindricalPoint.(p.points), t))
+    pts = extreme_points(p)
+    t_idx_range_r, t_idx_range_φ, t_idx_range_z = get_min_max_index_ranges((CylindricalPoint.(pts), t))
     ls = (length(t_idx_range_r), length(t_idx_range_φ), length(t_idx_range_z))
     ls = (
         ls[1] == 1 ? typemax(eltype(ls)) : ls[1],
