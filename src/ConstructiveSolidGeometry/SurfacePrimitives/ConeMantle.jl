@@ -39,6 +39,7 @@ end
 The function will always return 2 CartesianPoint's.
 If the line just touches the mantle, the two points will be the same. 
 If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+If the line crosses the mantle only once, two points will be returned. The two points will be the same point (the intersection).
 """
 function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
@@ -49,32 +50,47 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     D1 = obj_l.direction.x
     D2 = obj_l.direction.y
     D3 = obj_l.direction.z
-
-    S = (cm.r[2] - cm.r[1]) / 2cm.hZ # r slope
-
-    f1 = D1^2 + D2^2 - D3^2*S^2
-    λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
-                # (here eZ -> D1 = D2 = 0)
-                # and the cone is actually a tupe (S = 0).
-                # We assume here that this is not the case -> 
-                # We check this this in choosing the sample / evaluating diensions in `paint!` 
+    
     hZ = cm.hZ
     R0 = cm.r[1]
 
-    term1 = (2D1*L1 + 2D2*L2 - 2D3*hZ*S^2 - 2D3*L3*S^2 - 2D3*R0*S)^2
-    term2 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
-    term3 = -D1*L1 - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
-    term4 = term1 - 4*f1*term2
-    sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
+    S = (cm.r[2] - cm.r[1]) / 2hZ # r slope
+
+    f1 = D1^2 + D2^2 - D3^2*S^2
+    # f1 is 0 if obj_l is parallel to the axis of the cone (here eZ -> D1 = D2 = 0)
+    # or the cone is actually a tupe (S = 0).
+    # We assume here that this is not the case:
+    #    -> We check this in choosing the sample / evaluating dimensions in `paint!` 
+    # Thus, f1 only zero if there is only one intersection.
+
+    λ1, λ2 = if f1 == 0 # one intersection
+        term1 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2*hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
+        term2 = L1*sqrt(D3^2*S^2 - D2^2) - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
+        λ = term1/(2*term2) 
+        λ, λ
+    else # two or no intersections 
+        λ = inv(f1)
+        term1 = (2D1*L1 + 2D2*L2 - 2D3*hZ*S^2 - 2D3*L3*S^2 - 2D3*R0*S)^2
+        term2 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
+        term3 = -D1*L1 - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
+        term4 = term1 - 4*f1*term2
+        sq::T = term4 < 0 ? T(NaN) : sqrt(term4) 
     
-    λ1 = λ * (-sq/2 + term3) 
-    λ2 = λ * (+sq/2 + term3)
-    
+        λ1 = λ * (-sq/2 + term3) 
+        λ2 = λ * (+sq/2 + term3)
+        λ1, λ2    
+    end
     ints1 = obj_l.origin + λ1 * obj_l.direction 
     ints2 = obj_l.origin + λ2 * obj_l.direction 
     return _transform_into_global_coordinate_system(ints1, cm), 
            _transform_into_global_coordinate_system(ints2, cm)
 end
+
+
+# x = term1/(2 term2) 
+
+# and D1 = -sqrt(D3^2 S^2 - D2^2) 
+# and -L1 sqrt(D3^2 S^2 - D2^2) + D2 L2 - D3 hZ S^2 - D3 L3 S^2 - D3 R0 S!=0
 
 """
     intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
@@ -97,7 +113,7 @@ function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
     λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
                 # (here eZ -> D1 = D2 = 0)
                 # We assume here that this is not the case -> 
-                # We check this this in choosing the sample / evaluating diensions in `paint!` 
+                # We check this in choosing the sample / evaluating dimensions in `paint!` 
     hZ = cm.hZ
     R0 = cm.r
 
