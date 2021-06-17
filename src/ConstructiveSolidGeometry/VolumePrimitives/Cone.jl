@@ -212,5 +212,20 @@ end
 #     ]
 # end
 
+function sample(t::Tube{T}; n = 4) where {T}
+    # this could be improved performance-vise, 
+    # but not that important right now as it is only called 
+    # in the initzialiaton of the grid. 
+    ehZ = CartesianPoint(zero(T), zero(T), t.hZ)
+    e_top = Ellipse(t.r, t.φ, t.origin + t.rotation * ehZ, t.rotation)
+    e_bot = Ellipse(t.r, t.φ, t.origin - t.rotation * ehZ, t.rotation)
+    φs = range(0, step = 2π / n, length = n)
+    pts_top = [CartesianPoint(CylindricalPoint{T}(e_top.r, φ, zero(T))) for φ in φs]
+    pts_top = map(p -> _transform_into_global_coordinate_system(p, e_top), pts_top)
+    pts_bot = [CartesianPoint(CylindricalPoint{T}(e_bot.r, φ, zero(T))) for φ in φs]
+    pts_bot = map(p -> _transform_into_global_coordinate_system(p, e_bot), pts_bot)
+    vcat(pts_bot, pts_top)
+end
+
 # @inline sample(c::Cone{T}) where {T} = sample(c, (2,3,3))
 # @inline sample(c::Cone{T, <:Any, Nothing}) where {T} = sample(c, (2,5,3))
