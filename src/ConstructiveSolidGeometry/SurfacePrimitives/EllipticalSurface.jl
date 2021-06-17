@@ -12,7 +12,7 @@
     * TP = Nothing <-> Full in φ
     * ...
 """
-@with_kw struct EllipticalSurface{T,TR,TP} <: AbstractFlatSurfacePrimitive{T}
+@with_kw struct EllipticalSurface{T,TR,TP} <: AbstractPlanarSurfacePrimitive{T}
     r::TR = 1
     φ::TP = nothing
 

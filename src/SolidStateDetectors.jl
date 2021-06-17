@@ -34,7 +34,7 @@ using .ConstructiveSolidGeometry:
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             CartesianTicksTuple, CylindricalTicksTuple,
             Geometry, AbstractGeometry,
-            AbstractSurfacePrimitive, AbstractFlatSurfacePrimitive, AbstractBentSurfacePrimitive,
+            AbstractSurfacePrimitive, AbstractPlanarSurfacePrimitive, AbstractCurvedSurfacePrimitive,
             geom_round, geom_sigdigits, geom_atol_zero,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations

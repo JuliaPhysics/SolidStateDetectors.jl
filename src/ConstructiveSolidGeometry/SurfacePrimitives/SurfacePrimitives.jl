@@ -1,5 +1,5 @@
-abstract type AbstractFlatSurfacePrimitive{T} <: AbstractSurfacePrimitive{T} end
-abstract type AbstractBentSurfacePrimitive{T} <: AbstractSurfacePrimitive{T} end
+abstract type AbstractPlanarSurfacePrimitive{T} <: AbstractSurfacePrimitive{T} end
+abstract type AbstractCurvedSurfacePrimitive{T} <: AbstractSurfacePrimitive{T} end
 
 include("Plane.jl")
 include("Polygon.jl")
@@ -30,7 +30,7 @@ function get_min_max_index_ranges(a::Union{
 end
 
 """
-    get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CartesianTicksTuple{T}) where {N, T}
+    get_2d_grid_ticks_and_proj(p::AbstractPlanarSurfacePrimitive, t::CartesianTicksTuple{T}) where {N, T}
 
 This function determines the two best dimensions to sample/paint the surface p. 
 E.g. `x` & `y` -> `proj = Val{:xy}()`.
@@ -39,7 +39,7 @@ However, the polygon is not allowed to be parallel to the remaining dimension, e
 because, than, there would not be a single value, but infinite ones,
 for `z` in the evalution.
 """
-function get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CartesianTicksTuple{T}) where {N, T}
+function get_2d_grid_ticks_and_proj(p::AbstractPlanarSurfacePrimitive, t::CartesianTicksTuple{T}) where {N, T}
     # This method would actually work for any flat surface, e.g. elipse
     pts = extreme_points(p)
     t_idx_range_x, t_idx_range_y, t_idx_range_z = get_min_max_index_ranges((pts, t))
@@ -65,7 +65,7 @@ end
 
 
 """
-    get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CylindricalTicksTuple{T}) where {N, T}
+    get_2d_grid_ticks_and_proj(p::AbstractPlanarSurfacePrimitive, t::CylindricalTicksTuple{T}) where {N, T}
 
 This function determines the two best dimensions to sample/paint the surface p. 
 E.g. `r` & `φ` -> `proj = Val{:rφ}()`.
@@ -73,7 +73,7 @@ The dimensions are picked such that the number of points to evaluate is minimal.
 However, the polygon is not allowed to be parallel to the remaining dimension, e.g. `z`,
 because, than, there would not be a single value, but infinite ones, for `z` in the evalution.
 """
-function get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CylindricalTicksTuple{T}) where {N, T}
+function get_2d_grid_ticks_and_proj(p::AbstractPlanarSurfacePrimitive, t::CylindricalTicksTuple{T}) where {N, T}
     # This method would actually work for any flat surface, e.g. elipse
     pts = extreme_points(p)
     t_idx_range_r, t_idx_range_φ, t_idx_range_z = get_min_max_index_ranges((CylindricalPoint.(pts), t))
