@@ -1,8 +1,6 @@
 @recipe function f(cm::ConeMantle, n = 40; subn = 10)
-    T = typeof(cm.hZ)
-    ehZ = CartesianPoint(zero(T), zero(T), cm.hZ)
-    e_top = Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * ehZ, cm.rotation)
-    e_bot = Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * ehZ, cm.rotation)
+    e_top = get_top_ellipse(cm)
+    e_bot = get_bot_ellipse(cm)
     e_top_edges = edges(e_top, n = n)
     e_bot_edges = edges(e_bot, n = n)
     linecolor --> :black
@@ -19,6 +17,16 @@
         map(i -> Edge(e_top_edges[i].a, e_bot_edges[i].a), 1:subn:length(e_top_edges))
     end
 end
+
+get_top_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
+    Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ),  cm.rotation)
+get_bot_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
+    Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), -cm.rotation)
+get_top_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
+    Ellipse(cm.r[2], cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), cm.rotation)
+get_bot_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
+    Ellipse(cm.r[1], cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ(π) * -cm.rotation)
+    # RotZ(π) * -cm.rotation such that the normal vector points inside the cone (Convention)
 
 
 # function get_plot_points(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
