@@ -76,6 +76,46 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
            _transform_into_global_coordinate_system(ints2, cm)
 end
 
+"""
+    intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
+
+The function will always return 2 CartesianPoint's.
+If the line just touches the mantle, the two points will be the same. 
+If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+"""
+function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
+    obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
+    
+    L1 = obj_l.origin.x
+    L2 = obj_l.origin.y
+    L3 = obj_l.origin.z
+    D1 = obj_l.direction.x
+    D2 = obj_l.direction.y
+    D3 = obj_l.direction.z
+
+    f1 = D1^2 + D2^2 
+    λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
+                # (here eZ -> D1 = D2 = 0)
+                # We assume here that this is not the case -> 
+                # We check this this in choosing the sample / evaluating diensions in `paint!` 
+    hZ = cm.hZ
+    R0 = cm.r
+
+    term1 = (2D1*L1 + 2D2*L2)^2
+    term2 = L1^2 + L2^2 - R0^2
+    term3 = -D1*L1 - D2*L2 
+    term4 = term1 - 4*f1*term2
+    sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
+    
+    λ1 = λ * (-sq/2 + term3) 
+    λ2 = λ * (+sq/2 + term3)
+    
+    ints1 = obj_l.origin + λ1 * obj_l.direction 
+    ints2 = obj_l.origin + λ2 * obj_l.direction 
+    return _transform_into_global_coordinate_system(ints1, cm), 
+           _transform_into_global_coordinate_system(ints2, cm)
+end
+
 
 # function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
 #     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
