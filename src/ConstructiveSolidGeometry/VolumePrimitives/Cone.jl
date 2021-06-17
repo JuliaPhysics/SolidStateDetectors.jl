@@ -92,8 +92,8 @@ function surfaces(t::Tube{T}) where {T}
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = ConeMantle{T,T,Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
     bot_normal = top_center_pt - bot_center_pt
-    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation = t.rotation)
-    e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = t.rotation)
+    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation =  t.rotation)
+    e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = -t.rotation)
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle
 end
