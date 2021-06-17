@@ -17,8 +17,6 @@ Box{T, CO}( b::Box{T, CO}; COT = CO,
             rotation::SMatrix{3,3,T,9} = b.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} =
     Box{T, COT}(b.hX, b.hY, b.hZ, origin, rotation)
 
-extremum(b::Box{T}) where {T} = norm(CartesianPoint{T}(b.hX, b.hY, b.hZ))
-
 _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
     abs(pt.x) <= b.hX && abs(pt.y) <= b.hY && abs(pt.z) <= b.hZ
 _in(pt::CartesianPoint, b::Box{<:Any, :OpenPrimitive}) = 
