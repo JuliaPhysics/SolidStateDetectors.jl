@@ -30,9 +30,9 @@ function get_min_max_index_ranges(a::Union{
 end
 
 """
-    get_2d_grid_ticks_and_proj(pts::AbstractVector{CartesianPoint{T}}, t::CartesianTicksTuple{T}) where {N, T}
+    get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CartesianTicksTuple{T}) where {N, T}
 
-This function determines the two best dimensions to sample/paint a surface to which the points `pts` belong. 
+This function determines the two best dimensions to sample/paint the surface p. 
 E.g. `x` & `y` -> `proj = Val{:xy}()`.
 The dimensions are picked such that the number of points to evaluate is minimal. 
 However, the polygon is not allowed to be parallel to the remaining dimension, e.g. `z`,
@@ -65,9 +65,9 @@ end
 
 
 """
-    get_2d_grid_ticks_and_proj(pts::AbstractVector{CartesianPoint{T}}, t::CylindricalTicksTuple{T}) where {N, T}
+    get_2d_grid_ticks_and_proj(p::AbstractFlatSurfacePrimitive, t::CylindricalTicksTuple{T}) where {N, T}
 
-This function determines the two best dimensions to sample/paint a surface to which the points `pts` belong. 
+This function determines the two best dimensions to sample/paint the surface p. 
 E.g. `r` & `φ` -> `proj = Val{:rφ}()`.
 The dimensions are picked such that the number of points to evaluate is minimal. 
 However, the polygon is not allowed to be parallel to the remaining dimension, e.g. `z`,
