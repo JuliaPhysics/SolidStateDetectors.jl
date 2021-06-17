@@ -1,3 +1,26 @@
+@recipe function f(cm::ConeMantle, n = 40; subn = 10)
+    T = typeof(cm.hZ)
+    ehZ = CartesianPoint(zero(T), zero(T), cm.hZ)
+    e_top = Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * ehZ, cm.rotation)
+    e_bot = Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * ehZ, cm.rotation)
+    e_top_edges = edges(e_top, n = n)
+    e_bot_edges = edges(e_bot, n = n)
+    linecolor --> :black
+    @series begin
+        label --> "Cone Mantle"
+        e_top_edges
+    end
+    @series begin
+        label := nothing
+        e_bot_edges
+    end
+    @series begin
+        label := nothing
+        map(i -> Edge(e_top_edges[i].a, e_bot_edges[i].a), 1:subn:length(e_top_edges))
+    end
+end
+
+
 # function get_plot_points(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
 
 #     plot_points = Vector{CartesianPoint{T}}[]
