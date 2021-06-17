@@ -1,3 +1,10 @@
+@recipe function f(es::EllipticalSurface)
+    @series begin
+        Ellipse(es)
+    end
+end
+
+
 # function get_plot_points(a::CylindricalAnnulus{T}; n = 30) where {T <: AbstractFloat}
 
 #     plot_points = Vector{CartesianPoint{T}}[]
