@@ -52,7 +52,7 @@ detectors:
         channel: 1
         geometry:
           translate:
-            z: -3.9
+            z: -3.95
             tube:
               r: 1
               h: 0.2
@@ -62,7 +62,7 @@ detectors:
         channel: 2
         geometry:
           translate:
-            z: 3.9
+            z: 3.95
             tube:
               r: 3
               h: 0.2
