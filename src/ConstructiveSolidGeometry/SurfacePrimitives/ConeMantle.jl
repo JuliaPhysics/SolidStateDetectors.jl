@@ -22,14 +22,11 @@ T: Type of values, e.g. Float64
     φ::TP = nothing
     hZ::T = 1 # maybe we don't need this. I will leave it for now...
 
-    axis::Line{T} = Line{T}(CartesianPoint{T}(zero(T), zero(T), -hZ), CartesianVector{T}(zero(T), zero(T), 2hZ))
+    # axis::Line{T} = Line{T}(CartesianPoint{T}(zero(T), zero(T), -hZ), CartesianVector{T}(zero(T), zero(T), 2hZ))
+    origin::CartesianPoint{T} = zero(CartesianPoint{T})
+    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-function ConeMantle(t::Tube{T}) where {T}
-    bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
-    top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
-    ConeMantle{T,T,Nothing}(t.r, t.φ, t.hZ, Line{T}(bot_center_pt, top_center_pt - bot_center_pt))
-end
 
 # function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
 #     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
