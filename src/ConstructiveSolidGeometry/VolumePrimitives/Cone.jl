@@ -38,6 +38,12 @@ const Tube{T,CO} = Cone{T,CO,T,Nothing}
 _in(pt::CartesianPoint, c::Tube{<:Real, ClosedPrimitive}) = abs(pt.z) <= c.hZ && hypot(pt.x, pt.y) <= c.r
 _in(pt::CartesianPoint, c::Tube{<:Real, OpenPrimitive})   = abs(pt.z) <  c.hZ && hypot(pt.x, pt.y) <  c.r
 
+function radius_at_z(c::Cone{T,CO,Tuple{T,T}}, z::T) where {T,CO} 
+    rslope = (c.r[2] - c.r[1]) / 2c.hZ 
+    return c.r[1] + rslope * (z + c.hZ)
+end
+_in(pt::CartesianPoint, c::Cone{T,ClosedPrimitive,Tuple{T,T},Nothing}) where {T} = abs(pt.z) <= c.hZ && hypot(pt.x, pt.y) <= radius_at_z(c, pt.z)
+_in(pt::CartesianPoint, c::Cone{T,OpenPrimitive,Tuple{T,T},Nothing}) where {T} = abs(pt.z) < c.hZ && hypot(pt.x, pt.y) < radius_at_z(c, pt.z)
 
 # #Constructors for Tubes
 # Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) = Cone(rMin, rMax, rMin, rMax, φMin, φMax, zMin, zMax)
@@ -94,6 +100,16 @@ function surfaces(t::Tube{T}) where {T}
     bot_normal = top_center_pt - bot_center_pt
     e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation =  t.rotation)
     e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = -t.rotation)
+    # normals of the surfaces show inside the volume primitives. 
+    e_top, e_bot, mantle
+end
+function surfaces(t::Cone{T,CO,Tuple{T,T},Nothing}) where {T,CO}
+    bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
+    top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
+    mantle = ConeMantle{T,Tuple{T,T},Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
+    bot_normal = top_center_pt - bot_center_pt
+    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r[1], φ = nothing, origin = bot_center_pt, rotation =  t.rotation)
+    e_top = EllipticalSurface{T,T,Nothing}(r = t.r[2], φ = nothing, origin = top_center_pt, rotation = -t.rotation)
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle
 end
