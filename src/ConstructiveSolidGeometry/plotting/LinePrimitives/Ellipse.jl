@@ -8,7 +8,6 @@ end
 @recipe function f(e::Ellipse; n = 40)
     @series begin
         label --> "Ellipse"
-        @info n
         edges(e, n = n)
     end
 end
