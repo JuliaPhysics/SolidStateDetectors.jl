@@ -27,6 +27,55 @@ T: Type of values, e.g. Float64
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
+function radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} 
+    rslope = (cm.r[2] - cm.r[1]) / 2cm.hZ 
+    return cm.r[1] + rslope * (z + cm.hZ)
+end
+
+"""
+    intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
+
+The function will always return 2 CartesianPoint's.
+If the line just touches the mantle, the two points will be the same. 
+If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+"""
+function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
+    obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
+    
+    L1 = obj_l.origin.x
+    L2 = obj_l.origin.y
+    L3 = obj_l.origin.z
+    D1 = obj_l.direction.x
+    D2 = obj_l.direction.y
+    D3 = obj_l.direction.z
+
+    S = (cm.r[2] - cm.r[1]) / 2cm.hZ # r slope
+
+    f1 = D1^2 + D2^2 - D3^2*S^2
+    λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
+                # (here eZ -> D1 = D2 = 0)
+                # and the cone is actually a tupe (S = 0).
+                # We assume here that this is not the case -> 
+                # We check this this in choosing the sample / evaluating diensions in `paint!` 
+    hZ = cm.hZ
+    R0 = cm.r[1]
+
+    term1 = (2D1*L1 + 2D2*L2 - 2D3*hZ*S^2 - 2D3*L3*S^2 - 2D3*R0*S)^2
+    term2 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
+    term3 = -D1*L1 - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
+    term4 = term1 - 4*f1*term2
+    sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
+    
+    λ1 = λ * (-sq/2 + term3) 
+    λ2 = λ * (+sq/2 + term3)
+    
+    ints1 = obj_l.origin + λ1 * obj_l.direction 
+    ints2 = obj_l.origin + λ2 * obj_l.direction 
+    return _transform_into_global_coordinate_system(ints1, cm), 
+           _transform_into_global_coordinate_system(ints2, cm)
+end
+
 
 # function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
 #     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
