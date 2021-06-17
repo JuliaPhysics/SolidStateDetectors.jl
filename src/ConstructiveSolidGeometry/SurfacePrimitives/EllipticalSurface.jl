@@ -12,7 +12,7 @@
     * TP = Nothing <-> Full in φ
     * ...
 """
-@with_kw struct EllipticalSurface{T,TR,TP} <: AbstractSurfacePrimitive{T}
+@with_kw struct EllipticalSurface{T,TR,TP} <: AbstractFlatSurfacePrimitive{T}
     r::TR = 1
     φ::TP = nothing
 
@@ -21,6 +21,8 @@
 end
 
 Ellipse(es::EllipticalSurface) = Ellipse(r = es.r, φ = es.φ, origin = es.origin, rotation = es.rotation)
+
+Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * CartesianVector{T}(zero(T),zero(T),one(T)))
 
 # #Constructors
 # CylindricalAnnulus(c::Cone{T}; z = 0) where {T} = CylindricalAnnulus(T, get_r_at_z(c,z), c.φ, T(z))

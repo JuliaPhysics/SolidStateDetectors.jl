@@ -17,7 +17,7 @@ T: Type of values, e.g. Float64
 
 * `axis::Line{T}`: The axis of the Cone mantle. Going from the bottom center point to the top center point. 
 """
-@with_kw struct ConeMantle{T,RT,TP} <: AbstractSurfacePrimitive{T}
+@with_kw struct ConeMantle{T,RT,TP} <: AbstractBentSurfacePrimitive{T}
     r::RT = 1
     φ::TP = nothing
     hZ::T = 1 # maybe we don't need this. I will leave it for now...

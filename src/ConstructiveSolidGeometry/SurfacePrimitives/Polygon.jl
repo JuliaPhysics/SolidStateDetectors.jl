@@ -1,5 +1,5 @@
 
-struct Polygon{N,T} <: AbstractPlane{T}
+struct Polygon{N,T} <: AbstractFlatSurfacePrimitive{T}
     points::SVector{N, CartesianPoint{T}} 
 end
 const Triangle{T} = Polygon{3, T}

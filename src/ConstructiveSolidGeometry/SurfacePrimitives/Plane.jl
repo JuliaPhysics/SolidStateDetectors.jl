@@ -1,6 +1,4 @@
-abstract type AbstractPlane{T} <: AbstractSurfacePrimitive{T} end
-
-struct Plane{T} <: AbstractPlane{T}
+struct Plane{T} <: AbstractFlatSurfacePrimitive{T}
     origin::CartesianPoint{T}
     normal::CartesianVector{T}
     Plane{T}(o, n) where {T} = new{T}(o, normalize(n))
