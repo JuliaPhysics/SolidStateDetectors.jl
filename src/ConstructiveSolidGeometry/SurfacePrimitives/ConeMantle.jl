@@ -27,11 +27,6 @@ T: Type of values, e.g. Float64
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
-function radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} 
-    rslope = (cm.r[2] - cm.r[1]) / 2cm.hZ 
-    return cm.r[1] + rslope * (z + cm.hZ)
-end
 
 """
     intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
@@ -57,11 +52,7 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     S = (cm.r[2] - cm.r[1]) / 2hZ # r slope
 
     f1 = D1^2 + D2^2 - D3^2*S^2
-    # f1 is 0 if obj_l is parallel to the axis of the cone (here eZ -> D1 = D2 = 0)
-    # or the cone is actually a tupe (S = 0).
-    # We assume here that this is not the case:
-    #    -> We check this in choosing the sample / evaluating dimensions in `paint!` 
-    # Thus, f1 only zero if there is only one intersection.
+    # f1 is zero if there is only one intersection.
 
     λ1, λ2 = if f1 == 0 # one intersection
         term1 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2*hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
@@ -85,12 +76,6 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     return _transform_into_global_coordinate_system(ints1, cm), 
            _transform_into_global_coordinate_system(ints2, cm)
 end
-
-
-# x = term1/(2 term2) 
-
-# and D1 = -sqrt(D3^2 S^2 - D2^2) 
-# and -L1 sqrt(D3^2 S^2 - D2^2) + D2 L2 - D3 hZ S^2 - D3 L3 S^2 - D3 R0 S!=0
 
 """
     intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
@@ -136,11 +121,11 @@ end
 get_top_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
     Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ),  cm.rotation)
 get_bot_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
-    Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ(π) * -cm.rotation)
+    Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ{T}(π) * -cm.rotation)
 get_top_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
     Ellipse(cm.r[2], cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), cm.rotation)
 get_bot_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
-    Ellipse(cm.r[1], cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ(π) * -cm.rotation)
+    Ellipse(cm.r[1], cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ{T}(π) * -cm.rotation)
 
 
 
@@ -161,9 +146,9 @@ function get_2d_grid_ticks_and_proj(cm::ConeMantle{T}, t) where {T}
     eZ = CartesianVector{T}(zero(T),zero(T),one(T))
     axis = cm.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
 
-    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && (axis × eZ != zero(CartesianVector{T}))
+    proj, t1, t2 = if (axis × eZ != zero(CartesianVector{T}))
         Val{:xy}(), t_idx_range_x, t_idx_range_y
-    elseif ls[1] < ls[2] && ls[3] < ls[2] && (axis × eY != zero(CartesianVector{T}))
+    elseif (axis × eY != zero(CartesianVector{T}))
         Val{:xz}(), t_idx_range_x, t_idx_range_z
     elseif (axis × eX != zero(CartesianVector{T}))
         Val{:yz}(), t_idx_range_y, t_idx_range_z
@@ -177,20 +162,18 @@ end
 
 
 function evaluate(cm::ConeMantle{T}, x, y, ::Val{:xy}) where {T}
-    # plane.normal may not be perpendicular to the z-axis
     line = Line{T}(CartesianPoint{T}(x, y, zero(T)), CartesianVector{T}(zero(T), zero(T), one(T)))
     intersection(cm, line)
 end
 function evaluate(cm::ConeMantle{T}, x, z, ::Val{:xz}) where {T}
-    # plane.normal may not be perpendicular to the y-axis
     line = Line{T}(CartesianPoint{T}(x, zero(T), z), CartesianVector{T}(zero(T), one(T), zero(T)))
     intersection(cm, line)
 end
 function evaluate(cm::ConeMantle{T}, y, z, ::Val{:yz}) where {T}
-    # plane.normal may not be perpendicular to the x-axis
     line = Line{T}(CartesianPoint{T}(zero(T), y, z), CartesianVector{T}(one(T), zero(T), zero(T)))
     intersection(cm, line)
 end
+
 # function ConeMantle(c::Cone{T}; rbot = 1, rtop = 1) where {T}
 #     r = rbot == rtop ? T(rbot) : (T(rbot), T(rtop))
 #     ConeMantle( T, r, c.φ, c.z)
