@@ -1,15 +1,38 @@
 @recipe function f(csg::ConstructiveSolidGeometry.CSGUnion)
     linecolor --> :black
     csguniontype --> :union
-    csg.a, csg.b
+    @series begin 
+        linestyle := :solid
+        csg.a
+    end
+    @series begin 
+        linestyle := :solid
+        csg.b
+    end
 end
 @recipe function f(csg::ConstructiveSolidGeometry.CSGDifference)
     linecolor --> :black
-    csguniontype --> :difference
-    csg.a, csg.b
+    @series begin
+        linestyle := :solid
+        csguniontype --> :difference
+        csg.a
+    end
+    @series begin
+        linestyle := :dash
+        csg.b
+    end
 end
 @recipe function f(csg::ConstructiveSolidGeometry.CSGIntersection)
     linecolor --> :black
     csguniontype --> :intersection
-    csg.a, csg.b
+    @series begin
+        linestyle := :dot
+        csguniontype --> :difference
+        csg.a
+    end
+    @series begin
+        linestyle := :dot
+        linestyle := :dash
+        csg.b
+    end
 end
