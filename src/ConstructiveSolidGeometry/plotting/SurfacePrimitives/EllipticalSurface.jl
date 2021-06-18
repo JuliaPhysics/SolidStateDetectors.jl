@@ -1,9 +1,21 @@
 @recipe function f(es::EllipticalSurface)
+    ess = ellpises(es)
+    linecolor --> black
     @series begin
-        Ellipse(es)
+        label --> "Elliptical Surface"
+        ess[1]
+    end
+    if length(ess) == 2
+        label := nothing
+        ess[2]
     end
 end
 
+ellpises(es::EllipticalSurface{T,T}) where {T} = (Ellipse(es),)
+function ellpises(es::EllipticalSurface{T,Tuple{T,T}}) where {T}
+    Ellipse(r = es.r[1], φ = es.φ, origin = es.origin, rotation = es.rotation),
+    Ellipse(r = es.r[2], φ = es.φ, origin = es.origin, rotation = es.rotation)
+end
 
 # function get_plot_points(a::CylindricalAnnulus{T}; n = 30) where {T <: AbstractFloat}
 
