@@ -56,7 +56,9 @@ function vertices(b::Box{T}) where {T}
     )
 end
 
-sample(b::Box)::Vector{CartesianPoint{T}} = [vertices(b)...]
+function sample(b::Box{T})::Vector{CartesianPoint{T}} where {T} 
+    [vertices(b)...]
+end
 
 function surfaces(b::Box{T}) where {T}
     vs = vertices(b)
