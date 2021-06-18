@@ -1,5 +1,5 @@
 
-function paint!(pointtypes, potential, face::ConstructiveSolidGeometry.ConeMantle, geometry, pot_value, grid::CartesianGrid)
+function paint!(pointtypes, potential, face::ConstructiveSolidGeometry.CylinderMantle, geometry, pot_value, grid::CartesianGrid)
     ticks = TicksTuple(grid)
     t_idx_r1, t_idx_r2, proj = ConstructiveSolidGeometry.get_2d_grid_ticks_and_proj(face, ticks)
     t1, t2 = if proj == Val{:xy}() 

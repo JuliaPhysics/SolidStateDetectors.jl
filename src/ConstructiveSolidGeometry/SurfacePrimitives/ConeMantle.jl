@@ -27,6 +27,7 @@ T: Type of values, e.g. Float64
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+const CylinderMantle{T} = ConeMantle{T,T}
 
 """
     intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
@@ -79,13 +80,13 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
 end
 
 """
-    intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
+    intersection(cm::CylinderMantle{T}, l::Line{T}) where {T}
 
 The function will always return 2 CartesianPoint's.
 If the line just touches the mantle, the two points will be the same. 
 If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
 """
-function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
+function intersection(cm::CylinderMantle{T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
     
     L1 = obj_l.origin.x
@@ -119,9 +120,9 @@ function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
 end
 
 
-get_top_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
+get_top_ellipse(cm::CylinderMantle{T}) where {T} = 
     Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ),  cm.rotation)
-get_bot_ellipse(cm::ConeMantle{T,T,Nothing}) where {T} = 
+get_bot_ellipse(cm::CylinderMantle{T}) where {T} = 
     Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ{T}(π) * -cm.rotation)
 get_top_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
     Ellipse(cm.r[2], cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), cm.rotation)

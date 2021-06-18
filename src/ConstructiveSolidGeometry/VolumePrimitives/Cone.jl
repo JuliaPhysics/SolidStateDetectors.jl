@@ -112,7 +112,7 @@ end
 function surfaces(t::Cylinder{T}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
-    mantle = ConeMantle{T,T,Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
+    mantle = CylinderMantle{T,T,Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
     e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation = t.rotation)
     e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
     # normals of the surfaces show inside the volume primitives. 
