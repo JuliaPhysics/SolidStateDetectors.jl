@@ -30,8 +30,50 @@ end
 const CylinderMantle{T} = ConeMantle{T,T,Nothing}
 const PartialCylinderMantle{T} = ConeMantle{T,T,Tuple{T,T}}
 
-const FullConeMantle{T} = ConeMantle{T,T,Tuple{T,T}} # ugly name but works for now
+const FullConeMantle{T} = ConeMantle{T,Tuple{T,T},Nothing} # ugly name but works for now
 const PartialConeMantle{T} = ConeMantle{T,Tuple{T,T},Tuple{T,T}}
+
+function lines(sp::CylinderMantle{T}) where {T} 
+    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)
+    bot_ellipse = Circle{T}(r = sp.r, φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
+    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
+    top_ellipse = Circle{T}(r = sp.r, φ = sp.φ, origin = top_origin, rotation = sp.rotation)
+    bot_ellipse, top_ellipse
+end
+function lines(sp::PartialCylinderMantle{T}) where {T} 
+    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)
+    bot_ellipse = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
+    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
+    top_ellipse = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = top_origin, rotation = sp.rotation)
+    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[1], -sp.hZ), sp)
+    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[2], -sp.hZ), sp)
+    p_top_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[1],  sp.hZ), sp)
+    p_top_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[2],  sp.hZ), sp)
+    edge_l = Edge{T}(p_bot_l, p_top_l)
+    edge_r = Edge{T}(p_bot_r, p_top_r)
+    bot_ellipse, top_ellipse, edge_l, edge_r
+end
+function lines(sp::FullConeMantle{T}) where {T} 
+    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), sp.hZ), sp)
+    bot_ellipse = Circle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
+    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T),-sp.hZ), sp)
+    top_ellipse = Circle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
+    bot_ellipse, top_ellipse
+end
+function lines(sp::PartialConeMantle{T}) where {T} 
+    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)
+    bot_ellipse = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
+    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
+    top_ellipse = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
+    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[1], sp.φ[1], -sp.hZ), sp)
+    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[1], sp.φ[2], -sp.hZ), sp)
+    p_top_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[2], sp.φ[1],  sp.hZ), sp)
+    p_top_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[2], sp.φ[2],  sp.hZ), sp)
+    edge_l = Edge{T}(p_bot_l, p_top_l)
+    edge_r = Edge{T}(p_bot_r, p_top_r)
+    bot_ellipse, top_ellipse, edge_l, edge_r
+end
+
 
 """
     intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
@@ -122,17 +164,6 @@ function intersection(cm::CylinderMantle{T}, l::Line{T}) where {T}
     return _transform_into_global_coordinate_system(ints1, cm), 
            _transform_into_global_coordinate_system(ints2, cm)
 end
-
-
-get_top_ellipse(cm::CylinderMantle{T}) where {T} = 
-    Ellipse(cm.r, cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ),  cm.rotation)
-get_bot_ellipse(cm::CylinderMantle{T}) where {T} = 
-    Ellipse(cm.r, cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ{T}(π) * -cm.rotation)
-get_top_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
-    Ellipse(cm.r[2], cm.φ, cm.origin + cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), cm.rotation)
-get_bot_ellipse(cm::ConeMantle{T,Tuple{T,T},Nothing}) where {T} = 
-    Ellipse(cm.r[1], cm.φ, cm.origin - cm.rotation * CartesianPoint(zero(T), zero(T), cm.hZ), RotZ{T}(π) * -cm.rotation)
-
 
 
 function get_2d_grid_ticks_and_proj(cm::ConeMantle{T}, t) where {T}
