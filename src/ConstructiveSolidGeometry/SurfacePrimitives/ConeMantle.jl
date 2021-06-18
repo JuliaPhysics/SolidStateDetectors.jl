@@ -35,6 +35,7 @@ The function will always return 2 CartesianPoint's.
 If the line just touches the mantle, the two points will be the same. 
 If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
 If the line crosses the mantle only once, two points will be returned. The two points will be the same point (the intersection).
+If the line lies inside the mantle and is parallel to it. The same point will be returned which is the origin of the line. 
 """
 function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
@@ -57,7 +58,7 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     λ1, λ2 = if f1 == 0 # one intersection
         term1 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2*hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
         term2 = L1*sqrt(D3^2*S^2 - D2^2) - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
-        λ = term1/(2*term2) 
+        λ = term1 / (2term2) 
         λ, λ
     else # two or no intersections 
         λ = inv(f1)
