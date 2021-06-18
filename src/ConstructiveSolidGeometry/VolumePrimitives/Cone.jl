@@ -34,7 +34,7 @@ Cone{T,CO,RT,TP}( c::Cone{T,CO,RT,TP}; COT = CO,
     Cone{T,CO,RT,TP}(c.r, c.φ, c.hZ, origin, rotation)
 
 const Cylinder{T,CO} = Cone{T,CO,T,Nothing}
-# const Tube{T,CO} = Cone{T,CO,Tuple{T,T},Nothing}
+const Tube{T,CO} = Cone{T,CO,Tuple{T,T},Nothing}
 
 function _in(pt::CartesianPoint, c::Cylinder{<:Real, ClosedPrimitive}) 
     z = abs(pt.z)
