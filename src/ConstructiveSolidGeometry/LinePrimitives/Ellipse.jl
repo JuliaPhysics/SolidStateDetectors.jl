@@ -22,8 +22,6 @@ end
 
 const Circle{T} = Ellipse{T,T,Nothing}
 const PartialCircle{T} = Ellipse{T,T,Tuple{T,T}}
-const Annulus{T} = Ellipse{T,Tuple{T,T},Nothing}
-const PartialAnnulus{T} = Ellipse{T,Tuple{T,T},Tuple{T,T}}
 
 Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP}; 
             origin::CartesianPoint{T} = b.origin,
@@ -32,16 +30,30 @@ Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP};
 
 
 extremum(e::Ellipse{T,T}) where {T} = e.r
+extremum(e::Ellipse{T,Tuple{T,T}}) where {T} = max(e.r[1], e.r[1])
 
-# function sample(e::Ellipse{T,TP}) where {T,TP}
-#     rand(2)
-# end
+function sample(e::Circle{T}; n = 4) where {T}
+    φs = range(T(0), step = T(2π) / n, length = n)
+    pts = Vector{CartesianPoint{T}}(undef, n)
+    for i in eachindex(pts)
+        pts[i] = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(e.r, φs[i], zero(T))), e)
+    end
+    pts
+end
+function sample(e::PartialCircle{T}; n = 2) where {T}
+    φs = range(e.φ[1], stop = e.φ[1], length = n)
+    pts = Vector{CartesianPoint{T}}(undef, n)
+    for i in eachindex(pts)
+        pts[i] = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(e.r, φs[i], zero(T))), e)
+    end
+    pts
+end
 
 
 
 # function Arc(; r = 0, center = PlanarPoint(0,0), αMin = 0, αMax = 2π)
 #     T = float(promote_type(typeof.((r, αMin, αMax))..., eltype(center)))
-#     α = mod(T(αMax) - T(αMin), T(2π)) == 0 ? nothing : T(αMin)..T(αMax)
+#     α = mod(T(αMax    ) - T(αMin), T(2π)) == 0 ? nothing : T(αMin)..T(αMax)
 #     Arc(T, T(r), PlanarPoint{T}(center), α)
 # end
 
