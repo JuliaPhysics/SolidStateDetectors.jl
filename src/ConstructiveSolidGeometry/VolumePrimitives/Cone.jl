@@ -5,10 +5,10 @@ T: Type of values, e.g. Float64
 CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
 
 * `r::TR`: 
-    * TR = Real -> Solid Tube 
-    * TR = (Real, Real) -> Pipe (r_in = r[1], r_out = r[2])
-    * TR = ((Real,), (Real,)) Solid widening Tube  -> (r_bot = r[1][1], r_top = r[1][2])
-    * TR = ((Real,Real), (Real,Real)) Solid widening Pipe ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r[2][1], r_top_out = r[2][2])
+    * TR = Real -> Cylinder
+    * TR = (Real, Real) -> Tube (r_in = r[1], r_out = r[2])
+    * TR = ((Real,), (Real,)) Solid widening Cylinder  -> (r_bot = r[1][1], r_top = r[1][2])
+    * TR = ((Real,Real), (Real,Real)) Solid widening Tube ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r[2][1], r_top_out = r[2][2])
     * TR = (Nothing, (Real,Real)) Cone ->\n(r_bot_in = r_bot_out = 0, r_top_in = r[2][1], r_top_out = r[2][2])
     * TR = ((Real,Real), Nothing) Cone ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r_top_out = 0)
     * ... (+ elliptical cases -> (a, b))
@@ -33,17 +33,28 @@ Cone{T,CO,RT,TP}( c::Cone{T,CO,RT,TP}; COT = CO,
             rotation::SMatrix{3,3,T,9} = b.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,TP} =
     Cone{T,CO,RT,TP}(c.r, c.φ, c.hZ, origin, rotation)
 
-const Tube{T,CO} = Cone{T,CO,T,Nothing}
+const Cylinder{T,CO} = Cone{T,CO,T,Nothing}
+# const Tube{T,CO} = Cone{T,CO,Tuple{T,T},Nothing}
 
-_in(pt::CartesianPoint, c::Tube{<:Real, ClosedPrimitive}) = abs(pt.z) <= c.hZ && hypot(pt.x, pt.y) <= c.r
-_in(pt::CartesianPoint, c::Tube{<:Real, OpenPrimitive})   = abs(pt.z) <  c.hZ && hypot(pt.x, pt.y) <  c.r
-
-function radius_at_z(c::Cone{T,CO,Tuple{T,T}}, z::T) where {T,CO} 
-    rslope = (c.r[2] - c.r[1]) / 2c.hZ 
-    return c.r[1] + rslope * (z + c.hZ)
+function _in(pt::CartesianPoint, c::Cylinder{<:Real, ClosedPrimitive}) 
+    z = abs(pt.z)
+    r = hypot(pt.x, pt.y)
+    # return z < c.hZ || z ≈ c.hZ && r < c.r || r ≈ c.r  # This solves numerical issues but costs performance...
+    return z <= c.hZ && r <= c.r
 end
-_in(pt::CartesianPoint, c::Cone{T,ClosedPrimitive,Tuple{T,T},Nothing}) where {T} = abs(pt.z) <= c.hZ && hypot(pt.x, pt.y) <= radius_at_z(c, pt.z)
-_in(pt::CartesianPoint, c::Cone{T,OpenPrimitive,Tuple{T,T},Nothing}) where {T} = abs(pt.z) < c.hZ && hypot(pt.x, pt.y) < radius_at_z(c, pt.z)
+_in(pt::CartesianPoint, c::Cylinder{<:Real, OpenPrimitive}) = abs(pt.z) < c.hZ && hypot(pt.x, pt.y) < c.r
+
+
+function _in(pt::CartesianPoint, c::Cone{T,ClosedPrimitive,Tuple{Tuple{T,T},Tuple{T,T}},Nothing}) where {T} 
+    z = abs(pt.z)
+    if abs(pt.z) <= c.hZ
+        r = hypot(pt.x, pt.y)
+        r_in, r_out = radii_at_z(c, z)
+        r_in <= r <= r_out 
+    else
+        false
+    end
+end
 
 # #Constructors for Tubes
 # Tube(;rMin = 0, rMax = 1, φMin = 0, φMax = 2π, zMin = -1/2, zMax = 1/2) = Cone(rMin, rMax, rMin, rMax, φMin, φMax, zMin, zMax)
@@ -87,32 +98,41 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     length_unit = input_units.length
     angle_unit = input_units.angle
     r = parse_r_of_primitive(T, dict, length_unit)
+    @info r
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     hZ = parse_height_of_primitive(T, dict, length_unit)
     cone = Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = hZ)
     return transform(cone, transformations)
 end
 
-function surfaces(t::Tube{T}) where {T}
+function surfaces(t::Cylinder{T}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = ConeMantle{T,T,Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
-    bot_normal = top_center_pt - bot_center_pt
-    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation =  t.rotation)
-    e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = -t.rotation)
+    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation = t.rotation)
+    e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle
 end
-function surfaces(t::Cone{T,CO,Tuple{T,T},Nothing}) where {T,CO}
-    bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
-    top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
-    mantle = ConeMantle{T,Tuple{T,T},Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
-    bot_normal = top_center_pt - bot_center_pt
-    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r[1], φ = nothing, origin = bot_center_pt, rotation =  t.rotation)
-    e_top = EllipticalSurface{T,T,Nothing}(r = t.r[2], φ = nothing, origin = top_center_pt, rotation = -t.rotation)
-    # normals of the surfaces show inside the volume primitives. 
-    e_top, e_bot, mantle
-end
+# function surfaces(t::Cone{T,CO,Tuple{T,T},Nothing}) where {T,CO}
+#     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
+#     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
+#     mantle = ConeMantle{T,Tuple{T,T},Nothing}(t.r, t.φ, t.hZ, t.origin, t.rotation)
+#     e_bot = EllipticalSurface{T,T,Nothing}(r = t.r[1], φ = nothing, origin = bot_center_pt, rotation = t.rotation)
+#     e_top = EllipticalSurface{T,T,Nothing}(r = t.r[2], φ = nothing, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
+#     # normals of the surfaces show inside the volume primitives. 
+#     e_top, e_bot, mantle
+# end
+# function surfaces(t::Cone{T,CO,Tuple{Tuple{T,T},Tuple{T,T}},Nothing}) where {T,CO}
+#     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
+#     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
+#     in_mantle  = ConeMantle{T,Tuple{T,T},Nothing}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
+#     out_mantle = ConeMantle{T,Tuple{T,T},Nothing}((t.r[1][2], t.r[2][2]), t.φ, t.hZ, t.origin, t.rotation)
+#     e_bot = EllipticalSurface{T,Tuple{T,T},Nothing}(r = t.r[1], φ = nothing, origin = bot_center_pt, rotation = t.rotation)
+#     e_top = EllipticalSurface{T,Tuple{T,T},Nothing}(r = t.r[2], φ = nothing, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
+#     # normals of the surfaces show inside the volume primitives. 
+#     e_top, e_bot, in_mantle, out_mantle
+# end
 
 # function Dictionary(g::Cone{T,<:Union{T, AbstractInterval}}) where {T}
 #     dict = OrderedDict{String,Any}()
@@ -228,20 +248,54 @@ end
 #     ]
 # end
 
-function sample(t::Tube{T}; n = 4) where {T}
+
+#=
+    This sampling might be better to be done more general:
+    kinda like: sample.(lines.(surfaces.(p::VolumePrimitive))
+    So we only have to right a set of sample methods for certain line types
+=#
+function sample(t::Cylinder{T}; n = 4) where {T}
     # this could be improved performance-vise, 
     # but not that important right now as it is only called 
     # in the initzialiaton of the grid. 
     ehZ = CartesianPoint(zero(T), zero(T), t.hZ)
-    e_top = Ellipse(t.r, t.φ, t.origin + t.rotation * ehZ, t.rotation)
     e_bot = Ellipse(t.r, t.φ, t.origin - t.rotation * ehZ, t.rotation)
+    e_top = Ellipse(t.r, t.φ, t.origin + t.rotation * ehZ, t.rotation)
     φs = range(0, step = 2π / n, length = n)
-    pts_top = [CartesianPoint(CylindricalPoint{T}(e_top.r, φ, zero(T))) for φ in φs]
-    pts_top = map(p -> _transform_into_global_coordinate_system(p, e_top), pts_top)
     pts_bot = [CartesianPoint(CylindricalPoint{T}(e_bot.r, φ, zero(T))) for φ in φs]
     pts_bot = map(p -> _transform_into_global_coordinate_system(p, e_bot), pts_bot)
+    pts_top = [CartesianPoint(CylindricalPoint{T}(e_top.r, φ, zero(T))) for φ in φs]
+    pts_top = map(p -> _transform_into_global_coordinate_system(p, e_top), pts_top)
     vcat(pts_bot, pts_top)
 end
+# function sample(t::Cone{T,CO,Tuple{T,T}}; n = 4) where {T,CO}
+#     ehZ = CartesianPoint(zero(T), zero(T), t.hZ)
+#     e_bot = Ellipse(t.r[1], t.φ, t.origin - t.rotation * ehZ, t.rotation)
+#     e_top = Ellipse(t.r[2], t.φ, t.origin + t.rotation * ehZ, t.rotation)
+#     φs = range(0, step = 2π / n, length = n)
+#     pts_top = [CartesianPoint(CylindricalPoint{T}(e_top.r, φ, zero(T))) for φ in φs]
+#     pts_top = map(p -> _transform_into_global_coordinate_system(p, e_top), pts_top)
+#     pts_bot = [CartesianPoint(CylindricalPoint{T}(e_bot.r, φ, zero(T))) for φ in φs]
+#     pts_bot = map(p -> _transform_into_global_coordinate_system(p, e_bot), pts_bot)
+#     vcat(pts_bot, pts_top)
+# end
+# function sample(t::Cone{T,CO,Tuple{Tuple{T,T},Tuple{T,T}}}; n = 4) where {T,CO}
+#     ehZ = CartesianPoint(zero(T), zero(T), t.hZ)
+#     e_in_bot  = Ellipse(t.r[1][1], t.φ, t.origin - t.rotation * ehZ, t.rotation)
+#     e_out_bot = Ellipse(t.r[1][2], t.φ, t.origin - t.rotation * ehZ, t.rotation)
+#     e_in_top  = Ellipse(t.r[2][1], t.φ, t.origin + t.rotation * ehZ, t.rotation)
+#     e_out_top = Ellipse(t.r[2][2], t.φ, t.origin + t.rotation * ehZ, t.rotation)
+#     φs = range(0, step = 2π / n, length = n)
+#     pts_in_bot = [CartesianPoint(CylindricalPoint{T}(e_in_bot.r, φ, zero(T))) for φ in φs]
+#     pts_in_bot = map(p -> _transform_into_global_coordinate_system(p, e_in_bot), pts_in_bot)
+#     pts_out_bot = [CartesianPoint(CylindricalPoint{T}(e_out_bot.r, φ, zero(T))) for φ in φs]
+#     pts_out_bot = map(p -> _transform_into_global_coordinate_system(p, e_out_bot), pts_out_bot)
+#     pts_in_top = [CartesianPoint(CylindricalPoint{T}(e_in_top.r, φ, zero(T))) for φ in φs]
+#     pts_in_top = map(p -> _transform_into_global_coordinate_system(p, e_in_top), pts_in_top)
+#     pts_out_top = [CartesianPoint(CylindricalPoint{T}(e_out_top.r, φ, zero(T))) for φ in φs]
+#     pts_out_top = map(p -> _transform_into_global_coordinate_system(p, e_out_top), pts_out_top)
+#     vcat(pts_in_bot, pts_out_bot, pts_in_top, pts_out_top)
+# end
 
 # @inline sample(c::Cone{T}) where {T} = sample(c, (2,3,3))
 # @inline sample(c::Cone{T, <:Any, Nothing}) where {T} = sample(c, (2,5,3))

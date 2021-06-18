@@ -4,9 +4,9 @@
 T: Type of values, e.g. Float64
 
 * `r::TR`: 
-    * TR = Real -> Tube Mantle (a = b = r)
-    * TR = (Real, Real) -> Cone Mantle (r_bot = r[1], r_top = r[2])
-    * TR = ((Real,), (Real,)) -> Elliptical Tube Mantle (a = r[1][1], b = r[2][1])
+    * TR = Real -> Cylinder Mantle (a = b = r)
+    * TR = (Real, Real) -> Cone Mantle (r_bot = r[1], r_top = r[2]) 
+    * TR = ((Real,), (Real,)) -> Elliptical Cylinder Mantle (a = r[1][1], b = r[2][1])
     * TR = ((Real, Real),(Real, Real)) -> Elliptical Cone Mantle \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
     * Not all are implemented yet
 
