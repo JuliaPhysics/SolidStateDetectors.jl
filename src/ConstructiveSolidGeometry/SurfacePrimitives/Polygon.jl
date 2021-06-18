@@ -13,7 +13,7 @@ extreme_points(p::Polygon) = p.points
 
 function edges(p::Triangle{T}) where {T}
     vs = vertices(p)
-    return SVector{3,Edge{T}}(
+    return (
         Edge(vs[1], vs[2]),
         Edge(vs[2], vs[3]),
         Edge(vs[3], vs[1])
@@ -21,13 +21,15 @@ function edges(p::Triangle{T}) where {T}
 end
 function edges(p::Quadrangle{T}) where {T}
     vs = vertices(p)
-    return SVector{4,Edge{T}}(
+    return (
         Edge(vs[1], vs[2]),
         Edge(vs[2], vs[3]),
         Edge(vs[3], vs[4]),
         Edge(vs[4], vs[1])
     )
 end
+
+lines(p::Polygon) = edges(p)
 
 Plane(p::Polygon{N, T}) where {N, T} = Plane{T}(p.points[1], (p.points[2] - p.points[1]) × (p.points[3] - p.points[1]))
 
