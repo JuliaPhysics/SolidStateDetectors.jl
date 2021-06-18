@@ -20,6 +20,9 @@
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+const Circle{T} = Ellipse{T,T}
+const Annulus{T} = Ellipse{T,Tuple{T,T}}
+
 Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP}; 
             origin::CartesianPoint{T} = b.origin,
             rotation::SMatrix{3,3,T,9} = b.rotation) where {T,TR,TP} =
