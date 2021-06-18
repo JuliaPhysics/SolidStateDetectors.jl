@@ -20,6 +20,13 @@
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+const CircularArea{T} = EllipticalSurface{T,T,Nothing}
+const PartialCircularArea{T} = EllipticalSurface{T,T,Tuple{T,T}}
+
+const Annulus{T} = EllipticalSurface{T,Tuple{T,T},Nothing}
+const PartialAnnulus{T} = EllipticalSurface{T,Tuple{T,T},Tuple{T,T}}
+
+
 Ellipse(es::EllipticalSurface) = Ellipse(r = es.r, φ = es.φ, origin = es.origin, rotation = es.rotation)
 
 Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * CartesianVector{T}(zero(T),zero(T),one(T)))
