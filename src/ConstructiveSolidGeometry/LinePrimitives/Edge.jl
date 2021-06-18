@@ -16,3 +16,13 @@ function distance(pt::CartesianPoint{T}, e::Edge{T}) where {T}
         distance(pt, Line(e))
     end
 end
+
+function sample(e::Edge{T}; n = 2) where {T}
+    xs = range(zero(T), stop = one(T), length = n)
+    pts = Vector{CartesianPoint{T}}(undef, n)
+    dir = direction(e)
+    for i in eachindex(pts)
+        pts[i] = e.a + xs[i] .* dir
+    end
+    pts
+end
