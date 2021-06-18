@@ -64,7 +64,6 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     length_unit = input_units.length
     angle_unit = input_units.angle
     r = parse_r_of_primitive(T, dict, length_unit)
-    @info r
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     hZ = parse_height_of_primitive(T, dict, length_unit)
     cone = Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = hZ)
