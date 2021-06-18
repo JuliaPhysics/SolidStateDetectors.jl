@@ -27,7 +27,11 @@ T: Type of values, e.g. Float64
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-const CylinderMantle{T} = ConeMantle{T,T}
+const CylinderMantle{T} = ConeMantle{T,T,Nothing}
+const PartialCylinderMantle{T} = ConeMantle{T,T,Tuple{T,T}}
+
+const FullConeMantle{T} = ConeMantle{T,T,Tuple{T,T}} # ugly name but works for now
+const PartialConeMantle{T} = ConeMantle{T,Tuple{T,T},Tuple{T,T}}
 
 """
     intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}

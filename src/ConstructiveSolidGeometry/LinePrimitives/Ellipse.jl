@@ -20,8 +20,10 @@
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-const Circle{T} = Ellipse{T,T}
-const Annulus{T} = Ellipse{T,Tuple{T,T}}
+const Circle{T} = Ellipse{T,T,Nothing}
+const PartialCircle{T} = Ellipse{T,T,Tuple{T,T}}
+const Annulus{T} = Ellipse{T,Tuple{T,T},Nothing}
+const PartialAnnulus{T} = Ellipse{T,Tuple{T,T},Tuple{T,T}}
 
 Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP}; 
             origin::CartesianPoint{T} = b.origin,
@@ -31,7 +33,9 @@ Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP};
 
 extremum(e::Ellipse{T,T}) where {T} = e.r
 
-
+# function sample(e::Ellipse{T,TP}) where {T,TP}
+#     rand(2)
+# end
 
 
 
