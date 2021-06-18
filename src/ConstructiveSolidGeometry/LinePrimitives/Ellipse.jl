@@ -32,7 +32,7 @@ Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP};
 extremum(e::Ellipse{T,T}) where {T} = e.r
 extremum(e::Ellipse{T,Tuple{T,T}}) where {T} = max(e.r[1], e.r[1])
 
-function sample(e::Circle{T}; n = 4) where {T}
+function sample(e::Circle{T}; n = 4)::Vector{CartesianPoint{T}} where {T}
     φs = range(T(0), step = T(2π) / n, length = n)
     pts = Vector{CartesianPoint{T}}(undef, n)
     for i in eachindex(pts)
@@ -40,7 +40,7 @@ function sample(e::Circle{T}; n = 4) where {T}
     end
     pts
 end
-function sample(e::PartialCircle{T}; n = 2) where {T}
+function sample(e::PartialCircle{T}; n = 2)::Vector{CartesianPoint{T}} where {T}
     φs = range(e.φ[1], stop = e.φ[1], length = n)
     pts = Vector{CartesianPoint{T}}(undef, n)
     for i in eachindex(pts)

@@ -44,7 +44,7 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
 end
 
 function vertices(b::Box{T}) where {T}
-    return SVector{8, CartesianPoint{T}}(
+    return (
         b.rotation * SVector{3,T}(-b.hX, -b.hY, -b.hZ) .+ b.origin,
         b.rotation * SVector{3,T}(+b.hX, -b.hY, -b.hZ) .+ b.origin,
         b.rotation * SVector{3,T}(+b.hX, +b.hY, -b.hZ) .+ b.origin,
@@ -56,7 +56,7 @@ function vertices(b::Box{T}) where {T}
     )
 end
 
-sample(b::Box) = vertices(b)
+sample(b::Box)::Vector{CartesianPoint{T}} = [vertices(b)...]
 
 function surfaces(b::Box{T}) where {T}
     vs = vertices(b)

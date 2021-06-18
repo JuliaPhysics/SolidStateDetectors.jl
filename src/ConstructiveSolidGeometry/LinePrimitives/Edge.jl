@@ -17,7 +17,7 @@ function distance(pt::CartesianPoint{T}, e::Edge{T}) where {T}
     end
 end
 
-function sample(e::Edge{T}; n = 2) where {T}
+function sample(e::Edge{T}; n = 2)::Vector{CartesianPoint{T}} where {T}
     xs = range(zero(T), stop = one(T), length = n)
     pts = Vector{CartesianPoint{T}}(undef, n)
     dir = direction(e)
