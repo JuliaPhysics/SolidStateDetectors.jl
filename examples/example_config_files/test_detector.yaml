@@ -42,30 +42,34 @@ detectors:
       charge_drift_model:
         include: ADLChargeDriftModel/drift_velocity_config.json
       geometry:
-        tube:
-          r: 5 # width in x
-          h: 8 # width in z
+        difference:
+          - tube:
+              r: 4 # width in x
+              h: 6 # width in z
+          - tube:
+              r: 1 # width in x
+              h: 6 # width in z
     contacts:
       - material: HPGe
         name: n+ contact
         potential: 2000
         channel: 1
         geometry:
-          translate:
-            z: -3.95
-            tube:
-              r: 1
-              h: 0.2
+          tube:
+            r: 
+              from: 3.8
+              to: 4
+            h: 6
       - material: HPGe
         name: p+ contact
         potential: 0
         channel: 2
         geometry:
-          translate:
-            z: 3.95
-            tube:
-              r: 3
-              h: 0.2
+          tube:
+            r: 
+              from: 1
+              to: 1.2
+            h: 6
 
 surroundings:
   - name: Base
