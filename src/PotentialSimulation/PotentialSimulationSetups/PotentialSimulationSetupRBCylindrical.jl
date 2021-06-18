@@ -19,15 +19,17 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
 
-                for passive in ssd.passives
-                    if passive.potential != :floating
-                        if pt in passive
-                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
-                                passive.potential
-                            else
-                                0
+                if !ismissing(ssd.passives)
+                    for passive in ssd.passives
+                        if passive.potential != :floating
+                            if pt in passive
+                                potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                                    passive.potential
+                                else
+                                    0
+                                end
+                                pointtypes[ ir, iφ, iz ] = zero(PointType)
                             end
-                            pointtypes[ ir, iφ, iz ] = zero(PointType)
                         end
                     end
                 end

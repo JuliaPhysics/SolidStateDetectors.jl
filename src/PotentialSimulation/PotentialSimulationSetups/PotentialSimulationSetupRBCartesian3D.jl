@@ -19,15 +19,17 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 x::T = axx[ix]
                 pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
 
-                for passive in ssd.passives
-                    if passive.potential != :floating
-                        if pt in passive
-                            potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
-                                passive.potential
-                            else
-                                0
+                if !ismissing(ssd.passives)
+                    for passive in ssd.passives
+                        if passive.potential != :floating
+                            if pt in passive
+                                potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
+                                    passive.potential
+                                else
+                                    0
+                                end
+                                pointtypes[ ix, iy, iz ] = zero(PointType)
                             end
-                            pointtypes[ ix, iy, iz ] = zero(PointType)
                         end
                     end
                 end
