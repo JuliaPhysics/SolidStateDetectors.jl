@@ -26,9 +26,6 @@ const PartialCircularArea{T} = EllipticalSurface{T,T,Tuple{T,T}}
 const Annulus{T} = EllipticalSurface{T,Tuple{T,T},Nothing}
 const PartialAnnulus{T} = EllipticalSurface{T,Tuple{T,T},Tuple{T,T}}
 
-
-Ellipse(es::EllipticalSurface) = Ellipse(r = es.r, φ = es.φ, origin = es.origin, rotation = es.rotation)
-
 Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * CartesianVector{T}(zero(T),zero(T),one(T)))
 
 normal(es::EllipticalSurface{T}) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
@@ -36,6 +33,37 @@ normal(es::EllipticalSurface{T}) where {T} = es.rotation * CartesianVector{T}(ze
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = max(es.r[1], es.r[2])
 
+function lines(sp::CircularArea{T}) where {T} 
+    circ = Circle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    return (circ,)
+end
+function lines(sp::PartialCircularArea{T}) where {T} 
+    circ = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    p_l = CartesianPoint{T}(sp.r, sp.φ[1], zero(T))
+    p_r = CartesianPoint{T}(sp.r, sp.φ[2], zero(T))
+    edge_l = Edge(sp.origin, _transform_into_global_coordinate_system(p_l, sp))
+    edge_r = Edge(sp.origin, _transform_into_global_coordinate_system(p_r, sp))
+    return (circ, edge_l, edge_r)
+end
+
+function lines(sp::Annulus{T}) where {T} 
+    circ_in  = Circle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    circ_out = Circle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    return (circ_in, circ_out)
+end
+function lines(sp::PartialAnnulus{T}) where {T} 
+    circ_in  = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    circ_out = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    p_l_in  = CartesianPoint{T}(sp.r[1], sp.φ[1], zero(T))
+    p_l_out = CartesianPoint{T}(sp.r[2], sp.φ[1], zero(T))
+    p_r_in  = CartesianPoint{T}(sp.r[1], sp.φ[2], zero(T))
+    p_r_out = CartesianPoint{T}(sp.r[2], sp.φ[2], zero(T))
+    edge_l = Edge(_transform_into_global_coordinate_system(p_l_in,  sp),
+                  _transform_into_global_coordinate_system(p_l_out, sp))
+    edge_r = Edge(_transform_into_global_coordinate_system(p_r_in,  sp),
+                  _transform_into_global_coordinate_system(p_r_out, sp))
+    return (circ_in, circ_out, edge_l, edge_r)
+end
 
 # #Constructors
 # CylindricalAnnulus(c::Cone{T}; z = 0) where {T} = CylindricalAnnulus(T, get_r_at_z(c,z), c.φ, T(z))
