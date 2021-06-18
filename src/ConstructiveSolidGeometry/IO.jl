@@ -64,8 +64,8 @@ end
 function _parse_radial_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
-    @assert From >= 0 && To >= 0 "Entries 'from' and 'to' of radial $(dict) should be non-zero."
-    From == 0 ? To : From..To
+    @assert From >= 0 && To >= 0 "Entries 'from' and 'to' of radial $(dict) should `>= 0`."
+    (From, To)
 end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
@@ -95,14 +95,14 @@ end
 function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "r") "Please specify 'r'."
     dictr = dict["r"]
-    # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
     if haskey(dictr, "bottom") && haskey(dictr, "top")
+        # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
         bottom = _parse_radial_interval(T, dictr["bottom"], unit)
         top = _parse_radial_interval(T, dictr["top"], unit)
         # bottom and top need to be same type for Cone
         typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
-    # "r" : {"from": ..., "to": ...}
     else
+        # "r" : {"from": ..., "to": ...}
         _parse_radial_interval(T, dictr, unit)
     end
 end
