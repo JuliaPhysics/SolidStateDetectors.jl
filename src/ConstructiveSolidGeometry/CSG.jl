@@ -63,7 +63,8 @@ end
 
 Dictionary(g::CSGDifference{T}) where {T} = OrderedDict{String,Any}("difference" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
 
-Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, input_units::NamedTuple) where {T} = Geometry(T, CSG, [g for g in v], input_units)
+Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, input_units::NamedTuple, transformations::Transformations{T}) where {T} = 
+    Geometry(T, CSG, [g for g in v], input_units, transformations)
 
 (+)(csg::A, v::CartesianVector) where {A <: AbstractConstructiveGeometry} = A(csg.a + v, csg.b + v)
 
