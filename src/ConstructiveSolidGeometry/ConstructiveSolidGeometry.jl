@@ -59,6 +59,22 @@ module ConstructiveSolidGeometry
     # Do we want to store the rotation matrix permanently in the primitive?
     # We should do tests regarding the performance. It can be easily added later.     
 
+    """
+        extreme_points(es::AbstractPrimitive{T}) where {T}
+
+    General implementation for all primitives.
+    """
+    function extreme_points(es::AbstractPrimitive{T}) where {T}
+        o = origin(es)
+        r = extremum(es)
+        vX = r * CartesianVector{T}(one(T), zero(T), zero(T))
+        vY = r * CartesianVector{T}(zero(T), one(T), zero(T))
+        vZ = r * CartesianVector{T}(zero(T), zero(T), one(T))
+        SVector{6,CartesianPoint{T}}(
+            o - vX, o + vX, o - vY, o + vY, o - vZ, o + vZ,
+        )
+    end
+
     include("Transformations.jl")
     include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")

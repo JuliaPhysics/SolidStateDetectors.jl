@@ -50,9 +50,9 @@ function get_2d_grid_ticks_and_proj(p::AbstractPlanarSurfacePrimitive, t::Cartes
         ls[3] == 1 ? typemax(eltype(ls)) : ls[3]
     )
     n = normal(p)
-    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
+    proj, t1, t2 = if (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
         Val{:xy}(), t_idx_range_x, t_idx_range_y
-    elseif ls[1] < ls[2] && ls[3] < ls[2] && (n ⋅ CartesianVector{T}(zero(T),one(T),zero(T)) != 0)
+    elseif (n ⋅ CartesianVector{T}(zero(T),one(T),zero(T)) != 0)
         Val{:xz}(), t_idx_range_x, t_idx_range_z
     elseif n ⋅ CartesianVector{T}(one(T),zero(T), zero(T)) != 0
         Val{:yz}(), t_idx_range_y, t_idx_range_z
@@ -84,12 +84,12 @@ function get_2d_grid_ticks_and_proj(p::AbstractPlanarSurfacePrimitive, t::Cylind
         ls[3] == 1 ? typemax(eltype(ls)) : ls[3]
     )
     n = normal(p)
-    p_r = p.points[findmax(broadcast(p -> abs(p[1]), p.points))[2]]
+    p_r = pts[findmax(broadcast(p -> abs(p[1]), pts))[2]]
     # We skip the `:rz`-case as there could be two intersections with the arc and the polygon.
-    proj, t1, t2 = if ls[1] < ls[3] && ls[2] < ls[3] && (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
+    proj, t1, t2 = if (n ⋅ CartesianVector{T}(zero(T),zero(T),one(T)) != 0)
         # evaluate the z value -> same as for the cartesian case
         Val{:rφ}(), t_idx_range_r, t_idx_range_φ
-    elseif ls[2] < ls[1] && ls[3] < ls[1] && (n ⋅ p_r != 0)
+    elseif (n ⋅ p_r != 0)
         Val{:φz}(), t_idx_range_φ, t_idx_range_z
     else
         Val{:rz}(), t_idx_range_r, t_idx_range_z

@@ -26,14 +26,9 @@ Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP};
     Ellipse{T,TR,TP}(e.r, e.φ, origin, rotation)
 
 
+extremum(e::Ellipse{T,T}) where {T} = e.r
 
-function extreme_points(es::Ellipse{T,T}; n = 4) where {T} 
-    # this is probably not entirly correct. We need the extreme points of the ellipse 
-    # in the global coordinate system. Not the ones in the object coordinate system.
-    φs = range(0, step = 2π / n, length = n)
-    pts = [CartesianPoint(CylindricalPoint{T}(es.r, φ, zero(T))) for φ in φs]
-    map(p -> _transform_into_global_coordinate_system(p, es), pts)
-end
+
 
 
 

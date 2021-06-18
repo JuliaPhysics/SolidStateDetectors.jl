@@ -26,13 +26,9 @@ Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * Ca
 
 normal(es::EllipticalSurface{T}) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
 
-function extreme_points(es::EllipticalSurface{T,TR,Nothing}; n = 4) where {T,TR<:Real} 
-    # this is probably not entirly correct. We need the extreme points of the ellipse 
-    # in the global coordinate system. Not the ones in the object coordinate system.
-    φs = range(0, step = 2π / n, length = n)
-    pts = [CartesianPoint(CylindricalPoint{T}(es.r, φ, zero(T))) for φ in φs]
-    map(p -> _transform_into_global_coordinate_system(p, es), pts)
-end
+extremum(es::EllipticalSurface{T,T}) where {T} = es.r
+extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = max(es.r[1], es.r[2])
+
 
 # #Constructors
 # CylindricalAnnulus(c::Cone{T}; z = 0) where {T} = CylindricalAnnulus(T, get_r_at_z(c,z), c.φ, T(z))
