@@ -50,7 +50,7 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
     eZ = CartesianVector{T}(0,0,1);
     for i2 in eachindex(ticks[2])
         for i1 in eachindex(ticks[1])
-            l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], ticks[2][i2], zero(T)), eZ)
+            l = ConstructiveSolidGeometry.Line(CartesianPoint(CylindricalPoint{T}(ticks[1][i1], ticks[2][i2], zero(T))), eZ)
             pt = ConstructiveSolidGeometry.intersection(plane, l)
             if pt in geometry
                 i3 = searchsortednearest(ticks[3], pt[3])
@@ -74,10 +74,15 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
     for i3 in t_idx_r3 # z;   Maybe switch loops so that the direction of `l` has to be calculated less times..
         o = CartesianPoint{T}(zero(T), zero(T), ticks[3][i3])
         for i2 in eachindex(ticks[2]) # φ
-            l = ConstructiveSolidGeometry.Line(o, CartesianVector(CartesianPoint(CylindricalPoint{T}(one(T), ticks[2][i2], zero(T)))))
-            pt = CylindricalPoint(ConstructiveSolidGeometry.intersection(plane, l))
-            if pt in geometry
-                i1 = searchsortednearest(ticks[1], pt[1])
+            dir = CartesianVector(CartesianPoint(CylindricalPoint{T}(one(T), ticks[2][i2], zero(T)))) 
+            l = ConstructiveSolidGeometry.Line(o, dir) # dir should be normalized
+            pt_car = ConstructiveSolidGeometry.intersection(plane, l)
+            pt_cyl = CylindricalPoint(pt_car)
+            # Intersection must be in positive r direction of dir: pt_cyl[2] == ticks[2][i2]
+            # Use `abs(pt_cyl[2] - ticks[2][i2]) < 0.1` to avoid rounding issues
+            # if it differs, it would always differ by π = 3.141... -> 0.1 is fine
+            if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && pt_car in geometry
+                i1 = searchsortednearest(ticks[1], pt_cyl[1])
                 pointtypes[i1, i2, i3] = zero(PointType)
                 potential[i1, i2, i3] = pot_value
             end
