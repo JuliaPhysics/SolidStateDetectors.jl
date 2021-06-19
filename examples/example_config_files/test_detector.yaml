@@ -48,7 +48,7 @@ detectors:
               h: 6 # width in z
           - tube:
               r: 1 # width in x
-              h: 6 # width in z
+              h: 6.5 # width in z
     contacts:
       - material: HPGe
         name: n+ contact
