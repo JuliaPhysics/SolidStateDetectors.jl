@@ -59,9 +59,11 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
             end
         end
     end 
+    # For this we need a the function `intersection_with_φ_axis`...
+    # This will be fun... I skip this for now. 
+
     # for i3 in t_idx_r3 # z
     #     for i1 in t_idx_r1 # r
-        # For this we need a new method for `intersection(plane, Circle)`
     #         l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], zero(T), ticks[3][i3]), eY)
     #         pt = ConstructiveSolidGeometry.intersection(plane, l)
     #         if pt in geometry
@@ -71,6 +73,7 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
     #         end
     #     end
     # end 
+    
     for i3 in t_idx_r3 # z;   Maybe switch loops so that the direction of `l` has to be calculated less times..
         o = CartesianPoint{T}(zero(T), zero(T), ticks[3][i3])
         for i2 in eachindex(ticks[2]) # φ
