@@ -18,8 +18,11 @@ Box{T, CO}( b::Box{T, CO}; COT = CO,
     Box{T, COT}(b.hX, b.hY, b.hZ, origin, rotation)
 
 _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
-    abs(pt.x) <= b.hX && abs(pt.y) <= b.hY && abs(pt.z) <= b.hZ
-_in(pt::CartesianPoint, b::Box{<:Any, :OpenPrimitive}) = 
+    (abs(pt.x) <= b.hX || abs(pt.x) ≈ b.hX) && 
+    (abs(pt.y) <= b.hY || abs(pt.y) ≈ b.hY) && 
+    (abs(pt.z) <= b.hZ || abs(pt.z) ≈ b.hZ)
+
+_in(pt::CartesianPoint, b::Box{<:Any, OpenPrimitive}) = 
     abs(pt.x) < b.hX && abs(pt.y) < b.hY && abs(pt.z) < b.hZ
  
 function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
