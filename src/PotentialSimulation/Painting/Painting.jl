@@ -25,10 +25,10 @@ function get_sub_ind_ranges(a::Union{
     t_idx_range_ax1, t_idx_range_ax2, t_idx_range_ax3
 end
 
-get_sub_ind_ranges(p::ConstructiveSolidGeometry.Polygon{N,T}, grid::CartesianGrid{T}) where {N,T} = 
+get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CartesianGrid{T}) where {N,T} = 
     get_sub_ind_ranges((ConstructiveSolidGeometry.extreme_points(p), TicksTuple(grid)))
-get_sub_ind_ranges(p::ConstructiveSolidGeometry.Polygon{N,T}, grid::CylindricalGrid{T}) where {N,T} = 
+get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CylindricalGrid{T}) where {N,T} = 
     get_sub_ind_ranges((CylindricalPoint.(ConstructiveSolidGeometry.extreme_points(p)), TicksTuple(grid)))
 
-include("Polygon.jl")
-include("ConeMantle.jl")
+include("Planar.jl")
+include("Curved.jl")
