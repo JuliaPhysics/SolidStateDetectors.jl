@@ -54,7 +54,18 @@ struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: A
 end
 
 in(p::AbstractCoordinatePoint, csg::CSGDifference) = in(p, csg.a) && !in(p, csg.b)
-(-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGDifference{T,A,B}(a, b)
+
+function (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractConstructiveGeometry{T}} 
+    ob = switchClosedOpen(b)
+    CSGDifference{T,A,typeof(ob)}(a, ob)
+end
+function switchClosedOpen(csg::CSGDifference) 
+    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
+end
+function (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractVolumePrimitive{T}} 
+    ob = OpenPrimitive(b)
+    CSGDifference{T,A,typeof(ob)}(a, ob)
+end
 
 # read-in
 function Geometry(::Type{T}, ::Type{CSGDifference}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
