@@ -16,6 +16,15 @@ _distance(pt::AbstractCoordinatePoint, p::Plane) = (pt - origin(p)) ⋅ normal(p
 distance(pt::AbstractCoordinatePoint, p::Plane) = abs(_distance(pt, p))
 
 
+"""
+    We assume l.direction is normalized
+"""
+function intersection(p::Plane{T}, line::Line{T}) where {T}
+    ndir = normalize(line.direction)
+    λ = (p.normal ⋅ p.origin - p.normal ⋅ line.origin) / (p.normal ⋅ ndir)
+    line.origin + λ * ndir
+end
+
 function evaluate(p::Plane{T}, x, y, ::Val{:xy}) where {T}
     # plane.normal may not be perpendicular to the z-axis
     line = Line{T}(CartesianPoint{T}(x, y, zero(T)), CartesianVector{T}(zero(T), zero(T), one(T)))
