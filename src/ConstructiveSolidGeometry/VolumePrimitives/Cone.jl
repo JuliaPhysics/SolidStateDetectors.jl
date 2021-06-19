@@ -29,9 +29,9 @@ CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
 end
 
 Cone{T,CO,RT,TP}( c::Cone{T,CO,RT,TP}; COT = CO,
-            origin::CartesianPoint{T} = b.origin,
-            rotation::SMatrix{3,3,T,9} = b.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,TP} =
-    Cone{T,CO,RT,TP}(c.r, c.φ, c.hZ, origin, rotation)
+            origin::CartesianPoint{T} = c.origin,
+            rotation::SMatrix{3,3,T,9} = c.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,TP} =
+    Cone{T,COT,RT,TP}(c.r, c.φ, c.hZ, origin, rotation)
 
 # Aliases for certain types of Cones:
 # We can change these names, but for now they do their job
