@@ -23,12 +23,6 @@ end
 const Circle{T} = Ellipse{T,T,Nothing}
 const PartialCircle{T} = Ellipse{T,T,Tuple{T,T}}
 
-Ellipse{T,TR,TP}( e::Ellipse{T,TR,TP}; 
-            origin::CartesianPoint{T} = b.origin,
-            rotation::SMatrix{3,3,T,9} = b.rotation) where {T,TR,TP} =
-    Ellipse{T,TR,TP}(e.r, e.φ, origin, rotation)
-
-
 extremum(e::Ellipse{T,T}) where {T} = e.r
 extremum(e::Ellipse{T,Tuple{T,T}}) where {T} = max(e.r[1], e.r[1])
 
