@@ -39,8 +39,8 @@ function lines(sp::CircularArea{T}) where {T}
 end
 function lines(sp::PartialCircularArea{T}) where {T} 
     circ = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    p_l = CartesianPoint{T}(sp.r, sp.φ[1], zero(T))
-    p_r = CartesianPoint{T}(sp.r, sp.φ[2], zero(T))
+    p_l = CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[1], zero(T)))
+    p_r = CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[2], zero(T)))
     edge_l = Edge(sp.origin, _transform_into_global_coordinate_system(p_l, sp))
     edge_r = Edge(sp.origin, _transform_into_global_coordinate_system(p_r, sp))
     return (circ, edge_l, edge_r)
@@ -54,10 +54,10 @@ end
 function lines(sp::PartialAnnulus{T}) where {T} 
     circ_in  = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
     circ_out = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    p_l_in  = CartesianPoint{T}(sp.r[1], sp.φ[1], zero(T))
-    p_l_out = CartesianPoint{T}(sp.r[2], sp.φ[1], zero(T))
-    p_r_in  = CartesianPoint{T}(sp.r[1], sp.φ[2], zero(T))
-    p_r_out = CartesianPoint{T}(sp.r[2], sp.φ[2], zero(T))
+    p_l_in  = CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[1], zero(T)))
+    p_l_out = CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[1], zero(T)))
+    p_r_in  = CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[2], zero(T)))
+    p_r_out = CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[2], zero(T)))
     edge_l = Edge(_transform_into_global_coordinate_system(p_l_in,  sp),
                   _transform_into_global_coordinate_system(p_l_out, sp))
     edge_r = Edge(_transform_into_global_coordinate_system(p_r_in,  sp),

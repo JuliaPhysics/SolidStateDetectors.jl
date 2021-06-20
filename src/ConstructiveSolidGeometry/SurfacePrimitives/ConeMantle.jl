@@ -52,10 +52,10 @@ function lines(sp::PartialCylinderMantle{T}) where {T}
     bot_ellipse = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
     top_ellipse = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[1], -sp.hZ), sp)
-    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[2], -sp.hZ), sp)
-    p_top_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[1],  sp.hZ), sp)
-    p_top_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r, sp.φ[2],  sp.hZ), sp)
+    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[1], -sp.hZ)), sp)
+    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[2], -sp.hZ)), sp)
+    p_top_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[1],  sp.hZ)), sp)
+    p_top_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[2],  sp.hZ)), sp)
     edge_l = Edge{T}(p_bot_l, p_top_l)
     edge_r = Edge{T}(p_bot_r, p_top_r)
     bot_ellipse, top_ellipse, edge_l, edge_r
@@ -72,10 +72,10 @@ function lines(sp::PartialConeMantle{T}) where {T}
     bot_ellipse = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
     top_ellipse = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[1], sp.φ[1], -sp.hZ), sp)
-    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[1], sp.φ[2], -sp.hZ), sp)
-    p_top_l = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[2], sp.φ[1],  sp.hZ), sp)
-    p_top_r = _transform_into_global_coordinate_system(CartesianPoint{T}(sp.r[2], sp.φ[2],  sp.hZ), sp)
+    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[1], -sp.hZ)), sp)
+    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[2], -sp.hZ)), sp)
+    p_top_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[1],  sp.hZ)), sp)
+    p_top_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[2],  sp.hZ)), sp)
     edge_l = Edge{T}(p_bot_l, p_top_l)
     edge_r = Edge{T}(p_bot_r, p_top_r)
     bot_ellipse, top_ellipse, edge_l, edge_r
@@ -133,13 +133,13 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
 end
 
 """
-    intersection(cm::CylinderMantle{T}, l::Line{T}) where {T}
+    intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
 
 The function will always return 2 CartesianPoint's.
 If the line just touches the mantle, the two points will be the same. 
 If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
 """
-function intersection(cm::CylinderMantle{T}, l::Line{T}) where {T}
+function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
     
     L1 = obj_l.origin.x

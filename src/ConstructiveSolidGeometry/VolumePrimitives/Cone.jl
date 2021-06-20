@@ -91,13 +91,43 @@ function surfaces(t::Cylinder{T}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = CylinderMantle{T}(t.r, t.φ, t.hZ, t.origin, t.rotation)
-    e_bot = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation = t.rotation)
-    e_top = EllipticalSurface{T,T,Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
+    e_bot = CircularArea{T}(r = t.r, φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
+    e_top = CircularArea{T}(r = t.r, φ = t.φ, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle
 end
 
 # PartialCylinder
+function _in(pt::CartesianPoint, c::PartialCylinder{T,ClosedPrimitive}) where {T} 
+    abs(pt.z) <= c.hZ &&
+    hypot(pt.x, pt.y) <= c.r &&
+    _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
+end
+function _in(pt::CartesianPoint, c::PartialCylinder{T,OpenPrimitive}) where {T} 
+    abs(pt.z) < c.hZ &&
+    hypot(pt.x, pt.y) < c.r &&
+    _in_angular_interval_open(atan(pt.y, pt.x), c.φ)
+end
+
+function surfaces(t::PartialCylinder{T}) where {T}
+    bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
+    top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
+    mantle = PartialCylinderMantle{T}(t.r, t.φ, t.hZ, t.origin, t.rotation)
+    e_bot = PartialCircularArea{T}(r = t.r, φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
+    e_top = PartialCircularArea{T}(r = t.r, φ = t.φ, origin = top_center_pt, rotation = t.rotation) #RotZ{T}(π) * -t.rotation)
+    poly_l = _transform_into_global_coordinate_system(Quadrangle{T}((
+        CartesianPoint(CylindricalPoint{T}(zero(T), zero(T), -t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(    t.r,  t.φ[1], -t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(    t.r,  t.φ[1], +t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(zero(T), zero(T), +t.hZ)) )), t)
+    poly_r = _transform_into_global_coordinate_system(Quadrangle{T}((
+        CartesianPoint(CylindricalPoint{T}(zero(T), zero(T), -t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(zero(T), zero(T), +t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(    t.r,  t.φ[2], +t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(    t.r,  t.φ[2], -t.hZ)) )), t)
+    # normals of the surfaces show inside the volume primitives. 
+    (e_top, e_bot, mantle, poly_l, poly_r)
+end
 
 # Tube
 
@@ -108,14 +138,21 @@ function _in(pt::CartesianPoint, c::Tube{T,ClosedPrimitive}) where {T}
         false
     end
 end
+function _in(pt::CartesianPoint, c::Tube{T,OpenPrimitive}) where {T} 
+    if abs(pt.z) < c.hZ
+        c.r[1] < hypot(pt.x, pt.y) < c.r[2]
+    else
+        false
+    end
+end
 
 function surfaces(t::Tube{T}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
-    inner_mantle = ConeMantle{T,T,Nothing}(t.r[1], t.φ, t.hZ, t.origin, t.rotation)
-    outer_mantle = ConeMantle{T,T,Nothing}(t.r[2], t.φ, t.hZ, t.origin, t.rotation)
-    e_bot = EllipticalSurface{T,Tuple{T,T},Nothing}(r = t.r, φ = nothing, origin = bot_center_pt, rotation = t.rotation)
-    e_top = EllipticalSurface{T,Tuple{T,T},Nothing}(r = t.r, φ = nothing, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
+    inner_mantle = CylinderMantle{T}(t.r[1], t.φ, t.hZ, t.origin, t.rotation)
+    outer_mantle = CylinderMantle{T}(t.r[2], t.φ, t.hZ, t.origin, t.rotation)
+    e_bot = Annulus{T}(r = t.r, φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
+    e_top = Annulus{T}(r = t.r, φ = t.φ, origin = top_center_pt, rotation = RotZ{T}(π) * -t.rotation)
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, inner_mantle, outer_mantle
 end

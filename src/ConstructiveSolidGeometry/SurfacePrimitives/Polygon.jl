@@ -83,6 +83,11 @@ function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Quadrangle{T}) 
     return PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0 
 end
 
+function _transform_into_global_coordinate_system(poly::Polygon{N, T}, p::AbstractPrimitive{T}) where {N, T}
+    Polygon{N,T}(broadcast(pt -> _transform_into_global_coordinate_system(pt, p), poly.points))
+end
+
+
 function distance(pt::CartesianPoint, p::Polygon)
     return if _above_or_below_polygon(pt, p)
         distance(pt, Plane(p))

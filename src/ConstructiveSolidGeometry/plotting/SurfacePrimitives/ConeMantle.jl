@@ -1,20 +1,15 @@
 @recipe function f(cm::ConeMantle, n = 40; subn = 10)
-    e_top = get_top_ellipse(cm)
-    e_bot = get_bot_ellipse(cm)
-    e_top_edges = edges(e_top, n = n)
-    e_bot_edges = edges(e_bot, n = n)
+    ls = lines(cm)
     linecolor --> :black
     @series begin
         label --> "Cone Mantle"
-        e_top_edges
+        ls[1]
     end
-    @series begin
-        label := nothing
-        e_bot_edges
-    end
-    @series begin
-        label := nothing
-        map(i -> Edge(e_top_edges[i].a, e_bot_edges[i].a), 1:subn:length(e_top_edges))
+    for i in 2:length(ls)
+        @series begin
+            label := nothing
+            ls[i]
+        end
     end
 end
 
