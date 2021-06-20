@@ -5,20 +5,33 @@ units:
   potential: V
   temperature: K
 grid:
-  coordinates: cartesian
+  coordinates: cylindrical
   axes:
-    x:
-      from: -9
+    r:
       to: 9
       boundaries: inf
     y:
-      from: -9
-      to: 9
-      boundaries: inf
+      from: 0
+      to: 180
+      boundaries: periodic
     z:
       from: -9
       to: 9
       boundaries: inf
+  # coordinates: cartesian
+  # axes:
+  #   x:
+  #     from: -9
+  #     to: 9
+  #     boundaries: inf
+  #   y:
+  #     from: -9
+  #     to: 9
+  #     boundaries: inf
+  #   z:
+  #     from: -9
+  #     to: 9
+  #     boundaries: inf
 medium: vacuum
 detectors:
   - translate: 
