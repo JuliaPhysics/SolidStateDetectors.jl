@@ -31,10 +31,14 @@ end
 const CylinderMantle{T} = ConeMantle{T,T,Nothing}
 const PartialCylinderMantle{T} = ConeMantle{T,T,Tuple{T,T}}
 
-const FullConeMantle{T} = ConeMantle{T,Tuple{T,T},Nothing} # ugly name but works for now
+const FullConeMantle{T} = ConeMantle{T,Tuple{T,T},Nothing} # ugly name but works for now, should just be `ConeMantle`...
 const PartialConeMantle{T} = ConeMantle{T,Tuple{T,T},Tuple{T,T}}
 
 extremum(cm::CylinderMantle{T}) where {T} = sqrt(cm.hZ^2 + cm.r^2)
+extremum(cm::PartialCylinderMantle{T}) where {T} = sqrt(cm.hZ^2 + cm.r^2)
+
+extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(es.r[1], es.r[2])^2)
+extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(es.r[1], es.r[2])^2)
 
 function lines(sp::CylinderMantle{T}) where {T} 
     bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)

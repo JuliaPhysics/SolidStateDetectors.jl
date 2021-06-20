@@ -31,7 +31,7 @@ Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * Ca
 normal(es::EllipticalSurface{T}) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
 
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
-extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = max(es.r[1], es.r[2])
+extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
 
 function lines(sp::CircularArea{T}) where {T} 
     circ = Circle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
