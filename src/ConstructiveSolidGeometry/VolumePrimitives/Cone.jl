@@ -71,20 +71,13 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
 end
 
 # Cylinder
-
 function _in(pt::CartesianPoint, c::Cylinder{T,ClosedPrimitive}) where {T} 
-    if abs(pt.z) <= c.hZ
-        hypot(pt.x, pt.y) <= c.r
-    else
-        false
-    end
+    abs(pt.z) <= c.hZ &&
+    hypot(pt.x, pt.y) <= c.r
 end
 function _in(pt::CartesianPoint, c::Cylinder{T,OpenPrimitive}) where {T} 
-    if abs(pt.z) < c.hZ
-        hypot(pt.x, pt.y) < c.r
-    else
-        false
-    end
+    abs(pt.z) < c.hZ &&
+    hypot(pt.x, pt.y) < c.r
 end
 
 function surfaces(t::Cylinder{T}) where {T}
@@ -130,20 +123,13 @@ function surfaces(t::PartialCylinder{T}) where {T}
 end
 
 # Tube
-
 function _in(pt::CartesianPoint, c::Tube{T,ClosedPrimitive}) where {T} 
-    if abs(pt.z) <= c.hZ
-        c.r[1] <= hypot(pt.x, pt.y) <= c.r[2]
-    else
-        false
-    end
+    abs(pt.z) <= c.hZ &&
+    c.r[1] <= hypot(pt.x, pt.y) <= c.r[2]
 end
 function _in(pt::CartesianPoint, c::Tube{T,OpenPrimitive}) where {T} 
-    if abs(pt.z) < c.hZ
-        c.r[1] < hypot(pt.x, pt.y) < c.r[2]
-    else
-        false
-    end
+    abs(pt.z) < c.hZ &&
+    c.r[1] < hypot(pt.x, pt.y) < c.r[2]
 end
 
 function surfaces(t::Tube{T}) where {T}
