@@ -30,9 +30,11 @@ end
             c
         end
     end
-    for p in det.passives
-        @series begin
-            p
+    if !ismissing(det.passives)
+        for p in det.passives
+            @series begin
+                p
+            end
         end
     end
 end
