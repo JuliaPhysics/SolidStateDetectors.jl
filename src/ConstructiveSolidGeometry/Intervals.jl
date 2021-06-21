@@ -26,7 +26,7 @@
 @inline function _in_angular_interval_closed(α::T, α_int::Tuple{T,T}) where {T} 
     m = mod(α - α_int[1], T(2π))
     d = (α_int[2] - α_int[1])
-    m ≤ d || m ≈ d 
+    m ≤ d || csg_isapprox(m, d) # we might want to add r into this here.
 end
 @inline _in_angular_interval_open(α::T, α_int::Tuple{T,T}) where {T} = 0 < mod(α - α_int[1], T(2π)) < (α_int[2] - α_int[1])
 

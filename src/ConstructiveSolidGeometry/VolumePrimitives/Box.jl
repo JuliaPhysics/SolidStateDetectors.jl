@@ -18,9 +18,9 @@ Box{T, CO}( b::Box{T, CO}; COT = CO,
     Box{T, COT}(b.hX, b.hY, b.hZ, origin, rotation)
 
 _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) =
-    (abs(pt.x) <= b.hX || abs(pt.x) ≈ b.hX) && 
-    (abs(pt.y) <= b.hY || abs(pt.y) ≈ b.hY) && 
-    (abs(pt.z) <= b.hZ || abs(pt.z) ≈ b.hZ)
+    (abs(pt.x) <= b.hX || csg_isapprox(pt.x, b.hX)) && 
+    (abs(pt.y) <= b.hY || csg_isapprox(pt.y, b.hY)) && 
+    (abs(pt.z) <= b.hZ || csg_isapprox(pt.z, b.hZ))
 
 _in(pt::CartesianPoint, b::Box{<:Any, OpenPrimitive}) = 
     abs(pt.x) < b.hX && abs(pt.y) < b.hY && abs(pt.z) < b.hZ
