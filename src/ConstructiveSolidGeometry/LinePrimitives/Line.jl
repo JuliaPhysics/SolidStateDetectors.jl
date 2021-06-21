@@ -7,6 +7,6 @@ distance(pt::CartesianPoint, l::Line) = norm((pt - l.origin) × l.direction) / n
 
 function _transform_into_object_coordinate_system(l::Line{T}, p::AbstractPrimitive) where {T}
     origin = _transform_into_object_coordinate_system(l.origin, p) 
-    direction = _transform_into_object_coordinate_system(CartesianPoint(l.direction), p)
+    direction = rotation(p) * l.direction
     Line( origin, CartesianVector(direction) )  
 end
