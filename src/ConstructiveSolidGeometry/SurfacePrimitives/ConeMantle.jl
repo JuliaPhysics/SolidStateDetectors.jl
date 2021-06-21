@@ -1,5 +1,5 @@
 """
-    struct ConeMantle{T,RT,TP} <: AbstractSurfacePrimitive{T}
+    struct ConeMantle{T,RT,TP,D} <: AbstractSurfacePrimitive{T}
 
 T: Type of values, e.g. Float64
 
@@ -15,9 +15,9 @@ T: Type of values, e.g. Float64
     * ...
 * `zH::T`: half hight/length of the cone mantle
 
-* `axis::Line{T}`: The axis of the Cone mantle. Going from the bottom center point to the top center point. 
+* `D`: `:inwards` or `:outwards`: Whethe the normal points inside or outside
 """
-@with_kw struct ConeMantle{T,RT,TP} <: AbstractCurvedSurfacePrimitive{T}
+@with_kw struct ConeMantle{T,RT,TP,D} <: AbstractCurvedSurfacePrimitive{T}
     r::RT = 1
     φ::TP = nothing
     hZ::T = 1 # maybe we don't need this. I will leave it for now...
@@ -27,50 +27,52 @@ T: Type of values, e.g. Float64
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+radius_at_z(hZ::T, rBot::T, rTop::T, z::T) where {T} = iszero(hZ) ? rBot : rBot + (hZ+z)*(rTop - rBot)/(2hZ) 
+radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
+radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, cm.r[1], cm.r[2], z)
 
-const CylinderMantle{T} = ConeMantle{T,T,Nothing}
-const PartialCylinderMantle{T} = ConeMantle{T,T,Tuple{T,T}}
-
-const FullConeMantle{T} = ConeMantle{T,Tuple{T,T},Nothing} # ugly name but works for now, should just be `ConeMantle`...
-const PartialConeMantle{T} = ConeMantle{T,Tuple{T,T},Tuple{T,T}}
-
-extremum(cm::CylinderMantle{T}) where {T} = sqrt(cm.hZ^2 + cm.r^2)
-extremum(cm::PartialCylinderMantle{T}) where {T} = sqrt(cm.hZ^2 + cm.r^2)
-
-extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(es.r[1], es.r[2])^2)
-extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(es.r[1], es.r[2])^2)
-
-function lines(sp::CylinderMantle{T}) where {T} 
-    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)
-    bot_ellipse = Circle{T}(r = sp.r, φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
-    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
-    top_ellipse = Circle{T}(r = sp.r, φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    bot_ellipse, top_ellipse
+function normal(cm::ConeMantle{T,T}, pt::CartesianPoint{T}) where {T}
+    pto = _transform_into_object_coordinate_system(pt, cm)
+    cyl = CylindricalPoint(pto)
+    return CartesianVector(_transform_into_global_coordinate_system(
+            CartesianPoint(CylindricalPoint{T}(cyl.r, cyl.φ, zero(T))), cm))
 end
-function lines(sp::PartialCylinderMantle{T}) where {T} 
-    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)
-    bot_ellipse = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
-    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
-    top_ellipse = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[1], -sp.hZ)), sp)
-    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[2], -sp.hZ)), sp)
-    p_top_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[1],  sp.hZ)), sp)
-    p_top_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[2],  sp.hZ)), sp)
-    edge_l = Edge{T}(p_bot_l, p_top_l)
-    edge_r = Edge{T}(p_bot_r, p_top_r)
-    bot_ellipse, top_ellipse, edge_l, edge_r
+function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{T}) where {T}
+    pto = _transform_into_object_coordinate_system(pt, cm)
+    cyl = CylindricalPoint(pto)
+    Δr = cm.r[2] - cm.r[1]
+    z = cyl.r * Δr / 2cm.hZ
+    return CartesianVector(_transform_into_global_coordinate_system(
+            CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, z)), cm))
 end
+function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T}) where {T}
+    pto = _transform_into_object_coordinate_system(pt, cm)
+    cyl = CylindricalPoint(pto)
+    Δr = -(cm.r[2] - cm.r[1])
+    z = cyl.r * Δr / 2cm.hZ
+    return CartesianVector(_transform_into_global_coordinate_system(
+            CartesianPoint(CylindricalPoint{T}( cyl.r, cyl.φ, z)), cm))
+end
+
+const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
+const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Tuple{T,T},D}
+
+
+extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r[1], cm.r[2])^2)
+extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r[1], cm.r[2])^2)
+
+
 function lines(sp::FullConeMantle{T}) where {T} 
-    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), sp.hZ), sp)
+    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), -sp.hZ), sp)
     bot_ellipse = Circle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
-    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T),-sp.hZ), sp)
+    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), +sp.hZ), sp)
     top_ellipse = Circle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
     bot_ellipse, top_ellipse
 end
 function lines(sp::PartialConeMantle{T}) where {T} 
-    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T),  sp.hZ), sp)
+    bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
     bot_ellipse = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
-    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
+    top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +sp.hZ), sp)
     top_ellipse = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
     p_bot_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[1], -sp.hZ)), sp)
     p_bot_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[2], -sp.hZ)), sp)
@@ -132,45 +134,45 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
            _transform_into_global_coordinate_system(ints2, cm)
 end
 
-"""
-    intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
+# """
+#     intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
 
-The function will always return 2 CartesianPoint's.
-If the line just touches the mantle, the two points will be the same. 
-If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
-"""
-function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
-    obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
+# The function will always return 2 CartesianPoint's.
+# If the line just touches the mantle, the two points will be the same. 
+# If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+# """
+# function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
+#     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
     
-    L1 = obj_l.origin.x
-    L2 = obj_l.origin.y
-    L3 = obj_l.origin.z
-    D1 = obj_l.direction.x
-    D2 = obj_l.direction.y
-    D3 = obj_l.direction.z
+#     L1 = obj_l.origin.x
+#     L2 = obj_l.origin.y
+#     L3 = obj_l.origin.z
+#     D1 = obj_l.direction.x
+#     D2 = obj_l.direction.y
+#     D3 = obj_l.direction.z
 
-    f1 = D1^2 + D2^2 
-    λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
-                # (here eZ -> D1 = D2 = 0)
-                # We assume here that this is not the case -> 
-                # We check this in choosing the sample / evaluating dimensions in `paint!` 
-    hZ = cm.hZ
-    R0 = cm.r
+#     f1 = D1^2 + D2^2 
+#     λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
+#                 # (here eZ -> D1 = D2 = 0)
+#                 # We assume here that this is not the case -> 
+#                 # We check this in choosing the sample / evaluating dimensions in `paint!` 
+#     hZ = cm.hZ
+#     R0 = cm.r
 
-    term1 = (2D1*L1 + 2D2*L2)^2
-    term2 = L1^2 + L2^2 - R0^2
-    term3 = -D1*L1 - D2*L2 
-    term4 = term1 - 4*f1*term2
-    sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
+#     term1 = (2D1*L1 + 2D2*L2)^2
+#     term2 = L1^2 + L2^2 - R0^2
+#     term3 = -D1*L1 - D2*L2 
+#     term4 = term1 - 4*f1*term2
+#     sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
     
-    λ1 = λ * (-sq/2 + term3) 
-    λ2 = λ * (+sq/2 + term3)
+#     λ1 = λ * (-sq/2 + term3) 
+#     λ2 = λ * (+sq/2 + term3)
     
-    ints1 = obj_l.origin + λ1 * obj_l.direction 
-    ints2 = obj_l.origin + λ2 * obj_l.direction 
-    return _transform_into_global_coordinate_system(ints1, cm), 
-           _transform_into_global_coordinate_system(ints2, cm)
-end
+#     ints1 = obj_l.origin + λ1 * obj_l.direction 
+#     ints2 = obj_l.origin + λ2 * obj_l.direction 
+#     return _transform_into_global_coordinate_system(ints1, cm), 
+#            _transform_into_global_coordinate_system(ints2, cm)
+# end
 
 
 # function get_2d_grid_ticks_and_proj(cm::ConeMantle{T}, t) where {T}

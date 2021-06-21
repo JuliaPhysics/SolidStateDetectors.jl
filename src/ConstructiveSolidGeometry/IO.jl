@@ -73,7 +73,7 @@ end
 function _parse_linear_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
-    To == -From ? To : From..To
+    To == -From == zero(T) ? To : From..To # if != 0 is influences the origin 
 end
 
 
@@ -100,10 +100,38 @@ function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units
         bottom = _parse_radial_interval(T, dictr["bottom"], unit)
         top = _parse_radial_interval(T, dictr["top"], unit)
         # bottom and top need to be same type for Cone
-        typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
+        # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
+        bottom, top
     else
-        # "r" : {"from": ..., "to": ...}
+        # "r" : {"from": ... , "to": ...}
         _parse_radial_interval(T, dictr, unit)
+    end
+end
+# converts "r" to the respective AbstractFloat/Interval/Tuple for Cone
+function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units, ::Type{Cone}) where {T}
+    @assert haskey(dict, "r") "Please specify 'r'."
+    dictr = dict["r"]
+    r_bot, r_top = if haskey(dictr, "bottom") && haskey(dictr, "top")
+        # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
+        bottom = _parse_radial_interval(T, dictr["bottom"], unit)
+        top = _parse_radial_interval(T, dictr["top"], unit)
+        # bottom and top need to be same type for Cone
+        # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
+        bottom, top
+    else
+        # "r" : {"from": ... , "to": ...}
+        r = _parse_radial_interval(T, dictr, unit)
+        (r, r)
+    end
+    # Not all cases implemented yet 
+    if r_bot[1] == r_top[1] == zero(T)
+        if r_bot[2] == r_bot[1]
+            r_bot[2]
+        else
+            r_bot[2], r_top[2]
+        end
+    else
+        r_bot, r_top    
     end
 end
 
