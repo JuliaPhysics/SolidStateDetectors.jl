@@ -122,8 +122,10 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
         term2 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
         term3 = -D1*L1 - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
         term4 = term1 - 4*f1*term2
-        sq::T = term4 < 0 ? T(NaN) : sqrt(term4) 
+        # sq::T = term4 < 0 ? T(NaN) : sqrt(term4) 
+        sq::T = sqrt(abs(term4)) 
     
+        # @show term4
         λ1 = λ * (-sq/2 + term3) 
         λ2 = λ * (+sq/2 + term3)
         λ1, λ2    
