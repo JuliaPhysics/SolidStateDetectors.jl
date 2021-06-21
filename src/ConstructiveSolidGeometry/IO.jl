@@ -111,27 +111,46 @@ end
 function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units, ::Type{Cone}) where {T}
     @assert haskey(dict, "r") "Please specify 'r'."
     dictr = dict["r"]
-    r_bot, r_top = if haskey(dictr, "bottom") && haskey(dictr, "top")
+    r = if haskey(dictr, "bottom") && haskey(dictr, "top")
         # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
         bottom = _parse_radial_interval(T, dictr["bottom"], unit)
         top = _parse_radial_interval(T, dictr["top"], unit)
         # bottom and top need to be same type for Cone
         # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
-        bottom, top
-    else
+        if bottom isa Real bottom = (zero(T), bottom) end
+        if top isa Real top = (zero(T), top) end
+        (bottom, top)
+    elseif haskey(dictr, "from") && haskey(dictr, "to")
         # "r" : {"from": ... , "to": ...}
         r = _parse_radial_interval(T, dictr, unit)
+        if r isa Real r = (zero(T), r) end
         (r, r)
+    else
+        r = _parse_radial_interval(T, dictr, unit)
+        ((zero(T),r),(zero(T),r))
     end
     # Not all cases implemented yet 
-    if r_bot[1] == r_top[1] == zero(T)
-        if r_bot[2] == r_bot[1]
-            r_bot[2]
+    r_bot_in, r_bot_out, r_top_in, r_top_out = r[1][1], r[1][2], r[2][1], r[2][2]
+    if r_bot_in == r_top_in == zero(T) 
+        if r_bot_out == r_top_out
+            return r_bot_out # Cylinder
         else
-            r_bot[2], r_top[2]
+            return (r_bot_out, r_top_out) # VaryingCylinder
+        end
+    elseif r_top_in == r_top_out && r_bot_in != r_bot_out
+        if r_top_in == 0
+            return ((r_bot_in, r_bot_out), nothing)
+        else
+            return ((r_bot_in, r_bot_out), r_top_in)
+        end
+    elseif r_top_in != r_top_out && r_bot_in == r_bot_out
+        if r_bot_in == 0
+            return (nothing, (r_top_in, r_top_out))
+        else
+            return (r_bot_in, (r_top_in, r_top_out))
         end
     else
-        r_bot, r_top    
+        r # VaryingTube
     end
 end
 
