@@ -13,7 +13,7 @@ SSD_examples[:Coax] = (
     joinpath(@__DIR__, "../examples/example_config_files/public_Coax_config.json")
 )
 SSD_examples[:InvertedCoax] = (
-    joinpath(@__DIR__, "../examples/example_config_files/public_ivc_config.json")
+    joinpath(@__DIR__, "../examples/example_config_files/public_ivc_config.yaml")
 )
 SSD_examples[:InvertedCoaxInCryostat] = (
     joinpath(@__DIR__, "../examples/example_config_files/ivc_splitted_config/public_ivc_cryostat_config.json")
