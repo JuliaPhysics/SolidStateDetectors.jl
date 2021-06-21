@@ -20,3 +20,5 @@ end
 function geom_round(pt::CartesianPoint{T})::CartesianPoint{T} where {T <: Real}
     return CartesianPoint{T}( geom_round(pt.x), geom_round(pt.y), geom_round(pt.z)  )
 end
+
+csg_isapprox(x::T, y::T) where {T} = abs(x - y) < T(1e-9) # nm resolution
