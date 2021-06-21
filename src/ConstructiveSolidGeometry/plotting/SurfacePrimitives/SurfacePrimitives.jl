@@ -6,13 +6,13 @@ include("ConeMantle.jl")
     linecolor --> :black
     @series begin
         label --> "Faces"
-        show_normal --> false
+        show_normal --> true
         vp[1]
     end
     if length(vp) > 1
         for p in vp[2:end]
             @series begin
-                show_normal --> false
+                show_normal --> true
                 label := nothing
                 p
             end

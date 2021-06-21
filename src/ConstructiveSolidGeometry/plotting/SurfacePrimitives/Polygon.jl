@@ -1,4 +1,4 @@
-@recipe function f(p::Polygon; normallength = 0)
+@recipe function f(p::Polygon)
     linecolor --> :black
     @series begin
         label --> "Polygon"
@@ -7,14 +7,15 @@
         z = map(p -> p[3], [p.points..., p.points[1]])
         x, y, z
     end
-    if normallength > 0
+    if !haskey(plotattributes, :show_normal) || plotattributes[:show_normal]
         @series begin
-            label --> "Normal"
+            label := nothing
             seriestype := :vector
-            mean(p.points), Plane(p).normal * normallength
+            mean(p.points), Plane(p).normal / 5
         end
     end
 end
 
 
 
+!
