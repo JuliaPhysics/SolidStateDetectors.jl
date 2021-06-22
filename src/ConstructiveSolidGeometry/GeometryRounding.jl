@@ -22,4 +22,4 @@ function geom_round(pt::CartesianPoint{T})::CartesianPoint{T} where {T <: Real}
 end
 
 csg_isapprox(x::T, y::T) where {T} = abs(x - y)/((x+y)/2) < T(1e-9)
-csg_isapprox(x::Float32, y::Float32)  = abs(x - y)/((x+y)/2) < 1f-7
+csg_isapprox(x::Float32, y::Float32)  = abs(x - y)/((x+y)/2) < 1f-6
