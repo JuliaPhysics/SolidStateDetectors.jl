@@ -22,6 +22,7 @@ T = Float32
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
+        @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-4 )
     end
     @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
@@ -33,19 +34,21 @@ T = Float32
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
+        @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-4 )
     end
-    # @testset "Simulate example detector: Coax" begin
-    #     sim = Simulation{T}(SSD_examples[:Coax])
-    #     simulate!(sim, max_refinements = 0, verbose = true)
-    #     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
-    #     simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
-    #     signalsum = T(0)
-    #     for i in 1:length(evt.waveforms)
-    #         signalsum += abs(evt.waveforms[i].value[end])
-    #     end
-    #     @test isapprox( signalsum, T(2), atol = 4e-3 )
-    # end
+    @testset "Simulate example detector: Coax" begin
+        sim = Simulation{T}(SSD_examples[:Coax])
+        simulate!(sim, max_refinements = 0, verbose = true)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
+        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @info signalsum
+        @test isapprox( signalsum, T(2), atol = 4e-3 )
+    end
 #     @testset "Simulate example detector: BEGe" begin
 #         sim = Simulation{T}(SSD_examples[:BEGe])
 #         simulate!(sim, max_refinements = 0, verbose = true)
@@ -55,6 +58,7 @@ T = Float32
 #         for i in 1:length(evt.waveforms)
 #             signalsum += abs(evt.waveforms[i].value[end])
 #         end
+#         @info signalsum
 #         @test isapprox( signalsum, T(2), atol = 3e-3 )
 #     end
 #     @testset "Simulate example detector: HexagonalPrism" begin
@@ -66,6 +70,7 @@ T = Float32
 #         for i in 1:length(evt.waveforms)
 #             signalsum += abs(evt.waveforms[i].value[end])
 #         end
+#         @info signalsum
 #         @test isapprox( signalsum, T(2), atol = 5e-4 )
 #     end
     @testset "Simulate example detector: CGD" begin
@@ -78,6 +83,7 @@ T = Float32
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
+        @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-2 )
     end
 #     #=
@@ -91,6 +97,7 @@ T = Float32
 #         # for i in 1:length(evt.waveforms)
 #         #     signalsum += abs(evt.waveforms[i].value[end])
 #         # end
+#         @info signalsum
 #         # @test isapprox( signalsum, T(2), atol = 5e-4 )
 #     end 
 #     @testset "Simulate example detector: Toroidal" begin
@@ -103,6 +110,7 @@ T = Float32
 #         for i in 1:length(evt.waveforms)
 #             signalsum += abs(evt.waveforms[i].value[end])
 #         end
+#         @info signalsum
 #         @test isapprox( signalsum, T(2), atol = 5e-4 )
 #     end
 #     =#
@@ -115,6 +123,7 @@ T = Float32
 #         for i in 1:length(evt.waveforms)
 #             signalsum += abs(evt.waveforms[i].value[end])
 #         end
+#         @info signalsum
 #         @test isapprox( signalsum, T(2), atol = 5e-4 )
 #     end
 end
