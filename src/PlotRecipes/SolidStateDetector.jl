@@ -21,6 +21,7 @@ end
     xguide --> "x / m"
     yguide --> "y / m"
     zguide --> "z / m"
+    show_normal --> false
 
     @series begin
         det.semiconductor
