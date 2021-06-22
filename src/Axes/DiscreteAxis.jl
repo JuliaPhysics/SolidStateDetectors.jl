@@ -153,14 +153,14 @@ end
 
 function DiscreteAxis{BL, BR}(interval::Interval{L, R, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing)::DiscreteAxis{T, BL, BR} where {L, R, T, BL, BR}
     ticks::Vector{T} = collect(range(interval, step=step, length=length))
-    if T == Float32 || T == Float64
-        ticks = round.(ticks, sigdigits = geom_sigdigits(T))
-        for iv in eachindex(ticks)
-            if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
-                ticks[iv] = zero(T)
-            end
-        end
-    end
+    # if T == Float32 || T == Float64
+    #     ticks = round.(ticks, sigdigits = geom_sigdigits(T))
+    #     for iv in eachindex(ticks)
+    #         if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
+    #             ticks[iv] = zero(T)
+    #         end
+    #     end
+    # end
     DiscreteAxis{T, BL, BR}(interval, ticks)
 end
 
