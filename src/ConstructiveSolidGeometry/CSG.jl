@@ -72,8 +72,9 @@ end
 
 Dictionary(g::CSGDifference{T}) where {T} = OrderedDict{String,Any}("difference" => OrderedDict[Dictionary(g.a), Dictionary(g.b)])
 
-Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, input_units::NamedTuple, transformations::Transformations{T}) where {T} = 
+function Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, input_units::NamedTuple, transformations::Transformations{T}) where {T} 
     Geometry(T, CSG, [g for g in v], input_units, transformations)
+end
 
 (+)(csg::A, v::CartesianVector) where {A <: AbstractConstructiveGeometry} = A(csg.a + v, csg.b + v)
 
@@ -85,8 +86,8 @@ function switchClosedOpen(csg::CSGDifference)
     CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
 end
 function switchClosedOpen(csg::CSGUnion) 
-    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
+    CSGUnion(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
 end
 function switchClosedOpen(csg::CSGIntersection) 
-    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
+    CSGIntersection(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
 end
