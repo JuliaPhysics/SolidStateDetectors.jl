@@ -59,9 +59,7 @@ function (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractConstr
     ob = switchClosedOpen(b)
     CSGDifference{T,A,typeof(ob)}(a, ob)
 end
-function switchClosedOpen(csg::CSGDifference) 
-    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
-end
+
 function (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractVolumePrimitive{T}} 
     ob = OpenPrimitive(b)
     CSGDifference{T,A,typeof(ob)}(a, ob)
@@ -82,3 +80,13 @@ Geometry(::Type{T}, CSG::Type{<:AbstractConstructiveGeometry}, v::Vector{Any}, i
 (*)(r::AbstractMatrix, csg::A) where {A <: AbstractConstructiveGeometry} = A(r * csg.a, r * csg.b)
 
 surfaces(csg::AbstractConstructiveGeometry) = vcat(surfaces(csg.a)..., surfaces(csg.b)...)
+
+function switchClosedOpen(csg::CSGDifference) 
+    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
+end
+function switchClosedOpen(csg::CSGUnion) 
+    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
+end
+function switchClosedOpen(csg::CSGIntersection) 
+    CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
+end
