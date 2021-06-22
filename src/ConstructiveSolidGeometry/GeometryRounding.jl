@@ -1,5 +1,5 @@
 geom_sigdigits(::Type{Int64})::Int = 12
-geom_sigdigits(::Type{Float32})::Int = 6
+geom_sigdigits(::Type{Float32})::Int = 5
 geom_sigdigits(::Type{Float64})::Int = 12
 
 geom_atol_zero(::Type{Int64})::Float64 = 1e-12
