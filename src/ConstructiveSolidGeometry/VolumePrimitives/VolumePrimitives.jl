@@ -14,4 +14,5 @@ end
 
 include("Box.jl")
 include("Cone.jl")
+include("Ellipsoid.jl")
 include("RegularPrism.jl")
