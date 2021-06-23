@@ -37,6 +37,12 @@ function _in(pt::CartesianPoint, s::FullSphere{<:Any, OpenPrimitive})
     r < s.r
 end
 
+function surfaces(e::Ellipsoid{T}) where {T}
+    em = EllipsoidMantle(e.r, e.φ, e.θ, e.origin, e.rotation)
+    (em,)
+end
+
+
 
 # #Constructors
 # function Sphere(; rMin = 0, rMax = 1)
