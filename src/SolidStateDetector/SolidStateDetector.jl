@@ -12,6 +12,12 @@ struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
     SolidStateDetector{T}(n::AbstractString,s::SC,c::C,p::P,v::VDM) where {T,SC,C,P,VDM}= new{T,SC,C,P,VDM}(n,s,c,p,v)
 end
 
+function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, cdm::AbstractImpurityDensity{T}) where {T,SC,CT,PT,VDM}
+    sc = Semiconductor(det.semiconductor, cdm)
+    SolidStateDetector{T}(
+        det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
+    )
+end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 

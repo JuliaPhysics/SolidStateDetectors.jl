@@ -39,7 +39,6 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple, outer_transformat
     return Semiconductor(temperature, material, impurity_density_model, charge_drift_model, geometry)
 end
 
-
 function println(io::IO, d::Semiconductor{T}) where {T <: SSDFloat}
     println("\t---General Properties---")
     println("\t-Detector Material: \t $(d.material.name)")
@@ -50,3 +49,8 @@ print(io::IO, d::Semiconductor{T}) where {T} = print(io, "Semiconductor{$T} - $(
 
 show(io::IO, d::Semiconductor) = print(io, d)
 show(io::IO,::MIME"text/plain", d::Semiconductor) = show(io, d)
+
+
+function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, cdm::AbstractImpurityDensity{T}) where {T,G,MT,CDM,IDM}
+    Semiconductor(sc.temperature, sc.material, cdm, sc.charge_drift_model, sc.geometry)
+end
