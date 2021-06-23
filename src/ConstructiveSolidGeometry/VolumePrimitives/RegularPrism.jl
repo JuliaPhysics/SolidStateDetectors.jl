@@ -27,17 +27,19 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     else
         CartesianPoint{T}(zero(T), zero(T), mean(z))
     end
-    if r isa Tuple # lazy workaround for now
-        return P{T,ClosedPrimitive,T}(r = r[2], hZ = hZ, origin = origin) -
-               P{T,ClosedPrimitive,T}(r = r[1], hZ = hZ, origin = origin)
+    g = if r isa Tuple # lazy workaround for now
+        P{T,ClosedPrimitive,T}(r = r[2], hZ = hZ, origin = origin) -
+        P{T,ClosedPrimitive,T}(r = r[1], hZ = T(1.1)*hZ, origin = origin)
     else
-        return P{T,ClosedPrimitive,T}(r = r, hZ = hZ, origin = origin)
+        P{T,ClosedPrimitive,T}(r = r, hZ = hZ, origin = origin)
     end
+    transform(g, transformations)
 end
 
 function vertices(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
-    xys = SVector{6,Tuple{T,T}}([sincos(T(2π)*(n-1)/N) for n in 1:N])
-    SVector{2N,CartesianPoint{T}}([CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys])
+    xys = [sincos(T(2π)*(n-1)/N) for n in 1:N]
+    pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
+    _transform_into_global_coordinate_system(pts, rp)
 end
 
 function surfaces(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
@@ -55,6 +57,23 @@ end
 
 function sample(rp::RegularPrism{T,<:Any,N,T})::Vector{CartesianPoint{T}} where {T,N}
     [vertices(rp)...]
+end
+
+function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,ClosedPrimitive,N,T}) where {T,N} 
+    (abs(pt.z) <= rp.hZ || csg_isapprox_lin(abs(pt.z), rp.hZ)) && begin
+        r, φ = hypot(pt.x, pt.y), atan(pt.y, pt.x)
+        α = T(π/N)
+        _r = r * cos(α - mod(φ, 2α)) / cos(α) 
+        _r <= rp.r || csg_isapprox_lin(_r, rp.r)
+    end
+end
+function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}) where {T,N} 
+    abs(pt.z) < rp.hZ && begin
+        r, φ = hypot(pt.x, pt.y), atan(pt.y, pt.x)
+        α = T(π/N)
+        _r = r * cos(α - mod(φ, 2α)) / cos(α) 
+        _r < rp.r
+    end
 end
 
 # const PrismAliases = Dict{Int, String}(
