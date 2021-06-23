@@ -10,7 +10,27 @@ RegularPrism{T, CO, N, TR}( rp::RegularPrism{T, CO, N, TR}; COT = CO,
             origin::CartesianPoint{T} = rp.origin,
             rotation::SMatrix{3,3,T,9} = rp.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}, N, TR} =
     RegularPrism{T, COT, N, TR}(rp.r, rp.hZ, origin, rotation)
-    
+
+const TriangularPrism{T,CO,TR} = RegularPrism{T,CO,3,TR}
+const QuadranglePrism{T,CO,TR} = RegularPrism{T,CO,4,TR}
+const PentagonalPrism{T,CO,TR} = RegularPrism{T,CO,5,TR}
+const HexagonalPrism{T,CO,TR}  = RegularPrism{T,CO,6,TR}
+
+function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}
+            ) where {T, P <: Union{TriangularPrism, QuadranglePrism, PentagonalPrism, HexagonalPrism}}
+    length_unit = input_units.length
+    r = parse_r_of_primitive(T, dict, length_unit)
+    z = parse_height_of_primitive(T, dict, length_unit)
+    hZ = typeof(z) <: Real ? z : width(z)/2
+    origin = if typeof(z) <: Real
+        CartesianPoint{T}(zero(T), zero(T), zero(T))
+    else
+        CartesianPoint{T}(zero(T), zero(T), mean(z))
+    end
+    return P{T,ClosedPrimitive,typeof(r)}(r = r, hZ = hZ, origin = origin)
+end
+
+
 # const PrismAliases = Dict{Int, String}(
 #     3 => "TriangularPrism", 
 #     4 => "SquarePrism", 
@@ -72,13 +92,7 @@ RegularPrism{T, CO, N, TR}( rp::RegularPrism{T, CO, N, TR}; COT = CO,
 #     )
 
 # # read-in
-# function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTuple
-#             ) where {T, P <: Union{TriangularPrism, SquarePrism, PentagonalPrism, HexagonalPrism}}
-#     length_unit = input_units.length
-#     r = parse_r_of_primitive(T, dict, length_unit)
-#     z = parse_height_of_primitive(T, dict, length_unit)
-#     return P(T, r, z)
-# end
+
 
 # function Dictionary(rp::RegularPrism{N,T}) where {N,T}
 #     dict = OrderedDict{String,Any}()
