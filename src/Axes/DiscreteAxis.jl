@@ -111,7 +111,8 @@ function range(interval::Interval{:closed, :open, T}; step::Union{Missing, T} = 
         range(interval.left, stop = stop, length=length)
     elseif ismissing(length)
         # stop = interval.right - interval.right % step
-        stop = geom_round(interval.right - step)
+        # stop = geom_round(interval.right - step)
+        stop = interval.right - step
         range(interval.left, stop = stop, step=step)
     else
         error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")

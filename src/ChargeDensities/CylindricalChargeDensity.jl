@@ -24,8 +24,10 @@ end
 function CylindricalChargeDensity{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T)::CylindricalChargeDensity{T} where {T <: SSDFloat}
     offsets, gradients = zeros(T,3), zeros(T,3)
     if prod(map(k -> k in ["r","z"], collect(keys(dict)))) @warn "Only r and z are supported in the cylindrical charge density model.\nChange the charge density model in the config file or remove all other entries." end
-    if haskey(dict, "r")     offsets[1] = geom_round(unit_factor * T(dict["r"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["r"]["gradient"]))    end
-    if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
+    # if haskey(dict, "r")     offsets[1] = geom_round(unit_factor * T(dict["r"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["r"]["gradient"]))    end
+    # if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
+    if haskey(dict, "r")     offsets[1] = unit_factor * T(dict["r"]["init"]);     gradients[1] = gradient_unit_factor * T(dict["r"]["gradient"])    end
+    if haskey(dict, "z")     offsets[3] = unit_factor * T(dict["z"]["init"]);     gradients[3] = gradient_unit_factor * T(dict["z"]["gradient"])    end
     CylindricalChargeDensity{T}( NTuple{3, T}(offsets), NTuple{3, T}(gradients) )
 end
 

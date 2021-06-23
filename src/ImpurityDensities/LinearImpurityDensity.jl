@@ -24,9 +24,12 @@ end
 function LinearImpurityDensity{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T)::LinearImpurityDensity{T} where {T <: SSDFloat}
     offsets, gradients = zeros(T,3), zeros(T,3)
     if prod(map(k -> k in ["x","y","z"], collect(keys(dict)))) @warn "Only x, y and z are supported in the linear Impurity density model.\nChange the Impurity density model in the config file or remove all other entries." end
-    if haskey(dict, "x")     offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["x"]["gradient"]))    end
-    if haskey(dict, "y")     offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]));     gradients[2] = geom_round(gradient_unit_factor * T(dict["y"]["gradient"]))    end
-    if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
+    # if haskey(dict, "x")     offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["x"]["gradient"]))    end
+    # if haskey(dict, "y")     offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]));     gradients[2] = geom_round(gradient_unit_factor * T(dict["y"]["gradient"]))    end
+    # if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
+    if haskey(dict, "x")     offsets[1] = unit_factor * T(dict["x"]["init"]);     gradients[1] = gradient_unit_factor * T(dict["x"]["gradient"])    end
+    if haskey(dict, "y")     offsets[2] = unit_factor * T(dict["y"]["init"]);     gradients[2] = gradient_unit_factor * T(dict["y"]["gradient"])    end
+    if haskey(dict, "z")     offsets[3] = unit_factor * T(dict["z"]["init"]);     gradients[3] = gradient_unit_factor * T(dict["z"]["gradient"])    end
     LinearImpurityDensity{T}( NTuple{3, T}(offsets), NTuple{3, T}(gradients) )
 end
 

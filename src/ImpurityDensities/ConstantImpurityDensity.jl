@@ -24,7 +24,8 @@ end
 
 function ConstantImpurityDensity{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T)::ConstantImpurityDensity{T} where {T <: SSDFloat}
     ρ::T = if haskey(dict, "Impurity_density")   
-        geom_round(unit_factor * T(dict["Impurity_density"]))
+        # geom_round(unit_factor * T(dict["Impurity_density"]))
+        unit_factor * T(dict["Impurity_density"])
     else
         T(0)
     end

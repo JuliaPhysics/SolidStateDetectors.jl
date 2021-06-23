@@ -142,7 +142,7 @@ end
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
-        if in(searchsortednearest(grid, geom_round(p)), contact) || in(searchsortednearest(grid, p), contact) || geom_round(p) in contact || p in contact 
+        if in(searchsortednearest(grid, p), contact) || in(searchsortednearest(grid, p), contact) || p in contact || p in contact 
             return CD_ELECTRODE::UInt8, contact.id, surface_normal
         end
     end

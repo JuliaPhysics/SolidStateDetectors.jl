@@ -52,9 +52,9 @@ const PartialCylinder{T,CO} = Cone{T,CO,T,Tuple{T,T}}
 
 function _in(pt::CartesianPoint, c::Cylinder{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z) 
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y) 
-        r <= c.r || csg_isapprox(r, c.r)
+        r <= c.r || csg_isapprox_lin(r, c.r)
     end
 end
 function _in(pt::CartesianPoint, c::Cylinder{T,OpenPrimitive}) where {T} 
@@ -76,9 +76,9 @@ end
 
 function _in(pt::CartesianPoint, c::PartialCylinder{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z) 
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y) 
-        r <= c.r || csg_isapprox(r, c.r)
+        r <= c.r || csg_isapprox_lin(r, c.r)
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end
@@ -123,10 +123,10 @@ const PartialVaryingCylinder{T,CO} = Cone{T,CO,Tuple{T,T},Tuple{T,T}}
 
 function _in(pt::CartesianPoint, c::VaryingCylinder{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z) 
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y) 
         rz = radius_at_z(c.hZ, c.r[1], c.r[2], pt.z)
-        r <= rz || csg_isapprox(r, rz)
+        r <= rz || csg_isapprox_lin(r, rz)
     end
 end
 function _in(pt::CartesianPoint, c::VaryingCylinder{T,OpenPrimitive}) where {T} 
@@ -146,10 +146,10 @@ end
 
 function _in(pt::CartesianPoint, c::PartialVaryingCylinder{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z) 
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y) 
         rz = radius_at_z(c.hZ, c.r[1], c.r[2], pt.z)
-        r <= rz || csg_isapprox(r, rz)
+        r <= rz || csg_isapprox_lin(r, rz)
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end
@@ -197,12 +197,12 @@ const PartialVaryingTube{T,CO} = Cone{T,CO,Tuple{Tuple{T,T},Tuple{T,T}},Tuple{T,
 
 function _in(pt::CartesianPoint, c::VaryingTube{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
         r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z)
-        (r_in <= r || csg_isapprox(r_in, r)) &&
-        (r <= r_out || csg_isapprox(r, r_out)) 
+        (r_in <= r || csg_isapprox_lin(r_in, r)) &&
+        (r <= r_out || csg_isapprox_lin(r, r_out)) 
     end
 end
 function _in(pt::CartesianPoint, c::VaryingTube{T,OpenPrimitive}) where {T} 
@@ -223,12 +223,12 @@ end
 
 function _in(pt::CartesianPoint, c::PartialVaryingTube{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
         r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z)
-        (r_in <= r || csg_isapprox(r_in, r)) &&
-        (r <= r_out || csg_isapprox(r, r_out)) 
+        (r_in <= r || csg_isapprox_lin(r_in, r)) &&
+        (r <= r_out || csg_isapprox_lin(r, r_out)) 
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end
@@ -274,10 +274,10 @@ const PartialUpwardCone{T,CO} = Cone{T,CO,Tuple{Tuple{Nothing,T},Nothing},Tuple{
 
 function _in(pt::CartesianPoint, c::UpwardCone{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z)
-        (r <= r_out || csg_isapprox(r_out, r)) 
+        (r <= r_out || csg_isapprox_lin(r_out, r)) 
     end 
 end
 function _in(pt::CartesianPoint, c::UpwardCone{T,OpenPrimitive}) where {T} 
@@ -295,10 +295,10 @@ end
 
 function _in(pt::CartesianPoint, c::PartialUpwardCone{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z)
-        (r <= r_out || csg_isapprox(r_out, r)) 
+        (r <= r_out || csg_isapprox_lin(r_out, r)) 
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end
@@ -341,10 +341,10 @@ const PartialDownwardCone{T,CO} = Cone{T,CO,Tuple{Nothing,Tuple{Nothing,T}},Tupl
 
 function _in(pt::CartesianPoint, c::DownwardCone{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
-        (r <= r_out || csg_isapprox(r_out, r)) 
+        (r <= r_out || csg_isapprox_lin(r_out, r)) 
     end 
 end
 function _in(pt::CartesianPoint, c::DownwardCone{T,OpenPrimitive}) where {T} 
@@ -362,10 +362,10 @@ end
 
 function _in(pt::CartesianPoint, c::PartialDownwardCone{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
-        (r <= r_out || csg_isapprox(r_out, r)) 
+        (r <= r_out || csg_isapprox_lin(r_out, r)) 
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end
@@ -409,12 +409,12 @@ const PartialTopClosedTube{T,CO} = Cone{T,CO,Tuple{Tuple{T,T},T},Tuple{T,T}}
 
 function _in(pt::CartesianPoint, c::TopClosedTube{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2], pt.z)
         r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2], pt.z)
-        (r_in <= r || csg_isapprox(r_in, r)) &&
-        (r <= r_out || csg_isapprox(r, r_out)) 
+        (r_in <= r || csg_isapprox_lin(r_in, r)) &&
+        (r <= r_out || csg_isapprox_lin(r, r_out)) 
     end
 end
 function _in(pt::CartesianPoint, c::TopClosedTube{T,OpenPrimitive}) where {T} 
@@ -435,12 +435,12 @@ end
 
 function _in(pt::CartesianPoint, c::PartialTopClosedTube{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2], pt.z)
         r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2], pt.z)
-        (r_in <= r || csg_isapprox(r_in, r)) &&
-        (r <= r_out || csg_isapprox(r, r_out)) 
+        (r_in <= r || csg_isapprox_lin(r_in, r)) &&
+        (r <= r_out || csg_isapprox_lin(r, r_out)) 
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end
@@ -488,12 +488,12 @@ const PartialBottomClosedTube{T,CO} = Cone{T,CO,Tuple{T,Tuple{T,T}},Tuple{T,T}}
 
 function _in(pt::CartesianPoint, c::BottomClosedTube{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_in = radius_at_z(c.hZ, c.r[1], c.r[2][1], pt.z)
         r_out = radius_at_z(c.hZ, c.r[1], c.r[2][2], pt.z)
-        (r_in <= r || csg_isapprox(r_in, r)) &&
-        (r <= r_out || csg_isapprox(r, r_out)) 
+        (r_in <= r || csg_isapprox_lin(r_in, r)) &&
+        (r <= r_out || csg_isapprox_lin(r, r_out)) 
     end
 end
 function _in(pt::CartesianPoint, c::BottomClosedTube{T,OpenPrimitive}) where {T} 
@@ -514,12 +514,12 @@ end
 
 function _in(pt::CartesianPoint, c::PartialBottomClosedTube{T,ClosedPrimitive}) where {T} 
     az = abs(pt.z)
-    (az <= c.hZ || csg_isapprox(az, c.hZ)) && begin
+    (az <= c.hZ || csg_isapprox_lin(az, c.hZ)) && begin
         r = hypot(pt.x, pt.y)
         r_in = radius_at_z(c.hZ, c.r[1], c.r[2][1], pt.z)
         r_out = radius_at_z(c.hZ, c.r[1], c.r[2][2], pt.z)
-        (r_in <= r || csg_isapprox(r_in, r)) &&
-        (r <= r_out || csg_isapprox(r, r_out)) 
+        (r_in <= r || csg_isapprox_lin(r_in, r)) &&
+        (r <= r_out || csg_isapprox_lin(r, r_out)) 
     end &&
     _in_angular_interval_closed(atan(pt.y, pt.x), c.φ)
 end

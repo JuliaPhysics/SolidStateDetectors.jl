@@ -35,11 +35,10 @@ using .ConstructiveSolidGeometry:
             CartesianTicksTuple, CylindricalTicksTuple,
             Geometry, AbstractGeometry,
             AbstractSurfacePrimitive, AbstractPlanarSurfacePrimitive, AbstractCurvedSurfacePrimitive,
-            geom_round, geom_sigdigits, geom_atol_zero,
+            csg_round_lin, csg_round_rad, csg_isapprox_lin, csg_isapprox_rad,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations
-            
-
+        
 import .ConstructiveSolidGeometry: sample, sample_surface
 export CartesianPoint, CartesianVector, CylindricalPoint
 
@@ -78,6 +77,8 @@ Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.ms
 
 include("Units.jl")
 
+isunique(v::AbstractVector) = length(v) == length(unique(v))
+
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
 include("Grids/Grids.jl")
@@ -90,7 +91,6 @@ include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
-# include("GeometryRounding.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")
 

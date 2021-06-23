@@ -121,7 +121,8 @@ function _drift_charge!(
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
-            if geom_round.(stepvector) == null_step
+            # if geom_round.(stepvector) == null_step
+            if stepvector == null_step
                 done = true
             end
             next_pos::CartesianPoint{T} = current_pos + stepvector
@@ -159,7 +160,8 @@ function _drift_charge!(
                     drifttime += Δt * (1 - i * T(0.001))
                     timestamps[istep] = drifttime
                     last_real_step_index += 1
-                    if geom_round.(next_pos - current_pos) == null_step
+                    # if geom_round.(next_pos - current_pos) == null_step
+                    if next_pos - current_pos == null_step
                         done = true
                     end
                 else # elseif cd_point_type == CD_BULK  -- or -- cd_point_type == CD_OUTSIDE
