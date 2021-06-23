@@ -27,7 +27,12 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     else
         CartesianPoint{T}(zero(T), zero(T), mean(z))
     end
-    return P{T,ClosedPrimitive,typeof(r)}(r = r, hZ = hZ, origin = origin)
+    if r isa Tuple # lazy workaround for now
+        return P{T,ClosedPrimitive,T}(r = r[2], hZ = hZ, origin = origin) -
+               P{T,ClosedPrimitive,T}(r = r[1], hZ = hZ, origin = origin)
+    else
+        return P{T,ClosedPrimitive,T}(r = r, hZ = hZ, origin = origin)
+    end
 end
 
 function vertices(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
@@ -36,7 +41,7 @@ function vertices(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
 end
 
 function surfaces(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
-    vs = vertices(rp)
+    vs = (vertices(rp))
     p_bot = Polygon{N,T}(vs[1:N])
     p_top = Polygon{N,T}(reverse(vs[N+1:end]))
     quads = Vector{Quadrangle{T}}(undef, N)
@@ -45,6 +50,11 @@ function surfaces(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
     end
     quads[N] = Quadrangle{T}((vs[N], vs[2N], vs[N+1], vs[1]))
     p_bot, p_top, quads...
+end
+
+
+function sample(rp::RegularPrism{T,<:Any,N,T})::Vector{CartesianPoint{T}} where {T,N}
+    [vertices(rp)...]
 end
 
 # const PrismAliases = Dict{Int, String}(
