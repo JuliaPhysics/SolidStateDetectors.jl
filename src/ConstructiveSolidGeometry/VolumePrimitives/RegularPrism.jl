@@ -30,6 +30,22 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     return P{T,ClosedPrimitive,typeof(r)}(r = r, hZ = hZ, origin = origin)
 end
 
+function vertices(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
+    xys = SVector{6,Tuple{T,T}}([sincos(T(2π)*(n-1)/N) for n in 1:N])
+    SVector{2N,CartesianPoint{T}}([CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys])
+end
+
+function surfaces(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
+    vs = vertices(rp)
+    p_bot = Polygon{N,T}(vs[1:N])
+    p_top = Polygon{N,T}(reverse(vs[N+1:end]))
+    quads = Vector{Quadrangle{T}}(undef, N)
+    for i in 1:N-1
+        quads[i] = Quadrangle{T}((vs[i], vs[N+i], vs[N+i+1], vs[i+1]))
+    end
+    quads[N] = Quadrangle{T}((vs[N], vs[2N], vs[N+1], vs[1]))
+    p_bot, p_top, quads...
+end
 
 # const PrismAliases = Dict{Int, String}(
 #     3 => "TriangularPrism", 
