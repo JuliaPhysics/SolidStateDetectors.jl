@@ -12,6 +12,10 @@ Ellipsoid{T,CO,RT,PT,TT}( e::Ellipsoid{T,CO,RT,PT,TT}; COT = CO,
             rotation::SMatrix{3,3,T,9} = e.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,PT,TT} =
     Ellipsoid{T,COT,RT,PT,TT}(e.r, e.φ, e.θ, origin, rotation)
 
+const Sphere{T,CO,PT,TT} = Ellipsoid{T,CO,T,PT,TT}
+const FullSphere{T,CO} = Ellipsoid{T,CO,T,Nothing,Nothing}
+const FullEllipsoid{T,CO} = Ellipsoid{T,CO,NTuple{3,T},Nothing,Nothing}
+
 function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     r = parse_r_of_primitive(T, dict, input_units.length)
     φ = nothing
