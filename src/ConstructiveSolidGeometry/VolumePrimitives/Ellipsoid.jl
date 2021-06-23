@@ -28,6 +28,16 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
     transform(e, transformations)
 end
 
+function _in(pt::CartesianPoint, s::FullSphere{<:Any, ClosedPrimitive}) 
+    r = hypot(pt.x, pt.y, pt.z)
+    r <= s.r || csg_isapprox_lin(r, s.r) 
+end
+function _in(pt::CartesianPoint, s::FullSphere{<:Any, OpenPrimitive}) 
+    r = hypot(pt.x, pt.y, pt.z)
+    r < s.r
+end
+
+
 # #Constructors
 # function Sphere(; rMin = 0, rMax = 1)
 #     T = float(promote_type(typeof.((rMin, rMax))...))
