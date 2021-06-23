@@ -8,9 +8,9 @@ using Unitful
 
 T = Float32
 
-# @testset "Comparison to analytic solutions" begin
-#     include("comparison_to_analytic_solutions.jl")
-# end
+@testset "Comparison to analytic solutions" begin
+    include("comparison_to_analytic_solutions.jl")
+end
 
 @testset "Test real detectors" begin
     @testset "Simulate example detector: Inverted Coax" begin
