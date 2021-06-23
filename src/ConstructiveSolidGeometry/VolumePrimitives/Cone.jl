@@ -558,8 +558,14 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     angle_unit = input_units.angle
     r = parse_r_of_primitive(T, dict, length_unit, Cone)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
-    hZ = parse_height_of_primitive(T, dict, length_unit)
-    cone = Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = hZ)
+    z = parse_height_of_primitive(T, dict, length_unit)
+    hZ = typeof(z) <: Real ? z : width(z)/2
+    origin = if typeof(z) <: Real
+        CartesianPoint{T}(zero(T), zero(T), zero(T))
+    else
+        CartesianPoint{T}(zero(T), zero(T), mean(z))
+    end
+    cone = Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(r = r, φ = φ, hZ = hZ, origin = origin)
     return transform(cone, transformations)
 end
 
