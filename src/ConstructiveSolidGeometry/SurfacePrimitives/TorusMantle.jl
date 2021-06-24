@@ -9,9 +9,27 @@
 end
 
 flip(t::TorusMantle{T,TP,TT,:inwards}) where {T,TP,TT} = 
-    TorusMantle{T,TP,TT,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation )
+TorusMantle{T,TP,TT,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation )
 
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
+
+function lines(tm::FullTorusMantle{T}) where {T} 
+    top_circ_origin = CartesianPoint{T}(zero(T), zero(T),  tm.r_tube)
+    top_circ_origin = _transform_into_global_coordinate_system(top_circ_origin, tm)
+    top_circ = Circle{T}(r = tm.r_torus, origin = top_circ_origin, rotation = tm.rotation)
+    bot_circ_origin = CartesianPoint{T}(zero(T), zero(T), -tm.r_tube)
+    bot_circ_origin = _transform_into_global_coordinate_system(bot_circ_origin, tm)
+    bot_circ = Circle{T}(r = tm.r_torus, origin = bot_circ_origin, rotation = tm.rotation)
+    inner_circ = Circle{T}(r = tm.r_torus - tm.r_tube, origin = tm.origin, rotation = tm.rotation)
+    outer_circ = Circle{T}(r = tm.r_torus + tm.r_tube, origin = tm.origin, rotation = tm.rotation)
+    tube_circ_1_origin = CartesianPoint{T}(tm.r_torus, zero(T), zero(T))
+    tube_circ_1_origin = _transform_into_global_coordinate_system(tube_circ_1_origin, tm)
+    tube_circ_1 = Circle{T}(r = tm.r_tube, origin = tube_circ_1_origin, rotation = tm.rotation * RotX(T(π)/2))
+    tube_circ_2_origin = CartesianPoint{T}(-tm.r_torus, zero(T), zero(T))
+    tube_circ_2_origin = _transform_into_global_coordinate_system(tube_circ_2_origin, tm)
+    tube_circ_2 = Circle{T}(r = tm.r_tube, origin = tube_circ_2_origin, rotation = tm.rotation * RotX(T(π)/2))
+    (bot_circ, outer_circ, top_circ, inner_circ, tube_circ_1, tube_circ_2)
+end 
 
 # #Constructors
 # TorusMantle(t::Torus{T}; r_tube = 1) where {T} = TorusMantle( T, t.r_torus, T(r_tube), t.φ, t.θ, t.z)
