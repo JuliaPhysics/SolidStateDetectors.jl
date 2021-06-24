@@ -1,6 +1,6 @@
 @with_kw struct Torus{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T,CO}
     r_torus::T = 1
-    r_tube::TR = 1
+    r_tube::TR = 1 
     φ::TP = nothing
     θ::TT = nothing
 
@@ -14,6 +14,18 @@ Torus{T,CO,TR,TP,TT}( t::Torus{T,CO,TR,TP,TT}; COT = CO,
     Torus{T,COT,TR,TP,TT}(t.r_torus, t.r_tube, t.φ, t.θ, origin, rotation)
 
 const FullTorus{T,CO} = Torus{T,CO,T,Nothing,Nothing}
+
+function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    r_torus = _parse_value(T, dict["r_torus"], length_unit)
+    r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    θ = parse_θ_of_primitive(T, dict, angle_unit)
+    t = Torus{T,ClosedPrimitive,typeof(r_tube),typeof(φ),typeof(θ)}(
+        r_torus = r_torus, r_tube = r_tube, φ =φ, θ = θ)
+    transform(t, transformations)
+end
 
 # #Constructors
 # function Torus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π, z = 0)
@@ -50,16 +62,16 @@ const FullTorus{T,CO} = Torus{T,CO,T,Nothing,Nothing}
     
 
 # # read-in
-# function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)
-#     length_unit = input_units.length
-#     angle_unit = input_units.angle
-#     r_torus::T = _parse_value(T, dict["r_torus"], length_unit)
-#     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
-#     φ = parse_φ_of_primitive(T, dict, angle_unit)
-#     θ = parse_θ_of_primitive(T, dict, angle_unit)
-#     z::T = ("z" in keys(dict) ? _parse_value(T, dict["z"], length_unit) : T(0))
-#     Torus(T, r_torus, r_tube, φ, θ, z)
-# end
+function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    r_torus::T = _parse_value(T, dict["r_torus"], length_unit)
+    r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    θ = parse_θ_of_primitive(T, dict, angle_unit)
+    z::T = ("z" in keys(dict) ? _parse_value(T, dict["z"], length_unit) : T(0))
+    Torus(T, r_torus, r_tube, φ, θ, z)
+end
 
 # function Dictionary(t::Torus{T}) where {T}
 #     dict = OrderedDict{String,Any}()
