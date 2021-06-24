@@ -27,6 +27,15 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
     transform(t, transformations)
 end
 
+function surfaces(t::FullTorus{T,ClosedPrimitive}) where {T}
+    tm = FullTorusMantle{T,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    (tm, )
+end
+function surfaces(t::FullTorus{T,OpenPrimitive}) where {T}
+    tm = FullTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    (tm, )
+end
+
 # #Constructors
 # function Torus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π, z = 0)
 #     T = float(promote_type(typeof.((r_torus, r_tubeMin, r_tubeMax, φMin, φMax, θMin, θMax, z))...))
