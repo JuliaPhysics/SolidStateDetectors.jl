@@ -22,8 +22,15 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    t = Torus{T,ClosedPrimitive,typeof(r_tube),typeof(φ),typeof(θ)}(
-        r_torus = r_torus, r_tube = r_tube, φ =φ, θ = θ)
+    t = if r_tube isa Real
+        Torus{T,ClosedPrimitive,typeof(r_tube),typeof(φ),typeof(θ)}(
+            r_torus = r_torus, r_tube = r_tube, φ =φ, θ = θ)
+    else
+        Torus{T,ClosedPrimitive,typeof(r_tube[2]),typeof(φ),typeof(θ)}(
+            r_torus = r_torus, r_tube = r_tube[2], φ =φ, θ = θ) - 
+        Torus{T,ClosedPrimitive,typeof(r_tube[1]),typeof(φ),typeof(θ)}(
+            r_torus = r_torus, r_tube = r_tube[1], φ =φ, θ = θ)
+    end        
     transform(t, transformations)
 end
 
