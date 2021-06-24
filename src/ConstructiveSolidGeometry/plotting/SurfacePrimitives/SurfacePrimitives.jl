@@ -2,6 +2,7 @@ include("Polygon.jl")
 include("EllipticalSurface.jl")
 include("ConeMantle.jl")
 include("EllipsoidMantle.jl")
+include("TorusMantle.jl")
 
 @recipe function f(vp::AbstractVector{<:AbstractSurfacePrimitive})
     linecolor --> :black
