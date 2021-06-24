@@ -6,4 +6,5 @@ include("Polygon.jl")
 include("ConeMantle.jl")
 include("EllipticalSurface.jl")
 include("EllipsoidMantle.jl")
+include("TorusMantle.jl")
 
