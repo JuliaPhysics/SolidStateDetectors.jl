@@ -1,4 +1,4 @@
-@with_kw struct EllipsoidMantle{T,RT,PT,TT} <: AbstractCurvedSurfacePrimitive{T}
+@with_kw struct EllipsoidMantle{T,RT,PT,TT,D} <: AbstractCurvedSurfacePrimitive{T}
     r::RT = 1
     φ::PT = nothing
     θ::TT = nothing
@@ -7,8 +7,11 @@
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-const FullSphereMantle{T} = EllipsoidMantle{T,T,Nothing,Nothing}
-const FullEllipsoidMantle{T} = EllipsoidMantle{T,NTuple{3,T},Nothing,Nothing}
+flip(em::EllipsoidMantle{T,RT,PT,TT,:inwards}) where {T,RT,PT,TT} = 
+    EllipsoidMantle{T,RT,PT,TT,:outwards}(em.r, em.φ, em.θ, em.origin, em.rotation )
+
+const FullSphereMantle{T,D} = EllipsoidMantle{T,T,Nothing,Nothing,D}
+const FullEllipsoidMantle{T,D} = EllipsoidMantle{T,NTuple{3,T},Nothing,Nothing,D}
 
 function lines(em::FullSphereMantle{T}) where {T} 
     ellipse_xy = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation)
@@ -25,6 +28,15 @@ end
 
 extremum(e::EllipsoidMantle{T,T}) where {T} = e.r
 extremum(e::EllipsoidMantle{T,NTuple{3,T}}) where {T} = max(e.r)
+
+function normal(em::EllipsoidMantle{T,NTuple{3,T},PT,TT,:outwards}, pt::CartesianPoint{T}) where {T,PT,TT}
+    # not normalized, do we want this?
+    # Or wrap this into somehting like `normal(em, pt) = normalize(direction(em, pt))` ?
+    p = _transform_into_object_coordinate_system(pt, em)
+    obj_normal = CartesianPoint{T}((p.x/em.r[1])^2, (p.y/em.r[2])^2, (p.z/em.r[3])^2) # We might want to store the inv(em.r) in the struct?
+    CartesianVector(_transform_into_global_coordinate_system(obj_normal, em))
+end
+normal(em::EllipsoidMantle{T,RT,PT,TT,:inwards}, pt::CartesianPoint{T}) where {T,RT,PT,TT} = -normal(flip(em), pt)
 
 """
     intersection(cm::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
@@ -94,14 +106,6 @@ function intersection(em::EllipsoidMantle{T,T}, l::Line{T}) where {T}
     return _transform_into_global_coordinate_system(ints1, em), 
            _transform_into_global_coordinate_system(ints2, em)
 end
-
-# x = (-1/2 sqrt((2 D1 L1 + 2 D2 L2 + 2 D3 L3)^2 - 4 (D1^2 + D2^2 + D3^2) (L1^2 + L2^2 + L3^2 - R^2)) 
-#     - D1 L1 - D2 L2 - D3 L3)/(D1^2 + D2^2 + D3^2) 
-#     #and D1^2 + D2^2 + D3^2!=0 and R!=0
-
-# y = (+1/2 sqrt((2 D1 L1 + 2 D2 L2 + 2 D3 L3)^2 - 4 (D1^2 + D2^2 + D3^2) (L1^2 + L2^2 + L3^2 - R^2)) 
-#     - D1 L1 - D2 L2 - D3 L3)/(D1^2 + D2^2 + D3^2) 
-    #and D1^2 + D2^2 + D3^2!=0 and R!=0
 
 
 
