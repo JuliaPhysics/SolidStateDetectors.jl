@@ -109,7 +109,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 5e-3 )
+        @test isapprox( signalsum, T(2), atol = 2e-2 )
     end
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation{T}(SSD_examples[:SigGen])
