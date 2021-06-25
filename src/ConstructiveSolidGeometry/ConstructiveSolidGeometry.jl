@@ -10,6 +10,7 @@ module ConstructiveSolidGeometry
     using IntervalSets
     using Parameters
     using PolygonOps
+    using Polynomials
     using RecipesBase
     using Rotations
     using StaticArrays
