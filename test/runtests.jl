@@ -111,19 +111,18 @@ end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
-#     =#
-#     @testset "Simulate example detector: SigGen PPC" begin
-#         sim = Simulation{T}(SSD_examples[:SigGen])
-#         simulate!(sim, max_refinements = 0, verbose = true)
-#         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
-#         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
-#         signalsum = T(0)
-#         for i in 1:length(evt.waveforms)
-#             signalsum += abs(evt.waveforms[i].value[end])
-#         end
-#         @info signalsum
-#         @test isapprox( signalsum, T(2), atol = 5e-4 )
-#     end
+    @testset "Simulate example detector: SigGen PPC" begin
+        sim = Simulation{T}(SSD_examples[:SigGen])
+        simulate!(sim, max_refinements = 0, verbose = true)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
+        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @info signalsum
+        @test isapprox( signalsum, T(2), atol = 2e-3 )
+    end
 end
 
 # @testset "ADLChargeDriftModel" begin
