@@ -1,6 +1,6 @@
 @with_kw struct Torus{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T,CO}
     r_torus::T = 1
-    r_tube::TR = 1 
+    r_tube::TR = 1  # (r_tube_in, r_tube_out)
     φ::TP = nothing
     θ::TT = nothing
 
@@ -41,6 +41,15 @@ end
 function surfaces(t::FullTorus{T,OpenPrimitive}) where {T}
     tm = FullTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     (tm, )
+end
+
+function _in(pt::CartesianPoint{T}, t::FullTorus{T,ClosedPrimitive}) where {T}
+    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    return _r <= t.r_tube || csg_isapprox_lin(_r, t.r_tube) 
+end
+function _in(pt::CartesianPoint{T}, t::FullTorus{T,OpenPrimitive}) where {T}
+    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    return _r < t.r_tube
 end
 
 # #Constructors
