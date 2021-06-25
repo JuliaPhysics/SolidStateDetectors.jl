@@ -1,6 +1,6 @@
-csg_round_lin(x::T) where {T} = round(x, sigdigits = 9) # min. Δx = 1 nm 
-csg_round_lin(x::Float32) where {T} = round(x, sigdigits = 5) # min. Δx = 10 μm 
-csg_round_rad(φ::T) where {T} = round(φ, digits = 4) # min. Δφ ≈ 0.011 °
+csg_round_lin(x::T; sigdigits::Int = 9) where {T} = round(x, sigdigits = sigdigits) # min. Δx = 1 nm 
+csg_round_lin(x::Float32; sigdigits::Int = 5) where {T} = round(x, sigdigits = sigdigits) # min. Δx = 10 μm 
+csg_round_rad(φ::T; digits::Int = 4) where {T} = round(φ, digits = digits) # min. Δφ ≈ 0.011 °
 
-csg_isapprox_lin(x::T, y::T) where {T} = csg_round_lin(x) == csg_round_lin(y) #abs(x - y) < T(1e-9)
-csg_isapprox_rad(α::T, β::T) where {T} = csg_round_rad(α) == csg_round_rad(β) #abs(x - y) < T(1e-4)
+csg_isapprox_lin(x::T, y::T; Δ::T = T(1e-9)) where {T} = abs(x - y) < Δ
+csg_isapprox_rad(α::T, β::T; Δ::T = T(1e-4)) where {T} = abs(α - β) < Δ
