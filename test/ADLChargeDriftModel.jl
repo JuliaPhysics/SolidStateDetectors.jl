@@ -1,4 +1,4 @@
-using SolidStateDetectors: getVe, getVh, Vl, geom_sigdigits
+using SolidStateDetectors: getVe, getVh, Vl
 using StaticArrays
 using LinearAlgebra
 
@@ -6,6 +6,10 @@ config_dict = Dict(
     "High-purity germanium" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config.json"),
     "Silicon" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_Si_300K_config.json")
 )
+
+geom_sigdigits(::Type{Int64})::Int = 12
+geom_sigdigits(::Type{Float32})::Int = 6
+geom_sigdigits(::Type{Float64})::Int = 12
 
 for T in (Float32, Float64) 
     @testset "Precision type: $(T)" begin

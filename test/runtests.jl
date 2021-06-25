@@ -125,9 +125,9 @@ end
     end
 end
 
-# @testset "ADLChargeDriftModel" begin
-#     include("ADLChargeDriftModel.jl")
-# end
+@testset "ADLChargeDriftModel" begin
+    include("ADLChargeDriftModel.jl")
+end
 
 # include("ConstructiveSolidGeometry/CSG_test.jl")
 # include("ConstructiveSolidGeometry/CSG_IO.jl")
