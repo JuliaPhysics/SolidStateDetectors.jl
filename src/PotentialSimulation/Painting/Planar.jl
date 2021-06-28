@@ -6,12 +6,24 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
     eX = CartesianVector{T}(1,0,0);
     eY = CartesianVector{T}(0,1,0);
     eZ = CartesianVector{T}(0,0,1);
+    widths_ax1 = diff(get_extended_ticks(grid[1]))
+    widths_ax2 = diff(get_extended_ticks(grid[2]))
+    widths_ax3 = diff(get_extended_ticks(grid[3]))
     for i2 in t_idx_r2
         for i1 in t_idx_r1
             l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], ticks[2][i2], zero(T)), eZ)
             pt = ConstructiveSolidGeometry.intersection(plane, l)
-            if pt in geometry
-                i3 = searchsortednearest(ticks[3], pt[3])
+            i3 = searchsortednearest(ticks[3], pt[3])
+            csgtol = abs(ticks[3][i3] - pt[3])
+            Δw_max = max(
+                widths_ax1[i1], widths_ax1[i1+1],
+                widths_ax2[i2], widths_ax1[i2+1],
+                # widths_ax3[i3], widths_ax3[i3+1]
+            )/4
+            if csgtol > Δw_max
+                csgtol = Δw_max
+            end
+            if in(pt, geometry, csgtol = csgtol)
                 pointtypes[i1, i2, i3] = zero(PointType)
                 potential[i1, i2, i3] = pot_value
             end
@@ -21,8 +33,17 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
         for i1 in t_idx_r1
             l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], zero(T), ticks[3][i3]), eY)
             pt = ConstructiveSolidGeometry.intersection(plane, l)
-            if pt in geometry
-                i2 = searchsortednearest(ticks[2], pt[2])
+            i2 = searchsortednearest(ticks[2], pt[2])
+            csgtol = abs(ticks[2][i2] - pt[2])
+            Δw_max = max(
+                widths_ax1[i1], widths_ax1[i1+1],
+                # widths_ax2[i2], widths_ax1[i2+1],
+                widths_ax3[i3], widths_ax3[i3+1]
+            )/4
+            if csgtol > Δw_max
+                csgtol = Δw_max
+            end
+            if in(pt, geometry, csgtol = csgtol)
                 pointtypes[i1, i2, i3] = zero(PointType)
                 potential[i1, i2, i3] = pot_value
             end
@@ -32,8 +53,17 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
         for i2 in t_idx_r2
             l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(zero(T), ticks[2][i2], ticks[3][i3]), eX)
             pt = ConstructiveSolidGeometry.intersection(plane, l)
-            if pt in geometry
-                i1 = searchsortednearest(ticks[1], pt[1])
+            i1 = searchsortednearest(ticks[1], pt[1])
+            csgtol = abs(ticks[1][i1] - pt[1])
+            Δw_max = max(
+                # widths_ax1[i1], widths_ax1[i1+1],
+                widths_ax2[i2], widths_ax1[i2+1],
+                widths_ax3[i3], widths_ax3[i3+1]
+            )/4
+            if csgtol > Δw_max
+                csgtol = Δw_max
+            end
+            if in(pt, geometry, csgtol = csgtol)
                 pointtypes[i1, i2, i3] = zero(PointType)
                 potential[i1, i2, i3] = pot_value
             end
@@ -48,12 +78,24 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     plane = ConstructiveSolidGeometry.Plane(face)
     eZ = CartesianVector{T}(0,0,1);
+    widths_ax1 = diff(get_extended_ticks(grid[1]))
+    widths_ax2 = diff(get_extended_ticks(grid[2]))
+    widths_ax3 = diff(get_extended_ticks(grid[3]))
+
     for i2 in eachindex(ticks[2])
         for i1 in eachindex(ticks[1])
             l = ConstructiveSolidGeometry.Line(CartesianPoint(CylindricalPoint{T}(ticks[1][i1], ticks[2][i2], zero(T))), eZ)
             pt = ConstructiveSolidGeometry.intersection(plane, l)
-            if pt in geometry
-                i3 = searchsortednearest(ticks[3], pt[3])
+            i3 = searchsortednearest(ticks[3], pt[3])
+            csgtol = abs(ticks[3][i3] - pt[3])
+            Δw_max = max(
+                widths_ax1[i1], widths_ax1[i1+1],
+                # widths_ax2[i2], widths_ax2[i2+1],
+            )/4
+            if csgtol > Δw_max
+                csgtol = Δw_max
+            end
+            if in(pt, geometry, csgtol = csgtol)
                 pointtypes[i1, i2, i3] = zero(PointType)
                 potential[i1, i2, i3] = pot_value
             end
@@ -66,8 +108,8 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
     #     for i1 in t_idx_r1 # r
     #         l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], zero(T), ticks[3][i3]), eY)
     #         pt = ConstructiveSolidGeometry.intersection(plane, l)
-    #         if pt in geometry
-    #             i2 = searchsortednearest(ticks[2], pt[2])
+#             i2 = searchsortednearest(ticks[2], pt[2])
+    #         if in(pt, geometry, csgtol = abs(ticks[2][i2] - pt[2]))
     #             pointtypes[i1, i2, i3] = zero(PointType)
     #             potential[i1, i2, i3] = pot_value
     #         end
@@ -84,8 +126,17 @@ function paint!(pointtypes, potential, face::AbstractPlanarSurfacePrimitive{T}, 
             # Intersection must be in positive r direction of dir: pt_cyl[2] == ticks[2][i2]
             # Use `abs(pt_cyl[2] - ticks[2][i2]) < 0.1` to avoid rounding issues
             # if it differs, it would always differ by π = 3.141... -> 0.1 is fine
-            if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && pt_car in geometry
-                i1 = searchsortednearest(ticks[1], pt_cyl[1])
+            i1 = searchsortednearest(ticks[1], pt_cyl[1])
+            csgtol = abs(ticks[1][i1] - pt_cyl[1])
+            Δw_max = max(
+                # widths_ax2[i2], widths_ax2[i2+1],
+                widths_ax3[i3], widths_ax3[i3+1]
+            )/4
+            if csgtol > Δw_max
+                csgtol = Δw_max
+            end
+            if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && 
+                        in(pt_car, geometry, csgtol = csgtol)
                 pointtypes[i1, i2, i3] = zero(PointType)
                 potential[i1, i2, i3] = pot_value
             end

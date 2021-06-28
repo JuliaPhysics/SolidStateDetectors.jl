@@ -17,14 +17,14 @@ Box{T, CO}( b::Box{T, CO}; COT = CO,
             rotation::SMatrix{3,3,T,9} = b.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} =
     Box{T, COT}(b.hX, b.hY, b.hZ, origin, rotation)
 
-function _in(pt::CartesianPoint, b::Box{<:Any, ClosedPrimitive}) 
-    (abs(pt.x) <= b.hX || csg_isapprox_lin(abs(pt.x), b.hX)) && 
-    (abs(pt.y) <= b.hY || csg_isapprox_lin(abs(pt.y), b.hY)) && 
-    (abs(pt.z) <= b.hZ || csg_isapprox_lin(abs(pt.z), b.hZ))
+function _in(pt::CartesianPoint{T}, b::Box{<:Any, ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    abs(pt.x) <= b.hX + csgtol && 
+    abs(pt.y) <= b.hY + csgtol && 
+    abs(pt.z) <= b.hZ + csgtol 
 end
 
-_in(pt::CartesianPoint, b::Box{<:Any, OpenPrimitive}) = 
-    abs(pt.x) < b.hX && abs(pt.y) < b.hY && abs(pt.z) < b.hZ
+_in(pt::CartesianPoint{T}, b::Box{<:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} = 
+    abs(pt.x) < b.hX - csgtol && abs(pt.y) < b.hY - csgtol && abs(pt.z) < b.hZ - csgtol
  
 function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     length_unit = input_units.length

@@ -59,20 +59,20 @@ function sample(rp::RegularPrism{T,<:Any,N,T})::Vector{CartesianPoint{T}} where 
     [vertices(rp)...]
 end
 
-function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,ClosedPrimitive,N,T}) where {T,N} 
-    (abs(pt.z) <= rp.hZ || csg_isapprox_lin(abs(pt.z), rp.hZ)) && begin
+function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,ClosedPrimitive,N,T}; csgtol::T = csg_default_tol(T)) where {T,N} 
+    abs(pt.z) <= rp.hZ + csgtol && begin
         r, φ = hypot(pt.x, pt.y), atan(pt.y, pt.x)
         α = T(π/N)
         _r = r * cos(α - mod(φ, 2α)) / cos(α) 
-        _r <= rp.r || csg_isapprox_lin(_r, rp.r)
+        _r <= rp.r + csgtol
     end
 end
-function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}) where {T,N} 
-    abs(pt.z) < rp.hZ && begin
+function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}; csgtol::T = csg_default_tol(T)) where {T,N} 
+    abs(pt.z) < rp.hZ - csgtol && begin
         r, φ = hypot(pt.x, pt.y), atan(pt.y, pt.x)
         α = T(π/N)
         _r = r * cos(α - mod(φ, 2α)) / cos(α) 
-        _r < rp.r
+        _r < rp.r - csgtol
     end
 end
 

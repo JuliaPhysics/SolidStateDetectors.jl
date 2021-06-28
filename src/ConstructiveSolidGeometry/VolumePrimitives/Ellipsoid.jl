@@ -28,14 +28,11 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
     transform(e, transformations)
 end
 
-function _in(pt::CartesianPoint, s::FullSphere{<:Any, ClosedPrimitive}) 
-    r = hypot(pt.x, pt.y, pt.z)
-    r <= s.r || csg_isapprox_lin(r, s.r) 
-end
-function _in(pt::CartesianPoint, s::FullSphere{<:Any, OpenPrimitive}) 
-    r = hypot(pt.x, pt.y, pt.z)
-    r < s.r
-end
+_in(pt::CartesianPoint{T}, s::FullSphere{<:Any, ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} =
+    hypot(pt.x, pt.y, pt.z) <= s.r + csgtol
+
+_in(pt::CartesianPoint{T}, s::FullSphere{<:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} =
+    hypot(pt.x, pt.y, pt.z) < s.r - csgtol
 
 function surfaces(e::Ellipsoid{T,ClosedPrimitive}) where {T}
     em = EllipsoidMantle{T,typeof(e.r),typeof(e.φ),typeof(e.θ),:inwards}(e.r, e.φ, e.θ, e.origin, e.rotation)

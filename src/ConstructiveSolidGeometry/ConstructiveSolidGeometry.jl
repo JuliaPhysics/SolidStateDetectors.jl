@@ -57,8 +57,10 @@ module ConstructiveSolidGeometry
     _transform_into_global_coordinate_system(pts::AbstractVector{<:CartesianPoint}, p::AbstractPrimitive) =
         broadcast(pt -> _transform_into_global_coordinate_system(pt, p), pts)
     _transform_into_object_coordinate_system(pt::CartesianPoint, p::AbstractPrimitive) = inv(rotation(p)) * (pt - origin(p)) 
-    in(pt::CartesianPoint, p::AbstractPrimitive) = _in(_transform_into_object_coordinate_system(pt, p), p)
-    in(pt::CylindricalPoint, p::AbstractPrimitive) = in(CartesianPoint(pt), p)
+    in(pt::CartesianPoint{T}, p::AbstractPrimitive{T}; csgtol::T = csg_default_tol(T)) where {T} = 
+        _in(_transform_into_object_coordinate_system(pt, p), p; csgtol = csgtol)
+    in(pt::CylindricalPoint{T}, p::AbstractPrimitive{T}; csgtol::T = csg_default_tol(T)) where {T} = 
+        in(CartesianPoint(pt), p; csgtol = csgtol)
     # Do we want to store the rotation matrix permanently in the primitive?
     # We should do tests regarding the performance. It can be easily added later.     
 

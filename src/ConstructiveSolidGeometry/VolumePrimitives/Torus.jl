@@ -43,13 +43,13 @@ function surfaces(t::FullTorus{T,OpenPrimitive}) where {T}
     (tm, )
 end
 
-function _in(pt::CartesianPoint{T}, t::FullTorus{T,ClosedPrimitive}) where {T}
+function _in(pt::CartesianPoint{T}, t::FullTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    return _r <= t.r_tube || csg_isapprox_lin(_r, t.r_tube) 
+    return _r <= t.r_tube + csgtol
 end
-function _in(pt::CartesianPoint{T}, t::FullTorus{T,OpenPrimitive}) where {T}
+function _in(pt::CartesianPoint{T}, t::FullTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    return _r < t.r_tube
+    return _r < t.r_tube - csgtol
 end
 
 # #Constructors
