@@ -27,7 +27,7 @@ function lines(em::FullEllipsoidMantle{T}) where {T}
 end
 
 extremum(e::EllipsoidMantle{T,T}) where {T} = e.r
-extremum(e::EllipsoidMantle{T,NTuple{3,T}}) where {T} = max(e.r)
+extremum(e::EllipsoidMantle{T,NTuple{3,T}}) where {T} = max(e.r...)
 
 function normal(em::EllipsoidMantle{T,NTuple{3,T},TP,TT,:outwards}, pt::CartesianPoint{T}) where {T,TP,TT}
     # not normalized, do we want this?

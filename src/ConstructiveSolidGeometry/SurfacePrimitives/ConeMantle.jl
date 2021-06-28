@@ -58,8 +58,8 @@ const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but w
 const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Tuple{T,T},D}
 
 
-extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r[1], cm.r[2])^2)
-extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r[1], cm.r[2])^2)
+extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
+extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
 
 
 function lines(sp::FullConeMantle{T}) where {T} 
