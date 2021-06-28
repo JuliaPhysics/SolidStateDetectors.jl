@@ -24,7 +24,7 @@ const Circle{T} = Ellipse{T,T,Nothing}
 const PartialCircle{T} = Ellipse{T,T,Tuple{T,T}}
 
 extremum(e::Ellipse{T,T}) where {T} = e.r
-extremum(e::Ellipse{T,Tuple{T,T}}) where {T} = max(e.r[1], e.r[1])
+extremum(e::Ellipse{T,Tuple{T,T}}) where {T} = max(e.r[1], e.r[2])
 
 function sample(e::Circle{T}; n = 4)::Vector{CartesianPoint{T}} where {T}
     φs = range(T(0), step = T(2π) / n, length = n)
