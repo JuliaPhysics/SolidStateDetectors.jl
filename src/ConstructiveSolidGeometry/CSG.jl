@@ -36,8 +36,8 @@ in(p::AbstractCoordinatePoint{T}, csg::CSGIntersection; csgtol::T = csg_default_
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
-function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformation::Transformations{T}) where {T}
-    parts = broadcast(x-> Geometry(T, x, input_units, transformation), v) 
+function Geometry(::Type{T}, ::Type{CSGIntersection}, v::Vector{<:AbstractDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+    parts = broadcast(x-> Geometry(T, x, input_units, transformations), v) 
     reduce(&, parts)
 end
 
