@@ -87,7 +87,6 @@ end
     end
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation{T}(SSD_examples[:Spherical])
-        SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
         simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event([CartesianPoint{T}(0,0,0)])
         simulate!(evt, sim)
