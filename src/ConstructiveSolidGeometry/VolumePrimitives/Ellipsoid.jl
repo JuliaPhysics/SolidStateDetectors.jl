@@ -1,5 +1,5 @@
-@with_kw struct Ellipsoid{T,CO,RT,TP,TT} <: AbstractVolumePrimitive{T, CO}
-    r::RT = 1
+@with_kw struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
+    r::TR = 1
     φ::TP = nothing
     θ::TT = nothing
 
@@ -7,10 +7,10 @@
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-Ellipsoid{T,CO,RT,TP,TT}( e::Ellipsoid{T,CO,RT,TP,TT}; COT = CO,
+Ellipsoid{T,CO,TR,TP,TT}( e::Ellipsoid{T,CO,TR,TP,TT}; COT = CO,
             origin::CartesianPoint{T} = e.origin,
-            rotation::SMatrix{3,3,T,9} = e.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,TP,TT} =
-    Ellipsoid{T,COT,RT,TP,TT}(e.r, e.φ, e.θ, origin, rotation)
+            rotation::SMatrix{3,3,T,9} = e.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},TR,TP,TT} =
+    Ellipsoid{T,COT,TR,TP,TT}(e.r, e.φ, e.θ, origin, rotation)
 
 const Sphere{T,CO,TP,TT} = Ellipsoid{T,CO,T,TP,TT}
 const FullSphere{T,CO} = Ellipsoid{T,CO,T,Nothing,Nothing}

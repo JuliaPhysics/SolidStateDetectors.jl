@@ -1,5 +1,5 @@
 """
-    struct ConeMantle{T,RT,TP,D} <: AbstractSurfacePrimitive{T}
+    struct ConeMantle{T,TR,TP,D} <: AbstractSurfacePrimitive{T}
 
 T: Type of values, e.g. Float64
 
@@ -13,14 +13,14 @@ T: Type of values, e.g. Float64
 * `φ::TP`: 
     * TP = Nothing <-> Full in φ
     * ...
-* `zH::T`: half hight/length of the cone mantle
+* `hZ::T`: half hight/length of the cone mantle
 
 * `D`: `:inwards` or `:outwards`: Whethe the normal points inside or outside
 """
-@with_kw struct ConeMantle{T,RT,TP,D} <: AbstractCurvedSurfacePrimitive{T}
-    r::RT = 1
+@with_kw struct ConeMantle{T,TR,TP,D} <: AbstractCurvedSurfacePrimitive{T}
+    r::TR = 1
     φ::TP = nothing
-    hZ::T = 1 # maybe we don't need this. I will leave it for now...
+    hZ::T = 1
 
     # axis::Line{T} = Line{T}(CartesianPoint{T}(zero(T), zero(T), -hZ), CartesianVector{T}(zero(T), zero(T), 2hZ))
     origin::CartesianPoint{T} = zero(CartesianPoint{T})

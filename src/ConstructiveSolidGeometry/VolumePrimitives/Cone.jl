@@ -1,5 +1,5 @@
 """
-    struct Cone{T,CO,RT,TP} <: AbstractVolumePrimitive{T, CO}
+    struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
 
 T: Type of values, e.g. Float64
 CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
@@ -19,8 +19,8 @@ CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
     * ...
 * `zH::T`: half hight/length of the cone
 """
-@with_kw struct Cone{T,CO,RT,TP} <: AbstractVolumePrimitive{T, CO}
-    r::RT = 1
+@with_kw struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
+    r::TR = 1
     φ::TP = nothing
     hZ::T = 1
 
@@ -28,10 +28,10 @@ CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-Cone{T,CO,RT,TP}( c::Cone{T,CO,RT,TP}; COT = CO,
+Cone{T,CO,TR,TP}( c::Cone{T,CO,TR,TP}; COT = CO,
             origin::CartesianPoint{T} = c.origin,
-            rotation::SMatrix{3,3,T,9} = c.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},RT,TP} =
-    Cone{T,COT,RT,TP}(c.r, c.φ, c.hZ, origin, rotation)
+            rotation::SMatrix{3,3,T,9} = c.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},TR,TP} =
+    Cone{T,COT,TR,TP}(c.r, c.φ, c.hZ, origin, rotation)
 
 ####################################################################
 ####################################################################

@@ -1,5 +1,5 @@
-@with_kw struct EllipsoidMantle{T,RT,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
-    r::RT = 1
+@with_kw struct EllipsoidMantle{T,TR,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
+    r::TR = 1
     φ::TP = nothing
     θ::TT = nothing
 
@@ -7,8 +7,8 @@
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
-flip(em::EllipsoidMantle{T,RT,TP,TT,:inwards}) where {T,RT,TP,TT} = 
-    EllipsoidMantle{T,RT,TP,TT,:outwards}(em.r, em.φ, em.θ, em.origin, em.rotation )
+flip(em::EllipsoidMantle{T,TR,TP,TT,:inwards}) where {T,TR,TP,TT} = 
+    EllipsoidMantle{T,TR,TP,TT,:outwards}(em.r, em.φ, em.θ, em.origin, em.rotation )
 
 const FullSphereMantle{T,D} = EllipsoidMantle{T,T,Nothing,Nothing,D}
 const FullEllipsoidMantle{T,D} = EllipsoidMantle{T,NTuple{3,T},Nothing,Nothing,D}
@@ -36,7 +36,7 @@ function normal(em::EllipsoidMantle{T,NTuple{3,T},TP,TT,:outwards}, pt::Cartesia
     obj_normal = CartesianPoint{T}(sign(p.x)*(p.x/em.r[1])^2, sign(p.y)*(p.y/em.r[2])^2, sign(p.z)*(p.z/em.r[3])^2) # We might want to store the inv(em.r) in the struct?
     CartesianVector(_transform_into_global_coordinate_system(obj_normal, em))
 end
-normal(em::EllipsoidMantle{T,RT,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,RT,TP,TT} = -normal(flip(em), pt)
+normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
 
 """
     intersection(cm::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
