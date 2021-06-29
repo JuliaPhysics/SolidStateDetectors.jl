@@ -73,7 +73,7 @@ end
 function _parse_linear_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
-    To == -From == zero(T) ? To : From..To # if != 0 is influences the origin 
+    To == -From == zero(T) ? To : (From, To) # if != 0 is influences the origin 
 end
 
 

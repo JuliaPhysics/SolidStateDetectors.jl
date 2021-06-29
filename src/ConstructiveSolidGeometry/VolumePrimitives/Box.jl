@@ -35,9 +35,9 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     μy = typeof(y) <: Real ? zero(T) : mean(y)
     μz = typeof(z) <: Real ? zero(T) : mean(z)
     origin = CartesianPoint{T}(μx, μy, μz)
-    hX = typeof(x) <: Real ? x : width(x)/2
-    hY = typeof(y) <: Real ? y : width(y)/2
-    hZ = typeof(z) <: Real ? z : width(z)/2
+    hX = typeof(x) <: Real ? x : (x[2] - x[1])/2
+    hY = typeof(y) <: Real ? y : (y[2] - y[1])/2
+    hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
     box = Box{T, ClosedPrimitive}(
         hX = hX, 
         hY = hY, 

@@ -573,7 +573,7 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     r = parse_r_of_primitive(T, dict, length_unit, Cone)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     z = parse_height_of_primitive(T, dict, length_unit)
-    hZ = typeof(z) <: Real ? z : width(z)/2
+    hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
     origin = if typeof(z) <: Real
         CartesianPoint{T}(zero(T), zero(T), zero(T))
     else
