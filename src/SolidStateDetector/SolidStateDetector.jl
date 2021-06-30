@@ -163,11 +163,13 @@ function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
             println(c)
         end
     end
-    println()
-    println("# Passives: $(length(d.passives))")
-    if length(d.passives)<=5
-        for p in d.passives
-            # println(c)
+    if !ismissing(d.passives)
+        println()
+        println("# Passives: $(length(d.passives))")
+        if length(d.passives) <= 5
+            for p in d.passives
+                # println(c)
+            end
         end
     end
 end
