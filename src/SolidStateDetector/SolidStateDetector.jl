@@ -18,6 +18,12 @@ function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, cdm::Abstra
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
 end
+function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}; contact_id::Int, contact_potential::Real) where {T,SC,CT,PT,VDM}
+    oc = det.contacts[contact_id]
+    nc = Contact(T(contact_potential), oc.material, oc.id, oc.name, oc.geometry )
+    contacts = [c.id == contact_id ? nc : c for c in det.contacts]
+    SolidStateDetector{T}( det.name, det.semiconductor, contacts, det.passives, det.virtual_drift_volumes )
+end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 
