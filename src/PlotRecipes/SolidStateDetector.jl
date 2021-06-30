@@ -17,14 +17,16 @@ end
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector)
+@recipe function f(det::SolidStateDetector; show_semiconductor = false)
     xguide --> "x / m"
     yguide --> "y / m"
     zguide --> "z / m"
     show_normal --> false
 
-    @series begin
-        det.semiconductor
+    if show_semiconductor
+        @series begin
+            det.semiconductor
+        end
     end
     for c in det.contacts
         @series begin
