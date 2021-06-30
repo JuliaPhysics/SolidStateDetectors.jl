@@ -1,30 +1,33 @@
 using SolidStateDetectors
-path_to_example_primitives_config_files = joinpath(dirname(dirname(pathof(SolidStateDetectors))), "examples", "example_primitive_files") # hide
-example_primitives_config_filenames = readdir(path_to_example_primitives_config_files) # hide
 import SolidStateDetectors.ConstructiveSolidGeometry as CSG
 using SolidStateDetectors.ConstructiveSolidGeometry: ClosedPrimitive
 using SolidStateDetectors.ConstructiveSolidGeometry: Box
 using Plots
-gr(xlabel = "X", ylabel = "Y", zlabel = "Z"); 
 T = Float64;
 
-# # Box
-box = Box{T, ClosedPrimitive}(hX = 1.0, hY = 2.0, hZ = 3.0)
-plot(box)
-#=
-YAML configuration file format:
-```yaml
-box:
-  x:
-    from: -1.0
-    to: 1.0
-  y:
-    from: -2.0
-    to: 2.0
-  z:
-    from: -3.0
-    to: 3.0
-```
-=#
+# ## List of YAML example configuration files for Primitives
+# Under `SolidStateDetectors.jl/examples/example_primitive_files` there 
+# are some examples how to define the different primitives 
+# via the YAML format:
 
-# # Sphere
+path_to_example_primitives_config_files = joinpath(dirname(dirname(pathof(SolidStateDetectors))), "examples", "example_primitive_files") 
+example_primitives_config_filenames = readdir(path_to_example_primitives_config_files) 
+for fn in example_primitives_config_filenames
+    println(fn)
+end
+
+# # Box
+cfn = joinpath(path_to_example_primitives_config_files, "Box.yaml")
+print(open(f -> read(f, String), cfn))
+
+# Load the primitive from the configuration file via `CSG.Geometry`
+box = CSG.Geometry(T, cfn)
+plot(box)
+
+# # Ellipsoid
+cfn = joinpath(path_to_example_primitives_config_files, "Sphere.yaml")
+print(open(f -> read(f, String), cfn))
+
+# Load the primitive from the configuration file via `CSG.Geometry`
+ellipsoid = CSG.Geometry(T, cfn)
+plot(ellipsoid)
