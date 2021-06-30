@@ -25,7 +25,7 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
             r = r[2], 
             φ = φ, 
             θ = θ
-        ) - Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
+        ) - Ellipsoid{T,OpenPrimitive,T,typeof(φ),typeof(θ)}(
             r = r[1], 
             φ = φ, 
             θ = θ
