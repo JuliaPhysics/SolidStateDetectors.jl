@@ -24,7 +24,8 @@ end
 
 function ConstantChargeDensity{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T)::ConstantChargeDensity{T} where {T <: SSDFloat}
     ρ::T = if haskey(dict, "charge_density")   
-        geom_round(unit_factor * T(dict["charge_density"]))
+        # geom_round(unit_factor * T(dict["charge_density"]))
+        unit_factor * T(dict["charge_density"])
     else
         T(0)
     end

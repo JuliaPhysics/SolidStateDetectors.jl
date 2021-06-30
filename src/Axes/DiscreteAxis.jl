@@ -111,7 +111,8 @@ function range(interval::Interval{:closed, :open, T}; step::Union{Missing, T} = 
         range(interval.left, stop = stop, length=length)
     elseif ismissing(length)
         # stop = interval.right - interval.right % step
-        stop = geom_round(interval.right - step)
+        # stop = geom_round(interval.right - step)
+        stop = interval.right - step
         range(interval.left, stop = stop, step=step)
     else
         error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
@@ -153,14 +154,14 @@ end
 
 function DiscreteAxis{BL, BR}(interval::Interval{L, R, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing)::DiscreteAxis{T, BL, BR} where {L, R, T, BL, BR}
     ticks::Vector{T} = collect(range(interval, step=step, length=length))
-    if T == Float32 || T == Float64
-        ticks = round.(ticks, sigdigits = geom_sigdigits(T))
-        for iv in eachindex(ticks)
-            if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
-                ticks[iv] = zero(T)
-            end
-        end
-    end
+    # if T == Float32 || T == Float64
+    #     ticks = round.(ticks, sigdigits = geom_sigdigits(T))
+    #     for iv in eachindex(ticks)
+    #         if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
+    #             ticks[iv] = zero(T)
+    #         end
+    #     end
+    # end
     DiscreteAxis{T, BL, BR}(interval, ticks)
 end
 

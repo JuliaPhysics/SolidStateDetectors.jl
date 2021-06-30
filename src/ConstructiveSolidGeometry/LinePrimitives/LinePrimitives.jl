@@ -1,2 +1,3 @@
 include("Line.jl")
-include("Arc.jl")
+include("Edge.jl")
+include("Ellipse.jl")

@@ -1,25 +1,23 @@
-include("ConalPlane.jl")
+include("Polygon.jl")
+include("EllipticalSurface.jl")
 include("ConeMantle.jl")
-include("CylindricalAnnulus.jl")
-include("Rectangle.jl")
-include("RegularPolygon.jl")
-include("RegularPrismMantle.jl")
-include("SphereMantle.jl")
-include("ToroidalAnnulus.jl")
+include("EllipsoidMantle.jl")
 include("TorusMantle.jl")
-#include("Plane.jl")
 
-@recipe function f(g::AbstractSurfacePrimitive; SSD_style = :wireframe, n = 30)
-    if SSD_style == :wireframe #update to only plot real surfaces
-        linewidth --> 2
-        for points in get_plot_points(g, n = n)
+@recipe function f(vp::AbstractVector{<:AbstractSurfacePrimitive})
+    linecolor --> :black
+    @series begin
+        label --> "Faces"
+        show_normal --> true
+        vp[1]
+    end
+    if length(vp) > 1
+        for p in vp[2:end]
             @series begin
-                label := ""
-                points
+                show_normal --> true
+                label := nothing
+                p
             end
         end
-    elseif SSD_style == :surface
-        linewidth --> 0.2
-        mesh(g)
     end
 end

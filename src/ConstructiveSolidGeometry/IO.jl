@@ -1,40 +1,54 @@
 const CSG_dict = Dict{String, Any}(
     "tube" => Cone,
     "cone" => Cone,
-    "sphere" => Sphere,
+    "sphere" => Ellipsoid,
     "box" => Box,
     "torus" => Torus,
     "TriangularPrism" => TriangularPrism,
-    "SquarePrism"  => SquarePrism,
+    "QuadranglePrism" => QuadranglePrism,
     "PentagonalPrism" => PentagonalPrism,
     "HexagonalPrism"  => HexagonalPrism,
     "union" => CSGUnion,
     "difference" => CSGDifference,
     "intersection" => CSGIntersection,
-    "translate" => TranslatedGeometry,
-    "rotate" => RotatedGeometry,
-    "scale" => ScaledGeometry
+    "translate" => CartesianVector, # we just ne some type to dispatch on
+    "rotate" => Rotations.Rotation  # we just ne some type to dispatch on
 )
 
-function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple)::Tuple{String, Vector{CSGTransformation}} where {T}
-    dict_keys = filter(k -> k in keys(CSG_dict), keys(dict))
-    transformations = sort!(filter(k -> 
-                                (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) || 
-                                (k == "rotate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["rotate"])))), 
-                            collect(dict_keys)), 
-                      rev = true) #this will ensure that the rotation is parsed first and the translation is parsed second
-    primitives = setdiff(dict_keys, transformations)
-    @assert length(primitives) <= 1 "Too many geometry entries in dictionary: $(length(dict_keys))."
-    @assert length(primitives) >= 1 "None of the entries $(keys(dict)) describes a Geometry."
-    first(primitives), broadcast(t -> parse_CSG_transformation(T, dict, CSG_dict[t], input_units), transformations)
+function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
+    g = collect(filter(k -> k in keys(CSG_dict), keys(dict)))
+    @assert !(length(g) > 1) "Too many geometry entries in dictionary: $(length(g))."
+    @assert !(length(g) == 0) "None of the entries $(keys(dict)) describes a Geometry."
+    g[1]
 end
 
+
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
+    r = if haskey(dict, "rotate")
+        SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict["rotate"], input_units.angle))
+        # We might want to improve this to avoid numerical precision errors. 
+        # For now this is fine. 
+    else
+        one(SMatrix{3, 3, T, 9})
+    end
+    # s = if haskey(dict, "scale")
+    #     _s = parse_scale_vector(T, dict["scale"])
+    # else
+    #     ones(SVector{3,T})
+    # end
+    t = if haskey(dict, "translate")
+        parse_translate_vector(T, dict["translate"], input_units.length)
+    else
+        zero(CartesianVector{T})
+    end
+    (rotation = r, translation = t)
+end
 
 #### INTERNAL PARSE FUNCTIONS
 
 # parses dictionary entries of type Real or String to their value in internal units
-@inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = to_internal_units(T(x) * unit)
-@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = to_internal_units(T(uparse(s)))
+@inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = T(to_internal_units(x * unit))
+@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = T(to_internal_units(uparse(s)))
 @inline _parse_value(::Type{T}, a::Vector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries
@@ -50,8 +64,8 @@ end
 function _parse_radial_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
-    @assert From >= 0 && To >= 0 "Entries 'from' and 'to' of radial $(dict) should be non-zero."
-    From == 0 ? To : From..To
+    @assert From >= 0 && To >= 0 "Entries 'from' and 'to' of radial $(dict) should `>= 0`."
+    (From, To)
 end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
@@ -59,7 +73,7 @@ end
 function _parse_linear_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
-    To == -From ? To : From..To
+    To == -From == zero(T) ? To : (From, To) # if != 0 is influences the origin 
 end
 
 
@@ -68,7 +82,7 @@ function _parse_angular_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Un
     φTo::T = _parse_value(T, dict["to"], unit)
     φFrom::T = _parse_value(T, dict["from"], unit)
     if abs(rem2pi(φFrom - φTo, RoundNearest)) > 2*eps(T)
-        φFrom..φTo
+        φFrom, φTo
         #else nothing 
     end
 end
@@ -81,15 +95,62 @@ end
 function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "r") "Please specify 'r'."
     dictr = dict["r"]
-    # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
     if haskey(dictr, "bottom") && haskey(dictr, "top")
+        # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
         bottom = _parse_radial_interval(T, dictr["bottom"], unit)
         top = _parse_radial_interval(T, dictr["top"], unit)
         # bottom and top need to be same type for Cone
-        typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
-    # "r" : {"from": ..., "to": ...}
+        # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
+        bottom, top
     else
+        # "r" : {"from": ... , "to": ...}
         _parse_radial_interval(T, dictr, unit)
+    end
+end
+# converts "r" to the respective AbstractFloat/Interval/Tuple for Cone
+function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units, ::Type{Cone}) where {T}
+    @assert haskey(dict, "r") "Please specify 'r'."
+    dictr = dict["r"]
+    r = if haskey(dictr, "bottom") && haskey(dictr, "top")
+        # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
+        bottom = _parse_radial_interval(T, dictr["bottom"], unit)
+        top = _parse_radial_interval(T, dictr["top"], unit)
+        # bottom and top need to be same type for Cone
+        # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
+        if bottom isa Real bottom = (zero(T), bottom) end
+        if top isa Real top = (zero(T), top) end
+        (bottom, top)
+    elseif haskey(dictr, "from") && haskey(dictr, "to")
+        # "r" : {"from": ... , "to": ...}
+        r = _parse_radial_interval(T, dictr, unit)
+        if r isa Real r = (zero(T), r) end
+        (r, r)
+    else
+        r = _parse_radial_interval(T, dictr, unit)
+        ((zero(T),r),(zero(T),r))
+    end
+    # Not all cases implemented yet 
+    r_bot_in, r_bot_out, r_top_in, r_top_out = r[1][1], r[1][2], r[2][1], r[2][2]
+    if r_bot_in == r_top_in == zero(T) 
+        if r_bot_out == r_top_out
+            return r_bot_out # Cylinder
+        else
+            return (r_bot_out, r_top_out) # VaryingCylinder
+        end
+    elseif r_top_in == r_top_out && r_bot_in != r_bot_out
+        if r_top_in == 0
+            return ((r_bot_in, r_bot_out), nothing)
+        else
+            return ((r_bot_in, r_bot_out), r_top_in)
+        end
+    elseif r_top_in != r_top_out && r_bot_in == r_bot_out
+        if r_bot_in == 0
+            return (nothing, (r_top_in, r_top_out))
+        else
+            return (r_bot_in, (r_top_in, r_top_out))
+        end
+    else
+        r # VaryingTube
     end
 end
 
@@ -134,30 +195,31 @@ function parse_translate_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Uni
     CartesianVector{T}(x,y,z)
 end
 
-function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{TranslatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{CartesianVector}, input_units::NamedTuple) where {T}
     parse_translate_vector(T, dict["translate"], input_units.length)
 end
 
-function Geometry(::Type{T}, ::Type{TranslatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    length_unit = input_units.length
-    translate_vector::CartesianVector{T} = parse_translate_vector(T, dict, length_unit)
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    translate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), translate_vector)
+function Geometry(::Type{T}, ::Type{CartesianVector}, dict::AbstractDict, input_units::NamedTuple, outer_transformations::Transformations{T}) where {T}
+    translate_vector = parse_translate_vector(T, dict, input_units.length)
+    key = get_geometry_key(T, dict, input_units)
+    # inner_transformations = (rotation = one(SMatrix{3, 3, T, 9}), translation = translate_vector)
+    # transformations = combine_transformations(inner_transformations, outer_transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, outer_transformations)
 end
 
-function parse_scale_vector(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::SVector{3,T} where {T}
-    x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], unit) : T(1)
-    y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], unit) : T(1)
-    z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], unit) : T(1)
+function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {T}
+    x::T = haskey(dict, "x") ? _parse_value(T, dict["x"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
+    y::T = haskey(dict, "y") ? _parse_value(T, dict["y"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
+    z::T = haskey(dict, "z") ? _parse_value(T, dict["z"], Unitful.FreeUnits{(), NoDims, nothing}()) : T(1)
     SVector{3,T}(x,y,z)
 end
 
-function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    length_unit = input_units.length
-    scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    scale(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), scale_vector)
-end
+# function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
+#     length_unit = input_units.length
+#     scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
+#     key::String, transformations = get_geometry_key(T, dict, input_units)
+#     scale(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), scale_vector)
+# end
 
 _rot_keys = ["X","Y","Z","XY","XZ","YX","YZ","ZX","ZY","XYX","XYZ","XZX","XZY","YXY","YXZ","YZX","YZY","ZXY","ZXZ","ZYX","ZYZ"]
 function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::RotMatrix3{T} where {T}
@@ -175,21 +237,29 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
     end
 end
 
-function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{RotatedGeometry}, input_units::NamedTuple)::CSGTransformation where {T}
+function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{Rotation}, input_units::NamedTuple) where {T}
     parse_rotation_matrix(T, dict["rotate"], input_units.angle)
 end
 
-function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    angle_unit = input_units.angle
-    rotation_matrix = parse_rotation_matrix(T, dict, angle_unit)
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    rotate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), rotation_matrix)
+# function Geometry(::Type{T}, ::Type{RotatedGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
+#     angle_unit = input_units.angle
+#     rotation_matrix = parse_rotation_matrix(T, dict, angle_unit)
+#     key::String, transformations = get_geometry_key(T, dict, input_units)
+#     rotate(transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations), rotation_matrix)
+# end
+
+function Geometry(::Type{T}, ::Type{Rotations.Rotation}, dict::AbstractDict, input_units::NamedTuple, outer_transformations::Transformations{T}) where {T}
+    rotation_matrix = SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict["rotate"], input_units.angle))
+    key = get_geometry_key(T, dict, input_units)
+    Geometry(T, CSG_dict[key], dict[key], input_units, outer_transformations)
 end
 
 
-function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    key::String, transformations::Vector{CSGTransformation} = get_geometry_key(T, dict, input_units)
-    transform(Geometry(T, CSG_dict[key], dict[key], input_units), transformations)
+function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_transformations::Transformations{T}) where {T}
+    key = get_geometry_key(T, dict, input_units)
+    inner_transformations = parse_CSG_transformation(T, dict, input_units)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end
 
 
@@ -204,11 +274,11 @@ function show_CSG_tree(csgtree; start = "", tab = "", CSG = false)
         show_CSG_tree(csgtree.a, start = tab*"├"*(CT <: CSGDifference ? " +" : "──"), tab = tab*(next_CSG ? "" : "│"), CSG = next_CSG)
         show_CSG_tree(csgtree.b, start = tab*(CSG ? "├" : "└")*(CT <: CSGDifference ? " ─" : "──"), tab = tab*(CSG ? "│" : " "))
     end
-    if CT <: AbstractTransformedGeometry
-        println(start*" $(CT.name.name){$(CT.parameters[1])}")
-        tab *= "\t"
-        show_CSG_tree(csgtree.p, start = tab*"└──", tab = tab)
-    end
+    # if CT <: AbstractTransformedGeometry
+    #     println(start*" $(CT.name.name){$(CT.parameters[1])}")
+    #     tab *= "\t"
+    #     show_CSG_tree(csgtree.p, start = tab*"└──", tab = tab)
+    # end
     if CT <: AbstractPrimitive
         println(start*" $(CT.name.name){$(CT.parameters[1])}")
     end

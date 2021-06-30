@@ -8,14 +8,18 @@ module ConstructiveSolidGeometry
 
     # # Other Packages
     using IntervalSets
+    using Parameters
+    using PolygonOps
+    using Polynomials
     using RecipesBase
     using Rotations
     using StaticArrays
+    using Statistics
     using Unitful
-    
+
     using DataStructures: OrderedDict
 
-    import Base: in, *, +, -, &, size
+    import Base: in, *, +, -, &, size, zero
 
     abstract type AbstractCoordinateSystem end
     abstract type Cartesian <: AbstractCoordinateSystem end
@@ -35,24 +39,55 @@ module ConstructiveSolidGeometry
     abstract type AbstractGeometry{T <: AbstractFloat} end
 
     abstract type AbstractPrimitive{T} <: AbstractGeometry{T} end
-    abstract type AbstractVolumePrimitive{T} <: AbstractPrimitive{T} end
+    abstract type ClosedPrimitive end
+    abstract type OpenPrimitive end
+
+    abstract type AbstractVolumePrimitive{T, CO} <: AbstractPrimitive{T} end
     abstract type AbstractSurfacePrimitive{T} <: AbstractPrimitive{T} end
     abstract type AbstractLinePrimitive{T} <: AbstractPrimitive{T} end
 
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
-    abstract type AbstractTransformedGeometry{T} <: AbstractGeometry{T} end
 
     include("Units.jl")
-    include("PointsAndVectors.jl")
+    include("PointsAndVectors/PointsAndVectors.jl")
+
+    rotation(p::AbstractPrimitive) = p.rotation
+    origin(p::AbstractPrimitive) = p.origin
+    _transform_into_global_coordinate_system(pt::CartesianPoint, p::AbstractPrimitive) = (rotation(p) * pt) + origin(p)
+    _transform_into_global_coordinate_system(pts::AbstractVector{<:CartesianPoint}, p::AbstractPrimitive) =
+        broadcast(pt -> _transform_into_global_coordinate_system(pt, p), pts)
+    _transform_into_object_coordinate_system(pt::CartesianPoint, p::AbstractPrimitive) = inv(rotation(p)) * (pt - origin(p)) 
+    in(pt::CartesianPoint{T}, p::AbstractPrimitive{T}; csgtol::T = csg_default_tol(T)) where {T} = 
+        _in(_transform_into_object_coordinate_system(pt, p), p; csgtol = csgtol)
+    in(pt::CylindricalPoint{T}, p::AbstractPrimitive{T}; csgtol::T = csg_default_tol(T)) where {T} = 
+        in(CartesianPoint(pt), p; csgtol = csgtol)
+    # Do we want to store the rotation matrix permanently in the primitive?
+    # We should do tests regarding the performance. It can be easily added later.     
+
+    """
+        extreme_points(es::AbstractPrimitive{T}) where {T}
+
+    General implementation for all primitives.
+    """
+    function extreme_points(es::AbstractPrimitive{T}) where {T}
+        o = origin(es)
+        r = extremum(es)
+        vX = r * CartesianVector{T}(one(T), zero(T), zero(T))
+        vY = r * CartesianVector{T}(zero(T), one(T), zero(T))
+        vZ = r * CartesianVector{T}(zero(T), zero(T), one(T))
+        SVector{6,CartesianPoint{T}}(
+            o - vX, o + vX, o - vY, o + vY, o - vZ, o + vZ,
+        )
+    end
+
+    include("Transformations.jl")
     include("GeometryRounding.jl")
     include("VolumePrimitives/VolumePrimitives.jl")
     include("LinePrimitives/LinePrimitives.jl")
     include("SurfacePrimitives/SurfacePrimitives.jl")
-    include("Transformations.jl")
     include("Intervals.jl")
     include("CSG.jl")
     include("IO.jl")
-    include("Decompose.jl")
     include("Sampling.jl")
 
     # Plotting

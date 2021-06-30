@@ -134,8 +134,10 @@ end
                 @info("Scaling down sampling steps by a factor of $(2^exponent). Now using sampling steps of $(sampling_vector_pool./2^exponent) m. Also scaling down offset by a factor $(2^exponent).")
                 offset /= 2^exponent
             end
-            sample_pool = S == Cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : geom_round.(sample_pool)
-            sample_pool = S == Cartesian ? geom_round.(CartesianPoint.(sample_pool)) : geom_round.(sample_pool)
+            # sample_pool = S == Cylindrical ? geom_round.(CylindricalPoint.(sample_pool)) : geom_round.(sample_pool)
+            # sample_pool = S == Cartesian ? geom_round.(CartesianPoint.(sample_pool)) : geom_round.(sample_pool)
+            sample_pool = S == Cylindrical ? CylindricalPoint.(sample_pool) : sample_pool
+            sample_pool = S == Cartesian ? CartesianPoint.(sample_pool) : sample_pool
             sampled_planes = unique!(map(x->x[dim_number],sample_pool))
             v_Xsec_plane = sampled_planes[searchsortednearest(sampled_planes,v)]
             if abs(v-v_Xsec_plane) > sampling_vector_pool[dim_number] continue; end

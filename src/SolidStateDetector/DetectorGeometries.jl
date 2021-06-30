@@ -108,14 +108,14 @@ end
 function sample(c::SolidStateDetector{T}, ::Type{Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
     imp::Vector{CartesianPoint{T}} = vcat(
         CartesianPoint.(sample(c.semiconductor.geometry, sampling...)),
-        [CartesianPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
+        [CartesianPoint.(sample(g.geometry, sampling...)) for object in skipmissing((c.contacts, c.passives)) for g in object]...)
     unique!(imp)
 end
 
 function sample(c::SolidStateDetector{T}, ::Type{Cylindrical}, sampling...)::Vector{CylindricalPoint{T}} where {T <: SSDFloat}
     imp::Vector{CylindricalPoint{T}} = vcat(
     CylindricalPoint.(sample(c.semiconductor.geometry, sampling...)),
-    [CylindricalPoint.(sample(g.geometry, sampling...)) for object in (c.contacts, c.passives) for g in object]...)
+    [CylindricalPoint.(sample(g.geometry, sampling...)) for object in skipmissing((c.contacts, c.passives)) for g in object]...)
     unique!(imp)
 end
 
@@ -142,7 +142,7 @@ end
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
-        if in(searchsortednearest(grid, geom_round(p)), contact) || in(searchsortednearest(grid, p), contact) || geom_round(p) in contact || p in contact 
+        if in(searchsortednearest(grid, p), contact) || in(searchsortednearest(grid, p), contact) || p in contact || p in contact 
             return CD_ELECTRODE::UInt8, contact.id, surface_normal
         end
     end
@@ -275,7 +275,7 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     if pt in ssd.semiconductor
         ρ_semiconductor = get_charge_density(ssd.semiconductor, pt) 
         ϵ = ssd.semiconductor.material.ϵ_r
-    elseif in(pt, ssd.passives)
+    elseif !ismissing(ssd.passives) && in(pt, ssd.passives)
         for ep in ssd.passives
             if pt in ep
                 q_eff_fix = get_charge_density(ep, pt)
@@ -287,134 +287,6 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     return ρ_semiconductor, ϵ, q_eff_fix
 end
 
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
-
-    channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
-        [weighting_potential_contact_id]
-    else
-        Int[]
-    end
-
-    axr::Vector{T} = grid.axes[1].ticks
-    axφ::Vector{T} = grid.axes[2].ticks
-    axz::Vector{T} = grid.axes[3].ticks
-
-    for iz in axes(potential, 3)
-        z::T = axz[iz]
-        for iφ in axes(potential, 2)
-            φ::T = axφ[iφ]
-            for ir in axes(potential, 1)
-                r::T = axr[ir]
-                pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
-
-                for passive in ssd.passives
-                    if passive.potential != :floating
-                        if pt in passive
-                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
-                                passive.potential
-                            else
-                                0
-                            end
-                            pointtypes[ ir, iφ, iz ] = zero(PointType)
-                        end
-                    end
-                end
-                if in(pt, ssd)
-                    pointtypes[ ir, iφ, iz ] += pn_junction_bit
-                end
-                for contact in ssd.contacts
-                    if pt in contact
-                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
-                            contact.potential
-                        else
-                            contact.id == weighting_potential_contact_id ? 1 : 0
-                        end
-                        pointtypes[ ir, iφ, iz ] = zero(PointType)
-                    end
-                end
-            end
-        end
-    end
-
-    for contact in ssd.contacts
-        pot::T = if ismissing(weighting_potential_contact_id)
-            contact.potential
-        else
-            contact.id == weighting_potential_contact_id ? 1 : 0
-        end
-        contact_gridpoints = paint_object(contact, grid)
-        for gridpoint in contact_gridpoints
-            potential[ gridpoint... ] = pot
-            pointtypes[ gridpoint... ] = zero(PointType)
-        end
-    end
-    nothing
-end
-
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-    grid::Grid{T, N, Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
-
-    channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
-        [weighting_potential_contact_id]
-    else
-        Int[]
-    end
-
-    axx::Vector{T} = grid.axes[1].ticks
-    axy::Vector{T} = grid.axes[2].ticks
-    axz::Vector{T} = grid.axes[3].ticks
-
-    for iz in axes(potential, 3)
-        z::T = axz[iz]
-        for iy in axes(potential, 2)
-            y::T = axy[iy]
-            for ix in axes(potential, 1)
-                x::T = axx[ix]
-                pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
-
-                for passive in ssd.passives
-                    if passive.potential != :floating
-                        if pt in passive
-                            potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
-                                passive.potential
-                            else
-                                0
-                            end
-                            pointtypes[ ix, iy, iz ] = zero(PointType)
-                        end
-                    end
-                end
-                if in(pt, ssd)
-                    pointtypes[ ix, iy, iz ] += pn_junction_bit
-                end
-                for contact in ssd.contacts
-                    if pt in contact
-                        potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
-                            contact.potential
-                        else
-                            contact.id == weighting_potential_contact_id ? 1 : 0
-                        end
-                        pointtypes[ ix, iy, iz ] = zero(PointType)
-                    end
-                end
-            end
-        end
-    end
-    for contact in ssd.contacts
-        pot::T = if ismissing(weighting_potential_contact_id)
-            contact.potential
-        else
-            contact.id == weighting_potential_contact_id ? 1 : 0
-        end
-        contact_gridpoints = paint_object(contact, grid)
-        for gridpoint in contact_gridpoints
-            potential[ gridpoint... ] = pot
-            pointtypes[ gridpoint... ] = zero(PointType)
-        end
-    end
-    nothing
-end
 
 function json_to_dict(inputfile::String)::Dict
     parsed_json_file = Dict()

@@ -1,28 +1,22 @@
 abstract type AbstractPassive{T} <: AbstractObject{T} end
 
-mutable struct Passive{T} <: AbstractPassive{T}
+mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
     name::String
     id::Int
-    potential::Union{Symbol,T}
-    temperature::Union{T,Missing}
-    material::NamedTuple
-    charge_density_model::AbstractChargeDensity{T}
-    geometry::AbstractGeometry{T}
-    geometry_positive::Vector{AbstractGeometry{T}}
-    geometry_negative::Vector{AbstractGeometry{T}}
-    decomposed_surfaces::Vector{AbstractGeometry{T}}
-    
-    Passive{T}() where T <: SSDFloat = new{T}()
+    potential::T
+    temperature::T
+    material::MT
+    charge_density_model::CDM
+    geometry::G
 end
 
-function Passive{T}(dict::Dict, input_units::NamedTuple, transformations::Vector{CSGTransformation}) where T <: SSDFloat
-    pass = Passive{T}()
-    haskey(dict, "name") ? pass.name = dict["name"] : pass.name = "external part"
-    haskey(dict, "id") ? pass.id = dict["id"] : pass.id = -1
-    haskey(dict, "potential") ? pass.potential = T(dict["potential"]) : pass.potential = :floating
-    haskey(dict, "temperature") ? pass.temperature = T(dict["temperature"]) : pass.temperature = missing
-    pass.material = material_properties[materials[dict["material"]]]
-    pass.charge_density_model = if haskey(dict, "charge_density") 
+function Passive{T}(dict::Dict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
+    name = haskey(dict, "name") ? dict["name"] : "external part"
+    id::Int = haskey(dict, "id") ? dict["id"] : -1
+    potential = haskey(dict, "potential") ? T(dict["potential"]) : :floating
+    material = material_properties[materials[dict["material"]]]
+    temperature = haskey(dict, "temperature") ? T(dict["temperature"]) : T(293)
+    charge_density_model = if haskey(dict, "charge_density") 
         ChargeDensity(T, dict["charge_density"], input_units)
     elseif haskey(dict, "charge_density_model") 
         @warn "Config file deprication: There was an internal change from v0.5.1 to v0.6.0 regarding the 
@@ -35,10 +29,10 @@ function Passive{T}(dict::Dict, input_units::NamedTuple, transformations::Vector
     else
         ConstantChargeDensity{T}(0)
     end
-    pass.geometry = transform(Geometry(T, dict["geometry"], input_units), transformations)
-    pass.geometry_positive, pass.geometry_negative = get_decomposed_volumes(pass.geometry)
-    pass.decomposed_surfaces = vcat(get_decomposed_surfaces.(pass.geometry_positive)...)
-    return pass
+    inner_transformations = parse_CSG_transformation(T, dict, input_units)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    geometry = Geometry(T, dict["geometry"], input_units, transformations)
+    return Passive(name, id, potential, temperature, material, charge_density_model, geometry)
 end
 
 function println(io::IO, d::Passive{T}) where {T}

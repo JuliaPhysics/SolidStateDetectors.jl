@@ -23,11 +23,21 @@
 @inline _in_angular_interval_closed(α::Real, α_int::Nothing, tol::Real = 0) = true
 @inline _in_angular_interval_closed(α::Real, α_int::AbstractInterval{T}, tol::Real = 0) where {T} = mod(α - (α_int.left-tol), T(2π)) ≤ (α_int.right+tol) - (α_int.left-tol)
 
+@inline function _in_angular_interval_closed(α::T, α_int::Tuple{T,T}; csgtol::T = csg_default_tol(T)) where {T} 
+    m = mod(α - α_int[1], T(2π))
+    d = (α_int[2] - α_int[1])
+    m ≤ d + csgtol 
+end
+@inline function _in_angular_interval_open(α::T, α_int::Tuple{T,T}; csgtol::T = csg_default_tol(T)) where {T} 
+    csgtol < mod(α - α_int[1], T(2π)) < (α_int[2] - α_int[1]) - csgtol 
+end
+
+
 @inline _in_angular_interval_open(α::T, α_int::Nothing) where {T<:Real} = 0 < mod(α, T(2π)) < T(2π)
 @inline _in_angular_interval_open(α::Real, α_int::AbstractInterval{T}) where {T} = 0 < mod(α - α_int.left, T(2π)) < α_int.right - α_int.left
 
 _in_angular_interval_union(val::T, α::AbstractInterval, β::AbstractInterval) where {T<:AbstractFloat} =
-    _in_angular_interval_closed(val, α) || _in_angular_interval_closed(val, β)
+_in_angular_interval_closed(val, α) || _in_angular_interval_closed(val, β)
 
 function _is_edge_of_angular_interval_union(val::T, α::AbstractInterval, β::AbstractInterval) where {T<:AbstractFloat}
     tol = 10*geom_atol_zero(T)

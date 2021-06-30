@@ -1,10 +1,10 @@
-include("ConalPlane.jl")
+abstract type AbstractPlanarSurfacePrimitive{T} <: AbstractSurfacePrimitive{T} end
+abstract type AbstractCurvedSurfacePrimitive{T} <: AbstractSurfacePrimitive{T} end
+
+include("Plane.jl")
+include("Polygon.jl")
 include("ConeMantle.jl")
-include("CylindricalAnnulus.jl")
-include("Rectangle.jl")
-include("RegularPolygon.jl")
-include("RegularPrismMantle.jl")
-include("SphereMantle.jl")
-include("ToroidalAnnulus.jl")
+include("EllipticalSurface.jl")
+include("EllipsoidMantle.jl")
 include("TorusMantle.jl")
-#include("Plane.jl")
+
