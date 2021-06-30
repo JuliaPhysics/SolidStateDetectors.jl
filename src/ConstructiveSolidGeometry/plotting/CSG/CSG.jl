@@ -1,37 +1,24 @@
-@recipe function f(csg::ConstructiveSolidGeometry.CSGUnion)
-    linecolor --> :black
-    csguniontype --> :union
-    @series begin 
-        linestyle --> :solid
-        csg.a
+primitives(vp::AbstractVolumePrimitive) = (vp,)
+function primitives(csg::AbstractConstructiveGeometry)
+    ps = []
+    push!(ps, primitives(csg.a)...)
+    push!(ps, primitives(csg.b)...)
+    ps
+end
+
+@recipe function f(csg::AbstractConstructiveGeometry)
+    ps = primitives(csg)
+    @series begin
+        label --> "CSG"
+        linestyle := isClosedPrimitive(ps[1]) ? :solid : :dot
+        ps[1]
     end
-    @series begin 
-        linestyle --> :solid
-        csg.b
+    for i in 2:length(ps)
+        @series begin
+            label := nothing
+            linestyle := isClosedPrimitive(ps[i]) ? :solid : :dot
+            ps[i]
+        end
     end
 end
-@recipe function f(csg::ConstructiveSolidGeometry.CSGDifference)
-    linecolor --> :black
-    @series begin
-        linestyle --> :solid
-        csguniontype --> :difference
-        csg.a
-    end
-    @series begin
-        linestyle --> :dash
-        csg.b
-    end
-end
-@recipe function f(csg::ConstructiveSolidGeometry.CSGIntersection)
-    linecolor --> :black
-    csguniontype --> :intersection
-    @series begin
-        linestyle --> :dot
-        csguniontype --> :difference
-        csg.a
-    end
-    @series begin
-        linestyle --> :dot
-        csg.b
-    end
-end
+
