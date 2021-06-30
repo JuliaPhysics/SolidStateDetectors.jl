@@ -895,11 +895,6 @@ function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_
     nothing
 end
 
-function set_charge_drift_model!(sim::Simulation{T}, charge_drift_model::AbstractChargeDriftModel{T})::Nothing where {T <: SSDFloat}
-    sim.detector.semiconductor.charge_drift_model = charge_drift_model
-    nothing
-end
-
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
     sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)

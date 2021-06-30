@@ -50,7 +50,7 @@ get_active_volume(simulation.point_types) # approximation (sum of the volume of 
 # SolidStateDetectors.jl can also calculate the electric potential of a partially depleted detector:
 
 simulation_undep = deepcopy(simulation)
-simulation_undep.detector.contacts[end].potential = 500; # V  <-- Bias Voltage of Mantle
+simulation_undep.detector = SolidStateDetector(simulation_undep.detector, contact_id = 2, contact_potential = 500); # V  <-- Bias Voltage of Mantle
 
 calculate_electric_potential!( simulation_undep,
                                depletion_handling = true,
@@ -91,7 +91,7 @@ plot(simulation.electric_field, φ = 0.0, size = (350, 500))
 # Set the charge drift model of the simulation:
 
 charge_drift_model = ADLChargeDriftModel()
-set_charge_drift_model!(simulation, charge_drift_model)
+simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
 
 
 # And apply the charge drift model to the electric field:

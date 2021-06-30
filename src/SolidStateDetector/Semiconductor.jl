@@ -51,6 +51,9 @@ show(io::IO, d::Semiconductor) = print(io, d)
 show(io::IO,::MIME"text/plain", d::Semiconductor) = show(io, d)
 
 
-function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, cdm::AbstractImpurityDensity{T}) where {T,G,MT,CDM,IDM}
-    Semiconductor(sc.temperature, sc.material, cdm, sc.charge_drift_model, sc.geometry)
+function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, impurity_density::AbstractImpurityDensity{T}) where {T,G,MT,CDM,IDM}
+    Semiconductor(sc.temperature, sc.material, impurity_density, sc.charge_drift_model, sc.geometry)
+end
+function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, chargedriftmodel::AbstractChargeDriftModel{T}) where {T,G,MT,CDM,IDM}
+    Semiconductor(sc.temperature, sc.material, sc.impurity_density_model, chargedriftmodel, sc.geometry)
 end
