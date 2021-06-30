@@ -18,6 +18,10 @@ function edges(e::Ellipse{T,NTuple{2,Tuple{T}},Nothing}; n = 4) where {T}
 end
 
 @recipe function f(e::Ellipse; n = 40)
+    xguide --> "X"
+    yguide --> "Y"
+    zguide --> "Z"
+    aspect_ratio --> 1.0
     @series begin
         label --> "Ellipse"
         edges(e, n = n)
