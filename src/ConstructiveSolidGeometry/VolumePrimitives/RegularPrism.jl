@@ -37,7 +37,7 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
 end
 
 function vertices(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
-    xys = [sincos(T(2π)*(n-1)/N) for n in 1:N]
+    xys = [rp.r .* sincos(T(2π)*(n-1)/N) for n in 1:N]
     pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
     _transform_into_global_coordinate_system(pts, rp)
 end
