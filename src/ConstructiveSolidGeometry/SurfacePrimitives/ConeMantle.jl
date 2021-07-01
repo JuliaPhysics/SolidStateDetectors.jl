@@ -41,17 +41,17 @@ function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{
     pto = _transform_into_object_coordinate_system(pt, cm)
     cyl = CylindricalPoint(pto)
     Δr = cm.r[2] - cm.r[1]
-    z = cyl.r * Δr / 2cm.hZ
+    Δz = 2cm.hZ
     return CartesianVector(_transform_into_global_coordinate_system(
-            CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, z)), cm))
+            CartesianPoint(CylindricalPoint{T}(-one(T), cyl.φ, Δr / Δz)), cm))
 end
 function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T}) where {T}
     pto = _transform_into_object_coordinate_system(pt, cm)
     cyl = CylindricalPoint(pto)
-    Δr = -(cm.r[2] - cm.r[1])
-    z = cyl.r * Δr / 2cm.hZ
+    Δr = cm.r[2] - cm.r[1]
+    Δz = 2cm.hZ
     return CartesianVector(_transform_into_global_coordinate_system(
-            CartesianPoint(CylindricalPoint{T}( cyl.r, cyl.φ, z)), cm))
+            CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz)), cm))
 end
 
 const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
