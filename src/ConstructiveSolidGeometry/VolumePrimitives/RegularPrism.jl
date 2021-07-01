@@ -36,8 +36,13 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     transform(g, transformations)
 end
 
-function vertices(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
+function vertices(rp::RegularPrism{T,ClosedPrimitive,N,T}) where {T,N}
     xys = [rp.r .* sincos(T(2π)*(n-1)/N) for n in 1:N]
+    pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
+    _transform_into_global_coordinate_system(pts, rp)
+end
+function vertices(rp::RegularPrism{T,OpenPrimitive,N,T}) where {T,N}
+    xys = [rp.r .* sincos(T(2π)*(n-1)/N) for n in N:-1:1]
     pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
     _transform_into_global_coordinate_system(pts, rp)
 end
