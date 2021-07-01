@@ -19,7 +19,7 @@
             T = typeof(cm.hZ)
             npt_obj = CartesianPoint(CylindricalPoint{T}(radius_at_z(cm, zero(T)), nφ, zero(T)))
             npt = _transform_into_global_coordinate_system(npt_obj, cm)
-            npt, normalize(normal(cm, npt))/10
+            npt, normal(cm, npt)/3
         end
     end
 end

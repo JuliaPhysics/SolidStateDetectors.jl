@@ -1,6 +1,7 @@
 @recipe function f(es::EllipticalSurface; n = 40)
     ls = lines(es)
     linecolor --> :black
+    @info ls
     @series begin
         label --> "Elliptical Surface"
         n := n
@@ -10,7 +11,7 @@
         @series begin
             label := nothing
             seriestype := :vector
-            _plt_get_start_point_for_normal(es), normalize(Plane(es).normal) * _plt_area(es) / 20
+            _plt_get_start_point_for_normal(es), normalize(Plane(es).normal) * sqrt(_plt_area(es)) / 20 
         end
     end
     if length(ls) > 1 
@@ -19,11 +20,6 @@
                 label := nothing
                 n := n
                 ls[i]
-            end
-            @series begin
-                label := nothing
-                seriestype := :vector
-                _plt_get_start_point_for_normal(es), normalize(Plane(es).normal) * _plt_area(es) / 20
             end
         end
     end
