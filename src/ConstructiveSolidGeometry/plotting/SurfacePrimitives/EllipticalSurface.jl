@@ -1,7 +1,6 @@
 @recipe function f(es::EllipticalSurface; n = 40)
     ls = lines(es)
     linecolor --> :black
-    @info ls
     @series begin
         label --> "Elliptical Surface"
         n := n
