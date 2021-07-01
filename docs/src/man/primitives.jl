@@ -24,10 +24,46 @@ print(open(f -> read(f, String), cfn))
 box = CSG.Geometry(T, cfn)
 plot(box)
 
+# # Cone:
+# ## Tube
+cfn = joinpath(path_to_example_primitives_config_files, "Tube.yaml")
+print(open(f -> read(f, String), cfn))
+
+# Load the primitive from the configuration file via `CSG.Geometry`
+cone = CSG.Geometry(T, cfn)
+plot(cone)
+
+# # Cone
+# ## VaryingTube
+cfn = joinpath(path_to_example_primitives_config_files, "Cone.yaml")
+print(open(f -> read(f, String), cfn))
+
+# Load the primitive from the configuration file via `CSG.Geometry`
+cone = CSG.Geometry(T, cfn)
+plot(cone)
+
 # # Ellipsoid
+# ## Sphere
 cfn = joinpath(path_to_example_primitives_config_files, "Sphere.yaml")
 print(open(f -> read(f, String), cfn))
 
 # Load the primitive from the configuration file via `CSG.Geometry`
 ellipsoid = CSG.Geometry(T, cfn)
 plot(ellipsoid)
+
+# # Torus
+cfn = joinpath(path_to_example_primitives_config_files, "Torus.yaml")
+print(open(f -> read(f, String), cfn))
+
+# Load the primitive from the configuration file via `CSG.Geometry`
+torus = CSG.Geometry(T, cfn)
+plot(torus, zlims = [-6,6], camera = (40, 55))
+
+# # Prism
+# ## Hexagonal Prism
+cfn = joinpath(path_to_example_primitives_config_files, "HexagonalPrism.yaml")
+print(open(f -> read(f, String), cfn))
+
+# Load the primitive from the configuration file via `CSG.Geometry`
+prism = CSG.Geometry(T, cfn)
+plot(prism)
