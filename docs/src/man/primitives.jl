@@ -1,3 +1,5 @@
+# ## Volume Primitives
+
 using SolidStateDetectors
 import SolidStateDetectors.ConstructiveSolidGeometry as CSG
 using SolidStateDetectors.ConstructiveSolidGeometry: ClosedPrimitive
@@ -5,7 +7,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry: Box
 using Plots
 T = Float64;
 
-# ## List of YAML example configuration files for Primitives
+# ### List of YAML example configuration files for Primitives
 # Under `SolidStateDetectors.jl/examples/example_primitive_files` there 
 # are some examples how to define the different primitives 
 # via the YAML format:
@@ -16,7 +18,7 @@ for fn in example_primitives_config_filenames
     println(fn)
 end
 
-# # Box
+# ### Box
 cfn = joinpath(path_to_example_primitives_config_files, "Box.yaml")
 print(open(f -> read(f, String), cfn))
 
@@ -24,8 +26,8 @@ print(open(f -> read(f, String), cfn))
 box = CSG.Geometry(T, cfn)
 plot(box)
 
-# # Cone:
-# ## Tube
+# ### Cone:
+# #### Tube
 cfn = joinpath(path_to_example_primitives_config_files, "Tube.yaml")
 print(open(f -> read(f, String), cfn))
 
@@ -33,8 +35,7 @@ print(open(f -> read(f, String), cfn))
 cone = CSG.Geometry(T, cfn)
 plot(cone)
 
-# # Cone
-# ## VaryingTube
+# #### VaryingTube
 cfn = joinpath(path_to_example_primitives_config_files, "Cone.yaml")
 print(open(f -> read(f, String), cfn))
 
@@ -42,8 +43,8 @@ print(open(f -> read(f, String), cfn))
 cone = CSG.Geometry(T, cfn)
 plot(cone)
 
-# # Ellipsoid
-# ## Sphere
+# ### Ellipsoid
+# #### Sphere
 cfn = joinpath(path_to_example_primitives_config_files, "Sphere.yaml")
 print(open(f -> read(f, String), cfn))
 
@@ -51,7 +52,7 @@ print(open(f -> read(f, String), cfn))
 ellipsoid = CSG.Geometry(T, cfn)
 plot(ellipsoid)
 
-# # Torus
+# ### Torus
 cfn = joinpath(path_to_example_primitives_config_files, "Torus.yaml")
 print(open(f -> read(f, String), cfn))
 
@@ -59,8 +60,8 @@ print(open(f -> read(f, String), cfn))
 torus = CSG.Geometry(T, cfn)
 plot(torus, zlims = [-6,6], camera = (40, 55))
 
-# # Prism
-# ## Hexagonal Prism
+# ### Prism
+# #### Hexagonal Prism
 cfn = joinpath(path_to_example_primitives_config_files, "HexagonalPrism.yaml")
 print(open(f -> read(f, String), cfn))
 
