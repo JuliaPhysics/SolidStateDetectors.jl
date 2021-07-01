@@ -83,7 +83,8 @@ function _parse_angular_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Un
     φFrom::T = _parse_value(T, dict["from"], unit)
     if abs(rem2pi(φFrom - φTo, RoundNearest)) > 2*eps(T)
         φFrom, φTo
-        #else nothing 
+    else 
+        nothing 
     end
 end
 
