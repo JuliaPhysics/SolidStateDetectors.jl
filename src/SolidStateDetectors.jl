@@ -39,7 +39,7 @@ using .ConstructiveSolidGeometry:
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations
         
-import .ConstructiveSolidGeometry: sample, sample_surface
+import .ConstructiveSolidGeometry: sample
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
