@@ -8,13 +8,13 @@ include("TorusMantle.jl")
     linecolor --> :black
     @series begin
         label --> "Faces"
-        show_normal --> true
+        show_normal --> false
         vp[1]
     end
     if length(vp) > 1
         for p in vp[2:end]
             @series begin
-                show_normal --> true
+                show_normal --> false
                 label := nothing
                 p
             end
