@@ -83,7 +83,8 @@ function _parse_angular_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Un
     φFrom::T = _parse_value(T, dict["from"], unit)
     if abs(rem2pi(φFrom - φTo, RoundNearest)) > 2*eps(T)
         φFrom, φTo
-        #else nothing 
+    else 
+        nothing 
     end
 end
 
@@ -262,6 +263,18 @@ function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_
     Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end
 
+function Geometry(::Type{T}, filename::String, input_units::NamedTuple = (length = internal_unit_length, angle = internal_unit_angle)) where {T}
+    @assert isfile(filename) "The given filename '$(filename)' does not lead to a valid file."
+    dict = if endswith(filename, ".json")
+        JSON.parsefile(filename)
+    elseif endswith(filename, ".yaml")
+        YAML.load_file(filename)
+    else
+        @error "Only JSON and YAML formats are supported at the moment."
+    end
+    transformation = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
+    Geometry(T, dict, input_units, transformation)
+end
 
 function show_CSG_tree(csgtree; start = "", tab = "", CSG = false)
     CT = typeof(csgtree)

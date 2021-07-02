@@ -33,36 +33,36 @@ normal(es::EllipticalSurface{T}) where {T} = es.rotation * CartesianVector{T}(ze
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
 
-function lines(sp::CircularArea{T}) where {T} 
+function lines(sp::CircularArea{T}; n = 2) where {T} 
     circ = Circle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    return (circ,)
+    φs = range(T(0), step = T(2π) / n, length = n)
+    edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(zero(T), φ, zero(T))), sp),
+                      _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, φ, zero(T))), sp)) for φ in φs ]
+    return (circ, edges)
 end
-function lines(sp::PartialCircularArea{T}) where {T} 
+function lines(sp::PartialCircularArea{T}; n = 2) where {T} 
     circ = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    p_l = CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[1], zero(T)))
-    p_r = CartesianPoint(CylindricalPoint{T}(sp.r, sp.φ[2], zero(T)))
-    edge_l = Edge(sp.origin, _transform_into_global_coordinate_system(p_l, sp))
-    edge_r = Edge(sp.origin, _transform_into_global_coordinate_system(p_r, sp))
-    return (circ, edge_l, edge_r)
+    φs = range(sp.φ[1], stop = sp.φ[2], length = n)
+    edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(zero(T), φ, zero(T))), sp),
+                      _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, φ, zero(T))), sp)) for φ in φs ]
+    return (circ, edges)
 end
 
-function lines(sp::Annulus{T}) where {T} 
+function lines(sp::Annulus{T}; n = 2) where {T} 
     circ_in  = Circle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
     circ_out = Circle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    return (circ_in, circ_out)
+    φs = range(T(0), step = T(2π) / n, length = n)
+    edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, zero(T))), sp),
+                      _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, zero(T))), sp)) for φ in φs ]
+    return (circ_in, circ_out, edges)
 end
-function lines(sp::PartialAnnulus{T}) where {T} 
+function lines(sp::PartialAnnulus{T}; n = 2) where {T} 
     circ_in  = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
     circ_out = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    p_l_in  = CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[1], zero(T)))
-    p_l_out = CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[1], zero(T)))
-    p_r_in  = CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[2], zero(T)))
-    p_r_out = CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[2], zero(T)))
-    edge_l = Edge(_transform_into_global_coordinate_system(p_l_in,  sp),
-                  _transform_into_global_coordinate_system(p_l_out, sp))
-    edge_r = Edge(_transform_into_global_coordinate_system(p_r_in,  sp),
-                  _transform_into_global_coordinate_system(p_r_out, sp))
-    return (circ_in, circ_out, edge_l, edge_r)
+    φs = range(sp.φ[1], stop = sp.φ[2], length = n)
+    edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, zero(T))), sp),
+                      _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, zero(T))), sp)) for φ in φs ]
+    return (circ_in, circ_out, edges)
 end
 
 # #Constructors

@@ -41,17 +41,17 @@ function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{
     pto = _transform_into_object_coordinate_system(pt, cm)
     cyl = CylindricalPoint(pto)
     Δr = cm.r[2] - cm.r[1]
-    z = cyl.r * Δr / 2cm.hZ
+    Δz = 2cm.hZ
     return CartesianVector(_transform_into_global_coordinate_system(
-            CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, z)), cm))
+            CartesianPoint(CylindricalPoint{T}(-one(T), cyl.φ, Δr / Δz)), cm))
 end
 function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T}) where {T}
     pto = _transform_into_object_coordinate_system(pt, cm)
     cyl = CylindricalPoint(pto)
-    Δr = -(cm.r[2] - cm.r[1])
-    z = cyl.r * Δr / 2cm.hZ
+    Δr = cm.r[2] - cm.r[1]
+    Δz = 2cm.hZ
     return CartesianVector(_transform_into_global_coordinate_system(
-            CartesianPoint(CylindricalPoint{T}( cyl.r, cyl.φ, z)), cm))
+            CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz)), cm))
 end
 
 const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
@@ -62,25 +62,25 @@ extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
 extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
 
 
-function lines(sp::FullConeMantle{T}) where {T} 
+function lines(sp::FullConeMantle{T}; n = 2) where {T} 
     bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), -sp.hZ), sp)
     bot_ellipse = Circle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), +sp.hZ), sp)
     top_ellipse = Circle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    bot_ellipse, top_ellipse
+    φs = range(T(0), step = T(2π) / n, length = n)
+    edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, -sp.hZ)), sp),
+                      _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, +sp.hZ)), sp)) for φ in φs ]
+    bot_ellipse, top_ellipse, edges
 end
-function lines(sp::PartialConeMantle{T}) where {T} 
+function lines(sp::PartialConeMantle{T}; n = 2) where {T} 
     bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
     bot_ellipse = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +sp.hZ), sp)
     top_ellipse = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    p_bot_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[1], -sp.hZ)), sp)
-    p_bot_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], sp.φ[2], -sp.hZ)), sp)
-    p_top_l = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[1],  sp.hZ)), sp)
-    p_top_r = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], sp.φ[2],  sp.hZ)), sp)
-    edge_l = Edge{T}(p_bot_l, p_top_l)
-    edge_r = Edge{T}(p_bot_r, p_top_r)
-    bot_ellipse, top_ellipse, edge_l, edge_r
+    φs = range(sp.φ[1], stop = sp.φ[2], length = n)
+    edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, -sp.hZ)), sp),
+                      _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, +sp.hZ)), sp)) for φ in φs ]
+    bot_ellipse, top_ellipse, edges
 end
 
 

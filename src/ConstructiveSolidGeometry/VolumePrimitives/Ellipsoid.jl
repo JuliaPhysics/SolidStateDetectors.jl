@@ -20,11 +20,23 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
     r = parse_r_of_primitive(T, dict, input_units.length)
     φ = nothing
     θ = nothing
-    e = Ellipsoid{T,ClosedPrimitive,typeof(r),typeof(φ),typeof(θ)}(
-        r = r, 
-        φ = φ, 
-        θ = θ
-    )
+    e = if r isa Tuple{T,T}
+        Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
+            r = r[2], 
+            φ = φ, 
+            θ = θ
+        ) - Ellipsoid{T,OpenPrimitive,T,typeof(φ),typeof(θ)}(
+            r = r[1], 
+            φ = φ, 
+            θ = θ
+        )
+    else
+        Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
+            r = r, 
+            φ = φ, 
+            θ = θ
+        )
+    end
     transform(e, transformations)
 end
 

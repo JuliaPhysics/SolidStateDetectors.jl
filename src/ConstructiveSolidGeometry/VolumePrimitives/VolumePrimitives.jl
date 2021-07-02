@@ -3,6 +3,9 @@ OpenPrimitive(p::VP) where {VP <: AbstractVolumePrimitive} = VP(p, COT = OpenPri
 switchClosedOpen(p::AbstractVolumePrimitive{<:Any,ClosedPrimitive}) = OpenPrimitive(p)
 switchClosedOpen(p::AbstractVolumePrimitive{<:Any,OpenPrimitive}) = ClosedPrimitive(p)
 
+isClosedPrimitive(vp::AbstractVolumePrimitive{<:Any,ClosedPrimitive}) = true
+isClosedPrimitive(vp::AbstractVolumePrimitive{<:Any,OpenPrimitive}) = false
+
 distance(pt::CartesianPoint, vp::AbstractVolumePrimitive) = 
 minimum(map(p -> distance(pt, p), surfaces(vp)))
 

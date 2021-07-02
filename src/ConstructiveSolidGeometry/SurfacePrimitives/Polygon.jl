@@ -29,6 +29,8 @@ function edges(p::Quadrangle{T}) where {T}
     )
 end
 
+flip(p::Polygon) = Polygon(reverse(p.points))
+
 lines(p::Polygon) = edges(p)
 
 Plane(p::Polygon{N, T}) where {N, T} = Plane{T}(p.points[1], (p.points[2] - p.points[1]) × (p.points[3] - p.points[1]))

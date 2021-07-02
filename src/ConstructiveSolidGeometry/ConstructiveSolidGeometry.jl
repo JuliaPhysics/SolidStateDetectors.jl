@@ -8,6 +8,7 @@ module ConstructiveSolidGeometry
 
     # # Other Packages
     using IntervalSets
+    using JSON
     using Parameters
     using PolygonOps
     using Polynomials
@@ -16,6 +17,7 @@ module ConstructiveSolidGeometry
     using StaticArrays
     using Statistics
     using Unitful
+    using YAML
 
     using DataStructures: OrderedDict
 

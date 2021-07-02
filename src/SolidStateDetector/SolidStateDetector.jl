@@ -12,11 +12,23 @@ struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
     SolidStateDetector{T}(n::AbstractString,s::SC,c::C,p::P,v::VDM) where {T,SC,C,P,VDM}= new{T,SC,C,P,VDM}(n,s,c,p,v)
 end
 
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, cdm::AbstractImpurityDensity{T}) where {T,SC,CT,PT,VDM}
-    sc = Semiconductor(det.semiconductor, cdm)
+function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, impurity_density::AbstractImpurityDensity{T}) where {T,SC,CT,PT,VDM}
+    sc = Semiconductor(det.semiconductor, impurity_density)
     SolidStateDetector{T}(
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
+end
+function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, chargedriftmodel::AbstractChargeDriftModel{T}) where {T,SC,CT,PT,VDM}
+    sc = Semiconductor(det.semiconductor, chargedriftmodel)
+    SolidStateDetector{T}(
+        det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
+    )
+end
+function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}; contact_id::Int, contact_potential::Real) where {T,SC,CT,PT,VDM}
+    oc = det.contacts[contact_id]
+    nc = Contact(T(contact_potential), oc.material, oc.id, oc.name, oc.geometry )
+    contacts = [c.id == contact_id ? nc : c for c in det.contacts]
+    SolidStateDetector{T}( det.name, det.semiconductor, contacts, det.passives, det.virtual_drift_volumes )
 end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
@@ -163,11 +175,13 @@ function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
             println(c)
         end
     end
-    println()
-    println("# Passives: $(length(d.passives))")
-    if length(d.passives)<=5
-        for p in d.passives
-            # println(c)
+    if !ismissing(d.passives)
+        println()
+        println("# Passives: $(length(d.passives))")
+        if length(d.passives) <= 5
+            for p in d.passives
+                # println(c)
+            end
         end
     end
 end
