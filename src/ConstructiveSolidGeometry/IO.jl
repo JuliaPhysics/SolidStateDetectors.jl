@@ -256,6 +256,15 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
     end
 end
 
+function get_rotation(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
+    if haskey(dict, "rotate")
+        parse_rotation_matrix(T, dict["rotate"], unit)
+    else
+        one(SMatrix{3, 3, T, 9})
+    end
+end
+
+
 function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{Rotation}, input_units::NamedTuple) where {T}
     parse_rotation_matrix(T, dict["rotate"], input_units.angle)
 end
