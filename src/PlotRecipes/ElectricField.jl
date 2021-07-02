@@ -120,6 +120,9 @@ end
             sample_dummy = SolidStateDetectors.sample(positive_geometry, T[1000,1000,1000]) # used to extract the point type of the volume primitive
             PT = eltype(sample_dummy)
             sampling_vector_pool = T.(ustrip.([uconvert(u"m", sampling) for i in 1:3]))
+            if typeof(positive_geometry) <: Torus
+                sampling_vector_pool[3] = sampling_vector_pool[3]/positive_geometry.r_tube_interval.left
+            end
             PT == CylindricalPoint{T} ? sampling_vector_pool[2] = sampling_vector_pool[2]/0.001 *2*π / 360 : nothing # rough translation of mm to radians; Might need some polish
             sample_pool = SolidStateDetectors.sample(positive_geometry, sampling_vector_pool)
             if length(sample_pool)<8
