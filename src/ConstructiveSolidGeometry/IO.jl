@@ -215,6 +215,24 @@ function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {
     SVector{3,T}(x,y,z)
 end
 
+function get_origin(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
+    if haskey(dict, "origin")
+        o = dict["origin"]
+        if o isa Vector
+            CartesianPoint{T}(_parse_value(T, o, unit))
+        else
+            x, y, z = zero(T), zero(T), zero(T)
+            if haskey(o, "x") x = _parse_value(T, o["x"], unit) end
+            if haskey(o, "y") y = _parse_value(T, o["y"], unit) end
+            if haskey(o, "z") z = _parse_value(T, o["z"], unit) end
+            CartesianPoint{T}(x, y, z)
+        end
+    else
+        zero(CartesianPoint{T})
+    end
+end
+
+
 # function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
 #     length_unit = input_units.length
 #     scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
