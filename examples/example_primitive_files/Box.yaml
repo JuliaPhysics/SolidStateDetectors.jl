@@ -1,5 +1,5 @@
 box:
   widths: [2, 4, 6] # => hX = 1; hY = 2; hZ = 3;
-  # origin: [0, 0, 0] # [x, y, z] - Optional; Default: [0, 0, 0]
-  # rotate: # Optional; Default: no rotation
-  #   Z: 0 
+  origin: [0, 0, 0] # [x, y, z] - Optional; Default: [0, 0, 0]
+  rotate: # Optional; Default: no rotation
+    Z: 0 

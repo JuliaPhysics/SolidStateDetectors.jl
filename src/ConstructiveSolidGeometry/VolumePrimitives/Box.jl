@@ -26,23 +26,45 @@ end
 _in(pt::CartesianPoint{T}, b::Box{<:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} = 
     abs(pt.x) < b.hX - csgtol && abs(pt.y) < b.hY - csgtol && abs(pt.z) < b.hZ - csgtol
  
+
 function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     length_unit = input_units.length
-    x = parse_interval_of_primitive(T, "x", dict, length_unit)
-    y = parse_interval_of_primitive(T, "y", dict, length_unit)
-    z = parse_interval_of_primitive(T, "z", dict, length_unit)
-    μx = typeof(x) <: Real ? zero(T) : mean(x)
-    μy = typeof(y) <: Real ? zero(T) : mean(y)
-    μz = typeof(z) <: Real ? zero(T) : mean(z)
-    origin = CartesianPoint{T}(μx, μy, μz)
-    hX = typeof(x) <: Real ? x : (x[2] - x[1])/2
-    hY = typeof(y) <: Real ? y : (y[2] - y[1])/2
-    hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
+    origin = get_origin(T, dict, length_unit)
+    rotation = get_rotation(T, dict, input_units.angle) 
+    hX, hY, hZ = if haskey(dict, "widths")
+        @assert length(dict["widths"]) == 3
+        _parse_value(T, dict["widths"], length_unit)/2
+    elseif haskey(dict, "halfwidths")
+        @assert length(dict["halfwidths"]) == 3
+        _parse_value(T, dict["halfwidths"], length_unit)
+    elseif haskey(dict, "hX") && haskey(dict, "hZ") && haskey(dict, "hZ")
+        _parse_value(T, dict["hX"], length_unit), 
+        _parse_value(T, dict["hY"], length_unit), 
+        _parse_value(T, dict["hZ"], length_unit)
+    elseif haskey(dict, "x") && haskey(dict, "y") && haskey(dict, "z")
+        @warn "Deprication warning: Detected old primitive definition for `Box`. 
+            Please update your configuration file to the new format 
+            via `widhts`, `haldfwidht` or `hX`, `hY` and `hZ`
+            in combination with possible fields `origin` and `rotate`.
+            The old definition overwrites the optional field `origin`."        
+        x = parse_interval_of_primitive(T, "x", dict, length_unit)
+        y = parse_interval_of_primitive(T, "y", dict, length_unit)
+        z = parse_interval_of_primitive(T, "z", dict, length_unit)
+        μx = typeof(x) <: Real ? zero(T) : mean(x)
+        μy = typeof(y) <: Real ? zero(T) : mean(y)
+        μz = typeof(z) <: Real ? zero(T) : mean(z)
+        origin = CartesianPoint{T}(μx, μy, μz)
+        hX = typeof(x) <: Real ? x : (x[2] - x[1])/2
+        hY = typeof(y) <: Real ? y : (y[2] - y[1])/2
+        hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
+        hX, hY, hZ
+    end
     box = Box{T, ClosedPrimitive}(
         hX = hX, 
         hY = hY, 
         hZ = hZ, 
-        origin = origin
+        origin = origin,
+        rotation = rotation
     )
     transform(box, transformations)
 end

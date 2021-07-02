@@ -16,7 +16,15 @@ T = Float64
 
 example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_files")
 @testset "Test primitive read-in" begin
-    @test typeof(Geometry(T, joinpath(example_primitive_dir, "Box.yaml"))) <: Box{T}
+    @testset "Box" begin
+        box_widths = Geometry(T, joinpath(example_primitive_dir, "Box.yaml"))
+        box_halfwidths = Geometry(T, joinpath(example_primitive_dir, "Box_halfwidths.yaml"))
+        box_hXhYhZ = Geometry(T, joinpath(example_primitive_dir, "Box_hXhYhZ.yaml"))
+        box_old = Geometry(T, joinpath(example_primitive_dir, "Box_old.yaml"))
+        @test box_widths isa Box
+        @test box_widths == box_halfwidths == box_hXhYhZ == box_old
+    end
+
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Cone.yaml"))) <: Cone{T, <:Any, <:Tuple}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "HexagonalPrism.yaml")).a) <: HexagonalPrism{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Sphere.yaml")).a) <: Ellipsoid{T}
