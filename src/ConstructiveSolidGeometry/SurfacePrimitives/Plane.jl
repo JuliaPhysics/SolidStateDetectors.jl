@@ -6,6 +6,7 @@ end
 Plane(origin::CartesianPoint{T}, normal::CartesianVector{T}) where {T} = Plane{T}(origin, normal)
 
 normal(p::Plane) = p.normal
+normal(p::Plane, ::AbstractCoordinatePoint) = p.normal
 origin(p::Plane) = p.origin
 
 isinfront(pt::AbstractCoordinatePoint, p::Plane) = (pt - origin(p)) ⋅ normal(p) > 0
