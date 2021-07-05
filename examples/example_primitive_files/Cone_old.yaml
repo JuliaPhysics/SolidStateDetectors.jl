@@ -9,5 +9,6 @@ cone:
   phi:
     from: 0.0
     to: 6.283185307179586
-  h: 2.0
-  origin: [0,0,0] # optional
+  z: 
+    from: -1
+    to: 1

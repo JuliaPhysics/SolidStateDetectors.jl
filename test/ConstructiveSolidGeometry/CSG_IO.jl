@@ -25,7 +25,13 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         @test box_widths == box_halfwidths == box_hXhYhZ == box_old
     end
 
-    @test typeof(Geometry(T, joinpath(example_primitive_dir, "Cone.yaml"))) <: Cone{T, <:Any, <:Tuple}
+    @testset "Cone" begin
+        cone = Geometry(T, joinpath(example_primitive_dir, "Cone.yaml"))
+        cone_old = Geometry(T, joinpath(example_primitive_dir, "Cone_old.yaml"))
+        @test cone isa Cone{T, <:Any, <:Tuple}
+        @test cone == cone_old
+    end
+
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "HexagonalPrism.yaml")).a) <: HexagonalPrism{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Sphere.yaml")).a) <: Ellipsoid{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Torus.yaml")).a) <: Torus{T}
