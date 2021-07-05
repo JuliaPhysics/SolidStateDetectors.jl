@@ -18,18 +18,39 @@ const FullTorus{T,CO} = Torus{T,CO,T,Nothing,Nothing}
 function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     length_unit = input_units.length
     angle_unit = input_units.angle
+    origin = get_origin(T, dict, length_unit)
+    rotation = get_rotation(T, dict, angle_unit)
+
     r_torus = _parse_value(T, dict["r_torus"], length_unit)
     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
+    if !(φ === nothing)
+        error("Partial Ellipsoid (`φ = φ`) is not yet supported.")
+    end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
+    if !(φ === nothing)
+        error("Partial Ellipsoid (`θ = θ`) is not yet supported.")
+    end
+    if haskey(dict, "z")
+        @warn "Deprecation warning: Field `z` for `Torus` is deprecated. 
+                Use instead (only) `origin` to specify the origin of the primitive.
+                There might be a conflict with the possible field `origin`:
+                The `z` component of the origin of the primitive is overwritten by the `z`."
+        z = _parse_value(T, dict["z"], length_unit)
+        origin = CartesianPoint{T}(origin[1], origin[2], z)
+    end
+
     t = if r_tube isa Real
         Torus{T,ClosedPrimitive,typeof(r_tube),typeof(φ),typeof(θ)}(
-            r_torus = r_torus, r_tube = r_tube, φ =φ, θ = θ)
+            r_torus = r_torus, r_tube = r_tube, φ =φ, θ = θ, 
+            origin = origin, rotation = rotation)
     else
         Torus{T,ClosedPrimitive,typeof(r_tube[2]),typeof(φ),typeof(θ)}(
-            r_torus = r_torus, r_tube = r_tube[2], φ =φ, θ = θ) - 
+            r_torus = r_torus, r_tube = r_tube[2], φ =φ, θ = θ, 
+            origin = origin, rotation = rotation) - 
         Torus{T,ClosedPrimitive,typeof(r_tube[1]),typeof(φ),typeof(θ)}(
-            r_torus = r_torus, r_tube = r_tube[1], φ =φ, θ = θ)
+            r_torus = r_torus, r_tube = r_tube[1], φ =φ, θ = θ, 
+            origin = origin, rotation = rotation)
     end        
     transform(t, transformations)
 end
