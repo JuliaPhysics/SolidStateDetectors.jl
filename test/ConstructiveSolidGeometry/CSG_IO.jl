@@ -31,6 +31,9 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         cone_old = Geometry(T, joinpath(example_primitive_dir, "Cone_old.yaml"))
         @test cone isa Cone{T, <:Any, <:Tuple}
         @test cone == cone_old
+
+        cone_tube = Geometry(T, joinpath(example_primitive_dir, "Cone_tube.yaml"))
+        @test cone_tube isa CSG.VaryingTube{T}
     end
 
     @testset "Ellipsoid" begin
@@ -43,6 +46,8 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         @test hexagon isa CSG.HexagonalPrism{T}
     end
 
-    @test typeof(Geometry(T, joinpath(example_primitive_dir, "Torus.yaml")).a) <: Torus{T}
-    @test typeof(Geometry(T, joinpath(example_primitive_dir, "Tube.yaml"))) <: Cone{T, <:Any, <:Tuple}
+    @testset "Torus" begin
+        torus = Geometry(T, joinpath(example_primitive_dir, "Torus.yaml"))
+        @test torus isa CSG.Torus{T}
+    end
 end
