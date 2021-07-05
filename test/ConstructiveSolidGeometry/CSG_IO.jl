@@ -38,7 +38,11 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         @test ellipsoid_full_sphere isa CSG.FullSphere{T}
     end
 
-    @test typeof(Geometry(T, joinpath(example_primitive_dir, "HexagonalPrism.yaml")).a) <: HexagonalPrism{T}
+    @testset "RegularPrism" begin
+        hexagon = Geometry(T, joinpath(example_primitive_dir, "RegularPrism_hexagon.yaml"))
+        @test hexagon isa CSG.HexagonalPrism{T}
+    end
+
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Torus.yaml")).a) <: Torus{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Tube.yaml"))) <: Cone{T, <:Any, <:Tuple}
 end
