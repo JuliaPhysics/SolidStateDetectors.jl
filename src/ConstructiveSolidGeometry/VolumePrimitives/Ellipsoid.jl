@@ -17,24 +17,41 @@ const FullSphere{T,CO} = Ellipsoid{T,CO,T,Nothing,Nothing}
 const FullEllipsoid{T,CO} = Ellipsoid{T,CO,NTuple{3,T},Nothing,Nothing}
 
 function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+    length_unit = input_units.length
+    angle_unit = input_units.angle
+    origin = get_origin(T, dict, length_unit)
+    rotation = get_rotation(T, dict, angle_unit)
+    
     r = parse_r_of_primitive(T, dict, input_units.length)
-    φ = nothing
-    θ = nothing
+    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    if !(φ === nothing)
+        error("Partial Ellipsoid (`φ = φ`) is not yet supported.")
+    end
+    θ = parse_θ_of_primitive(T, dict, angle_unit)
+    if !(φ === nothing)
+        error("Partial Ellipsoid (`θ = θ`) is not yet supported.")
+    end
     e = if r isa Tuple{T,T}
         Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
             r = r[2], 
             φ = φ, 
-            θ = θ
+            θ = θ,
+            origin = origin,
+            rotation = rotation
         ) - Ellipsoid{T,OpenPrimitive,T,typeof(φ),typeof(θ)}(
             r = r[1], 
             φ = φ, 
-            θ = θ
+            θ = θ,
+            origin = origin,
+            rotation = rotation
         )
     else
         Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
             r = r, 
             φ = φ, 
-            θ = θ
+            θ = θ,
+            origin = origin,
+            rotation = rotation
         )
     end
     transform(e, transformations)

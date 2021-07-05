@@ -6,6 +6,7 @@ using JSON
 using YAML
 using StaticArrays
 
+import SolidStateDetectors.ConstructiveSolidGeometry as CSG
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
 using SolidStateDetectors.ConstructiveSolidGeometry: 
     internal_unit_length, internal_unit_angle,
@@ -32,8 +33,12 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         @test cone == cone_old
     end
 
+    @testset "Ellipsoid" begin
+        ellipsoid_full_sphere = Geometry(T, joinpath(example_primitive_dir, "Ellipsoid_full_sphere.yaml"))
+        @test ellipsoid_full_sphere isa CSG.FullSphere{T}
+    end
+
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "HexagonalPrism.yaml")).a) <: HexagonalPrism{T}
-    @test typeof(Geometry(T, joinpath(example_primitive_dir, "Sphere.yaml")).a) <: Ellipsoid{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Torus.yaml")).a) <: Torus{T}
     @test typeof(Geometry(T, joinpath(example_primitive_dir, "Tube.yaml"))) <: Cone{T, <:Any, <:Tuple}
 end
