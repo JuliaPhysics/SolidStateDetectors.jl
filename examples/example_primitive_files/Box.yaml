@@ -1,10 +1,5 @@
 box:
-  x:
-    from: -1.0
-    to: 1.0
-  y:
-    from: -2.0
-    to: 2.0
-  z:
-    from: -3.0
-    to: 3.0
+  widths: [2, 4, 6] # => hX = 1; hY = 2; hZ = 3;
+  origin: [0, 0, 0] # [x, y, z] - Optional; Default: [0, 0, 0]
+  rotate: # Optional; Default: no rotation
+    Z: 0 
