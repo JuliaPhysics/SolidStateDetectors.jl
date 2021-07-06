@@ -34,13 +34,13 @@ SSD_examples[:SigGen] = (
     joinpath(@__DIR__, "../examples/example_config_files/public_ppc_config_SigGen.config")
 )
 SSD_examples[:InfiniteParallelPlateCapacitor] = (
-    joinpath(@__DIR__, "../examples/example_config_files/infinite_parallel_plate_capacitor.json")
+    joinpath(@__DIR__, "../examples/example_config_files/infinite_parallel_plate_capacitor.yaml")
 )
 SSD_examples[:InfiniteCoaxialCapacitor] = (
-    joinpath(@__DIR__, "../examples/example_config_files/infinite_coaxial_capacitor.json")
+    joinpath(@__DIR__, "../examples/example_config_files/infinite_coaxial_capacitor.yaml")
 )
 SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords] = (
-    joinpath(@__DIR__, "../examples/example_config_files/infinite_coaxial_capacitor_cartesian_coords.json")
+    joinpath(@__DIR__, "../examples/example_config_files/infinite_coaxial_capacitor_cartesian_coords.yaml")
 )
 SSD_examples[:Hexagon] = (
     joinpath(@__DIR__, "../examples/example_config_files/minimum_hexagon_config.json")
