@@ -1,3 +1,9 @@
+struct ConfigFileError <: Exception
+    msg::AbstractString
+end
+Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
+
+
 const CSG_dict = Dict{String, Any}(
     "tube" => Cone,
     "cone" => Cone,
@@ -216,8 +222,12 @@ function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {
 end
 
 function get_origin(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
-    if haskey(dict, "origin")
-        o = dict["origin"]
+    origin_names = ["origin", "translate", "translation"]
+    haskeys = map(n -> haskey(dict, n), origin_names)
+    i = findfirst(i -> i, haskeys)
+    haskeyssum = sum(haskeys)
+    if haskeyssum == 1
+        o = dict[origin_names[i]]
         if o isa Vector
             CartesianPoint{T}(_parse_value(T, o, unit))
         else
@@ -227,6 +237,8 @@ function get_origin(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T
             if haskey(o, "z") z = _parse_value(T, o["z"], unit) end
             CartesianPoint{T}(x, y, z)
         end
+    elseif haskeyssum > 1
+        throw(ConfigFileError("Multiple fields for origin of primitive detected. Use only `origin`, `translate` or `translation`."))
     else
         zero(CartesianPoint{T})
     end
@@ -257,8 +269,14 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
 end
 
 function get_rotation(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
-    if haskey(dict, "rotate")
-        parse_rotation_matrix(T, dict["rotate"], unit)
+    rot_names = ["rotate", "rotation"]
+    haskeys = map(n -> haskey(dict, n), rot_names)
+    i = findfirst(i -> i, haskeys)
+    haskeyssum = sum(haskeys)
+    if haskeyssum == 1
+        parse_rotation_matrix(T, dict[rot_names[i]], unit)
+    elseif haskeyssum > 1
+        throw(ConfigFileError("Multiple fields for rotation of primitive detected. Use only `rotation` or `rotate`."))
     else
         one(SMatrix{3, 3, T, 9})
     end
