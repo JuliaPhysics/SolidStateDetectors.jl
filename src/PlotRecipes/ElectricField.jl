@@ -66,7 +66,7 @@ end
 
 function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical}, sampling::T)::Vector{Line} where {T}
     
-    φsampling = 2π * sampling / grid.r.interval.right # or use sampling together with the unit ?
+    φsampling = 2π * sampling / (dim_symbol == :r ? v : grid.r.interval.right) # or use sampling together with the unit ?
     rrange = range(round.((-grid.r.interval.right,grid.r.interval.right)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
     φrange = range(round.(endpoints(grid.φ.interval)./φsampling, (RoundDown, RoundUp)).*φsampling..., step = φsampling)
     zrange = range(round.(endpoints(grid.z.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
@@ -79,7 +79,7 @@ function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical},
     elseif dim_symbol == :z
         [Line(CartesianPoint{T}(0,0,v), CartesianVector{T}(cos(φ), sin(φ),0)) for φ in φrange]
     else # dim_symbol == :r
-        throw(ArgumentError("Plotting field lines at constant '$(dim_symbol)' errored."))
+        [Line(CartesianPoint{T}(v*cos(φ),v*sin(φ),0), CartesianVector{T}(0,0,1)) for φ in φrange]
     end
 end
 
@@ -197,10 +197,10 @@ end
                             map(x -> x[1], path),
                             map(x -> x[2], path)
                         end
-                    # elseif dim_symbol == :r
-                    #      path = CylindricalPoint.(path)
-                    #      map(x -> x[2], path),
-                    #      map(x -> x[3], path)
+                    elseif dim_symbol == :r
+                        path = CylindricalPoint.(path)
+                        map(x -> x[2], path),
+                        map(x -> x[3], path)
                     end
                     x, y
                 end
