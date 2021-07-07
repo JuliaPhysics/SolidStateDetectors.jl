@@ -78,7 +78,7 @@ println("Undepleted: ", get_active_volume(simulation_undep.point_types));
 calculate_electric_field!(simulation, n_points_in_φ = 72)
 
 plot(simulation.electric_field, φ = 0.0, size = (350, 500))
-# plot_electric_fieldlines!(simulation, φ = 0.0)
+plot_electric_fieldlines!(simulation, φ = 0.0)
 
 # ## Drift field calculation
 
