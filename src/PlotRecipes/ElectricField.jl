@@ -38,7 +38,7 @@ end
     ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential
 end
 
-function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, sampling::T)::Vector{Line} where {T}
+function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
     
     xrange = range(round.(endpoints(grid.x.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
     yrange = range(round.(endpoints(grid.y.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
@@ -46,25 +46,25 @@ function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, s
     
     return if dim_symbol == :x
         vcat(
-            [Line(CartesianPoint{T}(v,y,0), CartesianVector{T}(0,0,1)) for y in yrange],
-            [Line(CartesianPoint{T}(v,0,z), CartesianVector{T}(0,1,0)) for z in zrange]
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(v,y,0), CartesianVector{T}(0,0,1)) for y in yrange],
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(v,0,z), CartesianVector{T}(0,1,0)) for z in zrange]
         )
     elseif dim_symbol == :y
         vcat(
-            [Line(CartesianPoint{T}(x,v,0), CartesianVector{T}(0,0,1)) for x in xrange],
-            [Line(CartesianPoint{T}(0,v,z), CartesianVector{T}(1,0,0)) for z in zrange]
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(x,v,0), CartesianVector{T}(0,0,1)) for x in xrange],
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(0,v,z), CartesianVector{T}(1,0,0)) for z in zrange]
         )
         
     else # dim_symbol == :z
         vcat(
-            [Line(CartesianPoint{T}(x,0,v), CartesianVector{T}(0,1,0)) for x in xrange],
-            [Line(CartesianPoint{T}(0,y,v), CartesianVector{T}(1,0,0)) for y in yrange]
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(x,0,v), CartesianVector{T}(0,1,0)) for x in xrange],
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(0,y,v), CartesianVector{T}(1,0,0)) for y in yrange]
         )
     end
 end
 
 
-function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical}, sampling::T)::Vector{Line} where {T}
+function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
     
     φsampling = 2π * sampling / (dim_symbol == :r ? v : grid.r.interval.right) # or use sampling together with the unit ?
     rrange = range(round.((-grid.r.interval.right,grid.r.interval.right)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
@@ -73,13 +73,13 @@ function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical},
     
     return if dim_symbol == :φ
         vcat(
-            [Line(CartesianPoint{T}(r*cos(v),r*sin(v),0), CartesianVector{T}(0,0,1)) for r in rrange],
-            [Line(CartesianPoint{T}(0,0,z), CartesianVector{T}(cos(v),sin(v),0)) for z in zrange]
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(r*cos(v),r*sin(v),0), CartesianVector{T}(0,0,1)) for r in rrange],
+            [ConstructiveSolidGeometry.Line(CartesianPoint{T}(0,0,z), CartesianVector{T}(cos(v),sin(v),0)) for z in zrange]
         )
     elseif dim_symbol == :z
-        [Line(CartesianPoint{T}(0,0,v), CartesianVector{T}(cos(φ), sin(φ),0)) for φ in φrange]
+        [ConstructiveSolidGeometry.Line(CartesianPoint{T}(0,0,v), CartesianVector{T}(cos(φ), sin(φ),0)) for φ in φrange]
     else # dim_symbol == :r
-        [Line(CartesianPoint{T}(v*cos(φ),v*sin(φ),0), CartesianVector{T}(0,0,1)) for φ in φrange]
+        [ConstructiveSolidGeometry.Line(CartesianPoint{T}(v*cos(φ),v*sin(φ),0), CartesianVector{T}(0,0,1)) for φ in φrange]
     end
 end
 
@@ -139,26 +139,15 @@ end
     sample_lines = get_sample_lines(dim_symbol, v, grid, T(ustrip(to_internal_units(internal_length_unit, sampling))))
 
     for c in contacts_to_spawn_charges_for[:]
-        surfs = surfaces(c.geometry)
+        surfs = ConstructiveSolidGeometry.surfaces(c.geometry)
         for l in sample_lines
             for surf in surfs
-                if surf isa AbstractPlanarSurfacePrimitive 
-                    psurf = Plane(surf)
-                    pt = intersection(psurf,l)
+                pts = ConstructiveSolidGeometry.intersection(surf,l)
+                for pt in pts
                     if pt in c
-                        point = pt + T(ustrip(to_internal_units(internal_length_unit, offset)))*normal(psurf, pt)
+                        point = pt + T(ustrip(to_internal_units(internal_length_unit, offset)))*ConstructiveSolidGeometry.normal(surf, pt)
                         if point in sim.detector && !(point in sim.detector.contacts)
                             push!(spawn_positions, point)
-                        end
-                    end 
-                else
-                    pts = intersection(surf,l)
-                    for pt in pts
-                        if pt in c
-                            point = pt + T(ustrip(to_internal_units(internal_length_unit, offset)))*normal(surf, pt)
-                            if point in sim.detector && !(point in sim.detector.contacts)
-                                push!(spawn_positions, point)
-                            end
                         end
                     end
                 end
