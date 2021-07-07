@@ -10,7 +10,7 @@
 
     seriescolor --> :inferno
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
-    cross_section != :r ? aspect_ratio --> 1 : nothing
+    cross_section == :φ ? aspect_ratio --> 1 : nothing
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
     colorbar_title --> "Electric Field Strength in V / m"
@@ -66,25 +66,20 @@ end
 
 function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical}, sampling::T)::Vector{Line} where {T}
     
+    φsampling = 2π * sampling / grid.r.interval.right # or use sampling together with the unit ?
     rrange = range(round.((-grid.r.interval.right,grid.r.interval.right)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
-    #φrange = range(round.(endpoints(grid.φ.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
+    φrange = range(round.(endpoints(grid.φ.interval)./φsampling, (RoundDown, RoundUp)).*φsampling..., step = φsampling)
     zrange = range(round.(endpoints(grid.z.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
-    
     
     return if dim_symbol == :φ
         vcat(
             [Line(CartesianPoint{T}(r*cos(v),r*sin(v),0), CartesianVector{T}(0,0,1)) for r in rrange],
             [Line(CartesianPoint{T}(0,0,z), CartesianVector{T}(cos(v),sin(v),0)) for z in zrange]
         )
-    #=
     elseif dim_symbol == :z
-        vcat(
-            [Line(CartesianPoint{T}(x,0,v), CartesianVector{T}(0,1,0)) for x in xrange],
-            [Line(CartesianPoint{T}(0,y,v), CartesianVector{T}(1,0,0)) for y in yrange]
-        )
-    =#
+        [Line(CartesianPoint{T}(0,0,v), CartesianVector{T}(cos(φ), sin(φ),0)) for φ in φrange]
     else # dim_symbol == :r
-        throw(ArgumentError("Plotting field lines at constant 'r' makes no sense."))
+        throw(ArgumentError("Plotting field lines at constant '$(dim_symbol)' errored."))
     end
 end
 
