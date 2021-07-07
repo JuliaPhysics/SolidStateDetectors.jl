@@ -47,7 +47,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 4e-3 )
+        @test isapprox( signalsum, T(2), atol = 0.02 )
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation{T}(SSD_examples[:BEGe])
@@ -59,7 +59,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 3e-3 )
+        @test isapprox( signalsum, T(2), atol = 3e-2 )
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
@@ -120,7 +120,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 2e-3 )
+        @test isapprox( signalsum, T(2), atol = 2e-2 )
     end
 end
 

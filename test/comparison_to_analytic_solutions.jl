@@ -44,12 +44,10 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     intV = (R2^2 - R1^2) * π * L
 
     calculate_electric_potential!(sim_cyl, 
-        init_grid_size = (40, 2, 2), 
-        max_refinements = 1,
+        max_refinements = 6,
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (40, 40, 2), 
-        max_refinements = 1
+        max_refinements = 2
     )
     calculate_electric_field!(sim_cyl)
     calculate_electric_field!(sim_car)
@@ -100,11 +98,9 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     sim_car.detector = SolidStateDetector(sim_car.detector, DummyImpurityDensity{T}());
 
     calculate_electric_potential!(sim_cyl, 
-        init_grid_size = (40, 2, 2), 
-        max_refinements = 1
+        max_refinements = 4
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (40, 40, 2), 
         max_refinements = 1
     )
 
