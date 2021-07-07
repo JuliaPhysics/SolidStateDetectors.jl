@@ -19,19 +19,34 @@ const HexagonalPrism{T,CO,TR}  = RegularPrism{T,CO,6,TR}
 function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}
             ) where {T, P <: Union{TriangularPrism, QuadranglePrism, PentagonalPrism, HexagonalPrism}}
     length_unit = input_units.length
+    angle_unit = input_units.angle
+    origin = get_origin(T, dict, length_unit)
+    rotation = get_rotation(T, dict, angle_unit)
+
     r = parse_r_of_primitive(T, dict, length_unit)
-    z = parse_height_of_primitive(T, dict, length_unit)
-    hZ = typeof(z) <: Real ? z : width(z)/2
-    origin = if typeof(z) <: Real
-        CartesianPoint{T}(zero(T), zero(T), zero(T))
-    else
-        CartesianPoint{T}(zero(T), zero(T), mean(z))
+    hZ = if haskey(dict, "h")
+        _parse_value(T, dict["h"], length_unit) / 2
+    elseif haskey(dict, "z")
+        z = parse_height_of_primitive(T, dict, length_unit)
+        if z isa Real
+            @warn "Deprecation warning: Field `z` for `RegularPrism` is deprecated. 
+                Use `h` instead to specify the height of the primitive."
+            z
+        else # z isa Tuple
+            @warn "Deprecation warning: Field `z` for `CRegularPrismone` is deprecated. 
+                Use `h` instead to specify the height of the primitive.
+                There might be a conflict with the possible field `origin`:
+                The `z` component of the origin of the primitive is overwritten by the `z`."
+            origin = CartesianPoint{T}(origin[1], origin[2], mean(z))
+            (z[2] - z[1])/2
+       end
     end
+    
     g = if r isa Tuple # lazy workaround for now
-        P{T,ClosedPrimitive,T}(r = r[2], hZ = hZ, origin = origin) -
-        P{T,ClosedPrimitive,T}(r = r[1], hZ = T(1.1)*hZ, origin = origin)
+        P{T,ClosedPrimitive,T}(r = r[2], hZ = hZ, origin = origin, rotation = rotation) -
+        P{T,ClosedPrimitive,T}(r = r[1], hZ = T(1.1)*hZ, origin = origin, rotation = rotation)
     else
-        P{T,ClosedPrimitive,T}(r = r, hZ = hZ, origin = origin)
+        P{T,ClosedPrimitive,T}(r = r, hZ = hZ, origin = origin, rotation = rotation)
     end
     transform(g, transformations)
 end

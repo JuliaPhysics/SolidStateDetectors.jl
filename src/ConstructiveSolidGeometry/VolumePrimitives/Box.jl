@@ -42,9 +42,9 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
         _parse_value(T, dict["hY"], length_unit), 
         _parse_value(T, dict["hZ"], length_unit)
     elseif haskey(dict, "x") && haskey(dict, "y") && haskey(dict, "z")
-        @warn "Deprication warning: Detected old primitive definition for `Box`. 
+        @warn "Deprecation warning: Detected old primitive definition for `Box`. 
             Please update your configuration file to the new format 
-            via `widhts`, `haldfwidht` or `hX`, `hY` and `hZ`
+            via `widths`, `halfwidths` or `hX`, `hY` and `hZ`
             in combination with possible fields `origin` and `rotate`.
             The old definition overwrites the optional field `origin`."        
         x = parse_interval_of_primitive(T, "x", dict, length_unit)

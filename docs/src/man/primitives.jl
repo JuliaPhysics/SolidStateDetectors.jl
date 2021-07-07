@@ -28,7 +28,7 @@ plot(box)
 
 # ### Cone:
 # #### Tube
-cfn = joinpath(path_to_example_primitives_config_files, "Tube.yaml")
+cfn = joinpath(path_to_example_primitives_config_files, "Cone_tube.yaml")
 print(open(f -> read(f, String), cfn))
 
 # Load the primitive from the configuration file via `CSG.Geometry`
@@ -45,7 +45,7 @@ plot(cone)
 
 # ### Ellipsoid
 # #### Sphere
-cfn = joinpath(path_to_example_primitives_config_files, "Sphere.yaml")
+cfn = joinpath(path_to_example_primitives_config_files, "Ellipsoid_full_sphere.yaml")
 print(open(f -> read(f, String), cfn))
 
 # Load the primitive from the configuration file via `CSG.Geometry`
@@ -62,7 +62,7 @@ plot(torus, zlims = [-6,6], camera = (40, 55))
 
 # ### Prism
 # #### Hexagonal Prism
-cfn = joinpath(path_to_example_primitives_config_files, "HexagonalPrism.yaml")
+cfn = joinpath(path_to_example_primitives_config_files, "RegularPrism_hexagon.yaml")
 print(open(f -> read(f, String), cfn))
 
 # Load the primitive from the configuration file via `CSG.Geometry`

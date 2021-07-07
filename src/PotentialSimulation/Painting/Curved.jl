@@ -17,7 +17,7 @@ function paint!(pointtypes, potential, face::AbstractCurvedSurfacePrimitive{T}, 
                 csgtol = abs(ticks[3][i3] - pt[3])
                 Δw_max = max(
                     widths_ax1[i1], widths_ax1[i1+1],
-                    widths_ax2[i2], widths_ax1[i2+1],
+                    widths_ax2[i2], widths_ax2[i2+1],
                     # widths_ax3[i3], widths_ax3[i3+1]
                 )/2
                 if csgtol > Δw_max
@@ -39,7 +39,7 @@ function paint!(pointtypes, potential, face::AbstractCurvedSurfacePrimitive{T}, 
                 csgtol = abs(ticks[2][i2] - pt[2])
                 Δw_max = max(
                     widths_ax1[i1], widths_ax1[i1+1],
-                    # widths_ax2[i2], widths_ax1[i2+1],
+                    # widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
                 )/2
                 if csgtol > Δw_max
@@ -61,7 +61,7 @@ function paint!(pointtypes, potential, face::AbstractCurvedSurfacePrimitive{T}, 
                 csgtol = abs(ticks[1][i1] - pt[1])
                 Δw_max = max(
                     # widths_ax1[i1], widths_ax1[i1+1],
-                    widths_ax2[i2], widths_ax1[i2+1],
+                    widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
                 )/2
                 if csgtol > Δw_max
