@@ -11,6 +11,14 @@ end
 flip(t::TorusMantle{T,TP,TT,:inwards}) where {T,TP,TT} = 
 TorusMantle{T,TP,TT,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation )
 
+function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where {T,TP,TT}
+    pto = _transform_into_object_coordinate_system(pt, tm)
+    cyl = CylindricalPoint(pto)
+    ptt = CartesianPoint(CylindricalPoint{T}(tm.r_torus, cyl.φ, zero(T)))
+    return pt - _transform_into_global_coordinate_system(ptt, tm)
+end
+normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT} = -normal(flip(tm), pt)
+
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
 
 function lines(tm::FullTorusMantle{T}) where {T} 
