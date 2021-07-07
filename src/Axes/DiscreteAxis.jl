@@ -485,3 +485,23 @@ function initialize_axis_ticks(t::AbstractVector{T}; max_ratio = T(2)) where {T}
     @assert isunique(ticks)
     ticks
 end
+
+function fill_up_ticks(v::AbstractVector{T}, max_diff::T) where {T}
+    if length(v) == 1 return v end
+    Δv = diff(v)
+    add_n_points = Int.(round.(Δv ./ max_diff, RoundUp)) .- 1
+    r = Vector{T}(undef, length(v) + sum(add_n_points))
+    r[:] .= 0
+    i = 0
+    for j in eachindex(Δv)
+        x0 = v[j]
+        n = add_n_points[j]
+        Δ = Δv[j] / (n + 1) 
+        for l in 0:n
+            i += 1
+            r[i] = x0 + Δ * l
+        end
+    end
+    r[end] = v[end]
+    r
+end
