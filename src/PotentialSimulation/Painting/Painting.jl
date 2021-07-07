@@ -55,9 +55,9 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
                     # widths_ax3[i3], widths_ax3[i3+1]
-                )/2
+                )/4
                 if csgtol > Δw_max
-                    # csgtol = Δw_max
+                    csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
                     pointtypes[i1, i2, i3] = zero(PointType)
@@ -77,9 +77,9 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     widths_ax1[i1], widths_ax1[i1+1],
                     # widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
-                )/2
+                )/4
                 if csgtol > Δw_max
-                    # csgtol = Δw_max
+                    csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
                     pointtypes[i1, i2, i3] = zero(PointType)
@@ -99,9 +99,9 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     # widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
-                )/2
+                )/4
                 if csgtol > Δw_max
-                    # csgtol = Δw_max
+                    csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
                     pointtypes[i1, i2, i3] = zero(PointType)
