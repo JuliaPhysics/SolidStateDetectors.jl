@@ -28,18 +28,18 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
         _parse_value(T, dict["h"], length_unit) / 2
     elseif haskey(dict, "z")
         z = parse_height_of_primitive(T, dict, length_unit)
-        hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
         if z isa Real
             @warn "Deprecation warning: Field `z` for `RegularPrism` is deprecated. 
                 Use `h` instead to specify the height of the primitive."
+            z
         else # z isa Tuple
             @warn "Deprecation warning: Field `z` for `CRegularPrismone` is deprecated. 
                 Use `h` instead to specify the height of the primitive.
                 There might be a conflict with the possible field `origin`:
                 The `z` component of the origin of the primitive is overwritten by the `z`."
             origin = CartesianPoint{T}(origin[1], origin[2], mean(z))
+            (z[2] - z[1])/2
        end
-       hZ
     end
     
     g = if r isa Tuple # lazy workaround for now
