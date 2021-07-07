@@ -392,3 +392,96 @@ function merge_close_ticks(v::AbstractVector{T}; min_diff::T = T(1e-6)) where {T
     end
     v[1:n]
 end
+
+
+function get_new_ticks_to_equalize_ratios_on_side(t::AbstractVector{T}; max_ratio = T(2)) where {T}
+    @assert length(t) == 3 
+    Δt = diff(t)
+    r = Δt[2] / Δt[1]
+    min_ratio = inv(max_ratio)
+    new_ticks = T[]
+    if r > max_ratio
+        x0 = t[2]
+        Δnt = max_ratio * Δt[1]
+        nt = x0 + Δnt # new tick 
+        while t[3] - nt > Δnt
+            push!(new_ticks, nt)
+            Δnt = max_ratio * Δnt
+            nt = nt + Δnt # new tick 
+        end
+        vcat(t[1:2], new_ticks, t[3:3])
+    elseif r < min_ratio
+        x0 = t[2]
+        Δnt = max_ratio * Δt[2]
+        nt = x0 - Δnt # new tick 
+        while nt - t[1] > Δnt
+            push!(new_ticks, nt)
+            Δnt = max_ratio * Δnt
+            nt = nt - Δnt # new tick 
+        end
+        sort!(new_ticks)
+        vcat(t[1:1], new_ticks, t[2:3])
+    else
+        t
+    end
+end
+
+function initialize_axis_ticks(t::AbstractVector{T}; max_ratio = T(2)) where {T}
+    @assert max_ratio >= 1 
+    if length(t) <= 2 return t end 
+    # First: Left and right side intervals:
+    new_ticks_left = get_new_ticks_to_equalize_ratios_on_side(t[1:3]; max_ratio)
+    if length(t) == 3 return new_ticks_left end
+    if length(t) == 4
+        return vcat(new_ticks_left, t[4:4])
+    end
+    new_ticks_right = get_new_ticks_to_equalize_ratios_on_side(t[end-2:end]; max_ratio)
+    if length(t) == 5
+        return vcat(new_ticks_left, new_ticks_right[2:end])
+    end
+    ticks = vcat(new_ticks_left, t[4:end-3], new_ticks_right)
+    # Second: Intervals in between
+    iL = length(new_ticks_left) - 1 
+    iR = iL + 3
+    n_sub_ints = length(t) - 5
+    for i_sub_int in 1:n_sub_ints
+        subticks = ticks[iL:iR]
+        Δst = diff(subticks)
+        r_l = Δst[2] / Δst[1]
+        r_r = Δst[2] / Δst[3]
+        r_lr = Δst[1] / Δst[3]
+        new_ticks = T[]
+        if r_lr < 1 # interval to the left is smaller than interval to the right
+            if r_l > max_ratio
+                x0 = subticks[2]
+                Δnt = max_ratio * Δst[1]
+                nt = x0 + Δnt # new tick 
+                while subticks[3] - nt > Δnt
+                    push!(new_ticks, nt)
+                    Δnt = max_ratio * Δnt
+                    nt = nt + Δnt # new tick 
+                end
+            end
+        else # interval to the right is smaller than interval to the left
+            if r_r > max_ratio
+                x0 = subticks[3]
+                Δnt = max_ratio * Δst[3]
+                nt = x0 - Δnt # new tick 
+                while nt - subticks[2] > Δnt
+                    push!(new_ticks, nt)
+                    Δnt = max_ratio * Δnt
+                    nt = nt - Δnt # new tick 
+                end
+                sort!(new_ticks)
+            end
+        end
+        
+        ticks = vcat(ticks[1:iL+1], new_ticks, ticks[iR-1:end])
+
+        iL += 1 + length(new_ticks)
+        iR += 1 + length(new_ticks)
+    end
+    @assert issorted(ticks)
+    @assert isunique(ticks)
+    ticks
+end
