@@ -28,7 +28,7 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
         error("Partial Ellipsoid (`φ = φ`) is not yet supported.")
     end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    if !(φ === nothing)
+    if !(θ === nothing)
         error("Partial Ellipsoid (`θ = θ`) is not yet supported.")
     end
     e = if r isa Tuple{T,T}

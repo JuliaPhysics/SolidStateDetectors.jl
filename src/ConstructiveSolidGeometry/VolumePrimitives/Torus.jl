@@ -25,11 +25,11 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     if !(φ === nothing)
-        error("Partial Ellipsoid (`φ = φ`) is not yet supported.")
+        error("Partial Torus (`φ = φ`) is not yet supported.")
     end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    if !(φ === nothing)
-        error("Partial Ellipsoid (`θ = θ`) is not yet supported.")
+    if !(θ === nothing)
+        error("Partial Torus (`θ = θ`) is not yet supported.")
     end
     if haskey(dict, "z")
         @warn "Deprecation warning: Field `z` for `Torus` is deprecated. 
