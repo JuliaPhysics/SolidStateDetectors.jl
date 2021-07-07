@@ -296,35 +296,6 @@ function Grid(  sim::Simulation{T, Cylindrical};
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
 
-function merge_closest_ticks!(v::AbstractVector{T}, n::Int = length(v); max_diff::T = T(1e-6)) where {T}
-    Δv = diff(v[1:n])
-    Δ_min, Δv_min_indx = findmin(Δv)
-    vFirst = v[1]
-    vLast  = v[n]
-    if Δ_min < max_diff
-        v[Δv_min_indx] = (v[Δv_min_indx]+v[Δv_min_indx+1]) / 2
-        v[Δv_min_indx+1:end-1] = v[Δv_min_indx+2:end]
-        v[1] = vFirst
-        n -= 1
-        v[n] = vLast
-        n
-    else
-        n
-    end
-end
-function merge_close_ticks(v::AbstractVector{T}; max_diff::T = T(1e-6)) where {T}
-    l = length(v)
-    if l == 1 return v end
-    n = merge_closest_ticks!(v, max_diff = max_diff)
-    reduced = n < l
-    l = n
-    while reduced
-        n = merge_closest_ticks!(v, n, max_diff = max_diff)
-        reduced = n < l
-        l = n
-    end
-    v[1:n]
-end
 
 function Grid(  sim::Simulation{T, Cartesian};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
