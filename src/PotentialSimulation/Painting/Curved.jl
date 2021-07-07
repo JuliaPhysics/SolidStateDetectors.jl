@@ -1,5 +1,4 @@
-
-function paint!(pointtypes, potential, face::AbstractCurvedSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid) where {T}
+function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eX = CartesianVector{T}(1,0,0);
@@ -78,7 +77,7 @@ function paint!(pointtypes, potential, face::AbstractCurvedSurfacePrimitive{T}, 
 end
 
 
-function paint!(pointtypes, potential, face::AbstractCurvedSurfacePrimitive{T}, geometry, pot_value, grid::CylindricalGrid) where {T}
+function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CylindricalGrid) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eZ = CartesianVector{T}(0,0,1);
