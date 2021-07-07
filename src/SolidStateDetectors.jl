@@ -38,7 +38,7 @@ using .ConstructiveSolidGeometry:
             csg_round_lin, csg_round_rad, csg_isapprox, 
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
-            Line, Plane, surfaces, intersection, normal
+            Line, Plane, surfaces, intersection, normal, ConfigFileError
         
 import .ConstructiveSolidGeometry: sample
 export CartesianPoint, CartesianVector, CylindricalPoint
@@ -71,10 +71,6 @@ export Event, drift_charges!
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
-struct ConfigFileError <: Exception
-    msg::AbstractString
-end
-Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
 include("Units.jl")
 

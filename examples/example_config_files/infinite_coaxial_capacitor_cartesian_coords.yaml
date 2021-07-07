@@ -1,0 +1,69 @@
+name: Infinite Coaxial Capacitor
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cartesian
+  axes:
+    x:
+      from: -35
+      to: 35
+      boundaries: reflecting
+    y:
+      from: -35
+      to: 35
+      boundaries: reflecting
+    z:
+      from: 0
+      to: 40
+      boundaries: reflecting
+medium: HPGe
+detectors:
+  - bulk:
+      material: HPGe
+      temperature: 78
+      impurity_density:
+        name: cylindrical
+        r:
+          init: 0
+          gradient: 0
+        z:
+          init: 0
+          gradient: 0
+      geometry:
+        difference:
+          - tube:
+              r: 35
+              h: 120
+              origin:
+                z: 20
+          - tube:
+              r: 5
+              h: 120
+              origin:
+                z: 20
+    contacts:
+      - material: HPGe
+        channel: 1
+        potential: 0
+        geometry:
+          tube:
+            r:
+              from: 5
+              to: 5
+            h: 120
+            origin:
+              z: 20
+      - material: HPGe
+        channel: 2
+        potential: 10
+        geometry:
+          tube:
+            r:
+              from: 35
+              to: 35
+            h: 120
+            origin:
+              z: 20

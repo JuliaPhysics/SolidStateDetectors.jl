@@ -1,3 +1,9 @@
+struct ConfigFileError <: Exception
+    msg::AbstractString
+end
+Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
+
+
 const CSG_dict = Dict{String, Any}(
     "tube" => Cone,
     "cone" => Cone,
@@ -219,6 +225,30 @@ function parse_scale_vector(::Type{T}, dict::AbstractDict)::SVector{3,T} where {
     SVector{3,T}(x,y,z)
 end
 
+function get_origin(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
+    origin_names = ["origin", "translate", "translation"]
+    haskeys = map(n -> haskey(dict, n), origin_names)
+    i = findfirst(i -> i, haskeys)
+    haskeyssum = sum(haskeys)
+    if haskeyssum == 1
+        o = dict[origin_names[i]]
+        if o isa Vector
+            CartesianPoint{T}(_parse_value(T, o, unit))
+        else
+            x, y, z = zero(T), zero(T), zero(T)
+            if haskey(o, "x") x = _parse_value(T, o["x"], unit) end
+            if haskey(o, "y") y = _parse_value(T, o["y"], unit) end
+            if haskey(o, "z") z = _parse_value(T, o["z"], unit) end
+            CartesianPoint{T}(x, y, z)
+        end
+    elseif haskeyssum > 1
+        throw(ConfigFileError("Multiple fields for origin of primitive detected. Use only `origin`, `translate` or `translation`."))
+    else
+        zero(CartesianPoint{T})
+    end
+end
+
+
 # function Geometry(::Type{T}, ::Type{ScaledGeometry}, dict::AbstractDict, input_units::NamedTuple) where {T}
 #     length_unit = input_units.length
 #     scale_vector::SVector{3,T} = parse_scale_vector(T, dict, length_unit)
@@ -241,6 +271,21 @@ function parse_rotation_matrix(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
         RotMatrix3{T}(R{Float64}(_parse_value(Float64,dict[key],unit)...)) # parse rotations matrix values as Float64 to minimize rounding errors
     end
 end
+
+function get_rotation(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
+    rot_names = ["rotate", "rotation"]
+    haskeys = map(n -> haskey(dict, n), rot_names)
+    i = findfirst(i -> i, haskeys)
+    haskeyssum = sum(haskeys)
+    if haskeyssum == 1
+        parse_rotation_matrix(T, dict[rot_names[i]], unit)
+    elseif haskeyssum > 1
+        throw(ConfigFileError("Multiple fields for rotation of primitive detected. Use only `rotation` or `rotate`."))
+    else
+        one(SMatrix{3, 3, T, 9})
+    end
+end
+
 
 function parse_CSG_transformation(::Type{T}, dict::AbstractDict, ::Type{Rotation}, input_units::NamedTuple) where {T}
     parse_rotation_matrix(T, dict["rotate"], input_units.angle)
