@@ -1,7 +1,5 @@
 sample(csg::AbstractConstructiveGeometry{T}, sampling...) where {T} = vcat(sample(csg.a, sampling...), sample(csg.b, sampling...))
 
-sample_surface(csg::AbstractConstructiveGeometry{T}, sampling...) where {T} = vcat(sample_surface(csg.a, sampling...), sample_surface(csg.b, sampling...))
-
 # for sampling surfaces with predefined ticks
 get_r_ticks(a::AbstractSurfacePrimitive{T}, g::CylindricalTicksTuple{T}) where {T} = _get_ticks(g.r, get_r_limits(a)...)
 get_φ_ticks(a::AbstractSurfacePrimitive{T}, g::CylindricalTicksTuple{T}) where {T} = _get_ticks(g.φ, get_φ_limits(a)...)

@@ -1,5 +1,21 @@
 const ScalarPotential{T, N, S} = Union{ElectricPotential{T, N, S}, WeightingPotential{T, N, S}, PointTypes{T, N, S}, EffectiveChargeDensity{T, N, S}}
 
+function getindex(ep::P, g::Grid{T, N, S}) where {T, N, S, P <: ScalarPotential{T, N, S}}
+    gridsize::Tuple = size(g)
+    data::Array{T, N} = zeros(T, gridsize)
+    ep_itp::Interpolations.Extrapolation{T, N} = interpolated_scalarfield(ep)
+    point = (S == Cylindrical ? CylindricalPoint : CartesianPoint)
+    for i1 in eachindex(g[1])
+        for i2 in eachindex(g[2])
+            for i3 in eachindex(g[3])
+                data[i1, i2, i3] = get_interpolation(ep_itp, point{T}(g[i1, i2, i3]), S)
+            end
+        end
+    end
+    return P(data, g)
+end
+
+
 function get_2π_potential(wp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T}) where {T}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     Potential::Type = typeof(wp)

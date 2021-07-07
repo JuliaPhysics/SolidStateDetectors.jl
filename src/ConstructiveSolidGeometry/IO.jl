@@ -23,7 +23,11 @@ const CSG_dict = Dict{String, Any}(
 
 function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}
     g = collect(filter(k -> k in keys(CSG_dict), keys(dict)))
-    @assert !(length(g) > 1) "Too many geometry entries in dictionary: $(length(g))."
+    filter!(k -> !(
+        (k == "translate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["translate"])))) ||
+        (k == "rotate" && !any(broadcast(key -> key in keys(CSG_dict), keys(dict["rotate"]))))
+    )  , g) # exclude translate and rotate that have no primitives inside
+    @assert !(length(g) > 1) "Too many ($(length(g))) geometry entries in dictionary: $(g)."
     @assert !(length(g) == 0) "None of the entries $(keys(dict)) describes a Geometry."
     g[1]
 end

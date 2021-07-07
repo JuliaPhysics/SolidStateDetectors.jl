@@ -37,10 +37,10 @@ using .ConstructiveSolidGeometry:
             AbstractSurfacePrimitive, AbstractPlanarSurfacePrimitive, AbstractCurvedSurfacePrimitive,
             csg_round_lin, csg_round_rad, csg_isapprox, 
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
-            transform, CSG_dict, Transformations, combine_transformations, 
-            ConfigFileError
+            transform, CSG_dict, Transformations, combine_transformations,
+            Line, Plane, surfaces, intersection, normal, ConfigFileError
         
-import .ConstructiveSolidGeometry: sample, sample_surface
+import .ConstructiveSolidGeometry: sample
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering

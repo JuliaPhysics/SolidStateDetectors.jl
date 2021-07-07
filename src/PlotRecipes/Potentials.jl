@@ -33,7 +33,7 @@ end
 
 
 
-@recipe function f(ep::ElectricPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
+@recipe function f(ep::ElectricPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
     if !(ep.grid[2][end] - ep.grid[2][1] ≈ 2π) ep = get_2π_potential(ep, n_points_in_φ = 72) end
 
@@ -43,11 +43,11 @@ end
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    ep, cross_section, idx, value, contours_equal_potential
+    ep, cross_section, idx, value, contours_equal_potential, full_det
 end
 
 
-@recipe function f(wp::WeightingPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
+@recipe function f(wp::WeightingPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
     if !(wp.grid[2][end] - wp.grid[2][1] ≈ 2π)
         wp = get_2π_potential(wp, n_points_in_φ = 72)
@@ -60,11 +60,11 @@ end
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    wp, cross_section, idx, value, contours_equal_potential
+    wp, cross_section, idx, value, contours_equal_potential, full_det
 end
 
 
-@recipe function f(ρ::EffectiveChargeDensity{T,3,Cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(ρ::EffectiveChargeDensity{T,3,Cylindrical}; r = missing, φ = missing, z = missing, full_det = false) where {T <: SSDFloat}
 
     if !(ρ.grid[2][end] - ρ.grid[2][1] ≈ 2π)
         ρ = get_2π_potential(ρ, n_points_in_φ = 72)
@@ -75,11 +75,11 @@ end
 
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-    ρ, cross_section, idx, value
+    ρ, cross_section, idx, value, false, full_det
 end
 
 
-@recipe function f(pt::PointTypes{T,3,Cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(pt::PointTypes{T,3,Cylindrical}; r = missing, φ = missing, z = missing, full_det = false) where {T <: SSDFloat}
 
     if !(pt.grid[2][end] - pt.grid[2][1] ≈ 2π)
         pt = get_2π_potential(pt, n_points_in_φ = 72)
@@ -92,7 +92,7 @@ end
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    pt, cross_section, idx, value
+    pt, cross_section, idx, value, false, full_det
 end
 
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
