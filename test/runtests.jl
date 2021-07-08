@@ -112,7 +112,7 @@ end
     end
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation{T}(SSD_examples[:SigGen])
-        simulate!(sim, max_refinements = 0, verbose = true)
+        simulate!(sim, max_refinements = 1, verbose = true)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
