@@ -180,6 +180,7 @@ function Grid(  sim::Simulation{T, Cylindrical};
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
                 min_n_ticks::Int = 10,
+                max_tick_distance::Real = 1e-2,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
     if ismissing(init_grid_size)
         world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
@@ -214,18 +215,40 @@ function Grid(  sim::Simulation{T, Cylindrical};
 
     push!(important_r_points, sim.world.intervals[1].left)
     push!(important_r_points, sim.world.intervals[1].right)
-    important_r_points = unique!(sort!(csg_round_lin.(important_r_points)))
+    important_r_points = unique!(sort!(important_r_points))
+    iL = searchsortedfirst(important_r_points, sim.world.intervals[1].left)
+    iR = searchsortedfirst(important_r_points, sim.world.intervals[1].right)
+    important_r_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_points[iL:iR]))
+    important_r_points = merge_close_ticks(important_r_points)
+    important_r_points = initialize_axis_ticks(important_r_points; max_ratio = 2.0)
+    if max_tick_distance isa Real
+        important_r_points = fill_up_ticks(important_r_points, T(max_tick_distance))
+    end
+
     push!(important_z_points, sim.world.intervals[3].left)
     push!(important_z_points, sim.world.intervals[3].right)
-    important_z_points = unique!(sort!(csg_round_lin.(important_z_points)))
+    important_z_points = unique!(sort!(important_z_points))
+    iL = searchsortedfirst(important_z_points, sim.world.intervals[3].left)
+    iR = searchsortedfirst(important_z_points, sim.world.intervals[3].right)
+    important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
+    important_z_points = merge_close_ticks(important_z_points)
+    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = 2.0)
+    if max_tick_distance isa Real
+        important_z_points = fill_up_ticks(important_z_points, T(max_tick_distance))
+    end
+
     push!(important_φ_points, sim.world.intervals[2].left)
     push!(important_φ_points, sim.world.intervals[2].right)
-    important_φ_points = unique!(sort!(csg_round_rad.(important_φ_points)))
-
-    important_r_points = merge_close_ticks(important_r_points)
-    important_φ_points = merge_close_ticks(important_φ_points, max_diff = T(1e-4))
-    important_z_points = merge_close_ticks(important_z_points)
-
+    important_φ_points = unique!(sort!(important_φ_points))
+    iL = searchsortedfirst(important_φ_points, sim.world.intervals[2].left)
+    iR = searchsortedfirst(important_φ_points, sim.world.intervals[2].right)
+    important_φ_points = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_points[iL:iR]))
+    important_φ_points = merge_close_ticks(important_φ_points, min_diff = T(1e-3))
+    important_φ_points = initialize_axis_ticks(important_φ_points; max_ratio = 2.0)
+    if max_tick_distance isa Real
+        important_φ_points = fill_up_ticks(important_φ_points, 2*T(max_tick_distance) / (sim.world.intervals[1].right - sim.world.intervals[1].left))
+    end
+    
     # r
     L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
     int_r = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
@@ -234,8 +257,9 @@ function Grid(  sim::Simulation{T, Cylindrical};
     else
         DiscreteAxis{BL, BR}(int_r, length = init_grid_size[1])
     end
-    rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
-    rticks = merge_close_ticks(rticks)
+    # rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
+    # rticks = merge_close_ticks(rticks)
+    rticks = important_r_points
     ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
 
 
@@ -256,12 +280,17 @@ function Grid(  sim::Simulation{T, Cylindrical};
         end
     end
     if length(ax_φ) > 1
-        φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
-        φticks = merge_close_ticks(φticks)
+        # φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
+        # φticks = merge_close_ticks(φticks)
+        φticks = if R == :open 
+            important_φ_points[1:end-1]
+        else
+            important_φ_points
+        end
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
     int_φ = ax_φ.interval
-    φticks = merge_close_ticks(ax_φ.ticks)
+    # φticks = merge_close_ticks(ax_φ.ticks)
     if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
         imax = findmax(diff(φticks))[2]
         push!(φticks, (φticks[imax] + φticks[imax+1]) / 2)
@@ -280,8 +309,9 @@ function Grid(  sim::Simulation{T, Cylindrical};
     else
         DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
     end
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=minimum(diff(ax_z.ticks))/2)
-    zticks = merge_close_ticks(zticks)
+    # zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=minimum(diff(ax_z.ticks))/2)
+    # zticks = merge_close_ticks(zticks)
+    zticks = important_z_points
     ax_z = typeof(ax_z)(int_z, zticks)
     if isodd(length(ax_z)) # must be even
         int_z = ax_z.interval
@@ -296,40 +326,12 @@ function Grid(  sim::Simulation{T, Cylindrical};
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
 
-function merge_closest_ticks!(v::AbstractVector{T}, n::Int = length(v); max_diff::T = T(1e-6)) where {T}
-    Δv = diff(v[1:n])
-    Δ_min, Δv_min_indx = findmin(Δv)
-    vFirst = v[1]
-    vLast  = v[n]
-    if Δ_min < max_diff
-        v[Δv_min_indx] = (v[Δv_min_indx]+v[Δv_min_indx+1]) / 2
-        v[Δv_min_indx+1:end-1] = v[Δv_min_indx+2:end]
-        v[1] = vFirst
-        n -= 1
-        v[n] = vLast
-        n
-    else
-        n
-    end
-end
-function merge_close_ticks(v::AbstractVector{T}; max_diff::T = T(1e-6)) where {T}
-    l = length(v)
-    if l == 1 return v end
-    n = merge_closest_ticks!(v, max_diff = max_diff)
-    reduced = n < l
-    l = n
-    while reduced
-        n = merge_closest_ticks!(v, n, max_diff = max_diff)
-        reduced = n < l
-        l = n
-    end
-    v[1:n]
-end
 
 function Grid(  sim::Simulation{T, Cartesian};
                 init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
                 init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
                 min_n_ticks::Int = 10,
+                max_tick_distance::Real = 1e-2,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
 
     if ismissing(init_grid_size)
@@ -352,10 +354,45 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     samples::Vector{CartesianPoint{T}} = sample(sim.detector, Cartesian)
     
-    important_x_points::Vector{T} = merge_close_ticks(sort(unique(map(p -> p.x, samples))))
-    important_y_points::Vector{T} = merge_close_ticks(sort(unique(map(p -> p.y, samples))))
-    important_z_points::Vector{T} = merge_close_ticks(sort(unique(map(p -> p.z, samples))))
+    important_x_points::Vector{T} = map(p -> p.x, samples)
+    important_y_points::Vector{T} = map(p -> p.y, samples)
+    important_z_points::Vector{T} = map(p -> p.z, samples)
 
+    push!(important_x_points, sim.world.intervals[1].left)
+    push!(important_x_points, sim.world.intervals[1].right)
+    important_x_points = unique!(sort!(important_x_points))
+    iL = searchsortedfirst(important_x_points, sim.world.intervals[1].left)
+    iR = searchsortedfirst(important_x_points, sim.world.intervals[1].right)
+    important_x_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_points[iL:iR]))
+    important_x_points = merge_close_ticks(important_x_points)
+    important_x_points = initialize_axis_ticks(important_x_points; max_ratio = 2.0)
+    if max_tick_distance isa Real
+        important_x_points = fill_up_ticks(important_x_points, T(max_tick_distance))
+    end
+
+    push!(important_y_points, sim.world.intervals[2].left)
+    push!(important_y_points, sim.world.intervals[2].right)
+    important_y_points = unique!(sort!(important_y_points))
+    iL = searchsortedfirst(important_y_points, sim.world.intervals[2].left)
+    iR = searchsortedfirst(important_y_points, sim.world.intervals[2].right)
+    important_y_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_points[iL:iR]))
+    important_y_points = merge_close_ticks(important_y_points)
+    important_y_points = initialize_axis_ticks(important_y_points; max_ratio = 2.0)
+    if max_tick_distance isa Real
+        important_y_points = fill_up_ticks(important_y_points, T(max_tick_distance))
+    end
+
+    push!(important_z_points, sim.world.intervals[3].left)
+    push!(important_z_points, sim.world.intervals[3].right)
+    important_z_points = unique!(sort!(important_z_points))
+    iL = searchsortedfirst(important_z_points, sim.world.intervals[3].left)
+    iR = searchsortedfirst(important_z_points, sim.world.intervals[3].right)
+    important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
+    important_z_points = merge_close_ticks(important_z_points)
+    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = 2.0)
+    if max_tick_distance isa Real
+        important_z_points = fill_up_ticks(important_z_points, T(max_tick_distance))
+    end
 
     init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
         T.(init_grid_spacing), true
@@ -371,8 +408,9 @@ function Grid(  sim::Simulation{T, Cartesian};
     else
         DiscreteAxis{BL, BR}(int_x, length = init_grid_size[1])
     end
-    xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = minimum(diff(ax_x.ticks)) / 2)
-    xticks = merge_close_ticks(xticks)
+    # xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = minimum(diff(ax_x.ticks)) / 2)
+    # xticks = merge_close_ticks(xticks)
+    xticks = important_x_points
     ax_x = typeof(ax_x)(int_x, xticks)
     if isodd(length(ax_x)) # RedBlack dimension must be of even length
         xticks = ax_x.ticks
@@ -390,8 +428,9 @@ function Grid(  sim::Simulation{T, Cartesian};
     else
         DiscreteAxis{BL, BR}(int_y, length = init_grid_size[2])
     end
-    yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = minimum(diff(ax_y.ticks)) / 2)
-    yticks = merge_close_ticks(yticks)
+    # yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = minimum(diff(ax_y.ticks)) / 2)
+    # yticks = merge_close_ticks(yticks)
+    yticks = important_y_points
     ax_y = typeof(ax_y)(int_y, yticks)
 
     # z
@@ -402,8 +441,9 @@ function Grid(  sim::Simulation{T, Cartesian};
     else
         DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
     end
-    zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = minimum(diff(ax_z.ticks)) / 2)
-    zticks = merge_close_ticks(zticks)
+    # zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = minimum(diff(ax_z.ticks)) / 2)
+    # zticks = merge_close_ticks(zticks)
+    zticks = important_z_points
     ax_z = typeof(ax_z)(int_z, zticks)
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
