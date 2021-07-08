@@ -6,7 +6,6 @@ end
 Plane(origin::CartesianPoint{T}, normal::CartesianVector{T}) where {T} = Plane{T}(origin, normal)
 
 normal(p::Plane) = p.normal
-normal(p::Plane, ::AbstractCoordinatePoint) = p.normal
 origin(p::Plane) = p.origin
 
 isinfront(pt::AbstractCoordinatePoint, p::Plane) = (pt - origin(p)) ⋅ normal(p) > 0
@@ -20,5 +19,7 @@ distance(pt::AbstractCoordinatePoint, p::Plane) = abs(_distance(pt, p))
 function intersection(p::Plane{T}, line::Line{T}) where {T}
     ndir = normalize(line.direction)
     λ = (p.normal ⋅ p.origin - p.normal ⋅ line.origin) / (p.normal ⋅ ndir)
-    line.origin + λ * ndir
+    (line.origin + λ * ndir,)
 end
+
+intersection(p::AbstractPlanarSurfacePrimitive{T}, line::Line{T}) where {T} = intersection(Plane(p), line)

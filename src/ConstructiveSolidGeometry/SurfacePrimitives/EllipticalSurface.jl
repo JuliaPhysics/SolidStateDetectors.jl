@@ -28,7 +28,7 @@ const PartialAnnulus{T} = EllipticalSurface{T,Tuple{T,T},Tuple{T,T}}
 
 Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * CartesianVector{T}(zero(T),zero(T),one(T)))
 
-normal(es::EllipticalSurface{T}) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
+normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
 
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
