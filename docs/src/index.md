@@ -29,3 +29,22 @@ Pages = ["man/drift_fields.md"]
 ```@contents
 Pages = ["man/IO.md"]
 ```
+
+## Citing SolidStateDetectors.jl
+
+When using SolidStateDetectors.jl for research, teaching or similar, please cite
+the [paper](https://arxiv.org/abs/2104.00109).
+
+```
+@article{Abt:2021SSD,
+  author        = {Abt, I. and Fischer, F. and Hagemann, F. and Hauertmann, L. and Schulz, O. and Schuster, M. and Zsigmond, A. J.},
+  title         = {Simulation of semiconductor detectors in 3D with SolidStateDetectors.jl},
+  year          = {2021},
+  month         = {3},
+  journal       = {Journal of Instrumentation},
+  pubstate      = {Accepted},
+  eprint        = {2104.00109},
+  archiveprefix = {ArXiv},
+  primaryclass  = {physics.ins-det},
+}
+```
