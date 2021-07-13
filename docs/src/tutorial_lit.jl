@@ -8,6 +8,10 @@ T = Float32
 simulation = Simulation{T}(SSD_examples[:InvertedCoax])
 
 plot(simulation.detector)
+#jl savefig("tutorial_det.pdf")
+#md savefig("tutorial_det.pdf")
+#md savefig("tutorial_det.svg"); nothing # hide
+#md # [![tutorial_det](tutorial_det.svg)](tutorial_det.pdf)
 
 # One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
 
@@ -19,6 +23,11 @@ plot(
     plot(simulation.ϵ_r), # dielectric distribution
     layout = (1, 4), size = (1600, 500)
 )
+#jl savefig("tutorial_initial_condition.pdf")
+#md savefig("tutorial_initial_condition.pdf")
+#md savefig("tutorial_initial_condition.svg"); nothing # hide
+#md # [![tutorial_initial_condition](tutorial_initial_condition.svg)](tutorial_initial_condition.pdf)
+
 
 # Next, calculate the electric potential:
 
@@ -32,6 +41,10 @@ plot(
     plot(simulation.ϵ_r), # dielectric distribution
     layout = (1, 4), size = (1600, 500)
 )
+#jl savefig("tutorial_calculated_potential.pdf")
+#md savefig("tutorial_calculated_potential.pdf")
+#md savefig("tutorial_calculated_potential.svg"); nothing # hide
+#md # [![tutorial_calculated_potential](tutorial_calculated_potential.svg)](tutorial_calculated_potential.pdf)
 
 # SolidStateDetectors.jl supports active (i.e. depleted) volume calculation:
 
@@ -53,11 +66,16 @@ calculate_electric_potential!( simulation_undep,
                                max_refinements = 3,
                                verbose = false)
 
+
 plot(
     plot(simulation_undep.electric_potential),
     plot(simulation_undep.point_types),
     layout = (1, 2), size = (800, 700)
 )
+#jl savefig("tutorial_calculated_potential_undep.pdf")
+#md savefig("tutorial_calculated_potential_undep.pdf")
+#md savefig("tutorial_calculated_potential_undep.svg"); nothing # hide
+#md # [![tutorial_calculated_potential_undep](tutorial_calculated_potential_undep.svg)](tutorial_calculated_potential_undep.pdf)
 
 # Compare both volumes:
 
@@ -74,6 +92,11 @@ calculate_electric_field!(simulation, n_points_in_φ = 72)
 
 plot(simulation.electric_field, φ = 0.0, size = (350, 500))
 plot_electric_fieldlines!(simulation, φ = 0.0)
+#jl savefig("tutorial_electric_field.pdf")
+#md savefig("tutorial_electric_field.pdf")
+#md savefig("tutorial_electric_field.svg"); nothing # hide
+#md # [![tutorial_electric_field](tutorial_electric_field.svg)](tutorial_electric_field.pdf)
+
 
 # ## Drift field calculation
 
@@ -107,6 +130,11 @@ drift_charges!(event, simulation, Δt = time_step)
 
 plot(simulation.detector, size = (700, 700))
 plot!(event.drift_paths)
+#jl savefig("tutorial_drift_paths.pdf")
+#md savefig("tutorial_drift_paths.pdf")
+#md savefig("tutorial_drift_paths.svg"); nothing # hide
+#md # [![tutorial_drift_paths](tutorial_drift_paths.svg)](tutorial_drift_paths.pdf)
+
 
 # ## Weighting potential calculation
 
@@ -121,6 +149,11 @@ plot(
     plot(simulation.weighting_potentials[2]),
     size = (900, 700)
 )
+#jl savefig("tutorial_weighting_potentials.pdf")
+#md savefig("tutorial_weighting_potentials.pdf")
+#md savefig("tutorial_weighting_potentials.svg"); nothing # hide
+#md # [![tutorial_weighting_potentials](tutorial_weighting_potentials.svg)](tutorial_weighting_potentials.pdf)
+
 
 # ## Detector waveform generation
 
@@ -132,3 +165,8 @@ simulate!(event, simulation) # drift_charges + signal generation of all channels
 
 p_pc_signal = plot( event.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time / ns",
                     legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
+#jl savefig("tutorial_waveforms.pdf")
+#md savefig("tutorial_waveforms.pdf")
+#md savefig("tutorial_waveforms.svg"); nothing # hide
+#md # [![tutorial_waveforms](tutorial_waveforms.svg)](tutorial_waveforms.pdf)
+
