@@ -1,6 +1,6 @@
 # # Example 1: Inverted Coax Detector
 
-using Plots; gr(fmt = :png);
+using Plots
 using SolidStateDetectors
 using Unitful
 

@@ -15,3 +15,6 @@ where the elements are the means of the electric field in each direction calcula
 	\mathcal{E}_z^{i,j,k} &= \dfrac{1}{2}\left( \dfrac{\Phi_{i,j,k+1}-\Phi_{i,j,k}}{z_{k+1} - z_{k}} + \dfrac{\Phi_{i,j,k}-\Phi_{i,j,k-1}}{z_{k} - z_{k-1}} \right)\hspace{10pt}.
 \end{aligned}
 ```
+
+This discrete electric field is interpolated (via [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)) 
+during the drift in order to get the electric field at the current position of the charge carrier.
