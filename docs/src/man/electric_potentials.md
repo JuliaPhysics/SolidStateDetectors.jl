@@ -25,7 +25,3 @@ To use multiple threads for the simulation, the environement variable `JULIA_NUM
 ```bash
 export JULIA_NUM_THREADS=4
 ```
-
-Note that the user still has to parse the number of threads to the function as a keyword `nthreads`.
-
-ToDo...
