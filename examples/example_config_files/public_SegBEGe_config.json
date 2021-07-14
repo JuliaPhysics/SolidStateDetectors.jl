@@ -49,7 +49,7 @@
                     }
                 },
                 "charge_drift_model": {
-                    "include": "ADLChargeDriftModel/drift_velocity_config.json"
+                    "include": "ADLChargeDriftModel/drift_velocity_config.yaml"
                 },
                 "geometry": {
                     "translate": {

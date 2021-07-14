@@ -3,8 +3,8 @@ using StaticArrays
 using LinearAlgebra
 
 config_dict = Dict(
-    "High-purity germanium" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config.json"),
-    "Silicon" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_Si_300K_config.json")
+    "High-purity germanium" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config.yaml"),
+    "Silicon" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_Si_300K_config.yaml")
 )
 
 geom_sigdigits(::Type{Int64})::Int = 12
@@ -87,7 +87,7 @@ for T in (Float32, Float64)
             end
         end
     
-        config = joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config_axes.json")
+        config = joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config_axes.yaml")
 
         @testset "All axes in one plane" begin
 

@@ -40,42 +40,35 @@ On each axes, $v_{l}$ can be described through the parametrization proposed by [
 v_l = \frac{\mu_0 E}{(1 + (E/E_0 )^{\beta})^{1/ \beta}} - \mu_{n} E.
 ```
 
-The parameters $\mu_{0}$, $E_{0}$ and $\beta$ differ for electrons and holes, and $\mu_{n}$ is only relevant for electrons. These parameters were obtained by [B. Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) by measuring the drift velocities of electrons and holes in the $\langle$100$\rangle$ and $\langle$111$\rangle$ directions in high purity germanium at a temperature of 78 K. These parameters are stored in a json configuration file, "drift\_velocity\_config.json", located in `<package_directory>/example/example_config_files/ADLChargeDriftModel`. The configuration file is expressed as following:
+The parameters $\mu_{0}$, $E_{0}$ and $\beta$ differ for electrons and holes, and $\mu_{n}$ is only relevant for electrons. These parameters were obtained by [B. Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) by measuring the drift velocities of electrons and holes in the $\langle$100$\rangle$ and $\langle$111$\rangle$ directions in high purity germanium at a temperature of 78 K. These parameters are stored in a configuration file, "drift\_velocity\_config.yaml", located in `<package_directory>/example/example_config_files/ADLChargeDriftModel`. The configuration file is expressed as following:
 
 
-```json
-{
-	"phi110": -0.785398,
-	"drift": {
-		"velocity": {
-			"model": "Bruyneel2006",
-			"parameters": {
-				"e100": {
-					"mu0": 3.8609,
-					"beta": 0.805,
-					"E0": 51100.0,
-					"mun": -0.0171
-				},
-				"e111": {
-					"mu0": 3.8536,
-					"beta": 0.641,
-					"E0": 53800.0,
-					"mun": 0.0510
-				},
-				"h100": {
-					"mu0": 6.1824,
-					"beta": 0.942,
-					"E0": 18500.0
-				},
-				"h111": {
-					"mu0": 6.1215,
-					"beta": 0.662,
-					"E0": 18200.0
-				}
-			}
-		}
-	}
-}
+```yaml
+model: ADLChargeDriftModel
+phi110: -0.785398
+material: HPGe
+drift:
+  velocity:
+    model: Bruyneel2006
+    parameters:
+      e100:
+        mu0: 3.8609
+        beta: 0.805
+        E0: 51100
+        mun: -0.0171
+      e111:
+        mu0: 3.8536
+        beta: 0.641
+        E0: 53800
+        mun: 0.051
+      h100:
+        mu0: 6.1824
+        beta: 0.942
+        E0: 18500
+      h111:
+        mu0: 6.1215
+        beta: 0.662
+        E0: 18200
 ```
 
 where the parameters are stored under the keys `e100`, `e111`, `h100` and `h111`, in which `e` and `h` stand for electrons and holes, respectively, and `100` and `111`, for the principal axes $\langle$100$\rangle$ and $\langle$111$\rangle$. 
@@ -85,11 +78,11 @@ By default, in `SolidStateDetectors.jl` the $\langle$001$\rangle$ axis is aligne
 If the electric field is not aligned with any of the crystal axes, the charge drift velocity is not necessarily aligned with the electric field. In the [`ADLChargeDriftModel`](@ref), two models are implemented to describe the charge drift of electrons and holes between the axes. Detailed information about the charge drift models is provided in the papers from [L. Mihailescu et al. ](https://www.sciencedirect.com/science/article/pii/S0168900299012863) for electrons and from [B.Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) for holes.
 
 
-In order to perform the calculation of the drift fields, a json configuration file containing the parametrization values like the "drift\_velocity\_config.json" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
+In order to perform the calculation of the drift fields, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
 
 ```julia
 T = SolidStateDetectors.get_precision_type(simulation) # e.g. Float32
-charge_drift_model = ADLChargeDriftModel("<path_to_ADL_json_config_file>", T=T)
+charge_drift_model = ADLChargeDriftModel("<path_to_ADL_configuration_file>", T=T)
 simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
 calculate_drift_fields!(simulation)
 ```
@@ -99,7 +92,7 @@ The values from the default configuration file correspond to germanium at 78 K. 
 
 ```julia
 T = SolidStateDetectors.get_precision_type(simulation) # e.g. Float32
-charge_drift_model = ADLChargeDriftModel("<path_to_drift_velocity_config_boltzmann.json>", T = T, temperature = 100) 
+charge_drift_model = ADLChargeDriftModel("<path_to_drift_velocity_config_boltzmann.yaml>", T = T, temperature = 100) 
 simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
 calculate_drift_fields!(simulation)
 ```

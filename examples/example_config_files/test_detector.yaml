@@ -53,7 +53,7 @@ detectors:
           init: 10000000
           gradient: 50000
       charge_drift_model:
-        include: ADLChargeDriftModel/drift_velocity_config.json
+        include: ADLChargeDriftModel/drift_velocity_config.yaml
       geometry:
         tube:
           r: 

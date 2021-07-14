@@ -57,7 +57,7 @@
                     }
                 },
                 "charge_drift_model": {
-                    "include": "ADLChargeDriftModel/drift_velocity_Si_300K.json"
+                    "include": "ADLChargeDriftModel/drift_velocity_Si_300K.yaml"
                 },
                 "geometry": {
                     "translate": {

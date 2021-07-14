@@ -90,8 +90,8 @@ println("Undepleted: ", get_active_volume(simulation_undep.point_types));
 
 calculate_electric_field!(simulation, n_points_in_φ = 72)
 
-plot(simulation.electric_field, φ = 0.0, size = (350, 500))
-plot_electric_fieldlines!(simulation, φ = 0.0)
+plot(simulation.electric_field, full_det = true, φ = 0.0, size = (350, 500))
+plot_electric_fieldlines!(simulation, full_det = true, φ = 0.0)
 #jl savefig("tutorial_electric_field.pdf") # hide
 #md savefig("tutorial_electric_field.pdf") # hide
 #md savefig("tutorial_electric_field.svg"); nothing # hide
@@ -102,9 +102,9 @@ plot_electric_fieldlines!(simulation, φ = 0.0)
 
 # Given the electric field and a charge drift model, calculate drift fields for electrons and holes. Precalculating the drift fields saves time during charge drift simulation:
 
-# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the Bruyneel model from the Agata Data Library (ADL) is used. Other configurations are saved in their JSON configuration files and can be found under:
+# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the Bruyneel model from the Agata Data Library (ADL) is used. Other configurations are saved in their configuration files and can be found under:
 
-# `<package_directory>/src/ChargeDriftModels/ADL/<config_filename>.json.`
+# `<package_directory>/examples/example_config_files/ADLChargeDriftModel/<config_filename>.yaml.`
 
 # Set the charge drift model of the simulation:
 

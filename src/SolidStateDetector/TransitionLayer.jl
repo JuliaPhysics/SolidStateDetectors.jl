@@ -27,7 +27,7 @@ end
 function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, tl::ArbitraryDriftModificationVolume{T}, ::Type{Val{id}})::CartesianVector{T} where {T <: SSDFloat, id}
     error("""
         This function needs to be overwritten by the user. Use `::Type{Val{<id>}}` for the last argument. 
-        <id> is the corresponding id specified in the json-config file of the detector. 
+        <id> is the corresponding id specified in the configuration file of the detector. 
     """)
 end
 

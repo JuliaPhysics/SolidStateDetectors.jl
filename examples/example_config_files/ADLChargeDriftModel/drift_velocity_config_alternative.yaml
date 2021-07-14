@@ -1,0 +1,24 @@
+model: ADLChargeDriftModel
+phi110: -0.785398
+drift:
+  velocity:
+    model: Bruyneel2006
+    parameters:
+      e100:
+        mu0: 4.018
+        beta: 0.72
+        E0: 49300
+        mun: 0.0589
+      e111:
+        mu0: 4.242
+        beta: 0.87
+        E0: 25100
+        mun: 0.0062
+      h100:
+        mu0: 6.6333
+        beta: 0.744
+        E0: 18100
+      h111:
+        mu0: 10.727
+        beta: 0.58
+        E0: 10000
