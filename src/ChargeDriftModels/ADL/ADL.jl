@@ -121,10 +121,10 @@ ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDrif
 function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
                              temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
 
-    if ismissing(configfilename) configfilename = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.json") end
+    if ismissing(configfilename) configfilename = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml") end
     if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file
 
-    config = JSON.parsefile(configfilename)
+    config = parse_config_file(configfilename)
 
     #mu0 in m^2 / ( V * s )
     #beta dimensionless

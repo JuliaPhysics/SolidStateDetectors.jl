@@ -1,9 +1,0 @@
-{
-    "material": "HPGe",
-    "temperature": 78.0,
-    "include" : [
-        "detector_geometry.json",
-        "impurity_density.json",
-        "../ADLChargeDriftModel/drift_velocity_config.json"
-    ]
-}

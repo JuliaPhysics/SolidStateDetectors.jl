@@ -29,5 +29,9 @@ By default, `gr` is loaded when importing `Plots`.
 
 This documentation was build with
 ```@example
-using Pkg; Pkg.status(["Plots", "GR"], mode = PKGMODE_MANIFEST)
+using Pkg, Plots # hide
+pkgversion(m::Module) = Pkg.TOML.parsefile(joinpath(dirname(string(first(methods(m.eval)).file)), "..", "Project.toml"))["version"] # hide
+Plots_version = pkgversion(Plots) # hide
+GR_version = pkgversion(GR) # hide
+print("Plots: v$(Plots_version) - GR: v$(GR_version)") # hide
 ```

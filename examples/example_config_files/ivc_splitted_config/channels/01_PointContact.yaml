@@ -1,0 +1,14 @@
+material: HPGe
+channel: 1
+potential: 0
+geometry:
+  translate:
+    z: 1
+    tube:
+      r:
+        from: 0
+        to: 3
+      phi:
+        from: 0
+        to: 360
+      h: 2

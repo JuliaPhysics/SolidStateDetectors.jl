@@ -4,7 +4,8 @@ using SolidStateDetectors
 import SolidStateDetectors.ConstructiveSolidGeometry as CSG
 using SolidStateDetectors.ConstructiveSolidGeometry: ClosedPrimitive
 using SolidStateDetectors.ConstructiveSolidGeometry: Box
-using Plots
+using Plots; gr()
+Plots.reset_defaults()
 T = Float64;
 
 # ### List of YAML example configuration files for Primitives

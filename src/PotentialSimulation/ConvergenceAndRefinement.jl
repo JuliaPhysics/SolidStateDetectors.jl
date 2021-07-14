@@ -37,7 +37,9 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
     cf::T = Inf
     cfs::Vector{T} = fill(cf, 10)
     cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
-    prog = ProgressThresh(cl, 0.1, "Convergence: ")
+    # To disable automatically ProgressMeters in CI builds:
+    is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+    prog = ProgressThresh(cl; dt = 0.1, desc = "Convergence: ", output = stderr, enabled = !is_logging(stderr))
     while cf > cl
         for i in 1:n_iterations_between_checks
             update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)

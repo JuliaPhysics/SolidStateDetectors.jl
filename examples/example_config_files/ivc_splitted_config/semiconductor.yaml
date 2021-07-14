@@ -1,0 +1,6 @@
+material: HPGe
+temperature: 78
+include:
+- detector_geometry.yaml
+- impurity_density.yaml
+- "../ADLChargeDriftModel/drift_velocity_config.yaml"

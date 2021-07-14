@@ -1,0 +1,13 @@
+include:
+- grid.yaml
+- units.yaml
+name: Public Inverted Coax
+medium: vacuum
+detectors:
+- bulk:
+    include: semiconductor.yaml
+  contacts:
+  - include: channels/01_PointContact.yaml
+  - include: channels/02_Mantle.yaml
+  passives:
+  - include: cryostat.yaml
