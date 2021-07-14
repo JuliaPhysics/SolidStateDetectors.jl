@@ -2,7 +2,7 @@
 
 The detector, its surroundings and symmetries can be specified in configuration files.
 
-SSD supports YAML and JSON as formats for the configuration files.
+SolidStateDetectors.jl supports YAML and JSON as formats for the configuration files.
 
 ## Example Configuration Files
 
@@ -13,7 +13,7 @@ Several example configuration files can be found under
 They are accessible through a dictionary, `SSD_examples`, defined in the package:
 ```@example general
 using SolidStateDetectors
-keys(SSD_examples) # dictionary holding the full path to the corresponding config JSON files
+keys(SSD_examples) # dictionary holding the full path to the corresponding configuration files
 ```
 
 They can be loaded via
