@@ -120,7 +120,7 @@ calculate_drift_fields!(simulation)
 
 starting_positions = [ CylindricalPoint{T}( 0.020, deg2rad(10), 0.015 ),
                        CylindricalPoint{T}( 0.015, deg2rad(20), 0.045 ),
-                       CylindricalPoint{T}( 0.025, deg2rad(30), 0.025 ) ]
+                       CylindricalPoint{T}( 0.022, deg2rad(35), 0.025 ) ]
 energy_depos = T[1460, 609, 1000] * u"keV" # are needed later in the signal generation
 
 event = Event(starting_positions, energy_depos);
