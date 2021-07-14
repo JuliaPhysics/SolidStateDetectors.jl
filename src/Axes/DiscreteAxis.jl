@@ -1,12 +1,12 @@
 abstract type AbstractAxis{T, BL, BR, I} <: AbstractVector{T} end
 
 """
-    DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
+    DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
 * BL: left boundary condition
 * BR: right boundary condition
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
 * I: IntervalSets.Interval (closed or open boundaries)
 """
 struct DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} 
@@ -29,7 +29,7 @@ end
 
 * T: Type of ticks
 * BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
-* L, R {:closed, :open} 
+* L, R ∈ {:closed, :open} 
 * ticks: Ticks of the axis
 """
 function DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
@@ -162,14 +162,6 @@ function DiscreteAxis{BL, BR}(interval::Interval{L, R, T}; step::Union{Missing, 
     #     end
     # end
     DiscreteAxis{T, BL, BR}(interval, ticks)
-end
-
-function midpoints(a::Vector{T})::Vector{T} where {T}
-    @inbounds r::Vector{T} = a[1:end-1]
-    @simd for i in eachindex(r)
-        @inbounds r[i] += 0.5 * (a[i + 1] - a[i])
-    end
-    return r
 end
 
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
