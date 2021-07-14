@@ -26,6 +26,23 @@ using StatsBase
 using Unitful
 using YAML
 
+include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
+using .ConstructiveSolidGeometry
+using .ConstructiveSolidGeometry:
+            CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
+            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
+            CartesianTicksTuple, CylindricalTicksTuple,
+            Geometry, AbstractGeometry,
+            AbstractSurfacePrimitive, AbstractPlanarSurfacePrimitive, AbstractCurvedSurfacePrimitive,
+            csg_round_lin, csg_round_rad, csg_isapprox, 
+            parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
+            transform, CSG_dict, Transformations, combine_transformations,
+            ConfigFileError
+        
+import .ConstructiveSolidGeometry: sample
+export CartesianPoint, CartesianVector, CylindricalPoint
+
 import Clustering
 import DataStructures
 import Distributions
@@ -33,14 +50,13 @@ import Tables
 import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
-             range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in
-import Base: show, print, println, display, +, -, &
-import Base.convert
+             range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in, convert,
+             show, print, println, display, +, -, &
 
 export SolidStateDetector
 export SSD_examples
 
-export Grid, CylindricalPoint, CartesianPoint
+export Grid
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
@@ -55,12 +71,10 @@ export Event, drift_charges!
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
-struct ConfigFileError <: Exception
-    msg::AbstractString
-end
-Base.showerror(io::IO, e::ConfigFileError) = print(io, "ConfigFileError: ", e.msg)
 
-include("Geometries/Geometries.jl")
+include("Units.jl")
+
+isunique(v::AbstractVector) = length(v) == length(unique(v))
 
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
@@ -70,16 +84,16 @@ include("Types/Types.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
-include("ChargeDensityModels/ChargeDensityModels.jl")
+include("ChargeDensities/ChargeDensities.jl")
+include("ImpurityDensities/ImpurityDensities.jl")
+include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
-include("GeometryRounding.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
 
-include("ChargeDriftModels/ChargeDriftModels.jl")
-include("ChargeCloudModels/ChargeCloudModels.jl")
+#include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")
 

@@ -1,1 +1,6 @@
-include("Detectors/InvertedCoax_3d.jl")
+include("DriftPaths.jl")
+include("ElectricField.jl")
+include("Grids.jl")
+include("Potentials.jl")
+include("PotentialSimulationSetup.jl")
+include("SolidStateDetector.jl")

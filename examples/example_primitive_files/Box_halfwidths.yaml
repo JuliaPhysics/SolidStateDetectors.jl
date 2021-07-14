@@ -1,0 +1,2 @@
+box:
+  halfwidths: [1, 2, 3] # => hX = 1; hY = 2; hZ = 3;

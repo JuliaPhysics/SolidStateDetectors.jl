@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - master
-      - dev
+      - v0.6
     tags: '*'
   pull_request:
   release:
@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
+          - '1.6'
           - '1'
           - 'nightly'
         os:
@@ -88,3 +88,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Needed due to https://github.com/JuliaDocs/Documenter.jl/issues/1177
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+          GKSwstype: 'nul'

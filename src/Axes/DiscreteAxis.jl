@@ -111,7 +111,8 @@ function range(interval::Interval{:closed, :open, T}; step::Union{Missing, T} = 
         range(interval.left, stop = stop, length=length)
     elseif ismissing(length)
         # stop = interval.right - interval.right % step
-        stop = geom_round(interval.right - step)
+        # stop = geom_round(interval.right - step)
+        stop = interval.right - step
         range(interval.left, stop = stop, step=step)
     else
         error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
@@ -153,14 +154,14 @@ end
 
 function DiscreteAxis{BL, BR}(interval::Interval{L, R, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing)::DiscreteAxis{T, BL, BR} where {L, R, T, BL, BR}
     ticks::Vector{T} = collect(range(interval, step=step, length=length))
-    if T == Float32 || T == Float64
-        ticks = round.(ticks, sigdigits = geom_sigdigits(T))
-        for iv in eachindex(ticks)
-            if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
-                ticks[iv] = zero(T)
-            end
-        end
-    end
+    # if T == Float32 || T == Float64
+    #     ticks = round.(ticks, sigdigits = geom_sigdigits(T))
+    #     for iv in eachindex(ticks)
+    #         if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
+    #             ticks[iv] = zero(T)
+    #         end
+    #     end
+    # end
     DiscreteAxis{T, BL, BR}(interval, ticks)
 end
 
@@ -362,3 +363,145 @@ end
 
 Base.convert(T::Type{NamedTuple}, x::DiscreteAxis; unit = u"m/m") = T(x)
 
+function merge_closest_ticks!(v::AbstractVector{T}, n::Int = length(v); min_diff::T = T(1e-6)) where {T}
+    Δv = diff(v[1:n])
+    Δ_min, Δv_min_indx = findmin(Δv)
+    vFirst = v[1]
+    vLast  = v[n]
+    if Δ_min < min_diff
+        v[Δv_min_indx] = (v[Δv_min_indx]+v[Δv_min_indx+1]) / 2
+        v[Δv_min_indx+1:end-1] = v[Δv_min_indx+2:end]
+        v[1] = vFirst
+        n -= 1
+        v[n] = vLast
+        n
+    else
+        n
+    end
+end
+function merge_close_ticks(v::AbstractVector{T}; min_diff::T = T(1e-6)) where {T}
+    l = length(v)
+    if l == 1 return v end
+    n = merge_closest_ticks!(v, min_diff = min_diff)
+    reduced = n < l
+    l = n
+    while reduced
+        n = merge_closest_ticks!(v, n, min_diff = min_diff)
+        reduced = n < l
+        l = n
+    end
+    v[1:n]
+end
+
+
+function get_new_ticks_to_equalize_ratios_on_side(t::AbstractVector{T}; max_ratio = T(2)) where {T}
+    @assert length(t) == 3 
+    Δt = diff(t)
+    r = Δt[2] / Δt[1]
+    min_ratio = inv(max_ratio)
+    new_ticks = T[]
+    if r > max_ratio
+        x0 = t[2]
+        Δnt = max_ratio * Δt[1]
+        nt = x0 + Δnt # new tick 
+        while t[3] - nt > Δnt
+            push!(new_ticks, nt)
+            Δnt = max_ratio * Δnt
+            nt = nt + Δnt # new tick 
+        end
+        vcat(t[1:2], new_ticks, t[3:3])
+    elseif r < min_ratio
+        x0 = t[2]
+        Δnt = max_ratio * Δt[2]
+        nt = x0 - Δnt # new tick 
+        while nt - t[1] > Δnt
+            push!(new_ticks, nt)
+            Δnt = max_ratio * Δnt
+            nt = nt - Δnt # new tick 
+        end
+        sort!(new_ticks)
+        vcat(t[1:1], new_ticks, t[2:3])
+    else
+        t
+    end
+end
+
+function initialize_axis_ticks(t::AbstractVector{T}; max_ratio = T(2)) where {T}
+    @assert max_ratio >= 1 
+    if length(t) <= 2 return t end 
+    # First: Left and right side intervals:
+    new_ticks_left = get_new_ticks_to_equalize_ratios_on_side(t[1:3]; max_ratio)
+    if length(t) == 3 return new_ticks_left end
+    if length(t) == 4
+        return vcat(new_ticks_left, t[4:4])
+    end
+    new_ticks_right = get_new_ticks_to_equalize_ratios_on_side(t[end-2:end]; max_ratio)
+    if length(t) == 5
+        return vcat(new_ticks_left, new_ticks_right[2:end])
+    end
+    ticks = vcat(new_ticks_left, t[4:end-3], new_ticks_right)
+    # Second: Intervals in between
+    iL = length(new_ticks_left) - 1 
+    iR = iL + 3
+    n_sub_ints = length(t) - 5
+    for i_sub_int in 1:n_sub_ints
+        subticks = ticks[iL:iR]
+        Δst = diff(subticks)
+        r_l = Δst[2] / Δst[1]
+        r_r = Δst[2] / Δst[3]
+        r_lr = Δst[1] / Δst[3]
+        new_ticks = T[]
+        if r_lr < 1 # interval to the left is smaller than interval to the right
+            if r_l > max_ratio
+                x0 = subticks[2]
+                Δnt = max_ratio * Δst[1]
+                nt = x0 + Δnt # new tick 
+                while subticks[3] - nt > Δnt
+                    push!(new_ticks, nt)
+                    Δnt = max_ratio * Δnt
+                    nt = nt + Δnt # new tick 
+                end
+            end
+        else # interval to the right is smaller than interval to the left
+            if r_r > max_ratio
+                x0 = subticks[3]
+                Δnt = max_ratio * Δst[3]
+                nt = x0 - Δnt # new tick 
+                while nt - subticks[2] > Δnt
+                    push!(new_ticks, nt)
+                    Δnt = max_ratio * Δnt
+                    nt = nt - Δnt # new tick 
+                end
+                sort!(new_ticks)
+            end
+        end
+        
+        ticks = vcat(ticks[1:iL+1], new_ticks, ticks[iR-1:end])
+
+        iL += 1 + length(new_ticks)
+        iR += 1 + length(new_ticks)
+    end
+    @assert issorted(ticks)
+    @assert isunique(ticks)
+    ticks
+end
+
+function fill_up_ticks(v::AbstractVector{T}, max_diff::T) where {T}
+    if length(v) == 1 return v end
+    Δv = diff(v)
+    add_n_points = Int.(round.(Δv ./ max_diff, RoundUp)) .- 1
+    r = Vector{T}(undef, length(v) + sum(add_n_points))
+    r[:] .= 0
+    i = 0
+    for j in eachindex(Δv)
+        x0 = v[j]
+        n = add_n_points[j]
+        Δ = Δv[j] / (n + 1) 
+        for l in 0:n
+            i += 1
+            r[i] = x0 + Δ * l
+        end
+    end
+    r[end] = v[end]
+    r
+end

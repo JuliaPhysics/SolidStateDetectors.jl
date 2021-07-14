@@ -25,30 +25,32 @@ include("PowerLawModel.jl")
 include("VacuumModel.jl")
 
 # Electron model parametrization from [3]
-@fastmath function γj(j::Integer, phi110::T, γ0::SMatrix{3,3,T,9}, ::Type{HPGe})::SMatrix{3,3,T,9} where {T <: SSDFloat}
+@fastmath function γj(j::Integer, crystal_orientation::SMatrix{3,3,T,9}, γ0::SMatrix{3,3,T,9}, ::Type{HPGe})::SMatrix{3,3,T,9} where {T <: SSDFloat}
     tmp::T = 2 / 3
     a::T = acos(sqrt(tmp))
-    Rx::SMatrix{3,3,T,9} = SMatrix{3,3,T,9}(1, 0, 0, 0, cos(a), sin(a), 0, -sin(a), cos(a))
-    b::T = phi110 + (j - 1) * T(π) / 2
-    Rzj::SMatrix{3,3,T,9} = SMatrix{3,3,T,9}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1)
-    Rj = Rx * Rzj
+    Rx::SMatrix{3,3,T,9} = RotX{T}(a)
+    b::T = (j - 1) * T(π) / 2 - π / 4
+    Rzj::SMatrix{3,3,T,9} = RotZ{T}(-b)
+    Rj = Rx * Rzj * crystal_orientation
     transpose(Rj) * γ0 * Rj
 end
 
-@fastmath function γj(j::Integer, phi110::T, γ0::SMatrix{3,3,T,9}, ::Type{Si})::SMatrix{3,3,T,9} where {T <: SSDFloat}
-    b::T = phi110 + T(π/4) * (-1)^j
-    Rj::SMatrix{3,3,T,9} = (j == 3 ? SMatrix{3,3,T,9}(1, 0, 0, 0, 0, 1, 0, -1, 0)  : I) * SMatrix{3,3,T,9}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1) 
+@fastmath function γj(j::Integer, crystal_orientation::SMatrix{3,3,T,9}, γ0::SMatrix{3,3,T,9}, ::Type{Si})::SMatrix{3,3,T,9} where {T <: SSDFloat}
+    # needs to be updated!
+    b::T = (j == 1 ? 0 : π / 2)
+    Rzj::SMatrix{3,3,T,9} = (j == 3 ? SMatrix{3,3,T,9}(1, 0, 0, 0, 0, 1, 0, -1, 0)  : I) * SMatrix{3,3,T,9}(cos(b), -sin(b), 0, sin(b), cos(b), 0, 0, 0, 1) 
+    Rj = Rzj * crystal_orientation
     transpose(Rj) * γ0 * Rj
 end
 
-@fastmath function setup_γj(phi110::T, p::ADLParameters{T}, material::Type{HPGe})::SVector{4, SMatrix{3,3,T,9}} where {T <: SSDFloat}
+@fastmath function setup_γj(crystal_orientation::SMatrix{3,3,T,9}, p::ADLParameters{T}, material::Type{HPGe})::SVector{4, SMatrix{3,3,T,9}} where {T <: SSDFloat}
     γ0 = SMatrix{3,3,T,9}(p.mt_inv, 0, 0, 0, p.ml_inv, 0, 0, 0, p.mt_inv)
-    SVector{4, SMatrix{3,3,T,9}}([γj(i, phi110, γ0, material) for i in Base.OneTo(4)]...)
+    SVector{4, SMatrix{3,3,T,9}}([γj(i, crystal_orientation, γ0, material) for i in Base.OneTo(4)]...)
 end
 
-@fastmath function setup_γj(phi110::T, p::ADLParameters{T}, material::Type{Si})::SVector{3, SMatrix{3,3,T,9}} where {T <: SSDFloat}
+@fastmath function setup_γj(crystal_orientation::SMatrix{3,3,T,9}, p::ADLParameters{T}, material::Type{Si})::SVector{3, SMatrix{3,3,T,9}} where {T <: SSDFloat}
     γ0 = SMatrix{3,3,T,9}(p.mt_inv, 0, 0, 0, p.ml_inv, 0, 0, 0, p.mt_inv)
-    SVector{3, SMatrix{3,3,T,9}}([γj(i, phi110, γ0, material) for i in Base.OneTo(3)]...)
+    SVector{3, SMatrix{3,3,T,9}}([γj(i, crystal_orientation, γ0, material) for i in Base.OneTo(3)]...)
 end
 
 @fastmath function ADLParameters{T}(ml::T, mt::T, ::Type{HPGe})::ADLParameters{T} where {T}
@@ -85,7 +87,7 @@ end
 # Fields
 - `electrons::CarrierParameters{T}`
 - `holes::CarrierParameters{T}`
-- `phi110::T`
+- `crystal_orientation::SMatrix{3,3,T,9}`
 - `γ::SVector{N,SMatrix{3,3,T,9}}`
 - `parameters::ADLParameters{T}`
 - `temperaturemodel::TM`
@@ -93,7 +95,7 @@ end
 struct ADLChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}} <: AbstractChargeDriftModel{T}
     electrons::CarrierParameters{T}
     holes::CarrierParameters{T}
-    phi110::T
+    crystal_orientation::SMatrix{3,3,T,9}
     γ::SVector{N,SMatrix{3,3,T,9}}
     parameters::ADLParameters{T}
     temperaturemodel::TM
@@ -107,20 +109,22 @@ function ADLChargeDriftModel{T,M,N,TM}(chargedriftmodel::ADLChargeDriftModel{<:A
     h111 = VelocityParameters{T}(cdmf64.holes.axis111.mu0, cdmf64.holes.axis111.beta, cdmf64.holes.axis111.E0, cdmf64.holes.axis111.mun)
     electrons = CarrierParameters{T}(e100, e111)
     holes     = CarrierParameters{T}(h100, h111)
-    phi110::T = cdmf64.phi110
+    crystal_orientation = SMatrix{3,3,T,9}(cdmf64.crystal_orientation)
     γ = Vector{SMatrix{3,3,T,9}}( cdmf64.γ )
     parameters = ADLParameters{T}(cdmf64.parameters.ml_inv, cdmf64.parameters.mt_inv, cdmf64.parameters.Γ0_inv, cdmf64.parameters.Γ1, cdmf64.parameters.Γ2)
     temperaturemodel::AbstractTemperatureModel{T} = cdmf64.temperaturemodel
-    ADLChargeDriftModel{T,M,N,TM}(electrons, holes, phi110, γ, parameters, temperaturemodel)
+    ADLChargeDriftModel{T,M,N,TM}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
 end
 
+
+ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDriftModel(args..., T=T, kwargs...)
 function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = missing; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
                              temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
 
-    if ismissing(configfilename) configfilename = joinpath(@__DIR__, "drift_velocity_config.json") end
+    if ismissing(configfilename) configfilename = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml") end
     if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file
 
-    config = JSON.parsefile(configfilename)
+    config = parse_config_file(configfilename)
 
     #mu0 in m^2 / ( V * s )
     #beta dimensionless
@@ -171,9 +175,17 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
         ADLParameters{T}(ml, mt, material)
     end
 
-    ismissing(phi110) ? phi110 = T(config["phi110"]) : phi110 = T(phi110)  #if you give the angle of the 110 axis it will be used, otherwise read from config file
+    crystal_orientation::SMatrix{3,3,T,9} = if ismissing(phi110) 
+        if "phi110" in keys(config)
+            RotZ{T}(- π/4 - config["phi110"] )
+        else
+            transpose(parse_rotation_matrix(T, config, u"rad")) # replace u"rad" with the units in the config file
+        end
+    else
+        RotZ{T}(- π/4 - phi110)
+    end
 
-    γ = setup_γj(phi110, parameters, material)
+    γ = setup_γj(crystal_orientation, parameters, material)
 
     if "temperature_dependence" in keys(config)
         if "model" in keys(config["temperature_dependence"])
@@ -196,7 +208,7 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
         temperaturemodel = VacuumModel{T}(config)
         # println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
     end
-    return ADLChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, phi110, γ, parameters, temperaturemodel)
+    return ADLChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
 end
 
 
@@ -298,9 +310,7 @@ end
         V100h::T = Vl(Emag, cdm.holes.axis100) * f100h
         V111h::T = Vl(Emag, cdm.holes.axis111) * f111h
         
-        φz::T = cdm.phi110 + π / 4
-        Rz_inv::RotZ{T} = RotZ{T}(-φz)
-        tmp::SVector{3,T} = Rz_inv * fv
+        tmp::SVector{3,T} = cdm.crystal_orientation * fv
 
         vrel::T = V111h / V100h
         Λvrel::T = Λ(vrel)
@@ -316,7 +326,7 @@ end
         vφ::T = V100h * Ωvrel * 2 * sθ0^3 * s2φ0 * c2φ0
 
         Ry::RotY{T} = RotY{T}(θ0)
-        Rz::RotZ{T} = RotZ{T}(φ0 + φz)
+        Rz::SMatrix{3,3,T,9} = transpose(cdm.crystal_orientation) * RotZ{T}(φ0)
         Rz * (Ry * @SVector T[vΩ, vφ, vr])
     end
 end

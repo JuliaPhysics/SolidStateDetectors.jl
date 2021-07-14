@@ -28,11 +28,11 @@ function World{T, ND, S}(args...) where {T <: SSDFloat, ND, S}
 end
 
 
-function World(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::World
+function World(T, dict::Dict, input_units::NamedTuple)::World
     if dict["coordinates"] == "cylindrical"
-        CylindricalWorld(T, dict["axes"], inputunit_dict)
+        CylindricalWorld(T, dict["axes"], input_units)
     elseif dict["coordinates"] == "cartesian"
-        CartesianWorld(T, dict["axes"], inputunit_dict)
+        CartesianWorld(T, dict["axes"], input_units)
     else
         error("Gridtype must be \"cylindrical\" or \"cartesian\"")
     end
@@ -68,11 +68,12 @@ function is_periodic_plus_mirror_symmetric(BL::Symbol, BR::Symbol)::Bool
     return (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic)
 end
 
-function get_r_SSDInterval(T, dict, inputunit_dict::Dict{String, Unitful.Units})
+function get_r_SSDInterval(T, dict, input_units::NamedTuple)
     if isa(dict, Dict)
         from::T = 0 
         if "from" in keys(dict) @warn "ConfigFileWarning: \"from\" is not used in r-axis. It is fixed to 0." end
-        to::T = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * inputunit_dict["length"]))) : throw(ConfigFileError("No \"to\" given for r-axis."))
+        # to::T = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length))) : throw(ConfigFileError("No \"to\" given for r-axis."))
+        to::T = "to" in keys(dict) ? ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length)) : throw(ConfigFileError("No \"to\" given for r-axis."))
         if from < 0 throw(ConfigFileError("left boundary of r-axis cannot be negative.")) end 
         if to < 0 throw(ConfigFileError("right boundary of r-axis cannot be negative.")) end 
         L = :closed
@@ -83,14 +84,16 @@ function get_r_SSDInterval(T, dict, inputunit_dict::Dict{String, Unitful.Units})
         end      
         return SSDInterval{T, L, R, BL, BR}(from, to)
     else
-        SSDInterval{T, :closed, :closed, :r0, :infinite}(0, geom_round(ustrip(uconvert(internal_length_unit, T(dict) * inputunit_dict["length"]))))
+        SSDInterval{T, :closed, :closed, :r0, :infinite}(0, geom_round(ustrip(uconvert(internal_length_unit, T(dict) * input_units.length))))
     end
 end
-function get_φ_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})
+function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)
     if haskey(dict, "phi")
         dp = dict["phi"]
-        from::T = "from" in keys(dp) ? geom_round(ustrip(uconvert(internal_angle_unit, T(dp["from"]) * inputunit_dict["angle"]))) : T(0)
-        to::T = "to" in keys(dp) ? geom_round(ustrip(uconvert(internal_angle_unit, T(dp["to"]) * inputunit_dict["angle"]))) : T(2π)
+        # from::T = "from" in keys(dp) ? geom_round(ustrip(uconvert(internal_angle_unit, T(dp["from"]) * input_units.angle))) : T(0)
+        # to::T = "to" in keys(dp) ? geom_round(ustrip(uconvert(internal_angle_unit, T(dp["to"]) * input_units.angle))) : T(2π)
+        from::T = "from" in keys(dp) ? ustrip(uconvert(internal_angle_unit, T(dp["from"]) * input_units.angle)) : T(0)
+        to::T = "to" in keys(dp) ? ustrip(uconvert(internal_angle_unit, T(dp["to"]) * input_units.angle)) : T(2π)
         L = :closed
         R = :open
         BL = :periodic
@@ -111,9 +114,11 @@ function get_φ_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.
     end
 end
 
-function get_cartesian_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})
-    from::T = "from" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["from"]) * inputunit_dict["length"]))) : 0
-    to = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * inputunit_dict["length"]))) : throw(ConfigFileError("No \"to\" given for z-axis."))
+function get_cartesian_SSDInterval(T, dict::Dict, input_units::NamedTuple)
+    # from::T = "from" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["from"]) * input_units.length))) : 0
+    # to = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length))) : throw(ConfigFileError("No \"to\" given for z-axis."))
+    from::T = "from" in keys(dict) ? ustrip(uconvert(internal_length_unit, T(dict["from"]) * input_units.length)) : 0
+    to = "to" in keys(dict) ? ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length)) : throw(ConfigFileError("No \"to\" given for z-axis."))
     L = :closed
     R = :closed
     BL, BR = :infinite, :infinite
@@ -126,19 +131,19 @@ function get_cartesian_SSDInterval(T, dict::Dict, inputunit_dict::Dict{String, U
 end
 
 
-function CylindricalWorld(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::World
-    r_int = get_r_SSDInterval(T, dict["r"], inputunit_dict)
-    φ_int = get_φ_SSDInterval(T, dict, inputunit_dict)
-    z_int = get_cartesian_SSDInterval(T, dict["z"], inputunit_dict)
-    return World{T, 3, :cylindrical}( r_int, φ_int, z_int )
+function CylindricalWorld(T, dict::Dict, input_units::NamedTuple)::World
+    r_int = get_r_SSDInterval(T, dict["r"], input_units)
+    φ_int = get_φ_SSDInterval(T, dict, input_units)
+    z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
+    return World{T, 3, Cylindrical}( r_int, φ_int, z_int )
 end
 
 
-function CartesianWorld(T, dict::Dict, inputunit_dict::Dict{String, Unitful.Units})::World
-    x_int = get_cartesian_SSDInterval(T, dict["x"], inputunit_dict)
-    y_int = get_cartesian_SSDInterval(T, dict["y"], inputunit_dict)
-    z_int = get_cartesian_SSDInterval(T, dict["z"], inputunit_dict)
-    return World{T, 3, :cartesian}( x_int, y_int, z_int )
+function CartesianWorld(T, dict::Dict, input_units::NamedTuple)::World
+    x_int = get_cartesian_SSDInterval(T, dict["x"], input_units)
+    y_int = get_cartesian_SSDInterval(T, dict["y"], input_units)
+    z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
+    return World{T, 3, Cartesian}( x_int, y_int, z_int )
 end
 
 function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T)::World where {T <: SSDFloat}
@@ -148,7 +153,7 @@ function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T)::World where {
     x_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(xl - Δx, xr + Δx)
     y_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(yl - Δy, yr + Δy)
     z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - Δz, zr + Δz)
-    return World{T, 3, :cartesian}( x_int, y_int, z_int )
+    return World{T, 3, Cartesian}( x_int, y_int, z_int )
 end
 
 function CylindricalWorld(r_max::T, zl::T, zr::T)::World where {T <: SSDFloat}
@@ -156,12 +161,12 @@ function CylindricalWorld(r_max::T, zl::T, zr::T)::World where {T <: SSDFloat}
     φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(T(0), T(2π))
     Δz::T = zr - zl
     z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - (Δz / 10), zr + (Δz / 10))
-    return World{T, 3, :cylindrical}( r_int, φ_int, z_int )
+    return World{T, 3, Cylindrical}( r_int, φ_int, z_int )
 end
 
-function World(S::Val{:cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}
+function World(::Type{Cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}
     return CylindricalWorld(limits[2], limits[5], limits[6])
 end
-function World(S::Val{:cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
+function World(::Type{Cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
     return CartesianWorld(limits...)
 end

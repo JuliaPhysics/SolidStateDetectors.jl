@@ -65,9 +65,6 @@ function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
     return _drift_charges(detector, grid, CartesianPoint{T}.(point_types), [starting_point], velocity_field_e, velocity_field_h, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
 end
 
-@inline _convert_vector(pt::CartesianPoint, ::Val{:cylindrical}) = CylindricalPoint(pt)
-@inline _convert_vector(pt::CartesianPoint, ::Val{:cartesian}) = pt
-
 function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where {T <: SSDFloat}
     return p
 end
@@ -80,13 +77,22 @@ function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv
     end
     return sv
 end
+modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cylindrical}, point_types::PointTypes{T, 3, :cylindrical})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl in point_types || pt_cyl in det
 end
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T, :cartesian}, point_types::PointTypes{T, 3, :cartesian})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
     pt_car in point_types || pt_car in det
 end
+
+function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
+    # solve (v⃗+λ*n⃗) ⋅ n⃗ = 0
+    # n⃗ = n⃗ ./ norm(n⃗)
+    λ = -1 * dot(v⃗, n⃗) / dot(n⃗, n⃗)
+    SVector{3,eltype(v⃗)}(v⃗[1] + λ * n⃗[1], v⃗[2] + λ * n⃗[2], v⃗[3] + λ * n⃗[3])
+end
+
 
 """
     _drift_charge!(...)
@@ -96,7 +102,7 @@ Before calling this function one should check that `startpos` is inside `det`: `
 function _drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
                             timestamps::Vector{T},
-                            det::SolidStateDetector{T, S},
+                            det::SolidStateDetector{T},
                             point_types::PointTypes{T, 3, S},
                             grid::Grid{T, 3, S},
                             startpos::CartesianPoint{T},
@@ -113,9 +119,10 @@ function _drift_charge!(
     @inbounds for istep in eachindex(drift_path)[2:end]
         if done == false
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
-            stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_vector(current_pos, Val(S))) * Δt
+            stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
-            if geom_round.(stepvector) == null_step
+            # if geom_round.(stepvector) == null_step
+            if stepvector == null_step
                 done = true
             end
             next_pos::CartesianPoint{T} = current_pos + stepvector
@@ -153,7 +160,8 @@ function _drift_charge!(
                     drifttime += Δt * (1 - i * T(0.001))
                     timestamps[istep] = drifttime
                     last_real_step_index += 1
-                    if geom_round.(next_pos - current_pos) == null_step
+                    # if geom_round.(next_pos - current_pos) == null_step
+                    if next_pos - current_pos == null_step
                         done = true
                     end
                 else # elseif cd_point_type == CD_BULK  -- or -- cd_point_type == CD_OUTSIDE
@@ -176,10 +184,10 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
+function get_crossing_pos(  detector::SolidStateDetector{T}, grid::Grid{T, 3, S}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
-    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_vector(point_mid, Val(S)))
+    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_point(point_mid, S))
     for i in 1:max_n_iter
         if cd_point_type == CD_BULK
             point_in = point_mid
@@ -191,10 +199,7 @@ function get_crossing_pos(  detector::SolidStateDetector{T, S}, grid::Grid{T, 3}
             break
         end
         point_mid = T(0.5) * (point_in + point_out)
-        cd_point_type, contact_idx, surface_normal = point_type(detector, grid, _convert_vector(point_mid, Val(S)))
+        cd_point_type, contact_idx, surface_normal = point_type(detector, grid, _convert_point(point_mid, S))
     end
     return point_mid, cd_point_type, contact_idx, surface_normal
 end
-
-
-include("plot_recipes.jl")

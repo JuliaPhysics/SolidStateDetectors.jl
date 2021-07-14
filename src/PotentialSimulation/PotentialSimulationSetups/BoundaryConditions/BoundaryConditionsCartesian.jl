@@ -154,7 +154,7 @@ function apply_boundary_conditions_on_y_axis!(  rbpot::Array{T, 4}, ix::Int, iz:
     nothing
 end
 
-function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, N1, N2, :cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, N1, N2, even_points, only_2d}
+function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, N1, N2, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, N1, N2, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
 
     if only_2d

@@ -4,6 +4,7 @@ end
 
 include("RedBlack/RedBlack.jl")
 include("GeometricalWeights/GeometricalWeights.jl")
+include("Painting/Painting.jl")
 include("PotentialSimulationSetups/PotentialSimulationSetups.jl")
 
 include("EffectiveChargeDensity.jl")
@@ -15,5 +16,3 @@ include("ScalarPotential.jl")
 include("SimulationAlgorithms/Cylindrical.jl")
 include("SimulationAlgorithms/Cartesian3D.jl")
 include("ConvergenceAndRefinement.jl")
-
-include("plot_recipes.jl")

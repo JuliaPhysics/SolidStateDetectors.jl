@@ -1,0 +1,10 @@
+torus:
+  r_torus: 10.0
+  r_tube: 2
+  phi: 
+      from: 0.0°
+      to: 360.0°
+  theta: 
+      from: 0.0°
+      to: 360.0°
+  z: 0.0

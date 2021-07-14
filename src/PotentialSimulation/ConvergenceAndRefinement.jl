@@ -37,7 +37,9 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
     cf::T = Inf
     cfs::Vector{T} = fill(cf, 10)
     cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
-    prog = ProgressThresh(cl, 0.1, "Convergence: ")
+    # To disable automatically ProgressMeters in CI builds:
+    is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+    prog = ProgressThresh(cl; dt = 0.1, desc = "Convergence: ", output = stderr, enabled = !is_logging(stderr))
     while cf > cl
         for i in 1:n_iterations_between_checks
             update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
@@ -87,7 +89,7 @@ end
 
 
 
-function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, :cylindrical}, 
+function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, Cylindrical}, 
                 max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T <: SSDFloat}
     inds_r::Vector{Int} = Int[]
     inds_φ::Vector{Int} = Int[]
@@ -255,7 +257,7 @@ function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, :cylindr
 end
 
 
-function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, :cartesian}, 
+function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, Cartesian}, 
                                 max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T}
     inds_x::Vector{Int} = Int[]
     inds_y::Vector{Int} = Int[]

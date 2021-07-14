@@ -1,85 +1,56 @@
 # Constructive Solid Geometry (CSG)
 
+All objects are defined through Constructive Solid Geometry (CSG),
+where complex geometries can be build by combining simple volume primitives (e.g. `Box`)
+through boolean operators. 
+
+The primitives which can be used are shown under [Volume Primitives](@ref) together with how they
+can be specified in the configuration files.
 ## Boolean operators
 
+The boolean operators are `union`, `difference` and `intersection`:
 ### Union
 
-```json
-"geometry": {
-    "type": "union",
-    "parts": [
-        {
-            "name":"Seg1 bottom",
-            "type": "tube",
-            "r": {
-                "from": 13.5,
-                "to": 39.5
-            },
-            "phi": {
-                "from": 0.3582,
-                "to": 59.6419
-            },
-            "h": 0
-        },
-        {
-            "name": "Seg1 side",
-            "type": "tube",
-            "r": {
-                "from": 39.5,
-                "to": 39.5
-            },
-            "phi": {
-                "from": 0.3582,
-                "to": 59.6419
-            },
-            "h": 40
-        },
-    }
-}
+```yaml
+geometry:
+  type: union # A || B
+  parts:
+    - tube: # A
+        r: 0.5
+        h: 1
+        origin: 
+          z: 1
+    - tube: # B
+        r: 1
+        h: 1
 ```
 
 ### Difference
 
-```json
-"geometry": {
-    "type": "difference",
-    "parts": [
-        {
-            "name": "Initial Cylinder",
-            "type": "tube",
-            "r": {
-                "from": 0.0,
-                "to":  35.0
-            },
-            "phi": {
-                "from": 0.0,
-                "to": 360.0
-            },
-            "z": {
-                "from": 0,
-                "to":  40
-            }
-        },
-        {
-            "name": "Borehole",
-            "type": "tube",
-            "r": {
-                "from": 0.0,
-                "to":   5.0
-            },
-            "phi": {
-                "from": 0.0,
-                "to": 360.0
-            },
-            "z": {
-                "from": 0,
-                "to":  40
-            }
-        }
-    ]
-}
+```yaml
+geometry: # A && !B
+  type: difference
+  parts:
+    - tube: # A
+        r: 0.5
+        h: 1.2
+    - tube: # B
+        r: 1
+        h: 1
 ```
 
 ### Intersection
 
-ToDo...
+```yaml
+geometry: # A && B
+  type: intersection
+  parts:
+    - tube: # A
+        r: 
+          from: 0.5
+          to: 1
+        h: 1
+    - tube: # B
+        r: 1
+        h: 1
+```

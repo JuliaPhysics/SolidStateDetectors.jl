@@ -1,6 +1,7 @@
 ϵ0 = SolidStateDetectors.ϵ0 * u"F / m"
 e = SolidStateDetectors.elementary_charge * u"C"
 
+
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
     calculate_electric_potential!(sim, 
@@ -9,12 +10,13 @@ e = SolidStateDetectors.elementary_charge * u"C"
     )
     calculate_electric_field!(sim)
     BV_true = SolidStateDetectors._get_abs_bias_voltage(sim.detector) 
-    Δd = (sim.detector.contacts[2].geometry.x[2] - sim.detector.contacts[1].geometry.x[2]) * u"m"
-    Δx = (sim.detector.world.intervals[2].right - sim.detector.world.intervals[2].left) * u"m"
+    # Δd = (sim.detector.contacts[2].decomposed_surfaces[1].loc - sim.detector.contacts[1].decomposed_surfaces[1].loc) * u"m"
+    Δd = (sim.detector.contacts[2].geometry.origin[1] - sim.detector.contacts[1].geometry.origin[1]) * u"m"
+    Δx = (sim.world.intervals[2].right - sim.world.intervals[2].left) * u"m"
     A = Δx * Δx 
     V = A * Δd
     E_true = BV_true / Δd
-    ϵr = sim.detector.semiconductors[1].material.ϵ_r
+    ϵr = sim.detector.semiconductor.material.ϵ_r
     W_true = uconvert(u"J", (ϵr * ϵ0 * E_true^2 / 2) * A * Δd)
     W_ssd = SolidStateDetectors.calculate_stored_energy(sim);
     C_true = uconvert(u"pF", 2 * W_true / (BV_true^2))
@@ -24,29 +26,28 @@ e = SolidStateDetectors.elementary_charge * u"C"
     end
 end
 
-struct DummyChargeDensity{T} <: SolidStateDetectors.AbstractChargeDensity{T} end
+
+struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
 
 
 @testset "InfiniteCoaxialCapacitor" begin
     sim_cyl = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
     sim_car = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords])
     BV_true = SolidStateDetectors._get_abs_bias_voltage(sim_cyl.detector)
-    ϵr = sim_cyl.detector.semiconductors[1].material.ϵ_r
-    R1 = sim_cyl.detector.contacts[1].geometry.r_interval.right * u"m"
-    R2 = sim_cyl.detector.contacts[2].geometry.r_interval.left * u"m"
+    ϵr = sim_cyl.detector.semiconductor.material.ϵ_r
+    R1 = sim_cyl.detector.contacts[1].geometry.r[1][1] * u"m"
+    R2 = sim_cyl.detector.contacts[2].geometry.r[1][1] * u"m"
     V1 = sim_cyl.detector.contacts[1].potential * u"V"
     V2 = sim_cyl.detector.contacts[2].potential * u"V"
-    L = (sim_cyl.detector.world.intervals[3].right - sim_cyl.detector.world.intervals[3].left) * u"m"
+    L = (sim_cyl.world.intervals[3].right - sim_cyl.world.intervals[3].left) * u"m"
     V = π * R2^2 * L
     intV = (R2^2 - R1^2) * π * L
 
     calculate_electric_potential!(sim_cyl, 
-        init_grid_size = (40, 2, 2), 
-        max_refinements = 1,
+        max_refinements = 6,
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (40, 40, 2), 
-        max_refinements = 1
+        max_refinements = 2
     )
     calculate_electric_field!(sim_cyl)
     calculate_electric_field!(sim_car)
@@ -81,7 +82,7 @@ struct DummyChargeDensity{T} <: SolidStateDetectors.AbstractChargeDensity{T} end
     rs_analytic = range(R1, stop = R2, length = 500);
     pot_analytic = map(r -> potential_analytic(r), rs_analytic)
 
-    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensity{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
+    function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CylindricalPoint{T})::T where {T <: SSDFloat}
         if ustrip(R1) <= pt[1] <= ustrip(R2)
             return -ustrip(ρ1 / e) * pt[1]^2 
         else 
@@ -89,19 +90,17 @@ struct DummyChargeDensity{T} <: SolidStateDetectors.AbstractChargeDensity{T} end
         end
     end
 
-    function SolidStateDetectors.get_charge_density(cdm::DummyChargeDensity{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
-        SolidStateDetectors.get_charge_density(cdm, CylindricalPoint(pt))
+    function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
+        SolidStateDetectors.get_impurity_density(cdm, CylindricalPoint(pt))
     end
 
-    sim_cyl.detector.semiconductors[1].charge_density_model = DummyChargeDensity{T}()
-    sim_car.detector.semiconductors[1].charge_density_model = DummyChargeDensity{T}()
+    sim_cyl.detector = SolidStateDetector(sim_cyl.detector, DummyImpurityDensity{T}());
+    sim_car.detector = SolidStateDetector(sim_car.detector, DummyImpurityDensity{T}());
 
     calculate_electric_potential!(sim_cyl, 
-        init_grid_size = (40, 2, 2), 
-        max_refinements = 1
+        max_refinements = 4
     )
     calculate_electric_potential!(sim_car, 
-        init_grid_size = (40, 40, 2), 
         max_refinements = 1
     )
 

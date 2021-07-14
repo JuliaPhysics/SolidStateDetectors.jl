@@ -1,0 +1,22 @@
+name: Simple True Coax
+units:
+  length: mm
+  angle: deg
+grid:
+  coordinates: cylindrical
+  axes:
+    r: 45
+    z:
+      from: -10
+      to: 70
+detectors:
+- bulk:
+    material: HPGe
+    geometry:
+      difference:
+      - tube:
+          r: 40
+          h: 60
+      - tube:
+          r: 5
+          h: 60

@@ -5,21 +5,21 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
     N: N dimensional
     S: System (Cartesian, Cylindrical...)
 """
-struct Grid{T, N, S, AT} <: AbstractGrid{T, N}
+struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
     axes::AT
 end
 
-const CartesianGrid{T, N} = Grid{T, N, :cartesian}
+const CartesianGrid{T, N} = Grid{T, N, Cartesian}
 const CartesianGrid1D{T} = CartesianGrid{T, 1}
 const CartesianGrid2D{T} = CartesianGrid{T, 2}
 const CartesianGrid3D{T} = CartesianGrid{T, 3}
-const RadialGrid{T} = Grid{T, 1, :Radial}
-const PolarGrid{T} = Grid{T, 2, :Polar}
-const CylindricalGrid{T} = Grid{T, 3, :cylindrical}
-const SphericalGrid{T} = Grid{T, 3, :Spherical}
+const CylindricalGrid{T} = Grid{T, 3, Cylindrical}
+#const RadialGrid{T} = Grid{T, 1, Radial}
+#const PolarGrid{T} = Grid{T, 2, Polar}
+#const SphericalGrid{T} = Grid{T, 3, Spherical}
 
-CylindricalGrid{T}(a) where {T} = Grid{T, 3, :cylindrical, typeof(a)}(a)
-CartesianGrid3D{T}(a) where {T} = Grid{T, 3, :cartesian, typeof(a)}(a)
+CylindricalGrid{T}(a) where {T} = Grid{T, 3, Cylindrical, typeof(a)}(a)
+CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 
 @inline size(g::Grid{T, N, S}) where {T, N, S} = size.(g.axes, 1)
 @inline length(g::Grid{T, N, S}) where {T, N, S} = prod(size(g))
@@ -98,24 +98,6 @@ end
 
 include("RefineGrid.jl")
 
-@recipe function f(grid::Grid{T, N, S}) where {T, N, S}
-    
-    #only plot grid point densities for axes with more than one tick
-    iaxs = findall(ax -> length(ax) > 1, grid.axes)
-    layout --> length(iaxs) 
-    seriestype --> :stephist
-    legend --> false
-
-    for (i,iax) in enumerate(iaxs)
-        @series begin
-            subplot := i
-            bins --> div(length(grid[iax]), 2)
-            xguide --> "Grid point density - Axis $(iax)"
-            grid[iax]
-        end
-    end
-end
-
 
 function get_coordinate_system(grid::Grid{T, N, S}) where {T, N, S}
     return S
@@ -131,6 +113,8 @@ function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
    return get_boundary_types.(grid.axes)
 end
 
+TicksTuple(g::Grid{T, 3, Cartesian}) where {T} = (x = g.axes[1].ticks, y = g.axes[2].ticks, z = g.axes[3].ticks)
+TicksTuple(g::Grid{T, 3, Cylindrical}) where {T} = (r = g.axes[1].ticks, φ = g.axes[2].ticks, z = g.axes[3].ticks)
 
 function Grid(nt::NamedTuple)
     if nt.coordtype == "cylindrical"
@@ -138,13 +122,13 @@ function Grid(nt::NamedTuple)
         axφ::DiscreteAxis = DiscreteAxis(nt.axes.phi, unit=u"rad")
         axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axr.ticks[1])
-        return Grid{T, 3, :cylindrical}( (axr, axφ, axz) )
+        return Grid{T, 3, Cylindrical}( (axr, axφ, axz) )
     elseif nt.coordtype == "cartesian"
         axx::DiscreteAxis = DiscreteAxis(nt.axes.x, unit=u"m")
         axy::DiscreteAxis = DiscreteAxis(nt.axes.y, unit=u"m")
         axz = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axx.ticks[1])
-        return Grid{T, 3, :cartesian}( (axx, axy, axz) )
+        return Grid{T, 3, Cartesian}( (axx, axy, axz) )
     else
         error("`coordtype` = $(nt.coordtype) is not valid.")
     end
@@ -152,7 +136,7 @@ end
 
 Base.convert(T::Type{Grid}, x::NamedTuple) = T(x)
 
-function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
+function NamedTuple(grid::Grid{T, 3, Cylindrical}) where {T}
     axr::DiscreteAxis{T} = grid.axes[1]
     axφ::DiscreteAxis{T} = grid.axes[2]
     axz::DiscreteAxis{T} = grid.axes[3]
@@ -166,7 +150,7 @@ function NamedTuple(grid::Grid{T, 3, :cylindrical}) where {T}
         )
     )
 end
-function NamedTuple(grid::Grid{T, 3, :cartesian}) where {T}
+function NamedTuple(grid::Grid{T, 3, Cartesian}) where {T}
     axx::DiscreteAxis{T} = grid.axes[1]
     axy::DiscreteAxis{T} = grid.axes[2]
     axz::DiscreteAxis{T} = grid.axes[3]

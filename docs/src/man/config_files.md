@@ -1,40 +1,23 @@
-# Config Files
+# Configuration Files
 
-## Example Detector Config Files
+The detector, its surroundings and symmetries can be specified in configuration files.
 
-Currently, there are four predefined example detectors. 
+SolidStateDetectors.jl supports YAML and JSON as formats for the configuration files.
 
-Three of them are cylindrical detectors:
+## Example Configuration Files
 
-    * Coaxial detector (Coax)
-    * Inverted coax detector (IVC)
-    * BEGe type detector (BEGe)
-The fourth one is in cartesian coordinates:
+Several example configuration files can be found under
 
-    * simple cube detector (CGD)
+`<package_directory>/examples/example_config_files/`.
 
-They are all specified in their JSON config files, which can be found under:
-`<package_directory>/examples/example_detector_config_files/<config_filename>.json`.
-
-In Julia, their path is already saved in the SolidStateDetectors.jl package in a dictionary:
-```julia
-    using SolidStateDetectors
-    SSD_examples # dictionary holding the full path to the corresponding config JSON files
-    SSD_examples[:Coax]
-```
-The keys are: `:Coax`, `:InvertedCoax`, `:BEGe`, `:CGD`.
-
-### Example 1) Inverted Coax
-
-Example minimum config file for an Inverted Coax detector (IVC) plus explanations.
-**Remember**, comments are not allowed in JSON files and have to be deleted if you want to use it.
-```json
-{
-    name = "Example Detector",
-    ToDo...
-}
+They are accessible through a dictionary, `SSD_examples`, defined in the package:
+```@example general
+using SolidStateDetectors
+keys(SSD_examples) # dictionary holding the full path to the corresponding configuration files
 ```
 
-## UserConfigs: Define your own geometry
-
-ToDo...
+They can be loaded via
+```@example general
+path_to_config_file = SSD_examples[:InvertedCoax]
+sim = Simulation(path_to_config_file)
+```

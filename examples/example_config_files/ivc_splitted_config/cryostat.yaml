@@ -1,0 +1,36 @@
+---
+material: Al
+name: Cryostat
+potential: 0
+geometry:
+  union:
+  - tube:
+      r:
+        from: 55
+        to: 59
+      phi:
+        from: 0
+        to: 360
+      z:
+        from: -5
+        to: 104
+  - tube:
+      r:
+        from: 0
+        to: 59
+      phi:
+        from: 0
+        to: 360
+      z:
+        from: 100
+        to: 104
+  - tube:
+      r:
+        from: 0
+        to: 59
+      phi:
+        from: 0
+        to: 360
+      z:
+        from: -10
+        to: -5

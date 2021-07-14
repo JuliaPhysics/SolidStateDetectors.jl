@@ -1,0 +1,104 @@
+name: ExampleCuboid
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 9
+      boundaries: inf
+    y:
+      from: 0
+      to: 0
+      boundaries: periodic
+    z:
+      from: -9
+      to: 9
+      boundaries: inf
+medium: vacuum
+detectors:
+  - translate: 
+      x: 0
+    rotate: 
+      Z: 45
+    bulk:
+      material: HPGe
+      temperature: 78
+      impurity_density:
+        name: linear
+        x:
+          init: 0
+          gradient: 0
+        y:
+          init: 0
+          gradient: 0
+        z:
+          init: 10000000
+          gradient: 50000
+      charge_drift_model:
+        include: ADLChargeDriftModel/drift_velocity_config.yaml
+      geometry:
+        box:
+          x: 10 # width in x
+          y: 10 # width in y
+          z: 10 # width in z
+    contacts:
+      - material: HPGe
+        name: n+ contact
+        potential: 2000
+        channel: 1
+        geometry:
+          union:
+            - box:
+                x: 
+                  from: -5
+                  to: -4.5
+                y: 10
+                z: 10
+            - translate:
+                z: 4.5
+                box:
+                  x: 
+                    from: -4.5
+                    to: -4
+                  y: 10
+                  z: 1
+      - material: HPGe
+        name: p+ contact
+        potential: 0
+        channel: 2
+        geometry:
+          translate:
+            y: 0
+            difference:
+              - box:
+                  x: 
+                    from: 4.5
+                    to: 5
+                  y: 10
+                  z: 10
+              - box:
+                  x: 
+                    from: 4 
+                    to: 5.5
+                  y: 4
+                  z: 4
+
+surroundings:
+  - name: Base
+    material: Copper
+    potential: 0
+    geometry:
+      box:
+        x:
+          from: -9
+          to: 9
+        y:
+          from: -9
+          to: 9
+        z:
+          from: -9
+          to: -7
