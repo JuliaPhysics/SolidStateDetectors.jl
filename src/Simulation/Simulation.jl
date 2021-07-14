@@ -53,7 +53,7 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     end
     wps_syms = Symbol.(wps_strings)
     nt = (
-        detector_json_string = NamedTuple(sim.detector.config_dict),
+        detector_json_string = NamedTuple(sim.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
         q_eff_imp = NamedTuple(sim.q_eff_imp),
         q_eff_fix = NamedTuple(sim.q_eff_fix),
@@ -73,8 +73,7 @@ Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 function Simulation(nt::NamedTuple)
     ep = ElectricPotential(nt.electric_potential)
     T = eltype(ep.data)
-    det = SolidStateDetector{T}( Dict(nt.detector_json_string) )
-    sim = Simulation( det )
+    sim = Simulation{T}( Dict(nt.detector_json_string) )
     if !ismissing(nt.electric_potential) sim.electric_potential = ep end
     if !ismissing(nt.q_eff_imp) sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp) end
     if !ismissing(nt.q_eff_fix) sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix) end
