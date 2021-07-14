@@ -7,7 +7,7 @@ The electric potential is calculated through [successive over relaxation](https:
 The calculation is based on Gauss' law in matter
 
 ```math
-\nabla \left( \epsilon_r(\vec{r}) \nabla \Phi(\vec{r})\right) = \dfrac{\rho(\vec{r})}{\epsilon_0}\,,
+\nabla \left( \epsilon_r(\vec{r}) \nabla \Phi(\vec{r})\right) = - \dfrac{\rho(\vec{r})}{\epsilon_0}\,,
 ```
 where $\Phi$ is the electric potential, $\rho$ is the charge density,
 $\epsilon_r$ is the dielectric distribution and $\epsilon_0$ is the dielectric constant of the vacuum.
