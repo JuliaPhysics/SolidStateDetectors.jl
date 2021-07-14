@@ -1,16 +1,8 @@
 using Test
 using SolidStateDetectors
-using IntervalSets
-using LinearAlgebra
-using JSON
-using YAML
-using StaticArrays
 
 import SolidStateDetectors.ConstructiveSolidGeometry as CSG
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
-using SolidStateDetectors.ConstructiveSolidGeometry: 
-    internal_unit_length, internal_unit_angle,
-    Box, Cone, HexagonalPrism, Ellipsoid, Torus
 
 T = Float64
 
@@ -22,14 +14,14 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         box_halfwidths = Geometry(T, joinpath(example_primitive_dir, "Box_halfwidths.yaml"))
         box_hXhYhZ = Geometry(T, joinpath(example_primitive_dir, "Box_hXhYhZ.yaml"))
         box_old = Geometry(T, joinpath(example_primitive_dir, "Box_old.yaml"))
-        @test box_widths isa Box
+        @test box_widths isa CSG.Box
         @test box_widths == box_halfwidths == box_hXhYhZ == box_old
     end
 
     @testset "Cone" begin
         cone = Geometry(T, joinpath(example_primitive_dir, "Cone.yaml"))
         cone_old = Geometry(T, joinpath(example_primitive_dir, "Cone_old.yaml"))
-        @test cone isa Cone{T, <:Any, <:Tuple}
+        @test cone isa CSG.Cone{T, <:Any, <:Tuple}
         @test cone == cone_old
 
         cone_tube = Geometry(T, joinpath(example_primitive_dir, "Cone_tube.yaml"))
