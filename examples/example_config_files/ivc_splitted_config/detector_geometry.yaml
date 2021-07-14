@@ -1,0 +1,40 @@
+geometry:
+  difference:
+  - difference:
+    - name: Initial Cylinder
+      translate:
+        z: 40
+        tube:
+          r:
+            from: 0
+            to: 35
+          phi:
+            from: 0
+            to: 360
+          h: 80
+    - name: Upper cone
+      translate:
+        z: 50
+        cone:
+          r:
+            bottom:
+              from: 35
+              to: 36
+            top:
+              from: 24.42
+              to: 36
+          phi:
+            from: 0
+            to: 360
+          h: 60
+  - name: borehole
+    translate:
+      z: 65
+      tube:
+        r:
+          from: 0
+          to: 5
+        phi:
+          from: 0
+          to: 360
+        h: 80
