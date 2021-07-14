@@ -90,7 +90,7 @@ println("Undepleted: ", get_active_volume(simulation_undep.point_types));
 
 calculate_electric_field!(simulation, n_points_in_φ = 72)
 
-plot(simulation.electric_field, full_det = true, φ = 0.0, size = (350, 500))
+plot(simulation.electric_field, full_det = true, φ = 0.0, size = (500, 500))
 plot_electric_fieldlines!(simulation, full_det = true, φ = 0.0)
 #jl savefig("tutorial_electric_field.pdf") # hide
 #md savefig("tutorial_electric_field.pdf") # hide
