@@ -1,5 +1,4 @@
 abstract type AbstractAxis{T, BL, BR, I} <: AbstractVector{T} end
-abstract type AbstractDiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} end
 
 """
     DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
