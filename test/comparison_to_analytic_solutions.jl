@@ -5,7 +5,6 @@ e = SolidStateDetectors.elementary_charge * u"C"
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
     calculate_electric_potential!(sim, 
-        init_grid_spacing = T.( (1e-4, 1e-3, 1e-3) ), 
         max_refinements = 1,
     )
     calculate_electric_field!(sim)
