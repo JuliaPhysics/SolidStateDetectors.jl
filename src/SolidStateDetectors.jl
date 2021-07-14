@@ -38,7 +38,7 @@ using .ConstructiveSolidGeometry:
             csg_round_lin, csg_round_rad, csg_isapprox, 
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
-            ConfigFileError
+            ConfigFileError, _parse_value
         
 import .ConstructiveSolidGeometry: sample
 export CartesianPoint, CartesianVector, CylindricalPoint
