@@ -3,7 +3,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, 
         parse_r_of_primitive, parse_height_of_primitive, parse_translate_vector, parse_rotation_matrix
 using SolidStateDetectors: construct_units
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
-using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry, TranslatedGeometry, ScaledGeometry, RotatedGeometry, 
+using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry,
     CSGUnion, CSGDifference, CSGIntersection, Cone, CartesianVector, HexagonalPrism
 using DataStructures: OrderedDict
 using IntervalSets
@@ -96,9 +96,9 @@ function Geometry(::Type{T}, ::Type{HexagonalPrism}, dict::AbstractDict, input_u
     r = parse_r_of_primitive(T, dict, length_unit)
     z = parse_height_of_primitive(T, dict, length_unit)
     rot = haskey(dict, "rotate") ? parse_rotation_matrix(T, dict["rotate"], u"rad") : one(RotMatrix{3,T})
-    return RotatedGeometry(HexagonalPrism(T, r, z), rot)
+    return HexagonalPrism(T, r, z, rotation = rot)
 end
-
+#=
 function Dictionary(g::RotatedGeometry{T}) where {T}
     dict = Dictionary(g.p)
     mat = RotXYZ(inv(g.inv_r))
@@ -111,7 +111,7 @@ function Dictionary(g::RotatedGeometry{T}) where {T}
     end
     OrderedDict{String,Any}("rotate" => dict)
 end
-
+=#
 
 function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataType = Float64)
 
