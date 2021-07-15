@@ -120,28 +120,28 @@ ___
 _____\
 
 =#
-const VaryingCylinder{T,CO} = Cone{T,CO,Tuple{T,T},Nothing} # Full in φ
-const PartialVaryingCylinder{T,CO} = Cone{T,CO,Tuple{T,T},Tuple{T,T}}
+const VaryingCylinder{T,CO} = Cone{T,CO,Tuple{Tuple{T},Tuple{T}},Nothing} # Full in φ
+const PartialVaryingCylinder{T,CO} = Cone{T,CO,Tuple{Tuple{T},Tuple{T}},Tuple{T,T}}
 
 function _in(pt::CartesianPoint, c::VaryingCylinder{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
     az = abs(pt.z) 
     az <= c.hZ + csgtol && begin
         r = hypot(pt.x, pt.y) 
-        rz = radius_at_z(c.hZ, c.r[1], c.r[2], pt.z)
+        rz = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
         r <= rz + csgtol
     end
 end
 function _in(pt::CartesianPoint, c::VaryingCylinder{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
     abs(pt.z) + csgtol < c.hZ &&
-    csgtol + hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1], c.r[2], pt.z)
+    csgtol + hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
 end
 
 function surfaces(t::VaryingCylinder{T}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
-    mantle = ConeMantle{T,Tuple{T,T},Nothing,:inwards}((t.r[1], t.r[2]), t.φ, t.hZ, t.origin, t.rotation)
-    e_bot = CircularArea{T}(r = t.r[1], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
-    e_top = CircularArea{T}(r = t.r[2], φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
+    mantle = ConeMantle{T,Tuple{T,T},Nothing,:inwards}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
+    e_bot = CircularArea{T}(r = t.r[1][1], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
+    e_top = CircularArea{T}(r = t.r[2][1], φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle
 end
@@ -150,7 +150,7 @@ function _in(pt::CartesianPoint, c::PartialVaryingCylinder{T,ClosedPrimitive}; c
     az = abs(pt.z) 
     az <= c.hZ + csgtol && begin
         r = hypot(pt.x, pt.y) 
-        rz = radius_at_z(c.hZ, c.r[1], c.r[2], pt.z)
+        rz = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
         r <= rz + csgtol &&
         _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
     end
@@ -158,7 +158,7 @@ end
 function _in(pt::CartesianPoint, c::PartialVaryingCylinder{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
     abs(pt.z) + csgtol < c.hZ && begin
         r = hypot(pt.x, pt.y) 
-        csgtol + r < radius_at_z(c.hZ, c.r[1], c.r[2], pt.z) &&
+        csgtol + r < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) &&
         _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
     end
 end
@@ -166,19 +166,19 @@ end
 function surfaces(t::PartialVaryingCylinder{T}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
-    mantle = ConeMantle{T,Tuple{T,T},Tuple{T,T},:inwards}((t.r[1], t.r[2]), t.φ, t.hZ, t.origin, t.rotation)
-    e_bot = PartialCircularArea{T}(r = t.r[1], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
-    e_top = PartialCircularArea{T}(r = t.r[2], φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
+    mantle = ConeMantle{T,Tuple{T,T},Tuple{T,T},:inwards}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
+    e_bot = PartialCircularArea{T}(r = t.r[1][1], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
+    e_top = PartialCircularArea{T}(r = t.r[2][1], φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
     poly_l = _transform_into_global_coordinate_system(Quadrangle{T}((
-        CartesianPoint(CylindricalPoint{T}(zero(T),  t.φ[1], -t.hZ)),
-        CartesianPoint(CylindricalPoint{T}(zero(T),  t.φ[1], +t.hZ)),
-        CartesianPoint(CylindricalPoint{T}( t.r[2],  t.φ[1], +t.hZ)),
-        CartesianPoint(CylindricalPoint{T}( t.r[1],  t.φ[1], -t.hZ)) )), t)
+        CartesianPoint(CylindricalPoint{T}(zero(T),    t.φ[1], -t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(zero(T),    t.φ[1], +t.hZ)),
+        CartesianPoint(CylindricalPoint{T}( t.r[2][1], t.φ[1], +t.hZ)),
+        CartesianPoint(CylindricalPoint{T}( t.r[1][1], t.φ[1], -t.hZ)) )), t)
     poly_r = _transform_into_global_coordinate_system(Quadrangle{T}((
-        CartesianPoint(CylindricalPoint{T}(zero(T),  t.φ[2], -t.hZ)),
-        CartesianPoint(CylindricalPoint{T}( t.r[1],  t.φ[2], -t.hZ)),
-        CartesianPoint(CylindricalPoint{T}( t.r[2],  t.φ[2], +t.hZ)),
-        CartesianPoint(CylindricalPoint{T}(zero(T),  t.φ[2], +t.hZ)) )), t)
+        CartesianPoint(CylindricalPoint{T}(zero(T),    t.φ[2], -t.hZ)),
+        CartesianPoint(CylindricalPoint{T}( t.r[1][1], t.φ[2], -t.hZ)),
+        CartesianPoint(CylindricalPoint{T}( t.r[2][1], t.φ[2], +t.hZ)),
+        CartesianPoint(CylindricalPoint{T}(zero(T),    t.φ[2], +t.hZ)) )), t)
     # normals of the surfaces show inside the volume primitives. 
     e_top, e_bot, mantle, poly_l, poly_r
 end

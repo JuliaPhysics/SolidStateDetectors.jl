@@ -146,7 +146,7 @@ function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units
         if r_bot_out == r_top_out
             return r_bot_out # Cylinder
         else
-            return (r_bot_out, r_top_out) # VaryingCylinder
+            return ((r_bot_out,), (r_top_out,)) # VaryingCylinder
         end
     elseif r_top_in == r_top_out && r_bot_in != r_bot_out
         if r_top_in == 0
