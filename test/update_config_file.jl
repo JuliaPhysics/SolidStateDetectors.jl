@@ -3,44 +3,45 @@ using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, 
         parse_r_of_primitive, parse_height_of_primitive, parse_translate_vector, parse_rotation_matrix
 using SolidStateDetectors: construct_units
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
-using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry,
+using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry, Transformations,
     CSGUnion, CSGDifference, CSGIntersection, Cone, CartesianVector, HexagonalPrism
 using DataStructures: OrderedDict
 using IntervalSets
 using Rotations
+using StaticArrays
 using Unitful
 using JSON
 using YAML
 
 
-#old implementation of Geometry:    
-function Geometry(::Type{T}, t::Type{CSGUnion}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple) where {T}
+#old implementation of Constructive Solid Geometries:  
+function Geometry(::Type{T}, t::Type{CSGUnion}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
-    sum( map(x-> Geometry(T, x, input_units), dict["parts"]) )
+    sum( map(x-> Geometry(T, x, input_units, transformations), dict["parts"]) )
 end
 
-function Geometry(::Type{T}, ::Type{CSGIntersection}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{CSGIntersection}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
-    parts = map(x-> Geometry(T, x, input_units), dict["parts"]) 
+    parts = map(x-> Geometry(T, x, input_units, transformations), dict["parts"]) 
     reduce(&, parts)
 end
 
-function Geometry(::Type{T}, ::Type{CSGDifference}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, ::Type{CSGDifference}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
-    Geometry(T, dict["parts"][1], input_units) - sum( map(x-> Geometry(T, x, input_units), dict["parts"][2:end]) )
+    Geometry(T, dict["parts"][1], input_units, transformations) - sum( map(x-> Geometry(T, x, input_units, transformations), dict["parts"][2:end]) )
 end
 
-function Geometry(::Type{T}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     if haskey(dict, "translate")
         length_unit = input_units.length
         t::CartesianVector{T} = parse_translate_vector(T, dict["translate"], length_unit)
         gdict::Dict{Any,Any} = filter(p -> first(p) != "translate", dict)
-        return Geometry(T, gdict, input_units) + t
+        return Geometry(T, gdict, input_units, transformations) + t
     end
-    Geometry(T, CSG_dict[dict["type"]], dict, input_units)
+    Geometry(T, CSG_dict[dict["type"]], dict, input_units, transformations)
 end
 
-function Geometry(::Type{T}, filename::String, input_units::NamedTuple) where {T}
+function Geometry(::Type{T}, filename::String, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert isfile(filename) "The given filename '$(filename)' does not lead to a valid file."
     dict = if endswith(filename, ".json")
         JSON.parsefile(filename)
@@ -49,7 +50,7 @@ function Geometry(::Type{T}, filename::String, input_units::NamedTuple) where {T
     else
         @error "Only JSON and YAML formats are supported at the moment."
     end
-    Geometry(T, dict, input_units)
+    Geometry(T, dict, input_units, transformations::Transformations{T})
 end
 
 
@@ -61,7 +62,7 @@ function update_primitives!(dict::AbstractDict, input_units::NamedTuple)
     if "type" in dict_keys && dict["type"] == "HexagonalPrism"
         rotZ = haskey(dict, "rotZ") ? dict["rotZ"] : 0
         rotZ -= input_units.angle == u"°" ? 30 : π/6
-        rotZ = ustrip(uconvert(u"rad", rotZ * input_units.angle))
+        rotZ = string(rotZ * input_units.angle)
         delete!(dict, "rotZ")
         if rotZ != 0 dict["rotate"] = Dict("Z" => rotZ) end
     elseif "type" in dict_keys && dict["type"] in ["tube", "cone"] && "h" in dict_keys && dict["h"] != 0
@@ -86,38 +87,16 @@ function update_primitives!(dict::AbstractDict, input_units::NamedTuple)
 end
 
 function update_geometry!(g::AbstractDict, T::DataType, input_units = (length = NoUnits, angle = NoUnits))
-    g["geometry"] = Dictionary(Geometry(T, g["geometry"], input_units))
+    transformations::Transformations{T} = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
+    g["geometry"] = Dictionary(Geometry(T, g["geometry"], input_units, transformations))
     return g
 end
-
-# HexagonalPrism (#146)
-function Geometry(::Type{T}, ::Type{HexagonalPrism}, dict::AbstractDict, input_units::NamedTuple) where {T}
-    length_unit = input_units.length
-    r = parse_r_of_primitive(T, dict, length_unit)
-    z = parse_height_of_primitive(T, dict, length_unit)
-    rot = haskey(dict, "rotate") ? parse_rotation_matrix(T, dict["rotate"], u"rad") : one(RotMatrix{3,T})
-    return HexagonalPrism(T, r, z, rotation = rot)
-end
-#=
-function Dictionary(g::RotatedGeometry{T}) where {T}
-    dict = Dictionary(g.p)
-    mat = RotXYZ(inv(g.inv_r))
-    if mat.theta1 == 0 && mat.theta2 == 0
-        if mat.theta3 != 0 
-            dict["Z"] = HexagonalPrismAngleUnit == u"°" ? rad2deg(mat.theta3) : mat.theta3
-        end
-    else
-        dict["M"] = inv(g.inv_r)[:]
-    end
-    OrderedDict{String,Any}("rotate" => dict)
-end
-=#
 
 function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataType = Float64)
 
     input_units = construct_units(config_file_dict)
     update_primitives!(config_file_dict, input_units)
-    global HexagonalPrismAngleUnit = input_units.angle
+    update_units = (length = NoUnits, angle = input_units.angle)
 
     t = broadcast(obj -> obj["type"], config_file_dict["objects"])
     
@@ -131,14 +110,14 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
             semiconductor["impurity_density"] = semiconductor["charge_density_model"]
             delete!(semiconductor, "charge_density_model")
         end
-        update_geometry!(semiconductor, T)
+        update_geometry!(semiconductor, T, update_units)
         semiconductor
     end
 
     contacts = [
         begin 
         delete!(contact, "type")
-        update_geometry!(contact, T)
+        update_geometry!(contact, T, update_units)
         contact
         end
         for contact in config_file_dict["objects"][findall(t .== "contact")]
@@ -147,7 +126,7 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
     passives = [
         begin 
         delete!(passive, "type")
-        update_geometry!(passive, T)
+        update_geometry!(passive, T, update_units)
         passive
         end
         for passive in config_file_dict["objects"][findall(t .== "passive")]
@@ -156,18 +135,20 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
     virtual_drift_volumes = [
         begin 
         delete!(virtual_volume, "type")
-        update_geometry!(virtual_volume, T)
+        update_geometry!(virtual_volume, T, update_units)
         virtual_volume
         end
         for virtual_volume in config_file_dict["objects"][findall(t .== "virtual_drift_volume")]
     ]
 
-    config_file_dict["detectors"] = []
-    push!(config_file_dict["detectors"], Dict("bulk" => semiconductor) )
-    if length(contacts) > 0 push!(config_file_dict["detectors"], Dict("contacts" => contacts)) end
-    if length(passives) > 0 push!(config_file_dict["detectors"], Dict("passives" => passives)) end
-    if length(virtual_drift_volumes) > 0 push!(config_file_dict["detectors"], Dict("virtual_drift_volumes" => virtual_drift_volumes)) end
     
+    config_file_dict["detectors"] = []
+    push!(config_file_dict["detectors"], OrderedDict{String, Any}("bulk" => semiconductor) )
+    if length(contacts) > 0 config_file_dict["detectors"][1]["contacts"] = contacts end
+    if length(passives) > 0 config_file_dict["detectors"][1]["passives"] = passives end
+    if length(virtual_drift_volumes) > 0 config_file_dict["detectors"][1]["virtual_drift_volumes"] = virtual_drift_volumes end
+    
+    delete!(config_file_dict, "objects")
     config_file_dict
     
 end
@@ -176,15 +157,20 @@ end
 """
     update_config_file(filename::String)::String
 
-Updates the format of config files from v0.5 to v0.6.
+Updates the format of config files from v0.5.3 to v0.6.
 Currently supported formats for the config file: .json, .yaml.
-Returns the new filename.
+Returns the new filename (or an empty string if file could not be converted).
 """
 function update_config_file(filename::String)::String
     @assert isfile(filename) "'$(filename)' does not exist!"
     
     if endswith(filename, ".json")
         data = JSON.parsefile(filename, dicttype = OrderedDict)
+        if !haskey(data, "objects") 
+            @warn "The configuration file does not have the key 'objects'.\n"*
+                  "Assuming that this configuration file has already been updated. Skipping..."
+            return ""
+        end   
         restructure_config_file_dict!(data)
         new_filename = replace(filename, ".json" => "_updated.json")
         open(new_filename,"w") do f 
@@ -192,6 +178,11 @@ function update_config_file(filename::String)::String
         end
     elseif endswith(filename, ".yaml")
         data = YAML.load_file(filename, dicttype = OrderedDict)
+        if !haskey(data, "objects") 
+            @warn "The configuration file does not have the key 'objects'.\n"*
+                  "Assuming that this configuration file has already been updated. Skipping..."
+            return ""
+        end   
         restructure_config_file_dict!(data)
         new_filename = replace(filename, ".yaml" => "_updated.yaml")
         YAML.write_file(new_filename, data)
