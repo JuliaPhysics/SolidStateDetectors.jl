@@ -17,7 +17,7 @@ CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
 * `φ::TP`: 
     * TP = Nothing <-> Full in φ
     * ...
-* `zH::T`: half hight/length of the cone
+* `hZ::T`: half height/length of the cone
 """
 @with_kw struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1
@@ -602,6 +602,39 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
         rotation = rotation
     )
     return transform(cone, transformations)
+end
+
+
+function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, TR}
+    dict = OrderedDict{String, Any}()
+    name  = "tube"
+    if TR <: Real
+        dict["r"] = c.r
+    elseif TR <: Tuple{<:Real, <:Real}
+        dict["r"] = OrderedDict{String, Any}("from" => c.r[1], "to" => c.r[2])
+    else
+        name = "cone"
+        dict["r"] = OrderedDict{String, Any}()
+        dict["r"]["bottom"] = if c.r[1] isa Tuple{<:Real} 
+            c.r[1][1]
+        elseif isnothing(c.r[1])
+            0
+        else
+            OrderedDict{String, Any}("from" => c.r[1][1], "to" => c.r[1][2])
+        end
+        dict["r"]["top"] = if c.r[2] isa Tuple{<:Real} 
+            c.r[2][1]
+        elseif isnothing(c.r[2])
+            0
+        else 
+            OrderedDict{String, Any}("from" => c.r[2][1], "to" => c.r[2][2])
+        end
+    end
+    if !isnothing(c.φ) dict["phi"] = OrderedDict("from" => string(c.φ[1])*"rad", "to" => string(c.φ[2])*"rad") end
+    dict["h"] = 2*c.hZ
+    if c.origin != zero(CartesianVector{T}) dict["origin"] = c.origin end
+    if c.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(c.rotation) end
+    OrderedDict{String, Any}(name => dict)
 end
 
 # Cylinder

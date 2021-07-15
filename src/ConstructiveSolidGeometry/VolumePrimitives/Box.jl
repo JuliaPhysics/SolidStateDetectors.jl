@@ -69,6 +69,14 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     transform(box, transformations)
 end
 
+function Dictionary(b::Box{T})::OrderedDict{String, Any} where {T}
+    dict = OrderedDict{String,Any}()
+    dict["widths"] = [2*b.hX, 2*b.hY, 2*b.hZ]
+    if b.origin != zero(CartesianVector{T}) dict["origin"] = b.origin end
+    if b.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(b.rotation) end
+    OrderedDict{String,Any}("box" => dict)
+end
+
 function vertices(b::Box{T}) where {T}
     return (
         b.rotation * SVector{3,T}(-b.hX, -b.hY, -b.hZ) .+ b.origin,

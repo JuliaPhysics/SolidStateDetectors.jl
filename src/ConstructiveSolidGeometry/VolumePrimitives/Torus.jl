@@ -55,6 +55,17 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
     transform(t, transformations)
 end
 
+function Dictionary(t::Torus{T})::OrderedDict{String, Any} where {T}
+    dict = OrderedDict{String, Any}()
+    dict["r_torus"] = t.r_torus
+    dict["r_tube"] = t.r_tube # always a Real
+    if !isnothing(t.φ) error("Partial Torus (`φ = φ`) is not yet supported.") end
+    if !isnothing(t.θ) error("Partial Torus (`θ = θ`) is not yet supported.") end
+    if t.origin != zero(CartesianVector{T}) dict["origin"] = t.origin end
+    if t.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(t.rotation) end
+    OrderedDict{String, Any}("torus" => dict)
+end
+
 function surfaces(t::FullTorus{T,ClosedPrimitive}) where {T}
     tm = FullTorusMantle{T,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     (tm, )
