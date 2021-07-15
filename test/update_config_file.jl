@@ -1,5 +1,5 @@
 using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, CSGDifference,
-        internal_unit_length, internal_unit_angle, CSG_dict, geom_round,
+        internal_unit_length, internal_unit_angle, CSG_dict,
         parse_r_of_primitive, parse_height_of_primitive, parse_translate_vector, parse_rotation_matrix
 using SolidStateDetectors: construct_units
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
@@ -67,7 +67,7 @@ function update_primitives!(dict::AbstractDict, input_units::NamedTuple)
     elseif "type" in dict_keys && dict["type"] in ["tube", "cone"] && "h" in dict_keys && dict["h"] != 0
         #add translate vector with z=0 if it does not exist
         if !("translate" in dict_keys) dict["translate"] = Dict{String,Any}("z" => 0) end
-        dict["translate"]["z"] = geom_round(dict["translate"]["z"] + Float64(dict["h"] / 2))
+        dict["translate"]["z"] = dict["translate"]["z"] + Float64(dict["h"] / 2)
         if dict["translate"]["z"] == 0 delete!(dict["translate"], "z") end
         if length(keys(dict["translate"])) == 0 delete!(dict, "translate") end
     end
@@ -104,7 +104,7 @@ function Dictionary(g::RotatedGeometry{T}) where {T}
     mat = RotXYZ(inv(g.inv_r))
     if mat.theta1 == 0 && mat.theta2 == 0
         if mat.theta3 != 0 
-            dict["Z"] = geom_round(HexagonalPrismAngleUnit == u"°" ? rad2deg(mat.theta3) : mat.theta3)
+            dict["Z"] = HexagonalPrismAngleUnit == u"°" ? rad2deg(mat.theta3) : mat.theta3
         end
     else
         dict["M"] = inv(g.inv_r)[:]
