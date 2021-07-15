@@ -51,6 +51,22 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     transform(g, transformations)
 end
 
+const PrismAliases = Dict{Int, String}(
+    3 => "TriangularPrism", 
+    4 => "QuadranglePrism", 
+    5 => "PentagonalPrism", 
+    6 => "HexagonalPrism"
+)
+
+function Dictionary(rp::RegularPrism{T, <:Any, N})::OrderedDict{String, Any} where {T, N}
+    dict = OrderedDict{String, Any}()
+    dict["r"] = rp.r # always a Real 
+    dict["h"] = rp.hZ*2
+    if rp.origin != zero(CartesianVector{T}) dict["origin"] = rp.origin end
+    if rp.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(rp.rotation) end
+    OrderedDict{String, Any}(PrismAliases[N] => dict)
+end
+
 function vertices(rp::RegularPrism{T,ClosedPrimitive,N,T}) where {T,N}
     xys = [rp.r .* sincos(T(2π)*(n-1)/N) for n in 1:N]
     pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
@@ -95,13 +111,6 @@ function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}; csgto
         _r < rp.r - csgtol
     end
 end
-
-# const PrismAliases = Dict{Int, String}(
-#     3 => "TriangularPrism", 
-#     4 => "SquarePrism", 
-#     5 => "PentagonalPrism", 
-#     6 => "HexagonalPrism"
-# )
 
 # # Convenience functions
 # const TriangularPrism{T,TR,TZ} = RegularPrism{3,T,TR,TZ}
