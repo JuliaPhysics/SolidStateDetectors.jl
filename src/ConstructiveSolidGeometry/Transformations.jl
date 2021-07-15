@@ -25,3 +25,17 @@ function combine_transformations(current::Transformations, new::Transformations)
     (rotation = r, translation = t)
 end
 
+
+function Dictionary(m::SMatrix{3,3,T,9}) where {T}
+    dict = OrderedDict{String, Any}()
+    mat = RotXYZ(m)
+    if mat.theta1 == 0 && mat.theta2 == 0
+        if mat.theta3 != 0
+            dict["Z"] = string(mat.theta3)*"rad"
+        end
+    else
+        dict["M"] = m[:]
+    end
+    dict
+end
+
