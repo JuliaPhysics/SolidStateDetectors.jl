@@ -234,3 +234,10 @@ function _refine_axis(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, ns::
     ticks[end] = ax.ticks[end]
     typeof(ax)(ax.interval, ticks)
 end
+
+
+function _extend_refinement_limits(rl::Union{<:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}})
+    0
+end
+_extend_refinement_limits(rl::Real) = (rl, rl, rl )
+_extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl
