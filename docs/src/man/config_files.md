@@ -117,6 +117,86 @@ tube:
 In the last example, even if the `length` unit was set to `mm`, the values will be parsed in units of `cm`. Please note to not leave a white space between the value and the unit and to use the Unitful.jl notation.
 
 
+
+### Grid 
+
+The calculations are performed on a finite world. To define the world, SolidStateDetectors.jl requires the properties of the grid, which are the coordinate system type and the dimensions. These are defined in the `grid` section of the configuration file, e.g.
+```yaml
+grid:
+ coordinates: cartesian
+ axes:
+   x: 
+     from: -40
+     to: 40
+   y:
+     from: -40
+     to: 40
+   z:
+     from: -40
+     to: 40
+```
+
+The `coordinates` of the `grid` can be:
+- `cartesian` (with the axes `x`, `y` and `z`)
+- `cylindrical` (with the axes `r`, `phi` and `z`).
+
+The `axes` field is used to define the dimensions of each axis and, optionally, the boundary handling.
+In the example above, the `x`, `y` and `z` axes range from `-40` to `40` units.
+
+
+#### Grid boundary handling
+
+Symmetries of the world can be used to reduce the calculation only to a fraction of the world. These can be passed as `boundaries` to the different `axes`.
+
+For linear axes (`x`, `y`, `z`), the `boundaries` can be chosen `infinite`, `periodic`, `reflecting`, or `fixed`.
+
+For radial axes (`r`), the boundaries can be chosen `r0`.
+If no boundaries are given, the default is `r0` for the left boundary and `infinite` for the right boundary.
+
+For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. If no boundaries are given, the default is `periodic` for both edges.
+
+$\varphi$-symmetric configurations can be calculated in 2D if `phi` ranges from `0` to `0` with `periodic` boundary handling, i.e.
+```yaml
+grid:
+ coordinates: cylindrical
+ axes:
+   r: #...
+   phi:
+     from: 0
+     to: 0
+     boundaries: periodic
+   z: #...
+``` 
+
+$\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, i.e. for a `120°`-periodic system
+```yaml
+grid:
+ coordinates: cylindrical
+ axes:
+   r: #...
+   phi:
+     from: 0°
+     to: 120°
+     boundaries: periodic
+   z: #...
+``` 
+
+Different boundary handling can be chosen for the `left` and `right` end of the interval, i.e. for a `60°`-periodic system with mirror symmetry at `30°`
+```yaml
+grid:
+ coordinates: cylindrical
+ axes:
+   r: #...
+   phi:
+     from: 0°
+     to: 30°
+     boundaries:
+       left: periodic
+       right: reflecting
+   z: #...
+``` 
+
+
 ## Splitting Configuration Files
 
 Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
