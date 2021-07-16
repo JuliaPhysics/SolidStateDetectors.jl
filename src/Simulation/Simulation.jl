@@ -669,7 +669,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
         n_refinement_steps = length(refinement_limits)
         for iref in 1:n_refinement_steps
-            ref_limits = _extend_refinement_limits(refinement_limits[iref])
+            ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
                 sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_grid_spacing)
@@ -838,15 +838,18 @@ end
 
 ToDo...
 """
-function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false,
-                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
+function simulate!( sim::Simulation{T};  
+                    refinement_limits = [0.2, 0.1, 0.05],
+                    verbose::Bool = false,
+                    depletion_handling::Bool = false, 
+                    convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim,
-                                    max_refinements = max_refinements,
+                                    refinement_limits = refinement_limits,
                                     verbose = verbose,
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
-        calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements,
+        calculate_weighting_potential!(sim, contact.id, refinement_limits = refinement_limits,
                 verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
