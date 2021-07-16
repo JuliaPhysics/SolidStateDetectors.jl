@@ -70,3 +70,33 @@ detectors:
         h: 60
 ```
 It will be used to guide through the different parts of the configuration file.
+
+
+## Splitting Configuration Files
+
+Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
+files into smaller ones and loading them using the `include` keyword. This feature supports YAML and JSON files.
+
+When including a separate file, the user has to add its file path in the main configuration file at the place it supposed to be added. To identify the file, set the key of this entry to `include`. Here, the user can also give an array of file paths. The file paths can be relative to the path of the configuration file or absolute. When including nested files and using relative paths, please always refer to the last parent file.
+
+Including one file:
+```yaml
+include : "file_to_be_included.yaml"
+```
+
+Including a list of files:
+```yaml
+include: 
+  - "first_file_to_be_included.yaml"
+  - "second_file_to_be_included.yaml"
+```
+
+Add files to an array in the main configuration file
+```yaml
+detectors:
+  - include: "first_file_in_array.yaml"
+  - include: "second_file_in_array.yaml"
+  - include: "thrid_file_in_array.yaml"
+```
+
+A fully working example can be seen in `SSD_examples[:InvertedCoaxInCryostat]`. Here, the channels, the geometry and other parts are split into separate configuration files.
