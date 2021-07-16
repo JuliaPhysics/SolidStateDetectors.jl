@@ -35,9 +35,7 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Installation" => "man/installation.md",
-            "Detectors" => Any[
-                "Configuration Files" => "man/config_files.md",
-            ],
+            "Configuration Files" => "man/config_files.md",
             "Geometries (CSG)" => Any[
                 "CSG" => "man/csg.md",
                 "Primitives" => "man/primitives.md",
