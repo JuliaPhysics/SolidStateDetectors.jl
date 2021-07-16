@@ -84,7 +84,7 @@ function get_r_SSDInterval(T, dict, input_units::NamedTuple)
         end      
         return SSDInterval{T, L, R, BL, BR}(from, to)
     else
-        SSDInterval{T, :closed, :closed, :r0, :infinite}(0, geom_round(ustrip(uconvert(internal_length_unit, T(dict) * input_units.length))))
+        SSDInterval{T, :closed, :closed, :r0, :infinite}(0, ustrip(uconvert(internal_length_unit, T(dict) * input_units.length)))
     end
 end
 function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)
