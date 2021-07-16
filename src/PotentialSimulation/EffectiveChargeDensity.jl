@@ -1,6 +1,6 @@
-struct EffectiveChargeDensity{T, N, S} <: AbstractArray{T, N}
+struct EffectiveChargeDensity{T, N, S, AT} <: AbstractArray{T, N}
     data::Array{T, N}
-    grid::Grid{T, N, S}
+    grid::Grid{T, N, S, AT}
 end
 
 @inline size(ρ::EffectiveChargeDensity{T, N, S}) where {T, N, S} = size(ρ.data)

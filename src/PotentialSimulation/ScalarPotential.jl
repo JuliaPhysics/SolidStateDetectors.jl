@@ -1,4 +1,8 @@
-const ScalarPotential{T, N, S} = Union{ElectricPotential{T, N, S}, WeightingPotential{T, N, S}, PointTypes{T, N, S}, EffectiveChargeDensity{T, N, S}}
+const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, WeightingPotential{T, N, S, AT}, PointTypes{T, N, S, AT}, EffectiveChargeDensity{T, N, S, AT}}
+
+get_axes_type(p::ScalarPotential{T, N, S, AT}) where {T, N, S, AT} = AT
+get_axes_type(::Type{<:ScalarPotential{T, N, S, AT}}) where {T, N, S, AT} = AT
+get_axes_type(::Type{Tuple{AT1, AT2, AT3}}) where {AT1, AT2, AT3} = (AT1, AT2, AT3)
 
 function getindex(ep::P, g::Grid{T, N, S}) where {T, N, S, P <: ScalarPotential{T, N, S}}
     gridsize::Tuple = size(g)

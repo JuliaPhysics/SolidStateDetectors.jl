@@ -30,9 +30,9 @@ const max_pointtype_value = update_bit + undepleted_bit + pn_junction_bit #+ bub
 
 PointTypes stores the point type of each grid point.
 """
-struct PointTypes{T, N, S} <: AbstractArray{T, N}
+struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
     data::Array{PointType, N}
-    grid::Grid{T, N, S}
+    grid::Grid{T, N, S, AT}
 end
 
 @inline size(pts::PointTypes{T, N, S}) where {T, N, S} = size(pts.data)
