@@ -610,7 +610,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             sor_consts = T(sor_consts[1])
         end
         if ismissing(refinement_limits)
-            refinement_limits::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+            refinement_limits::NTuple{3, T} = (T(0.2), T(0.2), T(0.2))
         end
         if ismissing(min_grid_spacing)
             min_grid_spacing::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
@@ -681,47 +681,51 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     refinement_counter::Int = 1
     if refine
         max_diffs::NTuple{3, T} = abs.(refinement_limits .* bias_voltage)
-        refine_at_inds::NTuple{3, Vector{Int}} = if isEP
-            _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
-        else
-            _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
+        @info max_diffs
+        if isEP
+            sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_grid_spacing)
         end
-        while any(!isempty, refine_at_inds[1]) && refinement_counter <= max_refinements
-            if isEP
-                sim.electric_potential = ElectricPotential(add_points_and_interpolate(
-                        sim.electric_potential.data, sim.electric_potential.grid, refine_at_inds...)...)
-                if verbose @info "New Grid Size = $(size(sim.electric_potential.grid))" end
-            else
-                sim.weighting_potentials[contact_id] = WeightingPotential(add_points_and_interpolate(
-                    sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, refine_at_inds...)...)
-                if verbose @info "New Grid Size = $(size(sim.weighting_potentials[contact_id].grid))" end
-            end
-            n_iterations_between_checks = div(10^7, length(isEP ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid))
-            if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
+        # refine_at_inds::NTuple{3, Vector{Int}} = if isEP
+        #     _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
+        # else
+        #     _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
+        # end
+        # while any(!isempty, refine_at_inds[1]) && refinement_counter <= max_refinements
+        #     if isEP
+        #         sim.electric_potential = ElectricPotential(add_points_and_interpolate(
+        #                 sim.electric_potential.data, sim.electric_potential.grid, refine_at_inds...)...)
+        #         if verbose @info "New Grid Size = $(size(sim.electric_potential.grid))" end
+        #     else
+        #         sim.weighting_potentials[contact_id] = WeightingPotential(add_points_and_interpolate(
+        #             sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, refine_at_inds...)...)
+        #         if verbose @info "New Grid Size = $(size(sim.weighting_potentials[contact_id].grid))" end
+        #     end
+        #     n_iterations_between_checks = div(10^7, length(isEP ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid))
+        #     if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
 
-            if isEP
-                update_till_convergence!( sim, potential_type, convergence_limit,
-                    n_iterations_between_checks = n_iterations_between_checks,
-                    max_n_iterations = max_n_iterations,
-                    depletion_handling = depletion_handling,
-                    use_nthreads = use_nthreads,
-                    sor_consts = sor_consts )
-            else
-                update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
-                                    n_iterations_between_checks = n_iterations_between_checks,
-                                    max_n_iterations = max_n_iterations,
-                                    depletion_handling = depletion_handling,
-                                    use_nthreads = use_nthreads,
-                                    sor_consts = sor_consts )
-            end
+        #     if isEP
+        #         update_till_convergence!( sim, potential_type, convergence_limit,
+        #             n_iterations_between_checks = n_iterations_between_checks,
+        #             max_n_iterations = max_n_iterations,
+        #             depletion_handling = depletion_handling,
+        #             use_nthreads = use_nthreads,
+        #             sor_consts = sor_consts )
+        #     else
+        #         update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
+        #                             n_iterations_between_checks = n_iterations_between_checks,
+        #                             max_n_iterations = max_n_iterations,
+        #                             depletion_handling = depletion_handling,
+        #                             use_nthreads = use_nthreads,
+        #                             sor_consts = sor_consts )
+        #     end
 
-            refine_at_inds = if isEP
-                _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
-            else
-                _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
-            end
-            refinement_counter += 1
-        end
+        #     refine_at_inds = if isEP
+        #         _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
+        #     else
+        #         _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
+        #     end
+        #     refinement_counter += 1
+        # end
     end
 
     nothing
