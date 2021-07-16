@@ -88,7 +88,17 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
 end
 
 
+"""
+    refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
 
+Refine any scalar potential `p`. 
+
+1. Extent the grid to be a closed grid in all dimensions. 
+2. Refine the axis of the grid based on `max_diffs` and `minimum_applied_potential`:
+   Insert N new ticks between to existing ticks such that the potential difference between each tick becomes
+   smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
+3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
+"""
 function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
     closed_potential = _get_closed_potential(p)
     int = interpolate_closed_potential(closed_potential)
@@ -111,6 +121,7 @@ interpolate_closed_potential(p::ScalarPotential) = interpolate(p.grid.axes, p.da
 
 _get_closed_ticks(ticks::Vector{T}, int::ClosedInterval{T}) where {T} = ticks
 _get_closed_ticks(ticks::Vector{T}, int::Interval{:closed, :open, T}) where {T} = vcat(ticks, [int.right])
+_get_closed_ticks(ticks::Vector{T}, int::Interval{:open, :closed, T}) where {T} = vcat([int.left], ticks)
 
 _get_closed_values(values::Array{T,3}, dim::Int, int::ClosedInterval{T}) where {T} = values
 
@@ -121,6 +132,15 @@ function _get_closed_values(values::Array{T,3}, dim::Int, int::Interval{:closed,
         cat(values, values[:,1:1,:], dims=dim)
     else # dim == 3
         cat(values, values[:,:,1:1], dims=dim)
+    end
+end
+function _get_closed_values(values::Array{T,3}, dim::Int, int::Interval{:open, :closed, T})::Array{T,3} where {T} 
+    if dim == 1
+        cat(values[end:end,:,:], values, dims=dim)
+    elseif dim == 2
+        cat(values[:,end:end,:], values, dims=dim)
+    else # dim == 3
+        cat(values[:,:,end:end], values, dims=dim)
     end
 end
 
@@ -163,8 +183,11 @@ end
 
 _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, I}}, ax::DiscreteAxis{T, BL, BR, I}) where {T, BL, BR, I} = ax
 
-function _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}}, ax::DiscreteAxis{T, BL, BR, ClosedInterval{T}}) where {T, BL, BR, }
+function _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}}, ax::DiscreteAxis{T, BL, BR, ClosedInterval{T}}) where {T, BL, BR}
     DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}(Interval{:closed, :open, T}(ax.interval.left, ax.interval.right), ax.ticks[1:end-1])
+end
+function _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, Interval{:open, :closed, T}}}, ax::DiscreteAxis{T, BL, BR, ClosedInterval{T}}) where {T, BL, BR}
+    DiscreteAxis{T, BL, BR, Interval{:open, :closed, T}}(Interval{:open, :closed, T}(ax.interval.left, ax.interval.right), ax.ticks[2:end])
 end
 
 function _reduce_closed_values(axTypes::Tuple, a::Array{T, 3}) where {T} 
@@ -174,6 +197,7 @@ end
 
 _get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, ClosedInterval{T}}}) where {T, BL, BR} = 1:l
 _get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}}) where {T, BL, BR} = 1:(l-1)
+_get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, Interval{:open, :closed, T}}}) where {T, BL, BR} = 2:l
 
 
 function _create_refined_grid(p::ScalarPotential{T,3}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
