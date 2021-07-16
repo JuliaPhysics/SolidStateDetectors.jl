@@ -155,7 +155,7 @@ If no boundaries are given, the default is `r0` for the left boundary and `infin
 
 For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. If no boundaries are given, the default is `periodic` for both edges.
 
-$\varphi$-symmetric configurations can be calculated in 2D if `phi` ranges from `0` to `0` with `periodic` boundary handling, i.e.
+All $\varphi$-symmetric configurations can be calculated in 2D if `phi` ranges from `0` to `0` with `periodic` boundary handling, i.e.
 ```yaml
 grid:
  coordinates: cylindrical
@@ -168,7 +168,7 @@ grid:
    z: #...
 ``` 
 
-$\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, i.e. for a `120°`-periodic system
+All $\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, i.e. for a `120°`-periodic system
 ```yaml
 grid:
  coordinates: cylindrical
@@ -195,6 +195,50 @@ grid:
        right: reflecting
    z: #...
 ``` 
+
+
+
+### Detector Constituents
+
+The detectors for the simulation are defined in an array `detectors`, where each entry corresponds to one detector.
+Each detector consists of exactly one `bulk`, a minimum of two `contacts` and, optionally, `passives` and `virtual_drift_volumes`.
+
+```yaml
+detectors:
+  - name: "Detector 1"
+    bulk: #...
+    contacts: 
+      - # Contact 1
+      - # Contact 2 
+    passives: 
+      - # Passive 1 (optional)
+    virtual_drift_volumes:
+      - # Virtual Drift Volume 1 (optional)
+  - name: "Detector 2"
+    bulk: #...
+    contacts: 
+      - # Contact 1
+      - # Contact 2
+```
+
+#### Bulk 
+
+An example definition of the bulk looks like this:
+```yaml 
+bulk:
+  material: HPGe
+  temperature: 78
+  impurity_density: # ...
+  charge_drift_model: # ...
+  geometry: # ...
+```
+
+The different fields of the bulk are:
+- `material`: the material of the bulk. This is important to know the electric properties of the bulk for the electric potential calculation. Possible choices are `HPGe` (high-purity germanium) and `Si` (silicon).
+- `temperature` (optional): the temperature of the bulk. If no `temperature` is given, the default is 78K for germanium and 293K for all other materials.
+- `impurity_density` (optional): the distribution of impurities in the semiconductor material. This has a strong impact on the electric potential calculation. If no `impurity_density` is given, the default is an impurity-free material ($\rho(\vec{r}) = 0$).
+- `charge_drift_model` (optional): a model to describe the drift of charge carriers in the semiconductor material. If no `charge_drift_model` is given, the default is `ElectricFieldChargeDriftModel`. Find a detailed description on how to define a charge drift model [here](Custom-Charge-Drift-Model).
+- `geometry`: the geometry of the semiconductor object. Find a detailed description on how to define geometries in the section CSG.
 
 
 ## Splitting Configuration Files
