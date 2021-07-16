@@ -72,6 +72,51 @@ detectors:
 It will be used to guide through the different parts of the configuration file.
 
 
+
+### Units
+
+Internally, SolidStateDetectors.jl performs its calculations in SI units. However, configuration files can be written in custom units.
+
+The field `units` denotes the standard units with which values will be parsed. Standard units can be defined for `length`, `angle`, `potential` and `temperature`.
+
+In the example above, 
+```yaml
+units:
+  length: mm
+  angle: deg
+```
+will lead to all `length` values to be parsed in units of `mm`, while all `angle` values will be parsed in units of `deg` (degree).
+
+The configuration files also allow for directly passing units to the values that will be parsed using `uparse` from the Unitful.jl package, e.g.
+```yaml
+units: 
+  length: mm
+  # ....
+tube:
+  r: 
+    from: 5
+    to: 40
+  h: 60
+```
+is equivalent to
+```yaml
+tube:
+  r: 
+    from: 5mm
+    to: 40mm
+  h: 60mm
+```
+or
+```yaml
+tube:
+  r: 
+    from: 0.5cm
+    to: 4cm
+  h: 6cm
+```
+In the last example, even if the `length` unit was set to `mm`, the values will be parsed in units of `cm`. Please note to not leave a white space between the value and the unit and to use the Unitful.jl notation.
+
+
 ## Splitting Configuration Files
 
 Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
