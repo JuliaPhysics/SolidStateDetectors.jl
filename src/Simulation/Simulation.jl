@@ -592,6 +592,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         use_nthreads::Int = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
+        n_iterations_between_checks::Int = 1000,
         verbose::Bool = true,
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
@@ -638,8 +639,6 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 (T(1e-5), T(1e-5), T(1e-5))
             end
         end
-
-        n_iterations_between_checks::Int = 1000
         if use_nthreads > Base.Threads.nthreads()
             use_nthreads = Base.Threads.nthreads();
             @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
