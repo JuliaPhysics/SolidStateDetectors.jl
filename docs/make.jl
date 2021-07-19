@@ -40,7 +40,7 @@ makedocs(
                 "CSG" => "man/csg.md",
                 "Primitives" => "man/primitives.md",
             ],
-            "Electric Potentials" => "man/electric_potentials.md",
+            "Electric Potential" => "man/electric_potential.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
             "Electric Field" => "man/electric_field.md",
             "Charge Drift" => "man/charge_drift.md",
