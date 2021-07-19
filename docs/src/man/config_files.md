@@ -298,6 +298,40 @@ The different fields of a passive are:
 
 
 
+### Surroundings
+
+The medium of the world is passed as field `medium`, i.e.
+```yaml
+name: # ... # optional
+units: #...
+grid: #...
+medium: vacuum
+detectors: # ...
+```
+If no `medium` is given, the default is vacuum. Implemented media are `vacuum` and `LAr` (liquid argon), but other media can be easily added to the `material_properties` dictionary in  MaterialProperties.jl.
+
+Passive objects, especially cryostats or holding structures can be defined in an array `surroundings` without being assigned to a specific detector. 
+```yaml
+name: # ... # optional
+units: #...
+grid: #...
+medium: vacuum
+detectors:
+- bulk: # ...
+  contacts: 
+    - # ...
+    - # ...
+  passives:
+    - # ...
+    - # ...
+surroundings:
+  - #...
+  - #...
+```
+The definition of passive objects in the `surroundings` array is equal to that in the `passives` array of a detector.
+
+
+
 ## Splitting Configuration Files
 
 Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
