@@ -89,7 +89,8 @@ end
 
 
 """
-    refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
+    refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
+        only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
 
 Refine any scalar potential `p`. 
 
@@ -99,25 +100,42 @@ Refine any scalar potential `p`.
    smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
 3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
 """
-function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
+function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
+        only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
     closed_potential = _get_closed_potential(p)
-    int = interpolate_closed_potential(closed_potential)
     new_grid = _create_refined_grid(closed_potential, T.(max_diffs), T.(minimum_distances))
     new_data = Array{T, 3}(undef, size(new_grid))
-    for i3 in axes(new_data, 3)
-        x3 = new_grid.axes[3].ticks[i3]
-        for i2 in axes(new_data, 2)
-            x2 = new_grid.axes[2].ticks[i2]
+    if only_2d
+        int = interpolate_closed_potential(closed_potential, only2d)
+        for i3 in axes(new_data, 3)
+            x3 = new_grid.axes[3].ticks[i3]
             for i1 in axes(new_data, 1)
                 x1 = new_grid.axes[1].ticks[i1]
-                new_data[i1, i2, i3] = int(x1, x2, x3)
+                new_data[i1, 1, i3] = int(x1, x3)
+            end
+        end
+    else
+        int = interpolate_closed_potential(closed_potential, only2d)
+        for i3 in axes(new_data, 3)
+            x3 = new_grid.axes[3].ticks[i3]
+            for i2 in axes(new_data, 2)
+                x2 = new_grid.axes[2].ticks[i2]
+                for i1 in axes(new_data, 1)
+                    x1 = new_grid.axes[1].ticks[i1]
+                    new_data[i1, i2, i3] = int(x1, x2, x3)
+                end
             end
         end
     end
     return _convert_closed_potential(typeof(p), ElectricPotential(new_data, new_grid))
 end             
 
-interpolate_closed_potential(p::ScalarPotential) = interpolate(p.grid.axes, p.data, Gridded(Linear()))
+function interpolate_closed_potential(p::ScalarPotential, ::Val{true}) where {T}
+    interpolate((p.grid.axes[1], p.grid.axes[3]), p.data[:,1,:], Gridded(Linear()))
+end
+function interpolate_closed_potential(p::ScalarPotential, ::Val{false}) where {T}
+    interpolate(p.grid.axes, p.data, Gridded(Linear()))
+end
 
 _get_closed_ticks(ticks::Vector{T}, int::ClosedInterval{T}) where {T} = ticks
 _get_closed_ticks(ticks::Vector{T}, int::Interval{:closed, :open, T}) where {T} = vcat(ticks, [int.right])

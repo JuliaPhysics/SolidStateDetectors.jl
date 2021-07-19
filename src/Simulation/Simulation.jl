@@ -672,7 +672,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
-                sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_grid_spacing)
+                sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_grid_spacing, only2d = Val(only_2d))
                 update_till_convergence!( sim, potential_type, convergence_limit,
                 n_iterations_between_checks = n_iterations_between_checks,
                 max_n_iterations = max_n_iterations,
@@ -681,7 +681,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
-                sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_grid_spacing)
+                sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_grid_spacing, only2d = Val(only_2d))
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
@@ -839,7 +839,7 @@ end
 ToDo...
 """
 function simulate!( sim::Simulation{T};  
-                    refinement_limits = [0.2, 0.1, 0.05],
+                    refinement_limits = [0.2, 0.1, 0.05 ],
                     verbose::Bool = false,
                     depletion_handling::Bool = false, 
                     convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
