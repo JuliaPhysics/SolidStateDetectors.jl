@@ -68,15 +68,17 @@ function extend_2D_to_3D_by_n_points(wp::ScalarPotential{T, 3, Cylindrical}, ax�
     Potential::Type = typeof(wp)
     new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
     new_ticks::Vector{T} = Vector{T}(undef, n_points_in_φ)
-    new_pot::Array{T, 3} = Array{T, 3}(undef, size(wp, 1), n_points_in_φ, size(wp, 3))
+    new_pot::Array{eltype(wp.data), 3} = Array{eltype(wp.data), 3}(undef, size(wp, 1), n_points_in_φ, size(wp, 3))
     Δφ::T = 2π / n_points_in_φ
     for i in 1:n_points_in_φ
         new_ticks[i] = (i - 1) * Δφ
         new_pot[:, i, :] = wp[:, 1, :]
     end
-    new_axφ::DiscreteAxis{T, :periodic, :periodic} = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
-    new_grid::Grid{T, 3, Cylindrical} = Grid{T, 3, Cylindrical}( (wp.grid[1], new_axφ, wp.grid[3]) )
-    new_wp::Potential = Potential( new_pot, new_grid )
+    new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
+    new_axes = (wp.grid[1], new_axφ, wp.grid[3])
+    new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
+    PT = typeof(wp).name.name
+    new_wp = eval(PT)( new_pot, new_grid )
     return new_wp
 end
 
