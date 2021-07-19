@@ -35,7 +35,7 @@ If more than two geometries are passed, the `union` is constructed from all of t
 ### Difference
 
 
-A `difference` of two objects `A` and `B` is defined as the set of points that are in `A` but not in `B`.
+A `difference` of two objects `A` and `B` is defined as the set of points that are in `A` but not in `B`. Note that `B` is treated as open primitive. This means that points which are in `A` and on the surface of `B` will still be in the `difference` of `A` and `B`.
 In the configuration files, it is defined using the `difference` field, followed by an array of entries. The first entry of the array is the main geometry, from which all following geometry entries are subtracted, e.g.
 ```yaml
 difference: # A && !B
@@ -44,9 +44,11 @@ difference: # A && !B
       h: 1
   - tube: # B
       r: 1
-      h: 1
+      h: 1.1
 ```
 ![CSGDifference](../assets/CSGDifference.png)
+
+Keep in mind that to discard the part of the surface of `A` which is on the surface of `B`, `B` should be chosen slightly bigger than `A`.
 
 If more than two geometries are passed, all entries starting from the second will be subtracted from the first.
 
