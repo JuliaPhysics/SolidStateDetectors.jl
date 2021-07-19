@@ -585,8 +585,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         grid::Union{Missing, Grid{T}} = missing,
         convergence_limit::Real = 1e-7,
         refinement_limits::Union{Missing, <:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}} = [0.2, 0.1, 0.05],
-        min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
-        max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+        min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, <:Union{length_unit, angle_unit}, length_unit}} = missing,
+        max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, <:Union{length_unit, angle_unit}, length_unit}} = missing,
         max_distance_ratio::Real = 5,
         depletion_handling::Bool = false,
         use_nthreads::Int = Base.Threads.nthreads(),
@@ -610,9 +610,35 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         elseif length(sor_consts) > 1 && CS == Cartesian
             sor_consts = T(sor_consts[1])
         end
-        if ismissing(min_grid_spacing)
-            min_grid_spacing::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+        min_tick_distance::NTuple{3, T} = if CS == Cylindrical
+            if !ismissing(min_tick_distance)
+                if min_tick_distance isa Quantity{<:Real, Unitful.𝐋}
+                    world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
+                    min_distance_z = min_distance_r = T(to_internal_units(internal_length_unit, min_tick_distance))
+                    min_distance_r, min_distance_z / world_r_mid, min_distance_z
+                else 
+                    T(to_internal_units(internal_length_unit, min_tick_distance[1])),
+                    T(to_internal_units(internal_angle_unit,  min_tick_distance[2])),
+                    T(to_internal_units(internal_length_unit, min_tick_distance[3]))
+                end 
+            else
+                (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) 
+            end
+        else
+            if !ismissing(min_tick_distance)
+                if min_tick_distance isa Quantity{<:Real, Unitful.𝐋}
+                    min_distance = T(to_internal_units(internal_length_unit, min_tick_distance))
+                    min_distance, min_distance, min_distance
+                else
+                    T(to_internal_units(internal_length_unit, min_tick_distance[1])),
+                    T(to_internal_units(internal_length_unit, min_tick_distance[2])),
+                    T(to_internal_units(internal_length_unit, min_tick_distance[3]))
+                end
+            else
+                (T(1e-5), T(1e-5), T(1e-5))
+            end
         end
+
         n_iterations_between_checks::Int = 1000
         if use_nthreads > Base.Threads.nthreads()
             use_nthreads = Base.Threads.nthreads();
@@ -622,7 +648,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
         if CS == Cylindrical
             cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
-            n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3))
+            n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3)) 
             n_φ_sym_info_txt = if only_2d
                 "φ symmetry: Detector is φ-symmetric -> 2D computation."
             else
@@ -673,7 +699,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
-                sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_grid_spacing, only2d = Val(only_2d))
+                sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_tick_distance, only2d = Val(only_2d))
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
@@ -682,7 +708,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
-                sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_grid_spacing, only2d = Val(only_2d))
+                sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_tick_distance, only2d = Val(only_2d))
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
@@ -715,7 +741,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
         * l::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
         * l::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
         * l::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
-- `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
+- `min_tick_distance::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
     For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
     It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
 - `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim)`.
@@ -845,6 +871,7 @@ ToDo...
 """
 function simulate!( sim::Simulation{T};  
                     refinement_limits = [0.2, 0.1, 0.05],
+                    min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
                     max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
                     max_distance_ratio::Real = 5,
                     verbose::Bool = false,
@@ -852,6 +879,7 @@ function simulate!( sim::Simulation{T};
                     convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim,
                                     refinement_limits = refinement_limits,
+                                    min_tick_distance = min_tick_distance,
                                     max_tick_distance = max_tick_distance,
                                     max_distance_ratio = max_distance_ratio,
                                     verbose = verbose,
@@ -859,6 +887,7 @@ function simulate!( sim::Simulation{T};
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, refinement_limits = refinement_limits,
+                    min_tick_distance = min_tick_distance,
                     max_tick_distance = max_tick_distance,
                     max_distance_ratio = max_distance_ratio,
                     verbose = verbose, convergence_limit = convergence_limit)
