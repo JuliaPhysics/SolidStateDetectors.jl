@@ -42,7 +42,7 @@ makedocs(
             ],
             "Electric Potentials" => "man/electric_potentials.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
-            "Electric Fields" => "man/electric_fields.md",
+            "Electric Field" => "man/electric_field.md",
             "Charge Drift" => "man/charge_drift.md",
             "IO" => "man/IO.md",
         ],
