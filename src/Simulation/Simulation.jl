@@ -586,6 +586,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         convergence_limit::Real = 1e-7,
         refinement_limits::Union{Missing, <:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}} = [0.2, 0.1, 0.05],
         min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
+        max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+        max_distance_ratio::Real = 5,
         depletion_handling::Bool = false,
         use_nthreads::Int = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
@@ -599,7 +601,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         isWP::Bool = !isEP
         if isWP depletion_handling = false end
         if ismissing(grid)
-            grid = Grid(sim, for_weighting_potential = isWP)
+            grid = Grid(sim, for_weighting_potential = isWP, max_tick_distance = max_tick_distance, max_distance_ratio = max_distance_ratio)
         end
         if ismissing(sor_consts)
             sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -838,18 +840,24 @@ end
 ToDo...
 """
 function simulate!( sim::Simulation{T};  
-                    refinement_limits = [0.2, 0.1, 0.05 ],
+                    refinement_limits = [0.2, 0.1, 0.05],
+                    max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    max_distance_ratio::Real = 5,
                     verbose::Bool = false,
                     depletion_handling::Bool = false, 
                     convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim,
                                     refinement_limits = refinement_limits,
+                                    max_tick_distance = max_tick_distance,
+                                    max_distance_ratio = max_distance_ratio,
                                     verbose = verbose,
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, refinement_limits = refinement_limits,
-                verbose = verbose, convergence_limit = convergence_limit)
+                    max_tick_distance = max_tick_distance,
+                    max_distance_ratio = max_distance_ratio,
+                    verbose = verbose, convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
     calculate_drift_fields!(sim)
