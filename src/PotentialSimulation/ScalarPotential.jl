@@ -38,7 +38,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
     new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    PT = typeof(sp).name.name
+    PT = nameof(typeof(sp))
     new_sp = eval(PT)( new_pot, new_grid )
     return new_sp
 end
@@ -59,7 +59,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
     new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    PT = typeof(sp).name.name
+    PT = nameof(typeof(sp))
     new_sp = eval(PT)( new_pot, new_grid )
     return get_2π_potential(new_sp, new_axφ, new_int)
     # return new_sp
@@ -78,7 +78,7 @@ function extend_2D_to_3D_by_n_points(sp::ScalarPotential{T, 3, Cylindrical}, ax�
     new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
     new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    PT = typeof(sp).name.name
+    PT = nameof(typeof(sp))
     new_sp = eval(PT)( new_pot, new_grid )
     return new_sp
 end
