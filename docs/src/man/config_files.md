@@ -269,6 +269,35 @@ The different fields of a contact are:
 
 
 
+#### Passives and Charged Surfaces 
+
+Passive objects and charged surfaces can be defined through entries of the `passives` array for each detector, e.g.
+```yaml 
+passives:
+  - name: Passivated Surface
+    material: HPGe
+    charge_density: # ...
+    geometry: # ...
+  - name: Cryostat
+    id: 3
+    potential: 0
+    temperature: 293K
+    material: Al
+    geometry: # ...
+
+```
+
+The different fields of a passive are:
+- `name` (optional): the name of the passive object. If no `name` is given, the default name is `"external part"`.
+- `id` (optional): a unique id of the contact that will unambiguously identify the passive object. If no `id` is given, the default is `-1`.
+- `potential` (optional): the electric potential to which the passive object is fixed. This value can be parsed with units (`5000V`) or without (`0` with the units defined in the `units` section). If no `potential` is given, the passive object will be treated as floating. 
+- `temperature` (optional): the temperature of the passive object. This value can be parsed with units (`293K`) or without (`78` with the units defined in the `units` section). If no `temperature` is given, the default is `293K`.
+- `material`: the material of the passive object. This is important to know the electric properties of the contact for the electric potential calculation.
+- `charge_density` (optional): model to describe charge density distributions within the passive object, e.g. charged surfaces. Find a detailed description on how to define charge densities in the section Charge Density.
+- `geometry`: the geometry of the contact. Find a detailed description on how to define geometries in the section CSG.
+
+
+
 ## Splitting Configuration Files
 
 Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
