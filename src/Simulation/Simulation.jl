@@ -611,8 +611,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         if ismissing(min_grid_spacing)
             min_grid_spacing::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
         end
-        n_iterations_between_checks::Int = div(10^7, length(grid))
-        if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
+        n_iterations_between_checks::Int = 1000
         if use_nthreads > Base.Threads.nthreads()
             use_nthreads = Base.Threads.nthreads();
             @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
@@ -633,7 +632,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         if isWP bias_voltage = T(1) end
         if verbose
             println(
-                "$(isEP ? "Electric" : "Weighting") Potential Calculation\n",
+                "$(isEP ? "Electric" : "Weighting") Potential Calculation$(isEP ? "" : " - ID: $contact_id")\n",
                 if isEP "Bias voltage: $(bias_voltage) V\n" else "" end,
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
@@ -674,20 +673,20 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 max_diffs = abs.(ref_limits .* bias_voltage)
                 sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_grid_spacing, only2d = Val(only_2d))
                 update_till_convergence!( sim, potential_type, convergence_limit,
-                n_iterations_between_checks = n_iterations_between_checks,
-                max_n_iterations = max_n_iterations,
-                depletion_handling = depletion_handling,
-                use_nthreads = use_nthreads,
-                sor_consts = sor_consts )
+                                                n_iterations_between_checks = n_iterations_between_checks,
+                                                max_n_iterations = max_n_iterations,
+                                                depletion_handling = depletion_handling,
+                                                use_nthreads = use_nthreads,
+                                                sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
                 sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_grid_spacing, only2d = Val(only_2d))
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
-                                    n_iterations_between_checks = n_iterations_between_checks,
-                                    max_n_iterations = max_n_iterations,
-                                    depletion_handling = depletion_handling,
-                                    use_nthreads = use_nthreads,
-                                    sor_consts = sor_consts )
+                                                n_iterations_between_checks = n_iterations_between_checks,
+                                                max_n_iterations = max_n_iterations,
+                                                depletion_handling = depletion_handling,
+                                                use_nthreads = use_nthreads,
+                                                sor_consts = sor_consts )
             end
         end
     end
