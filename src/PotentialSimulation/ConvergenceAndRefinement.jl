@@ -233,6 +233,13 @@ function _create_refined_grid(p::ScalarPotential{T,3}, max_diffs::NTuple{3, T}, 
             end
         end
     end
+    for i in 1:3 # always add an even number of ticks
+        if isodd(sum(ns[i])) 
+            i_max_width = findmax(sub_widths[i])[2]
+            ns[i][i_max_width] += 1 
+            sub_widths[i][i_max_width] = widths[i][i_max_width] / (ns[i][i_max_width]+1)
+        end
+    end
     new_axes = broadcast(i -> _refine_axis(p.grid.axes[i], ns[i], sub_widths[i]), (1, 2, 3))
     return typeof(p.grid)(new_axes)
 end
