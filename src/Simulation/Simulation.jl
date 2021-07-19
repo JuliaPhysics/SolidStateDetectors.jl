@@ -734,16 +734,21 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `refinement_limits: Defines the maximum relative (to applied bias voltage) allowed differences of the potential value of neighboured grid points
+- refinement_limits `rl`: Defines the maximum relative (to applied bias voltage) allowed differences 
+    of the potential value of neighboured grid points 
     in each dimension for each refinement.
-        * l::Real -> One refinement with `l` equal in all 3 dimensions
-        * l::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
-        * l::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
-        * l::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
-- `min_tick_distance::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
-    It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+    - `rl::Real` -> One refinement with `l` equal in all 3 dimensions
+    - `rl::Tuple{<:Real,<:Real,<:Real}`` -> One refinement with `l` set individual for each dimension
+    - `rl::Vector{<:Real}`` -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
+    - `rl::Vector{<:Real,<:Real,<:Real}}`` `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
+- `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the mimimum allowed distance between 
+    two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
+- `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
+    two grid ticks for each dimension used in the initialization of the grid.
+- `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+- `max_distance_ratio::Real`: Maxium allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
+        If the ratio is to large, additional ticks are generated such that the new ratios are smaler than `max_distance_ratio`.
+        Default is `5`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
@@ -775,13 +780,21 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `refinement_limits: Defines the maximum relative (to applied bias voltage) allowed differences of the potential value of neighboured grid points
+- `refinement_limits: Defines the maximum relative (to applied bias voltage) allowed differences 
+    of the potential value of neighboured grid points 
     in each dimension for each refinement.
-        * l::Real -> One refinement with `l` equal in all 3 dimensions
-        * l::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
-        * l::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
-        * l::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+    - rl::Real -> One refinement with `l` equal in all 3 dimensions
+    - rl::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
+    - rl::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
+    - rl::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
+- `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the mimimum allowed distance between 
+    two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
+- `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
+    two grid ticks for each dimension used in the initialization of the grid.
+- `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+- `max_distance_ratio::Real`: Maxium allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
+        If the ratio is to large, additional ticks are generated such that the new ratios are smaler than `max_distance_ratio`.
+        Default is `5`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
