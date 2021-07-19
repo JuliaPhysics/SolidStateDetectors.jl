@@ -2,7 +2,7 @@
 
 The detector, its surroundings and symmetries can be specified in configuration files.
 
-SolidStateDetectors.jl supports YAML and JSON as formats for the configuration files.
+SolidStateDetectors.jl supports [YAML](https://github.com/JuliaData/YAML.jl) and [JSON](https://github.com/JuliaIO/JSON.jl) as formats for the configuration files.
 
 ## Example Configuration Files
 
@@ -87,7 +87,7 @@ units:
 ```
 will lead to all `length` values to be parsed in units of `mm`, while all `angle` values will be parsed in units of `deg` (degree).
 
-The configuration files also allow for directly passing units to the values that will be parsed using `uparse` from the Unitful.jl package, e.g.
+The configuration files also allow for directly passing units to the values that will be parsed using `uparse` from the [Unitful.jl](https://github.com/PainterQubits/Unitful.jl) package, e.g.
 ```yaml
 units: 
   length: mm
@@ -114,7 +114,7 @@ tube:
     to: 4cm
   h: 6cm
 ```
-In the last example, even if the `length` unit was set to `mm`, the values will be parsed in units of `cm`. Please note to not leave a white space between the value and the unit and to use the Unitful.jl notation.
+In the last example, even if the `length` unit was set to `mm`, the values will be parsed in units of `cm`. Please note to not leave a white space between the value and the unit and to use the [Unitful.jl](https://github.com/PainterQubits/Unitful.jl) notation.
 
 
 
@@ -237,8 +237,8 @@ The different fields of the bulk are:
 - `material`: the material of the bulk. This is important to know the electric properties of the bulk for the electric potential calculation. Possible choices are `HPGe` (high-purity germanium) and `Si` (silicon).
 - `temperature` (optional): the temperature of the bulk. If no `temperature` is given, the default is 78K for germanium and 293K for all other materials.
 - `impurity_density` (optional): the distribution of impurities in the semiconductor material. This has a strong impact on the electric potential calculation. If no `impurity_density` is given, the default is an impurity-free material ($\rho(\vec{r}) = 0$).
-- `charge_drift_model` (optional): a model to describe the drift of charge carriers in the semiconductor material. If no `charge_drift_model` is given, the default is `ElectricFieldChargeDriftModel`. Find a detailed description on how to define a charge drift model [here](Custom-Charge-Drift-Model).
-- `geometry`: the geometry of the semiconductor object. Find a detailed description on how to define geometries in the section CSG.
+- `charge_drift_model` (optional): a model to describe the drift of charge carriers in the semiconductor material. If no `charge_drift_model` is given, the default is `ElectricFieldChargeDriftModel`. Find a detailed description  on how to define an own model under [Custom Charge Drift Model](@ref).
+- `geometry`: the geometry of the semiconductor object. Find a detailed description on how to define geometries under [Constructive Solid Geometry (CSG)](@ref).
 
 
 
@@ -265,7 +265,7 @@ The different fields of a contact are:
 - `channel`: a unique id of the contact that will unambiguously identify the contact, for example in the signal generation. All contacts should be given an integer id, ideally from 1 to N where N is the number of contacts.
 - `potential`: the electric potential applied to the contact that is fixed throughout the whole contact geometry. This value can be parsed with units (`5000V`) or without (`0` with the units defined in the `units` section).
 - `material` (optional): the material of the contact. This is important to know the electric properties of the contact for the electric potential calculation. If no `material` is given, the default is `HPGe` (high-purity germanium).
-- `geometry`: the geometry of the contact. Find a detailed description on how to define geometries in the section CSG.
+- `geometry`: the geometry of the contact. Find a detailed description on how to define geometries under [Constructive Solid Geometry (CSG)](@ref).
 
 
 
@@ -293,8 +293,8 @@ The different fields of a passive are:
 - `potential` (optional): the electric potential to which the passive object is fixed. This value can be parsed with units (`5000V`) or without (`0` with the units defined in the `units` section). If no `potential` is given, the passive object will be treated as floating. 
 - `temperature` (optional): the temperature of the passive object. This value can be parsed with units (`293K`) or without (`78` with the units defined in the `units` section). If no `temperature` is given, the default is `293K`.
 - `material`: the material of the passive object. This is important to know the electric properties of the contact for the electric potential calculation.
-- `charge_density` (optional): model to describe charge density distributions within the passive object, e.g. charged surfaces. Find a detailed description on how to define charge densities in the section Charge Density.
-- `geometry`: the geometry of the contact. Find a detailed description on how to define geometries in the section CSG.
+- `charge_density` (optional): model to describe charge density distributions within the passive object, e.g. charged surfaces. Find a detailed description on how to define charge densities under Charge Density.
+- `geometry`: the geometry of the contact. Find a detailed description on how to define geometries in the section under [Constructive Solid Geometry (CSG)](@ref).
 
 
 
@@ -335,7 +335,7 @@ The definition of passive objects in the `surroundings` array is equal to that i
 ## Splitting Configuration Files
 
 Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
-files into smaller ones and loading them using the `include` keyword. This feature supports YAML and JSON files.
+files into smaller ones and loading them using the `include` keyword. This feature supports [YAML](https://github.com/JuliaData/YAML.jl) and [JSON](https://github.com/JuliaIO/JSON.jl) files.
 
 When including a separate file, the user has to add its file path in the main configuration file at the place it supposed to be added. To identify the file, set the key of this entry to `include`. Here, the user can also give an array of file paths. The file paths can be relative to the path of the configuration file or absolute. When including nested files and using relative paths, please always refer to the last parent file.
 
