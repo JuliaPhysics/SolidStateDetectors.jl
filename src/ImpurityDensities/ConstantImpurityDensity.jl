@@ -1,7 +1,7 @@
 """
     struct ConstantImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-Returns always a fixed Impurity density.
+Returns always a fixed impurity density.
 """
 struct ConstantImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T} 
     ρ::T
@@ -23,9 +23,9 @@ end
 
 
 function ConstantImpurityDensity{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T)::ConstantImpurityDensity{T} where {T <: SSDFloat}
-    ρ::T = if haskey(dict, "Impurity_density")   
+    ρ::T = if haskey(dict, "value")   
         # geom_round(unit_factor * T(dict["Impurity_density"]))
-        unit_factor * T(dict["Impurity_density"])
+        unit_factor * T(dict["value"])
     else
         T(0)
     end
