@@ -80,6 +80,7 @@ materials = Dict{String, Symbol}(
     "Copper" => :Co,
     "copper" => :Co,
     "Al"  => :Al,
+    "LAr" => :LAr,
     "CZT" => :CdZnTe,
     "Si" => :Si
 )
