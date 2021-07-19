@@ -709,12 +709,12 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `max_refinements::Int`: Number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
-- `refinement_limits::Tuple{<:Real, <:Real, <:Real}`: Tuple of refinement limits for each dimension
-    (in case of cylindrical coordinates the order is `r`, `φ`, `z`).
-    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the
-    maximum allowed voltage difference between two neighbouring grid points in the respective dimension.
-    When the difference is larger, new points are created inbetween. Default is `[1e-5, 1e-5, 1e-5]`.
+- `refinement_limits: Defines the maximum relative (to applied bias voltage) allowed differences of the potential value of neighboured grid points
+    in each dimension for each refinement.
+        * l::Real -> One refinement with `l` equal in all 3 dimensions
+        * l::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
+        * l::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
+        * l::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
 - `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
     For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
     It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
@@ -750,12 +750,12 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `max_refinements::Int`: Number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
-- `refinement_limits::Tuple{<:Real, <:Real, <:Real}`: Tuple of refinement limits for each dimension
-    (in case of cylindrical coordinates the order is `r`, `φ`, `z`).
-    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the
-    maximum allowed voltage difference between two neighbouring grid points in the respective dimension.
-    When the difference is larger, new points are created inbetween. Default is `[1e-5, 1e-5, 1e-5]`.
+- `refinement_limits: Defines the maximum relative (to applied bias voltage) allowed differences of the potential value of neighboured grid points
+    in each dimension for each refinement.
+        * l::Real -> One refinement with `l` equal in all 3 dimensions
+        * l::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
+        * l::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
+        * l::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
 - `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim)`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
@@ -834,8 +834,12 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
 end
 
 """
-    function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false,
-                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
+    function simulate!(sim::Simulation{T};  refinement_limits = [0.2, 0.1, 0.05],
+                            max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                            max_distance_ratio::Real = 5,
+                            verbose::Bool = false,
+                            depletion_handling::Bool = false, 
+                            convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
 
 ToDo...
 """
