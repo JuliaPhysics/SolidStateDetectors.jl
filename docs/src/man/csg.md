@@ -11,6 +11,8 @@ can be specified in the configuration files.
 The boolean operators are `union`, `difference` and `intersection`:
 ### Union
 
+![CSGUnion](../assets/CSGUnion.png?raw=true)
+
 ```yaml
 geometry:
   type: union # A || B
@@ -27,6 +29,8 @@ geometry:
 
 ### Difference
 
+![CSGDifference](../assets/CSGDifference.png?raw=true)
+
 ```yaml
 geometry: # A && !B
   type: difference
@@ -40,6 +44,8 @@ geometry: # A && !B
 ```
 
 ### Intersection
+
+![CSGIntersection](../assets/CSGIntersection.png?raw=true)
 
 ```yaml
 geometry: # A && B
