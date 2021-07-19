@@ -32,7 +32,7 @@ plot(
 # Next, calculate the electric potential:
 
 calculate_electric_potential!( simulation,
-                               max_refinements = 3)
+                               refinement_limits = [0.2, 0.1, 0.05, 0.01])
 
 plot(
     plot(simulation.electric_potential, φ = 20), # initial electric potential (boundary conditions)
@@ -63,7 +63,7 @@ simulation_undep.detector = SolidStateDetector(simulation_undep.detector, contac
 calculate_electric_potential!( simulation_undep,
                                depletion_handling = true,
                                convergence_limit=1e-6,
-                               max_refinements = 3,
+                               refinement_limits = [0.2, 0.1, 0.05, 0.01],
                                verbose = false)
 
 
@@ -141,7 +141,7 @@ plot!(event.drift_paths)
 # We need weighting potentials to simulate the detector charge signal induced by drifting charges. We'll calculate the weighting potential for the point contact and the outer shell of the detector:
 
 for contact in simulation.detector.contacts
-    calculate_weighting_potential!(simulation, contact.id, max_refinements = 3, n_points_in_φ = 2, verbose = false)
+    calculate_weighting_potential!(simulation, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
 end
 
 plot(
