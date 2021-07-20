@@ -3,6 +3,7 @@ const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, Weigh
 ScalarPotential(::ElectricPotential, data, grid) = ElectricPotential(data, grid)
 ScalarPotential(::WeightingPotential, data, grid) = WeightingPotential(data, grid)
 ScalarPotential(::PointTypes, data, grid) = PointTypes(data, grid)
+ScalarPotential(::EffectiveChargeDensity, data, grid) = EffectiveChargeDensity(data, grid)
 
 get_axes_type(p::ScalarPotential{T, N, S, AT}) where {T, N, S, AT} = AT
 get_axes_type(::Type{<:ScalarPotential{T, N, S, AT}}) where {T, N, S, AT} = AT
