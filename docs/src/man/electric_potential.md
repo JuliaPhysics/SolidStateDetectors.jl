@@ -95,7 +95,7 @@ If no units are given, `init` is parsed in units of `units.length`$^{-3}$ and `g
 
 ### Custom Impurity Density
 
-The source code for the previously introduced impurity densities can be found [here](../../../src/ImpurityDensities). More complex impurity density profiles can be defined by the user.
+The source code for the previously introduced impurity densities can be found [here](../../../../src/ImpurityDensities). More complex impurity density profiles can be defined by the user.
 Each custom impurity density is a new `struct` and subtype of `SolidStateDetectors.AbstractImpurityDensity`
 and needs a method `SolidStateDetectors.get_impurity_density` that returns the impurity density at a given point `pt`.
 
