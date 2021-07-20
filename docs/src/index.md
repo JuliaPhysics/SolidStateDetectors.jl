@@ -15,16 +15,19 @@ Pages = ["man/csg.md"]
 Pages = ["man/primitives.md"]
 ```
 ```@contents
-Pages = ["man/electric_potentials.md"]
+Pages = ["man/transformations.md"]
+```
+```@contents
+Pages = ["man/electric_potential.md"]
 ```
 ```@contents
 Pages = ["man/weighting_potentials.md"]
 ```
 ```@contents
-Pages = ["man/electric_fields.md"]
+Pages = ["man/electric_field.md"]
 ```
 ```@contents
-Pages = ["man/drift_fields.md"]
+Pages = ["man/charge_drift.md"]
 ```
 ```@contents
 Pages = ["man/IO.md"]

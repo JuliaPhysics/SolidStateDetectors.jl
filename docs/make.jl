@@ -39,6 +39,7 @@ makedocs(
             "Geometries (CSG)" => Any[
                 "CSG" => "man/csg.md",
                 "Primitives" => "man/primitives.md",
+                "Transformations" => "man/transformations.md"
             ],
             "Electric Potential" => "man/electric_potential.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
