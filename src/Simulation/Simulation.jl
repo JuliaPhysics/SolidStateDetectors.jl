@@ -197,7 +197,7 @@ function Grid(  sim::Simulation{T, Cylindrical};
     max_distance_φ = T(world_Δφ / 4)
     max_distance_r = T(world_Δr / 4)
     if !ismissing(max_tick_distance)
-        if max_tick_distance isa Quantity{<:Real, Unitful.𝐋}
+        if max_tick_distance isa length_unit
             max_distance_z = max_distance_r = T(to_internal_units(internal_length_unit, max_tick_distance))
             max_distance_φ = max_distance_z / world_r_mid
         else #if max_tick_distance isa Tuple{length_unit, angle_unit, length_unit}
@@ -313,7 +313,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     min_max_distance = min(max_distance_x, max_distance_y, max_distance_z)
     max_distance_x = max_distance_y = max_distance_z = min_max_distance
     if !ismissing(max_tick_distance)
-        if max_tick_distance isa Quantity{<:Real, Unitful.𝐋}
+        if max_tick_distance isa length_unit
             max_distance_x = max_distance_y = max_distance_z = 
                 T(to_internal_units(internal_length_unit, max_tick_distance))
         else
@@ -613,7 +613,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         end
         min_tick_distance::NTuple{3, T} = if CS == Cylindrical
             if !ismissing(min_tick_distance)
-                if min_tick_distance isa Quantity{<:Real, Unitful.𝐋}
+                if min_tick_distance isa length_unit
                     world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
                     min_distance_z = min_distance_r = T(to_internal_units(internal_length_unit, min_tick_distance))
                     min_distance_r, min_distance_z / world_r_mid, min_distance_z
@@ -627,7 +627,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             end
         else
             if !ismissing(min_tick_distance)
-                if min_tick_distance isa Quantity{<:Real, Unitful.𝐋}
+                if min_tick_distance isa length_unit
                     min_distance = T(to_internal_units(internal_length_unit, min_tick_distance))
                     min_distance, min_distance, min_distance
                 else
@@ -740,7 +740,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
     - `rl::Real` -> One refinement with `l` equal in all 3 dimensions
     - `rl::Tuple{<:Real,<:Real,<:Real}`` -> One refinement with `l` set individual for each dimension
     - `rl::Vector{<:Real}`` -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
-    - `rl::Vector{<:Real,<:Real,<:Real}}`` `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
+    - `rl::Vector{<:Real,<:Real,<:Real}}`` -> `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
 - `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the mimimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
 - `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
@@ -786,7 +786,7 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
     - rl::Real -> One refinement with `l` equal in all 3 dimensions
     - rl::Tuple{<:Real,<:Real,<:Real} -> One refinement with `l` set individual for each dimension
     - rl::Vector{<:Real} -> `length(l)` refinements with `l[i]` being the limit for the i-th refinement. 
-    - rl::Vector{<:Real,<:Real,<:Real}} `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
+    - rl::Vector{<:Real,<:Real,<:Real}} -> `length(l)` refinements with `l[i]` being the limits for the i-th refinement.
 - `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the mimimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
 - `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
