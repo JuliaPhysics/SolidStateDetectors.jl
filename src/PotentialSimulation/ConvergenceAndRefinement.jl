@@ -127,7 +127,7 @@ function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T},
             end
         end
     end
-    return _convert_closed_potential(typeof(p), ElectricPotential(new_data, new_grid))
+    return _convert_to_original_potential(p, new_data, new_grid)
 end             
 
 function interpolate_closed_potential(p::ScalarPotential, ::Val{true}) where {T}
@@ -138,8 +138,8 @@ function interpolate_closed_potential(p::ScalarPotential, ::Val{false}) where {T
 end
 
 _get_closed_ticks(ticks::Vector{T}, int::ClosedInterval{T}) where {T} = ticks
-_get_closed_ticks(ticks::Vector{T}, int::Interval{:closed, :open, T}) where {T} = vcat(ticks, [int.right])
-_get_closed_ticks(ticks::Vector{T}, int::Interval{:open, :closed, T}) where {T} = vcat([int.left], ticks)
+_get_closed_ticks(ticks::Vector{T}, int::Interval{:closed, :open, T}) where {T} = vcat(ticks, int.right)
+_get_closed_ticks(ticks::Vector{T}, int::Interval{:open, :closed, T}) where {T} = vcat(int.left, ticks)
 
 _get_closed_values(values::Array{T,3}, dim::Int, int::ClosedInterval{T}) where {T} = values
 
@@ -183,20 +183,21 @@ function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
     closed_axes = broadcast(i -> _get_closed_axis(g.axes[i]), (1, 2, 3))
     AT = typeof(closed_axes)
     closed_grid = Grid{T, 3, CS, AT}(closed_axes)
-    ElectricPotential{T, 3, CS, AT}(closed_values, closed_grid) 
+    ScalarPotential(p, closed_values, closed_grid)
 end
 
+
 """
-    _convert_closed_potential(::Type{P}, p::ScalarPotential{T,3,CS}) where {P, T, CS}
+    _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
 
 Basically the counterpart to `_get_closed_potential`.
 """
-function _convert_closed_potential(::Type{P}, p::ScalarPotential{T,3,CS}) where {P, T, CS}
-    AT = get_axes_type(P)
-    ATs = get_axes_type(AT)
-    axs = broadcast(i -> _convert_closed_axis(ATs[i], p.grid.axes[i]), (1, 2, 3))
-    values = _reduce_closed_values(ATs, p.data)
-    P(values, Grid{T,3,CS,typeof(axs)}(axs))
+function _convert_to_original_potential(p::ScalarPotential{T,3,CS,ATO}, data::Array{T, 3}, grid::Grid{T, 3, CS, AT}) where {T, CS, AT, ATO}
+    ATs = get_axes_type(ATO)
+    axs = broadcast(i -> _convert_closed_axis(ATs[i], grid.axes[i]), (1, 2, 3))
+    new_data = _reduce_closed_values(ATs, data)
+    new_grid = Grid{T,3,CS,ATO}(axs)
+    ScalarPotential(p, new_data, new_grid)
 end
 
 _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, I}}, ax::DiscreteAxis{T, BL, BR, I}) where {T, BL, BR, I} = ax
@@ -219,9 +220,9 @@ _get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, Interval{:o
 
 
 function _create_refined_grid(p::ScalarPotential{T,3}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
-    n_1 = Int.(floor.([maximum(abs.(p.data[i+1,:,:] .- p.data[i,:,:])) for i in 1:size(p.data, 1)-1] ./ max_diffs[1], digits=0)) 
-    n_2 = Int.(floor.([maximum(abs.(p.data[:,i+1,:] .- p.data[:,i,:])) for i in 1:size(p.data, 2)-1] ./ max_diffs[2], digits=0)) 
-    n_3 = Int.(floor.([maximum(abs.(p.data[:,:,i+1] .- p.data[:,:,i])) for i in 1:size(p.data, 3)-1] ./ max_diffs[3], digits=0)) 
+    n_1 = floor.(Int, [maximum(abs.(p.data[i+1,:,:] .- p.data[i,:,:])) for i in 1:size(p.data, 1)-1] ./ max_diffs[1]) 
+    n_2 = floor.(Int, [maximum(abs.(p.data[:,i+1,:] .- p.data[:,i,:])) for i in 1:size(p.data, 2)-1] ./ max_diffs[2]) 
+    n_3 = floor.(Int, [maximum(abs.(p.data[:,:,i+1] .- p.data[:,:,i])) for i in 1:size(p.data, 3)-1] ./ max_diffs[3]) 
     ns = (n_1, n_2, n_3)
     widths = diff.((p.grid.axes[1].ticks, p.grid.axes[2].ticks, p.grid.axes[3].ticks))
     sub_widths = broadcast(ia -> [widths[ia][i] / (ns[ia][i]+1) for i in eachindex(ns[ia])], (1,2,3))
@@ -261,8 +262,5 @@ function _refine_axis(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, ns::
 end
 
 
-function _extend_refinement_limits(rl::Union{<:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}})
-    0
-end
 _extend_refinement_limits(rl::Real) = (rl, rl, rl )
 _extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl

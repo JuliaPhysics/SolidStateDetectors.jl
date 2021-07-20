@@ -1,5 +1,9 @@
 const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, WeightingPotential{T, N, S, AT}, PointTypes{T, N, S, AT}, EffectiveChargeDensity{T, N, S, AT}}
 
+ScalarPotential(::ElectricPotential, data, grid) = ElectricPotential(data, grid)
+ScalarPotential(::WeightingPotential, data, grid) = WeightingPotential(data, grid)
+ScalarPotential(::PointTypes, data, grid) = PointTypes(data, grid)
+
 get_axes_type(p::ScalarPotential{T, N, S, AT}) where {T, N, S, AT} = AT
 get_axes_type(::Type{<:ScalarPotential{T, N, S, AT}}) where {T, N, S, AT} = AT
 get_axes_type(::Type{Tuple{AT1, AT2, AT3}}) where {AT1, AT2, AT3} = (AT1, AT2, AT3)
@@ -19,14 +23,13 @@ function getindex(ep::P, g::Grid{T, N, S}) where {T, N, S, P <: ScalarPotential{
     return P(data, g)
 end
 
-
-function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T}) where {T}
+function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :periodic, :periodic}, int::Interval{:closed, :open, AT}) where {T, AT}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = length( axφ )
-    Δφ::T = int.right - int.left
-    new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
+    Δφ::AT = int.right - int.left
+    new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(0, 2π)
     n::Int = Int(round(T(2π) / Δφ, sigdigits = 6))
-    new_ticks::Vector{T} = Vector{T}(undef, l * n)
+    new_ticks::Vector{AT} = Vector{AT}(undef, l * n)
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), l * n, size(sp, 3))
     for idx_n in 1:n
         for il in 1:l
@@ -35,20 +38,20 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
             new_pot[:, idx, :] = sp[:, il, :]
         end
     end
-    new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
+    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
-    new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    PT = nameof(typeof(sp))
-    new_sp = eval(PT)( new_pot, new_grid )
-    return new_sp
+    new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+    ScalarPotential(sp, new_pot, new_grid)
 end
 
-function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T}) where {T}
+
+
+function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT}) where {T, AT}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = 2 * length( axφ ) - 2
-    Δφ::T = int.right - int.left
-    new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(int.left, int.right + Δφ)
-    new_ticks::Vector{T} = Vector{T}(undef, l)
+    Δφ::AT = int.right - int.left
+    new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(int.left, int.right + Δφ)
+    new_ticks::Vector{AT} = Vector{AT}(undef, l)
     new_ticks[1:length( axφ )] = collect(axφ.ticks)
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), l, size(sp, 3))
     new_pot[:, 1:length( axφ ), :] = sp.data[:, :, :]
@@ -56,31 +59,26 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
         new_ticks[length(axφ) + i] = 2 * int.right - axφ.ticks[length(axφ) - i]
         new_pot[:, length(axφ) + i, :] = sp[:, length(axφ) - i, :]
     end
-    new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
+    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
-    new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    PT = nameof(typeof(sp))
-    new_sp = eval(PT)( new_pot, new_grid )
-    return get_2π_potential(new_sp, new_axφ, new_int)
-    # return new_sp
+    new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+    ScalarPotential(sp, new_pot, new_grid)
 end
 
-function extend_2D_to_3D_by_n_points(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{T, :reflecting, :reflecting}, int::Interval{:closed, :closed, T},
-        n_points_in_φ::Int ) where {T}
-    new_int::Interval{:closed, :open, T} = Interval{:closed, :open, T}(0, 2π)
-    new_ticks::Vector{T} = Vector{T}(undef, n_points_in_φ)
+function extend_2D_to_3D_by_n_points(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT},
+        n_points_in_φ::Int ) where {T, AT}
+    new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(0, 2π)
+    new_ticks::Vector{AT} = Vector{AT}(undef, n_points_in_φ)
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), n_points_in_φ, size(sp, 3))
-    Δφ::T = 2π / n_points_in_φ
+    Δφ::AT = 2π / n_points_in_φ
     for i in 1:n_points_in_φ
         new_ticks[i] = (i - 1) * Δφ
         new_pot[:, i, :] = sp[:, 1, :]
     end
-    new_axφ = DiscreteAxis{T, :periodic, :periodic}( new_int, new_ticks )
+    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
-    new_grid = Grid{T, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    PT = nameof(typeof(sp))
-    new_sp = eval(PT)( new_pot, new_grid )
-    return new_sp
+    new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+    ScalarPotential(sp, new_pot, new_grid)
 end
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}; n_points_in_φ::Union{Missing, Int} = missing) where {T}
