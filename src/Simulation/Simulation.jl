@@ -553,7 +553,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
                     update_other_fields::Bool = false) where {T <: SSDFloat}
-    sim.electric_potential = refine(sim.electric_potential, max_diffs, minimum_distances)
+    sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
         fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
@@ -575,7 +575,7 @@ Takes the current state of `sim.weighting_potentials[contact_id]` and refines it
 function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int,
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0))) where {T <: SSDFloat}
-    sim.weighting_potentials[contact_id] = refine(weighting_potentials[contact_id], max_diffs, minimum_distances)
+    sim.weighting_potentials[contact_id] = refine_scalar_potential(weighting_potentials[contact_id], max_diffs, minimum_distances)
     nothing
 end
 
