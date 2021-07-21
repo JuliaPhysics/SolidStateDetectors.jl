@@ -70,16 +70,3 @@ function union_angular_intervals(α::AbstractInterval{T}, β::AbstractInterval{T
         end
     end
 end
-
-function is_intersection_an_interval(α::AbstractInterval{T}, β::AbstractInterval{T}) where {T}
-    if (mod(α.right - α.left, T(2π)) == 0 || mod(β.right - β.left, T(2π)) == 0)
-        return true
-    elseif isnothing(union_angular_intervals(α, β))
-        return false
-    elseif (mod(α.left, T(2π)) == mod(β.right, T(2π)) && !_in_angular_interval_open(α.right, β)) ||
-           (mod(α.right, T(2π)) == mod(β.left, T(2π)) && !_in_angular_interval_open(α.left, β))
-        return false
-    else
-        return true
-    end
-end
