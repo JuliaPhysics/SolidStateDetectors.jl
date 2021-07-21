@@ -8,9 +8,9 @@ The weighting potential is a theoretical potential that describes what fraction 
 where $\Phi_i^w$ is the electric potential and $\epsilon_r$ is the dielectric distribution.
 
 
-The net charge induced on each electrode $C_i$, $Q_i$, is given by the Schockley-Ramo theorem which states
+The net charge induced on each electrode $C_i$, $Q_i$, by electrons and hole with absolute charge $Q$ is given by the Schockley-Ramo theorem:
 ```math
-Q_i = \sum\limits_\text{holes} \Phi_i^w(\vec{r}_h) -  \sum\limits_\text{electrons} \Phi_i^w(\vec{r}_e)
+Q_i = Q \left( \sum\limits_\text{holes} \Phi_i^w(\vec{r}_h) -  \sum\limits_\text{electrons} \Phi_i^w(\vec{r}_e) \right)
 ```
 
 
