@@ -73,7 +73,7 @@ function get_r_SSDInterval(T, dict, input_units::NamedTuple)
         from::T = 0 
         if "from" in keys(dict) @warn "ConfigFileWarning: \"from\" is not used in r-axis. It is fixed to 0." end
         # to::T = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length))) : throw(ConfigFileError("No \"to\" given for r-axis."))
-        to::T = "to" in keys(dict) ? ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length)) : throw(ConfigFileError("No \"to\" given for r-axis."))
+        to::T = "to" in keys(dict) ? _parse_value(T, dict["to"], input_units.length) : throw(ConfigFileError("No \"to\" given for r-axis."))
         if from < 0 throw(ConfigFileError("left boundary of r-axis cannot be negative.")) end 
         if to < 0 throw(ConfigFileError("right boundary of r-axis cannot be negative.")) end 
         L = :closed
@@ -90,10 +90,8 @@ end
 function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)
     if haskey(dict, "phi")
         dp = dict["phi"]
-        # from::T = "from" in keys(dp) ? geom_round(ustrip(uconvert(internal_angle_unit, T(dp["from"]) * input_units.angle))) : T(0)
-        # to::T = "to" in keys(dp) ? geom_round(ustrip(uconvert(internal_angle_unit, T(dp["to"]) * input_units.angle))) : T(2π)
-        from::T = "from" in keys(dp) ? ustrip(uconvert(internal_angle_unit, T(dp["from"]) * input_units.angle)) : T(0)
-        to::T = "to" in keys(dp) ? ustrip(uconvert(internal_angle_unit, T(dp["to"]) * input_units.angle)) : T(2π)
+        from::T = "from" in keys(dp) ?  _parse_value(T, dp["from"], input_units.angle) : T(0)
+        to::T = "to" in keys(dp) ? _parse_value(T, dp["to"], input_units.angle) : T(2π)
         L = :closed
         R = :open
         BL = :periodic
@@ -115,10 +113,8 @@ function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)
 end
 
 function get_cartesian_SSDInterval(T, dict::Dict, input_units::NamedTuple)
-    # from::T = "from" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["from"]) * input_units.length))) : 0
-    # to = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length))) : throw(ConfigFileError("No \"to\" given for z-axis."))
-    from::T = "from" in keys(dict) ? ustrip(uconvert(internal_length_unit, T(dict["from"]) * input_units.length)) : 0
-    to = "to" in keys(dict) ? ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length)) : throw(ConfigFileError("No \"to\" given for z-axis."))
+    from::T = "from" in keys(dict) ? _parse_value(T, dict["from"], input_units.length) : 0
+    to = "to" in keys(dict) ? _parse_value(T, dict["to"], input_units.length) : throw(ConfigFileError("No \"to\" given for z-axis."))
     L = :closed
     R = :closed
     BL, BR = :infinite, :infinite

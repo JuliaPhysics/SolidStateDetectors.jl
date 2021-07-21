@@ -24,6 +24,9 @@ from_internal_units(u_external::Unitful.Units, u_internal::Unitful.Units, x::Rea
 from_internal_units(u_external::typeof(Unitful.NoUnits), u_internal::Unitful.Units, x::AbstractArray{<:Real}) where {T<:Real} = x
 from_internal_units(u_external::Unitful.Units, u_internal::Unitful.Units, x::AbstractArray{<:Real}) where {T<:Quantity} = uconvert.(u_external, x * u_internal)
 
+_get_TDU(x::Quantity{T,D,U}) where {T,D,U} = T, D, U
+const length_unit = Quantity{<:Real, Unitful.𝐋}
+const angle_unit = Quantity{<:Real, NoDims, <:Union{_get_TDU(1u"rad")[3], _get_TDU(1u"°")[3]}}
 
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length

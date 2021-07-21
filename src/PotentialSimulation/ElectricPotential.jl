@@ -1,6 +1,6 @@
-struct ElectricPotential{T, N, S} <: AbstractArray{T, N}
+struct ElectricPotential{T, N, S, AT} <: AbstractArray{T, N}
     data::Array{T, N}
-    grid::Grid{T, N, S}
+    grid::Grid{T, N, S, AT}
 end
 
 @inline size(ep::ElectricPotential{T, N, S}) where {T, N, S} = size(ep.data)

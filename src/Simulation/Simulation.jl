@@ -175,112 +175,85 @@ end
 # Functions
 
 function Grid(  sim::Simulation{T, Cylindrical};
-                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
-                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
                 for_weighting_potential::Bool = false,
-                min_n_ticks::Int = 10,
-                max_tick_distance::Real = 1e-2,
+                max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                max_distance_ratio::Real = 5,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
-    if ismissing(init_grid_size)
-        world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
-        world_diffs[2] = world_diffs[2] * 0.3 * sim.world.intervals[1].right # in radiance
-        inds::Vector{Int} = sortperm([world_diffs...])
-        ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
-            inv(world_diffs[inds[1]])
-        elseif world_diffs[inds[2]] > 0
-            inv(world_diffs[inds[2]])
-        elseif world_diffs[inds[3]] > 0
-            inv(world_diffs[inds[3]])
-        else
-            error("This should not happen... World has no dimension")
-        end
-        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
-        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
-        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
-        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
-    end
-
-    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
-        T.(init_grid_spacing), true
-    else
-        missing, false
-    end
-    
-    samples::Vector{CylindricalPoint{T}} = sample(sim.detector, Cylindrical)
-   
+    detector = sim.detector
+    world = sim.world 
+                
+    samples::Vector{CylindricalPoint{T}} = sample(detector, Cylindrical)
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
 
-    push!(important_r_points, sim.world.intervals[1].left)
-    push!(important_r_points, sim.world.intervals[1].right)
+    world_Δz = world.intervals[3].right - world.intervals[3].left
+    world_Δφ = world.intervals[2].right - world.intervals[2].left
+    world_Δr = world.intervals[1].right - world.intervals[1].left
+    world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
+    
+    max_distance_z = T(world_Δz / 4)
+    max_distance_φ = T(world_Δφ / 4)
+    max_distance_r = T(world_Δr / 4)
+    if !ismissing(max_tick_distance)
+        if max_tick_distance isa length_unit
+            max_distance_z = max_distance_r = T(to_internal_units(internal_length_unit, max_tick_distance))
+            max_distance_φ = max_distance_z / world_r_mid
+        else #if max_tick_distance isa Tuple{length_unit, angle_unit, length_unit}
+            max_distance_r = T(to_internal_units(internal_length_unit, max_tick_distance[1]))
+            max_distance_φ = T(to_internal_units(internal_angle_unit,  max_tick_distance[2]))
+            max_distance_z = T(to_internal_units(internal_length_unit, max_tick_distance[3]))
+        end 
+    end
+
+    push!(important_r_points, world.intervals[1].left)
+    push!(important_r_points, world.intervals[1].right)
     important_r_points = unique!(sort!(important_r_points))
-    iL = searchsortedfirst(important_r_points, sim.world.intervals[1].left)
-    iR = searchsortedfirst(important_r_points, sim.world.intervals[1].right)
+    iL = searchsortedfirst(important_r_points, world.intervals[1].left)
+    iR = searchsortedfirst(important_r_points, world.intervals[1].right)
     important_r_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_points[iL:iR]))
     important_r_points = merge_close_ticks(important_r_points)
-    important_r_points = initialize_axis_ticks(important_r_points; max_ratio = 2.0)
-    if max_tick_distance isa Real
-        important_r_points = fill_up_ticks(important_r_points, T(max_tick_distance))
-    end
+    important_r_points = initialize_axis_ticks(important_r_points; max_ratio = T(max_distance_ratio))
+    important_r_points = fill_up_ticks(important_r_points, max_distance_r)
 
-    push!(important_z_points, sim.world.intervals[3].left)
-    push!(important_z_points, sim.world.intervals[3].right)
+    push!(important_z_points, world.intervals[3].left)
+    push!(important_z_points, world.intervals[3].right)
     important_z_points = unique!(sort!(important_z_points))
-    iL = searchsortedfirst(important_z_points, sim.world.intervals[3].left)
-    iR = searchsortedfirst(important_z_points, sim.world.intervals[3].right)
+    iL = searchsortedfirst(important_z_points, world.intervals[3].left)
+    iR = searchsortedfirst(important_z_points, world.intervals[3].right)
     important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
     important_z_points = merge_close_ticks(important_z_points)
-    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = 2.0)
-    if max_tick_distance isa Real
-        important_z_points = fill_up_ticks(important_z_points, T(max_tick_distance))
-    end
+    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
+    important_z_points = fill_up_ticks(important_z_points, max_distance_z)
 
-    push!(important_φ_points, sim.world.intervals[2].left)
-    push!(important_φ_points, sim.world.intervals[2].right)
+    push!(important_φ_points, world.intervals[2].left)
+    push!(important_φ_points, world.intervals[2].right)
     important_φ_points = unique!(sort!(important_φ_points))
-    iL = searchsortedfirst(important_φ_points, sim.world.intervals[2].left)
-    iR = searchsortedfirst(important_φ_points, sim.world.intervals[2].right)
+    iL = searchsortedfirst(important_φ_points, world.intervals[2].left)
+    iR = searchsortedfirst(important_φ_points, world.intervals[2].right)
     important_φ_points = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_points[iL:iR]))
     important_φ_points = merge_close_ticks(important_φ_points, min_diff = T(1e-3))
-    important_φ_points = initialize_axis_ticks(important_φ_points; max_ratio = 2.0)
-    if max_tick_distance isa Real
-        important_φ_points = fill_up_ticks(important_φ_points, 2*T(max_tick_distance) / (sim.world.intervals[1].right - sim.world.intervals[1].left))
-    end
+    important_φ_points = initialize_axis_ticks(important_φ_points; max_ratio = T(max_distance_ratio))
+    important_φ_points = fill_up_ticks(important_φ_points, max_distance_φ)
     
     # r
-    L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
-    int_r = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
-    ax_r::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_r, step = init_grid_spacing[1])
-    else
-        DiscreteAxis{BL, BR}(int_r, length = init_grid_size[1])
-    end
-    # rticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_r, important_r_points, atol = minimum(diff(ax_r.ticks))/4)
-    # rticks = merge_close_ticks(rticks)
-    rticks = important_r_points
-    ax_r = DiscreteAxis{T, BL, BR}(int_r, rticks)
-
+    L, R, BL, BR = get_boundary_types(world.intervals[1])
+    int_r = Interval{L, R, T}(world.intervals[1].left, world.intervals[1].right)
+    ax_r = DiscreteAxis{T, BL, BR}(int_r, important_r_points)
 
     # φ
-    L, R, BL, BR = get_boundary_types(sim.world.intervals[2])
-    int_φ = Interval{L, R, T}(sim.world.intervals[2].left, sim.world.intervals[2].right)
-    if full_2π == true || (for_weighting_potential && (sim.world.intervals[2].left != sim.world.intervals[2].right))
+    L, R, BL, BR = get_boundary_types(world.intervals[2])
+    int_φ = Interval{L, R, T}(world.intervals[2].left, world.intervals[2].right)
+    if full_2π == true || (for_weighting_potential && (world.intervals[2].left != world.intervals[2].right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
         int_φ = Interval{L, R, T}(0, 2π)
     end
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
-        if use_spacing
-            DiscreteAxis{BL, BR}(int_φ, step = init_grid_spacing[2])
-        else
-            DiscreteAxis{BL, BR}(int_φ, length = init_grid_size[2])
-        end
+        DiscreteAxis{T, BL, BR}(int_φ, important_φ_points)
     end
     if length(ax_φ) > 1
-        # φticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_φ, important_φ_points, atol = minimum(diff(ax_φ.ticks))/4)
-        # φticks = merge_close_ticks(φticks)
         φticks = if R == :open 
             important_φ_points[1:end-1]
         else
@@ -289,7 +262,6 @@ function Grid(  sim::Simulation{T, Cylindrical};
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
     int_φ = ax_φ.interval
-    # φticks = merge_close_ticks(ax_φ.ticks)
     if isodd(length(ax_φ)) && length(ax_φ) > 1 # must be even
         imax = findmax(diff(φticks))[2]
         push!(φticks, (φticks[imax] + φticks[imax+1]) / 2)
@@ -301,17 +273,9 @@ function Grid(  sim::Simulation{T, Cylindrical};
     end
 
     #z
-    L, R, BL, BR = get_boundary_types(sim.world.intervals[3])
-    int_z = Interval{L, R, T}(sim.world.intervals[3].left, sim.world.intervals[3].right)
-    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
-    else
-        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
-    end
-    # zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol=minimum(diff(ax_z.ticks))/2)
-    # zticks = merge_close_ticks(zticks)
-    zticks = important_z_points
-    ax_z = typeof(ax_z)(int_z, zticks)
+    L, R, BL, BR = get_boundary_types(world.intervals[3])
+    int_z = Interval{L, R, T}(world.intervals[3].left, world.intervals[3].right)
+    ax_z = DiscreteAxis{T, BL, BR}(int_z, important_z_points)
     if isodd(length(ax_z)) # must be even
         int_z = ax_z.interval
         zticks = ax_z.ticks
@@ -327,123 +291,89 @@ end
 
 
 function Grid(  sim::Simulation{T, Cartesian};
-                init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
-                init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real,}} = missing,
-                min_n_ticks::Int = 10,
-                max_tick_distance::Real = 1e-2,
+                max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, length_unit, length_unit}} = missing,
+                max_distance_ratio::Real = 5,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
-
-    if ismissing(init_grid_size)
-        world_diffs = [(getproperty.(sim.world.intervals, :right) .- getproperty.(sim.world.intervals, :left))...]
-        inds::Vector{Int} = sortperm([world_diffs...])
-        ratio::T = min_n_ticks * if world_diffs[inds[1]] > 0
-            inv(world_diffs[inds[1]])
-        elseif world_diffs[inds[2]] > 0
-            inv(world_diffs[inds[2]])
-        elseif world_diffs[inds[3]] > 0
-            inv(world_diffs[inds[3]])
-        else
-            error("This should not happen... World has no dimension")
-        end
-        init_grid_size_1::Int = convert(Int, round(ratio * world_diffs[1], RoundUp))
-        init_grid_size_2::Int = convert(Int, round(ratio * world_diffs[2], RoundUp))
-        init_grid_size_3::Int = convert(Int, round(ratio * world_diffs[3], RoundUp))
-        init_grid_size::NTuple{3, Int} = NTuple{3, T}( [init_grid_size_1, init_grid_size_2, init_grid_size_3] )
-    end
-
-    samples::Vector{CartesianPoint{T}} = sample(sim.detector, Cartesian)
-    
+    detector = sim.detector
+    world = sim.world 
+                
+    samples::Vector{CartesianPoint{T}} = sample(detector, Cartesian)
     important_x_points::Vector{T} = map(p -> p.x, samples)
     important_y_points::Vector{T} = map(p -> p.y, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
 
-    push!(important_x_points, sim.world.intervals[1].left)
-    push!(important_x_points, sim.world.intervals[1].right)
+    world_Δx = world.intervals[1].right - world.intervals[1].left
+    world_Δy = world.intervals[2].right - world.intervals[2].left
+    world_Δz = world.intervals[3].right - world.intervals[3].left
+    
+    max_distance_x = T(world_Δx / 4)
+    max_distance_y = T(world_Δy / 4)
+    max_distance_z = T(world_Δz / 4)
+    min_max_distance = min(max_distance_x, max_distance_y, max_distance_z)
+    max_distance_x = max_distance_y = max_distance_z = min_max_distance
+    if !ismissing(max_tick_distance)
+        if max_tick_distance isa length_unit
+            max_distance_x = max_distance_y = max_distance_z = 
+                T(to_internal_units(internal_length_unit, max_tick_distance))
+        else
+            max_distance_x = T(to_internal_units(internal_length_unit, max_tick_distance[1]))
+            max_distance_y = T(to_internal_units(internal_length_unit, max_tick_distance[2]))
+            max_distance_z = T(to_internal_units(internal_length_unit, max_tick_distance[3]))
+        end
+    end
+
+    push!(important_x_points, world.intervals[1].left)
+    push!(important_x_points, world.intervals[1].right)
     important_x_points = unique!(sort!(important_x_points))
-    iL = searchsortedfirst(important_x_points, sim.world.intervals[1].left)
-    iR = searchsortedfirst(important_x_points, sim.world.intervals[1].right)
+    iL = searchsortedfirst(important_x_points, world.intervals[1].left)
+    iR = searchsortedfirst(important_x_points, world.intervals[1].right)
     important_x_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_points[iL:iR]))
     important_x_points = merge_close_ticks(important_x_points)
-    important_x_points = initialize_axis_ticks(important_x_points; max_ratio = 2.0)
-    if max_tick_distance isa Real
-        important_x_points = fill_up_ticks(important_x_points, T(max_tick_distance))
-    end
+    important_x_points = initialize_axis_ticks(important_x_points; max_ratio = T(max_distance_ratio))
+    important_x_points = fill_up_ticks(important_x_points, max_distance_x)
 
-    push!(important_y_points, sim.world.intervals[2].left)
-    push!(important_y_points, sim.world.intervals[2].right)
+    push!(important_y_points, world.intervals[2].left)
+    push!(important_y_points, world.intervals[2].right)
     important_y_points = unique!(sort!(important_y_points))
-    iL = searchsortedfirst(important_y_points, sim.world.intervals[2].left)
-    iR = searchsortedfirst(important_y_points, sim.world.intervals[2].right)
+    iL = searchsortedfirst(important_y_points, world.intervals[2].left)
+    iR = searchsortedfirst(important_y_points, world.intervals[2].right)
     important_y_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_points[iL:iR]))
     important_y_points = merge_close_ticks(important_y_points)
-    important_y_points = initialize_axis_ticks(important_y_points; max_ratio = 2.0)
-    if max_tick_distance isa Real
-        important_y_points = fill_up_ticks(important_y_points, T(max_tick_distance))
-    end
+    important_y_points = initialize_axis_ticks(important_y_points; max_ratio = T(max_distance_ratio))
+    important_y_points = fill_up_ticks(important_y_points, max_distance_y)
 
-    push!(important_z_points, sim.world.intervals[3].left)
-    push!(important_z_points, sim.world.intervals[3].right)
+    push!(important_z_points, world.intervals[3].left)
+    push!(important_z_points, world.intervals[3].right)
     important_z_points = unique!(sort!(important_z_points))
-    iL = searchsortedfirst(important_z_points, sim.world.intervals[3].left)
-    iR = searchsortedfirst(important_z_points, sim.world.intervals[3].right)
+    iL = searchsortedfirst(important_z_points, world.intervals[3].left)
+    iR = searchsortedfirst(important_z_points, world.intervals[3].right)
     important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
     important_z_points = merge_close_ticks(important_z_points)
-    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = 2.0)
-    if max_tick_distance isa Real
-        important_z_points = fill_up_ticks(important_z_points, T(max_tick_distance))
-    end
-
-    init_grid_spacing, use_spacing::Bool = if !ismissing(init_grid_spacing)
-        T.(init_grid_spacing), true
-    else
-        missing, false
-    end
+    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
+    important_z_points = fill_up_ticks(important_z_points, max_distance_z)
 
     # x
-    L, R, BL, BR = get_boundary_types(sim.world.intervals[1])
-    int_x = Interval{L, R, T}(sim.world.intervals[1].left, sim.world.intervals[1].right)
-    ax_x::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_x, step = init_grid_spacing[1])
-    else
-        DiscreteAxis{BL, BR}(int_x, length = init_grid_size[1])
-    end
-    # xticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_x, important_x_points, atol = minimum(diff(ax_x.ticks)) / 2)
-    # xticks = merge_close_ticks(xticks)
-    xticks = important_x_points
-    ax_x = typeof(ax_x)(int_x, xticks)
+    L, R, BL, BR = get_boundary_types(world.intervals[1])
+    int_x = Interval{L, R, T}(world.intervals[1].left, world.intervals[1].right)
+    ax_x = DiscreteAxis{T, BL, BR}(int_x, important_x_points)
     if isodd(length(ax_x)) # RedBlack dimension must be of even length
         xticks = ax_x.ticks
-        push!(xticks, csg_round_lin((xticks[end] + xticks[end-1]) * 0.5))
+        imax = findmax(diff(xticks))[2]
+        push!(xticks, (xticks[imax] + xticks[imax+1]) / 2)
         sort!(xticks)
-        ax_x = DiscreteAxis{T, BL, BR}(int_x, xticks) # must be even
+        ax_x = typeof(ax_x)(int_x, xticks) # must be even
     end
     @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
 
     # y
-    L, R, BL, BR = get_boundary_types(sim.world.intervals[2])
-    int_y = Interval{L, R, T}(sim.world.intervals[2].left, sim.world.intervals[2].right)
-    ax_y::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_y, step = init_grid_spacing[2])
-    else
-        DiscreteAxis{BL, BR}(int_y, length = init_grid_size[2])
-    end
-    # yticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_y, important_y_points, atol = minimum(diff(ax_y.ticks)) / 2)
-    # yticks = merge_close_ticks(yticks)
-    yticks = important_y_points
-    ax_y = typeof(ax_y)(int_y, yticks)
+    L, R, BL, BR = get_boundary_types(world.intervals[2])
+    int_y = Interval{L, R, T}(world.intervals[2].left, world.intervals[2].right)
+    ax_y = DiscreteAxis{T, BL, BR}(int_y, important_y_points)
 
     # z
-    L, R, BL, BR = get_boundary_types(sim.world.intervals[3])
-    int_z = Interval{L, R, T}(sim.world.intervals[3].left, sim.world.intervals[3].right)
-    ax_z::DiscreteAxis{T, BL, BR} = if use_spacing
-        DiscreteAxis{BL, BR}(int_z, step = init_grid_spacing[3])
-    else
-        DiscreteAxis{BL, BR}(int_z, length = init_grid_size[3])
-    end
-    # zticks::Vector{T} = merge_axis_ticks_with_important_ticks(ax_z, important_z_points, atol = minimum(diff(ax_z.ticks)) / 2)
-    # zticks = merge_close_ticks(zticks)
-    zticks = important_z_points
-    ax_z = typeof(ax_z)(int_z, zticks)
+    L, R, BL, BR = get_boundary_types(world.intervals[3])
+    int_z = Interval{L, R, T}(world.intervals[3].left, world.intervals[3].right)
+    ax_z = DiscreteAxis{T, BL, BR}(int_z, important_z_points)
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end
@@ -651,17 +581,17 @@ end
 
 
 function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
-        init_grid_size::Union{Missing, NTuple{3, Int}} = missing,
-        init_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
         grid::Union{Missing, Grid{T}} = missing,
         convergence_limit::Real = 1e-7,
-        max_refinements::Int = 3,
-        refinement_limits::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
-        min_grid_spacing::Union{Missing, Tuple{<:Real,<:Real,<:Real}} = missing,
+        refinement_limits::Union{Missing, <:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}} = [0.2, 0.1, 0.05],
+        min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, <:Union{length_unit, angle_unit}, length_unit}} = missing,
+        max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, <:Union{length_unit, angle_unit}, length_unit}} = missing,
+        max_distance_ratio::Real = 5,
         depletion_handling::Bool = false,
         use_nthreads::Int = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
+        n_iterations_between_checks::Int = 1000,
         verbose::Bool = true,
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
@@ -671,7 +601,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         isWP::Bool = !isEP
         if isWP depletion_handling = false end
         if ismissing(grid)
-            grid = Grid(sim, init_grid_size = init_grid_size, init_grid_spacing = init_grid_spacing, for_weighting_potential = isWP)
+            grid = Grid(sim, for_weighting_potential = isWP, max_tick_distance = max_tick_distance, max_distance_ratio = max_distance_ratio)
         end
         if ismissing(sor_consts)
             sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -680,23 +610,45 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         elseif length(sor_consts) > 1 && CS == Cartesian
             sor_consts = T(sor_consts[1])
         end
-        if ismissing(refinement_limits)
-            refinement_limits::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
+        min_tick_distance::NTuple{3, T} = if CS == Cylindrical
+            if !ismissing(min_tick_distance)
+                if min_tick_distance isa length_unit
+                    world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
+                    min_distance_z = min_distance_r = T(to_internal_units(internal_length_unit, min_tick_distance))
+                    min_distance_r, min_distance_z / world_r_mid, min_distance_z
+                else 
+                    T(to_internal_units(internal_length_unit, min_tick_distance[1])),
+                    T(to_internal_units(internal_angle_unit,  min_tick_distance[2])),
+                    T(to_internal_units(internal_length_unit, min_tick_distance[3]))
+                end 
+            else
+                (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) 
+            end
+        else
+            if !ismissing(min_tick_distance)
+                if min_tick_distance isa length_unit
+                    min_distance = T(to_internal_units(internal_length_unit, min_tick_distance))
+                    min_distance, min_distance, min_distance
+                else
+                    T(to_internal_units(internal_length_unit, min_tick_distance[1])),
+                    T(to_internal_units(internal_length_unit, min_tick_distance[2])),
+                    T(to_internal_units(internal_length_unit, min_tick_distance[3]))
+                end
+            else
+                (T(1e-5), T(1e-5), T(1e-5))
+            end
         end
-        if ismissing(min_grid_spacing)
-            min_grid_spacing::NTuple{3, T} = CS == Cylindrical ? (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) : (T(1e-5), T(1e-5), T(1e-5))
-        end
-        n_iterations_between_checks::Int = div(10^7, length(grid))
-        if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
         if use_nthreads > Base.Threads.nthreads()
             use_nthreads = Base.Threads.nthreads();
             @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
         end
-        refine::Bool = max_refinements > 0 ? true : false
+        refine = !ismissing(refinement_limits)
+        if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
+        n_refinement_steps = length(refinement_limits)
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
         if CS == Cylindrical
             cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
-            n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3))
+            n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3)) 
             n_φ_sym_info_txt = if only_2d
                 "φ symmetry: Detector is φ-symmetric -> 2D computation."
             else
@@ -707,27 +659,18 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         bias_voltage::T = (length(contact_potentials) > 0) ? (maximum(contact_potentials) - minimum(contact_potentials)) : T(0)
         if isWP bias_voltage = T(1) end
         if verbose
+            sim_name = sim.config_dict["name"]
             println(
-                "$(isEP ? "Electric" : "Weighting") Potential Calculation\n",
+                "Simulation: $(sim_name)\n",
+                "$(isEP ? "Electric" : "Weighting") Potential Calculation$(isEP ? "" : " - ID: $contact_id")\n",
                 if isEP "Bias voltage: $(bias_voltage) V\n" else "" end,
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
                 "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n",
                 "Threads: $use_nthreads\n",
                 "Coordinate system: $(CS)\n",
-                "Initial grid dimension: $(size(grid))\n",
-                "Refine? -> $refine\n",
-                "Refinement parameters:\n",
-                "\tmaximum number of refinements: $(max_refinements)\n",
-                "\tminimum grid spacing:\n",
-                "\t\tr: $(min_grid_spacing[1]) m\n",
-                "\t\tφ: $(min_grid_spacing[2]) rad\n",
-                "\t\tz: $(min_grid_spacing[3]) m\n",
-                "\tRefinement limits:\n",
-                "\t\tr: $(refinement_limits[1]) -> $(round(abs(bias_voltage * refinement_limits[1]), sigdigits=2)) V\n",
-                "\t\tφ: $(refinement_limits[2]) -> $(round(abs(bias_voltage * refinement_limits[2]), sigdigits=2)) V\n",
-                "\t\tz: $(refinement_limits[3]) -> $(round(abs(bias_voltage * refinement_limits[3]), sigdigits=2)) V\n",
-                ""
+                "N Refinements: -> $(n_refinement_steps)\n",
+                "Initial grid size: $(size(grid))\n",
             )
         end
     end
@@ -749,54 +692,37 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                     sor_consts = sor_consts )
     end
 
-    refinement_counter::Int = 1
+    # refinement_counter::Int = 1
     if refine
-        max_diffs::NTuple{3, T} = abs.(refinement_limits .* bias_voltage)
-        refine_at_inds::NTuple{3, Vector{Int}} = if isEP
-            _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
-        else
-            _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
-        end
-        while any(!isempty, refine_at_inds[1]) && refinement_counter <= max_refinements
+        for iref in 1:n_refinement_steps
+            ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
-                sim.electric_potential = ElectricPotential(add_points_and_interpolate(
-                        sim.electric_potential.data, sim.electric_potential.grid, refine_at_inds...)...)
-                if verbose @info "New Grid Size = $(size(sim.electric_potential.grid))" end
-            else
-                sim.weighting_potentials[contact_id] = WeightingPotential(add_points_and_interpolate(
-                    sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, refine_at_inds...)...)
-                if verbose @info "New Grid Size = $(size(sim.weighting_potentials[contact_id].grid))" end
-            end
-            n_iterations_between_checks = div(10^7, length(isEP ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid))
-            if n_iterations_between_checks < 20 n_iterations_between_checks = 20 end
-
-            if isEP
+                max_diffs = abs.(ref_limits .* bias_voltage)
+                sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_tick_distance, only2d = Val(only_2d))
+                if verbose println("Grid size: $(size(sim.electric_potential.data))") end
                 update_till_convergence!( sim, potential_type, convergence_limit,
-                    n_iterations_between_checks = n_iterations_between_checks,
-                    max_n_iterations = max_n_iterations,
-                    depletion_handling = depletion_handling,
-                    use_nthreads = use_nthreads,
-                    sor_consts = sor_consts )
+                                                n_iterations_between_checks = n_iterations_between_checks,
+                                                max_n_iterations = max_n_iterations,
+                                                depletion_handling = depletion_handling,
+                                                use_nthreads = use_nthreads,
+                                                sor_consts = sor_consts )
             else
+                max_diffs = abs.(ref_limits)
+                sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_tick_distance, only2d = Val(only_2d))
+                if verbose println("Grid size: $(size(sim.weighting_potentials[contact_id].data))") end
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
-                                    n_iterations_between_checks = n_iterations_between_checks,
-                                    max_n_iterations = max_n_iterations,
-                                    depletion_handling = depletion_handling,
-                                    use_nthreads = use_nthreads,
-                                    sor_consts = sor_consts )
+                                                n_iterations_between_checks = n_iterations_between_checks,
+                                                max_n_iterations = max_n_iterations,
+                                                depletion_handling = depletion_handling,
+                                                use_nthreads = use_nthreads,
+                                                sor_consts = sor_consts )
             end
-
-            refine_at_inds = if isEP
-                _get_refinement_inds(sim.electric_potential.data, sim.electric_potential.grid, max_diffs, min_grid_spacing)
-            else
-                _get_refinement_inds(sim.weighting_potentials[contact_id].data, sim.weighting_potentials[contact_id].grid, max_diffs, min_grid_spacing)
-            end
-            refinement_counter += 1
         end
     end
-
     nothing
 end
+
+
 
 """
     calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int; kwargs...)::Nothing
@@ -804,25 +730,29 @@ end
 Compute the weighting potential for the contact with id `contact_id`
 for the given Simulation `sim` on an adaptive grid through successive over relaxation.
 
-There are serveral `<keyword arguments>` which can be used to tune the computation:
+There are several `<keyword arguments>` which can be used to tune the computation:
 
 # Keywords
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `max_refinements::Int`: Number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
-- `refinement_limits::Tuple{<:Real, <:Real, <:Real}`: Tuple of refinement limits for each dimension
-    (in case of cylindrical coordinates the order is `r`, `φ`, `z`).
-    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the
-    maximum allowed voltage difference between two neighbouring grid points in the respective dimension.
-    When the difference is larger, new points are created inbetween. Default is `[1e-5, 1e-5, 1e-5]`.
-- `init_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the initial distances between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
-    It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
-- `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
-    It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim, init_grid_spacing=init_grid_spacing)`.
+- `refinement_limits`: Defines the maximum relative (to applied bias voltage) allowed differences 
+    of the potential value of neighbored grid points 
+    in each dimension for each refinement.
+    - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions
+    - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension
+    - `rl::Vector{<:Real}` -> `length(l)` refinements with `rl[i]` being the limit for the i-th refinement. 
+    - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
+- `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
+    two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
+    Default is 1e-5 for linear axes and `0.25 * r_max` for the polar axis in case of a cylindrical grid.
+- `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
+    two grid ticks for each dimension used in the initialization of the grid.
+    Default is 1/4 of size of the world of the respective dimension.
+- `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+- `max_distance_ratio::Real`: Maximum allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
+        If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
+        Default is `5`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
@@ -837,25 +767,6 @@ There are serveral `<keyword arguments>` which can be used to tune the computati
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
-    # S = get_coordinate_system(sim)
-    # periodicity::T = get_periodicity(sim.world.intervals[2])
-    # if S == Cylindrical && periodicity == T(0)
-    #     if ismissing(n_points_in_φ)
-    #         @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
-    #         n_points_in_φ = 36
-    #     else
-    #         if !(n_points_in_φ > 1 && iseven(n_points_in_φ))
-    #             @info "\tIn weighing potential calculation: Keyword `n_points_in_φ` is $(n_points_in_φ) but must be even and larger than 1.\n\t\t`n_points_in_φ` is now set to 36. 2D field will be extended to 36 points in φ."
-    #             n_points_in_φ = 36
-    #         end
-    #     end
-    # end
-    # wps = calculate_weighting_potential(sim.detector, contact_id, args...; kwargs...)
-    # if S == Cylindrical && size(wps.potential, 2) == 1 && !ismissing(n_points_in_φ)
-    #     wp = WeightingPotential(wps, n_points_in_φ = n_points_in_φ)
-    # else
-    #     wp = WeightingPotential(wps)
-    # end
     _calculate_potential!(sim, WeightingPotential, contact_id, args...; kwargs...)
     nothing
 end
@@ -867,25 +778,29 @@ end
 Compute the electric potential for the given Simulation `sim` on an adaptive grid
 through successive over relaxation.
 
-There are serveral `<keyword arguments>` which can be used to tune the computation:
+There are several `<keyword arguments>` which can be used to tune the computation:
 
 # Keywords
 - `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `max_refinements::Int`: Number of maximum refinements. Default is `2`. Set it to `0` to switch off refinement.
-- `refinement_limits::Tuple{<:Real, <:Real, <:Real}`: Tuple of refinement limits for each dimension
-    (in case of cylindrical coordinates the order is `r`, `φ`, `z`).
-    A refinement limit (e.g. `refinement_limits[1]`) times the bias voltage of the detector `det` is the
-    maximum allowed voltage difference between two neighbouring grid points in the respective dimension.
-    When the difference is larger, new points are created inbetween. Default is `[1e-5, 1e-5, 1e-5]`.
-- `init_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the initial distances between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
-    It prevents the refinement to make the grid to fine. Default is `[0.005, 10.0, 0.005]``.
-- `min_grid_spacing::Tuple{<:Real, <:Real, <:Real}`: Tuple of the mimimum allowed distance between two grid points for each dimension.
-    For normal coordinates the unit is meter. For angular coordinates, the unit is radiance.
-    It prevents the refinement to make the grid to fine. Default is [`1e-6`, `1e-6`, `1e-6`].
-- `grid::Grid{T, N, S}`: Initial grid used to start the simulation. Default is `Grid(sim, init_grid_spacing=init_grid_spacing)`.
+- `refinement_limits`: Defines the maximum relative (to applied bias voltage) allowed differences 
+    of the potential value of neighbored grid points 
+    in each dimension for each refinement.
+    - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions
+    - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension
+    - `rl::Vector{<:Real}` -> `length(l)` refinements with `rl[i]` being the limit for the i-th refinement. 
+    - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
+- `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
+    two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
+    Default is 1e-5 for linear axes and `0.25 * r_max` for the polar axis in case of a cylindrical grid.
+- `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
+    two grid ticks for each dimension used in the initialization of the grid.
+    Default is 1/4 of size of the world of the respective dimension.
+- `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+- `max_distance_ratio::Real`: Maximum allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
+        If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
+        Default is `5`.
 - `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
 - `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
@@ -963,23 +878,84 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
 end
 
 """
-    function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false,
-                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-5 ) where {T <: SSDFloat}
+    function simulate!( sim::Simulation{T};  
+                    refinement_limits = [0.2, 0.1, 0.05],
+                    min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    max_distance_ratio::Real = 5,
+                    verbose::Bool = false,
+                    use_nthreads::Int = Base.Threads.nthreads(),
+                    sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
+                    max_n_iterations::Int = -1,
+                    depletion_handling::Bool = false, 
+                    convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
 
-ToDo...
+# Keywords
+- `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
+    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
+    Default of `convergence_limit` is `2e-6` (times bias voltage).
+- `refinement_limits`: Defines the maximum relative (to applied bias voltage) allowed differences 
+    of the potential value of neighbored grid points 
+    in each dimension for each refinement.
+    - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions
+    - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension
+    - `rl::Vector{<:Real}` -> `length(l)` refinements with `rl[i]` being the limit for the i-th refinement. 
+    - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
+- `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
+    two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
+    Default is 1e-5 for linear axes and `0.25 * r_max` for the polar axis in case of a cylindrical grid.
+- `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
+    two grid ticks for each dimension used in the initialization of the grid.
+    Default is 1/4 of size of the world of the respective dimension.
+- `max_distance_ratio::Real`: Maximum allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
+        If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
+        Default is `5`.
+- `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
+- `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
+    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+- `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
+    First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
+    In case of cartesian coordinates only one value is taken.
+- `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
+    Default is `-1`. If set to `-1` there will be no limit.
+- `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
-function simulate!(sim::Simulation{T};  max_refinements::Int = 1, verbose::Bool = false,
-                                        depletion_handling::Bool = false, convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
+function simulate!( sim::Simulation{T};  
+                    refinement_limits = [0.2, 0.1, 0.05],
+                    min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    max_distance_ratio::Real = 5,
+                    verbose::Bool = false,
+                    use_nthreads::Int = Base.Threads.nthreads(),
+                    sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
+                    max_n_iterations::Int = -1,
+                    depletion_handling::Bool = false, 
+                    convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim,
-                                    max_refinements = max_refinements,
+                                    refinement_limits = refinement_limits,
+                                    min_tick_distance = min_tick_distance,
+                                    max_tick_distance = max_tick_distance,
+                                    max_distance_ratio = max_distance_ratio,
+                                    use_nthreads = use_nthreads,
+                                    sor_consts = sor_consts,
+                                    max_n_iterations = max_n_iterations,
                                     verbose = verbose,
-                                    init_grid_size = (20,20,20),
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
-        calculate_weighting_potential!(sim, contact.id, max_refinements = max_refinements,
-                init_grid_size = (20,20,20),
-                verbose = verbose, convergence_limit = convergence_limit)
+        calculate_weighting_potential!(sim, contact.id, 
+                    refinement_limits = refinement_limits,
+                    min_tick_distance = min_tick_distance,
+                    max_tick_distance = max_tick_distance,
+                    max_distance_ratio = max_distance_ratio,
+                    use_nthreads = use_nthreads,
+                    sor_consts = sor_consts,
+                    max_n_iterations = max_n_iterations,
+                    verbose = verbose, 
+                    convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
     calculate_drift_fields!(sim)

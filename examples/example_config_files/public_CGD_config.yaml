@@ -24,7 +24,7 @@ detectors:
   - translate: 
       x: 0
     rotate: 
-      Z: 45
+      Z: 0
     semiconductor:
       material: HPGe
       temperature: 78

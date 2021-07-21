@@ -88,282 +88,178 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
 end
 
 
+"""
+    refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
+        only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
 
-function _get_refinement_inds( potential::Array{T, 3}, grid::Grid{T, 3, Cylindrical}, 
-                max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T <: SSDFloat}
-    inds_r::Vector{Int} = Int[]
-    inds_φ::Vector{Int} = Int[]
-    inds_z::Vector{Int} = Int[]
+Refine any scalar potential `p`. 
 
-    ax1::DiscreteAxis{T} = grid[1]
-    ax2::DiscreteAxis{T} = grid[2]
-    ax3::DiscreteAxis{T} = grid[3]
-    int1::Interval = ax1.interval
-    int2::Interval = ax2.interval
-    int3::Interval = ax3.interval
-
-    refinement_value_r::T = max_diffs[1]
-    refinement_value_φ::T = max_diffs[2]
-    refinement_value_z::T = max_diffs[3]
-
-    minimum_distance_r::T = minimum_distances[1]
-    minimum_distance_φ::T = minimum_distances[2]
-    minimum_distance_z::T = minimum_distances[3]
-
-    minimum_distance_φ_deg::T = rad2deg(minimum_distance_φ)
-
-    axr::Vector{T} = collect(grid.axes[1])
-    axφ::Vector{T} = collect(grid.axes[2])
-    axz::Vector{T} = collect(grid.axes[3])
-    cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
-
-    for iz in 1:size(potential, 3)
-        z = axz[iz]
-        for iφ in 1:size(potential, 2)
-            φ = axφ[iφ]
-            isum = iz + iφ
-            for ir in 1:size(potential, 1)
-                r = axr[ir]
-
-                # r
-                if ir != size(potential, 1)
-                    if abs(potential[ir + 1, iφ, iz] - potential[ir, iφ, iz]) >= refinement_value_r
-                        if axr[ir + 1] - axr[ir] > minimum_distance_r
-                            if !in(ir, inds_r) push!(inds_r, ir) end
-                        end
-                    end
-                end
-
-                # φ
-                if iφ == size(potential, 2)
-                    if typeof(int2).parameters[2] == :open # ugly solution for now. should be done over multiple dispatch..
-                        if abs(potential[ir, 1, iz] - potential[ir, iφ, iz]) >= refinement_value_φ
-                            if cyclic - axφ[iφ] > minimum_distance_φ
-                                if !in(iφ, inds_φ) push!(inds_φ, iφ) end
-                            end
-                        end
-                    end
-                else
-                    if abs(potential[ir, iφ + 1, iz] - potential[ir, iφ, iz]) >= refinement_value_φ
-                        if axφ[iφ + 1] - axφ[iφ] > minimum_distance_φ
-                            if !in(iφ, inds_φ) push!(inds_φ, iφ) end
-                        end
-                    end
-                end
-
-                # z
-                if iz != size(potential, 3)
-                    if abs(potential[ir, iφ, iz + 1] - potential[ir, iφ, iz]) >= refinement_value_z
-                        if axz[iz + 1] - axz[iz] > minimum_distance_z
-                            if !in(iz, inds_z) push!(inds_z, iz) end
-                        end
-                    end
-                end
-
+1. Extent the grid to be a closed grid in all dimensions. 
+2. Refine the axis of the grid based on `max_diffs` and `minimum_applied_potential`:
+   Insert N new ticks between to existing ticks such that the potential difference between each tick becomes
+   smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
+3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
+"""
+function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
+        only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
+    closed_potential = _get_closed_potential(p)
+    new_grid = _create_refined_grid(closed_potential, T.(max_diffs), T.(minimum_distances))
+    new_data = Array{T, 3}(undef, size(new_grid))
+    if only_2d
+        int = interpolate_closed_potential(closed_potential, only2d)
+        for i3 in axes(new_data, 3)
+            x3 = new_grid.axes[3].ticks[i3]
+            for i1 in axes(new_data, 1)
+                x1 = new_grid.axes[1].ticks[i1]
+                new_data[i1, 1, i3] = int(x1, x3)
             end
         end
-    end
-
-    if typeof(int2).parameters[2] == :open
-        if isodd(length(inds_φ))
-            for iφ in 1:size(potential, 2)
-                if !in(iφ, inds_φ) 
-                    if iφ != size(potential, 2)
-                        if axφ[iφ + 1] - axφ[iφ] > minimum_distance_φ
-                            append!(inds_φ, iφ)
-                            break
-                        end
-                    else 
-                        if cyclic - axφ[iφ] > minimum_distance_φ
-                            append!(inds_φ, iφ)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-        if isodd(length(inds_φ))
-            b::Bool = true
-            diffs = diff(axφ)
-            while b
-                if length(diffs) > 0
-                    idx = findmax(diffs)[2]
-                    if !in(idx, inds_φ)
-                        append!(inds_φ, idx)
-                        b = false
-                    else
-                        deleteat!(diffs, idx)
-                    end
-                else
-                    for i in eachindex(axφ)
-                        if !in(i, inds_φ) push!(inds_φ, i) end
-                    end
-                    b = false
-                end
-            end
-        end    
-        @assert iseven(length(inds_φ)) "Refinement would result in uneven grid in φ."
-    end
-
-    if isodd(length(inds_z))
-        for iz in 1:size(potential, 3)
-            if !in(iz, inds_z)
-                if iz != size(potential, 3)
-                    if axz[iz + 1] - axz[iz] > minimum_distance_z
-                        append!(inds_z, iz)
-                        break
-                    end
+    else
+        int = interpolate_closed_potential(closed_potential, only2d)
+        for i3 in axes(new_data, 3)
+            x3 = new_grid.axes[3].ticks[i3]
+            for i2 in axes(new_data, 2)
+                x2 = new_grid.axes[2].ticks[i2]
+                for i1 in axes(new_data, 1)
+                    x1 = new_grid.axes[1].ticks[i1]
+                    new_data[i1, i2, i3] = int(x1, x2, x3)
                 end
             end
         end
     end
-    if isodd(length(inds_z)) && ((length(inds_z) + 1) < length(axz))
-        b = true
-        diffs = diff(axz)
-        while b
-            if length(diffs) > 0
-                idx = findmax(diffs)[2]
-                if !in(idx, inds_z)
-                    append!(inds_z, idx)
-                    b = false
-                else
-                    deleteat!(diffs, idx)
-                end
-            else
-                for i in eachindex(axz[1:end-1])
-                    if !in(i, inds_z) push!(inds_z, i) end
-                end
-                b = false
-            end
-        end
-    end
-    if isodd(length(inds_z)) && (length(inds_z) > 1)
-        b = true
-        diffs = diff(axz)
-        while b && length(diffs) > 1
-            idx = findmin(diffs)[2]
-            if in(idx, inds_z)
-                deleteat!(inds_z, findfirst(i -> i == idx, inds_z))
-                b = false
-            else
-                deleteat!(diffs, idx)
-            end
-        end
-    end
-    if isodd(length(inds_z)) inds_z = inds_z[1:end-1] end
-    @assert iseven(length(inds_z)) "Refinement would result in uneven grid in z."
+    return _convert_to_original_potential(p, new_data, new_grid)
+end             
 
-    return sort!(inds_r), sort!(inds_φ), sort!(inds_z)
+function interpolate_closed_potential(p::ScalarPotential, ::Val{true}) where {T}
+    interpolate((p.grid.axes[1], p.grid.axes[3]), p.data[:,1,:], Gridded(Linear()))
+end
+function interpolate_closed_potential(p::ScalarPotential, ::Val{false}) where {T}
+    interpolate(p.grid.axes, p.data, Gridded(Linear()))
+end
+
+_get_closed_ticks(ticks::Vector{T}, int::ClosedInterval{T}) where {T} = ticks
+_get_closed_ticks(ticks::Vector{T}, int::Interval{:closed, :open, T}) where {T} = vcat(ticks, int.right)
+_get_closed_ticks(ticks::Vector{T}, int::Interval{:open, :closed, T}) where {T} = vcat(int.left, ticks)
+
+_get_closed_values(values::Array{T,3}, dim::Int, int::ClosedInterval{T}) where {T} = values
+
+function _get_closed_values(values::Array{T,3}, dim::Int, int::Interval{:closed, :open, T})::Array{T,3} where {T} 
+    if dim == 1
+        cat(values, values[1:1,:,:], dims=dim)
+    elseif dim == 2
+        cat(values, values[:,1:1,:], dims=dim)
+    else # dim == 3
+        cat(values, values[:,:,1:1], dims=dim)
+    end
+end
+function _get_closed_values(values::Array{T,3}, dim::Int, int::Interval{:open, :closed, T})::Array{T,3} where {T} 
+    if dim == 1
+        cat(values[end:end,:,:], values, dims=dim)
+    elseif dim == 2
+        cat(values[:,end:end,:], values, dims=dim)
+    else # dim == 3
+        cat(values[:,:,end:end], values, dims=dim)
+    end
+end
+
+function _get_closed_axis(ax::DiscreteAxis{T, BL, BR}) where {T, BL, BR}
+    ticks = _get_closed_ticks(ax.ticks, ax.interval)
+    return DiscreteAxis{T, BL, BR, ClosedInterval{T}}(ClosedInterval(ax.interval.left, ax.interval.right), ticks)
+end
+
+"""
+    _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
+
+Returns an closed Grid & Potential:
+E.g. if one of the axis is {:closed,:open} it will turn this into {:closed,:closed}
+and also extend the `data` field of the potential in the respective dimension and fill
+it with the respective values.
+"""
+function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
+    g = p.grid
+    closed_values = _get_closed_values(p.data, 1, g.axes[1].interval)
+    closed_values = _get_closed_values(closed_values, 2, g.axes[2].interval)
+    closed_values = _get_closed_values(closed_values, 3, g.axes[3].interval)
+    closed_axes = broadcast(i -> _get_closed_axis(g.axes[i]), (1, 2, 3))
+    AT = typeof(closed_axes)
+    closed_grid = Grid{T, 3, CS, AT}(closed_axes)
+    ScalarPotential(p, closed_values, closed_grid)
+end
+
+"""
+    _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
+
+Basically the counterpart to `_get_closed_potential`.
+"""
+function _convert_to_original_potential(p::ScalarPotential{T,3,CS,ATO}, data::Array{T, 3}, grid::Grid{T, 3, CS, AT}) where {T, CS, AT, ATO}
+    ATs = get_axes_type(ATO)
+    axs = broadcast(i -> _convert_closed_axis(ATs[i], grid.axes[i]), (1, 2, 3))
+    new_data = _reduce_closed_values(ATs, data)
+    new_grid = Grid{T,3,CS,ATO}(axs)
+    ScalarPotential(p, new_data, new_grid)
+end
+
+_convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, I}}, ax::DiscreteAxis{T, BL, BR, I}) where {T, BL, BR, I} = ax
+
+function _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}}, ax::DiscreteAxis{T, BL, BR, ClosedInterval{T}}) where {T, BL, BR}
+    DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}(Interval{:closed, :open, T}(ax.interval.left, ax.interval.right), ax.ticks[1:end-1])
+end
+function _convert_closed_axis(::Type{DiscreteAxis{T, BL, BR, Interval{:open, :closed, T}}}, ax::DiscreteAxis{T, BL, BR, ClosedInterval{T}}) where {T, BL, BR}
+    DiscreteAxis{T, BL, BR, Interval{:open, :closed, T}}(Interval{:open, :closed, T}(ax.interval.left, ax.interval.right), ax.ticks[2:end])
+end
+
+function _reduce_closed_values(axTypes::Tuple, a::Array{T, 3}) where {T} 
+   inds = broadcast(i -> _get_ind_range_of_closed_axis(size(a, i), axTypes[i]), (1, 2, 3))
+   a[inds...]
+end
+
+_get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, ClosedInterval{T}}}) where {T, BL, BR} = 1:l
+_get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, Interval{:closed, :open, T}}}) where {T, BL, BR} = 1:(l-1)
+_get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, Interval{:open, :closed, T}}}) where {T, BL, BR} = 2:l
+
+
+function _create_refined_grid(p::ScalarPotential{T,3}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
+    n_1 = floor.(Int, [maximum(abs.(p.data[i+1,:,:] .- p.data[i,:,:])) for i in 1:size(p.data, 1)-1] ./ max_diffs[1]) 
+    n_2 = floor.(Int, [maximum(abs.(p.data[:,i+1,:] .- p.data[:,i,:])) for i in 1:size(p.data, 2)-1] ./ max_diffs[2]) 
+    n_3 = floor.(Int, [maximum(abs.(p.data[:,:,i+1] .- p.data[:,:,i])) for i in 1:size(p.data, 3)-1] ./ max_diffs[3]) 
+    ns = (n_1, n_2, n_3)
+    widths = diff.((p.grid.axes[1].ticks, p.grid.axes[2].ticks, p.grid.axes[3].ticks))
+    sub_widths = broadcast(ia -> [widths[ia][i] / (ns[ia][i]+1) for i in eachindex(ns[ia])], (1,2,3))
+    for ia in 1:3
+        for i in eachindex(ns[ia])
+            while sub_widths[ia][i] < minimum_distances[ia] && ns[ia][i] > 0
+                ns[ia][i] -= 1
+                sub_widths[ia][i] = widths[ia][i] / (ns[ia][i]+1)
+            end
+        end
+    end
+    for i in 1:3 # always add an even number of ticks
+        if isodd(sum(ns[i])) 
+            i_max_width = findmax(sub_widths[i])[2]
+            ns[i][i_max_width] += 1 
+            sub_widths[i][i_max_width] = widths[i][i_max_width] / (ns[i][i_max_width]+1)
+        end
+    end
+    new_axes = broadcast(i -> _refine_axis(p.grid.axes[i], ns[i], sub_widths[i]), (1, 2, 3))
+    return typeof(p.grid)(new_axes)
+end
+
+function _refine_axis(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, ns::Vector{Int}, sub_widths::Vector{T}) where {T, I}
+    @assert length(ns) == length(ax.ticks)-1 # for ClosedInterval axis
+    ticks = Vector{T}(undef, length(ax.ticks) + sum(ns))
+    i = 1 
+    for j in eachindex(ns)
+        ticks[i] = ax.ticks[j]
+        for k in 1:ns[j]
+            i += 1 
+            ticks[i] = ax.ticks[j] + k * sub_widths[j]
+        end
+        i += 1 
+    end
+    ticks[end] = ax.ticks[end]
+    typeof(ax)(ax.interval, ticks)
 end
 
 
-function _get_refinement_inds(  potential::Array{T, 3}, grid::Grid{T, 3, Cartesian}, 
-                                max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T})::NTuple{3, Vector{Int}} where {T}
-    inds_x::Vector{Int} = Int[]
-    inds_y::Vector{Int} = Int[]
-    inds_z::Vector{Int} = Int[]
-
-    ax1::DiscreteAxis{T} = grid[1]
-    ax2::DiscreteAxis{T} = grid[2]
-    ax3::DiscreteAxis{T} = grid[3]
-    int1::Interval = ax1.interval
-    int2::Interval = ax2.interval
-    int3::Interval = ax3.interval
-
-    refinement_value_x::T = max_diffs[1]
-    refinement_value_y::T = max_diffs[2]
-    refinement_value_z::T = max_diffs[3]
-
-    minimum_distance_x::T = minimum_distances[1]
-    minimum_distance_y::T = minimum_distances[2]
-    minimum_distance_z::T = minimum_distances[3]
-
-    ax_x::Vector{T} = collect(grid.axes[1])
-    ax_y::Vector{T} = collect(grid.axes[2])
-    ax_z::Vector{T} = collect(grid.axes[3])
-
-    
-    for iz in 1:size(potential, 3)
-        z = ax_z[iz]
-        for iy in 1:size(potential, 2)
-            y = ax_y[iy]
-            isum = iz + iy
-            for ix in 1:size(potential, 1)
-                x = ax_x[ix]
-
-                # x
-                if ix != size(potential, 1)
-                    if abs(potential[ix + 1, iy, iz] - potential[ix, iy, iz]) >= refinement_value_x
-                        if ax_x[ix + 1] - ax_x[ix] > minimum_distance_x
-                            if !in(ix, inds_x) push!(inds_x, ix) end
-                        end
-                    end
-                end
-
-                # y
-                if iy != size(potential, 2)
-                    if abs(potential[ix, iy + 1, iz] - potential[ix, iy, iz]) >= refinement_value_y
-                        if ax_y[iy + 1] - ax_y[iy] > minimum_distance_y
-                            if !in(iy, inds_y) push!(inds_y, iy) end
-                        end
-                    end
-                end
-
-                # z
-                if iz != size(potential, 3)
-                    if abs(potential[ix, iy, iz + 1] - potential[ix, iy, iz]) >= refinement_value_z
-                        if ax_z[iz + 1] - ax_z[iz] > minimum_distance_z
-                            if !in(iz, inds_z) push!(inds_z, iz) end
-                        end
-                    end
-                end
-
-            end
-        end
-    end
-
-    if isodd(length(inds_x))
-        for ix in 1:size(potential, 1)
-            if !in(ix, inds_x)
-                if ix != size(potential, 1)
-                    if ax_x[ix + 1] - ax_x[ix] > minimum_distance_x
-                        append!(inds_x, ix)
-                        break
-                    end
-                end
-            end
-        end
-    end
-    if isodd(length(inds_x))
-        b = true
-        diffs = diff(ax_x)
-        while b
-            if length(diffs) > 0
-                idx = findmax(diffs)[2]
-                if !in(idx, inds_x)
-                    append!(inds_x, idx)
-                    b = false
-                else
-                    deleteat!(diffs, idx)
-                end
-            else
-                for i in eachindex(ax_x[1:end-1])
-                    if !in(i, inds_x) push!(inds_x, i) end
-                end
-                b = false
-            end
-        end
-    end
-    if isodd(length(inds_x)) inds_x = inds_x[1:end-1] end
-    @assert iseven(length(inds_x)) "Refinement would result in uneven grid in x. This is not allowed since this is the red black dimension."
-    
-
-    return sort!(inds_x), sort!(inds_y), sort!(inds_z)
-end
-
-function refine(p::ScalarPotential, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})::typeof(p) 
-    T = eltype(p.grid)
-    refine_at_inds = _get_refinement_inds(p.data, p.grid, T.(max_diffs), T.(minimum_distances))
-    potential, grid = add_points_and_interpolate(p.data, p.grid, refine_at_inds...)
-    return typeof(p)(potential, grid)
-end
+_extend_refinement_limits(rl::Real) = (rl, rl, rl )
+_extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl
