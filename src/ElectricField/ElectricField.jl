@@ -270,11 +270,3 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cartesian
     end
     return ElectricField(ef, pointtypes.grid)
 end
-
-function get_electric_field_strength(ef::ElectricField{T}) where {T <: SSDFloat}
-    efs::Array{T, 3} = Array{T, 3}(undef, size(ef.data))
-    @inbounds for i in eachindex(ef.data)
-        efs[i] = norm(ef.data[i])
-    end
-    return efs
-end
