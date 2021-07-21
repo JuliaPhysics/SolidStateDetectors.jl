@@ -18,7 +18,7 @@ end
 function NamedTuple(ϵ::DielectricDistribution{T}) where {T <: SSDFloat}
     return (
         grid = NamedTuple(ϵ.grid),
-        values = ϵ.data * internal_voltage_unit,
+        values = ϵ.data,
     )
 end
 Base.convert(T::Type{NamedTuple}, x::DielectricDistribution) = T(x)
@@ -28,6 +28,6 @@ function DielectricDistribution(nt::NamedTuple)
     T = typeof(ustrip(nt.values[1]))
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
-    DielectricDistribution{T, N, S}( ustrip.(uconvert.(internal_voltage_unit, nt.values)), grid)
+    DielectricDistribution{T, N, S}( nt.values, grid )
 end
 Base.convert(T::Type{DielectricDistribution}, x::NamedTuple) = T(x)

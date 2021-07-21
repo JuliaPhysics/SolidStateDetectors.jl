@@ -484,6 +484,6 @@ function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3
 end
 
 
-function DielektrikumDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
+function DielectricDistributionArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
     return fssrb.ϵ_r
 end
