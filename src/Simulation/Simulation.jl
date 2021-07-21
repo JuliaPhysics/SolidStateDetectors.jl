@@ -947,11 +947,16 @@ function simulate!( sim::Simulation{T};
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
-        calculate_weighting_potential!(sim, contact.id, refinement_limits = refinement_limits,
+        calculate_weighting_potential!(sim, contact.id, 
+                    refinement_limits = refinement_limits,
                     min_tick_distance = min_tick_distance,
                     max_tick_distance = max_tick_distance,
                     max_distance_ratio = max_distance_ratio,
-                    verbose = verbose, convergence_limit = convergence_limit)
+                    use_nthreads = use_nthreads,
+                    sor_consts = sor_consts,
+                    max_n_iterations = max_n_iterations,
+                    verbose = verbose, 
+                    convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
     calculate_drift_fields!(sim)
