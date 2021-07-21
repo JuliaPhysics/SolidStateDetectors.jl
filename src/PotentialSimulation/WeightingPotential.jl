@@ -1,6 +1,6 @@
-struct WeightingPotential{T, N, S <: AbstractCoordinateSystem} <: AbstractArray{T, N}
+struct WeightingPotential{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractArray{T, N}
     data::Array{T, N}
-    grid::Grid{T, N, S}
+    grid::Grid{T, N, S, AT}
 end
 
 @inline size(wp::WeightingPotential{T, N, S}) where {T, N, S} = size(wp.data)

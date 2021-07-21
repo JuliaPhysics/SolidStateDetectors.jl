@@ -15,19 +15,7 @@ end
 @testset "Test real detectors" begin
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoax])
-        simulate!(sim, max_refinements = 1, verbose = true)
-        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
-        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
-        signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
-        end
-        @info signalsum
-        @test isapprox( signalsum, T(2), atol = 5e-4 )
-    end
-    @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
-        sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
-        simulate!(sim, max_refinements = 1, verbose = true)
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
@@ -35,11 +23,23 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 5e-4 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
+    end
+    @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
+        sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
+        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(evt.waveforms[i].value[end])
+        end
+        @info signalsum
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
     @testset "Simulate example detector: Coax" begin
         sim = Simulation{T}(SSD_examples[:Coax])
-        simulate!(sim, max_refinements = 0, verbose = true)
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
@@ -47,11 +47,11 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 0.02 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation{T}(SSD_examples[:BEGe])
-        simulate!(sim, max_refinements = 1, verbose = true)
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
@@ -59,11 +59,11 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 3e-2 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
-        simulate!(sim, max_refinements = 0, verbose = true)
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         evt = Event([CartesianPoint{T}(0, 5e-4, 1e-3)])
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
@@ -71,23 +71,23 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 5e-4 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
     @testset "Simulate example detector: CGD" begin
         sim = Simulation{T}(SSD_examples[:CGD])
-        simulate!(sim, max_refinements = 2, verbose = true)
-        evt = Event([CartesianPoint{T}(5e-3,0,0)])
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+        evt = Event([CartesianPoint{T}(0,2e-3,0)])
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 5e-2 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation{T}(SSD_examples[:Spherical])
-        simulate!(sim, max_refinements = 1, verbose = true)
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         evt = Event([CartesianPoint{T}(0,0,0)])
         simulate!(evt, sim)
         signalsum = T(0)
@@ -95,32 +95,32 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 5e-4 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end 
     @testset "Simulate example detector: Toroidal" begin
         sim = Simulation{T}(SSD_examples[:CoaxialTorus])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
-        simulate!(sim, max_refinements = 1, verbose = true)
-        evt = Event([CartesianPoint{T}(0.01,0,0.003)])
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+        evt = Event([CartesianPoint{T}(0.01,0,0.00205)])
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 2e-2 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation{T}(SSD_examples[:SigGen])
-        simulate!(sim, max_refinements = 1, verbose = true)
-        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 40e-3 )]))
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 2e-2 )
+        @test isapprox( signalsum, T(2), atol = 1e-3 )
     end
 end
 

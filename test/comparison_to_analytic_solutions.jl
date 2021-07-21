@@ -5,8 +5,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
     calculate_electric_potential!(sim, 
-        init_grid_spacing = T.( (1e-4, 1e-3, 1e-3) ), 
-        max_refinements = 1,
+        convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false
     )
     calculate_electric_field!(sim)
     BV_true = SolidStateDetectors._get_abs_bias_voltage(sim.detector) 
@@ -43,11 +42,11 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     V = π * R2^2 * L
     intV = (R2^2 - R1^2) * π * L
 
-    calculate_electric_potential!(sim_cyl, 
-        max_refinements = 6,
+    calculate_electric_potential!(sim_cyl, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+        convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, 
-        max_refinements = 2
+    calculate_electric_potential!(sim_car, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+        convergence_limit = 1e-3, refinement_limits = [0.2], use_nthreads = 1, verbose = false
     )
     calculate_electric_field!(sim_cyl)
     calculate_electric_field!(sim_car)
@@ -93,27 +92,26 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T <: SSDFloat}
         SolidStateDetectors.get_impurity_density(cdm, CylindricalPoint(pt))
     end
-
     sim_cyl.detector = SolidStateDetector(sim_cyl.detector, DummyImpurityDensity{T}());
     sim_car.detector = SolidStateDetector(sim_car.detector, DummyImpurityDensity{T}());
 
-    calculate_electric_potential!(sim_cyl, 
-        max_refinements = 4
+    calculate_electric_potential!(sim_cyl, grid = Grid(sim_cyl, max_tick_distance = (1u"cm", 15u"°", 1u"m")),
+        convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, 
-        max_refinements = 1
+    calculate_electric_potential!(sim_car, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+        convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
 
-    idxR1 = searchsortedfirst( sim_cyl.electric_potential.grid.axes[1], ustrip(R1))
-    rs = sim_cyl.electric_potential.grid.axes[1].ticks[idxR1:end]
-    potential_rms_cyl = sqrt(sum((ustrip.(map(r -> potential_analytic(r * u"m"), rs)) .- sim_cyl.electric_potential.data[idxR1:end, 1, 1]).^2))
-    idxR1 = searchsortedfirst( sim_car.electric_potential.grid.axes[1], ustrip(R1))
-    rs = sim_car.electric_potential.grid.axes[1].ticks[idxR1:end]
-    idy0 = searchsortedfirst( sim_car.electric_potential.grid.axes[2], 0)
-    potential_rms_car = sqrt(sum((ustrip.(map(r -> potential_analytic(r * u"m"), rs)) .- sim_car.electric_potential.data[idxR1:end, idy0, 1]).^2))
+    idxR1 = searchsortedfirst( sim_cyl.electric_potential.grid.axes[1], ustrip(R1));
+    rs = sim_cyl.electric_potential.grid.axes[1].ticks[idxR1:end];
+    potential_rms_cyl = sqrt(sum((ustrip.(map(r -> potential_analytic(r * u"m"), rs)) .- sim_cyl.electric_potential.data[idxR1:end, 1, 1]).^2)) / (ustrip(BV_true)*length(rs));
+    idxR1 = searchsortedfirst( sim_car.electric_potential.grid.axes[1], ustrip(R1));
+    rs = sim_car.electric_potential.grid.axes[1].ticks[idxR1:end];
+    idy0 = searchsortedfirst( sim_car.electric_potential.grid.axes[2], 0);
+    potential_rms_car = sqrt(sum((ustrip.(map(r -> potential_analytic(r * u"m"), rs)) .- sim_car.electric_potential.data[idxR1:end, idy0, 1]).^2))/ (ustrip(BV_true)*length(rs));
 
     @testset "Potential RMS" begin
-        @test potential_rms_cyl < 0.01
-        @test potential_rms_car < 1.1
+        @test potential_rms_cyl < 1e-3
+        @test potential_rms_car < 1e-3
     end
 end
