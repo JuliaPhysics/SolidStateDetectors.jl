@@ -41,7 +41,7 @@ grid:
       to: 40
 medium: vacuum
 detectors:
-- bulk:
+- semiconductor:
     material: HPGe
     geometry:
       tube:
@@ -201,12 +201,12 @@ grid:
 ### Detector Constituents
 
 The detectors for the simulation are defined in an array `detectors`, where each entry corresponds to one detector.
-Each detector consists of exactly one `bulk`, a minimum of two `contacts` and, optionally, `passives` and `virtual_drift_volumes`.
+Each detector consists of exactly one `semiconductor`, a minimum of two `contacts` and, optionally, `passives` and `virtual_drift_volumes`.
 
 ```yaml
 detectors:
   - name: "Detector 1"
-    bulk: #...
+    semiconductor: #...
     contacts: 
       - # Contact 1
       - # Contact 2 
@@ -215,7 +215,7 @@ detectors:
     virtual_drift_volumes:
       - # Virtual Drift Volume 1 (optional)
   - name: "Detector 2"
-    bulk: #...
+    semiconductor: #...
     contacts: 
       - # Contact 1
       - # Contact 2
@@ -223,9 +223,9 @@ detectors:
 
 #### Bulk 
 
-An example definition of the bulk looks like this:
+An example definition of the semiconductor looks like this:
 ```yaml 
-bulk:
+semiconductor:
   material: HPGe
   temperature: 78
   impurity_density: # ...
@@ -233,9 +233,9 @@ bulk:
   geometry: # ...
 ```
 
-The different fields of the bulk are:
-- `material`: the material of the bulk. This is important to know the electric properties of the bulk for the electric potential calculation. Possible choices are `HPGe` (high-purity germanium) and `Si` (silicon).
-- `temperature` (optional): the temperature of the bulk. If no `temperature` is given, the default is 78K for germanium and 293K for all other materials.
+The different fields of the semiconductor are:
+- `material`: the material of the semiconductor. This is important to know the electric properties of the semiconductor for the electric potential calculation. Possible choices are `HPGe` (high-purity germanium) and `Si` (silicon).
+- `temperature` (optional): the temperature of the semiconductor. If no `temperature` is given, the default is 78K for germanium and 293K for all other materials.
 - `impurity_density` (optional): the distribution of impurities in the semiconductor material. This has a strong impact on the electric potential calculation. If no `impurity_density` is given, the default is an impurity-free material ($\rho(\vec{r}) = 0$).
 - `charge_drift_model` (optional): a model to describe the drift of charge carriers in the semiconductor material. If no `charge_drift_model` is given, the default is `ElectricFieldChargeDriftModel`. Find a detailed description  on how to define an own model under [Custom Charge Drift Model](@ref).
 - `geometry`: the geometry of the semiconductor object. Find a detailed description on how to define geometries under [Constructive Solid Geometry (CSG)](@ref).
@@ -317,7 +317,7 @@ units: #...
 grid: #...
 medium: vacuum
 detectors:
-- bulk: # ...
+- semiconductor: # ...
   contacts: 
     - # ...
     - # ...

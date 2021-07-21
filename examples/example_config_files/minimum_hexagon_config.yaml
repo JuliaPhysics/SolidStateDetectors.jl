@@ -27,7 +27,7 @@ grid:
         right: inf
 medium: vacuum
 detectors:
-- bulk:
+- semiconductor:
     material: Si
     temperature: 140
     impurity_density:

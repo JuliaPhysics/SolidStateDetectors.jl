@@ -38,7 +38,7 @@ detectors:
       x: 0
     rotate: 
       Z: 0
-    bulk:
+    semiconductor:
       material: HPGe
       temperature: 78
       impurity_density:

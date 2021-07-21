@@ -21,7 +21,7 @@ grid:
       boundaries: reflecting
 medium: HPGe
 detectors:
-  - bulk:
+  - semiconductor:
       material: HPGe
       temperature: 78
       impurity_density:

@@ -121,8 +121,8 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
 
         transformations = parse_CSG_transformation(T, config_detector, input_units)
         
-        @assert haskey(config_detector, "bulk") "Each detector needs an entry `bulk`. Please define the bulk."     
-        semiconductor = Semiconductor{T}(config_detector["bulk"], input_units, transformations)
+        @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."     
+        semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
 
         @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
         contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])

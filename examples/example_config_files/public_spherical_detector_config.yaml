@@ -21,7 +21,7 @@ grid:
       boundaries: inf
 medium: vacuum
 detectors:
-- bulk:
+- semiconductor:
     material: HPGe
     temperature: 78
     impurity_density:
