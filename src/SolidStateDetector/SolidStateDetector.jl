@@ -148,15 +148,6 @@ function SolidStateDetector(parsed_dict::Dict)
     SolidStateDetector{Float32}(parsed_dict)
 end
 
-function Base.sort!(v::AbstractVector{<:AbstractGeometry})
-    hierarchies::Vector{Int} = map(x->x.hierarchy,v)
-    v_result::typeof(v) = []
-    for idx in unique!(sort!(hierarchies))
-        push!(v_result,filter(x->x.hierarchy == hierarchies[idx],v)...)
-    end
-    return v_result
-end
-
 function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T
     in(pt,c.semiconductor) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
 end
@@ -180,7 +171,7 @@ function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
         println("# Passives: $(length(d.passives))")
         if length(d.passives) <= 5
             for p in d.passives
-                # println(c)
+                println(p)
             end
         end
     end
@@ -188,10 +179,7 @@ end
 
 function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
 function print(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
-function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDFloat}
-    show(io, d)
-end
-
+function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDFloat} show(io, d) end
 
 # ToDo: Test it
 function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = 0.0001) where T
