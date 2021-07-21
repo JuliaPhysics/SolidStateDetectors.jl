@@ -286,14 +286,3 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
     end
     return ρ_semiconductor, ϵ, q_eff_fix
 end
-
-
-function json_to_dict(inputfile::String)::Dict
-    parsed_json_file = Dict()
-    open(inputfile,"r") do f
-        global parsed_json_file
-        dicttext = readstring(f)
-        parsed_json_file = JSON.parse(dicttext)
-    end
-    return parsed_json_file
-end
