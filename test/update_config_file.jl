@@ -143,7 +143,7 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
 
     
     config_file_dict["detectors"] = []
-    push!(config_file_dict["detectors"], OrderedDict{String, Any}("bulk" => semiconductor) )
+    push!(config_file_dict["detectors"], OrderedDict{String, Any}("semiconductor" => semiconductor) )
     if length(contacts) > 0 config_file_dict["detectors"][1]["contacts"] = contacts end
     if length(passives) > 0 config_file_dict["detectors"][1]["passives"] = passives end
     if length(virtual_drift_volumes) > 0 config_file_dict["detectors"][1]["virtual_drift_volumes"] = virtual_drift_volumes end

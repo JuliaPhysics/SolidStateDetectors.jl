@@ -1,4 +1,4 @@
-# Drift Fields
+# Charge Drift
 
 Charged particles in vacuum move along the electric field lines under Coulomb's force, $\bm{F} = q \bm{E}$, where $\bm{F}$ corresponds to the force experienced by the particle, $q$ is the charge of the particle and $\bm{E}$ is the electric field. Charged particles in vacuum would be continuously accelerated until approaching the speed of light (called ballistic transport), however, inside a material, scattering prevents this constant acceleration and leads to a constant drift velocity 
 
@@ -29,6 +29,9 @@ charge_drift_model = ElectricFieldChargeDriftModel(T)
 simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
 calculate_drift_fields!(simulation)
 ```
+
+If no charge drift model is specified for the semiconductor of the detector in the configuration files, the default is `ElectricFieldChargeDriftModel`.
+
 
 ## ADL Charge Drift Model
 
@@ -72,10 +75,10 @@ drift:
 ```
 
 where the parameters are stored under the keys `e100`, `e111`, `h100` and `h111`, in which `e` and `h` stand for electrons and holes, respectively, and `100` and `111`, for the principal axes $\langle$100$\rangle$ and $\langle$111$\rangle$. 
-By default, in `SolidStateDetectors.jl` the $\langle$001$\rangle$ axis is aligned with the Z-axis of the coordinate system of the simulation. The crystal orientation can be set through the `phi110` parameter, where the $\langle001\rangle$ axis is still aligned with the Z-axis and the angle between the $\langle$110$\rangle$ principal direction of the crystal and the X-axis is given by `phi110`. Alternatively, the crystal orientation can be set by passing a rotation matrix that describes the rotation from the global coordinate system to the crystal orientation system.
+By default, in `SolidStateDetectors.jl` the $\langle$001$\rangle$ axis is aligned with the Z-axis of the coordinate system of the simulation. The crystal orientation can be set through the `phi110` parameter, where the $\langle$001$\rangle$ axis is still aligned with the Z-axis and the angle between the $\langle$110$\rangle$ principal direction of the crystal and the X-axis is given by `phi110`. Alternatively, the crystal orientation can be set by passing a rotation matrix that describes the rotation from the global coordinate system to the crystal orientation system.
 
 
-If the electric field is not aligned with any of the crystal axes, the charge drift velocity is not necessarily aligned with the electric field. In the [`ADLChargeDriftModel`](@ref), two models are implemented to describe the charge drift of electrons and holes between the axes. Detailed information about the charge drift models is provided in the papers from [L. Mihailescu et al. ](https://www.sciencedirect.com/science/article/pii/S0168900299012863) for electrons and from [B.Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) for holes.
+If the electric field is not aligned with any of the crystal axes, the charge drift velocity is not necessarily aligned with the electric field. In the [`ADLChargeDriftModel`](@ref), two models are implemented to describe the charge drift of electrons and holes between the axes. Detailed information about the charge drift models is provided in the papers from [L. Mihailescu et al. ](https://www.sciencedirect.com/science/article/pii/S0168900299012863) for electrons and from [B.Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) for holes. Find the detailed calculations and modifications from the publications as implemented in SolidStateDetectors.jl [here](../assets/ADLChargeDriftModel.pdf).
 
 
 In order to perform the calculation of the drift fields, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
@@ -87,6 +90,36 @@ simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model
 calculate_drift_fields!(simulation)
 ```
 
+The `ÀDLChargeDriftModel` can also be specified already in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
+```yaml 
+detectors:
+  semiconductor:
+    # ...
+    charge_drift_model:
+      model: ADLChargeDriftModel
+      phi110: -0.785398 # in radians if no units are given
+      material: HPGe
+      drift: # ...
+```
+or
+```yaml 
+detectors:
+  semiconductor:
+    # ...
+    charge_drift_model:
+      model: ADLChargeDriftModel
+      crystal_orientation:
+        X: 45° # crystal axes correspond to the global xyz coordinate system, rotated 45° around the x axis
+      material: HPGe
+      drift: # ...
+```
+
+The `charge_drift_model` needs:
+- `model`: the name of the charge drift model, which in this case is `ADLChargeDriftModel`
+- `phi110` or `crystal_orientation`: the description of the orientation of the crystal with respect to the global coordinate system.
+  When using `phi110`, the `\langle001\rangle` axis is aligned with the global `z` axis and `phi110` describes the angle between the $\langle$110$\rangle$ axis and the `x` axis in radians (counterclockwise, looking from the top). If the $\langle$001$\rangle$ axis is not aligned with the `z` axis, a rotation matrix to transform the global coordinate system to the crystal axes system can be given.
+- `material` (optional): the semiconductor material. If no material is given, the `material` of the semiconductor is taken by default.
+- `drift`: the parameters needed to describe the longitudinal drift velocity along the $\langle$100$\rangle$ and $\langle$111$\rangle$ axes, see above.
 
 The values from the default configuration file correspond to germanium at 78 K. Calculations of the drift field at other temperatures are also supported by the `ADLChargeDriftModel`. While experimental observations suggest that the charge mobilities of electrons and holes in the crystal are temperature dependent, the dependency law has not yet been established. Several models have been proposed to reproduce the experimental behavior, and some examples of them can be found in the directory `<package_directory>/src/ChargeDriftModels/ADL/`. The examples include a linear model, a Boltzmann model and a power-law model. To use these models in the calculation of the drift fields, the corresponding configuration file, the temperature and the precision must be given to the function. As an example, in order to use the Boltzmann model at a temperature of 100 K:
 

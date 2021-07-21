@@ -38,7 +38,7 @@ detectors:
       x: 0
     rotate: 
       Z: 0
-    bulk:
+    semiconductor:
       material: HPGe
       temperature: 78
       impurity_density:
@@ -68,7 +68,7 @@ detectors:
       - material: HPGe
         name: n+ contact
         potential: 2000
-        channel: 1
+        id: 1
         geometry:
           tube:
             r: 2
@@ -79,7 +79,7 @@ detectors:
       - material: HPGe
         name: p+ contact
         potential: 0
-        channel: 2
+        id: 2
         geometry:
           tube:
             r: 

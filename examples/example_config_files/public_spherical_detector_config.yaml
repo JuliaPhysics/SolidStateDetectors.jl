@@ -21,12 +21,12 @@ grid:
       boundaries: inf
 medium: vacuum
 detectors:
-- bulk:
+- semiconductor:
     material: HPGe
     temperature: 78
     impurity_density:
       name: constant
-      charge_density: -1000000
+      value: -1000000
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:
@@ -45,7 +45,7 @@ detectors:
             to: 30
   contacts:
   - material: HPGe
-    channel: 1
+    id: 1
     potential: 0
     geometry:
       tube:
@@ -57,7 +57,7 @@ detectors:
           from: 29.8
           to: 30
   - material: HPGe
-    channel: 2
+    id: 2
     potential: 3500
     geometry:
       difference:

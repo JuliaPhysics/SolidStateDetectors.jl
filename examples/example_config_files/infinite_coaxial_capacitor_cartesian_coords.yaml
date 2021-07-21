@@ -21,7 +21,7 @@ grid:
       boundaries: reflecting
 medium: HPGe
 detectors:
-  - bulk:
+  - semiconductor:
       material: HPGe
       temperature: 78
       impurity_density:
@@ -46,7 +46,7 @@ detectors:
                 z: 20
     contacts:
       - material: HPGe
-        channel: 1
+        id: 1
         potential: 0
         geometry:
           tube:
@@ -57,7 +57,7 @@ detectors:
             origin:
               z: 20
       - material: HPGe
-        channel: 2
+        id: 2
         potential: 10
         geometry:
           tube:

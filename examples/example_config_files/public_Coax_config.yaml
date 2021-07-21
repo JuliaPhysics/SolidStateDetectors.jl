@@ -24,7 +24,7 @@ grid:
         right: inf
 medium: vacuum
 detectors:
-- bulk:
+- semiconductor:
     material: HPGe
     temperature: 78
     impurity_density:
@@ -78,7 +78,7 @@ detectors:
             z: 67.5
   contacts:
   - material: HPGe
-    channel: 1
+    id: 1
     potential: 6000
     geometry:
       translate:
@@ -92,7 +92,7 @@ detectors:
           h: 60
         z: 35
   - material: HPGe
-    channel: 2
+    id: 2
     potential: 0
     geometry:
       translate:
@@ -106,7 +106,7 @@ detectors:
           h: 23
         z: 11.5
   - material: HPGe
-    channel: 3
+    id: 3
     potential: 0
     geometry:
       translate:
@@ -120,7 +120,7 @@ detectors:
           h: 23
         z: 11.5
   - material: HPGe
-    channel: 4
+    id: 4
     potential: 0
     geometry:
       translate:
@@ -134,7 +134,7 @@ detectors:
           h: 23
         z: 11.5
   - material: HPGe
-    channel: 5
+    id: 5
     potential: 0
     geometry:
       translate:
@@ -148,7 +148,7 @@ detectors:
           h: 23
         z: 11.5
   - material: HPGe
-    channel: 6
+    id: 6
     potential: 0
     geometry:
       translate:
@@ -162,7 +162,7 @@ detectors:
           h: 23
         z: 11.5
   - material: HPGe
-    channel: 7
+    id: 7
     potential: 0
     geometry:
       translate:
@@ -176,7 +176,7 @@ detectors:
           h: 23
         z: 11.5
   - material: HPGe
-    channel: 8
+    id: 8
     potential: 0
     geometry:
       translate:
@@ -190,7 +190,7 @@ detectors:
           h: 23
         z: 35
   - material: HPGe
-    channel: 9
+    id: 9
     potential: 0
     geometry:
       translate:
@@ -204,7 +204,7 @@ detectors:
           h: 23
         z: 35
   - material: HPGe
-    channel: 10
+    id: 10
     potential: 0
     geometry:
       translate:
@@ -218,7 +218,7 @@ detectors:
           h: 23
         z: 35
   - material: HPGe
-    channel: 11
+    id: 11
     potential: 0
     geometry:
       translate:
@@ -232,7 +232,7 @@ detectors:
           h: 23
         z: 35
   - material: HPGe
-    channel: 12
+    id: 12
     potential: 0
     geometry:
       translate:
@@ -246,7 +246,7 @@ detectors:
           h: 23
         z: 35
   - material: HPGe
-    channel: 13
+    id: 13
     potential: 0
     geometry:
       translate:
@@ -260,7 +260,7 @@ detectors:
           h: 23
         z: 35
   - material: HPGe
-    channel: 14
+    id: 14
     potential: 0
     geometry:
       translate:
@@ -274,7 +274,7 @@ detectors:
           h: 23
         z: 58.5
   - material: HPGe
-    channel: 15
+    id: 15
     potential: 0
     geometry:
       translate:
@@ -288,7 +288,7 @@ detectors:
           h: 23
         z: 58.5
   - material: HPGe
-    channel: 16
+    id: 16
     potential: 0
     geometry:
       translate:
@@ -302,7 +302,7 @@ detectors:
           h: 23
         z: 58.5
   - material: HPGe
-    channel: 17
+    id: 17
     potential: 0
     geometry:
       translate:
@@ -316,7 +316,7 @@ detectors:
           h: 23
         z: 58.5
   - material: HPGe
-    channel: 18
+    id: 18
     potential: 0
     geometry:
       translate:
@@ -330,7 +330,7 @@ detectors:
           h: 23
         z: 58.5
   - material: HPGe
-    channel: 19
+    id: 19
     potential: 0
     geometry:
       translate:

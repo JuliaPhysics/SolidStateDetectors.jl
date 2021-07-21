@@ -4,7 +4,7 @@ include:
 name: Public Inverted Coax
 medium: vacuum
 detectors:
-- bulk:
+- semiconductor:
     include: semiconductor.yaml
   contacts:
   - include: channels/01_PointContact.yaml

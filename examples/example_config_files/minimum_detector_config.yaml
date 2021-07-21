@@ -10,7 +10,7 @@ grid:
       from: -10
       to: 70
 detectors:
-- bulk:
+- semiconductor:
     material: HPGe
     geometry:
       difference:

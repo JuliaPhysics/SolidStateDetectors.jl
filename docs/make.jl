@@ -35,17 +35,16 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Installation" => "man/installation.md",
-            "Detectors" => Any[
-                "Configuration Files" => "man/config_files.md",
-            ],
+            "Configuration Files" => "man/config_files.md",
             "Geometries (CSG)" => Any[
                 "CSG" => "man/csg.md",
                 "Primitives" => "man/primitives.md",
+                "Transformations" => "man/transformations.md"
             ],
-            "Electric Potentials" => "man/electric_potentials.md",
+            "Electric Potential" => "man/electric_potential.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
-            "Electric Fields" => "man/electric_fields.md",
-            "Drift Fields" => "man/drift_fields.md",
+            "Electric Field" => "man/electric_field.md",
+            "Charge Drift" => "man/charge_drift.md",
             "IO" => "man/IO.md",
         ],
         "Tutorial" => "tutorial.md",

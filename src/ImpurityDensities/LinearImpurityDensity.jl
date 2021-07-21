@@ -11,25 +11,22 @@ struct LinearImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 end
 
 function ImpurityDensity(T::DataType, t::Val{:linear}, dict::Union{Dict{String, Any}, Dict{Any, Any}}, input_units::NamedTuple)
-    unit_factor::T = 1
-    gradient_unit_factor::T = 1
-    if haskey(input_units, :length)
-        lunit = input_units.length
-        unit_factor = inv(ustrip(uconvert( internal_length_unit^3, 1 * lunit^3 )))
-        gradient_unit_factor = inv(ustrip(uconvert( internal_length_unit^4, 1 * lunit^4 )))
-    end
-    return LinearImpurityDensity{T}( dict, unit_factor, gradient_unit_factor )
-end
-
-function LinearImpurityDensity{T}(dict::Union{Dict{String, Any}, Dict{Any, Any}}, unit_factor::T, gradient_unit_factor::T)::LinearImpurityDensity{T} where {T <: SSDFloat}
     offsets, gradients = zeros(T,3), zeros(T,3)
-    if prod(map(k -> k in ["x","y","z"], collect(keys(dict)))) @warn "Only x, y and z are supported in the linear Impurity density model.\nChange the Impurity density model in the config file or remove all other entries." end
-    # if haskey(dict, "x")     offsets[1] = geom_round(unit_factor * T(dict["x"]["init"]));     gradients[1] = geom_round(gradient_unit_factor * T(dict["x"]["gradient"]))    end
-    # if haskey(dict, "y")     offsets[2] = geom_round(unit_factor * T(dict["y"]["init"]));     gradients[2] = geom_round(gradient_unit_factor * T(dict["y"]["gradient"]))    end
-    # if haskey(dict, "z")     offsets[3] = geom_round(unit_factor * T(dict["z"]["init"]));     gradients[3] = geom_round(gradient_unit_factor * T(dict["z"]["gradient"]))    end
-    if haskey(dict, "x")     offsets[1] = unit_factor * T(dict["x"]["init"]);     gradients[1] = gradient_unit_factor * T(dict["x"]["gradient"])    end
-    if haskey(dict, "y")     offsets[2] = unit_factor * T(dict["y"]["init"]);     gradients[2] = gradient_unit_factor * T(dict["y"]["gradient"])    end
-    if haskey(dict, "z")     offsets[3] = unit_factor * T(dict["z"]["init"]);     gradients[3] = gradient_unit_factor * T(dict["z"]["gradient"])    end
+    density_unit = input_units.length^(-3)
+    density_gradient_unit = input_units.length^(-4)
+    if prod(map(k -> k in ["x","y","z"], collect(keys(dict)))) @warn "Only x, y and z are supported in the linear impurity density model.\nChange the impurity density model in the config file or remove all other entries." end
+    if haskey(dict, "x")     
+        if haskey(dict["x"], "init")     offsets[1]   = _parse_value(T, dict["x"]["init"], density_unit) end
+        if haskey(dict["x"], "gradient") gradients[1] = _parse_value(T, dict["x"]["gradient"], density_gradient_unit) end
+    end
+    if haskey(dict, "y")     
+        if haskey(dict["y"], "init")     offsets[2]   = _parse_value(T, dict["y"]["init"], density_unit) end
+        if haskey(dict["y"], "gradient") gradients[2] = _parse_value(T, dict["y"]["gradient"], density_gradient_unit) end
+    end
+    if haskey(dict, "z")     
+        if haskey(dict["z"], "init")     offsets[3]   = _parse_value(T, dict["z"]["init"], density_unit) end
+        if haskey(dict["z"], "gradient") gradients[3] = _parse_value(T, dict["z"]["gradient"], density_gradient_unit) end
+    end
     LinearImpurityDensity{T}( NTuple{3, T}(offsets), NTuple{3, T}(gradients) )
 end
 
