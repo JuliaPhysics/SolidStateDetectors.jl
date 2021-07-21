@@ -170,10 +170,10 @@ end
 """
     _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
 
-Returnes an closed Grid & Potential:
+Returns an closed Grid & Potential:
 E.g. if one of the axis is {:closed,:open} it will turn this into {:closed,:closed}
 and also extend the `data` field of the potential in the respective dimension and fill
-it with the respective values. 
+it with the respective values.
 """
 function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
     g = p.grid
@@ -185,7 +185,6 @@ function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
     closed_grid = Grid{T, 3, CS, AT}(closed_axes)
     ScalarPotential(p, closed_values, closed_grid)
 end
-
 
 """
     _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
