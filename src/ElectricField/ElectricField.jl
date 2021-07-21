@@ -136,28 +136,6 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cylindric
     return ElectricField(ef, pointtypes.grid)
 end
 
-function get_component_field(ef,component=:r,cutoff=NaN)
-    components = [:r,:phi,:z]
-    # component_index = findfirst(components,component)
-    component_index = findfirst(x->x==component,components)
-    ef_component = Array{Float32}(undef,size(ef,1),size(ef,2),size(ef,3))
-    for iz in 1:size(ef, 3)
-        for iφ in 1:size(ef, 2)
-            for ir in 1:size(ef, 1)
-                if !isnan(cutoff)
-                    if abs(ef[ir,iφ ,iz][component_index]) >=cutoff
-                        ef_component[ir,iφ,iz] = 0.0
-                    else
-                        ef_component[ir,iφ,iz] = ef[ir,iφ ,iz][component_index]
-                    end
-                else
-                    ef_component[ir,iφ,iz] = ef[ir,iφ ,iz][component_index]
-                end
-            end
-        end
-    end
-    return ef_component
-end
 function get_xyz_vector_from_rφz_vector(v::AbstractArray)::AbstractArray
     return [v[1]*cos(v[2]),v[1]*sin(v[2]),v[3]]
 end
