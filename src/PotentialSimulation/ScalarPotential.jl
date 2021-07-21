@@ -5,8 +5,6 @@ ScalarPotential(::WeightingPotential, data, grid) = WeightingPotential(data, gri
 ScalarPotential(::PointTypes, data, grid) = PointTypes(data, grid)
 ScalarPotential(::EffectiveChargeDensity, data, grid) = EffectiveChargeDensity(data, grid)
 
-get_axes_type(p::ScalarPotential{T, N, S, AT}) where {T, N, S, AT} = AT
-get_axes_type(::Type{<:ScalarPotential{T, N, S, AT}}) where {T, N, S, AT} = AT
 get_axes_type(::Type{Tuple{AT1, AT2, AT3}}) where {AT1, AT2, AT3} = (AT1, AT2, AT3)
 
 function getindex(ep::P, g::Grid{T, N, S}) where {T, N, S, P <: ScalarPotential{T, N, S}}
