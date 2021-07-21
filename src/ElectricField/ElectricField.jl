@@ -136,11 +136,6 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cylindric
     return ElectricField(ef, pointtypes.grid)
 end
 
-function get_xyz_vector_from_rφz_vector(v::AbstractArray)::AbstractArray
-    return [v[1]*cos(v[2]),v[1]*sin(v[2]),v[3]]
-end
-
-
 function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φa::Array{T, 1})::Array{SVector{3, T},3} where {T}
     field_xyz = Array{SVector{3,T},3}(undef, size(field)...);
     for (iφ, φ) in enumerate(φa)
