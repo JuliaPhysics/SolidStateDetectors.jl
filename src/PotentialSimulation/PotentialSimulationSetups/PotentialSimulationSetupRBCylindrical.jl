@@ -1,12 +1,6 @@
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
 
-    channels::Array{Int, 1} = if !ismissing(weighting_potential_contact_id)
-        [weighting_potential_contact_id]
-    else
-        Int[]
-    end
-
     axr::Vector{T} = grid.axes[1].ticks
     axφ::Vector{T} = grid.axes[2].ticks
     axz::Vector{T} = grid.axes[3].ticks

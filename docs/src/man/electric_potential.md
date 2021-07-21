@@ -33,7 +33,7 @@ plot(
 
 ## Impurity Densities
 
-One contribution to the charge density $\rho(\vec{r})$ is the impurity density of the bulk a detector.
+One contribution to the charge density $\rho(\vec{r})$ is the impurity density of the semiconductor of a detector.
 Some simple impurity density profiles are already implemented in SolidStateDetectors.jl and can be easily accessed in the configuration files. Note that all impurity densities are given in units of **atoms / particles** per volume.
 
 ### Constant Impurity Density

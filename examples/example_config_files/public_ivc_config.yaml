@@ -91,7 +91,7 @@ detectors:
                         z: 65
       contacts:
           - material: HPGe
-            channel: 1
+            id: 1
             potential: 0
             geometry:
                 translate:
@@ -103,7 +103,7 @@ detectors:
                         h: 2
                     z: 1
           - material: HPGe
-            channel: 2
+            id: 2
             potential: 3500
             geometry:
                 union:

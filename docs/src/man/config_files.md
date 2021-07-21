@@ -51,7 +51,7 @@ detectors:
         h: 6cm
   contacts:
   - material: HPGe
-    channel: 1
+    id: 1
     potential: 6000
     geometry:
       tube:
@@ -60,7 +60,7 @@ detectors:
           to: 5
         h: 60
   - material: HPGe
-    channel: 2
+    id: 2
     potential: 0
     geometry:
       tube:
@@ -248,12 +248,12 @@ An example definition of contacts looks like this:
 ```yaml 
 contacts:
   - name: "n+ contact"
-    channel: 1
+    id: 1
     potential: 5000V
     material: HPGe # optional
     geometry: # ....
   - name: "p+ contact"
-    channel: 2
+    id: 2
     potential: 0
     material: HPGe #optional
     geometry: # ....
@@ -262,7 +262,7 @@ where each entry of the `contacts` array defines one contact.
 
 The different fields of a contact are:
 - `name` (optional): the custom name for the contacts, relevant for plotting. 
-- `channel`: a unique id of the contact that will unambiguously identify the contact, for example in the signal generation. All contacts should be given an integer id, ideally from 1 to N where N is the number of contacts.
+- `id`: a unique id of the contact that will unambiguously identify the contact, for example in the signal generation. All contacts should be given an integer id, ideally from 1 to N where N is the number of contacts.
 - `potential`: the electric potential applied to the contact that is fixed throughout the whole contact geometry. This value can be parsed with units (`5000V`) or without (`0` with the units defined in the `units` section).
 - `material` (optional): the material of the contact. This is important to know the electric properties of the contact for the electric potential calculation. If no `material` is given, the default is `HPGe` (high-purity germanium).
 - `geometry`: the geometry of the contact. Find a detailed description on how to define geometries under [Constructive Solid Geometry (CSG)](@ref).

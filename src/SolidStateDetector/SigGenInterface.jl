@@ -301,7 +301,7 @@ function siggentodict(config::Dict;
     #>----------------Define contact 1-----------------------------------------<
 
     contact_1 = Dict("material"    => "HPGe",
-                     "channel"     => 1,
+                     "id"     => 1,
                      "potential"   => 0.0,
                      "geometry"    => Dict("union" => geometry_1));
 
@@ -397,7 +397,7 @@ function siggentodict(config::Dict;
     #>----------------Define contact 2-----------------------------------------<
 
     contact_2 = Dict("material"    => "HPGe",
-                     "channel"     => 2,
+                     "id"     => 2,
                      "potential"   => config["xtal_HV"],
                      "geometry"    => Dict("union" => geometry_2));
 

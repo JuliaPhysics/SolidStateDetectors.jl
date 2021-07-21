@@ -53,7 +53,7 @@ detectors:
   - material: Si
     name: n+ contact
     potential: 0
-    channel: 1
+    id: 1
     geometry:
       translate:
         HexagonalPrism:
@@ -65,7 +65,7 @@ detectors:
   - material: Si
     name: p+ contact
     potential: -150
-    channel: 2
+    id: 2
     geometry:
       translate:
         HexagonalPrism:

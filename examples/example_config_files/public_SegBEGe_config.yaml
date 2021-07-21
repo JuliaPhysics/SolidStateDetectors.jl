@@ -48,7 +48,7 @@ detectors:
         z: 20
   contacts:
   - material: HPGe
-    channel: 1
+    id: 1
     potential: 4500
     geometry:
       translate:
@@ -61,7 +61,7 @@ detectors:
         z: 39.85
   - name: Seg. 1
     material: HPGe
-    channel: 2
+    id: 2
     potential: 0
     geometry:
       union:
@@ -95,7 +95,7 @@ detectors:
           z: 40
   - name: Seg. 2
     material: HPGe
-    channel: 3
+    id: 3
     potential: 0
     geometry:
       union:
@@ -129,7 +129,7 @@ detectors:
           z: 40
   - name: Seg. 3
     material: HPGe
-    channel: 4
+    id: 4
     potential: 0
     geometry:
       union:
@@ -163,7 +163,7 @@ detectors:
           z: 40
   - name: Seg. 4
     material: HPGe
-    channel: 5
+    id: 5
     potential: 0
     geometry:
       union:

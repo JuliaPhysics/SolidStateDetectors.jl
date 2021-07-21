@@ -44,7 +44,7 @@ detectors:
       - material: HPGe
         name: n+ contact
         potential: 10
-        channel: 1
+        id: 1
         geometry:
           box:
             hX: 0
@@ -55,7 +55,7 @@ detectors:
       - material: HPGe
         name: p+ contact
         potential: 0
-        channel: 2
+        id: 2
         geometry:
           box:
             hX: 0
