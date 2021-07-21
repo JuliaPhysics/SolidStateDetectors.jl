@@ -112,7 +112,7 @@ end
 #     OrderedDict{String,Any}("sphere" => dict)
 # end
 
-# get_r_limits(s::Sphere{T}) where {T} = (_left_radial_interval(s.r), _right_radial_interval(s.r))
+# get_r_limits(s::Sphere{T}) where {T} = _radial_endpoints(s.r)
 
 # get_decomposed_surfaces(s::Sphere{T, T}) where {T} = AbstractSurfacePrimitive[SphereMantle{T}(s.r)]
 

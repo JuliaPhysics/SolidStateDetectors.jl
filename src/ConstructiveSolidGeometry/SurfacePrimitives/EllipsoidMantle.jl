@@ -116,7 +116,7 @@ end
 
 
 
-# get_r_limits(s::SphereMantle{T}) where {T} = (_left_radial_interval(s.r), _right_radial_interval(s.r))
+# get_r_limits(s::SphereMantle{T}) where {T} = _radial_endpoints(s.r)
 # get_φ_limits(s::SphereMantle{T}) where {T} = (T(0), T(2π), true)
 # get_z_limits(s::SphereMantle{T}) where {T} = (-_right_linear_interval(s.r), _right_linear_interval(s.r))
 

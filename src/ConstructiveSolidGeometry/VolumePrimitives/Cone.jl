@@ -765,9 +765,9 @@ end
 
 
 # get_r_limits(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
-#     (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
+#     (_radial_endpoints(c.r)..., _radial_endpoints(c.r)...)
 # get_r_limits(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =
-#     (_left_radial_interval(c.r[1]),_right_radial_interval(c.r[1]),_left_radial_interval(c.r[2]),_right_radial_interval(c.r[2]))
+#     (_radial_endpoints(c.r[1])..., _radial_endpoints(c.r[2])...)
 
 # get_φ_limits(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
 # get_φ_limits(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
@@ -843,7 +843,7 @@ end
 #     samples = [
 #         CylindricalPoint{T}(r,φ,z)
 #         for z in zMin:step:zMax
-#         for r in _left_radial_interval(get_r_at_z(c, z)):step:_right_radial_interval(get_r_at_z(c, z))
+#         for r in range(_radial_endpoints(get_r_at_z(c, z))..., step = step)
 #         for φ in (r == 0 ? φMin : φMin:step/r:φMax)
 #     ]
 # end
@@ -854,7 +854,7 @@ end
 #     samples = [
 #         CylindricalPoint{T}(r,φ,z)
 #         for z in (Nsamps[3] ≤ 1 ? zMin : range(zMin, zMax, length = Nsamps[3]))
-#         for r in (Nsamps[1] ≤ 1 ? _left_radial_interval(get_r_at_z(c, z)) : range(_left_radial_interval(get_r_at_z(c, z)), _right_radial_interval(get_r_at_z(c, z)), length = Nsamps[1]))
+#         for r in (Nsamps[1] ≤ 1 ? _radial_endpoints(get_r_at_z(c, z))[1] : range(_radial_endpoints(get_r_at_z(c, z))..., length = Nsamps[1]))
 #         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
 #     ]
 # end

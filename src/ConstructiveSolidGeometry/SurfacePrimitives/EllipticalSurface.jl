@@ -100,7 +100,7 @@ end
 # end
 
 # get_r_limits(a::CylindricalAnnulus{T, <:Union{T, AbstractInterval{T}}, <:Any}) where {T} =
-#     (_left_radial_interval(a.r), _right_radial_interval(a.r))
+#     _radial_endpoints(a.r)
 
 # get_φ_limits(a::CylindricalAnnulus{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
 # get_φ_limits(a::CylindricalAnnulus{T, <:Any, <:AbstractInterval}) where {T} = (a.φ.left, a.φ.right, false)
@@ -140,8 +140,7 @@ end
 # end
 
 # function sample(a::CylindricalAnnulus{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
-#     L::T = _left_radial_interval(a.r)
-#     R::T = _right_radial_interval(a.r)
+#     L::T, R::T = _radial_endpoints(a.r)
 #     samples = [
 #         CartesianPoint{T}(x,y,a.z)
 #         for x in _get_ticks(g.x, -R, R)

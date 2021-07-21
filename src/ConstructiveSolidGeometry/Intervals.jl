@@ -1,11 +1,8 @@
 @inline _linear_endpoints(z::Real) = (-z, z)
 @inline _linear_endpoints(z::AbstractInterval) = endpoints(z)
 
-@inline _left_radial_interval(r::T) where {T <: Real} = T(0)
-@inline _left_radial_interval(r::AbstractInterval) = r.left
-
-@inline _right_radial_interval(r::Real) = r
-@inline _right_radial_interval(r::AbstractInterval) = r.right
+@inline _radial_endpoints(r::T) where {T <: Real} = (zero(T), r)
+@inline _radial_endpoints(r::AbstractInterval) = endpoints(r)
 
 @inline _extend_number_to_zero_interval(r::T) where {T <: Real} = T(0)..r
 @inline _extend_number_to_zero_interval(r::AbstractInterval) = r

@@ -177,7 +177,7 @@ end
 
 
 
-# get_r_limits(rp::RegularPrism) = (_left_radial_interval(rp.r), _right_radial_interval(rp.r))
+# get_r_limits(rp::RegularPrism) = _radial_endpoints(rp.r)
 # get_z_limits(rp::RegularPrism) = _linear_endpoints(rp.z)
 
 # function get_decomposed_surfaces(rp::RegularPrism{N,T}) where {N, T}
