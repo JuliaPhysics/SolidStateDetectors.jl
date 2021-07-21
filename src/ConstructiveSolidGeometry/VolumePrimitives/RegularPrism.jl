@@ -33,7 +33,7 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
                 Use `h` instead to specify the height of the primitive."
             z
         else # z isa Tuple
-            @warn "Deprecation warning: Field `z` for `CRegularPrismone` is deprecated. 
+            @warn "Deprecation warning: Field `z` for `RegularPrism` is deprecated. 
                 Use `h` instead to specify the height of the primitive.
                 There might be a conflict with the possible field `origin`:
                 The `z` component of the origin of the primitive is overwritten by the `z`."
