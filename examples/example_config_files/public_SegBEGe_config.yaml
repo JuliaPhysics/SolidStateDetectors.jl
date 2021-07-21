@@ -51,14 +51,11 @@ detectors:
     id: 1
     potential: 4500
     geometry:
-      translate:
-        tube:
-          r: 7.5
-          phi:
-            from: 0
-            to: 360
-          h: 0.3
-        z: 39.85
+      tube:
+        r: 7.5
+        h: 0.3
+        origin:
+          z: 39.85
   - name: Seg. 1
     material: HPGe
     id: 2
@@ -73,26 +70,26 @@ detectors:
             from: 0.3582
             to: 59.6419
           h: 0
-      - translate:
-          tube:
-            r:
-              from: 39.5
-              to: 39.5
-            phi:
-              from: 0.3582
-              to: 59.6419
-            h: 40
-          z: 20
-      - translate:
-          tube:
-            r:
-              from: 17
-              to: 39.5
-            phi:
-              from: 0.3582
-              to: 59.6419
-            h: 0
-          z: 40
+      - tube:
+          r:
+            from: 39.5
+            to: 39.5
+          phi:
+            from: 0.3582
+            to: 59.6419
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 17
+            to: 39.5
+          phi:
+            from: 0.3582
+            to: 59.6419
+          h: 0
+          origin:
+            z: 40
   - name: Seg. 2
     material: HPGe
     id: 3
@@ -107,26 +104,26 @@ detectors:
             from: 120.3581
             to: 179.6419
           h: 0
-      - translate:
-          tube:
-            r:
-              from: 39.5
-              to: 39.5
-            phi:
-              from: 120.3581
-              to: 179.6419
-            h: 40
-          z: 20
-      - translate:
-          tube:
-            r:
-              from: 17
-              to: 39.5
-            phi:
-              from: 120.3581
-              to: 179.6419
-            h: 0
-          z: 40
+      - tube:
+          r:
+            from: 39.5
+            to: 39.5
+          phi:
+            from: 120.3581
+            to: 179.6419
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 17
+            to: 39.5
+          phi:
+            from: 120.3581
+            to: 179.6419
+          h: 0
+          origin:
+            z: 40
   - name: Seg. 3
     material: HPGe
     id: 4
@@ -141,26 +138,26 @@ detectors:
             from: 240.3581
             to: 299.6419
           h: 0
-      - translate:
-          tube:
-            r:
-              from: 39.5
-              to: 39.5
-            phi:
-              from: 240.3581
-              to: 299.6419
-            h: 40
-          z: 20
-      - translate:
-          tube:
-            r:
-              from: 17
-              to: 39.5
-            phi:
-              from: 240.3581
-              to: 299.6419
-            h: 0
-          z: 40
+      - tube:
+          r:
+            from: 39.5
+            to: 39.5
+          phi:
+            from: 240.3581
+            to: 299.6419
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 17
+            to: 39.5
+          phi:
+            from: 240.3581
+            to: 299.6419
+          h: 0
+          origin:
+            z: 40
   - name: Seg. 4
     material: HPGe
     id: 5
@@ -175,26 +172,26 @@ detectors:
             from: 60.3581
             to: 119.6419
           h: 0
-      - translate:
-          tube:
-            r:
-              from: 39.5
-              to: 39.5
-            phi:
-              from: 60.3581
-              to: 119.6419
-            h: 40
-          z: 20
-      - translate:
-          tube:
-            r:
-              from: 17
-              to: 39.5
-            phi:
-              from: 60.3581
-              to: 119.6419
-            h: 0
-          z: 40
+      - tube:
+          r:
+            from: 39.5
+            to: 39.5
+          phi:
+            from: 60.3581
+            to: 119.6419
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 17
+            to: 39.5
+          phi:
+            from: 60.3581
+            to: 119.6419
+          h: 0
+          origin:
+            z: 40
       - tube:
           r:
             from: 13
@@ -203,26 +200,26 @@ detectors:
             from: 180.3581
             to: 239.6419
           h: 0
-      - translate:
-          tube:
-            r:
-              from: 39.5
-              to: 39.5
-            phi:
-              from: 180.3581
-              to: 239.6419
-            h: 40
-          z: 20
-      - translate:
-          tube:
-            r:
-              from: 17
-              to: 39.5
-            phi:
-              from: 180.3581
-              to: 239.6419
-            h: 0
-          z: 40
+      - tube:
+          r:
+            from: 39.5
+            to: 39.5
+          phi:
+            from: 180.3581
+            to: 239.6419
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 17
+            to: 39.5
+          phi:
+            from: 180.3581
+            to: 239.6419
+          h: 0
+          origin:
+            z: 40
       - tube:
           r:
             from: 13
@@ -231,29 +228,26 @@ detectors:
             from: 300.3581
             to: 359.6419
           h: 0
-      - translate:
-          tube:
-            r:
-              from: 39.5
-              to: 39.5
-            phi:
-              from: 300.3581
-              to: 359.6419
-            h: 40
-          z: 20
-      - translate:
-          tube:
-            r:
-              from: 17
-              to: 39.5
-            phi:
-              from: 300.3581
-              to: 359.6419
-            h: 0
-          z: 40
+      - tube:
+          r:
+            from: 39.5
+            to: 39.5
+          phi:
+            from: 300.3581
+            to: 359.6419
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 17
+            to: 39.5
+          phi:
+            from: 300.3581
+            to: 359.6419
+          h: 0
+          origin:
+            z: 40
       - tube:
           r: 13
-          phi:
-            from: 0
-            to: 360
           h: 0

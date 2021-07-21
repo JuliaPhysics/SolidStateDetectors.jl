@@ -39,307 +39,291 @@ detectors:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:
       difference:
-      - translate:
-          tube:
-            r: 37.5
-            phi:
-              from: 0
-              to: 360
-            h: 70
-          z: 35
-      - union:
-        - translate:
-            tube:
-              r: 5
-              phi:
-                from: 0
-                to: 360
-              h: 72
+      - tube:
+          r: 37.5
+          h: 70
+          origin:
             z: 35
-        - translate:
-            cone:
-              r:
-                bottom: 10
-                top: 5
-              phi:
-                from: 0
-                to: 360
-              h: 6
+      - tube:
+          r: 5
+          h: 72
+          origin:
+            z: 35
+      - cone:
+          r:
+            bottom: 10
+            top: 5
+          h: 6
+          origin:
             z: 2.5
-        - translate:
-            cone:
-              r:
-                bottom: 5
-                top: 10
-              phi:
-                from: 0
-                to: 360
-              h: 6
+      - cone:
+          r:
+            bottom: 5
+            top: 10
+          h: 6
+          origin:
             z: 67.5
   contacts:
   - material: HPGe
     id: 1
     potential: 6000
     geometry:
-      translate:
-        tube:
-          r:
-            from: 5
-            to: 5
-          phi:
-            from: 0
-            to: 360
-          h: 60
-        z: 35
+      tube:
+        r:
+          from: 5
+          to: 5
+        h: 60
+        origin:
+          z: 35
   - material: HPGe
     id: 2
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 0.382
-            to: 59.618
-          h: 23
-        z: 11.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 0.382
+          to: 59.618
+        h: 23
+        origin:
+          z: 11.5
   - material: HPGe
     id: 3
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 60.382
-            to: 119.618
-          h: 23
-        z: 11.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 60.382
+          to: 119.618
+        h: 23
+        origin:
+          z: 11.5
   - material: HPGe
     id: 4
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 120.382
-            to: 179.618
-          h: 23
-        z: 11.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 120.382
+          to: 179.618
+        h: 23
+        origin:
+          z: 11.5
   - material: HPGe
     id: 5
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 180.382
-            to: 239.618
-          h: 23
-        z: 11.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 180.382
+          to: 239.618
+        h: 23
+        origin:
+          z: 11.5
   - material: HPGe
     id: 6
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 240.382
-            to: 299.618
-          h: 23
-        z: 11.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 240.382
+          to: 299.618
+        h: 23
+        origin:
+          z: 11.5
   - material: HPGe
     id: 7
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 300.382
-            to: 359.618
-          h: 23
-        z: 11.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 300.382
+          to: 359.618
+        h: 23
+        origin:
+          z: 11.5
   - material: HPGe
     id: 8
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 0.382
-            to: 59.618
-          h: 23
-        z: 35
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 0.382
+          to: 59.618
+        h: 23
+        origin:
+          z: 35
   - material: HPGe
     id: 9
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 60.382
-            to: 119.618
-          h: 23
-        z: 35
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 60.382
+          to: 119.618
+        h: 23
+        origin:
+          z: 35
   - material: HPGe
     id: 10
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 120.382
-            to: 179.618
-          h: 23
-        z: 35
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 120.382
+          to: 179.618
+        h: 23
+        origin:
+          z: 35
   - material: HPGe
     id: 11
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 180.382
-            to: 239.618
-          h: 23
-        z: 35
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 180.382
+          to: 239.618
+        h: 23
+        origin:
+          z: 35
   - material: HPGe
     id: 12
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 240.382
-            to: 299.618
-          h: 23
-        z: 35
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 240.382
+          to: 299.618
+        h: 23
+        origin:
+          z: 35
   - material: HPGe
     id: 13
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 300.382
-            to: 359.618
-          h: 23
-        z: 35
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 300.382
+          to: 359.618
+        h: 23
+        origin:
+          z: 35
   - material: HPGe
     id: 14
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 0.382
-            to: 59.618
-          h: 23
-        z: 58.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 0.382
+          to: 59.618
+        h: 23
+        origin:
+          z: 58.5
   - material: HPGe
     id: 15
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 60.382
-            to: 119.618
-          h: 23
-        z: 58.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 60.382
+          to: 119.618
+        h: 23
+        origin:
+          z: 58.5
   - material: HPGe
     id: 16
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 120.382
-            to: 179.618
-          h: 23
-        z: 58.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 120.382
+          to: 179.618
+        h: 23
+        origin:
+          z: 58.5
   - material: HPGe
     id: 17
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 180.382
-            to: 239.618
-          h: 23
-        z: 58.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 180.382
+          to: 239.618
+        h: 23
+        origin:
+          z: 58.5
   - material: HPGe
     id: 18
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 240.382
-            to: 299.618
-          h: 23
-        z: 58.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 240.382
+          to: 299.618
+        h: 23
+        origin:
+          z: 58.5
   - material: HPGe
     id: 19
     potential: 0
     geometry:
-      translate:
-        tube:
-          r:
-            from: 37.5
-            to: 37.5
-          phi:
-            from: 300.382
-            to: 359.618
-          h: 23
-        z: 58.5
+      tube:
+        r:
+          from: 37.5
+          to: 37.5
+        phi:
+          from: 300.382
+          to: 359.618
+        h: 23
+        origin:
+          z: 58.5

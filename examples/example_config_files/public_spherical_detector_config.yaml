@@ -34,15 +34,10 @@ detectors:
       - sphere:
           r: 30
       - box:
-          x:
-            from: -30
-            to: 30
-          y:
-            from: -30
-            to: 30
-          z:
-            from: 29.8
-            to: 30
+          widths: [60, 60, 0.2]
+          origin:
+            z: 29.9
+        
   contacts:
   - material: HPGe
     id: 1
@@ -50,12 +45,9 @@ detectors:
     geometry:
       tube:
         r: 5
-        phi:
-          from: 0
-          to: 360
-        z:
-          from: 29.8
-          to: 30
+        h: 0.2
+        origin:
+          z: 29.9
   - material: HPGe
     id: 2
     potential: 3500
@@ -67,12 +59,6 @@ detectors:
         - sphere:
             r: 28
         - box:
-            x:
-              from: -30
-              to: 30
-            y:
-              from: -30
-              to: 30
-            z:
-              from: 0
-              to: 35
+            widths: [60, 60, 40]
+            origin:
+              z: 20

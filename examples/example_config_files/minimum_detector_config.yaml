@@ -19,4 +19,4 @@ detectors:
           h: 60
       - tube:
           r: 5
-          h: 60
+          h: 65

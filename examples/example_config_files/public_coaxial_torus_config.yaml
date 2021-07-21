@@ -44,12 +44,6 @@ detectors:
         r_tube:
           from: 2
           to: 5
-        phi:
-          from: 0
-          to: 360
-        theta:
-          from: 0
-          to: 360
   contacts:
   - name: p contact
     material: HPGe
@@ -61,12 +55,6 @@ detectors:
         r_tube:
           from: 2
           to: 2
-        phi:
-          from: 0
-          to: 360
-        theta:
-          from: 0
-          to: 360
   - name: n contact
     material: HPGe
     id: 2
@@ -77,9 +65,3 @@ detectors:
         r_tube:
           from: 5
           to: 5
-        phi:
-          from: 0
-          to: 360
-        theta:
-          from: 0
-          to: 360
