@@ -61,14 +61,6 @@ function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1,
     return s
 end
 
-#= OBSOLETE (#87)
-function PotentialSimulationSetup(ssd::SolidStateDetector{T}, grid::Grid{T, N, S}, medium::NamedTuple = material_properties[materials["vacuum"]], potential_array::Union{Missing, Array{T, N}} = missing)::PotentialSimulationSetup{T, N, S} where {T, N, S}   
-    fssrb::PotentialSimulationSetupRB{T, N, N + 1, S} = PotentialSimulationSetupRB(ssd, grid, medium, potential_array)
-    return PotentialSimulationSetup{T, N, S}( Grid(fssrb), ElectricPotentialArray(fssrb), PointTypeArray(fssrb), EffectiveChargeDensityArray(fssrb), FixedEffectiveChargeDensityArray(fssrb), DielektrikumDistributionArray(fssrb)  )
-end
-=#
-
 include("BoundaryConditions/BoundaryConditions.jl")
-
 include("PotentialSimulationSetupRBCylindrical.jl")
 include("PotentialSimulationSetupRBCartesian3D.jl")
