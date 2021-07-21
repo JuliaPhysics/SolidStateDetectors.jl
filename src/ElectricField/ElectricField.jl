@@ -38,21 +38,6 @@ function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}
     return ElectricField{T, 3, S}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
 end
 
-function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
-    magn=0
-    magn+=(vector[1])^2
-    magn+=(vector[3])^2
-    result = sqrt(magn)
-    if isnan(cutoff)
-        return result
-    else
-        if result >cutoff
-            result=0
-        end
-        return result
-    end
-end
-
 
 function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = ep.data
