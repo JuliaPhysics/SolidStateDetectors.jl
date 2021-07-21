@@ -119,26 +119,6 @@ function sample(c::SolidStateDetector{T}, ::Type{Cylindrical}, sampling...)::Vec
     unique!(imp)
 end
 
-
-function is_boundary_point(c::SolidStateDetector, pt::AbstractCoordinatePoint{T}, ax1::Vector{T}, ax2::Vector{T}, ax3::Vector{T})::Tuple{Bool, Real, Int} where {T <: SSDFloat}
-    # if false #!(p in c)
-    #     return false, T(0), 0
-    # else
-    for contact in c.contacts
-        if in(pt, contact, ax1)
-            return true, contact.potential, contact.id
-        end
-    end
-    for external_part in c.external_parts
-        if in(pt, external_part, ax1)
-            return true, external_part.potential, external_part.id
-        end
-    end
-    return false, 0.0, 0
-    # end
-end
-
-
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
