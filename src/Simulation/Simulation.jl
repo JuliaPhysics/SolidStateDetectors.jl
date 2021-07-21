@@ -644,6 +644,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
         end
         refine = !ismissing(refinement_limits)
+        if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
+        n_refinement_steps = length(refinement_limits)
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
         if CS == Cylindrical
             cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
@@ -658,7 +660,9 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         bias_voltage::T = (length(contact_potentials) > 0) ? (maximum(contact_potentials) - minimum(contact_potentials)) : T(0)
         if isWP bias_voltage = T(1) end
         if verbose
+            sim_name = sim.config_dict["name"]
             println(
+                "Simulation: $(sim_name)\n",
                 "$(isEP ? "Electric" : "Weighting") Potential Calculation$(isEP ? "" : " - ID: $contact_id")\n",
                 if isEP "Bias voltage: $(bias_voltage) V\n" else "" end,
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
@@ -666,9 +670,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n",
                 "Threads: $use_nthreads\n",
                 "Coordinate system: $(CS)\n",
-                "Initial grid dimension: $(size(grid))\n",
-                "Refine? -> $refine\n",
-                ""
+                "N Refinements: -> $(n_refinement_steps)\n",
+                "Initial grid size: $(size(grid))\n",
             )
         end
     end
@@ -692,13 +695,12 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
 
     # refinement_counter::Int = 1
     if refine
-        if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
-        n_refinement_steps = length(refinement_limits)
         for iref in 1:n_refinement_steps
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
                 sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_tick_distance, only2d = Val(only_2d))
+                if verbose println("Grid size: $(size(sim.electric_potential.data))") end
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
@@ -708,6 +710,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             else
                 max_diffs = abs.(ref_limits)
                 sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_tick_distance, only2d = Val(only_2d))
+                if verbose println("Grid size: $(size(sim.weighting_potentials[contact_id].data))") end
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
