@@ -4,9 +4,6 @@
 @inline _radial_endpoints(r::T) where {T <: Real} = (zero(T), r)
 @inline _radial_endpoints(r::AbstractInterval) = endpoints(r)
 
-@inline get_angular_interval(::Type{T}, α::AbstractInterval{T}) where {T} = α
-@inline get_angular_interval(::Type{T}, α::Nothing) where {T} = T(0)..T(2π)
-
 @inline _in_angular_interval_closed(α::Real, α_int::Nothing, tol::Real = 0) = true
 @inline _in_angular_interval_closed(α::Real, α_int::AbstractInterval{T}, tol::Real = 0) where {T} = mod(α - (α_int.left-tol), T(2π)) ≤ (α_int.right+tol) - (α_int.left-tol)
 
