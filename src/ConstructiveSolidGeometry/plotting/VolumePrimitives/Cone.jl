@@ -7,7 +7,7 @@ _get_plot_r(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} =
 _get_plot_φ(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
 _get_plot_φ(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
 
-_get_plot_z(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
+_get_plot_z(c::Cone{T}) where {T} = _linear_endpoints(c.z)
 
 
 function get_plot_points(c::Cone{T}; n = 30) where {T <: AbstractFloat}
