@@ -44,6 +44,18 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
     widths_ax1 = diff(get_extended_ticks(grid[1]))
     widths_ax2 = diff(get_extended_ticks(grid[2]))
     widths_ax3 = diff(get_extended_ticks(grid[3]))
+    Δw_max_factor = T(1e-2)
+    #= 
+        Δw_max_factor is chosen by trying out different values for it. 
+        This value seems to be okay if the grid is not to unevenly spaced. 
+        But this can be secured via the `max_ratio`- and the `the max_tick_distance`-keywords.
+        The critical parameter is `csgtol` inside the `in`-method, which is currently defined through 
+        the widths of the voxel of the grid point next to the calculated intersection point.
+        It would be probably better to turn this into an `NTuple{3,T}` and pass the widths of the voxel instead
+        of one single value (`csgtol`). However, inside the `in` methods this would have to be transformed 
+        due to rotations and maybe the shape of the primitive. This might not be straight forward.
+        But this can be investigated and certainly improved in the future.
+    =#
     for i2 in t_idx_r2
         for i1 in t_idx_r1
             l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], ticks[2][i2], zero(T)), eZ)
@@ -51,11 +63,11 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
             for pt in pts
                 i3 = searchsortednearest(ticks[3], pt[3])
                 csgtol = abs(ticks[3][i3] - pt[3])
-                Δw_max = max(
+                Δw_max = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
                     # widths_ax3[i3], widths_ax3[i3+1]
-                )/4
+                ) 
                 if csgtol < Δw_max
                     csgtol = Δw_max
                 end
@@ -73,11 +85,11 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
             for pt in pts
                 i2 = searchsortednearest(ticks[2], pt[2])
                 csgtol = abs(ticks[2][i2] - pt[2])
-                Δw_max = max(
+                Δw_max = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
                     # widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
-                )/4
+                )
                 if csgtol < Δw_max
                     csgtol = Δw_max
                 end
@@ -95,11 +107,11 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
             for pt in pts
                 i1 = searchsortednearest(ticks[1], pt[1])
                 csgtol = abs(ticks[1][i1] - pt[1])
-                Δw_max = max(
+                Δw_max = Δw_max_factor * max(
                     # widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
-                )/4
+                )
                 if csgtol < Δw_max
                     csgtol = Δw_max
                 end
@@ -122,7 +134,18 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
     widths_ax1 = diff(get_extended_ticks(grid[1]))
     widths_ax2 = diff(get_extended_ticks(grid[2]))
     widths_ax3 = diff(get_extended_ticks(grid[3]))
-
+    Δw_max_factor = T(1e-2)
+    #= 
+        Δw_max_factor is chosen by trying out different values for it. 
+        This value seems to be okay if the grid is not to unevenly spaced. 
+        But this can be secured via the `max_ratio`- and the `the max_tick_distance`-keywords.
+        The critical parameter is `csgtol` inside the `in`-method, which is currently defined through 
+        the widths of the voxel of the grid point next to the calculated intersection point.
+        It would be probably better to turn this into an `NTuple{3,T}` and pass the widths of the voxel instead
+        of one single value (`csgtol`). However, inside the `in` methods this would have to be transformed 
+        due to rotations and maybe the shape of the primitive. This might not be straight forward.
+        But this can be investigated and certainly improved in the future.
+    =#
     for i2 in eachindex(ticks[2])
         for i1 in eachindex(ticks[1])
             l = ConstructiveSolidGeometry.Line(CartesianPoint(CylindricalPoint{T}(ticks[1][i1], ticks[2][i2], zero(T))), eZ)
@@ -130,10 +153,10 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
             for pt in pts
                 i3 = searchsortednearest(ticks[3], pt[3])
                 csgtol = abs(ticks[3][i3] - pt[3])
-                Δw_max = max(
+                Δw_max = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
                     # widths_ax2[i2], widths_ax2[i2+1],
-                )/4
+                )
                 if csgtol < Δw_max
                     csgtol = Δw_max
                 end
@@ -172,10 +195,10 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                 # if it differs, it would always differ by π = 3.141... -> 0.1 is fine
                 i1 = searchsortednearest(ticks[1], pt_cyl[1])
                 csgtol = abs(ticks[1][i1] - pt_cyl[1])
-                Δw_max = max(
+                Δw_max = Δw_max_factor * max(
                     widths_ax3[i3], widths_ax3[i3+1],
                     # widths_ax2[i2], widths_ax2[i2+1],
-                )/4
+                )
                 if csgtol < Δw_max
                     csgtol = Δw_max
                 end
