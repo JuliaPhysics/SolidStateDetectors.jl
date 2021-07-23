@@ -4,8 +4,8 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
     struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
 
 - `T`: Tick type (element type) of the axes.
-- `N`: Dimension of the grid  
-- `S`: Coordinate system (`Cartesian` or `Cylindrical`)  
+- `N`: Dimension of the grid.  
+- `S`: Coordinate system (`Cartesian` or `Cylindrical`).
 - `AT`: Axes type.
 
 # Fields
