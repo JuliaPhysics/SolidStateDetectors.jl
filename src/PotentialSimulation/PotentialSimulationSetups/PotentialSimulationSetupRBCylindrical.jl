@@ -1,5 +1,7 @@
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, N}
+        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
+        not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
+        paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
 
     axr::Vector{T} = grid.axes[1].ticks
     axφ::Vector{T} = grid.axes[2].ticks
@@ -30,29 +32,32 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 if in(pt, ssd)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
-                for contact in ssd.contacts
-                    if pt in contact
-                        potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
-                            contact.potential
-                        else
-                            contact.id == weighting_potential_contact_id ? 1 : 0
+                if NotOnlyPaintContacts
+                    for contact in ssd.contacts
+                        if pt in contact
+                            potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
+                                contact.potential
+                            else
+                                contact.id == weighting_potential_contact_id ? 1 : 0
+                            end
+                            pointtypes[ ir, iφ, iz ] = zero(PointType)
                         end
-                        pointtypes[ ir, iφ, iz ] = zero(PointType)
                     end
                 end
             end
         end
     end
-
-    for contact in ssd.contacts
-        pot::T = if ismissing(weighting_potential_contact_id)
-            contact.potential
-        else
-            contact.id == weighting_potential_contact_id ? 1 : 0
-        end
-        fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
-        for face in fs
-            paint!(pointtypes, potential, face, contact.geometry, pot, grid)
+    if PaintContacts
+        for contact in ssd.contacts
+            pot::T = if ismissing(weighting_potential_contact_id)
+                contact.potential
+            else
+                contact.id == weighting_potential_contact_id ? 1 : 0
+            end
+            fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
+            for face in fs
+                paint!(pointtypes, potential, face, contact.geometry, pot, grid)
+            end
         end
     end
     nothing
@@ -61,8 +66,8 @@ end
 
 function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, Cylindrical}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = (1.0, 1.0),
-                weighting_potential_contact_id::Union{Missing, Int} = missing
-                )::PotentialSimulationSetupRB{T} where {T}
+                weighting_potential_contact_id::Union{Missing, Int} = missing,
+                not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialSimulationSetupRB{T} where {T}
     r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
@@ -350,7 +355,8 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
 
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id  )
+        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id,
+            not_only_paint_contacts = Val(not_only_paint_contacts), paint_contacts = Val(paint_contacts)  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
         rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )
         potential = clear(potential)

@@ -401,9 +401,10 @@ end
 Applies the initial state of the electric potential calculation.
 It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`.
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing where {T <: SSDFloat}
+function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
+        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
-        PotentialSimulationSetupRB(sim.detector, grid, sim.medium);
+        PotentialSimulationSetupRB(sim.detector, grid, sim.medium; not_only_paint_contacts, paint_contacts);
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), grid)
@@ -419,9 +420,11 @@ end
 Applies the initial state of the weighting potential calculation for the contact with the id `contact_id`.
 It overwrites `sim.weighting_potentials[contact_id]`.
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing where {T <: SSDFloat}
+function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim);
+        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
-        PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id);
+        PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
+            not_only_paint_contacts, paint_contacts);
 
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(fssrb), grid)
     nothing
@@ -440,6 +443,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                    max_n_iterations::Int = -1,
                                    depletion_handling::Bool = false,
                                    use_nthreads::Int = Base.Threads.nthreads(),
+                                   not_only_paint_contacts::Bool = true, 
+                                   paint_contacts::Bool = true,
                                    sor_consts::Union{Missing, T, NTuple{2, T}} = missing
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
@@ -452,7 +457,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
     only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
 
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
-        PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts))
+        PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
+            not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
     cf::T = _update_till_convergence!( fssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
@@ -530,6 +536,8 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
                                    depletion_handling::Bool = false,
+                                   not_only_paint_contacts::Bool = true, 
+                                   paint_contacts::Bool = true,
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    sor_consts::Union{Missing, T, NTuple{2, T}} = missing
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -544,7 +552,8 @@ function update_till_convergence!( sim::Simulation{T, CS},
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
     fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.weighting_potentials[contact_id].grid)} =
         PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
-                sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id)
+                sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
+                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
     cf::T = _update_till_convergence!( fssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
@@ -568,12 +577,15 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
+                    not_only_paint_contacts::Bool = true, 
+                    paint_contacts::Bool = true,
                     update_other_fields::Bool = false) where {T <: SSDFloat}
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
         fssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
-            PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data)
+            PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
+                                        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(fssrb), sim.electric_potential.grid)
@@ -608,6 +620,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
         n_iterations_between_checks::Int = 1000,
+        not_only_paint_contacts::Bool = true, 
+        paint_contacts::Bool = true,
         verbose::Bool = true,
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
@@ -691,7 +705,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         end
     end
     if isEP
-        apply_initial_state!(sim, potential_type, grid)
+        apply_initial_state!(sim, potential_type, grid, not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
         update_till_convergence!( sim, potential_type, convergence_limit,
                                   n_iterations_between_checks = n_iterations_between_checks,
                                   max_n_iterations = max_n_iterations,
@@ -699,7 +713,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                   use_nthreads = use_nthreads,
                                   sor_consts = sor_consts )
     else
-        apply_initial_state!(sim, potential_type, contact_id, grid)
+        apply_initial_state!(sim, potential_type, contact_id, grid, not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
         update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
@@ -721,6 +735,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
                                                 use_nthreads = use_nthreads,
+                                                not_only_paint_contacts = not_only_paint_contacts, 
+                                                paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
@@ -731,6 +747,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
                                                 use_nthreads = use_nthreads,
+                                                not_only_paint_contacts = not_only_paint_contacts, 
+                                                paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
             end
         end
@@ -780,6 +798,9 @@ There are several `<keyword arguments>` which can be used to tune the computatio
     In case of cartesian coordinates only one value is taken.
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `10000`. If set to `-1` there will be no limit.
+- `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+- `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
@@ -828,6 +849,9 @@ There are several `<keyword arguments>` which can be used to tune the computatio
     In case of cartesian coordinates only one value is taken.
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `10000`. If set to `-1` there will be no limit.
+- `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+- `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::Nothing where {T <: SSDFloat}
@@ -950,6 +974,9 @@ end
     In case of cartesian coordinates only one value is taken.
 - `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `-1`. If set to `-1` there will be no limit.
+- `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+- `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
 - `verbose::Bool=true`: Boolean whether info output is produced or not.
 """
 function simulate!( sim::Simulation{T};  
@@ -961,7 +988,10 @@ function simulate!( sim::Simulation{T};
                     use_nthreads::Int = Base.Threads.nthreads(),
                     sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
                     max_n_iterations::Int = -1,
+                    not_only_paint_contacts::Bool = true, 
+                    paint_contacts::Bool = true,
                     depletion_handling::Bool = false, 
+
                     convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
     calculate_electric_potential!(  sim,
                                     refinement_limits = refinement_limits,
@@ -972,6 +1002,8 @@ function simulate!( sim::Simulation{T};
                                     sor_consts = sor_consts,
                                     max_n_iterations = max_n_iterations,
                                     verbose = verbose,
+                                    not_only_paint_contacts = not_only_paint_contacts,
+                                    paint_contacts = paint_contacts,
                                     depletion_handling = depletion_handling,
                                     convergence_limit = convergence_limit )
     for contact in sim.detector.contacts
@@ -984,6 +1016,8 @@ function simulate!( sim::Simulation{T};
                     sor_consts = sor_consts,
                     max_n_iterations = max_n_iterations,
                     verbose = verbose, 
+                    not_only_paint_contacts = not_only_paint_contacts,
+                    paint_contacts = paint_contacts,
                     convergence_limit = convergence_limit)
     end
     calculate_electric_field!(sim)
