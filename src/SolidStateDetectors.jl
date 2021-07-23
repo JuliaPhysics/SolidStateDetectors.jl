@@ -33,9 +33,7 @@ using .ConstructiveSolidGeometry:
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             CartesianTicksTuple, CylindricalTicksTuple,
-            Geometry, AbstractGeometry,
-            AbstractSurfacePrimitive, AbstractPlanarSurfacePrimitive, AbstractCurvedSurfacePrimitive,
-            csg_round_lin, csg_round_rad, csg_isapprox, 
+            Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
             ConfigFileError, _parse_value
