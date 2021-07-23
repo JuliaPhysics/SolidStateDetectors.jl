@@ -1,5 +1,13 @@
 """
-    mutable struct SolidStateDetector{T <: SSDFloat} <: AbstractConfig{T}
+    struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
+
+# Fields
+- `name::String`: Name of the detector
+- `semiconductor::SC`: Semiconductor of the detector. 
+- `contacts::CT`: Vector of `Contact`s of the detector. 
+- `passives::PT`: Vector of `Passive` objects, e.g. holding structures around the detector. 
+- `virtual_drift_volumes::VDM`: Vector of virtual drift volumes in which the drift can be modulated
+    by an user-defined method for `modulate_driftvector`.
 
 """
 struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
