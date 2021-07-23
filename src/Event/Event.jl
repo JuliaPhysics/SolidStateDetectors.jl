@@ -48,7 +48,17 @@ end
 in(evt::Event, detector::SolidStateDetector) = all( pt -> pt in detector, evt.locations)
 in(evt::Event, simulation::Simulation) = all( pt -> pt in simulation.detector, evt.locations)
 
+"""
+    function drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
+Calculate the drift paths for the given `event` and Simulation `sim`
+    and stores them under `event.drift_paths`. 
+
+# Keywords
+- `Δt::RealQuantity = 5u"ns"`: Time difference between two time stamps of the drift.
+- `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
+- `verbose = false`: Activate or deactivate additional info output. 
+"""
 function drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     event.drift_paths = drift_charges(sim, CartesianPoint.(event.locations), Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
     nothing
