@@ -52,73 +52,36 @@ function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type
 end
 
 
-function get_world_limits_from_objects(::Type{Cylindrical}, s::Semiconductor{T}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cylindrical}, ssd::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
-    imps_1::Vector{T} = []
-    imps_3::Vector{T} = []
-    for objects in [c, p]
-        for object in objects
-            for posgeo in object.geometry_positive
-                append!(imps_1, get_important_points( posgeo, Val{:r}()))
-                append!(imps_3, get_important_points( posgeo, Val{:z}()))
-            end
+    t::Array{T, 2} = hcat(hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(ssd.semiconductor.geometry)))...)...)
+    (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
+    for c in ssd.contacts
+        t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(c.geometry)))...)...)
+        (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
+    end
+    if !ismissing(ssd.passives)
+        for p in ssd.passives
+            t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(p.geometry)))...)...)
+            (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
         end
-    end
-    unique!(sort!(imps_1))
-    unique!(sort!(imps_3))
-    if length(imps_1) > 1
-        ax1l = minimum(imps_1)
-        ax1r = maximum(imps_1)
-    elseif length(imps_1) == 1
-        ax1l = minimum(imps_1)
-        ax1r = maximum(imps_1) + 1
-    end
-    if length(imps_3) > 1
-        ax3l = minimum(imps_3)
-        ax3r = maximum(imps_3)
-    elseif length(imps_3) == 1
-        ax3l = minimum(imps_3)
-        ax3r = maximum(imps_3) + 1
     end
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
-function get_world_limits_from_objects(::Type{Cartesian}, s::Semiconductor{T}, c::Vector{Contact{T}}, p::Vector{Passive{T}}) where {T <: SSDFloat}
+
+function get_world_limits_from_objects(::Type{Cartesian}, ssd::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
-    imps_1::Vector{T} = []
-    imps_2::Vector{T} = []
-    imps_3::Vector{T} = []
-    for objects in [c, p]
-        for object in objects
-            for posgeo in object.geometry_positive
-                append!(imps_1, get_important_points( posgeo, Val{:x}()))
-                append!(imps_2, get_important_points( posgeo, Val{:y}()))
-                append!(imps_3, get_important_points( posgeo, Val{:z}()))
-            end
+    t::Array{T, 2} = hcat(hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(ssd.semiconductor.geometry))...)...)
+    (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
+    for c in ssd.contacts
+        t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(c.geometry))...)...)
+        (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
+    end
+    if !ismissing(ssd.passives)
+        for p in ssd.passives
+            t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(p.geometry))...)...)
+            (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
         end
-    end
-    unique!(sort!(imps_1))
-    unique!(sort!(imps_2))
-    unique!(sort!(imps_3))
-    if length(imps_1) > 1
-        ax1l = minimum(imps_1)
-        ax1r = maximum(imps_1)
-    elseif length(imps_1) == 1
-        ax1l = minimum(imps_1)
-        ax1r = maximum(imps_1) + 1
-    end
-    if length(imps_2) > 1
-        ax2l = minimum(imps_2)
-        ax2r = maximum(imps_2)
-    elseif length(imps_2) == 1
-        ax2l = minimum(imps_2)
-        ax2r = maximum(imps_2) + 1
-    end
-    if length(imps_3) > 1
-        ax3l = minimum(imps_3)
-        ax3r = maximum(imps_3)
-    elseif length(imps_3) == 1
-        ax3l = minimum(imps_3)
-        ax3r = maximum(imps_3) + 1
     end
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end

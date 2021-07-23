@@ -153,10 +153,10 @@ function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim.input_units = construct_units(parsed_dict)
     sim.medium = material_properties[materials[haskey(parsed_dict, "medium") ? parsed_dict["medium"] : "vacuum"]]
     sim.detector = SolidStateDetector{T}(parsed_dict, sim.input_units) 
-    sim.world = if haskey(parsed_dict, "grid") && isa(parsed_dict["grid"], Dict)
+    sim.world = if haskey(parsed_dict, "grid") && isa(parsed_dict["grid"], Dict) && haskey(parsed_dict["grid"], "axes")
             World(T, parsed_dict["grid"], sim.input_units)
         else let ssd = sim.detector 
-            world_limits = get_world_limits_from_objects(CS, ssd.semiconductor, ssd.contacts, ssd.passives)
+            world_limits = get_world_limits_from_objects(CS, ssd)
             World(CS, world_limits)
         end
     end
