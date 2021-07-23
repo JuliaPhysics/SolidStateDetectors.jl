@@ -22,7 +22,7 @@ abstract type HPGe <: AbstractDriftMaterial end
 Symbol(::Type{HPGe}) = :HPGe
 material_properties[:HPGe] = (
     E_ionisation = 2.95u"eV",
-    f_fano = 0.13,
+    f_fano = 0.129, # https://doi.org/10.1103/PhysRev.163.238
     ϵ_r = 16.0,
     ρ = 5.323u"g*cm^-3",
     name = "High Purity Germanium",
@@ -67,6 +67,7 @@ material_properties[:Co] = (
 material_properties[:CdZnTe] = (
     name = "Cadmium zinc telluride",
     E_ionisation = 4.64u"eV",
+    f_fano = 0.089, # https://doi.org/10.1557/PROC-487-101
     ϵ_r = 10.9,
     ρ = 5.78u"g*cm^-3"
 )
