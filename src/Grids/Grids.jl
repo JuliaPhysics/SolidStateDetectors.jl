@@ -1,9 +1,15 @@
 abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
 
 """
-    T: tick type
-    N: N dimensional
-    S: System (Cartesian, Cylindrical...)
+    struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
+
+- `T`: Tick type (element type) of the axes.
+- `N`: Dimension of the grid  
+- `S`: Coordinate system (`Cartesian` or `Cylindrical`)  
+- `AT`: Axes type.
+
+# Fields
+- `axes::AT`: Tuple of length `N` containing `DiscreteAxis`.
 """
 struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
     axes::AT
