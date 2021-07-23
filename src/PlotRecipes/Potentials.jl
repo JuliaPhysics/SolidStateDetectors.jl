@@ -6,9 +6,9 @@ function get_crosssection_idx_and_value(g::Grid{T, 3, Cylindrical}, r, φ, z)::T
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left
             if φ_rad > g.φ.interval.right
-                φ_rad -= g.φ.interval.right - g.φ.interval.left
+                φ_rad -= width(g.φ.interval)
             elseif φ_rad < g.φ.interval.left
-                φ_rad += g.φ.interval.right - g.φ.interval.left
+                φ_rad += width(g.φ.interval)
             end
         end
         :φ, searchsortednearest(g.φ, φ_rad)

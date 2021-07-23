@@ -203,9 +203,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
 
-    world_Δz = world.intervals[3].right - world.intervals[3].left
-    world_Δφ = world.intervals[2].right - world.intervals[2].left
-    world_Δr = world.intervals[1].right - world.intervals[1].left
+    world_Δr, world_Δφ, world_Δz = width.(world.intervals)
     world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
     
     max_distance_z = T(world_Δz / 4)
@@ -222,8 +220,7 @@ function Grid(sim::Simulation{T, Cylindrical};
         end 
     end
 
-    push!(important_r_points, world.intervals[1].left)
-    push!(important_r_points, world.intervals[1].right)
+    append!(important_r_points, endpoints(world.intervals[1])...)
     important_r_points = unique!(sort!(important_r_points))
     iL = searchsortedfirst(important_r_points, world.intervals[1].left)
     iR = searchsortedfirst(important_r_points, world.intervals[1].right)
@@ -232,8 +229,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_r_points = initialize_axis_ticks(important_r_points; max_ratio = T(max_distance_ratio))
     important_r_points = fill_up_ticks(important_r_points, max_distance_r)
 
-    push!(important_z_points, world.intervals[3].left)
-    push!(important_z_points, world.intervals[3].right)
+    append!(important_z_points, endpoints(world.intervals[3])...)
     important_z_points = unique!(sort!(important_z_points))
     iL = searchsortedfirst(important_z_points, world.intervals[3].left)
     iR = searchsortedfirst(important_z_points, world.intervals[3].right)
@@ -242,8 +238,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
     important_z_points = fill_up_ticks(important_z_points, max_distance_z)
 
-    push!(important_φ_points, world.intervals[2].left)
-    push!(important_φ_points, world.intervals[2].right)
+    append!(important_φ_points, endpoints(world.intervals[2])...)
     important_φ_points = unique!(sort!(important_φ_points))
     iL = searchsortedfirst(important_φ_points, world.intervals[2].left)
     iR = searchsortedfirst(important_φ_points, world.intervals[2].right)
@@ -254,12 +249,12 @@ function Grid(sim::Simulation{T, Cylindrical};
     
     # r
     L, R, BL, BR = get_boundary_types(world.intervals[1])
-    int_r = Interval{L, R, T}(world.intervals[1].left, world.intervals[1].right)
+    int_r = Interval{L, R, T}(endpoints(world.intervals[1])...)
     ax_r = DiscreteAxis{T, BL, BR}(int_r, important_r_points)
 
     # φ
     L, R, BL, BR = get_boundary_types(world.intervals[2])
-    int_φ = Interval{L, R, T}(world.intervals[2].left, world.intervals[2].right)
+    int_φ = Interval{L, R, T}(endpoints(world.intervals[2])...)
     if full_2π == true || (for_weighting_potential && (world.intervals[2].left != world.intervals[2].right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
         int_φ = Interval{L, R, T}(0, 2π)
@@ -290,7 +285,7 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     #z
     L, R, BL, BR = get_boundary_types(world.intervals[3])
-    int_z = Interval{L, R, T}(world.intervals[3].left, world.intervals[3].right)
+    int_z = Interval{L, R, T}(endpoints(world.intervals[3])...)
     ax_z = DiscreteAxis{T, BL, BR}(int_z, important_z_points)
     if isodd(length(ax_z)) # must be even
         int_z = ax_z.interval
@@ -318,9 +313,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_y_points::Vector{T} = map(p -> p.y, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
 
-    world_Δx = world.intervals[1].right - world.intervals[1].left
-    world_Δy = world.intervals[2].right - world.intervals[2].left
-    world_Δz = world.intervals[3].right - world.intervals[3].left
+    world_Δx, world_Δy, world_Δz = width.(world.intervals)
     
     max_distance_x = T(world_Δx / 4)
     max_distance_y = T(world_Δy / 4)
@@ -338,8 +331,7 @@ function Grid(  sim::Simulation{T, Cartesian};
         end
     end
 
-    push!(important_x_points, world.intervals[1].left)
-    push!(important_x_points, world.intervals[1].right)
+    append!(important_x_points, endpoints(world.intervals[1]))
     important_x_points = unique!(sort!(important_x_points))
     iL = searchsortedfirst(important_x_points, world.intervals[1].left)
     iR = searchsortedfirst(important_x_points, world.intervals[1].right)
@@ -348,8 +340,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_x_points = initialize_axis_ticks(important_x_points; max_ratio = T(max_distance_ratio))
     important_x_points = fill_up_ticks(important_x_points, max_distance_x)
 
-    push!(important_y_points, world.intervals[2].left)
-    push!(important_y_points, world.intervals[2].right)
+    append!(important_y_points, endpoints(world.intervals[2]))
     important_y_points = unique!(sort!(important_y_points))
     iL = searchsortedfirst(important_y_points, world.intervals[2].left)
     iR = searchsortedfirst(important_y_points, world.intervals[2].right)
@@ -358,8 +349,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_y_points = initialize_axis_ticks(important_y_points; max_ratio = T(max_distance_ratio))
     important_y_points = fill_up_ticks(important_y_points, max_distance_y)
 
-    push!(important_z_points, world.intervals[3].left)
-    push!(important_z_points, world.intervals[3].right)
+    append!(important_z_points, endpoints(world.intervals[3]))
     important_z_points = unique!(sort!(important_z_points))
     iL = searchsortedfirst(important_z_points, world.intervals[3].left)
     iR = searchsortedfirst(important_z_points, world.intervals[3].right)
@@ -370,7 +360,7 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     # x
     L, R, BL, BR = get_boundary_types(world.intervals[1])
-    int_x = Interval{L, R, T}(world.intervals[1].left, world.intervals[1].right)
+    int_x = Interval{L, R, T}(endpoints(world.intervals[1])...)
     ax_x = DiscreteAxis{T, BL, BR}(int_x, important_x_points)
     if isodd(length(ax_x)) # RedBlack dimension must be of even length
         xticks = ax_x.ticks
@@ -383,12 +373,12 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     # y
     L, R, BL, BR = get_boundary_types(world.intervals[2])
-    int_y = Interval{L, R, T}(world.intervals[2].left, world.intervals[2].right)
+    int_y = Interval{L, R, T}(endpoints(world.intervals[2])...)
     ax_y = DiscreteAxis{T, BL, BR}(int_y, important_y_points)
 
     # z
     L, R, BL, BR = get_boundary_types(world.intervals[3])
-    int_z = Interval{L, R, T}(world.intervals[3].left, world.intervals[3].right)
+    int_z = Interval{L, R, T}(endpoints(world.intervals[3])...)
     ax_z = DiscreteAxis{T, BL, BR}(int_z, important_z_points)
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
@@ -677,7 +667,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         n_refinement_steps = length(refinement_limits)
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
         if CS == Cylindrical
-            cyclic::T = grid.axes[2].interval.right - grid.axes[2].interval.left
+            cyclic::T = width(grid.axes[2].interval)
             n_φ_sym::Int = only_2d ? 1 : round(Int, round(T(2π) / cyclic, digits = 3)) 
             n_φ_sym_info_txt = if only_2d
                 "φ symmetry: Detector is φ-symmetric -> 2D computation."
@@ -870,7 +860,7 @@ Calculates the electric field from the electric potential stored in `sim.electri
 is extended to `n_points_in_φ` "layers" in φ in order to calculate a 3D electric field. 
 """
 function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat, CS}
-    periodicity::T = get_periodicity(sim.world.intervals[2])
+    periodicity::T = width(sim.world.intervals[2])
     e_pot, point_types = if CS == Cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
             @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."

@@ -228,7 +228,7 @@ function searchsortednearest(ax::DiscreteAxis{T, :periodic, :periodic}, x::T)::I
     if x in ax.interval
         return searchsortednearest(ax.ticks, x)
     else
-        period::T = ax.interval.right - ax.interval.left
+        period::T = width(ax.interval)
         v::T = x
         while v >= ax.interval.right
             v -= period

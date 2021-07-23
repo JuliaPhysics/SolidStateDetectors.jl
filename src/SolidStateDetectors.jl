@@ -45,6 +45,7 @@ export CartesianPoint, CartesianVector, CylindricalPoint
 import Clustering
 import DataStructures
 import Distributions
+import IntervalSets
 import Tables
 import TypedTables
 

@@ -38,10 +38,9 @@ function World(T, dict::Dict, input_units::NamedTuple)::World
     end
 end
 
-function get_periodicity(int::SSDInterval{T, L, R, BL, BR}) where {T <:SSDFloat, L, R, BL, BR}
-    return int.right - int.left
+function IntervalSets.endpoints(int::SSDInterval{T, L, R, BL, BR}) where {T <:SSDFloat, L, R, BL, BR} # this defines width(::SSDInterval)
+    (int.left, int.right) 
 end
-
 
 function get_interval_boundary_types(dict::Dict)
     BL, BR = missing, missing

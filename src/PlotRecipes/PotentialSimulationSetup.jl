@@ -12,9 +12,9 @@
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
             if φ_rad > g.φ.interval.right
-                φ_rad -= g.φ.interval.right - g.φ.interval.left
+                φ_rad -= width(g.φ.interval)
             elseif φ_rad < g.φ.interval.left
-                φ_rad += g.φ.interval.right - g.φ.interval.left
+                φ_rad += width(g.φ.interval)
             end
         end
         :φ, searchsortednearest(g.φ, φ_rad)
