@@ -36,9 +36,10 @@ using .ConstructiveSolidGeometry:
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
-            ConfigFileError, _parse_value
+            ConfigFileError, _parse_value,
+            length_unit, angle_unit
         
-import .ConstructiveSolidGeometry: sample
+import .ConstructiveSolidGeometry: sample, to_internal_units
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
