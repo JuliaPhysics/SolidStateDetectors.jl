@@ -255,7 +255,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     # φ
     L, R, BL, BR = get_boundary_types(world.intervals[2])
     int_φ = Interval{L, R, T}(endpoints(world.intervals[2])...)
-    if full_2π == true || (for_weighting_potential && (world.intervals[2].left != world.intervals[2].right))
+    if full_2π || (for_weighting_potential && (world.intervals[2].left != world.intervals[2].right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
         int_φ = Interval{L, R, T}(0, 2π)
     end
@@ -465,7 +465,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(fssrb), grid)
 
-    if depletion_handling == true
+    if depletion_handling
         update_again::Bool = false # With SOR-Constant = 1
         @inbounds for i in eachindex(sim.electric_potential.data)
             if sim.electric_potential.data[i] < fssrb.minimum_applied_potential # p-type

@@ -109,7 +109,7 @@ end
             ylims --> (g.z[1],g.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(g.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
-            if full_det == true
+            if full_det
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
                 extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                 xlims := (-1*g.r[end],g.r[end])
@@ -140,7 +140,7 @@ end
                 yguide := "z / m"
                 xlims --> (g.r[1],g.r[end])
                 ylims --> (g.z[1],g.z[end])
-                if full_det == true
+                if full_det
                     cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
                     extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                     xlims := (-1*g.r[end],g.r[end])
