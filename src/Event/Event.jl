@@ -49,7 +49,7 @@ in(evt::Event, detector::SolidStateDetector) = all( pt -> pt in detector, evt.lo
 in(evt::Event, simulation::Simulation) = all( pt -> pt in simulation.detector, evt.locations)
 
 """
-    function drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
 Calculate the drift paths for the given `event` and Simulation `sim`
     and stores them under `event.drift_paths`. 
@@ -87,7 +87,7 @@ function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5
 end
 
 """
-    function simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
 Simulates the `event` for a given Simulation `sim`:
     1. Simulate the drift paths of all hits, at `event.locations`, and stores them under `event.drift_paths`. 

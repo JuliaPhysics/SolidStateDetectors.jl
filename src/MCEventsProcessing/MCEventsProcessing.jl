@@ -1,7 +1,7 @@
 include("table_utils.jl")
 
 """
-    function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T})
+    simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T})
 
 1. Calculates the drift paths of all energy hits defined in `mcevents`
     based on the drift fields for electrons and holes stored in `s.electron_drift_field` and 

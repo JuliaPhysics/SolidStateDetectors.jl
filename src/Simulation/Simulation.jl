@@ -396,7 +396,7 @@ end
 
 
 """
-    function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing
+    apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing
 
 Applies the initial state of the electric potential calculation.
 It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`.
@@ -414,7 +414,7 @@ function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, gri
 end
 
 """
-    function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing
+    apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing
 
 Applies the initial state of the weighting potential calculation for the contact with the id `contact_id`.
 It overwrites `sim.weighting_potentials[contact_id]`.
@@ -429,7 +429,7 @@ end
 
 
 """
-    function update_till_convergence!( sim::Simulation{T} ::Type{ElectricPotential}, convergence_limit::Real; kwargs...)::T
+    update_till_convergence!( sim::Simulation{T} ::Type{ElectricPotential}, convergence_limit::Real; kwargs...)::T
 
 Takes the current state of `sim.electric_potential` and updates it until it has converged.
 """
@@ -519,7 +519,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
 end
 
 """
-    function update_till_convergence!( sim::Simulation{T} ::Type{WeightingPotential}, contact_id::Int, convergence_limit::Real; kwargs...)::T
+    update_till_convergence!( sim::Simulation{T} ::Type{WeightingPotential}, contact_id::Int, convergence_limit::Real; kwargs...)::T
 
 Takes the current state of `sim.weighting_potentials[contact_id]` and updates it until it has converged.
 """
@@ -560,7 +560,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
 end
 
 """
-    function refine!(sim::Simulation{T}, ::Type{ElectricPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
+    refine!(sim::Simulation{T}, ::Type{ElectricPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
 
 Takes the current state of `sim.electric_potential` and refines it with respect to the input arguments
 `max_diffs` and `minimum_distances`.
@@ -583,7 +583,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
     nothing
 end
 """
-    function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
+    refine!(sim::Simulation{T}, ::Type{WeightingPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
 
 Takes the current state of `sim.weighting_potentials[contact_id]` and refines it with respect to the input arguments
 `max_diffs` and `minimum_distances`.
@@ -871,7 +871,7 @@ function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_
 end
 
 """
-    function calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
+    calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
 
 Calculates the drift fields for electrons and holes and stores them in 
     `sim.sim.electron_drift_field` and `sim.hole_drift_field`.
@@ -907,7 +907,7 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
 end
 
 """
-    function simulate!( sim::Simulation{T};  
+    simulate!( sim::Simulation{T};  
                     refinement_limits = [0.2, 0.1, 0.05],
                     min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
