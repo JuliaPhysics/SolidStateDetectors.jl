@@ -98,8 +98,8 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     calculate_electric_potential!(sim_cyl, grid = Grid(sim_cyl, max_tick_distance = (1u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
-        convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
+    calculate_electric_potential!(sim_car, grid = Grid(sim_car, max_tick_distance = (0.5u"cm", 0.5u"cm", 1u"m")),
+        convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05, 0.02], use_nthreads = 1, verbose = false
     )
 
     idxR1 = searchsortedfirst( sim_cyl.electric_potential.grid.axes[1], ustrip(R1));

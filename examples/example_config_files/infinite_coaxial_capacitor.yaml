@@ -15,8 +15,8 @@ grid:
       to: 0
       boundaries: periodic
     z:
-      from: 0
-      to: 40
+      from: -1
+      to: 1
       boundaries: reflecting
 medium: HPGe
 detectors:
@@ -35,14 +35,10 @@ detectors:
         difference:
           - tube:
               r: 35
-              h: 120
-              origin:
-                z: 20
+              h: 4
           - tube:
               r: 5
-              h: 120
-              origin:
-                z: 20
+              h: 5
     contacts:
       - material: HPGe
         id: 1
@@ -52,9 +48,7 @@ detectors:
             r:
               from: 5
               to: 5
-            h: 120
-            origin:
-              z: 20
+            h: 2
       - material: HPGe
         id: 2
         potential: 10
@@ -63,6 +57,4 @@ detectors:
             r:
               from: 35
               to: 35
-            h: 120
-            origin:
-              z: 20
+            h: 2

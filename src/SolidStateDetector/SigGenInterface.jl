@@ -225,12 +225,12 @@ function siggentodict(config::Dict;
                             
     else
         hole         = Dict("translate"   => Dict("z"    => config["xtal_length"] -
-                                               config["hole_length"]/2,
+                                               0.8*config["hole_length"]/2,
                             "tube"        => Dict(
                             "name"        => "Top Hole",
                             "r"           => Dict("from" => 0.0, "to" => config["hole_radius"]),
                             "phi"         => Dict("from" => 0.0, "to" => 360.0),
-                            "h"           => config["hole_length"])));
+                            "h"           => 1.2*config["hole_length"])));
     end
 
     #>----------------Subtract volumes-----------------------------------------<

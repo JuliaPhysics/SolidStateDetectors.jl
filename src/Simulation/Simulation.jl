@@ -745,7 +745,7 @@ There are several `<keyword arguments>` which can be used to tune the computatio
     - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
 - `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
-    Default is 1e-5 for linear axes and `0.25 * r_max` for the polar axis in case of a cylindrical grid.
+    Default is 1e-5 for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical grid.
 - `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
     two grid ticks for each dimension used in the initialization of the grid.
     Default is 1/4 of size of the world of the respective dimension.
@@ -793,7 +793,7 @@ There are several `<keyword arguments>` which can be used to tune the computatio
     - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
 - `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
-    Default is 1e-5 for linear axes and `0.25 * r_max` for the polar axis in case of a cylindrical grid.
+    Default is 1e-5 for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical grid.
 - `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
     two grid ticks for each dimension used in the initialization of the grid.
     Default is 1/4 of size of the world of the respective dimension.
@@ -903,7 +903,7 @@ end
     - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
 - `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
-    Default is 1e-5 for linear axes and `0.25 * r_max` for the polar axis in case of a cylindrical grid.
+    Default is 1e-5 for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical grid.
 - `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
     two grid ticks for each dimension used in the initialization of the grid.
     Default is 1/4 of size of the world of the respective dimension.
