@@ -26,9 +26,21 @@ const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is 
 const max_pointtype_value = update_bit + undepleted_bit + pn_junction_bit #+ bubble_bit
 
 """
-    PointTypes{T, N, S} <: AbstractArray{T, N}
+    struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
+- `T`: Element type of `grid.axes`.
+- `N`: Dimension of the `grid` and `data` array.  
+- `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+- `AT`: Axes type.  
+        
+# Fields
+- `data::Array{PointType, N}`
+- `grid::Grid{T, N, S, AT}`
 
-PointTypes stores the point type of each grid point.
+The `data` array contains the point types of the discrete points defined by the 
+axes ticks of the `grid`. 
+
+The element type `data` is `PointType` which is an `UInt8` and stores is information bitwise,
+see [`PointType`](@ref).
 """
 struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
     data::Array{PointType, N}
