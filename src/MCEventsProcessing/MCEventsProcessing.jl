@@ -24,7 +24,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
                              max_nsteps::Int = 1000,
                              verbose = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
-    Δtime = T(to_internal_units(internal_time_unit, Δt)) 
+    Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(s.detector.contacts)
     S = get_coordinate_system(s)
     contacts = s.detector.contacts;
@@ -43,7 +43,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
     @info "Generating waveforms..."
     waveforms = map( 
         wp ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(internal_energy_unit, x.edeps), Δt, Δtime, wp, S),
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wp, S),
             TypedTables.Table(dps = drift_paths, edeps = mcevents.edep)
         ),
         wps_interpolated
@@ -66,7 +66,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, s::Simulation{T},
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
         _drift_charges(s.detector, s.electron_drift_field.grid, s.point_types, 
-                        CartesianPoint{T}.(to_internal_units.(u"m", phyevt.pos)),
+                        CartesianPoint{T}.(to_internal_units.(phyevt.pos)),
                         e_drift_field, h_drift_field, 
                         T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
     end

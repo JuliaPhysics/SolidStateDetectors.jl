@@ -42,7 +42,7 @@ function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
 
     drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points))
 
-    dt::T = T(to_internal_units(internal_time_unit, Δt))
+    dt::T = T(to_internal_units(Δt))
 
     for i in eachindex(starting_points)
         drift_path_e::Vector{CartesianPoint{T}} = zeros(CartesianPoint{T}, max_nsteps )#Vector{CartesianPoint{T}}(undef, max_nsteps)

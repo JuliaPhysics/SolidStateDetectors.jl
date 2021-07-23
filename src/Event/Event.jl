@@ -22,7 +22,7 @@ end
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity{T}} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
     evt.locations = locations
-    evt.energies = to_internal_units(internal_energy_unit, energies)
+    evt.energies = to_internal_units(energies)
     evt.waveforms = missing
     return evt
 end
@@ -35,11 +35,11 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
             AbstractVector{<:RealQuantity},
             AbstractVector{<:AbstractVector{<:RealQuantity}}
         }}, T = missing)
-    if ismissing(T) T = eltype(to_internal_units(internal_energy_unit, evt[:edep][:])) end
+    if ismissing(T) T = eltype(to_internal_units(evt[:edep][:])) end
 
     event = Event(
-        CartesianPoint{T}.(to_internal_units.(internal_length_unit, evt[:pos][:])),
-        T.(to_internal_units.(internal_energy_unit, evt[:edep][:]))
+        CartesianPoint{T}.(to_internal_units.(evt[:pos][:])),
+        T.(to_internal_units.(evt[:edep][:]))
     )
 
     return event

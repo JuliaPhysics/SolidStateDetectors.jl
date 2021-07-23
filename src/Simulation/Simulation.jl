@@ -197,12 +197,12 @@ function Grid(  sim::Simulation{T, Cylindrical};
     max_distance_r = T(world_Δr / 4)
     if !ismissing(max_tick_distance)
         if max_tick_distance isa length_unit
-            max_distance_z = max_distance_r = T(to_internal_units(internal_length_unit, max_tick_distance))
+            max_distance_z = max_distance_r = T(to_internal_units(max_tick_distance))
             max_distance_φ = max_distance_z / world_r_mid
         else #if max_tick_distance isa Tuple{length_unit, angle_unit, length_unit}
-            max_distance_r = T(to_internal_units(internal_length_unit, max_tick_distance[1]))
-            max_distance_φ = T(to_internal_units(internal_angle_unit,  max_tick_distance[2]))
-            max_distance_z = T(to_internal_units(internal_length_unit, max_tick_distance[3]))
+            max_distance_r = T(to_internal_units(max_tick_distance[1]))
+            max_distance_φ = T(to_internal_units(max_tick_distance[2]))
+            max_distance_z = T(to_internal_units(max_tick_distance[3]))
         end 
     end
 
@@ -314,11 +314,11 @@ function Grid(  sim::Simulation{T, Cartesian};
     if !ismissing(max_tick_distance)
         if max_tick_distance isa length_unit
             max_distance_x = max_distance_y = max_distance_z = 
-                T(to_internal_units(internal_length_unit, max_tick_distance))
+                T(to_internal_units(max_tick_distance))
         else
-            max_distance_x = T(to_internal_units(internal_length_unit, max_tick_distance[1]))
-            max_distance_y = T(to_internal_units(internal_length_unit, max_tick_distance[2]))
-            max_distance_z = T(to_internal_units(internal_length_unit, max_tick_distance[3]))
+            max_distance_x = T(to_internal_units(max_tick_distance[1]))
+            max_distance_y = T(to_internal_units(max_tick_distance[2]))
+            max_distance_z = T(to_internal_units(max_tick_distance[3]))
         end
     end
 
@@ -614,12 +614,12 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             if !ismissing(min_tick_distance)
                 if min_tick_distance isa length_unit
                     world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
-                    min_distance_z = min_distance_r = T(to_internal_units(internal_length_unit, min_tick_distance))
+                    min_distance_z = min_distance_r = T(to_internal_units(min_tick_distance))
                     min_distance_r, min_distance_z / world_r_mid, min_distance_z
                 else 
-                    T(to_internal_units(internal_length_unit, min_tick_distance[1])),
-                    T(to_internal_units(internal_angle_unit,  min_tick_distance[2])),
-                    T(to_internal_units(internal_length_unit, min_tick_distance[3]))
+                    T(to_internal_units(min_tick_distance[1])),
+                    T(to_internal_units(min_tick_distance[2])),
+                    T(to_internal_units(min_tick_distance[3]))
                 end 
             else
                 (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) 
@@ -627,12 +627,12 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         else
             if !ismissing(min_tick_distance)
                 if min_tick_distance isa length_unit
-                    min_distance = T(to_internal_units(internal_length_unit, min_tick_distance))
+                    min_distance = T(to_internal_units(min_tick_distance))
                     min_distance, min_distance, min_distance
                 else
-                    T(to_internal_units(internal_length_unit, min_tick_distance[1])),
-                    T(to_internal_units(internal_length_unit, min_tick_distance[2])),
-                    T(to_internal_units(internal_length_unit, min_tick_distance[3]))
+                    T(to_internal_units(min_tick_distance[1])),
+                    T(to_internal_units(min_tick_distance[2])),
+                    T(to_internal_units(min_tick_distance[3]))
                 end
             else
                 (T(1e-5), T(1e-5), T(1e-5))
@@ -882,7 +882,7 @@ function drift_charges( sim::Simulation{T}, starting_positions::Vector{Cartesian
 end
 
 function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
-    dt::T = to_internal_units(internal_time_unit, Δt)
+    dt::T = to_internal_units(Δt)
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
