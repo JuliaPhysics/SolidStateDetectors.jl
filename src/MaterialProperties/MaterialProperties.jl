@@ -12,7 +12,7 @@ material_properties[:Vacuum] = (
     E_ionisation = 0.0u"eV",
     f_fano = 0.0,
     ϵ_r = 1.0,
-    ρ = 0Unitful.g / (Unitful.cm^3),
+    ρ = 0u"g*cm^-3",
     name = "Vacuum",
     ml = 1.0,
     mt = 1.0
@@ -24,7 +24,7 @@ material_properties[:HPGe] = (
     E_ionisation = 2.95u"eV",
     f_fano = 0.13,
     ϵ_r = 16.0,
-    ρ = 5.323Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
+    ρ = 5.323u"g*cm^-3",
     name = "High Purity Germanium",
     ml = 1.64,
     mt = 0.0819
@@ -38,7 +38,7 @@ material_properties[:Si] = (
     E_ionisation = 3.62u"eV",
     f_fano = 0.11,
     ϵ_r = 11.7,
-    ρ = 2.3290Unitful.g / (Unitful.cm^3), # u"g/cm^3" throws warnings in precompilation
+    ρ = 2.3290u"g*cm^-3",
     name = "Silicon",
     mt = 0.98,
     ml = 0.19
@@ -47,7 +47,7 @@ material_properties[:Si] = (
 material_properties[:Al] = (
     name = "Aluminium",
     ϵ_r = 10.8, # Aluminium Foil
-    ρ = 2.6989Unitful.g / (Unitful.cm^3) # u"g/cm^3" throws warnings in precompilation
+    ρ = 2.6989u"g*cm^-3"
 )
 
 material_properties[:LAr] = (
@@ -55,20 +55,20 @@ material_properties[:LAr] = (
     E_ionisation = 0u"eV",
     f_fano = 0.107,
     ϵ_r = 1.505,
-    ρ = 1.396Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
+    ρ = 1.396u"g*cm^-3"
 )
 
 material_properties[:Co] = (
     name = "Copper",
     ϵ_r = 20,
-    ρ = 8.96Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
+    ρ = 8.96u"g*cm^-3"
 )
 
 material_properties[:CdZnTe] = (
     name = "Cadmium zinc telluride",
     E_ionisation = 4.64u"eV",
     ϵ_r = 10.9,
-    ρ = 5.78Unitful.g / (Unitful.ml) # u"g/cm^3" throws warnings in precompilation
+    ρ = 5.78u"g*cm^-3"
 )
 # Add new materials above this line
 # and just put different spellings into the dict `materials` below
