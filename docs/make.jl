@@ -41,7 +41,7 @@ makedocs(
                 "Primitives" => "man/primitives.md",
                 "Transformations" => "man/transformations.md"
             ],
-            "Grids" => "man/Grids.md"
+            "Grids" => "man/Grids.md",
             "Electric Potential" => "man/electric_potential.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
             "Electric Field" => "man/electric_field.md",
