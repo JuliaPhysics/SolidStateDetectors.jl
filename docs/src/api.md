@@ -13,6 +13,12 @@ end
 Order = [:module]
 ```
 
+## Dictionaries
+
+```@index
+Order = [:constant]
+```
+
 ## Types
 
 ```@index
@@ -29,5 +35,5 @@ Order = [:function]
 
 ```@autodocs
 Modules = [SolidStateDetectors, SolidStateDetectors.ConstructiveSolidGeometry]
-Order = [:module, :type, :function]
+Order = [:module, :constant, :type, :function]
 ```
