@@ -822,7 +822,12 @@ end
 """
     calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing
 
-ToDo...
+Calculates the electric field from the electric potential stored in `sim.electric_potential` and stores is under
+`sim.electric_field`. 
+
+# Keywords
+- `n_points_in_φ`: If the electric potential is 2D (cylindrical coordinates and symmetric in φ), the electric potential 
+is extended to `n_points_in_φ` "layers" in φ in order to calculate a 3D electric field. 
 """
 function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat, CS}
     periodicity::T = get_periodicity(sim.world.intervals[2])
@@ -849,6 +854,14 @@ function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_
     nothing
 end
 
+"""
+    function calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
+
+Calculates the drift fields for electrons and holes and stores them in 
+    `sim.sim.electron_drift_field` and `sim.hole_drift_field`.
+    The fields are calculated from the electric field, `sim.electric_field`, and 
+    the drift model `sim.detector.semiconductor.charge_drift_model`.
+"""
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
     sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
