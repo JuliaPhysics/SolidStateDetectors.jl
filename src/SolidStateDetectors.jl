@@ -60,12 +60,10 @@ export Grid
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
-export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!
-export update_till_convergence!, refine!
-export set_charge_drift_model!, calculate_drift_fields!
+export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
+export ElectricFieldChargeDriftModel, ADLChargeDriftModel
 export get_active_volume
 export generate_charge_signals, generate_charge_signals!
-export ElectricFieldChargeDriftModel, ADLChargeDriftModel
 export Simulation, simulate!
 export Event, drift_charges!
 

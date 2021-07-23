@@ -55,7 +55,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
         0:1
     end
     for nref in nrefs
-        update_till_convergence!(simulation, ElectricPotential)
+        SSD.update_till_convergence!(simulation, ElectricPotential)
         p = if S == SSD.Cartesian
             plot(
                 plot(simulation.electric_potential, y = 0.002),
@@ -73,7 +73,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
         end
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nref)_refinements"))
         if nref != nrefs[end]
-            refine!(simulation, ElectricPotential, (100, 100, 100), (1e-4, 1e-4, 1e-4), update_other_fields = true)
+            SSD.refine!(simulation, ElectricPotential, (100, 100, 100), (1e-4, 1e-4, 1e-4), update_other_fields = true)
         end
         @show size(simulation.electric_potential.grid)
     end
