@@ -1,5 +1,24 @@
 include("table_utils.jl")
 
+"""
+    function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T})
+
+1. Calculates the drift paths of all energy hits defined in `mcevents`
+    based on the drift fields for electrons and holes stored in `s.electron_drift_field` and 
+    `s.hole_drift_field`.
+2. Determines the signal (waveforms) of all channels 
+    (for which a weighting potential is given in the simulation object `s`.)
+    for the generated drift paths of the hits.
+3. Returns a the input table `mcevents` with an additional column `waveform` 
+    in which the generated waveforms are stored. 
+
+Note: The drift paths are just calculated temporarily and not returned. 
+
+# Keywords
+- `Δt::RealQuantity = 4u"ns"`: Time difference between two time stamps of the drift and the signals.
+- `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
+- `verbose = false`: Activate or deactivate additional info output. 
+"""
 function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
