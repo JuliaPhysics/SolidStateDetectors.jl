@@ -176,7 +176,7 @@ end
 
 function Grid(  sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
-                max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
     detector = sim.detector
@@ -196,10 +196,10 @@ function Grid(  sim::Simulation{T, Cylindrical};
     max_distance_φ = T(world_Δφ / 4)
     max_distance_r = T(world_Δr / 4)
     if !ismissing(max_tick_distance)
-        if max_tick_distance isa length_unit
+        if max_tick_distance isa LengthQuantity
             max_distance_z = max_distance_r = T(to_internal_units(max_tick_distance))
             max_distance_φ = max_distance_z / world_r_mid
-        else #if max_tick_distance isa Tuple{length_unit, angle_unit, length_unit}
+        else #if max_tick_distance isa Tuple{LengthQuantity, AngleQuantity, LengthQuantity}
             max_distance_r = T(to_internal_units(max_tick_distance[1]))
             max_distance_φ = T(to_internal_units(max_tick_distance[2]))
             max_distance_z = T(to_internal_units(max_tick_distance[3]))
@@ -291,7 +291,7 @@ end
 
 
 function Grid(  sim::Simulation{T, Cartesian};
-                max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, length_unit, length_unit}} = missing,
+                max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
     detector = sim.detector
@@ -312,7 +312,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     min_max_distance = min(max_distance_x, max_distance_y, max_distance_z)
     max_distance_x = max_distance_y = max_distance_z = min_max_distance
     if !ismissing(max_tick_distance)
-        if max_tick_distance isa length_unit
+        if max_tick_distance isa LengthQuantity
             max_distance_x = max_distance_y = max_distance_z = 
                 T(to_internal_units(max_tick_distance))
         else
@@ -584,8 +584,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         grid::Union{Missing, Grid{T}} = missing,
         convergence_limit::Real = 1e-7,
         refinement_limits::Union{Missing, <:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}} = [0.2, 0.1, 0.05],
-        min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, <:Union{length_unit, angle_unit}, length_unit}} = missing,
-        max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, <:Union{length_unit, angle_unit}, length_unit}} = missing,
+        min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
+        max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
         max_distance_ratio::Real = 5,
         depletion_handling::Bool = false,
         use_nthreads::Int = Base.Threads.nthreads(),
@@ -612,7 +612,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         end
         min_tick_distance::NTuple{3, T} = if CS == Cylindrical
             if !ismissing(min_tick_distance)
-                if min_tick_distance isa length_unit
+                if min_tick_distance isa LengthQuantity
                     world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
                     min_distance_z = min_distance_r = T(to_internal_units(min_tick_distance))
                     min_distance_r, min_distance_z / world_r_mid, min_distance_z
@@ -626,7 +626,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             end
         else
             if !ismissing(min_tick_distance)
-                if min_tick_distance isa length_unit
+                if min_tick_distance isa LengthQuantity
                     min_distance = T(to_internal_units(min_tick_distance))
                     min_distance, min_distance, min_distance
                 else
@@ -893,8 +893,8 @@ end
 """
     function simulate!( sim::Simulation{T};  
                     refinement_limits = [0.2, 0.1, 0.05],
-                    min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
-                    max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
+                    max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_distance_ratio::Real = 5,
                     verbose::Bool = false,
                     use_nthreads::Int = Base.Threads.nthreads(),
@@ -938,8 +938,8 @@ end
 """
 function simulate!( sim::Simulation{T};  
                     refinement_limits = [0.2, 0.1, 0.05],
-                    min_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
-                    max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing,
+                    min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
+                    max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_distance_ratio::Real = 5,
                     verbose::Bool = false,
                     use_nthreads::Int = Base.Threads.nthreads(),
