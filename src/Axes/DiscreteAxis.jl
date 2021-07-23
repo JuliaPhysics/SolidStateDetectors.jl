@@ -395,7 +395,7 @@ function initialize_axis_ticks(t::AbstractVector{T}; max_ratio = T(2)) where {T}
         iR += 1 + length(new_ticks)
     end
     @assert issorted(ticks)
-    @assert isunique(ticks)
+    @assert allunique(ticks)
     ticks
 end
 

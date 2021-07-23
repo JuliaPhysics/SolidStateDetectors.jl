@@ -71,9 +71,6 @@ const SSDFloat = Union{Float16, Float32, Float64}
 
 
 include("Units.jl")
-
-isunique(v::AbstractVector) = length(v) == length(unique(v))
-
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
 include("Grids/Grids.jl")
