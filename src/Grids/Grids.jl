@@ -111,7 +111,7 @@ end
 function get_number_of_dimensions(grid::Grid{T, N, S}) where {T, N, S}
     return N
 end
-function eltype(grid::Grid{T, N, S})::DataType where {T, N, S}
+function Base.eltype(grid::Grid{T, N, S})::DataType where {T, N, S}
     return T
 end
 

@@ -20,7 +20,7 @@ Base.convert(T::Type{NamedTuple}, x::ElectricField) = T(x)
 
 function ElectricField(nt::NamedTuple)
     grid = Grid(nt.grid)
-    T = eltype(ustrip.(nt.values[1]))
+    T = eltype(grid)
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     ef = Array{SVector{3, T}}(undef, size(grid)...)
