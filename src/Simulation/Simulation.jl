@@ -194,6 +194,7 @@ function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
+                add_points_between_important_point::Bool = true,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
     detector = sim.detector
     world = sim.world 
@@ -222,6 +223,9 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     append!(important_r_points, endpoints(world.intervals[1])...)
     important_r_points = unique!(sort!(important_r_points))
+    if add_points_between_important_point
+        important_r_points = sort!(vcat(important_r_points, StatsBase.midpoints(important_r_points)))
+    end
     iL = searchsortedfirst(important_r_points, world.intervals[1].left)
     iR = searchsortedfirst(important_r_points, world.intervals[1].right)
     important_r_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_points[iL:iR]))
@@ -231,6 +235,9 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     append!(important_z_points, endpoints(world.intervals[3])...)
     important_z_points = unique!(sort!(important_z_points))
+    if add_points_between_important_point
+        important_z_points = sort!(vcat(important_z_points, StatsBase.midpoints(important_z_points)))
+    end
     iL = searchsortedfirst(important_z_points, world.intervals[3].left)
     iR = searchsortedfirst(important_z_points, world.intervals[3].right)
     important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
@@ -240,6 +247,9 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     append!(important_φ_points, endpoints(world.intervals[2])...)
     important_φ_points = unique!(sort!(important_φ_points))
+    if add_points_between_important_point
+        important_φ_points = sort!(vcat(important_φ_points, StatsBase.midpoints(important_φ_points)))
+    end
     iL = searchsortedfirst(important_φ_points, world.intervals[2].left)
     iR = searchsortedfirst(important_φ_points, world.intervals[2].right)
     important_φ_points = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_points[iL:iR]))
@@ -304,6 +314,7 @@ end
 function Grid(  sim::Simulation{T, Cartesian};
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
+                add_points_between_important_point::Bool = true,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
     detector = sim.detector
     world = sim.world 
@@ -333,6 +344,9 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     append!(important_x_points, endpoints(world.intervals[1]))
     important_x_points = unique!(sort!(important_x_points))
+    if add_points_between_important_point
+        important_x_points = sort!(vcat(important_x_points, StatsBase.midpoints(important_x_points)))
+    end
     iL = searchsortedfirst(important_x_points, world.intervals[1].left)
     iR = searchsortedfirst(important_x_points, world.intervals[1].right)
     important_x_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_points[iL:iR]))
@@ -342,6 +356,9 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     append!(important_y_points, endpoints(world.intervals[2]))
     important_y_points = unique!(sort!(important_y_points))
+    if add_points_between_important_point
+        important_y_points = sort!(vcat(important_y_points, StatsBase.midpoints(important_y_points)))
+    end
     iL = searchsortedfirst(important_y_points, world.intervals[2].left)
     iR = searchsortedfirst(important_y_points, world.intervals[2].right)
     important_y_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_points[iL:iR]))
@@ -351,6 +368,9 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     append!(important_z_points, endpoints(world.intervals[3]))
     important_z_points = unique!(sort!(important_z_points))
+    if add_points_between_important_point
+        important_z_points = sort!(vcat(important_z_points, StatsBase.midpoints(important_z_points)))
+    end
     iL = searchsortedfirst(important_z_points, world.intervals[3].left)
     iR = searchsortedfirst(important_z_points, world.intervals[3].right)
     important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
