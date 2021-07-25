@@ -1,11 +1,11 @@
-"""
-    innerloops!(  iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian},
-                                update_even_points::Val{even_points},
-                                depletion_handling::Val{depletion_handling_enabled},
-                                )::Nothing where {T, even_points, depletion_handling_enabled}
-
-(Vectorized) inner loop for Cartesian coordinates. This function does all the work in the field calculation.                            
-"""
+# """
+#     innerloops!(  iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian},
+#                                 update_even_points::Val{even_points},
+#                                 depletion_handling::Val{depletion_handling_enabled},
+#                                 )::Nothing where {T, even_points, depletion_handling_enabled}
+# 
+# (Vectorized) inner loop for Cartesian coordinates. This function does all the work in the field calculation.                            
+# """
 @fastmath function innerloops!( iz::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_x::Array{T, 2}, gw_y::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},

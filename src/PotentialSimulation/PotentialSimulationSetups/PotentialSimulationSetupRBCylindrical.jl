@@ -425,13 +425,13 @@ function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})
     return pointtypes
 end
 
-"""
-    PointTypes(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical}
-
-Extracts the point types from `setup` and extrapolates it to an 2π grid.
-
-For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
-"""
+# """
+#     PointTypes(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical}
+# 
+# Extracts the point types from `setup` and extrapolates it to an 2π grid.
+# 
+# For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
+# """
 function PointTypes(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical} where {T}
     return get_2π_potential(PointTypes{T, 3, Cylindrical}(setup.pointtypes, setup.grid); kwargs...)
 end

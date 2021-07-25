@@ -26,22 +26,22 @@ end
 @inline getindex(ep::ElectricPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
 
 
-"""
-    ElectricPotential(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::ElectricPotential{T, 3, Cylindrical}
-
-Extracts the electric potential from `setup` and extrapolate it to an 2π grid.
-
-For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
-"""
+# """
+#     ElectricPotential(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::ElectricPotential{T, 3, Cylindrical}
+# 
+# Extracts the electric potential from `setup` and extrapolate it to an 2π grid.
+# 
+# For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
+# """
 function ElectricPotential(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::ElectricPotential{T, 3, Cylindrical} where {T}
     return get_2π_potential(ElectricPotential{T, 3, Cylindrical}(setup.potential, setup.grid); kwargs...)
 end
 
-"""
-    ElectricPotential(setup::PotentialSimulationSetup{T, 3, Cartesian} ; kwargs...)::ElectricPotential{T, 3, Cartesian}
-
-Extracts the electric potential from `setup`.
-"""
+# """
+#     ElectricPotential(setup::PotentialSimulationSetup{T, 3, Cartesian} ; kwargs...)::ElectricPotential{T, 3, Cartesian}
+# 
+# Extracts the electric potential from `setup`.
+# """
 function ElectricPotential(setup::PotentialSimulationSetup{T, 3, Cartesian} )::ElectricPotential{T, 3, Cartesian} where {T}
     return ElectricPotential{T, 3, Cartesian}(setup.potential, setup.grid)
 end

@@ -1,10 +1,10 @@
 abstract type AbstractPotentialSimulationSetup{T, N} end
 
-"""
-    PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, N}
-
-Collection struct. It holds the grid, the potential, the point types, the charge density and the dielectric distribution.
-"""
+# """
+#     PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, N}
+# 
+# Collection struct. It holds the grid, the potential, the point types, the charge density and the dielectric distribution.
+# """
 struct PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, N}
     grid::Grid{T, N, S}
     potential::Array{T, N}

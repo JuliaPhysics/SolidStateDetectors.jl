@@ -14,12 +14,12 @@ const rb_bool_odd  = false
     return div(nidx, 2) + mod(nidx, 2) + 1
 end
 
-"""
-    nidx( rbidx::Int, ::Val{true}, ::Val{true})::Int
-
-first type argument:  type of the orgal point (for even points -> `Val{true}()`, else `Val{false}()`)
-second type argument: is sum of other point indices even or odd -> (if sum is even -> `Val{true}()`, else `Val{false}()`)
-"""
+# """
+#     nidx( rbidx::Int, ::Val{true}, ::Val{true})::Int
+# 
+# first type argument:  type of the orgal point (for even points -> `Val{true}()`, else `Val{false}()`)
+# second type argument: is sum of other point indices even or odd -> (if sum is even -> `Val{true}()`, else `Val{false}()`)
+# """
 @inline function nidx( rbidx::Int, ::Val{true}, ::Val{true})::Int
    return (rbidx - 1) * 2 
 end
@@ -33,11 +33,11 @@ end
    return (rbidx - 1) * 2 
 end
 
-"""
-    get_rbidx_right_neighbour(rbidx::Int, ::Val{true}, ::Val{true})::Int
-
-needs docu...
-"""
+# """
+#     get_rbidx_right_neighbour(rbidx::Int, ::Val{true}, ::Val{true})::Int
+# 
+# needs docu...
+# """
 @inline function get_rbidx_right_neighbour(rbidx::Int, ::Val{true}, ::Val{true})::Int
     return rbidx + 1
 end
@@ -52,11 +52,11 @@ end
 end
 
 
-"""
-    RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
-
-Returns a RedBlack array for the grid `g`. 
-"""
+# """
+#     RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+# 
+# Returns a RedBlack array for the grid `g`. 
+# """
 function RBArray( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
     nr, nφ, nz = size(g)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
@@ -77,11 +77,11 @@ function RBArray( a::Array{T, N}, grid::Grid{TG, N, Cylindrical} )::Array{T, N +
     return rbarray
 end
 
-"""
-    RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
-
-Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
-"""
+# """
+#     RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+# 
+# Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
+# """
 function RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
     nr, nφ, nz = size(g)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
@@ -105,11 +105,11 @@ function RBExtBy2Array( a::Array{T, N}, grid::Grid{TG, N, Cylindrical} )::Array{
 end
 
 
-"""
-    RBExtBy2Array( et::Type, g::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
-
-Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
-"""
+# """
+#     RBExtBy2Array( et::Type, g::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
+# 
+# Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
+# """
 function RBExtBy2Array( et::Type, g::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
     nx, ny, nz = size(g)
     return zeros(T, div(nx, 2) + mod(nx, 2) + 2, ny + 2, nz + 2, 2)
