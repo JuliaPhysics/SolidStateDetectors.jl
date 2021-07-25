@@ -180,13 +180,13 @@ Initialize a grid based on the `sim::Simulation{T, S}`.
 
 The grid can be tuned via the two keywords `max_tick_distance` and `max_distance_ratio::Real = 5`.
 
-`max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of Quantities, e.g. `(1u"mm", 0.2u"cm", 3u"mm")`,
+`max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of Quantities, e.g. `(1u"mm", 15u"°", 3u"mm")`,
 to set it for each axis of the Grid separately. 
-If `max_tick_distance` is `missing` one fourth of the axis length is used. 
+If `max_tick_distance` is `missing`, one fourth of the axis length is used. 
 
 # Keywords:
 - `for_weighting_potential::Bool = false`
-- `max_tick_distance::Union{Missing, length_unit, Tuple{length_unit, angle_unit, length_unit}} = missing`
+- `max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}}} = missing`
 - `max_distance_ratio::Real = 5`
 - `full_2π::Bool = false`
 """
@@ -310,7 +310,23 @@ function Grid(sim::Simulation{T, Cylindrical};
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
 
+"""
+    Grid(sim::Simulation{T, Cartesian})
 
+Initialize a grid based on the `sim::Simulation{T, S}`.
+
+The grid can be tuned via the two keywords `max_tick_distance` and `max_distance_ratio::Real = 5`.
+
+`max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of Quantities, e.g. `(1u"mm", 0.2u"cm", 3u"mm")`,
+to set it for each axis of the Grid separately. 
+If `max_tick_distance` is `missing`, one fourth of the axis length is used. 
+
+# Keywords:
+- `for_weighting_potential::Bool = false`
+- `max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}}} = missing`
+- `max_distance_ratio::Real = 5`
+- `full_2π::Bool = false`
+"""
 function Grid(  sim::Simulation{T, Cartesian};
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
