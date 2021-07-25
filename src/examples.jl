@@ -2,7 +2,7 @@
 """
     get_path_to_example_config_files()::String
 
-Returns the path to example detector config files provided by the package.
+Returns the path to the example detector configuration files provided by the package.
 """
 function get_path_to_example_config_files()::String
     return joinpath(@__DIR__, "../examples/example_config_files")
@@ -11,7 +11,15 @@ end
 """
     SSD_examples::Dict{Symbol,String}
 
-containing absolute paths to example configuration files.
+Dictionary with the paths to the example detector configuration files provided by the package.
+
+Find the possible keys of the dictionary with `keys(SSD_examples)`.
+
+The example detector configuration files can be loaded via
+```
+path_to_config_file = SSD_examples[:InvertedCoax]
+sim = Simulation(path_to_config_file)
+```
 """
 const SSD_examples = Dict{Symbol,String}([
     :InvertedCoax                            => joinpath(get_path_to_example_config_files(), "public_ivc_config.yaml"),
