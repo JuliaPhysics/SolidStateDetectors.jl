@@ -148,9 +148,9 @@ const CD_OUTSIDE = 0x01
 const CD_BULK = 0x02
 const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-"""
-    For charge drift...
-"""
+# """
+#     For charge drift...
+# """
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
@@ -199,7 +199,7 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cylindr
                                     CylindricalPoint{T}(p.r, nextfloat(p.φ), p.z) in c,
                                     CylindricalPoint{T}(p.r, p.φ, prevfloat(p.z)) in c,
                                     CylindricalPoint{T}(p.r, p.φ, nextfloat(p.z)) in c]
-    if !(false in look_around)
+    if all(look_around)
         return false , CartesianPoint{T}(n...)
     else
         if (look_around[1]==false) n[1] -= 1 end
@@ -225,16 +225,15 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cartesi
                                     CartesianPoint{T}(p.x, nextfloat(p.y), p.z) in c,
                                     CartesianPoint{T}(p.x, p.y, prevfloat(p.z)) in c,
                                     CartesianPoint{T}(p.x, p.y, nextfloat(p.z)) in c]
-    if !(false in look_around)
+    if all(look_around)
         return false, n
     else
-        if (look_around[1] == false) n[1] -= 1 end
-        if (look_around[2] == false) n[1] += 1 end
-        if (look_around[3] == false) n[2] -= 1 end
-        if (look_around[4] == false) n[2] += 1 end
-        if (look_around[5] == false) n[3] -= 1 end
-        if (look_around[6] == false) n[3] += 1 end
-        # println(look_around , " " , n)
+        if !look_around[1] n[1] -= 1 end
+        if !look_around[2] n[1] += 1 end
+        if !look_around[3] n[2] -= 1 end
+        if !look_around[4] n[2] += 1 end
+        if !look_around[5] n[3] -= 1 end
+        if !look_around[6] n[3] += 1 end
         return true, n
     end
 end
