@@ -41,16 +41,6 @@ end
 
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Transformations)
-    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
-end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Transformations)
-    DeadVolume{T}(pass, input_units, transformations)
-end
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Transformations)
-    ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
-end
-
 
 function get_world_limits_from_objects(::Type{Cylindrical}, ssd::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
