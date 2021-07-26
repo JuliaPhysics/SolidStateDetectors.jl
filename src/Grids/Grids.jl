@@ -102,9 +102,6 @@ function check_grid(grid::CartesianGrid3D{T})::Nothing where {T}
     return nothing
 end
 
-include("RefineGrid.jl")
-
-
 function get_coordinate_system(grid::Grid{T, N, S}) where {T, N, S}
     return S
 end
