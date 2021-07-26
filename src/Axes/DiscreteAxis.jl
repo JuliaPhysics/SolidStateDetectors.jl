@@ -64,28 +64,6 @@ function get_boundary_types(ax::DiscreteAxis{T,LB,RB})::NTuple{4, Symbol} where 
     return LB, RB, get_boundary_types(ax.interval)...
 end
 
-function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
-    v::Vector{T} = T[]
-    for r in impticks if in(r, ax.interval) push!(v, r) end end
-    for r in ax push!(v, r) end
-    unique!(sort!(v))
-    delete_idcs::Vector{Int} = Int[]
-    for i in 1:(length(v) - 1)
-        if (v[i + 1] - v[i]) < atol
-            if !in(v[i], impticks) push!(delete_idcs, i) end
-            if !in(v[i + 1], impticks) push!(delete_idcs, i + 1) end
-        end
-    end
-    unique!(sort!(delete_idcs))
-    deleteat!(v, delete_idcs) 
-    for impv in impticks
-        if !in(impv, v) && in(impv, ax.interval)
-            error("Important ticks were removed.")
-        end
-    end
-    return v
-end
-
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
