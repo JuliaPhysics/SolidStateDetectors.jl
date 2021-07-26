@@ -1,9 +1,9 @@
-"""
-    update!(fssrb::PotentialSimulationSetupRB{T, 3, 4, S}, RBT::DataType)::Nothing
-
-Loop over `even` grid points. A point is `even` if the sum of its cartesian indicies (of the not extended grid) is even.
-Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ]).
-"""
+# """
+#     update!(fssrb::PotentialSimulationSetupRB{T, 3, 4, S}, RBT::DataType)::Nothing
+# 
+# Loop over `even` grid points. A point is `even` if the sum of its cartesian indicies (of the not extended grid) is even.
+# Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ]).
+# """
 @fastmath function update!( fssrb::PotentialSimulationSetupRB{T, 3, 4, S}, use_nthreads::Int,
                             update_even_points::Val{even_points},
                             depletion_handling::Val{depletion_handling_enabled},
@@ -23,14 +23,14 @@ Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ])
     nothing
 end
 
-"""
-    innerloops!(  ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
-                                update_even_points::Val{even_points},
-                                depletion_handling::Val{depletion_handling_enabled},
-                            )::Nothing where {T, even_points, depletion_handling_enabled}
-
-(Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the field calculation.                            
-"""
+# """
+#     innerloops!(  ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
+#                                 update_even_points::Val{even_points},
+#                                 depletion_handling::Val{depletion_handling_enabled},
+#                             )::Nothing where {T, even_points, depletion_handling_enabled}
+# 
+# (Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the field calculation.                            
+# """
 @fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},

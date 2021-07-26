@@ -2,108 +2,8 @@ include("Object.jl")
 include("Passive.jl")
 include("Contacts.jl")
 include("Semiconductor.jl")
-include("AbstractVirtualVolume.jl")
-include("TransitionLayer.jl")
-include("SigGenInterface.jl")
+include("VirtualVolumes.jl")
 include("SolidStateDetector.jl")
-
-
-"""
-    parse_config_file(filename::AbstractString)::SolidStateDetector{T} where {T <: SSDFloat}
-
-Reads in a config file and returns an Detector struct which holds all information specified in the config file.
-Currently supported formats for the config file: .json, .yaml
-"""
-function parse_config_file(filename::AbstractString)::Dict{Any,Any}
-    if endswith(filename, ".toml")
-        error("Currently only .json and .yaml files are supported.")
-    elseif endswith(filename, ".json")
-        dicttext = read(filename, String)
-        parsed_dict = JSON.parse(dicttext)
-        scan_and_merge_included_json_files!(parsed_dict, filename)
-    elseif endswith(filename, ".yaml")
-        parsed_dict = YAML.load_file(filename)
-        scan_and_merge_included_json_files!(parsed_dict, filename)
-    elseif endswith(filename, ".config")
-        siggen_dict = readsiggen(filename)
-        parsed_dict = siggentodict(siggen_dict)
-    else
-        error("Currently only .json and .yaml files are supported.")
-    end
-    parsed_dict
-end
-
-function yaml2json_convert(filename::String)
-    data = YAML.load(open(filename), dicttype = DataStructures.OrderedDict)
-    if isempty(data)
-        @warn "The file $(filename) is empty and will not be converted."
-    else
-        open(replace(filename, ".yaml" => ".json"),"w") do f 
-            JSON.print(f, data, 4) 
-        end
-    end
-end
-function yaml2json(directory::String)# or filename
-    if endswith(directory, ".yaml")
-        yaml2json_convert(directory)
-    else
-        yamlfiles = filter(x->endswith(x,".yaml"), joinpath.(directory, readdir(directory)))
-        for filename in yamlfiles
-            yaml2json_convert(filename)
-        end
-    end
-end
-
-function json2yaml_convert(filename::String)::Nothing
-    data = JSON.parsefile(filename, dicttype = DataStructures.OrderedDict)
-    if isempty(data)
-        @warn "The file $(filename) is empty and will not be converted."
-    else
-        YAML.write_file(replace(filename, ".json" => ".yaml"), data)
-    end
-
-end
-function json2yaml(directory::String)# or filename
-    if endswith(directory, ".json")
-        json2yaml_convert(directory)
-    else
-        jsonfiles = filter(x->endswith(x,".json"), joinpath.(directory, readdir(directory)))
-        for filename in jsonfiles
-            json2yaml_convert(filename)
-        end
-    end
-end
-
-function scan_and_merge_included_json_files!(parsed_dict, config_filename::AbstractString)
-    key_word = "include"
-    config_dir = dirname(config_filename)
-    for k in keys(parsed_dict)
-        is_subdict = typeof(parsed_dict[k]) <: Dict
-        if !is_subdict && string(k) != key_word
-            typeof(parsed_dict[k]) <: Array ? is_subdict = true : is_subdict = false
-        end
-        if is_subdict
-            scan_and_merge_included_json_files!(parsed_dict[k], config_filename)
-        elseif string(k) == key_word
-            files = []
-            if typeof(parsed_dict[k]) <: Array
-                append!(files, parsed_dict[k])
-            else
-                push!(files, parsed_dict[k])
-            end
-            for file in files
-                filepath = joinpath(config_dir, file)
-                if isfile(filepath)
-                    tmp = parse_config_file(filepath)
-                    for sub_k in keys(tmp)
-                        parsed_dict[sub_k] = tmp[sub_k]
-                    end
-                end
-            end
-            delete!(parsed_dict, k)
-        end
-    end
-end
 
 function sample(c::SolidStateDetector{T}, ::Type{Cartesian}, sampling...)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
     imp::Vector{CartesianPoint{T}} = vcat(
@@ -118,26 +18,6 @@ function sample(c::SolidStateDetector{T}, ::Type{Cylindrical}, sampling...)::Vec
     [CylindricalPoint.(sample(g.geometry, sampling...)) for object in skipmissing((c.contacts, c.passives)) for g in object]...)
     unique!(imp)
 end
-
-
-function is_boundary_point(c::SolidStateDetector, pt::AbstractCoordinatePoint{T}, ax1::Vector{T}, ax2::Vector{T}, ax3::Vector{T})::Tuple{Bool, Real, Int} where {T <: SSDFloat}
-    # if false #!(p in c)
-    #     return false, T(0), 0
-    # else
-    for contact in c.contacts
-        if in(pt, contact, ax1)
-            return true, contact.potential, contact.id
-        end
-    end
-    for external_part in c.external_parts
-        if in(pt, external_part, ax1)
-            return true, external_part.potential, external_part.id
-        end
-    end
-    return false, 0.0, 0
-    # end
-end
-
 
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
@@ -169,9 +49,9 @@ const CD_OUTSIDE = 0x01
 const CD_BULK = 0x02
 const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-"""
-    For charge drift...
-"""
+# """
+#     For charge drift...
+# """
 function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in c.contacts
@@ -196,13 +76,13 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
 end
 
 # go_to_nearest_gridpoint
-function searchsortednearest(grid::Grid{T, 3, Cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::CylindricalGrid{T}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.r)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.φ)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
     CylindricalPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
 end
-function searchsortednearest(grid::Grid{T, 3, Cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::CartesianGrid3D{T}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.x)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.y)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
@@ -220,7 +100,7 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cylindr
                                     CylindricalPoint{T}(p.r, nextfloat(p.φ), p.z) in c,
                                     CylindricalPoint{T}(p.r, p.φ, prevfloat(p.z)) in c,
                                     CylindricalPoint{T}(p.r, p.φ, nextfloat(p.z)) in c]
-    if !(false in look_around)
+    if all(look_around)
         return false , CartesianPoint{T}(n...)
     else
         if (look_around[1]==false) n[1] -= 1 end
@@ -246,16 +126,15 @@ function is_surface_point_and_normal_vector(c::SolidStateDetector{T}, p::Cartesi
                                     CartesianPoint{T}(p.x, nextfloat(p.y), p.z) in c,
                                     CartesianPoint{T}(p.x, p.y, prevfloat(p.z)) in c,
                                     CartesianPoint{T}(p.x, p.y, nextfloat(p.z)) in c]
-    if !(false in look_around)
+    if all(look_around)
         return false, n
     else
-        if (look_around[1] == false) n[1] -= 1 end
-        if (look_around[2] == false) n[1] += 1 end
-        if (look_around[3] == false) n[2] -= 1 end
-        if (look_around[4] == false) n[2] += 1 end
-        if (look_around[5] == false) n[3] -= 1 end
-        if (look_around[6] == false) n[3] += 1 end
-        # println(look_around , " " , n)
+        if !look_around[1] n[1] -= 1 end
+        if !look_around[2] n[1] += 1 end
+        if !look_around[3] n[2] -= 1 end
+        if !look_around[4] n[2] += 1 end
+        if !look_around[5] n[3] -= 1 end
+        if !look_around[6] n[3] += 1 end
         return true, n
     end
 end
@@ -285,15 +164,4 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, ssd::SolidStateDetector{T
         end
     end
     return ρ_semiconductor, ϵ, q_eff_fix
-end
-
-
-function json_to_dict(inputfile::String)::Dict
-    parsed_json_file = Dict()
-    open(inputfile,"r") do f
-        global parsed_json_file
-        dicttext = readstring(f)
-        parsed_json_file = JSON.parse(dicttext)
-    end
-    return parsed_json_file
 end

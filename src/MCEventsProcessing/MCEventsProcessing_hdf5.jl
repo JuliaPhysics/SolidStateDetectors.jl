@@ -6,7 +6,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T},
                              max_nsteps::Int = 1000,
                              verbose = false) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
-    Δtime = T(to_internal_units(internal_time_unit, Δt)) 
+    Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(s.detector.contacts)
     @info "Detector has $(n_contacts) contact(s)"
     contacts = s.detector.contacts;

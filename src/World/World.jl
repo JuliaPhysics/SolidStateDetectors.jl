@@ -38,10 +38,9 @@ function World(T, dict::Dict, input_units::NamedTuple)::World
     end
 end
 
-function get_periodicity(int::SSDInterval{T, L, R, BL, BR}) where {T <:SSDFloat, L, R, BL, BR}
-    return int.right - int.left
+function IntervalSets.endpoints(int::SSDInterval{T, L, R, BL, BR}) where {T <:SSDFloat, L, R, BL, BR} # this defines width(::SSDInterval)
+    (int.left, int.right) 
 end
-
 
 function get_interval_boundary_types(dict::Dict)
     BL, BR = missing, missing
@@ -72,19 +71,17 @@ function get_r_SSDInterval(T, dict, input_units::NamedTuple)
     if isa(dict, Dict)
         from::T = 0 
         if "from" in keys(dict) @warn "ConfigFileWarning: \"from\" is not used in r-axis. It is fixed to 0." end
-        # to::T = "to" in keys(dict) ? geom_round(ustrip(uconvert(internal_length_unit, T(dict["to"]) * input_units.length))) : throw(ConfigFileError("No \"to\" given for r-axis."))
         to::T = "to" in keys(dict) ? _parse_value(T, dict["to"], input_units.length) : throw(ConfigFileError("No \"to\" given for r-axis."))
         if from < 0 throw(ConfigFileError("left boundary of r-axis cannot be negative.")) end 
         if to < 0 throw(ConfigFileError("right boundary of r-axis cannot be negative.")) end 
-        L = :closed
-        BL = :r0
+        L, BL = :closed, :r0
         R, BR = :closed, :infinite
         if "boundaries" in keys(dict)
             BR = boundary_condition_mapping[dict["boundaries"]]
         end      
         return SSDInterval{T, L, R, BL, BR}(from, to)
     else
-        SSDInterval{T, :closed, :closed, :r0, :infinite}(0, ustrip(uconvert(internal_length_unit, T(dict) * input_units.length)))
+        SSDInterval{T, :closed, :closed, :r0, :infinite}(0, _parse_value(T, dict, input_units.length))
     end
 end
 function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)

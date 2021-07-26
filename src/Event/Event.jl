@@ -1,8 +1,15 @@
 """
     mutable struct Event{T <: SSDFloat}
 
-Collection struct for individual events. This (mutable) struct is ment to be used to look at individual events,
+Collection struct for individual events. 
+This (mutable) struct is mend to be used to look at individual events,
 not to process a huge amount of events.
+
+# Fields:
+- `locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}`: Vector of the positions of all hits of the event.
+- `energies::Union{Vector{T}, Missing}`: Vector of energies corresponding to the hits of the event.
+- `drift_paths::Union{Vector{EHDriftPath{T}}, Missing}`: Calculated drift paths of each hit position. 
+- `waveforms::Union{Vector{<:Any}, Missing}`: Generated signals (waveforms) of the event.
 """
 mutable struct Event{T <: SSDFloat}
     locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}
@@ -15,7 +22,7 @@ end
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity{T}} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
     evt.locations = locations
-    evt.energies = to_internal_units(internal_energy_unit, energies)
+    evt.energies = to_internal_units(energies)
     evt.waveforms = missing
     return evt
 end
@@ -28,11 +35,11 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
             AbstractVector{<:RealQuantity},
             AbstractVector{<:AbstractVector{<:RealQuantity}}
         }}, T = missing)
-    if ismissing(T) T = eltype(to_internal_units(internal_energy_unit, evt[:edep][:])) end
+    if ismissing(T) T = eltype(to_internal_units(evt[:edep][:])) end
 
     event = Event(
-        CartesianPoint{T}.(to_internal_units.(internal_length_unit, evt[:pos][:])),
-        T.(to_internal_units.(internal_energy_unit, evt[:edep][:]))
+        CartesianPoint{T}.(to_internal_units.(evt[:pos][:])),
+        T.(to_internal_units.(evt[:edep][:]))
     )
 
     return event
@@ -41,7 +48,17 @@ end
 in(evt::Event, detector::SolidStateDetector) = all( pt -> pt in detector, evt.locations)
 in(evt::Event, simulation::Simulation) = all( pt -> pt in simulation.detector, evt.locations)
 
+"""
+    drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
+Calculate the drift paths for the given `event` and Simulation `sim`
+    and stores them under `event.drift_paths`. 
+
+# Keywords
+- `Δt::RealQuantity = 5u"ns"`: Time difference between two time stamps of the drift.
+- `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
+- `verbose = false`: Activate or deactivate additional info output. 
+"""
 function drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     event.drift_paths = drift_charges(sim, CartesianPoint.(event.locations), Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
     nothing
@@ -69,6 +86,19 @@ function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5
     nothing
 end
 
+"""
+    simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+
+Simulates the `event` for a given Simulation `sim`:
+    1. Simulate the drift paths of all hits, at `event.locations`, and stores them under `event.drift_paths`. 
+    2. Generate the signal (waveform) for all channels for which a weighting potential is specified in `sim.weighting_potentials`
+        and stores them under `event.waveforms`.
+
+# Keywords
+- `Δt::RealQuantity = 5u"ns"`: Time difference between two time stamps of the drift and the signals.
+- `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
+- `verbose = false`: Activate or deactivate additional info output. 
+"""
 function simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     drift_charges!(event, sim, max_nsteps = max_nsteps, Δt = Δt, verbose = verbose)
     get_signals!(event, sim, Δt = Δt)

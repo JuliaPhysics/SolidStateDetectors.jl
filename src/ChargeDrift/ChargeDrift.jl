@@ -10,11 +10,6 @@ struct EHDriftPath{T <: SSDFloat, TT <: RealQuantity}
     timestamps_h::Vector{TT}
 end
 
-_common_length(dp::EHDriftPath{T} where {T <: SSDFloat})::Int =
-    max(length(dp.timestamps_e), length(dp.timestamps_h))
-_common_length(dps::Vector{EHDriftPath{T}} where {T <: SSDFloat})::Int =
-    maximum(_common_length.(dps))
-
 function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
@@ -42,7 +37,7 @@ function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
 
     drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points))
 
-    dt::T = T(to_internal_units(internal_time_unit, Δt))
+    dt::T = T(to_internal_units(Δt))
 
     for i in eachindex(starting_points)
         drift_path_e::Vector{CartesianPoint{T}} = zeros(CartesianPoint{T}, max_nsteps )#Vector{CartesianPoint{T}}(undef, max_nsteps)
@@ -55,14 +50,6 @@ function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
     end
 
     return drift_paths
-end
-
-function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
-                       starting_point::CartesianPoint{<:SSDFloat},
-                       velocity_field_e::Interpolations.Extrapolation{SVector{3, T}, 3},
-                       velocity_field_h::Interpolations.Extrapolation{SVector{3, T}, 3},
-                       Δt::RealQuantity, max_nsteps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(detector, grid, CartesianPoint{T}.(point_types), [starting_point], velocity_field_e, velocity_field_h, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
 end
 
 function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where {T <: SSDFloat}

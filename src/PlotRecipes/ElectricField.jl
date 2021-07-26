@@ -136,7 +136,7 @@ end
     spawn_positions = CartesianPoint{T}[]
     grid = sim.electric_field.grid
     
-    sample_lines = get_sample_lines(dim_symbol, v, grid, T(ustrip(to_internal_units(internal_length_unit, sampling))))
+    sample_lines = get_sample_lines(dim_symbol, v, grid, T(ustrip(to_internal_units(sampling))))
 
     for c in contacts_to_spawn_charges_for[:]
         surfs = ConstructiveSolidGeometry.surfaces(c.geometry)
@@ -145,7 +145,7 @@ end
                 pts = ConstructiveSolidGeometry.intersection(surf,l)
                 for pt in pts
                     if pt in c
-                        point = pt + T(ustrip(to_internal_units(internal_length_unit, offset)))*ConstructiveSolidGeometry.normal(surf, pt)
+                        point = pt + T(ustrip(to_internal_units(offset)))*ConstructiveSolidGeometry.normal(surf, pt)
                         if point in sim.detector && !(point in sim.detector.contacts)
                             push!(spawn_positions, point)
                         end

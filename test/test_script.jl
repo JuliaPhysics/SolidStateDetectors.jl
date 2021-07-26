@@ -11,6 +11,7 @@ mkpath(outputdir)
 @info "Loading packages"
 using Plots
 using SolidStateDetectors; SSD = SolidStateDetectors
+using LinearAlgebra
 
 T = Float32
 @info "Testing now for Float32:"
@@ -19,11 +20,12 @@ plot() # creates a plot so that the plots during the following loop pop up.
 
 key = :CGD
 
-for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
-# for key in keys(SSD_examples)
+for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
+
     @info "Now test detector type: $key"
 
     simulation = Simulation(SSD_examples[key]);
+    S = SSD.get_coordinate_system(simulation)
 
     apply_initial_state!(simulation, ElectricPotential)
     p = if S == SSD.Cartesian
@@ -53,7 +55,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
         0:1
     end
     for nref in nrefs
-        update_till_convergence!(simulation, ElectricPotential)
+        SSD.update_till_convergence!(simulation, ElectricPotential)
         p = if S == SSD.Cartesian
             plot(
                 plot(simulation.electric_potential, y = 0.002),
@@ -71,13 +73,13 @@ for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
         end
         savefig(joinpath(outputdir, "$(key)_1_Electric_Potential_$(nref)_refinements"))
         if nref != nrefs[end]
-            refine!(simulation, ElectricPotential, (1e-5, 1e-5, 1e-5), (1e-5, 1e-5, 1e-5), update_other_fields = true)
+            SSD.refine!(simulation, ElectricPotential, (100, 100, 100), (1e-4, 1e-4, 1e-4), update_other_fields = true)
         end
         @show size(simulation.electric_potential.grid)
     end
 
     for contact in simulation.detector.contacts
-        calculate_weighting_potential!(simulation, contact.id, max_refinements = key == :Coax ? 0 : 1, verbose = true)
+        calculate_weighting_potential!(simulation, contact.id, refinement_limits = key == :Coax ? missing : [0.2], verbose = true)
     end
     wp_plots = if S != SSD.Cartesian
         [ plot(simulation.weighting_potentials[contact.id]) for contact in simulation.detector.contacts ]
@@ -89,19 +91,19 @@ for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
 
     calculate_electric_field!(simulation)
 
-    plot( simulation.electric_field.grid[1], simulation.electric_field.grid[3], SSD.get_electric_field_strength(simulation.electric_field)[:, div(length(simulation.electric_field.grid[2].ticks), 2), :]',
+    plot( simulation.electric_field.grid[1], simulation.electric_field.grid[3], norm.(simulation.electric_field)[:, div(length(simulation.electric_field.grid[2].ticks), 2), :]',
           st=:heatmap, title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
     savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
     if S == SSD.Cylindrical
-        plot(simulation.electric_field, φ=deg2rad(0), spacing = 3.0)
+        plot(simulation.electric_field, φ = 0, spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     else
         plot(simulation.electric_field, y = 0, spacing = 3.0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 
-    set_charge_drift_model!(simulation, ADLChargeDriftModel())
+    simulation.detector = SolidStateDetector(simulation.detector, ADLChargeDriftModel(T = T))
 
     calculate_drift_fields!(simulation)
 
@@ -126,7 +128,6 @@ for key in  [:InvertedCoax, :BEGe, :Coax] #, :CGD, :Spherical]
     plot!(event.drift_paths)
     savefig(joinpath(outputdir, "$(key)_4_charge_drift"))
 
-    # signals[:, 2] *= -1
     plot([event.waveforms...], size = (1200, 600), lw = 1.5)
     savefig(joinpath(outputdir, "$(key)_5_induced_signals"))
 

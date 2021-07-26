@@ -110,8 +110,6 @@ function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units
         # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
         bottom = _parse_radial_interval(T, dictr["bottom"], unit)
         top = _parse_radial_interval(T, dictr["top"], unit)
-        # bottom and top need to be same type for Cone
-        # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
         bottom, top
     else
         # "r" : {"from": ... , "to": ...}
@@ -126,8 +124,6 @@ function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units
         # "r" : {"bottom": {"from": ..., "to": ...}, "top": {"from": ..., "to": ...}}
         bottom = _parse_radial_interval(T, dictr["bottom"], unit)
         top = _parse_radial_interval(T, dictr["top"], unit)
-        # bottom and top need to be same type for Cone
-        # typeof(bottom) == typeof(top) ? (bottom, top) : _extend_number_to_zero_interval.((bottom, top))
         if bottom isa Real bottom = (zero(T), bottom) end
         if top isa Real top = (zero(T), top) end
         (bottom, top)

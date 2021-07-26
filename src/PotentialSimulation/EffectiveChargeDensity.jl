@@ -1,3 +1,20 @@
+"""
+    struct EffectiveChargeDensity{T, N, S, AT} <: AbstractArray{T, N}
+- `T`: Element type of `data`.
+- `N`: Dimension of the `grid` and `data` array.  
+- `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+- `AT`: Axes type.  
+        
+# Fields
+- `data::Array{T, N}`
+- `grid::Grid{T, N, S, AT}`
+
+The `data` array contains the values of the effective charge density at the discrete points defined by the 
+axes ticks of the `grid`.
+
+The effective charge density is the charge density ([Q/m^3]) times the volume of the voxel of the respective
+grid point ([m^3]). Thus, the units of the effective charge density in `data` is coulombs ([C]).
+"""
 struct EffectiveChargeDensity{T, N, S, AT} <: AbstractArray{T, N}
     data::Array{T, N}
     grid::Grid{T, N, S, AT}

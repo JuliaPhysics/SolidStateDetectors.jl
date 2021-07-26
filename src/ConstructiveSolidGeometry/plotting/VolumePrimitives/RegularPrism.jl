@@ -1,6 +1,6 @@
 function get_plot_points(rp::RegularPrism{N,T}; kwargs...) where {N, T <: AbstractFloat}
     plot_points = Vector{CartesianPoint{T}}[]
-    zMin::T, zMax::T = get_z_limits(rp)
+    zMin::T, zMax::T = _linear_endpoints(rp.hZ)
 
     φrange = range(0, 2π, length = N+1)
     scφrange = sincos.(φrange)

@@ -6,9 +6,9 @@ function get_crosssection_idx_and_value(g::Grid{T, 3, Cylindrical}, r, φ, z)::T
         φ_rad::T = T(deg2rad(φ))
         while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right) && g.φ.interval.right != g.φ.interval.left
             if φ_rad > g.φ.interval.right
-                φ_rad -= g.φ.interval.right - g.φ.interval.left
+                φ_rad -= width(g.φ.interval)
             elseif φ_rad < g.φ.interval.left
-                φ_rad += g.φ.interval.right - g.φ.interval.left
+                φ_rad += width(g.φ.interval)
             end
         end
         :φ, searchsortednearest(g.φ, φ_rad)
@@ -109,7 +109,7 @@ end
             ylims --> (g.z[1],g.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(g.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(g.z))
-            if full_det == true
+            if full_det
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
                 extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                 xlims := (-1*g.r[end],g.r[end])
@@ -140,7 +140,7 @@ end
                 yguide := "z / m"
                 xlims --> (g.r[1],g.r[end])
                 ylims --> (g.z[1],g.z[end])
-                if full_det == true
+                if full_det
                     cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(g, missing, value+180, missing)
                     extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                     xlims := (-1*g.r[end],g.r[end])

@@ -20,7 +20,7 @@ Base.convert(T::Type{NamedTuple}, x::ElectricField) = T(x)
 
 function ElectricField(nt::NamedTuple)
     grid = Grid(nt.grid)
-    T = eltype(ustrip.(nt.values[1]))
+    T = eltype(grid)
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
     ef = Array{SVector{3, T}}(undef, size(grid)...)
@@ -36,21 +36,6 @@ Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
     return ElectricField{T, 3, S}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
-end
-
-function get_magnitude_of_rφz_vector(vector::AbstractArray,cutoff=NaN)
-    magn=0
-    magn+=(vector[1])^2
-    magn+=(vector[3])^2
-    result = sqrt(magn)
-    if isnan(cutoff)
-        return result
-    else
-        if result >cutoff
-            result=0
-        end
-        return result
-    end
 end
 
 
@@ -150,33 +135,6 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cylindric
     end
     return ElectricField(ef, pointtypes.grid)
 end
-
-function get_component_field(ef,component=:r,cutoff=NaN)
-    components = [:r,:phi,:z]
-    # component_index = findfirst(components,component)
-    component_index = findfirst(x->x==component,components)
-    ef_component = Array{Float32}(undef,size(ef,1),size(ef,2),size(ef,3))
-    for iz in 1:size(ef, 3)
-        for iφ in 1:size(ef, 2)
-            for ir in 1:size(ef, 1)
-                if !isnan(cutoff)
-                    if abs(ef[ir,iφ ,iz][component_index]) >=cutoff
-                        ef_component[ir,iφ,iz] = 0.0
-                    else
-                        ef_component[ir,iφ,iz] = ef[ir,iφ ,iz][component_index]
-                    end
-                else
-                    ef_component[ir,iφ,iz] = ef[ir,iφ ,iz][component_index]
-                end
-            end
-        end
-    end
-    return ef_component
-end
-function get_xyz_vector_from_rφz_vector(v::AbstractArray)::AbstractArray
-    return [v[1]*cos(v[2]),v[1]*sin(v[2]),v[3]]
-end
-
 
 function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φa::Array{T, 1})::Array{SVector{3, T},3} where {T}
     field_xyz = Array{SVector{3,T},3}(undef, size(field)...);
@@ -311,12 +269,4 @@ function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cartesian
         end
     end
     return ElectricField(ef, pointtypes.grid)
-end
-
-function get_electric_field_strength(ef::ElectricField{T}) where {T <: SSDFloat}
-    efs::Array{T, 3} = Array{T, 3}(undef, size(ef.data))
-    @inbounds for i in eachindex(ef.data)
-        efs[i] = norm(ef.data[i])
-    end
-    return efs
 end

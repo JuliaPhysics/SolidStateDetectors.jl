@@ -25,7 +25,7 @@ end
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :periodic, :periodic}, int::Interval{:closed, :open, AT}) where {T, AT}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = length( axφ )
-    Δφ::AT = int.right - int.left
+    Δφ::AT = width(int)
     new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(0, 2π)
     n::Int = Int(round(T(2π) / Δφ, sigdigits = 6))
     new_ticks::Vector{AT} = Vector{AT}(undef, l * n)
@@ -48,7 +48,7 @@ end
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT}) where {T, AT}
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = 2 * length( axφ ) - 2
-    Δφ::AT = int.right - int.left
+    Δφ::AT = width(int)
     new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(int.left, int.right + Δφ)
     new_ticks::Vector{AT} = Vector{AT}(undef, l)
     new_ticks[1:length( axφ )] = collect(axφ.ticks)

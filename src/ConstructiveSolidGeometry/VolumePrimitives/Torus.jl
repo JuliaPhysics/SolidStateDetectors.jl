@@ -141,8 +141,7 @@ end
 # end
 
 
-# get_r_tube_limits(t::Torus{T}) where {T} = (_left_radial_interval(t.r_tube),_right_radial_interval(t.r_tube))
-
+# get_r_tube_limits(t::Torus{T}) where {T} = _radial_endpoints(t.r_tube)
 # get_φ_limits(t::Torus{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
 # get_φ_limits(t::Torus{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (t.φ.left, t.φ.right, false)
 

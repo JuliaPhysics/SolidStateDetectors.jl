@@ -1,6 +1,6 @@
-"""
-# module ConstructiveSolidGeometry
-"""
+# """
+# # module ConstructiveSolidGeometry
+# """
 module ConstructiveSolidGeometry
 
     # Base Packages
@@ -63,8 +63,6 @@ module ConstructiveSolidGeometry
         _in(_transform_into_object_coordinate_system(pt, p), p; csgtol = csgtol)
     in(pt::CylindricalPoint{T}, p::AbstractPrimitive{T}; csgtol::T = csg_default_tol(T)) where {T} = 
         in(CartesianPoint(pt), p; csgtol = csgtol)
-    # Do we want to store the rotation matrix permanently in the primitive?
-    # We should do tests regarding the performance. It can be easily added later.     
 
     """
         extreme_points(es::AbstractPrimitive{T}) where {T}
@@ -90,7 +88,6 @@ module ConstructiveSolidGeometry
     include("Intervals.jl")
     include("CSG.jl")
     include("IO.jl")
-    include("Sampling.jl")
 
     # Plotting
     include("plotting/plotting.jl")

@@ -2,12 +2,12 @@
     legendfont --> 15
     linewidth --> 3
     @series begin
-        showlabel == true ? label --> "e-" : label --> ""
+        showlabel ? label --> "e-" : label --> ""
         seriescolor --> :red
         [CartesianPoint{T}(path * scaling) for path in dp.e_path]
     end
     @series begin
-        showlabel == true ? label --> "h+" : label --> ""
+        showlabel ? label --> "h+" : label --> ""
         seriescolor --> :green
         [CartesianPoint{T}(path * scaling) for path in dp.h_path]
     end

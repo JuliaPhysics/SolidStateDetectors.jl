@@ -1,9 +1,15 @@
 abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
 
 """
-    T: tick type
-    N: N dimensional
-    S: System (Cartesian, Cylindrical...)
+    struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
+
+- `T`: Tick type (element type) of the axes.
+- `N`: Dimension of the grid.  
+- `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+- `AT`: Axes type.
+
+# Fields
+- `axes::AT`: Tuple of length `N` containing `DiscreteAxis`.
 """
 struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
     axes::AT
@@ -61,28 +67,6 @@ end
 show(io::IO, g::Grid{T, N, S}) where {T, N, S} = print(io, g)
 show(io::IO, ::MIME"text/plain", g::Grid{T, N, S}) where {T, N, S} = show(io, g)
 
-
-function searchsortednearest(pt::CylindricalPoint{T}, g::CylindricalGrid{T})::NTuple{3, Int} where {T <: SSDFloat}
-    ir::Int = searchsortednearest(g.axes[1].ticks, pt.r)
-    iφ::Int = searchsortednearest(g.axes[2].ticks, pt.φ)
-    iz::Int = searchsortednearest(g.axes[3].ticks, pt.z)
-    ir, iφ, iz
-end
-function searchsortednearest(pt::CartesianPoint{T}, g::CylindricalGrid{T})::NTuple{3, Int} where {T <: SSDFloat}
-    return searchsortednearest(CylindricalPoint(pt), g)
-end
-
-function searchsortednearest(pt::CartesianPoint{T}, g::CartesianGrid{T, 3})::NTuple{3, Int} where {T <: SSDFloat}
-    ix::Int = searchsortednearest(g.axes[1].ticks, pt.x)
-    iy::Int = searchsortednearest(g.axes[2].ticks, pt.y)
-    iz::Int = searchsortednearest(g.axes[3].ticks, pt.z)
-    ix, iy, iz
-end
-function searchsortednearest(pt::CylindricalPoint{T}, g::CartesianGrid{T, 3})::NTuple{3, Int} where {T <: SSDFloat}
-    return searchsortednearest(CartesianPoint(pt), g)
-end
-
-
 function check_grid(grid::CylindricalGrid{T})::Nothing where {T}
     nr::Int, nφ::Int, nz::Int = size(grid)
     @assert iseven(nz) "GridError: Field simulation algorithm in cylindrical coordinates needs an even number of grid points in z. This is not the case. #z-ticks = $(nz)."
@@ -96,16 +80,13 @@ function check_grid(grid::CartesianGrid3D{T})::Nothing where {T}
     return nothing
 end
 
-include("RefineGrid.jl")
-
-
 function get_coordinate_system(grid::Grid{T, N, S}) where {T, N, S}
     return S
 end
 function get_number_of_dimensions(grid::Grid{T, N, S}) where {T, N, S}
     return N
 end
-function eltype(grid::Grid{T, N, S})::DataType where {T, N, S}
+function Base.eltype(grid::Grid{T, N, S})::DataType where {T, N, S}
     return T
 end
 
@@ -166,3 +147,18 @@ function NamedTuple(grid::Grid{T, 3, Cartesian}) where {T}
 end
 
 Base.convert(T::Type{NamedTuple}, x::Grid) = T(x)
+
+
+function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    return (searchsortednearest(grid.axes[1].ticks, point.r), searchsortednearest(grid.axes[2].ticks, point.φ), searchsortednearest(grid.axes[3].ticks, point.z))
+end
+function find_closest_gridpoint(point::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpoint(CylindricalPoint(point),grid)
+end
+
+function find_closest_gridpoint(point::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    @inbounds return (searchsortednearest(grid.axes[1].ticks, point.x), searchsortednearest(grid.axes[2].ticks, point.y), searchsortednearest(grid.axes[3].ticks, point.z))
+end
+function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpoint(CartesianPoint(point),grid)
+end

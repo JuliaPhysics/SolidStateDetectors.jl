@@ -1,11 +1,30 @@
 include("table_utils.jl")
 
+"""
+    simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T})
+
+1. Calculates the drift paths of all energy hits defined in `mcevents`
+    based on the drift fields for electrons and holes stored in `s.electron_drift_field` and 
+    `s.hole_drift_field`.
+2. Determines the signal (waveforms) of all channels 
+    (for which a weighting potential is given in the simulation object `s`.)
+    for the generated drift paths of the hits.
+3. Returns a the input table `mcevents` with an additional column `waveform` 
+    in which the generated waveforms are stored. 
+
+Note: The drift paths are just calculated temporarily and not returned. 
+
+# Keywords
+- `Δt::RealQuantity = 4u"ns"`: Time difference between two time stamps of the drift and the signals.
+- `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
+- `verbose = false`: Activate or deactivate additional info output. 
+"""
 function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
                              verbose = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
-    Δtime = T(to_internal_units(internal_time_unit, Δt)) 
+    Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(s.detector.contacts)
     S = get_coordinate_system(s)
     contacts = s.detector.contacts;
@@ -24,7 +43,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
     @info "Generating waveforms..."
     waveforms = map( 
         wp ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(internal_energy_unit, x.edeps), Δt, Δtime, wp, S),
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wp, S),
             TypedTables.Table(dps = drift_paths, edeps = mcevents.edep)
         ),
         wps_interpolated
@@ -47,7 +66,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, s::Simulation{T},
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
         _drift_charges(s.detector, s.electron_drift_field.grid, s.point_types, 
-                        CartesianPoint{T}.(to_internal_units.(u"m", phyevt.pos)),
+                        CartesianPoint{T}.(to_internal_units.(phyevt.pos)),
                         e_drift_field, h_drift_field, 
                         T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
     end

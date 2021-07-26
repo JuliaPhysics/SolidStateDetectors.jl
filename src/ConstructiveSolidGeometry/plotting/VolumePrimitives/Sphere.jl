@@ -2,8 +2,7 @@ function get_plot_points(s::Sphere{T}; n = 30) where {T <: AbstractFloat}
     
     plot_points = Vector{CartesianPoint{T}}[]
     
-    rMin::T = _left_radial_interval(s.r)
-    rMax::T = _right_radial_interval(s.r)
+    rMin::T, rMax::T = _radial_endpoints(s.r)
     φrange = range(0, 2π, length = n)
     
     for r in (rMin == 0 ? [rMax] : [rMin, rMax])

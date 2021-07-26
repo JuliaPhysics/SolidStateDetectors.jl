@@ -1,7 +1,8 @@
-include("Polygon.jl")
-include("EllipticalSurface.jl")
 include("ConeMantle.jl")
 include("EllipsoidMantle.jl")
+include("EllipticalSurface.jl")
+#include("Plane.jl")
+include("Polygon.jl")
 include("TorusMantle.jl")
 
 @recipe function f(vp::AbstractVector{<:AbstractSurfacePrimitive})

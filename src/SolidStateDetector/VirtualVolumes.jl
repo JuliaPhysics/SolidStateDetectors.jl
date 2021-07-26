@@ -1,3 +1,13 @@
+abstract type AbstractVirtualVolume{T} end
+
+in(p::AbstractCoordinatePoint{T, 3}, avv::AbstractVirtualVolume{T}) where {T <: SSDFloat} = in(p, avv.geometry)
+
+
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Transformations)
+    construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
+end
+
+
 struct DeadVolume{T} <: AbstractVirtualVolume{T}
     name::String
     geometry::AbstractGeometry{T}
@@ -11,6 +21,10 @@ function DeadVolume{T}(dict::Dict, input_units::NamedTuple, transformations = mi
     n = haskey(dict, "name") ? dict["name"] : "external part"
     g = transform(Geometry(T, dict["geometry"], input_units), transformations)
     return DeadVolume{T}(n, g)
+end
+
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Transformations)
+    DeadVolume{T}(pass, input_units, transformations)
 end
 
 
@@ -37,5 +51,9 @@ function ArbitraryDriftModificationVolume{T}(dict::Dict, input_units::NamedTuple
     g = transform(Geometry(T, dict["geometry"], input_units), transformations)
     id = Int(dict["id"])
     return ArbitraryDriftModificationVolume{T}(n, id, g)
+end
+
+function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Transformations)
+    ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
 end
 

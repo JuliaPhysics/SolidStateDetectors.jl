@@ -1,13 +1,13 @@
 
 _get_plot_r(c::Cone{T, <:Union{T, AbstractInterval{T}}, <:Any, <:Any}) where {T} =
-    (_left_radial_interval(c.r),_right_radial_interval(c.r),_left_radial_interval(c.r),_right_radial_interval(c.r))
+    (_radial_endpoints(c.r)..., _radial_endpoints(c.r)...)
 _get_plot_r(c::Cone{T, <:Tuple, <:Any, <:Any}) where {T} = 
-    (_left_radial_interval(c.r[1]),_right_radial_interval(c.r[1]),_left_radial_interval(c.r[2]),_right_radial_interval(c.r[2]))
+    (_radial_endpoints(c.r[1])..., _radial_endpoints(c.r[2])...)
 
 _get_plot_φ(c::Cone{T, <:Any, Nothing, <:Any}) where {T} = (T(0), T(2π), true)
 _get_plot_φ(c::Cone{T, <:Any, <:AbstractInterval, <:Any}) where {T} = (c.φ.left, c.φ.right, false)
 
-_get_plot_z(c::Cone{T}) where {T} = (_left_linear_interval(c.z), _right_linear_interval(c.z))
+_get_plot_z(c::Cone{T}) where {T} = _linear_endpoints(c.z)
 
 
 function get_plot_points(c::Cone{T}; n = 30) where {T <: AbstractFloat}

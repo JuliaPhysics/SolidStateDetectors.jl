@@ -87,177 +87,62 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 end
 
 
-"""
-    roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T, e::T)
-	
-Calculate the 4 (possible) roots of `x^4 + ax^3 + bx^2 + cx + d = 0`
-"""
-function roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T) where {T}
-	#=
-	using Polynomials
-	A, a, b, c, d = 1.0, 0.2, -5.0, -0.1, 2.5
-	p = Polynomial(SVector{5,T}([d, c, b, a, A]))
-	xs = -2.5:0.01:2.5; plot(xs, map(x -> p(x), xs))
-	roots(p)
-	
-	rs = CSG.roots_of_4th_order_polynomial(a, b, c, d)
-	vline!([rs...])
-	@btime CSG.roots_of_4th_order_polynomial($a, $b, $c, $d)
-	=#
-
-	# There are some issues for certain combinations of a, b, c, d, ...
-
-	term_1_1_1_1 = 2*b^3 - 9*a*b*c + 27*c^2 + 27*a^2*d - 72*b*d
-	term_1_1_1_2 = b^2 - 3*a*c + 12*d
-
-	comp_term = -4 * term_1_1_1_2^3 + term_1_1_1_1^2
-
-	term_1_1_1_3 = term_1_1_1_1 + sqrt(Complex(comp_term))
-	term_1_1_1 = 3*(term_1_1_1_3^(1/3))
-
-	term_1_1 = 2^(1/3) * term_1_1_1_2 / term_1_1_1
-	term_1_2 = (term_1_1_1_3 / 54)^(1/3)
-	term_1 = a^2/4 - 2b/3 + term_1_1 + term_1_2
-
-	if term_1 == 0
-		term_6 = sqrt(Complex(b^2 - 4d))
-		λ1 = sqrt(-term_6 - b)/sqrt(2)
-		λ2 = -λ1
-		λ3 = sqrt( term_6 - b)/sqrt(2)
-		λ4 = -λ3
-	else
-		term_2_1 = (-a^3 + 4a*b - 8c) / (4*sqrt(term_1))
-		term_2a = a^2/2 - 4b/3 - term_1_2 - term_1_2 - term_2_1
-		term_2b = a^2/2 - 4b/3 - term_1_1 - term_1_2 + term_2_1
-	
-		term3  = sqrt(term_1)/2
-		term4a = sqrt(term_2a)/2 
-		term4b = sqrt(term_2b)/2 
-		term5 = -a/4	
-		
-		λ1 = term5 - term3 - term4a 
-		λ2 = term5 - term3 + term4a 
-		λ3 = term5 + term3 - term4b 
-		λ4 = term5 + term3 + term4b 
-	end
-	real(λ1), real(λ2), real(λ3), real(λ4)
-end
-
-
-
-
-# #Constructors
-# TorusMantle(t::Torus{T}; r_tube = 1) where {T} = TorusMantle( T, t.r_torus, T(r_tube), t.φ, t.θ, t.z)
-
-# function TorusMantle(;r_torus = 1, r_tube = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π, z = 0)
-#     T = float(promote_type(typeof.((r_torus, r_tube, φMin, φMax, θMin, θMax, z))...))
-#     φ = mod(T(φMax) - T(φMin), T(2π)) == 0 ? nothing : T(φMin)..T(φMax)
-#     θ = mod(T(θMax) - T(θMin), T(2π)) == 0 ? nothing : T(θMin)..T(θMax)
-#     TorusMantle( T, T(r_torus), T(r_tube), φ, θ, T(z))
-# end
-# TorusMantle(r_torus, r_tube, φMin, φMax, θMin, θMax, z) = TorusMantle(;r_torus = r_torus, r_tube = r_tube, φMin = φMin, φMax = φMax, θMin = θMin, θMax = θMax, z = z)
-
-# function get_surface_vector(t::TorusMantle{T}, point::AbstractCoordinatePoint)::CartesianVector{T} where {T}
-#     pcy = CylindricalPoint(point)
-#     r = pcy.r - t.r_torus
-#     sφ::T, cφ::T = sincos(pcy.φ)
-#     CartesianVector{T}(r*cφ, r*sφ, pcy.z - t.z)
+# """
+#     roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T, e::T)
+# 
+# Calculate the 4 (possible) roots of `x^4 + ax^3 + bx^2 + cx + d = 0`
+# """
+# function roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T) where {T}
+# 	#=
+# 	using Polynomials
+# 	A, a, b, c, d = 1.0, 0.2, -5.0, -0.1, 2.5
+# 	p = Polynomial(SVector{5,T}([d, c, b, a, A]))
+# 	xs = -2.5:0.01:2.5; plot(xs, map(x -> p(x), xs))
+# 	roots(p)
+# 
+# 	rs = CSG.roots_of_4th_order_polynomial(a, b, c, d)
+# 	vline!([rs...])
+# 	@btime CSG.roots_of_4th_order_polynomial($a, $b, $c, $d)
+# 	=#
+# 
+# 	# There are some issues for certain combinations of a, b, c, d, ...
+# 
+# 	term_1_1_1_1 = 2*b^3 - 9*a*b*c + 27*c^2 + 27*a^2*d - 72*b*d
+# 	term_1_1_1_2 = b^2 - 3*a*c + 12*d
+# 
+# 	comp_term = -4 * term_1_1_1_2^3 + term_1_1_1_1^2
+# 
+# 	term_1_1_1_3 = term_1_1_1_1 + sqrt(Complex(comp_term))
+# 	term_1_1_1 = 3*(term_1_1_1_3^(1/3))
+# 
+# 	term_1_1 = 2^(1/3) * term_1_1_1_2 / term_1_1_1
+# 	term_1_2 = (term_1_1_1_3 / 54)^(1/3)
+# 	term_1 = a^2/4 - 2b/3 + term_1_1 + term_1_2
+# 
+# 	if term_1 == 0
+# 		term_6 = sqrt(Complex(b^2 - 4d))
+# 		λ1 = sqrt(-term_6 - b)/sqrt(2)
+# 		λ2 = -λ1
+# 		λ3 = sqrt( term_6 - b)/sqrt(2)
+# 		λ4 = -λ3
+# 	else
+# 		term_2_1 = (-a^3 + 4a*b - 8c) / (4*sqrt(term_1))
+# 		term_2a = a^2/2 - 4b/3 - term_1_2 - term_1_2 - term_2_1
+# 		term_2b = a^2/2 - 4b/3 - term_1_1 - term_1_2 + term_2_1
+# 
+# 		term3  = sqrt(term_1)/2
+# 		term4a = sqrt(term_2a)/2 
+# 		term4b = sqrt(term_2b)/2 
+# 		term5 = -a/4	
+# 
+# 		λ1 = term5 - term3 - term4a 
+# 		λ2 = term5 - term3 + term4a 
+# 		λ3 = term5 + term3 - term4b 
+# 		λ4 = term5 + term3 + term4b 
+# 	end
+# 	real(λ1), real(λ2), real(λ3), real(λ4)
 # end
 
-# in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, Nothing, Nothing}) =
-#     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
-
-# in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:AbstractInterval, Nothing}) =
-#     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
-
-# in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, Nothing, <:AbstractInterval}) =
-#     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
-
-# in(p::AbstractCoordinatePoint, t::TorusMantle{<:Any, <:AbstractInterval, <:AbstractInterval}) =
-#     _isapprox_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
-
-# get_φ_limits(t::TorusMantle{T, Nothing}) where {T} = (T(0), T(2π), true)
-# get_φ_limits(t::TorusMantle{T, <:AbstractInterval}) where {T} = (t.φ.left, t.φ.right, false)
-
-# get_θ_limits(t::TorusMantle{T, <:Any, Nothing}) where {T} = (T(0), T(2π), true)
-# get_θ_limits(t::TorusMantle{T, <:Any, <:AbstractInterval}) where {T} = (t.θ.left, t.θ.right, false)
-
-
-# function sample(t::TorusMantle{T}, step::Real) where {T}
-#     φMin::T, φMax::T, _ = get_φ_limits(t)
-#     θMin::T, θMax::T, _ = get_θ_limits(t)
-#     samples = (
-#         CylindricalPoint{T}(get_r_at_θ(t,θ),φ,t.r_tube*sin(θ)+t.z)
-#         for φ in (t.r_tube == 0 ? φMin : φMin:step/t.r_tube:φMax)
-#         for θ in (t.r_tube == 0 ? θMin : θMin:step/t.r_tube:θMax)
-#     )
-# end
-
-# function sample(t::TorusMantle{T}, Nsamps::NTuple{3,Int}) where {T}
-#     φMin::T, φMax::T, _ = get_φ_limits(t)
-#     θMin::T, θMax::T, _ = get_θ_limits(t)
-#     samples = (
-#         CylindricalPoint{T}(get_r_at_θ(t,θ),φ,t.r_tube*sin(θ)+t.z)
-#         for φ in (Nsamps(2) ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps(2)))
-#         for θ in (Nsamps(3) ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps(3)))
-#     )
-# end
-
-
-# function _get_z_ticks(t::TorusMantle{T}, g::CylindricalTicksTuple{T}) where {T}
-#     z_from_r::Vector{T} = sqrt.(t.r_tube.^2 .- (filter(r -> abs(r - t.r_torus) < t.r_tube, g.r).- t.r_torus).^2)
-#     filter!(z -> t.r_tube^2 - (z - t.z)^2 >= 0,_get_ticks(sort!(vcat(g.z, t.z .- z_from_r, t.z .+ z_from_r)), t.z - t.r_tube, t.z + t.r_tube))
-# end
-
-# function sample(t::TorusMantle{T}, g::CylindricalTicksTuple{T})::Vector{CylindricalPoint{T}} where {T}
-#     samples::Vector{CylindricalPoint{T}} = (
-#             CylindricalPoint{T}(r,φ,z)
-#             for z in _get_z_ticks(t, g)
-#             for φ in get_φ_ticks(t, g)
-#             for r in (t.r_torus - sqrt(t.r_tube^2 - (z - t.z)^2), t.r_torus + sqrt(t.r_tube^2 - (z - t.z)^2))
-#             if t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, r - t.r_torus), T(2π)), t.θ)
-#         )
-# end
-
-
-# function _get_z_ticks(t::TorusMantle{T}, g::CartesianTicksTuple{T}) where {T}
-#     z_from_x::Vector{T} = t.z .+ sqrt.(t.r_tube.^2 .- (filter(x -> abs(x - t.r_torus) < t.r_tube, g.x).- t.r_torus).^2)
-#     z_from_y::Vector{T} = t.z .+ sqrt.(t.r_tube.^2 .- (filter(y -> abs(y - t.r_torus) < t.r_tube, g.y).- t.r_torus).^2)
-#     filter!(z -> t.r_tube^2 - (z - t.z)^2 >= 0,_get_ticks(unique!(sort!(vcat(g.z, t.z .- z_from_x, t.z .+ z_from_x, t.z .- z_from_y, t.z .+ z_from_y))), t.z - t.r_tube, t.z + t.r_tube))
-# end
-
-# function _get_x_at_z(t::TorusMantle{T}, g::CartesianTicksTuple{T}, z::T) where {T}
-#     R::T = sqrt(t.r_tube^2 - (z - t.z)^2)
-#     xMax_from_y::Vector{T} = sqrt.((t.r_torus + R)^2 .- filter(y -> abs(y) <= t.r_torus + R, g.y).^2)
-#     xMin_from_y::Vector{T} = sqrt.((t.r_torus - R)^2 .- filter(y -> abs(y) <= t.r_torus - R, g.y).^2)
-#     _get_ticks(sort!(vcat(-xMax_from_y, -xMin_from_y, g.x, xMin_from_y, xMax_from_y)), -t.r_torus - t.r_tube, t.r_torus + t.r_tube)
-# end
-
-# function _get_y_at_z(t::TorusMantle{T}, x::T, z::T) where {T}
-#     R::T = sqrt(t.r_tube^2 - (z - t.z)^2)
-#     tmp::T = (t.r_torus + R)^2 - x^2
-#     tmp2::T = (t.r_torus - R)^2 - x^2
-#     if tmp < 0
-#         ()
-#     elseif tmp2 < 0
-#         (-sqrt(tmp), sqrt(tmp))
-#     else
-#         (-sqrt(tmp), -sqrt(tmp2), sqrt(tmp2), sqrt(tmp))
-#     end
-# end
-
-# function sample(t::TorusMantle{T}, g::CartesianTicksTuple{T})::Vector{CartesianPoint{T}} where {T}
-#     samples::Vector{CartesianPoint{T}} = (
-#             CartesianPoint{T}(x,y,z)
-#             for z in _get_z_ticks(t, g)
-#             for x in _get_x_at_z(t, g, z)
-#             for y in _get_y_at_z(t, x, z)
-#             if (t.φ === nothing || mod(atan(y, x), T(2π)) in t.φ) &&
-#                (t.θ === nothing || _in_angular_interval_closed(mod(atan(z - t.z, hypot(x, y) - t.r_torus), T(2π)), t.θ))
-#         )
-# end
-
-# Arc(t::TorusMantle{T}) where {T} = Arc(T, t.r_tube, PlanarPoint{T}(t.r_torus,t.z), t.θ)
 
 # function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
 #     pcy = CylindricalPoint(point)

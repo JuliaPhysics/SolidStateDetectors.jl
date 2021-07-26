@@ -94,3 +94,6 @@ end
 function switchClosedOpen(csg::CSGIntersection) 
     CSGIntersection(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
 end
+
+
+sample(csg::AbstractConstructiveGeometry{T}, sampling...) where {T} = vcat(sample(csg.a, sampling...), sample(csg.b, sampling...))

@@ -33,19 +33,19 @@ using .ConstructiveSolidGeometry:
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             CartesianTicksTuple, CylindricalTicksTuple,
-            Geometry, AbstractGeometry,
-            AbstractSurfacePrimitive, AbstractPlanarSurfacePrimitive, AbstractCurvedSurfacePrimitive,
-            csg_round_lin, csg_round_rad, csg_isapprox, 
+            Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
-            ConfigFileError, _parse_value
+            ConfigFileError, _parse_value,
+            LengthQuantity, AngleQuantity
         
-import .ConstructiveSolidGeometry: sample
+import .ConstructiveSolidGeometry: sample, to_internal_units
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
 import DataStructures
 import Distributions
+import IntervalSets
 import Tables
 import TypedTables
 
@@ -60,12 +60,10 @@ export Grid
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
-export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!
-export update_till_convergence!, refine!
-export set_charge_drift_model!, calculate_drift_fields!
-export get_active_volume
-export generate_charge_signals, generate_charge_signals!
+export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
 export ElectricFieldChargeDriftModel, ADLChargeDriftModel
+export get_active_volume
+export simulate_waveforms
 export Simulation, simulate!
 export Event, drift_charges!
 
@@ -73,9 +71,6 @@ const SSDFloat = Union{Float16, Float32, Float64}
 
 
 include("Units.jl")
-
-isunique(v::AbstractVector) = length(v) == length(unique(v))
-
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
 include("Grids/Grids.jl")

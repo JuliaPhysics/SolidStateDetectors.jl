@@ -1,13 +1,12 @@
 abstract type AbstractAxis{T, BL, BR, I} <: AbstractVector{T} end
-abstract type AbstractDiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} end
 
 """
-    DiscreteAxis{T, BL, BR} <: AbstractAxis{T, BL, BR}
+    DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I}
 
 * T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
 * BL: left boundary condition
 * BR: right boundary condition
+* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
 * I: IntervalSets.Interval (closed or open boundaries)
 """
 struct DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} 
@@ -30,7 +29,7 @@ end
 
 * T: Type of ticks
 * BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
-* L, R {:closed, :open} 
+* L, R ∈ {:closed, :open} 
 * ticks: Ticks of the axis
 """
 function DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
@@ -65,136 +64,28 @@ function get_boundary_types(ax::DiscreteAxis{T,LB,RB})::NTuple{4, Symbol} where 
     return LB, RB, get_boundary_types(ax.interval)...
 end
 
-function merge_axis_ticks_with_important_ticks(ax::DiscreteAxis{T}, impticks::Vector{T}; atol::Real = 0.0001 )::Vector{T} where {T}
-    v::Vector{T} = T[]
-    for r in impticks if in(r, ax.interval) push!(v, r) end end
-    for r in ax push!(v, r) end
-    unique!(sort!(v))
-    delete_idcs::Vector{Int} = Int[]
-    for i in 1:(length(v) - 1)
-        if (v[i + 1] - v[i]) < atol
-            if !in(v[i], impticks) push!(delete_idcs, i) end
-            if !in(v[i + 1], impticks) push!(delete_idcs, i + 1) end
-        end
-    end
-    unique!(sort!(delete_idcs))
-    deleteat!(v, delete_idcs) 
-    for impv in impticks
-        if !in(impv, v) && in(impv, ax.interval)
-            error("Important ticks were removed.")
-        end
-    end
-    return v
-end
-
-
-function range(interval::Interval{:closed, :closed, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing) where {T}
-    stop::T = interval.right
-    if ismissing(step) && ismissing(length)
-        range(interval.left, stop = stop)
-    elseif ismissing(step)
-        range(interval.left, stop = stop, length=length)
-    elseif ismissing(length)
-        range(interval.left, stop = stop, step=step)
-    else
-        error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
-    end
-end
-
-function range(interval::Interval{:closed, :open, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing) where {T}
-    if ismissing(step) && ismissing(length)
-        length::Int = 2
-        stop::T = (interval.right + interval.left) / 2
-        range(interval.left, stop = stop, length=2)
-    elseif ismissing(step)
-        stop = interval.right - ( interval.right - interval.left ) / length
-        range(interval.left, stop = stop, length=length)
-    elseif ismissing(length)
-        # stop = interval.right - interval.right % step
-        # stop = geom_round(interval.right - step)
-        stop = interval.right - step
-        range(interval.left, stop = stop, step=step)
-    else
-        error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
-    end
-end
-
-
-function range(interval::Interval{:open, :closed, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing) where {T}
-    stop::T = interval.right
-    if ismissing(step) && ismissing(length)
-        step::T = (stop - interval.left) / 2 
-        range(interval.left + step, stop = stop, length=2)
-    elseif ismissing(step)
-        step = (stop - interval.left) / length
-        range(interval.left + step, stop = stop, length=length)
-    elseif ismissing(length)
-        range(interval.left + step, stop = stop, step=step)
-    else
-        error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
-    end
-end
-
-function range(interval::Interval{:open, :open, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing) where {T}
-    if ismissing(step) && ismissing(length)
-        step::T = ( interval.right - interval.left ) / 3
-        range(interval.left + step, stop = interval.right - step, length=2)
-    elseif ismissing(step)
-        step = ( interval.right - interval.left ) / (length + 1)
-        range(interval.left + step, stop = interval.right - step, length=length)
-    elseif ismissing(length)
-        tmp::T = interval.right % step
-        if tmp == 0 tmp = step end
-        stop = interval.right - tmp
-        range(interval.left + step, stop = stop, step=step)
-    else
-        error(KeyError, ": Both keywords `step` and `length` were given. But only one is allowed.")
-    end
-end
-
-function DiscreteAxis{BL, BR}(interval::Interval{L, R, T}; step::Union{Missing, T} = missing, length::Union{Missing, Int} = missing)::DiscreteAxis{T, BL, BR} where {L, R, T, BL, BR}
-    ticks::Vector{T} = collect(range(interval, step=step, length=length))
-    # if T == Float32 || T == Float64
-    #     ticks = round.(ticks, sigdigits = geom_sigdigits(T))
-    #     for iv in eachindex(ticks)
-    #         if isapprox(ticks[iv], 0, atol = geom_atol_zero(T)) 
-    #             ticks[iv] = zero(T)
-    #         end
-    #     end
-    # end
-    DiscreteAxis{T, BL, BR}(interval, ticks)
-end
-
-function midpoints(a::Vector{T})::Vector{T} where {T}
-    @inbounds r::Vector{T} = a[1:end-1]
-    @simd for i in eachindex(r)
-        @inbounds r[i] += 0.5 * (a[i + 1] - a[i])
-    end
-    return r
-end
-
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :fixed} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :periodic, :periodic} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :infinite} )::Vector{T} where {T}
@@ -233,13 +124,13 @@ function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :fixed} )::Vector{T} wh
     # same as get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :fixed} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[1] = ticks_ext[2] - Δ
     return ticks_ext
@@ -247,7 +138,7 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[1] = ticks_ext[2] - Δ
     return ticks_ext
@@ -255,7 +146,7 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :infinite} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[end] = ticks_ext[end - 1] + Δ
     return ticks_ext
@@ -263,29 +154,29 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :infinite} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[end] = ticks_ext[end - 1] + Δ
     return ticks_ext
 end
 
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :open, T})::Nothing where {T}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :open, T})::Nothing where {T}
     ticks[1] = ticks[2] - (interval.right - ticks[end - 1])
     ticks[end] = interval.right
     nothing
 end
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:open, :closed, T})::Nothing where {T}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:open, :closed, T})::Nothing where {T}
     ticks[1] = interval.left
     ticks[end] = ticks[end - 1] + (ticks[2] - interval.left)
     nothing
 end
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:open, :open, T})::Nothing where {T}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:open, :open, T})::Nothing where {T}
     ticks[1] = interval.left
     ticks[end] = interval.right
     nothing
 end
 
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
     if length(ticks) == 3 
         ticks[1] = ticks[2] - 2π
         ticks[end] = ticks[2] + 2π # -> Δmidpoint_φ = 2π -> area of circle is 2π * 0.5*r^2   
@@ -315,7 +206,7 @@ function searchsortednearest(ax::DiscreteAxis{T, :periodic, :periodic}, x::T)::I
     if x in ax.interval
         return searchsortednearest(ax.ticks, x)
     else
-        period::T = ax.interval.right - ax.interval.left
+        period::T = width(ax.interval)
         v::T = x
         while v >= ax.interval.right
             v -= period
@@ -482,7 +373,7 @@ function initialize_axis_ticks(t::AbstractVector{T}; max_ratio = T(2)) where {T}
         iR += 1 + length(new_ticks)
     end
     @assert issorted(ticks)
-    @assert isunique(ticks)
+    @assert allunique(ticks)
     ticks
 end
 

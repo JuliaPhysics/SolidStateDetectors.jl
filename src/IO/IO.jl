@@ -1,17 +1,10 @@
-function NamedTuple(::Missing)
-    return (object = missing,)
-end
+include("SigGenInterface.jl")
+include("ParseConfigFiles.jl")
 
-
-function NamedTuple(d::Dict) 
-    return (dict_json_string = json(d),)
-end
+NamedTuple(::Missing) = (object = missing,)
+NamedTuple(d::Dict) = (dict_json_string = json(d),)
 Base.convert(T::Type{NamedTuple}, x::Dict) = T(x)
-
-function Dict(nt::NamedTuple)
-    JSON.parse(nt.dict_json_string)
-end
-# Base.convert(T::Type{Dict}, x::NamedTuple) = T(x) # is now defined in NamedTupleTools-Package
+Dict(nt::NamedTuple) = JSON.parse(nt.dict_json_string)
 
 
 
