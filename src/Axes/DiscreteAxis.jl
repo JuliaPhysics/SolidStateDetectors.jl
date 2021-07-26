@@ -89,25 +89,25 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :fixed} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :periodic, :periodic} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :infinite} )::Vector{T} where {T}
@@ -146,13 +146,13 @@ function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :fixed} )::Vector{T} wh
     # same as get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     return ticks_ext
 end
 function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :fixed} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[1] = ticks_ext[2] - Δ
     return ticks_ext
@@ -160,7 +160,7 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :infinite, :reflecting} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[1] = ticks_ext[2] - Δ
     return ticks_ext
@@ -168,7 +168,7 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :fixed, :infinite} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[end] = ticks_ext[end - 1] + Δ
     return ticks_ext
@@ -176,29 +176,29 @@ end
 function get_extended_ticks( ax::DiscreteAxis{T, :reflecting, :infinite} )::Vector{T} where {T}
     ticks_ext::Vector{T} = Array{T}(undef, length(ax.ticks) + 2)
     ticks_ext[2:end-1] = ax.ticks
-    set_periodic_bondary_ticks!(ticks_ext, ax.interval)
+    set_periodic_boundary_ticks!(ticks_ext, ax.interval)
     Δ::T = 1 * (ticks_ext[end-1] - ticks_ext[2])
     ticks_ext[end] = ticks_ext[end - 1] + Δ
     return ticks_ext
 end
 
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :open, T})::Nothing where {T}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :open, T})::Nothing where {T}
     ticks[1] = ticks[2] - (interval.right - ticks[end - 1])
     ticks[end] = interval.right
     nothing
 end
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:open, :closed, T})::Nothing where {T}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:open, :closed, T})::Nothing where {T}
     ticks[1] = interval.left
     ticks[end] = ticks[end - 1] + (ticks[2] - interval.left)
     nothing
 end
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:open, :open, T})::Nothing where {T}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:open, :open, T})::Nothing where {T}
     ticks[1] = interval.left
     ticks[end] = interval.right
     nothing
 end
 
-function set_periodic_bondary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
     if length(ticks) == 3 
         ticks[1] = ticks[2] - 2π
         ticks[end] = ticks[2] + 2π # -> Δmidpoint_φ = 2π -> area of circle is 2π * 0.5*r^2   
