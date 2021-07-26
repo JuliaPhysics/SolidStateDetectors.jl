@@ -105,8 +105,8 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     SolidStateDetector{T}( name, semiconductor, contacts, passives, virtual_drift_volumes )
 end
 
-function SolidStateDetector(parsed_dict::Dict)
-    SolidStateDetector{Float32}(parsed_dict)
+function SolidStateDetector(dict::Dict)
+    SolidStateDetector{Float32}(dict)
 end
 
 function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T

@@ -127,21 +127,21 @@ function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFlo
 end
 
 
-function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
+function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
-    if haskey(parsed_dict, "grid")
-        if isa(parsed_dict["grid"], Dict)
-            CS = if parsed_dict["grid"]["coordinates"] == "cartesian" 
+    if haskey(dict, "grid")
+        if isa(dict["grid"], Dict)
+            CS = if dict["grid"]["coordinates"] == "cartesian" 
                 Cartesian
-            elseif parsed_dict["grid"]["coordinates"]  == "cylindrical"
+            elseif dict["grid"]["coordinates"]  == "cylindrical"
                 Cylindrical
             else
                 @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
             end
-        elseif isa(parsed_dict["grid"], String)
-            CS = if parsed_dict["grid"] == "cartesian" 
+        elseif isa(dict["grid"], String)
+            CS = if dict["grid"] == "cartesian" 
                 Cartesian
-            elseif parsed_dict["grid"] == "cylindrical"
+            elseif dict["grid"] == "cylindrical"
                 Cylindrical
             else
                 @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
@@ -149,12 +149,12 @@ function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
         end
     end
     sim::Simulation{T,CS} = Simulation{T,CS}()
-    sim.config_dict = parsed_dict
-    sim.input_units = construct_units(parsed_dict)
-    sim.medium = material_properties[materials[haskey(parsed_dict, "medium") ? parsed_dict["medium"] : "vacuum"]]
-    sim.detector = SolidStateDetector{T}(parsed_dict, sim.input_units) 
-    sim.world = if haskey(parsed_dict, "grid") && isa(parsed_dict["grid"], Dict) && haskey(parsed_dict["grid"], "axes")
-            World(T, parsed_dict["grid"], sim.input_units)
+    sim.config_dict = dict
+    sim.input_units = construct_units(dict)
+    sim.medium = material_properties[materials[haskey(dict, "medium") ? dict["medium"] : "vacuum"]]
+    sim.detector = SolidStateDetector{T}(dict, sim.input_units) 
+    sim.world = if haskey(dict, "grid") && isa(dict["grid"], Dict) && haskey(dict["grid"], "axes")
+            World(T, dict["grid"], sim.input_units)
         else let ssd = sim.detector 
             world_limits = get_world_limits_from_objects(CS, ssd)
             World(CS, world_limits)
@@ -165,8 +165,8 @@ function Simulation{T}(parsed_dict::Dict)::Simulation{T} where {T <: SSDFloat}
 end
 
 function Simulation{T}(config_file::AbstractString)::Simulation{T} where{T <: SSDFloat}
-    parsed_dict = parse_config_file(config_file)
-    return Simulation{T}( parsed_dict )
+    dict = parse_config_file(config_file)
+    return Simulation{T}( dict )
 end
 function Simulation(config_file::AbstractString)::Simulation{Float32}
     return Simulation{Float32}( config_file )

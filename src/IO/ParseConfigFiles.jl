@@ -9,18 +9,18 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
         error("Currently only .json and .yaml files are supported.")
     elseif endswith(filename, ".json")
         dicttext = read(filename, String)
-        parsed_dict = JSON.parse(dicttext)
-        scan_and_merge_included_json_files!(parsed_dict, filename)
+        dict = JSON.parse(dicttext)
+        scan_and_merge_included_json_files!(dict, filename)
     elseif endswith(filename, ".yaml")
-        parsed_dict = YAML.load_file(filename)
-        scan_and_merge_included_json_files!(parsed_dict, filename)
+        dict = YAML.load_file(filename)
+        scan_and_merge_included_json_files!(dict, filename)
     elseif endswith(filename, ".config")
         siggen_dict = readsiggen(filename)
-        parsed_dict = siggentodict(siggen_dict)
+        dict = siggentodict(siggen_dict)
     else
         error("Currently only .json and .yaml files are supported.")
     end
-    parsed_dict
+    dict
 end
 
 function yaml2json_convert(filename::String)
@@ -64,33 +64,33 @@ function json2yaml(directory::String)# or filename
     end
 end
 
-function scan_and_merge_included_json_files!(parsed_dict, config_filename::AbstractString)
+function scan_and_merge_included_json_files!(dict, config_filename::AbstractString)
     key_word = "include"
     config_dir = dirname(config_filename)
-    for k in keys(parsed_dict)
-        is_subdict = typeof(parsed_dict[k]) <: Dict
+    for k in keys(dict)
+        is_subdict = typeof(dict[k]) <: Dict
         if !is_subdict && string(k) != key_word
-            typeof(parsed_dict[k]) <: Array ? is_subdict = true : is_subdict = false
+            typeof(dict[k]) <: Array ? is_subdict = true : is_subdict = false
         end
         if is_subdict
-            scan_and_merge_included_json_files!(parsed_dict[k], config_filename)
+            scan_and_merge_included_json_files!(dict[k], config_filename)
         elseif string(k) == key_word
             files = []
-            if typeof(parsed_dict[k]) <: Array
-                append!(files, parsed_dict[k])
+            if typeof(dict[k]) <: Array
+                append!(files, dict[k])
             else
-                push!(files, parsed_dict[k])
+                push!(files, dict[k])
             end
             for file in files
                 filepath = joinpath(config_dir, file)
                 if isfile(filepath)
                     tmp = parse_config_file(filepath)
                     for sub_k in keys(tmp)
-                        parsed_dict[sub_k] = tmp[sub_k]
+                        dict[sub_k] = tmp[sub_k]
                     end
                 end
             end
-            delete!(parsed_dict, k)
+            delete!(dict, k)
         end
     end
 end
