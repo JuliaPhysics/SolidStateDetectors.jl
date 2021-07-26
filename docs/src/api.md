@@ -7,12 +7,6 @@ DocTestSetup  = quote
 end
 ```
 
-## Modules
-
-```@index
-Order = [:module]
-```
-
 ## Dictionaries
 
 ```@index
@@ -35,5 +29,5 @@ Order = [:function]
 
 ```@autodocs
 Modules = [SolidStateDetectors, SolidStateDetectors.ConstructiveSolidGeometry]
-Order = [:module, :constant, :type, :function]
+Order = [:constant, :type, :function]
 ```
