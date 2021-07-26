@@ -141,18 +141,3 @@ end
 function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
 function print(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
 function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDFloat} show(io, d) end
-
-# ToDo: Test it
-function generate_random_startpositions(d::SolidStateDetector{T}, n::Int, Volume::NamedTuple=bounding_box(d), rng::AbstractRNG = MersenneTwister(), min_dist_from_boundary = 0.0001) where T
-    delta = T(min_dist_from_boundary)
-    n_filled::Int = 0
-    positions = Vector{CartesianPoint{T}}(undef,n)
-    while n_filled < n
-        sample=CylindricalPoint{T}(rand(rng,Volume[:r_range].left:0.00001:Volume[:r_range].right),rand(rng,Volume[:φ_range].left:0.00001:Volume[:φ_range].right),rand(rng,Volume[:z_range].left:0.00001:Volume[:z_range].right))
-        if !(sample in d.contacts) && in(sample,d) && in(CylindricalPoint{T}(sample.r+delta,sample.φ,sample.z),d) && in(CylindricalPoint{T}(sample.r-delta,sample.φ,sample.z),d) && in(CylindricalPoint{T}(sample.r,sample.φ,sample.z+delta),d) && in(CylindricalPoint{T}(sample.r,sample.φ,sample.z-delta),d)
-            n_filled += 1
-            positions[n_filled]=CartesianPoint(sample)
-        end
-    end
-    positions
-end
