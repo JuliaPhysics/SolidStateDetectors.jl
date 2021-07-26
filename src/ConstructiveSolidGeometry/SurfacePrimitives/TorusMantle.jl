@@ -87,61 +87,61 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 end
 
 
-"""
-    roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T, e::T)
-	
-Calculate the 4 (possible) roots of `x^4 + ax^3 + bx^2 + cx + d = 0`
-"""
-function roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T) where {T}
-	#=
-	using Polynomials
-	A, a, b, c, d = 1.0, 0.2, -5.0, -0.1, 2.5
-	p = Polynomial(SVector{5,T}([d, c, b, a, A]))
-	xs = -2.5:0.01:2.5; plot(xs, map(x -> p(x), xs))
-	roots(p)
-	
-	rs = CSG.roots_of_4th_order_polynomial(a, b, c, d)
-	vline!([rs...])
-	@btime CSG.roots_of_4th_order_polynomial($a, $b, $c, $d)
-	=#
-
-	# There are some issues for certain combinations of a, b, c, d, ...
-
-	term_1_1_1_1 = 2*b^3 - 9*a*b*c + 27*c^2 + 27*a^2*d - 72*b*d
-	term_1_1_1_2 = b^2 - 3*a*c + 12*d
-
-	comp_term = -4 * term_1_1_1_2^3 + term_1_1_1_1^2
-
-	term_1_1_1_3 = term_1_1_1_1 + sqrt(Complex(comp_term))
-	term_1_1_1 = 3*(term_1_1_1_3^(1/3))
-
-	term_1_1 = 2^(1/3) * term_1_1_1_2 / term_1_1_1
-	term_1_2 = (term_1_1_1_3 / 54)^(1/3)
-	term_1 = a^2/4 - 2b/3 + term_1_1 + term_1_2
-
-	if term_1 == 0
-		term_6 = sqrt(Complex(b^2 - 4d))
-		λ1 = sqrt(-term_6 - b)/sqrt(2)
-		λ2 = -λ1
-		λ3 = sqrt( term_6 - b)/sqrt(2)
-		λ4 = -λ3
-	else
-		term_2_1 = (-a^3 + 4a*b - 8c) / (4*sqrt(term_1))
-		term_2a = a^2/2 - 4b/3 - term_1_2 - term_1_2 - term_2_1
-		term_2b = a^2/2 - 4b/3 - term_1_1 - term_1_2 + term_2_1
-	
-		term3  = sqrt(term_1)/2
-		term4a = sqrt(term_2a)/2 
-		term4b = sqrt(term_2b)/2 
-		term5 = -a/4	
-		
-		λ1 = term5 - term3 - term4a 
-		λ2 = term5 - term3 + term4a 
-		λ3 = term5 + term3 - term4b 
-		λ4 = term5 + term3 + term4b 
-	end
-	real(λ1), real(λ2), real(λ3), real(λ4)
-end
+# """
+#     roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T, e::T)
+# 
+# Calculate the 4 (possible) roots of `x^4 + ax^3 + bx^2 + cx + d = 0`
+# """
+# function roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T) where {T}
+# 	#=
+# 	using Polynomials
+# 	A, a, b, c, d = 1.0, 0.2, -5.0, -0.1, 2.5
+# 	p = Polynomial(SVector{5,T}([d, c, b, a, A]))
+# 	xs = -2.5:0.01:2.5; plot(xs, map(x -> p(x), xs))
+# 	roots(p)
+# 
+# 	rs = CSG.roots_of_4th_order_polynomial(a, b, c, d)
+# 	vline!([rs...])
+# 	@btime CSG.roots_of_4th_order_polynomial($a, $b, $c, $d)
+# 	=#
+# 
+# 	# There are some issues for certain combinations of a, b, c, d, ...
+# 
+# 	term_1_1_1_1 = 2*b^3 - 9*a*b*c + 27*c^2 + 27*a^2*d - 72*b*d
+# 	term_1_1_1_2 = b^2 - 3*a*c + 12*d
+# 
+# 	comp_term = -4 * term_1_1_1_2^3 + term_1_1_1_1^2
+# 
+# 	term_1_1_1_3 = term_1_1_1_1 + sqrt(Complex(comp_term))
+# 	term_1_1_1 = 3*(term_1_1_1_3^(1/3))
+# 
+# 	term_1_1 = 2^(1/3) * term_1_1_1_2 / term_1_1_1
+# 	term_1_2 = (term_1_1_1_3 / 54)^(1/3)
+# 	term_1 = a^2/4 - 2b/3 + term_1_1 + term_1_2
+# 
+# 	if term_1 == 0
+# 		term_6 = sqrt(Complex(b^2 - 4d))
+# 		λ1 = sqrt(-term_6 - b)/sqrt(2)
+# 		λ2 = -λ1
+# 		λ3 = sqrt( term_6 - b)/sqrt(2)
+# 		λ4 = -λ3
+# 	else
+# 		term_2_1 = (-a^3 + 4a*b - 8c) / (4*sqrt(term_1))
+# 		term_2a = a^2/2 - 4b/3 - term_1_2 - term_1_2 - term_2_1
+# 		term_2b = a^2/2 - 4b/3 - term_1_1 - term_1_2 + term_2_1
+# 
+# 		term3  = sqrt(term_1)/2
+# 		term4a = sqrt(term_2a)/2 
+# 		term4b = sqrt(term_2b)/2 
+# 		term5 = -a/4	
+# 
+# 		λ1 = term5 - term3 - term4a 
+# 		λ2 = term5 - term3 + term4a 
+# 		λ3 = term5 + term3 - term4b 
+# 		λ4 = term5 + term3 + term4b 
+# 	end
+# 	real(λ1), real(λ2), real(λ3), real(λ4)
+# end
 
 
 # function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
