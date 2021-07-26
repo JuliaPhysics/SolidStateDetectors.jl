@@ -175,13 +175,13 @@ function point_type(c::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoin
 end
 
 # go_to_nearest_gridpoint
-function searchsortednearest(grid::Grid{T, 3, Cylindrical}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::CylindricalGrid{T}, pt::CylindricalPoint{T})::CylindricalPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.r)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.φ)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)
     CylindricalPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
 end
-function searchsortednearest(grid::Grid{T, 3, Cartesian}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
+function searchsortednearest(grid::CartesianGrid3D{T}, pt::CartesianPoint{T})::CartesianPoint{T} where {T <: SSDFloat}
     idx1::Int = searchsortednearest(grid.axes[1].ticks, pt.x)
     idx2::Int = searchsortednearest(grid.axes[2].ticks, pt.y)
     idx3::Int = searchsortednearest(grid.axes[3].ticks, pt.z)

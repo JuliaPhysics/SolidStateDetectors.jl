@@ -67,28 +67,6 @@ end
 show(io::IO, g::Grid{T, N, S}) where {T, N, S} = print(io, g)
 show(io::IO, ::MIME"text/plain", g::Grid{T, N, S}) where {T, N, S} = show(io, g)
 
-
-function searchsortednearest(pt::CylindricalPoint{T}, g::CylindricalGrid{T})::NTuple{3, Int} where {T <: SSDFloat}
-    ir::Int = searchsortednearest(g.axes[1].ticks, pt.r)
-    iφ::Int = searchsortednearest(g.axes[2].ticks, pt.φ)
-    iz::Int = searchsortednearest(g.axes[3].ticks, pt.z)
-    ir, iφ, iz
-end
-function searchsortednearest(pt::CartesianPoint{T}, g::CylindricalGrid{T})::NTuple{3, Int} where {T <: SSDFloat}
-    return searchsortednearest(CylindricalPoint(pt), g)
-end
-
-function searchsortednearest(pt::CartesianPoint{T}, g::CartesianGrid{T, 3})::NTuple{3, Int} where {T <: SSDFloat}
-    ix::Int = searchsortednearest(g.axes[1].ticks, pt.x)
-    iy::Int = searchsortednearest(g.axes[2].ticks, pt.y)
-    iz::Int = searchsortednearest(g.axes[3].ticks, pt.z)
-    ix, iy, iz
-end
-function searchsortednearest(pt::CylindricalPoint{T}, g::CartesianGrid{T, 3})::NTuple{3, Int} where {T <: SSDFloat}
-    return searchsortednearest(CartesianPoint(pt), g)
-end
-
-
 function check_grid(grid::CylindricalGrid{T})::Nothing where {T}
     nr::Int, nφ::Int, nz::Int = size(grid)
     @assert iseven(nz) "GridError: Field simulation algorithm in cylindrical coordinates needs an even number of grid points in z. This is not the case. #z-ticks = $(nz)."
