@@ -12,12 +12,11 @@ const internal_voltage_unit = u"V"
 const internal_efield_unit  = u"V / m"
 const internal_energy_unit  = u"eV"
 
-_get_TDU(x::Quantity{T,D,U}) where {T,D,U} = T, D, U
 to_internal_units(x::Quantity) = ustrip(uconvert(u_internal, x))
 to_internal_units(x::Quantity{<:Real, Unitful.𝐓}) = ustrip(uconvert(internal_time_unit, x))
-to_internal_units(x::Quantity{<:Real, _get_TDU(1u"V")[2]}) = ustrip(uconvert(internal_voltage_unit, x))
-to_internal_units(x::Quantity{<:Real, _get_TDU(1u"V / m")[2]}) = ustrip(uconvert(internal_efield_unit, x))
-to_internal_units(x::Quantity{<:Real, _get_TDU(1u"eV")[2]}) = ustrip(uconvert(internal_energy_unit, x))
+to_internal_units(x::Quantity{<:Real, dimension(1u"V")}) = ustrip(uconvert(internal_voltage_unit, x))
+to_internal_units(x::Quantity{<:Real, dimension(1u"V / m")}) = ustrip(uconvert(internal_efield_unit, x))
+to_internal_units(x::Quantity{<:Real, dimension(1u"eV")}) = ustrip(uconvert(internal_energy_unit, x))
 
 from_internal_units(u_external::typeof(Unitful.NoUnits), u_internal::Unitful.Units, x::Real) where {T<:Real} = x
 from_internal_units(u_external::Unitful.Units, u_internal::Unitful.Units, x::Real) where {T<:Quantity} = uconvert(u_external, x * u_internal)
