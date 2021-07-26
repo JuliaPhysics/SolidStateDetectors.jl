@@ -3,7 +3,6 @@ include("Passive.jl")
 include("Contacts.jl")
 include("Semiconductor.jl")
 include("VirtualVolumes.jl")
-include("SigGenInterface.jl")
 include("SolidStateDetector.jl")
 
 
