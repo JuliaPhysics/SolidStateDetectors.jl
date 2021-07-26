@@ -169,3 +169,18 @@ function NamedTuple(grid::Grid{T, 3, Cartesian}) where {T}
 end
 
 Base.convert(T::Type{NamedTuple}, x::Grid) = T(x)
+
+
+function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    return (searchsortednearest(grid.axes[1].ticks, point.r), searchsortednearest(grid.axes[2].ticks, point.φ), searchsortednearest(grid.axes[3].ticks, point.z))
+end
+function find_closest_gridpoint(point::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpoint(CylindricalPoint(point),grid)
+end
+
+function find_closest_gridpoint(point::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    @inbounds return (searchsortednearest(grid.axes[1].ticks, point.x), searchsortednearest(grid.axes[2].ticks, point.y), searchsortednearest(grid.axes[3].ticks, point.z))
+end
+function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpoint(CartesianPoint(point),grid)
+end
