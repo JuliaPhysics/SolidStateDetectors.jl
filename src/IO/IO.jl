@@ -1,4 +1,5 @@
 include("SigGenInterface.jl")
+include("ParseConfigFiles.jl")
 
 NamedTuple(::Missing) = (object = missing,)
 NamedTuple(d::Dict) = (dict_json_string = json(d),)
