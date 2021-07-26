@@ -10,11 +10,6 @@ struct EHDriftPath{T <: SSDFloat, TT <: RealQuantity}
     timestamps_h::Vector{TT}
 end
 
-_common_length(dp::EHDriftPath{T} where {T <: SSDFloat})::Int =
-    max(length(dp.timestamps_e), length(dp.timestamps_h))
-_common_length(dps::Vector{EHDriftPath{T}} where {T <: SSDFloat})::Int =
-    maximum(_common_length.(dps))
-
 function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
