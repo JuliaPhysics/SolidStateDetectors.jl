@@ -57,14 +57,6 @@ function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
     return drift_paths
 end
 
-function _drift_charge( detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
-                       starting_point::CartesianPoint{<:SSDFloat},
-                       velocity_field_e::Interpolations.Extrapolation{SVector{3, T}, 3},
-                       velocity_field_h::Interpolations.Extrapolation{SVector{3, T}, 3},
-                       Δt::RealQuantity, max_nsteps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(detector, grid, CartesianPoint{T}.(point_types), [starting_point], velocity_field_e, velocity_field_h, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
-end
-
 function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where {T <: SSDFloat}
     return p
 end
