@@ -5,9 +5,9 @@ Stores certain information about a grid point via bit-flags.
 
 Right now there are:
 
-    `const update_bit      = 0x01`
-    `const undepleted_bit  = 0x02`
-    `const pn_junction_bit = 0x04`
+    const update_bit      = 0x01
+    const undepleted_bit  = 0x02
+    const pn_junction_bit = 0x04
 
 How to get information out of a PointType variable `pt`:
 1. `pt & update_bit == 0` -> do not update this point (for fixed points)     
@@ -19,11 +19,8 @@ const PointType       = UInt8
 
 # Point types for electric potential calculation
 const update_bit      = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
-const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleteded point
+const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
 const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is not inside a bubble; 1 -> point is inside a bubble
-# const bubble_bit      = 0x08 # parse(UInt8, "00000100", base=2) # 0 -> point is not inside a bubble; 1 -> point is inside a bubble
-
-const max_pointtype_value = update_bit + undepleted_bit + pn_junction_bit #+ bubble_bit
 
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
