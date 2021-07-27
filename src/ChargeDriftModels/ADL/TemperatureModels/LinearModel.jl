@@ -56,3 +56,17 @@ function scale_to_given_temperature(m::LinearModel{T})::NTuple{4,T} where T <: S
 
     return scale_e100, scale_e111, scale_h100, scale_h111
 end
+
+ürint(io::IO, tm::LinearModel{T}) where {T <: SSDFloat} = print(io, "LinearModel{$T}")
+function println(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
+    println("\n________LinearModel________")
+    println("Fit function: p1 + p2 * T\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:  \t$(tm.temperature)")
+    println("Reference temperature:\t$(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
+end

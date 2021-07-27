@@ -41,3 +41,17 @@ function scale_to_given_temperature(m::PowerLawModel{T})::NTuple{4,T} where {T <
 
     return scale_e100, scale_e111, scale_h100, scale_h111
 end
+
+print(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat} = print(io, "PowerLawModel{$T}")
+function println(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
+    println("\n________PowerLawModel________")
+    println("Fit function: p1 * T^(3/2)\n")
+    println("---Temperature settings---")
+    println("Crystal temperature:   \t $(tm.temperature)")
+    println("Reference temperature: \t $(tm.reftemperature)\n")
+
+    println("---Fitting parameters---")
+    println("   \te100      \te111      \th100      \th111")
+    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
+end
+

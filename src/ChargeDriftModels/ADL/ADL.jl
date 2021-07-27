@@ -59,10 +59,7 @@ struct ADLParameters{T <: SSDFloat}
 end
 
 # Temperature models
-include("LinearModel.jl")
-include("BoltzmannModel.jl")
-include("PowerLawModel.jl")
-include("VacuumModel.jl")
+include("TemperatureModels/TemperatureModels.jl")
 
 # Electron model parametrization from [3]
 @fastmath function γj(j::Integer, crystal_orientation::SMatrix{3,3,T,9}, γ0::SMatrix{3,3,T,9}, ::Type{HPGe})::SMatrix{3,3,T,9} where {T <: SSDFloat}
@@ -359,52 +356,3 @@ end
         Rz * (Ry * @SVector T[vΩ, vφ, vr])
     end
 end
-
-
-print(io::IO, tm::VacuumModel{T}) where {T <: SSDFloat} = print(io, "No temperature model defined")
-println(io::IO, tm::VacuumModel) = print(io, tm)
-
-print(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat} = print(io, "BoltzmannModel{$T}")
-function println(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat}
-    println("\n________BoltzmannModel________")
-    println("Fit function: p1 + p2 exp(-p3/T)\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:   \t $(tm.temperature)")
-    println("Reference temperature: \t $(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
-    println("p3 \t$(tm.p3e100)   \t$(tm.p3e111)   \t$(tm.p3h100)   \t$(tm.p3h111)")
-end
-
-print(io::IO, tm::LinearModel{T}) where {T <: SSDFloat} = print(io, "LinearModel{$T}")
-function println(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
-    println("\n________LinearModel________")
-    println("Fit function: p1 + p2 * T\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:  \t$(tm.temperature)")
-    println("Reference temperature:\t$(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
-end
-
-print(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat} = print(io, "PowerLawModel{$T}")
-function println(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
-    println("\n________PowerLawModel________")
-    println("Fit function: p1 * T^(3/2)\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:   \t $(tm.temperature)")
-    println("Reference temperature: \t $(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-end
-
-show(io::IO, tm::AbstractTemperatureModel) = print(io, tm) 
-show(io::IO,::MIME"text/plain", tm::AbstractTemperatureModel) = show(io, tm)
