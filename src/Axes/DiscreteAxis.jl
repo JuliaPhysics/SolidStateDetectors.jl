@@ -1,13 +1,24 @@
 abstract type AbstractAxis{T, BL, BR, I} <: AbstractVector{T} end
 
 """
-    DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I}
+    struct DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I}
+    
+Axis with discrete ticks which is used to define a dimension of a [`Grid`](@ref).
 
-* T: Type of ticks
-* BL: left boundary condition
-* BR: right boundary condition
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
-* I: IntervalSets.Interval (closed or open boundaries)
+## Parametric types 
+* `T`: Type of ticks
+* `BL`: Boundary condition at the left endpoint.
+* `BR`: Boundary condition at the right endpoint.
+* `I`: IntervalSets.Interval (closed or open boundaries)
+
+The boundary conditions of a `DiscreteAxis` can be
+`BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed}`.
+
+## Fields
+* `interval::I`: Interval that defines the range of the axis.
+* `ticks::Vector{T}`: Array of values that correspond to the discrete ticks of the axis.
+
+See also [`Grid`](@ref).
 """
 struct DiscreteAxis{T, BL, BR, I} <: AbstractAxis{T, BL, BR, I} 
     interval::I
@@ -27,10 +38,24 @@ end
 """
     DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
 
-* T: Type of ticks
-* BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed} 
-* L, R ∈ {:closed, :open} 
-* ticks: Ticks of the axis
+Constructor of a `DiscreteAxis`.
+
+## Arguments
+* `left_endpoint::T`: Left endpoint of the interval of the `DiscreteAxis`.
+* `right_endpoint::T`: Right endpoint of the interval of the `DiscreteAxis`.
+* `BL::Symbol`: Boundary condition at the left endpoint.
+* `BR::Symbol`: Boundary condition at the right endpoint.
+* `L::Symbol`: Boundary type of the left endpoint.
+* `R::Symbol`: Boundary type of the right endpoint.
+* `ticks::AbstractVector{T}`: Array of values that correspond to the discrete ticks of the axis.
+
+The boundary conditions of a `DiscreteAxis` can be
+`BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed}`.
+
+The boundary types of a `DiscreteAxis` can be `L, R ∈ {:closed, :open}`.
+
+## Examples 
+    DiscreteAxis(-2.0, 2.0, :infinite, :infinite, :closed, :closed, collect(-2:0.1:2))
 """
 function DiscreteAxis(left_endpoint::T, right_endpoint::T, BL::Symbol, BR::Symbol, L::Symbol, R::Symbol, ticks::AbstractVector{T}) where {T}
     int::Interval{L, R, T} = Interval{L, R, T}( left_endpoint, right_endpoint )
