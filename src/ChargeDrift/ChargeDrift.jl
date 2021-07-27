@@ -81,11 +81,11 @@ function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to b
 end
 
 
-"""
-    _drift_charge!(...)
-
-Before calling this function one should check that `startpos` is inside `det`: `in(startpos, det)`
-"""
+# """
+#     _drift_charge!(...)
+# 
+# Before calling this function one should check that `startpos` is inside `det`: `in(startpos, det)`
+# """
 function _drift_charge!(
                             drift_path::Vector{CartesianPoint{T}},
                             timestamps::Vector{T},
