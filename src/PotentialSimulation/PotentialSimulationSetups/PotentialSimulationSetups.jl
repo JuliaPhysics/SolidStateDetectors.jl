@@ -22,7 +22,7 @@ struct PotentialSimulationSetupRB{T, N1, N2, S, TGW, AT} <: AbstractPotentialSim
     q_eff_imp::Array{T, N2}
     q_eff_fix::Array{T, N2}
     ϵ_r::Array{T, N1}
-    geom_weights::NTuple{N1, AbstractGeometricalAxisWeights{T}}        
+    geom_weights::TGW   
     sor_const::Array{T, 1}
     bias_voltage::T
     maximum_applied_potential::T
