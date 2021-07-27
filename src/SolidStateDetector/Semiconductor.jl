@@ -1,5 +1,41 @@
 abstract type AbstractSemiconductor{T} <: AbstractObject{T} end
 
+"""
+    struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
+        
+Bulk of a semiconductor detector.
+
+This is the volume in which electrons and holes will drift during the signal development.
+
+## Parametric types
+* `T`: Precision type.
+* `G`: Type of `geometry`.
+* `MT`: Type of `material`.
+* `CDM`: Type of `charge_drift_model`.
+* `IDM`: Type of `impurity_density_model`.
+
+## Fields
+* `temperature::T`: Temperature (in K) of the semiconductor.
+* `material::MT`: Material of the semiconductor.
+* `impurity_density_model::IDM`: Impurity density model for the points inside the semiconductor.
+* `charge_drift_model::CDM`: Model that describes the drift of electrons and holes inside the semiconductor.
+* `geometry::G`: Geometry of the semiconductor.
+
+## Definition in Configuration File
+
+A `Semiconductor` is defined through the `semiconductor` field of a detector.
+It needs `material` and `geometry`, and can optionally be given a `temperature`, `impurity_density` and `charge_drift_model`.
+
+An example definition of a semiconductor looks like this:
+```yaml 
+semiconductor:
+  material: HPGe
+  temperature: 78
+  impurity_density: # ...
+  charge_drift_model: # ...
+  geometry: # ...
+```
+"""
 struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
     temperature::T
     material::MT

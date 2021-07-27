@@ -221,7 +221,7 @@ detectors:
       - # Contact 2
 ```
 
-#### Bulk 
+#### Semiconductor
 
 An example definition of the semiconductor looks like this:
 ```yaml 
