@@ -1,9 +1,26 @@
-
 """
     struct LinearImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-Simple Impurity density model which assumes a linear gradient in Impurity density in each dimension of a Cartesian coordinate system.
-`offsets::NTuple{3, T}` are the Impurity densities at 0 and `gradients::NTuple{3, T}` are the linear slopes in each dimension, `x`, `y` and `z`.
+Impurity density model which assumes a linear gradient in impurity density in each dimension of a Cartesian coordinate system.
+ 
+## Fields
+* `offsets::NTuple{3,T}`: impurity density values at the origin of each dimension.
+* `gradients::NTuple{3,T}`: linear slopes in `x`, `y` and `z` direction.
+
+## Definition in Configuration File
+
+A `LinearImpurityDensity` is defined in the configuration file through the field `impurity_density` 
+(of a `passive` or `surrounding`) with `name: linear` and optional fields `x`, `y` and `z`
+that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
+
+An example definition of a linear impurity density looks like this:
+```yaml 
+impurity_density:
+  name: cylindrical
+  x:  # impurity profile with linear gradient in x
+    init: 1.0e10     # 1/m³
+    gradient: 1.0e11 # 1/m⁴
+```
 """
 struct LinearImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     offsets::NTuple{3, T}
