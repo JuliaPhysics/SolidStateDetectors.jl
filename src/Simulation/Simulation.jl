@@ -954,10 +954,21 @@ end
 """
     calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
 
-Calculates the drift fields for electrons and holes and stores them in 
-    `sim.sim.electron_drift_field` and `sim.hole_drift_field`.
-    The fields are calculated from the electric field, `sim.electric_field`, and 
-    the drift model `sim.detector.semiconductor.charge_drift_model`.
+Calculates the drift fields for electrons and holes from the electric field,
+`sim.electric_field` and the charge drift model `sim.detector.semiconductor.charge_drift_model`
+and stores them in `sim.electron_drift_field` and `sim.hole_drift_field`.
+    
+## Arguments
+* `sim::Simulation{T}`: Simulation, for which `sim.electric_field` has already been calculated.
+
+## Keywords 
+* `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
+
+## Examples 
+    calculate_drift_fields!(sim, use_nthreads = 4)
+    
+!!! note 
+    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
 """
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
