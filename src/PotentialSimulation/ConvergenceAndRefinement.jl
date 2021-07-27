@@ -186,11 +186,11 @@ function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
     ScalarPotential(p, closed_values, closed_grid)
 end
 
-"""
-    _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
-
-Basically the counterpart to `_get_closed_potential`.
-"""
+# """
+#     _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
+# 
+# Basically the counterpart to `_get_closed_potential`.
+# """
 function _convert_to_original_potential(p::ScalarPotential{T,3,CS,ATO}, data::Array{T, 3}, grid::Grid{T, 3, CS, AT}) where {T, CS, AT, ATO}
     ATs = get_axes_type(ATO)
     axs = broadcast(i -> _convert_closed_axis(ATs[i], grid.axes[i]), (1, 2, 3))
