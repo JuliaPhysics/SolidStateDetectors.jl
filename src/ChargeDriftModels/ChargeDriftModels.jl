@@ -37,5 +37,5 @@ function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::Abstr
     return df
 end
 
-include("Vacuum/Vacuum.jl")
+include("ElectricFieldChargeDriftModel/ElectricFieldChargeDriftModel.jl")
 include("ADLChargeDriftModel/ADLChargeDriftModel.jl")
