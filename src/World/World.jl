@@ -40,6 +40,19 @@ const boundary_condition_mapping = Dict{String, Symbol}(
     "periodic" => :periodic,
 )
 
+"""
+    struct World{T <: SSDFloat, ND, S} <: AbstractWorld{T, ND} 
+        
+Definition of the finite volume on which a [`Simulation`](@ref) is performed.
+
+## Parametric types
+* `T`: Precision type.
+* `ND`: Dimensions of the world.
+* `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+        
+## Fields 
+* `intervals::NTuple{ND, SSDInterval{T}}`: A set of [`SSDInterval`](@ref) defining the dimensions of the world.
+"""
 struct World{T <: SSDFloat, ND, S} <: AbstractWorld{T, ND} 
     intervals::NTuple{ND, SSDInterval{T}}
 end
