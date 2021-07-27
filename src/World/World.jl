@@ -1,5 +1,26 @@
 abstract type AbstractWorld{T, ND} end
 
+"""
+    struct SSDInterval{T <: SSDFloat, L, R, BL, BR} <: IntervalSets.TypedEndpointsInterval{L,R,T}
+        
+Interval containing boundary conditions of left and right boundary as parametric type (`BL` and `BR`).
+
+## Parametric types
+* `T`: Precision type.
+* `L`: Boundary type of the left endpoint.
+* `R`: Boundary type of the right endpoint.
+* `BL`: Boundary condition at the left endpoint.
+* `BR`: Boundary condition at the right endpoint.
+
+The boundary types of an `SSDInterval` can be `L, R ∈ {:closed, :open}`.
+
+The boundary conditions of an `SSDInterval` can be
+`BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed}`.
+
+## Fields
+* `left::T`: Value of the left endpoint.
+* `right::T`: Value of the right endpoint.
+"""
 struct SSDInterval{T <: SSDFloat, L, R, BL, BR} <: IntervalSets.TypedEndpointsInterval{L,R,T}
     left::T
     right::T
