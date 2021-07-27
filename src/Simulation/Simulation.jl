@@ -194,21 +194,39 @@ end
 
 # Functions
 """
-    Grid(sim::Simulation{T, Cylindrical})
+    Grid(sim::Simulation{T, Cartesian}; kwargs...)
+    Grid(sim::Simulation{T, Cylindrical}; kwargs...)
 
-Initialize a grid based on the `sim::Simulation{T, S}`.
+Initialize a grid based on the objects defined in a `Simulation`.\n
+The important points of all objects are sampled and added to the ticks of the grid.
+The grid initialization can be tuned using a set of keyword arguments listed below.
 
-The grid can be tuned via the two keywords `max_tick_distance` and `max_distance_ratio::Real = 5`.
+## Arguments
+* `sim::Simulation{T, S}`: Simulation for which the grid will be defined.
 
-`max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of Quantities, e.g. `(1u"mm", 15u"°", 3u"mm")`,
-to set it for each axis of the Grid separately. 
-If `max_tick_distance` is `missing`, one fourth of the axis length is used. 
+## Keywords
+* `max_tick_distance = missing`: Maximum distance between neighbouring ticks of the grid.\n
+    Additional grid ticks will be added if two neighbouring ticks are too far apart.
+    `max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of `Quantity`, 
+    e.g. `(1u"mm", 15u"°", 3u"mm")`,
+    to set it for each axis of the `Grid` separately. Note that a `CartesianGrid` requires a 
+    `Tuple{LengthQuantity, LengthQuantity, LengthQuantity}` while a `CylindricalGrid` requires a
+    `Tuple{LengthQuantity, AngleQuantity, LengthQuantity}`.\n
+    If `max_tick_distance` is `missing`, one fourth of the axis length is used.
+* `max_distance_ratio::Real = 5`: If the ratio between a tick and its left and right neighbour
+   is greater than `max_distance_ratio`, additional ticks are added between the ticks that are
+   further apart. This prevents the ticks from being too unevenly spaced.
+* `add_points_between_important_point::Bool = true`: If set to `true`, additional points
+    will be added in between the important points obtained from sampling the objects of the
+    simulation. If some objects are too close together, this will ensure a noticeable gap
+    between them in the calculation of potentials and fields.
 
-# Keywords:
-- `for_weighting_potential::Bool = false`
-- `max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}}} = missing`
-- `max_distance_ratio::Real = 5`
-- `full_2π::Bool = false`
+## Additional Keywords for a `CylindricalGrid`
+* `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of 
+    an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
+    if set to `false`.
+* `full_2π::Bool = false`: Grid will be extended to `2π` if set to `true` and be left as is
+    if set to `false`.
 """
 function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
@@ -330,23 +348,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
 
-"""
-    Grid(sim::Simulation{T, Cartesian})
 
-Initialize a grid based on the `sim::Simulation{T, S}`.
-
-The grid can be tuned via the two keywords `max_tick_distance` and `max_distance_ratio::Real = 5`.
-
-`max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of Quantities, e.g. `(1u"mm", 0.2u"cm", 3u"mm")`,
-to set it for each axis of the Grid separately. 
-If `max_tick_distance` is `missing`, one fourth of the axis length is used. 
-
-# Keywords:
-- `for_weighting_potential::Bool = false`
-- `max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}}} = missing`
-- `max_distance_ratio::Real = 5`
-- `full_2π::Bool = false`
-"""
 function Grid(  sim::Simulation{T, Cartesian};
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,

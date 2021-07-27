@@ -3,13 +3,19 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
 """
     struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
 
-- `T`: Tick type (element type) of the axes.
-- `N`: Dimension of the grid.  
-- `S`: Coordinate system (`Cartesian` or `Cylindrical`).
-- `AT`: Axes type.
+Collecting of `N` axes that define the dimensions of the grid needed to calculate 
+[`ElectricPotential`](@ref), [`ElectricField`](@ref) or [`WeightingPotential`](@ref).
 
-# Fields
-- `axes::AT`: Tuple of length `N` containing `DiscreteAxis`.
+## Parametric types
+* `T`: Tick type (element type) of the axes.
+* `N`: Dimension of the grid.
+* `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+* `AT`: Axes type.
+
+## Fields
+* `axes::AT`: Tuple of length `N` containing `DiscreteAxis` for each dimension of the grid.
+
+See also [`DiscreteAxis`](@ref).
 """
 struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
     axes::AT
