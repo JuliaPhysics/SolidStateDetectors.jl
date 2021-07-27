@@ -906,16 +906,27 @@ function calculate_electric_potential!(sim::Simulation{T}, args...; kwargs...)::
 end
 
 """
-    calculate_electric_field!(sim::Simulation{T}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing
+    calculate_electric_field!(sim::Simulation{T}; n_points_in_φ::Union{Missing, Int} = missing)::Nothing
 
-Calculates the electric field from the electric potential stored in `sim.electric_potential` and stores is under
+Calculates the electric field from the electric potential stored in `sim.electric_potential` and stores it in
 `sim.electric_field`. 
 
-# Keywords
-- `n_points_in_φ`: If the electric potential is 2D (cylindrical coordinates and symmetric in φ), the electric potential 
-is extended to `n_points_in_φ` "layers" in φ in order to calculate a 3D electric field. 
+## Arguments
+* `sim::Simulation{T}`: Simulation, for which `sim.electric_potential` has already been calculated.
+
+## Keywords
+* `n_points_in_φ::Union{Missing, Int}`: For 2D potentials (cylindrical coordinates and symmetric in `φ`), the electric potential 
+is extended to `n_points_in_φ` "layers" in `φ` in order to calculate a 3D electric field. If `n_points_in_φ` is `missing`, the 
+default value is 36.
+
+## Examples 
+    calculate_electric_field!(sim, n_points_in_φ = 32)
+
+!!! note 
+    This method only works if `sim.electric_potential` has already been calculated and is not `missing`.
 """
-function calculate_electric_field!(sim::Simulation{T, CS}, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat, CS}
+function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, CS}
+    @assert !ismissing(sim.electric_potential) "Electric potential has not been calculated yet. Please run `calculate_electric_potential!(sim)` first."
     periodicity::T = width(sim.world.intervals[2])
     e_pot, point_types = if CS == Cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
