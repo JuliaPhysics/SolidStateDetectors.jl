@@ -62,6 +62,15 @@ function in(pt::AbstractCoordinatePoint{T}, pts::PointTypes{T, 3, S})::Bool wher
     return pts.data[i1, i2, i3] & pn_junction_bit > 0
 end
 
+"""
+    is_depleted(point_types::PointTypes)::Bool
+    
+Returns a `Bool` value which is `true` if all point types are marked as depleted
+and `false` if any point in the point types is marked as undepleted.
+
+## Examples
+    is_depleted(sim.point_types)
+"""
 is_depleted(point_types::PointTypes)::Bool = 
     !any(b -> undepleted_bit & b > 0, point_types.data)
 
