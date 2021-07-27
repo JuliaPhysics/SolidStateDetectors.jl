@@ -1,6 +1,6 @@
-struct ElectricField{T, N, S} <: AbstractArray{T, N}
+struct ElectricField{T, N, S, AT} <: AbstractArray{T, N}
     data::Array{<:StaticArray{Tuple{N}, T}, N}
-    grid::Grid{T, N, S}
+    grid::Grid{T, N, S, AT}
 end
 
 @inline size(ep::ElectricField{T, N, S}) where {T, N, S} = size(ep.data)
