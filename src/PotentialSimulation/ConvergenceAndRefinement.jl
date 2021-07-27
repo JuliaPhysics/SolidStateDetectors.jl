@@ -167,14 +167,14 @@ function _get_closed_axis(ax::DiscreteAxis{T, BL, BR}) where {T, BL, BR}
     return DiscreteAxis{T, BL, BR, ClosedInterval{T}}(ClosedInterval(ax.interval.left, ax.interval.right), ticks)
 end
 
-"""
-    _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
-
-Returns an closed Grid & Potential:
-E.g. if one of the axis is {:closed,:open} it will turn this into {:closed,:closed}
-and also extend the `data` field of the potential in the respective dimension and fill
-it with the respective values.
-"""
+# """
+#     _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
+# 
+# Returns an closed Grid & Potential:
+# E.g. if one of the axis is {:closed,:open} it will turn this into {:closed,:closed}
+# and also extend the `data` field of the potential in the respective dimension and fill
+# it with the respective values.
+# """
 function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
     g = p.grid
     closed_values = _get_closed_values(p.data, 1, g.axes[1].interval)
