@@ -2,14 +2,14 @@
     mutable struct Event{T <: SSDFloat}
 
 Collection struct for individual events. 
-This (mutable) struct is mend to be used to look at individual events,
+This (mutable) struct is meant to be used to look at individual events,
 not to process a huge amount of events.
 
-# Fields:
-- `locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}`: Vector of the positions of all hits of the event.
-- `energies::Union{Vector{T}, Missing}`: Vector of energies corresponding to the hits of the event.
-- `drift_paths::Union{Vector{EHDriftPath{T}}, Missing}`: Calculated drift paths of each hit position. 
-- `waveforms::Union{Vector{<:Any}, Missing}`: Generated signals (waveforms) of the event.
+## Fields
+* `locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}`: Vector of the positions of all hits of the event.
+* `energies::Union{Vector{T}, Missing}`: Vector of energies corresponding to the hits of the event.
+* `drift_paths::Union{Vector{EHDriftPath{T}}, Missing}`: Calculated drift paths of each hit position. 
+* `waveforms::Union{Vector{<:Any}, Missing}`: Generated signals (waveforms) of the event.
 """
 mutable struct Event{T <: SSDFloat}
     locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}
