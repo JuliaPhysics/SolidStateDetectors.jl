@@ -7,10 +7,37 @@ function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transf
     construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
 end
 
+"""
+    struct DeadVolume{T, G} <: AbstractVirtualVolume{T}
+        
+Volume inside which the charge drift is set to zero.
 
-struct DeadVolume{T} <: AbstractVirtualVolume{T}
+## Parametric types
+* `T`: Precision type.
+* `G`: Type of `geometry`.
+
+## Fields
+* `name::String`: Name of the dead volume, relevant for plotting.
+* `geometry::G`: Geometry of the dead volume.
+
+## Definition in Configuration File
+A `DeadVolume` is defined through an entry in the `virtual_drift_volumes`
+array of a detector with `model: dead`. It needs a `geometry` and can optionally be given a `name`.
+
+An example definition of dead volumes looks like this:
+```yaml 
+virtual_drift_volume:
+  - name: Volume 1
+    model: dead
+    geometry: # ...
+  - name: Volume 2
+    model: dead
+    geometry: # ...
+```
+"""
+struct DeadVolume{T, G} <: AbstractVirtualVolume{T}
     name::String
-    geometry::AbstractGeometry{T}
+    geometry::G
 end
 
 function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, tl::DeadVolume{T})::CartesianVector{T} where {T <: SSDFloat}
@@ -20,7 +47,7 @@ end
 function DeadVolume{T}(dict::Dict, input_units::NamedTuple, transformations = missing) where T <: SSDFloat
     n = haskey(dict, "name") ? dict["name"] : "external part"
     g = transform(Geometry(T, dict["geometry"], input_units), transformations)
-    return DeadVolume{T}(n, g)
+    return DeadVolume{T, typeof(g)}(n, g)
 end
 
 function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Transformations)
