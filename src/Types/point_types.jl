@@ -80,10 +80,13 @@ Returns an approximation of the active volume of the detector by summing up the 
 all cells marked as depleted.
 
 ## Arguments
-* `point_types::PointTypes{T}`: Point types.
+* `point_types::PointTypes{T}`: Point types of a [`Simulation`](@ref).
+
+## Examples
+    get_active_volume(sim.point_types)
 
 !!! note
-    Only `φ`-symmetries are taken into account. 
+    Only `φ`-symmetries are taken into account.
 """
 function get_active_volume(point_types::PointTypes{T, 3, Cylindrical}) where {T}
     active_volume::T = 0
