@@ -22,6 +22,10 @@ end
     
 Returns the charge density at a given point, `pt`, based on the charge density model `cd`.
 
+## Arguments
+* `cd::AbstractChargeDensity`: The [`AbstractChargeDensity`](@ref) defining the charge density inside a [`Passive`](@ref).
+* `pt::AbstractCoordinatePoint`: The point at which `cd` is to be evaluated.
+
 !!! note 
     The value returned by `get_charge_density` is in units of C/m³ (SI units).
 """
