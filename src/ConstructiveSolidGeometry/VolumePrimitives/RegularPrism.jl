@@ -1,3 +1,39 @@
+"""
+    struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
+
+Volume primitive describing a prism with base plates parallel to the `xy` plane
+that are regular polygons. If the regular polygon base plate is projected to 
+the `xy` plane, one of the vertices lays on the `x` axis.
+
+
+## Parametric types
+* `T`: Precision type.
+* `CO`: Describes whether the surface belongs to the primitive. 
+    It can be `ClosedPrimitive`, i.e. the surface points belong to the primitive,
+    or `OpenPrimitive`, i.e. the surface points do not belong to the primitive.
+* `N`: Number of vertices of the regular polygon that defines the base of the prism.
+* `TR`: Type of `r`.
+    * `TR == T`: Regular polygon base (all vertices have the same distance to the center).
+    
+## Fields
+* `r::TR`: Distance of the vertices to the center of the regular polygon base (in m).
+* `hZ::T`: Half of the width in `z` dimension (in m).
+* `origin::CartesianPoint{T}`: The position of the center of the `RegularPrism`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `RegularPrism` around its `origin`.
+
+## Definition in Configuration File
+
+So far, only `HexagonalPrism` can be defined in the configuration files.
+A `HexagonalPrism` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `HexagonalPrism`.
+
+An example definition of a `HexagonalPrism` looks like this:
+```yaml
+HexagonalPrism:
+  r: 1.0 # => r = 1.0
+  h: 2.0 # => hZ = 1.0
+```
+"""
 @with_kw struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1
     hZ::T = 1
