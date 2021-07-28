@@ -29,7 +29,7 @@ end
 end
 
 
-function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
+function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                         starting_points::Vector{CartesianPoint{T}},
                         velocity_field_e::Interpolations.Extrapolation{<:SVector{3}, 3},
                         velocity_field_h::Interpolations.Extrapolation{<:SVector{3}, 3},
@@ -44,8 +44,8 @@ function _drift_charges(detector::SolidStateDetector{T}, grid::Grid{T, 3}, point
         drift_path_h::Vector{CartesianPoint{T}} = zeros(CartesianPoint{T}, max_nsteps )#Vector{CartesianPoint{T}}(undef, max_nsteps)
         timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
         timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
-        n_e::Int = _drift_charge!(drift_path_e, timestamps_e, detector, point_types, grid, starting_points[i], dt, velocity_field_e, verbose = verbose)
-        n_h::Int = _drift_charge!(drift_path_h, timestamps_h, detector, point_types, grid, starting_points[i], dt, velocity_field_h, verbose = verbose)
+        n_e::Int = _drift_charge!(drift_path_e, timestamps_e, det, point_types, grid, starting_points[i], dt, velocity_field_e, verbose = verbose)
+        n_h::Int = _drift_charge!(drift_path_h, timestamps_h, det, point_types, grid, starting_points[i], dt, velocity_field_h, verbose = verbose)
         drift_paths[i] = EHDriftPath{T, T}( drift_path_e[1:n_e], drift_path_h[1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
     end
 
@@ -171,10 +171,10 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  detector::SolidStateDetector{T}, grid::Grid{T, 3, S}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
+function get_crossing_pos(  det::SolidStateDetector{T}, grid::Grid{T, 3, S}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
     point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
-    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(detector, grid, _convert_point(point_mid, S))
+    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(det, grid, _convert_point(point_mid, S))
     for i in 1:max_n_iter
         if cd_point_type == CD_BULK
             point_in = point_mid
@@ -186,7 +186,7 @@ function get_crossing_pos(  detector::SolidStateDetector{T}, grid::Grid{T, 3, S}
             break
         end
         point_mid = T(0.5) * (point_in + point_out)
-        cd_point_type, contact_idx, surface_normal = point_type(detector, grid, _convert_point(point_mid, S))
+        cd_point_type, contact_idx, surface_normal = point_type(det, grid, _convert_point(point_mid, S))
     end
     return point_mid, cd_point_type, contact_idx, surface_normal
 end

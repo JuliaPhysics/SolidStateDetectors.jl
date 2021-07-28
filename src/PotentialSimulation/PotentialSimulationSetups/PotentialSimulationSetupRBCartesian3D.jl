@@ -1,5 +1,5 @@
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-    grid::Grid{T, N, Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
+    grid::Grid{T, N, Cartesian}, det::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
 
@@ -15,8 +15,8 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 x::T = axx[ix]
                 pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
 
-                if !ismissing(ssd.passives)
-                    for passive in ssd.passives
+                if !ismissing(det.passives)
+                    for passive in det.passives
                         if passive.potential != :floating
                             if pt in passive
                                 potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
@@ -29,11 +29,11 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                         end
                     end
                 end
-                if in(pt, ssd)
+                if in(pt, det)
                     pointtypes[ ix, iy, iz ] += pn_junction_bit
                 end
                 if NotOnlyPaintContacts
-                    for contact in ssd.contacts
+                    for contact in det.contacts
                         if pt in contact
                             potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
                                 contact.potential
@@ -48,7 +48,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         end
     end
     if PaintContacts
-        for contact in ssd.contacts
+        for contact in det.contacts
             pot::T = if ismissing(weighting_potential_contact_id)
                 contact.potential
             else
@@ -64,7 +64,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 end
 
 
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, Cartesian}, medium::NamedTuple = material_properties[materials["vacuum"]],
+function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3, Cartesian}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing,
                 sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true ) where {T}#::PotentialSimulationSetupRB{T} where {T}
                 is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
@@ -151,11 +151,11 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-        # detector_material_ϵ_r::T = ssd.material_detector.ϵ_r
-        # environment_material_ϵ_r::T = ssd.material_environment.ϵ_r
+        # detector_material_ϵ_r::T = det.material_detector.ϵ_r
+        # environment_material_ϵ_r::T = det.material_environment.ϵ_r
 
-        contact_bias_voltages::Vector{T} = if length(ssd.contacts) > 0 
-            T[contact.potential for contact in ssd.contacts]
+        contact_bias_voltages::Vector{T} = if length(det.contacts) > 0 
+            T[contact.potential for contact in det.contacts]
         else
             T[0]
         end
@@ -175,7 +175,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                 for ix in 1:size(ϵ, 1)
                     pos_x = mpx[ix]
                     pt::CartesianPoint{T} = CartesianPoint{T}(pos_x, pos_y, pos_z)
-                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd, medium)
+                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, det, medium)
                 end
             end
         end
@@ -272,7 +272,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
 
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id,
+        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
             not_only_paint_contacts = Val(not_only_paint_contacts), paint_contacts = Val(paint_contacts)  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
         rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )

@@ -175,8 +175,8 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim.detector = SolidStateDetector{T}(dict, sim.input_units) 
     sim.world = if haskey(dict, "grid") && isa(dict["grid"], Dict) && haskey(dict["grid"], "axes")
             World(T, dict["grid"], sim.input_units)
-        else let ssd = sim.detector 
-            world_limits = get_world_limits_from_objects(CS, ssd)
+        else let det = sim.detector 
+            world_limits = get_world_limits_from_objects(CS, det)
             World(CS, world_limits)
         end
     end
@@ -234,10 +234,10 @@ function Grid(sim::Simulation{T, Cylindrical};
                 max_distance_ratio::Real = 5,
                 add_points_between_important_point::Bool = true,
                 full_2π::Bool = false)::CylindricalGrid{T} where {T}
-    detector = sim.detector
+    det = sim.detector
     world = sim.world 
                 
-    samples::Vector{CylindricalPoint{T}} = sample(detector, Cylindrical)
+    samples::Vector{CylindricalPoint{T}} = sample(det, Cylindrical)
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
@@ -354,10 +354,10 @@ function Grid(  sim::Simulation{T, Cartesian};
                 max_distance_ratio::Real = 5,
                 add_points_between_important_point::Bool = true,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
-    detector = sim.detector
+    det = sim.detector
     world = sim.world 
                 
-    samples::Vector{CartesianPoint{T}} = sample(detector, Cartesian)
+    samples::Vector{CartesianPoint{T}} = sample(det, Cartesian)
     important_x_points::Vector{T} = map(p -> p.x, samples)
     important_y_points::Vector{T} = map(p -> p.y, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)

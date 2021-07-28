@@ -1,5 +1,5 @@
 function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, Cylindrical}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
+        grid::Grid{T, N, Cylindrical}, det::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
 
@@ -15,8 +15,8 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 r::T = axr[ir]
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( r, φ, z )
 
-                if !ismissing(ssd.passives)
-                    for passive in ssd.passives
+                if !ismissing(det.passives)
+                    for passive in det.passives
                         if passive.potential != :floating
                             if pt in passive
                                 potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
@@ -29,11 +29,11 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                         end
                     end
                 end
-                if in(pt, ssd)
+                if in(pt, det)
                     pointtypes[ ir, iφ, iz ] += pn_junction_bit
                 end
                 if NotOnlyPaintContacts
-                    for contact in ssd.contacts
+                    for contact in det.contacts
                         if pt in contact
                             potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
                                 contact.potential
@@ -48,7 +48,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         end
     end
     if PaintContacts
-        for contact in ssd.contacts
+        for contact in det.contacts
             pot::T = if ismissing(weighting_potential_contact_id)
                 contact.potential
             else
@@ -64,7 +64,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 end
 
 
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, Cylindrical}, medium::NamedTuple = material_properties[materials["vacuum"]],
+function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3, Cylindrical}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = (1.0, 1.0),
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialSimulationSetupRB{T} where {T}
@@ -170,8 +170,8 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
             grid_boundary_factors::NTuple{3, NTuple{2, T}} = ((grid_boundary_factor_r_left, grid_boundary_factor_r_right), (grid_boundary_factor_φ_left, grid_boundary_factor_φ_right), (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-        bias_voltages::Vector{T} = if length(ssd.contacts) > 0
-            [i.potential for i in ssd.contacts]
+        bias_voltages::Vector{T} = if length(det.contacts) > 0
+            [i.potential for i in det.contacts]
         else
             T[0]
         end
@@ -196,12 +196,12 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                     pos_r = axr[2] * 0.5
                 end
                 pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd, medium)
+                ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, det, medium)
 
                 for ir in 2:size(ϵ, 1)
                     pos_r = mpr[ir]
                     pt = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                    ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, ssd, medium)
+                    ρ_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρ_and_ϵ(pt, det, medium)
                 end
             end
         end
@@ -355,7 +355,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
 
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id,
+        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
             not_only_paint_contacts = Val(not_only_paint_contacts), paint_contacts = Val(paint_contacts)  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
         rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )

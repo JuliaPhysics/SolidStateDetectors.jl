@@ -45,7 +45,7 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
     return event
 end
 
-in(evt::Event, detector::SolidStateDetector) = all( pt -> pt in detector, evt.locations)
+in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, evt.locations)
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
 
 """
