@@ -18,17 +18,17 @@ struct ElectricField{T, N, S, AT} <: AbstractArray{T, N}
     grid::Grid{T, N, S, AT}
 end
 
-@inline size(ep::ElectricField{T, N, S}) where {T, N, S} = size(ep.data)
-@inline length(ep::ElectricField{T, N, S}) where {T, N, S} = length(ep.data)
-@inline getindex(ep::ElectricField{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(ep.data, I...)
-@inline getindex(ep::ElectricField{T, N, S}, i::Int) where {T, N, S} = getindex(ep.data, i)
-@inline getindex(ep::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
+@inline size(ef::ElectricField{T, N, S}) where {T, N, S} = size(ef.data)
+@inline length(ef::ElectricField{T, N, S}) where {T, N, S} = length(ef.data)
+@inline getindex(ef::ElectricField{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(ef.data, I...)
+@inline getindex(ef::ElectricField{T, N, S}, i::Int) where {T, N, S} = getindex(ef.data, i)
+@inline getindex(ef::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ef.grid, s)
 
 
-function NamedTuple(ep::ElectricField{T, 3}) where {T}
+function NamedTuple(ef::ElectricField{T, 3}) where {T}
     return (
-        grid = NamedTuple(ep.grid),
-        values = ep.data #* internal_efield_unit,
+        grid = NamedTuple(ef.grid),
+        values = ef.data #* internal_efield_unit,
     )
 end
 Base.convert(T::Type{NamedTuple}, x::ElectricField) = T(x)
