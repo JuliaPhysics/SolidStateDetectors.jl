@@ -104,18 +104,17 @@ end
 
 
 """
-    siggentodict(config::Dict[, units::Dict, detector_name::String])
+    siggentodict(config::Dict; units::Dict)
+    
 Converts the dictionary containing the parameters from a SigGen config file
-to a SSD config dictionary. This dictionary can be saved as a JSON file using
-the JSON package and 'JSON.print(file, config, 4)'.
-The 'detector_name' is set to "Public Inverted Coax" by default to inherit
-the colour scheme.
-...
-# Arguments
-- `config::Dict`: dictionary containing SigGen parameters (output of readsiggen()).
-- `units::Dict`: units used in SigGen file (set to 'mm', 'deg', 'V' and 'K').
-- `detector_name::String`: name of the detector.
-...
+to a dictionary that can be understood by SolidStateDetectors.jl. 
+
+## Arguments
+* `config::Dict`: Dictionary containing SigGen parameters (output of readsiggen()).
+
+## Keywords
+* `units::Dict`: Units used in SigGen file (set to 'mm', 'deg', 'V' and 'K').
+    The dictionary needs the fields `"length"`, `"angle"`, `"potential"` and `"temperature"`.
 """
 function siggentodict(config::Dict;
         units::Dict = Dict("length" => "mm","angle" => "deg","potential" => "V","temperature" => "K"))
