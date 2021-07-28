@@ -99,17 +99,30 @@ function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"
 end
 
 """
-    simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    simulate!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
 
-Simulates the `evt` for a given Simulation `sim`:
-    1. Simulate the drift paths of all hits, at `evt.locations`, and stores them under `evt.drift_paths`. 
-    2. Generate the signal (waveform) for all channels for which a weighting potential is specified in `sim.weighting_potentials`
-        and stores them under `evt.waveforms`.
+Simulates the waveforms for the [`Event`](@ref) `evt` for a given [Simulation](@ref) `sim` by
 
-# Keywords
-- `Δt::RealQuantity = 5u"ns"`: Time difference between two time stamps of the drift and the signals.
-- `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
-- `verbose = false`: Activate or deactivate additional info output. 
+1. calculating the drift paths of all energy hits, at `evt.locations` and 
+2. generating the waveforms for each [`Contact`], for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
+
+The output is stored in `evt.drift_paths` and `evt.waveforms`.
+
+## Arguments 
+* `evt::Event{T}`: [`Event`](@ref) for which the charges should be drifted.
+* `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `evt` should drift.
+
+## Keywords
+* `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
+* `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
+* `verbose = true`: Activate or deactivate additional info output.
+
+## Example 
+```julia
+simulate!(evt, sim, Δt = 1u"ns", verbose = false)
+```
+
+See also [`drift_charges!`](@ref) and [`get_signals!`](@ref).
 """
 function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
     drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, verbose = verbose)
