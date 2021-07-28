@@ -1,3 +1,24 @@
+"""
+    struct TorusMantle{T,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
+
+Surface primitive describing the mantle of a [`Torus`](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `TP`: Type of the azimuthial angle `φ`.
+    * `TP == Nothing`: Full 2π in `φ`.
+* `TT`: Type of the polar angle `θ`.
+    * `TT == Nothing`: Full 2π in `θ`.
+* `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+    
+## Fields
+* `r_torus::T`: Distance of the center of the `TorusMantle` to the center of the tube (in m).
+* `r_tube::T`: Radius of the tube of the `TorusMantle` (in m).
+* `φ::TP`: Range in azimuthial angle `φ` of the `TorusMantle`.
+* `θ::TT`: Range in polar angle `θ` of the `TorusMantle`.
+* `origin::CartesianPoint{T}`: The position of the center of the `TorusMantle`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `TorusMantle` around its `origin`.
+"""
 @with_kw struct TorusMantle{T,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
     r_torus::T = 1
     r_tube::T = 1
