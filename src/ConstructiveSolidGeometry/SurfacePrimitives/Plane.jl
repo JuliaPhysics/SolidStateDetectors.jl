@@ -1,3 +1,12 @@
+"""
+    struct Plane{T} <: AbstractPlanarSurfacePrimitive{T}
+
+Surface primitive describing a two-dimensional flat plane in three-dimensional space.
+    
+## Fields
+* `origin::CartesianPoint{T}`: Point in the `Plane`.
+* `normal::CartesianVector{T}`: Normal vector of the `Plane`, normalized to length 1.
+"""
 struct Plane{T} <: AbstractPlanarSurfacePrimitive{T}
     origin::CartesianPoint{T}
     normal::CartesianVector{T}
