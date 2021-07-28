@@ -60,6 +60,6 @@ function ElectricPotential(nt::NamedTuple)
     T = typeof(ustrip(nt.values[1]))
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
-    ElectricPotential{T, N, S}( ustrip.(uconvert.(u"V", nt.values)), grid)
+    ElectricPotential{T, N, S, typeof(grid.axes)}( ustrip.(uconvert.(u"V", nt.values)), grid)
 end
 Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)

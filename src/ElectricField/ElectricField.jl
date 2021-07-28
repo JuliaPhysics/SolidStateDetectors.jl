@@ -43,14 +43,14 @@ function ElectricField(nt::NamedTuple)
         # ef[i] = ustrip.(uconvert.(internal_efield_unit, nt.values[i]))
         ef[i] = nt.values[i]
     end
-    ElectricField{T, N, S}( ef, grid)
+    ElectricField{T, N, S, typeof(grid.axes)}( ef, grid)
 end
 Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 
 
 function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
-    return ElectricField{T, 3, S}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
+    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
 end
 
 

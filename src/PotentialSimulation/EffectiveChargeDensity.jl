@@ -45,6 +45,6 @@ function EffectiveChargeDensity(nt::NamedTuple)
     T = typeof(ustrip(nt.values[1]))
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
-    EffectiveChargeDensity{T, N, S}( ustrip.(uconvert.(internal_voltage_unit, nt.values)), grid)
+    EffectiveChargeDensity{T, N, S, typeof(grid.axes)}( ustrip.(uconvert.(internal_voltage_unit, nt.values)), grid)
 end
 Base.convert(T::Type{EffectiveChargeDensity}, x::NamedTuple) = T(x)

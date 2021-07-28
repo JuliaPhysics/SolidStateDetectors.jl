@@ -50,6 +50,6 @@ function DielectricDistribution(nt::NamedTuple)
     T = typeof(ustrip(nt.values[1]))
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
-    DielectricDistribution{T, N, S}( nt.values, grid )
+    DielectricDistribution{T, N, S, typeof(grid.axes)}( nt.values, grid )
 end
 Base.convert(T::Type{DielectricDistribution}, x::NamedTuple) = T(x)

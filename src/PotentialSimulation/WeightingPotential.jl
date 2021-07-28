@@ -37,7 +37,7 @@ function WeightingPotential(nt::NamedTuple)
     T = typeof(ustrip(nt.values[1]))
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
-    WeightingPotential{T, N, S}( nt.values, grid)
+    WeightingPotential{T, N, S, typeof(grid.axes)}( nt.values, grid)
 end
 Base.convert(T::Type{WeightingPotential}, x::NamedTuple) = T(x)
 
