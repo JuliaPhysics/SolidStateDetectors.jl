@@ -15,7 +15,19 @@ in(pt::AbstractCoordinatePoint, p::Plane) = (pt - origin(p)) ⋅ normal(p) == 0
 _distance(pt::AbstractCoordinatePoint, p::Plane) = (pt - origin(p)) ⋅ normal(p)
 distance(pt::AbstractCoordinatePoint, p::Plane) = abs(_distance(pt, p))
 
+"""
+    intersection(p::Plane{T}, line::Line{T}) where {T}
 
+Calculates the intersections of a `Line` with a `Plane`.
+
+## Arguments
+* `cm::Plane{T}`: The `Plane`.
+* `l::Line{T}`: The `Line`.
+
+!!! note 
+    The function will always return one Point as a Tuple.
+    If the line is parallel to the plane, the point will have `NaN`'s/`Inf`'s as values.
+"""
 function intersection(p::Plane{T}, line::Line{T}) where {T}
     ndir = normalize(line.direction)
     λ = (p.normal ⋅ p.origin - p.normal ⋅ line.origin) / (p.normal ⋅ ndir)

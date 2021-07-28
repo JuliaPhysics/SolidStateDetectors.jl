@@ -46,11 +46,18 @@ end
 normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
 
 """
-    intersection(cm::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
+    intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}
 
-The function will always return 2 CartesianPoint's.
-If the line just touches the mantle, the two points will be the same. 
-If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+Calculates the intersections of a `Line` with a `EllipsoidMantle`.
+
+## Arguments
+* `cm::EllipsoidMantle{T}`: The `EllipsoidMantle`.
+* `l::Line{T}`: The `Line`.
+
+!!! note 
+    The function will always return 2 CartesianPoint's.
+    If the line just touches the mantle, the two points will be the same. 
+    If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
 """
 function intersection(em::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, em) # direction is not normalized
@@ -80,13 +87,7 @@ function intersection(em::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
     return _transform_into_global_coordinate_system(ints1, em), 
            _transform_into_global_coordinate_system(ints2, em)
 end
-"""
-    intersection(cm::EllipsoidMantle{T,T}, l::Line{T}) where {T}
 
-The function will always return 2 CartesianPoint's.
-If the line just touches the mantle, the two points will be the same. 
-If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
-"""
 function intersection(em::EllipsoidMantle{T,T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, em) # direction is not normalized
     

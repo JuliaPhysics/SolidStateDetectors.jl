@@ -44,11 +44,16 @@ extremum(tm::TorusMantle{T}) where {T} = tm.r_torus + tm.r_tube
 """
     intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 
-The function will always return 4 CartesianPoint's.
-If the line just touches the mantle, the points will be the same. 
-If the line does not touch the mantle at all, the points will have NaN's as there coordinates.
+Calculates the intersections of a `Line` with a `TorusMantle`.
 
-Solve: `solve (sqrt((L1 + λ*D1)^2 + (L2 + λ*D2)^2)-R)^2 + (L3 + λ*D3)^2 = r^2 for λ`
+## Arguments
+* `cm::TorusMantle{T}`: The `TorusMantle`.
+* `l::Line{T}`: The `Line`.
+
+!!! note 
+    The function will always return 4 CartesianPoint's.
+    If the line just touches the mantle, the points will be the same. 
+    If the line does not touch the mantle at all, the points will have NaN's as there coordinates.
 """
 function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, tm) # direction is not normalized
@@ -71,6 +76,8 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     b = (2*A*C + B^2 - 4*R^2*(D1^2 + D2^2)) / C^2
     c = (2*A*B - 8*R^2*(L1*D1 + L2*D2)) / C^2
     d = (A^2 - 4*R^2*(L1^2 + L2^2)) / C^2
+
+    # Solve: `solve (sqrt((L1 + λ*D1)^2 + (L2 + λ*D2)^2)-R)^2 + (L3 + λ*D3)^2 = r^2 for λ`
 
 	# λ1, λ2, λ3, λ4 = roots_of_4th_order_polynomial(a, b, c, d) # That does not work for all combinations of a, b, c, d...
 	# fallback to Polynomials.jl, which is slower... We should improve `roots_of_4th_order_polynomial`... 
