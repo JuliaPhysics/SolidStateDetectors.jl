@@ -512,10 +512,41 @@ function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, co
 end
 
 
+
 """
     update_till_convergence!( sim::Simulation{T} ::Type{ElectricPotential}, convergence_limit::Real; kwargs...)::T
 
 Takes the current state of `sim.electric_potential` and updates it until it has converged.
+
+There are several keyword arguments which can be used to tune the simulation.
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.electric_potential` will be updated.
+* `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
+    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
+    Default is `1e-7`.
+
+## Keywords
+* `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
+* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
+    Default is `-1`. If set to `-1` there will be no limit.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
+    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
+    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
+    In case of Cartesian coordinates, only one value is taken.
+    
+## Example 
+```julia
+SolidStateDetectors.update_till_convergence!(sim, ElectricPotential, 1e-6, depletion_handling = true)
+```
 """
 function update_till_convergence!( sim::Simulation{T,CS},
                                    ::Type{ElectricPotential},
@@ -564,7 +595,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
                 update_again = true
             end
         end
-        if update_again == false
+        if !update_again
             @inbounds for i in eachindex(sim.electric_potential.data)
                 if sim.electric_potential.data[i] > pssrb.maximum_applied_potential # n-type
                     sim.electric_potential.data[i] = pssrb.maximum_applied_potential
@@ -592,6 +623,37 @@ end
     update_till_convergence!( sim::Simulation{T} ::Type{WeightingPotential}, contact_id::Int, convergence_limit::Real; kwargs...)::T
 
 Takes the current state of `sim.weighting_potentials[contact_id]` and updates it until it has converged.
+
+There are several keyword arguments which can be used to tune the simulation.
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.weighting_potentials[contact_id]` will be updated.
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the [`WeightingPotential`](@ref) is to be calculated.
+* `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
+    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
+    Default is `1e-7`.
+
+## Keywords
+* `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
+* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
+    Default is `-1`. If set to `-1` there will be no limit.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
+    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
+    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
+    In case of Cartesian coordinates, only one value is taken.
+    
+## Example 
+```julia
+SolidStateDetectors.update_till_convergence!(sim, WeightingPotential, 1, 1e-6, use_nthreads = 4)
+```
 """
 function update_till_convergence!( sim::Simulation{T, CS},
                                    ::Type{WeightingPotential},
