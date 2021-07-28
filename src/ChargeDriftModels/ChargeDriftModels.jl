@@ -4,7 +4,25 @@ abstract type AbstractTemperatureModel{T <: SSDFloat} end
 """
     get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::AbstractChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
 
-Applies the charge drift model onto the electric field vectors. The field vectors have to be in cartesian coordinates.
+Applies the electron charge drift model onto the electric field vectors and returns the electron drift field.
+
+!!! note 
+    The field vectors in `ef` have to be in Cartesian coordinates. 
+
+## Arguments
+* `ef::Array{SVector{3, T},3}`: Three-dimensional array with [`ElectricField`](@ref) vectors, e.g. `simulation.electric_field.data`.
+* `chargedriftmodel::AbstractChargeDriftModel`: Model that describes the electron drift in the [`Semiconductor`](@ref).
+
+## Keywords 
+* `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
+
+## Example 
+```julia 
+get_electron_drift_field(simulation.electric_field.data, simulation.detector.semiconductor.charge_drift_model)
+```
+
+!!! note 
+    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
 """
 function get_electron_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::AbstractChargeDriftModel; 
             use_nthreads::Int = Base.Threads.nthreads())::Array{SVector{3,T},3} where {T <: SSDFloat}
@@ -22,7 +40,25 @@ end
 """
     get_hole_drift_field(ef::Array{SVector{3, T},3}, chargedriftmodel::AbstractChargeDriftModel)::Array{SVector{3,T},3} where {T <: SSDFloat}
 
-Applies the charge drift model onto the hole field vectors. The field vectors have to be in cartesian coordinates.
+Applies the hole charge drift model onto the electric field vectors and returns the hole drift field.
+
+!!! note 
+    The field vectors in `ef` have to be in Cartesian coordinates. 
+
+## Arguments
+* `ef::Array{SVector{3, T},3}`: Three-dimensional array with [`ElectricField`](@ref) vectors, e.g. `simulation.electric_field.data`.
+* `chargedriftmodel::AbstractChargeDriftModel`: Model that describes the electron drift in the [`Semiconductor`](@ref).
+
+## Keywords 
+* `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
+
+## Example 
+```julia 
+get_hole_drift_field(simulation.electric_field.data, simulation.detector.semiconductor.charge_drift_model)
+```
+
+!!! note 
+    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
 """
 function get_hole_drift_field(ef::Array{SVector{3,T},3}, chargedriftmodel::AbstractChargeDriftModel; 
             use_nthreads::Int = Base.Threads.nthreads())::Array{SVector{3,T},3} where {T <: SSDFloat}
