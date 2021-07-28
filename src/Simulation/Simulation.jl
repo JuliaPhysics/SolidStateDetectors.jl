@@ -91,10 +91,10 @@ end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
 function Simulation(nt::NamedTuple)
-    ep = ElectricPotential(nt.electric_potential)
-    T = eltype(ep.data)
+    epot = ElectricPotential(nt.electric_potential)
+    T = eltype(epot.data)
     sim = Simulation{T}( Dict(nt.detector_json_string) )
-    if !ismissing(nt.electric_potential) sim.electric_potential = ep end
+    if !ismissing(nt.electric_potential) sim.electric_potential = epot end
     if !ismissing(nt.q_eff_imp) sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp) end
     if !ismissing(nt.q_eff_fix) sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix) end
     if !ismissing(nt.ϵ_r) sim.ϵ_r = DielectricDistribution(nt.ϵ_r) end

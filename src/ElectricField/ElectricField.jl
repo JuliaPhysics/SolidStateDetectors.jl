@@ -49,18 +49,18 @@ Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 
 
-function ElectricField(ep::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
-    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( ep, pointtypes ), ep.grid)
+function ElectricField(epot::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
+    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( epot, pointtypes ), epot.grid)
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
-    p = ep.data
-    axr::Vector{T} = collect(ep.grid.axes[1])
-    axφ::Vector{T} = collect(ep.grid.axes[2])
-    axz::Vector{T} = collect(ep.grid.axes[3])
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
+    p = epot.data
+    axr::Vector{T} = collect(epot.grid.axes[1])
+    axφ::Vector{T} = collect(epot.grid.axes[2])
+    axz::Vector{T} = collect(epot.grid.axes[3])
 
-    cyclic::T = ep.grid.axes[2].interval.right
+    cyclic::T = epot.grid.axes[2].interval.right
     ef = Array{SVector{3, T}}(undef, size(p)...)
     for iz in 1:size(ef, 3)
         for iφ in 1:size(ef, 2)
@@ -165,16 +165,16 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
 end
 
 
-function interpolated_scalarfield(ep::ScalarPotential{T, 3, Cylindrical}) where {T}
-    @inbounds knots = ep.grid.axes[1].ticks, cat(ep.grid.axes[2].ticks,T(2π),dims=1), ep.grid.axes[3].ticks
-    ext_data = cat(ep.data, ep.data[:,1:1,:], dims=2)
+function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
+    @inbounds knots = spot.grid.axes[1].ticks, cat(spot.grid.axes[2].ticks,T(2π),dims=1), spot.grid.axes[3].ticks
+    ext_data = cat(spot.data, spot.data[:,1:1,:], dims=2)
     i = interpolate(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
 end
-function interpolated_scalarfield(ep::ScalarPotential{T, 3, Cartesian}) where {T}
-    @inbounds knots = ep.grid.axes[1].ticks, ep.grid.axes[2].ticks, ep.grid.axes[3].ticks
-    i = interpolate(knots, ep.data, Gridded(Linear()))
+function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cartesian}) where {T}
+    @inbounds knots = spot.grid.axes[1].ticks, spot.grid.axes[2].ticks, spot.grid.axes[3].ticks
+    i = interpolate(knots, spot.data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return vector_field_itp
 end
@@ -195,62 +195,62 @@ function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) whe
 end
 
 
-function get_electric_field_from_potential(ep::ElectricPotential{T, 3, Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
-    axx::Vector{T} = collect(ep.grid.axes[1])
-    axy::Vector{T} = collect(ep.grid.axes[2])
-    axz::Vector{T} = collect(ep.grid.axes[3])
-    axx_ext::Vector{T} = get_extended_ticks(ep.grid.axes[1])
-    axy_ext::Vector{T} = get_extended_ticks(ep.grid.axes[2])
-    axz_ext::Vector{T} = get_extended_ticks(ep.grid.axes[3])
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
+    axx::Vector{T} = collect(epot.grid.axes[1])
+    axy::Vector{T} = collect(epot.grid.axes[2])
+    axz::Vector{T} = collect(epot.grid.axes[3])
+    axx_ext::Vector{T} = get_extended_ticks(epot.grid.axes[1])
+    axy_ext::Vector{T} = get_extended_ticks(epot.grid.axes[2])
+    axz_ext::Vector{T} = get_extended_ticks(epot.grid.axes[3])
 
-    ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(ep.data))
+    ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(epot.data))
 
     for ix in eachindex(axx)
         for iy in eachindex(axy)
             for iz in eachindex(axz)
                 if ix - 1 < 1
-                    Δp_x_1::T = ep.data[ix + 1, iy, iz] - ep.data[ix, iy, iz]
+                    Δp_x_1::T = epot.data[ix + 1, iy, iz] - epot.data[ix, iy, iz]
                     d_x_1::T = axx[ix + 1] - axx[ix]
                     ex::T =  Δp_x_1 / d_x_1
                 elseif ix + 1 > size(ef, 1)
-                    Δp_x_1 = ep.data[ix, iy, iz] - ep.data[ix - 1, iy, iz]
+                    Δp_x_1 = epot.data[ix, iy, iz] - epot.data[ix - 1, iy, iz]
                     d_x_1 = axx[ix] - axx[ix - 1]
                     ex = Δp_x_1 / d_x_1
                 else
-                    Δp_x_1 = ep.data[ix + 1, iy, iz] - ep.data[ix ,iy, iz]
-                    Δp_x_2::T = ep.data[ix, iy, iz] - ep.data[ix - 1, iy, iz]
+                    Δp_x_1 = epot.data[ix + 1, iy, iz] - epot.data[ix ,iy, iz]
+                    Δp_x_2::T = epot.data[ix, iy, iz] - epot.data[ix - 1, iy, iz]
                     d_x_1 = axx[ix + 1] - axx[ix]
                     d_x_2::T = axx[ix] - axx[ix - 1]
                     ex = (Δp_x_1 / d_x_1 + Δp_x_2 / d_x_2) / 2
                 end
 
                 if iy - 1 < 1
-                    Δp_y_1::T = ep.data[ix, iy + 1, iz] - ep.data[ix ,iy, iz]
+                    Δp_y_1::T = epot.data[ix, iy + 1, iz] - epot.data[ix ,iy, iz]
                     d_y_1::T = axy[iy + 1] - axy[iy]
                     ey::T =  Δp_y_1 / d_y_1
                 elseif iy + 1 > size(ef, 2)
-                    Δp_y_1 = ep.data[ix, iy, iz] - ep.data[ix, iy - 1, iz]
+                    Δp_y_1 = epot.data[ix, iy, iz] - epot.data[ix, iy - 1, iz]
                     d_y_1 = axy[iy] - axy[iy - 1]
                     ey = Δp_y_1 / d_y_1
                 else
-                    Δp_y_1 = ep.data[ix, iy + 1, iz] - ep.data[ix ,iy, iz]
-                    Δp_y_2::T = ep.data[ix, iy, iz] - ep.data[ix, iy - 1, iz]
+                    Δp_y_1 = epot.data[ix, iy + 1, iz] - epot.data[ix ,iy, iz]
+                    Δp_y_2::T = epot.data[ix, iy, iz] - epot.data[ix, iy - 1, iz]
                     d_y_1 = axy[iy + 1] - axy[iy]
                     d_y_2::T = axy[iy] - axy[iy - 1]
                     ey = (Δp_y_1 / d_y_1 + Δp_y_2 / d_y_2) / 2
                 end
 
                 if iz - 1 < 1
-                    Δp_z_1::T = ep.data[ix, iy, iz + 1] - ep.data[ix, iy, iz]
+                    Δp_z_1::T = epot.data[ix, iy, iz + 1] - epot.data[ix, iy, iz]
                     d_z_1::T = axz[iz + 1] - axz[iz]
                     ez::T =  Δp_z_1 / d_z_1
                 elseif iz + 1 > size(ef, 3)
-                    Δp_z_1 = ep.data[ix, iy, iz] - ep.data[ix, iy, iz - 1]
+                    Δp_z_1 = epot.data[ix, iy, iz] - epot.data[ix, iy, iz - 1]
                     d_z_1 = axz[iz] - axz[iz - 1]
                     ez = Δp_z_1 / d_z_1
                 else
-                    Δp_z_1 = ep.data[ix, iy, iz + 1] - ep.data[ix ,iy, iz]
-                    Δp_z_2::T = ep.data[ix, iy, iz] - ep.data[ix, iy, iz - 1]
+                    Δp_z_1 = epot.data[ix, iy, iz + 1] - epot.data[ix ,iy, iz]
+                    Δp_z_2::T = epot.data[ix, iy, iz] - epot.data[ix, iy, iz - 1]
                     d_z_1 = axz[iz + 1] - axz[iz]
                     d_z_2::T = axz[iz] - axz[iz - 1]
                     ez = (Δp_z_1 / d_z_1 + Δp_z_2 / d_z_2) / 2

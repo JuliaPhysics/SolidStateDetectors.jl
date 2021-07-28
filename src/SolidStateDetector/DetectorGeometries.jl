@@ -155,10 +155,10 @@ function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, det::SolidStateDetector{T
         ρ_semiconductor = get_charge_density(det.semiconductor, pt) 
         ϵ = det.semiconductor.material.ϵ_r
     elseif !ismissing(det.passives) && in(pt, det.passives)
-        for ep in det.passives
-            if pt in ep
-                q_eff_fix = get_charge_density(ep, pt)
-                ϵ = ep.material.ϵ_r
+        for passive in det.passives
+            if pt in passive
+                q_eff_fix = get_charge_density(passive, pt)
+                ϵ = passive.material.ϵ_r
                 break
             end
         end

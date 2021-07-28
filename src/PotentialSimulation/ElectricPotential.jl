@@ -18,11 +18,11 @@ struct ElectricPotential{T, N, S, AT} <: AbstractArray{T, N}
     grid::Grid{T, N, S, AT}
 end
 
-@inline size(ep::ElectricPotential{T, N, S}) where {T, N, S} = size(ep.data)
-@inline length(ep::ElectricPotential{T, N, S}) where {T, N, S} = length(ep.data)
-@inline getindex(ep::ElectricPotential{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(ep.data, I...)
-@inline getindex(ep::ElectricPotential{T, N, S}, i::Int) where {T, N, S} = getindex(ep.data, i)
-@inline getindex(ep::ElectricPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(ep.grid, s)
+@inline size(epot::ElectricPotential{T, N, S}) where {T, N, S} = size(epot.data)
+@inline length(epot::ElectricPotential{T, N, S}) where {T, N, S} = length(epot.data)
+@inline getindex(epot::ElectricPotential{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(epot.data, I...)
+@inline getindex(epot::ElectricPotential{T, N, S}, i::Int) where {T, N, S} = getindex(epot.data, i)
+@inline getindex(epot::ElectricPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(epot.grid, s)
 
 
 # """
@@ -47,10 +47,10 @@ end
 
 
 
-function NamedTuple(ep::ElectricPotential{T, 3}) where {T}
+function NamedTuple(epot::ElectricPotential{T, 3}) where {T}
     return (
-        grid = NamedTuple(ep.grid),
-        values = ep.data * u"V",
+        grid = NamedTuple(epot.grid),
+        values = epot.data * u"V",
     )
 end
 Base.convert(T::Type{NamedTuple}, x::ElectricPotential) = T(x)

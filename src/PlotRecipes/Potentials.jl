@@ -33,17 +33,17 @@ end
 
 
 
-@recipe function f(ep::ElectricPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
+@recipe function f(epot::ElectricPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
-    if !(ep.grid[2][end] - ep.grid[2][1] ≈ 2π) ep = get_2π_potential(ep, n_points_in_φ = 72) end
+    if !(epot.grid[2][end] - epot.grid[2][1] ≈ 2π) epot = get_2π_potential(epot, n_points_in_φ = 72) end
 
-    grid::Grid{T, 3, Cylindrical} = ep.grid
+    grid::Grid{T, 3, Cylindrical} = epot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    ep, cross_section, idx, value, contours_equal_potential, full_det
+    epot, cross_section, idx, value, contours_equal_potential, full_det
 end
 
 
@@ -220,14 +220,14 @@ function get_crosssection_idx_and_value(grid::Grid{T, 3, Cartesian}, x, y, z)::T
     cross_section, idx, value
 end
 
-@recipe function f(ep::ElectricPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
-    grid::Grid{T, 3, Cartesian} = ep.grid
+@recipe function f(epot::ElectricPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
+    grid::Grid{T, 3, Cartesian} = epot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    ep, cross_section, idx, value, contours_equal_potential
+    epot, cross_section, idx, value, contours_equal_potential
 end
 
 @recipe function f(wp::WeightingPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
