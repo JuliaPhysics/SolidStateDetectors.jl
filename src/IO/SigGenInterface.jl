@@ -1,12 +1,14 @@
 """
-    readsiggen(file_path::String[, T::Type=Float64])
-Read the '*.config' file in 'file_path' for SigGen and returns a dictionary of all parameters.
-Non-existing parameteres are set to 0.
-...
-# Arguments
-- `file_path::String`: file path for the SigGen config file.
-- `T::Type=Float64`: type of the parameters in the output dictionary.
-...
+    readsiggen(file_path::String; T::Type)
+    
+Reads a SigGen configuration file (ending in `.config`) in 'file_path'
+and returns a dictionary of all parameters. Non-existing parameteres are set to 0.
+
+## Arguments
+* `file_path::String`: File path to the SigGen config file.
+
+## Keywords 
+* `T::Type`: Type of the parameters in the output dictionary. Default is `Float64`.
 """
 function readsiggen(file_path::String; T::Type=Float64)
     #detector_name = split(basename(file_path), ".config")[1]
