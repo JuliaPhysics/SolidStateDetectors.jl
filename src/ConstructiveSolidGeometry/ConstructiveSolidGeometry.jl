@@ -67,7 +67,13 @@ module ConstructiveSolidGeometry
     """
         extreme_points(es::AbstractPrimitive{T}) where {T}
 
-    General implementation for all primitives.
+    Generic fallback of `extreme_points` for any primitive. 
+    Returns 6 `CartesianPoint`s in both directions of each cartesian axes (x, y and z)
+    around the origin of the primitive with distance determined by `extremum(es)`,
+    which returns the maximum distance of an primitive to its origin.
+
+    ## Arguments
+    * `es::AbstractPrimitive{T}`: Any primitive, e.g. a `Box`.
     """
     function extreme_points(es::AbstractPrimitive{T}) where {T}
         o = origin(es)
