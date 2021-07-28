@@ -126,7 +126,7 @@ end
     show_full_det = full_det && dim_symbol == :φ # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
     (dim_symbol != :r && !(dim_symbol == :z && S == Cylindrical) ) ? aspect_ratio --> 1 : nothing
-    title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°, (=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
+    title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°\n(=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
     xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
     yguide --> "z / m"
     (S == Cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
