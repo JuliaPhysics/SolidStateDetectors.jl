@@ -75,6 +75,7 @@ is_depleted(point_types::PointTypes)::Bool =
 
 """
     get_active_volume(pts::PointTypes{T}) where {T}
+
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
 all depleted cells.
 """
@@ -87,9 +88,6 @@ function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
     r_ext::Vector{T} = get_extended_ticks(pts.grid.axes[1])
     φ_ext::Vector{T} = get_extended_ticks(pts.grid.axes[2])
     z_ext::Vector{T} = get_extended_ticks(pts.grid.axes[3])
-    Δr_ext::Vector{T} = diff(r_ext)
-    Δφ_ext::Vector{T} = diff(φ_ext)
-    Δz_ext::Vector{T} = diff(z_ext)
 
     mpr::Vector{T} = midpoints(r_ext)
     mpφ::Vector{T} = midpoints(φ_ext)
@@ -131,6 +129,36 @@ function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
     end
     if cyclic > 0
         active_volume *= 2π / cyclic
+    end
+
+    f::T = 10^6
+    return active_volume * f * Unitful.cm * Unitful.cm * Unitful.cm
+end
+
+function get_active_volume(pts::PointTypes{T, 3, Cartesian}) where {T}
+    active_volume::T = 0
+
+    x_ext::Vector{T} = get_extended_ticks(pts.grid.axes[1])
+    y_ext::Vector{T} = get_extended_ticks(pts.grid.axes[2])
+    z_ext::Vector{T} = get_extended_ticks(pts.grid.axes[3])
+
+    mpx::Vector{T} = midpoints(x_ext)
+    mpy::Vector{T} = midpoints(y_ext)
+    mpz::Vector{T} = midpoints(z_ext)
+    Δmpx::Vector{T} = diff(mpx)
+    Δmpy::Vector{T} = diff(mpy)
+    Δmpz::Vector{T} = diff(mpz)
+
+    for iz in eachindex(pts.grid.axes[3])
+        for iy in eachindex(pts.grid.axes[2])
+            for ix in eachindex(pts.grid.axes[1])
+                pt::PointType = pts[ix, iy, iz]
+                if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
+                    dV = Δmpx[ix] * Δmpy[iy] * Δmpz[iz]
+                    active_volume += dV
+                end
+            end
+        end
     end
 
     f::T = 10^6
