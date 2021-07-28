@@ -1,24 +1,24 @@
-@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, ::Type{Cartesian})::T where {T <: SSDFloat}
-    return wp(pt.x, pt.y, pt.z)::T
+@inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, ::Type{Cartesian})::T where {T <: SSDFloat}
+    return wpot(pt.x, pt.y, pt.z)::T
 end
-@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, ::Type{Cylindrical})::T where {T <: SSDFloat}
+@inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, ::Type{Cylindrical})::T where {T <: SSDFloat}
     p::CylindricalPoint{T} = CylindricalPoint(pt)
-    return wp(p.r, p.φ, p.z)::T
+    return wpot(p.r, p.φ, p.z)::T
 end
-@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CylindricalPoint{T}, ::Type{Cartesian})::T where {T <: SSDFloat}
+@inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CylindricalPoint{T}, ::Type{Cartesian})::T where {T <: SSDFloat}
     p::CartesianPoint{T} = CartesianPoint(pt)
-    return wp(p.x, p.y, p.z)::T
+    return wpot(p.x, p.y, p.z)::T
 end
-@inline function get_interpolation(wp::Interpolations.Extrapolation{T, 3}, pt::CylindricalPoint{T}, ::Type{Cylindrical})::T where {T <: SSDFloat}
-    return wp(pt.r, pt.φ, pt.z)::T
+@inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CylindricalPoint{T}, ::Type{Cylindrical})::T where {T <: SSDFloat}
+    return wpot(pt.r, pt.φ, pt.z)::T
 end
 
 
 function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, path::Vector{CartesianPoint{T}}, pathtimestamps::AbstractVector{T}, charge::T, 
-                        wp::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
+                        wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
     tmp_signal = Vector{T}(undef, length(pathtimestamps))
     @inbounds for i in eachindex(tmp_signal)
-        tmp_signal[i] = get_interpolation(wp, path[i], S)::T * charge
+        tmp_signal[i] = get_interpolation(wpot, path[i], S)::T * charge
     end
     itp = interpolate( (pathtimestamps,), tmp_signal, Gridded(Linear()))
     t_max::T = last(pathtimestamps)
@@ -31,21 +31,15 @@ function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, p
 end
 
 
-function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{TT}, path::EHDriftPath{T, TT}, charge::T, wp::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat, TT}
-    add_signal!(signal, timestamps, path.e_path, path.timestamps_e, -charge, wp, S) # electrons induce negative charge
-    add_signal!(signal, timestamps, path.h_path, path.timestamps_h,  charge, wp, S)
+function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{TT}, path::EHDriftPath{T, TT}, charge::T, wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat, TT}
+    add_signal!(signal, timestamps, path.e_path, path.timestamps_e, -charge, wpot, S) # electrons induce negative charge
+    add_signal!(signal, timestamps, path.h_path, path.timestamps_h,  charge, wpot, S)
     nothing
 end
 
-function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{<:RealQuantity}, paths::Vector{<:EHDriftPath{T}}, charges::Vector{T}, wp::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
+function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{<:RealQuantity}, paths::Vector{<:EHDriftPath{T}}, charges::Vector{T}, wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
     for ipath in eachindex(paths)
-        add_signal!(signal, timestamps, paths[ipath], charges[ipath], wp, S)
+        add_signal!(signal, timestamps, paths[ipath], charges[ipath], wpot, S)
     end
     nothing
 end
-
-# function get_signal(path::Vector{CartesianPoint{T}}, charge::T, wp::Interpolations.Extrapolation{T, 3}, S::AbstractCoordinateSystem)::Vector{T} where {T <: SSDFloat}
-#     signal::Vector{T} = zeros(T, length(path))
-#     add_signal!(signal, path, charge, wp, S)
-#     return signal
-# end

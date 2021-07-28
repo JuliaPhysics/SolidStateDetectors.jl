@@ -47,20 +47,20 @@ end
 end
 
 
-@recipe function f(wp::WeightingPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
+@recipe function f(wpot::WeightingPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
-    if !(wp.grid[2][end] - wp.grid[2][1] ≈ 2π)
-        wp = get_2π_potential(wp, n_points_in_φ = 72)
+    if !(wpot.grid[2][end] - wpot.grid[2][1] ≈ 2π)
+        wpot = get_2π_potential(wpot, n_points_in_φ = 72)
     end
 
-    grid::Grid{T, 3, Cylindrical} = wp.grid
+    grid::Grid{T, 3, Cylindrical} = wpot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :viridis
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    wp, cross_section, idx, value, contours_equal_potential, full_det
+    wpot, cross_section, idx, value, contours_equal_potential, full_det
 end
 
 
@@ -230,16 +230,16 @@ end
     epot, cross_section, idx, value, contours_equal_potential
 end
 
-@recipe function f(wp::WeightingPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
+@recipe function f(wpot::WeightingPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cartesian} = wp.grid
+    grid::Grid{T, 3, Cartesian} = wpot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :viridis
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    wp, cross_section, idx, value, contours_equal_potential
+    wpot, cross_section, idx, value, contours_equal_potential
 end
 
 

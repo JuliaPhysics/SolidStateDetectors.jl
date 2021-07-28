@@ -18,11 +18,11 @@ struct WeightingPotential{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractAr
     grid::Grid{T, N, S, AT}
 end
 
-@inline size(wp::WeightingPotential{T, N, S}) where {T, N, S} = size(wp.data)
-@inline length(wp::WeightingPotential{T, N, S}) where {T, N, S} = length(wp.data)
-@inline getindex(wp::WeightingPotential{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(wp.data, I...)
-@inline getindex(wp::WeightingPotential{T, N, S}, i::Int) where {T, N, S} = getindex(wp.data, i)
-@inline getindex(wp::WeightingPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(wp.grid, s)
+@inline size(wpot::WeightingPotential{T, N, S}) where {T, N, S} = size(wpot.data)
+@inline length(wpot::WeightingPotential{T, N, S}) where {T, N, S} = length(wpot.data)
+@inline getindex(wpot::WeightingPotential{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(wpot.data, I...)
+@inline getindex(wpot::WeightingPotential{T, N, S}, i::Int) where {T, N, S} = getindex(wpot.data, i)
+@inline getindex(wpot::WeightingPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(wpot.grid, s)
 
 
 function WeightingPotential(fss::PotentialSimulationSetup{T, 3, Cylindrical}; kwargs...)::WeightingPotential{T, 3, Cylindrical} where {T <: SSDFloat}
@@ -41,10 +41,10 @@ function WeightingPotential(nt::NamedTuple)
 end
 Base.convert(T::Type{WeightingPotential}, x::NamedTuple) = T(x)
 
-function NamedTuple(ep::WeightingPotential{T, 3}) where {T}
+function NamedTuple(wpot::WeightingPotential{T, 3}) where {T}
     return (
-        grid = NamedTuple(ep.grid),
-        values = ep.data,
+        grid = NamedTuple(wpot.grid),
+        values = wpot.data,
     )
 end
 Base.convert(T::Type{NamedTuple}, x::WeightingPotential) = T(x)

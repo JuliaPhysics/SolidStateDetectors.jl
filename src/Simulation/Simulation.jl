@@ -65,13 +65,13 @@ get_precision_type(::Simulation{T}) where {T} = T
 get_coordinate_system(::Simulation{T, CS}) where {T, CS} = CS
 
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
-    wps_strings = AbstractString[]
+    wpots_strings = AbstractString[]
     for contact in sim.detector.contacts
         if !ismissing(sim.weighting_potentials[contact.id])
-            push!(wps_strings, "WeightingPotential_$(contact.id)")
+            push!(wpots_strings, "WeightingPotential_$(contact.id)")
         end
     end
-    wps_syms = Symbol.(wps_strings)
+    wpots_syms = Symbol.(wpots_strings)
     nt = (
         detector_json_string = NamedTuple(sim.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
@@ -83,8 +83,8 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         electron_drift_field = NamedTuple(sim.electron_drift_field),
         hole_drift_field = NamedTuple(sim.hole_drift_field)
     )
-    if length(wps_strings) > 0
-        nt = merge(nt, (weighting_potentials = NamedTuple{Tuple(wps_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))),))
+    if length(wpots_strings) > 0
+        nt = merge(nt, (weighting_potentials = NamedTuple{Tuple(wpots_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))),))
     end
     return nt
 end
@@ -996,10 +996,10 @@ end
 
 function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
     dt::T = to_internal_units(Δt)
-    wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
+    wpot::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, energy_depositions, wp, CS)
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS)
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal )
 end
 

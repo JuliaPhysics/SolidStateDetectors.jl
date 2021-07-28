@@ -81,12 +81,12 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, refinement_limits = key == :Coax ? missing : [0.2], verbose = true)
     end
-    wp_plots = if S != SSD.Cartesian
+    wpot_plots = if S != SSD.Cartesian
         [ plot(sim.weighting_potentials[contact.id]) for contact in sim.detector.contacts ]
     else
         [ plot(sim.weighting_potentials[contact.id], y = 0.002) for contact in sim.detector.contacts ]
     end
-    plot( wp_plots..., size = (1000, 1000))
+    plot( wpot_plots..., size = (1000, 1000))
     savefig(joinpath(outputdir, "$(key)_2_Weighting_Potentials"))
 
     calculate_electric_field!(sim)

@@ -49,12 +49,12 @@ Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 
 
-function ElectricField(epot::ElectricPotential{T, 3, S}, pointtypes::PointTypes{T}) where {T, S}
-    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( epot, pointtypes ), epot.grid)
+function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes{T}) where {T, S}
+    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( epot, point_types ), epot.grid)
 end
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, pointtypes::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = epot.data
     axr::Vector{T} = collect(epot.grid.axes[1])
     axφ::Vector{T} = collect(epot.grid.axes[2])
@@ -117,25 +117,25 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     d_z_2 = axz[iz]-axz[iz-1]
                     ez = ( Δp_z_1/d_z_1 + Δp_z_2/d_z_2) / 2
                 end
-                if pointtypes[ir, iφ, iz] & update_bit == 0 # boundary points
-                    if (1 < ir < size(pointtypes, 1))
-                        if (pointtypes[ir - 1, iφ, iz] & update_bit > 0) && (pointtypes[ir + 1, iφ, iz] & update_bit > 0)
+                if point_types[ir, iφ, iz] & update_bit == 0 # boundary points
+                    if (1 < ir < size(point_types, 1))
+                        if (point_types[ir - 1, iφ, iz] & update_bit > 0) && (point_types[ir + 1, iφ, iz] & update_bit > 0)
                             er = 0
-                        elseif (pointtypes[ir - 1, iφ, iz] & update_bit > 0) || (pointtypes[ir + 1, iφ, iz] & update_bit > 0)
+                        elseif (point_types[ir - 1, iφ, iz] & update_bit > 0) || (point_types[ir + 1, iφ, iz] & update_bit > 0)
                             er *= 2
                         end
                     end
-                    if (1 < iφ < size(pointtypes, 2))
-                        if (pointtypes[ir, iφ - 1, iz] & update_bit > 0) && (pointtypes[ir, iφ + 1, iz] & update_bit > 0)
+                    if (1 < iφ < size(point_types, 2))
+                        if (point_types[ir, iφ - 1, iz] & update_bit > 0) && (point_types[ir, iφ + 1, iz] & update_bit > 0)
                             eφ = 0
-                        elseif (pointtypes[ir, iφ - 1, iz] & update_bit > 0) || (pointtypes[ir, iφ + 1, iz] & update_bit > 0)
+                        elseif (point_types[ir, iφ - 1, iz] & update_bit > 0) || (point_types[ir, iφ + 1, iz] & update_bit > 0)
                             eφ *= 2
                         end
                     end
-                    if (1 < iz < size(pointtypes, 3))
-                        if (pointtypes[ir, iφ, iz - 1] & update_bit > 0) && (pointtypes[ir, iφ, iz + 1] & update_bit > 0)
+                    if (1 < iz < size(point_types, 3))
+                        if (point_types[ir, iφ, iz - 1] & update_bit > 0) && (point_types[ir, iφ, iz + 1] & update_bit > 0)
                             ez = 0
-                        elseif (pointtypes[ir, iφ, iz - 1] & update_bit > 0) || (pointtypes[ir, iφ, iz + 1] & update_bit > 0)
+                        elseif (point_types[ir, iφ, iz - 1] & update_bit > 0) || (point_types[ir, iφ, iz + 1] & update_bit > 0)
                             ez *= 2
                         end
                     end
@@ -148,7 +148,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
     if fieldvector_coordinates == :xyz
         ef = convert_field_vectors_to_xyz(ef, axφ)
     end
-    return ElectricField(ef, pointtypes.grid)
+    return ElectricField(ef, point_types.grid)
 end
 
 function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φa::Array{T, 1})::Array{SVector{3, T},3} where {T}
@@ -195,7 +195,7 @@ function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) whe
 end
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, pointtypes::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, point_types::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(epot.grid.axes[1])
     axy::Vector{T} = collect(epot.grid.axes[2])
     axz::Vector{T} = collect(epot.grid.axes[3])
@@ -256,25 +256,25 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesi
                     ez = (Δp_z_1 / d_z_1 + Δp_z_2 / d_z_2) / 2
                 end
 
-                if pointtypes[ix, iy, iz] & update_bit == 0 # boundary points
-                    if (1 < ix < size(pointtypes, 1))
-                        if (pointtypes[ix - 1, iy, iz] & update_bit > 0) && (pointtypes[ix + 1, iy, iz] & update_bit > 0)
+                if point_types[ix, iy, iz] & update_bit == 0 # boundary points
+                    if (1 < ix < size(point_types, 1))
+                        if (point_types[ix - 1, iy, iz] & update_bit > 0) && (point_types[ix + 1, iy, iz] & update_bit > 0)
                             ex = 0
-                        elseif (pointtypes[ix - 1, iy, iz] & update_bit > 0) || (pointtypes[ix + 1, iy, iz] & update_bit > 0)
+                        elseif (point_types[ix - 1, iy, iz] & update_bit > 0) || (point_types[ix + 1, iy, iz] & update_bit > 0)
                             ex *= 2
                         end
                     end
-                    if (1 < iy < size(pointtypes, 2))
-                        if (pointtypes[ix, iy - 1, iz] & update_bit > 0) && (pointtypes[ix, iy + 1, iz] & update_bit > 0)
+                    if (1 < iy < size(point_types, 2))
+                        if (point_types[ix, iy - 1, iz] & update_bit > 0) && (point_types[ix, iy + 1, iz] & update_bit > 0)
                             ey = 0
-                        elseif (pointtypes[ix, iy - 1, iz] & update_bit > 0) || (pointtypes[ix, iy + 1, iz] & update_bit > 0)
+                        elseif (point_types[ix, iy - 1, iz] & update_bit > 0) || (point_types[ix, iy + 1, iz] & update_bit > 0)
                             ey *= 2
                         end
                     end
-                    if (1 < iz < size(pointtypes, 3))
-                        if (pointtypes[ix, iy, iz - 1] & update_bit > 0) && (pointtypes[ix, iy, iz + 1] & update_bit > 0)
+                    if (1 < iz < size(point_types, 3))
+                        if (point_types[ix, iy, iz - 1] & update_bit > 0) && (point_types[ix, iy, iz + 1] & update_bit > 0)
                             ez = 0
-                        elseif (pointtypes[ix, iy, iz - 1] & update_bit > 0) || (pointtypes[ix, iy, iz + 1] & update_bit > 0)
+                        elseif (point_types[ix, iy, iz - 1] & update_bit > 0) || (point_types[ix, iy, iz + 1] & update_bit > 0)
                             ez *= 2
                         end
                     end
@@ -283,5 +283,5 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesi
             end
         end
     end
-    return ElectricField(ef, pointtypes.grid)
+    return ElectricField(ef, point_types.grid)
 end

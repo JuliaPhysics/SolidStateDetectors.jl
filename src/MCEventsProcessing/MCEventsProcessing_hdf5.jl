@@ -9,8 +9,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
     @info "Detector has $(n_contacts) contact(s)"
-    contacts = sim.detector.contacts;
-    # wps_interpolated = [interpolated_scalarfield(sim.weighting_potentials[contact.id]) for contact in contacts ];
+    contacts = sim.detector.contacts
     if !ispath(output_dir) mkpath(output_dir) end
     nfmt(i::Int) = format(i, zeropadding = true, width = length(digits(n_total_physics_events)))
     evt_ranges = chunked_ranges(n_total_physics_events, chunk_n_physics_events)

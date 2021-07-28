@@ -30,7 +30,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     contacts = sim.detector.contacts;
     contact_ids = Int[]
     for contact in contacts if !ismissing(sim.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
-    wps_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
+    wpots_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
     e_drift_field = get_interpolated_drift_field(sim.electron_drift_field);
     h_drift_field = get_interpolated_drift_field(sim.hole_drift_field);
     
@@ -42,11 +42,11 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
-        wp ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wp, S),
+        wpot ->  map( 
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, S),
             TypedTables.Table(dps = drift_paths, edeps = mcevents.edep)
         ),
-        wps_interpolated
+        wpots_interpolated
     )
     mcevents_chns = map(
         i -> add_column(mcevents, :chnid, fill(contact_ids[i], n_total_physics_events)),
@@ -75,11 +75,11 @@ end
 
 
 function _generate_waveform( drift_paths::Vector{EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
-                             wp::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType) where {T <: SSDFloat}
+                             wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType) where {T <: SSDFloat}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, T.(charges), wp, S)
+    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S)
     RDWaveform( timestamps_with_units, signal )
 end
 
