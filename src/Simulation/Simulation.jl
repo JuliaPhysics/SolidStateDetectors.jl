@@ -549,23 +549,6 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                             n_iterations_between_checks = n_iterations_between_checks,
                                             max_n_iterations = max_n_iterations )
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(fssrb), grid)
-
-            @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] < fssrb.minimum_applied_potential # p-type
-                    @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                        At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
-                        than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
-                        However, small overshoots could be due to numerical precision."""
-                    break
-                end
-                if sim.electric_potential.data[i] > fssrb.maximum_applied_potential # n-type
-                    @warn """Detector seems not to be not fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
-                        At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
-                        than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
-                        However, small overshoots could be due to numerical precision."""
-                    break
-                end
-            end
         end
     end
 
@@ -798,6 +781,26 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
+            end
+        end
+    end
+    if verbose && depletion_handling && isEP
+        maximum_applied_potential = maximum(broadcast(c -> c.potential, sim.detector.contacts))
+        minimum_applied_potential = minimum(broadcast(c -> c.potential, sim.detector.contacts))
+        @inbounds for i in eachindex(sim.electric_potential.data)
+            if sim.electric_potential.data[i] < minimum_applied_potential # p-type
+                @warn """Detector seems not to be fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                    At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
+                    than the minimum applied potential ($(fssrb.minimum_applied_potential) V). This should not be.
+                    However, small overshoots could be due to numerical precision."""
+                break
+            end
+            if sim.electric_potential.data[i] > maximum_applied_potential # n-type
+                @warn """Detector seems not to be not fully depleted at a bias voltage of $(fssrb.bias_voltage) V.
+                    At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
+                    than the maximum applied potential ($(fssrb.maximum_applied_potential) V). This should not be.
+                    However, small overshoots could be due to numerical precision."""
+                break
             end
         end
     end
