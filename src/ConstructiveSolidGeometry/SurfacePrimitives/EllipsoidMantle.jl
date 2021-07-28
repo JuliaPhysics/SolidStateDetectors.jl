@@ -1,3 +1,25 @@
+"""
+    struct EllipsoidMantle{T,TR,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
+
+Surface primitive describing the surface of an [`Ellipsoid`](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: SphereMantle (constant radius `r` along all axes).
+* `TP`: Type of the azimuthial angle `φ`.
+    * `TP == Nothing`: Full 2π in `φ`.
+* `TT`: Type of the polar angle `θ`.
+    * `TT == Nothing`: Full 2π in `θ`.
+* `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+
+## Fields
+* `r::TR`: Definition of the radius of the `EllipsoidMantle` (in m).
+* `φ::TP`: Range in azimuthial angle `φ` of the `EllipsoidMantle`.
+* `θ::TT`: Range in polar angle `θ` of the `EllipsoidMantle`.
+* `origin::CartesianPoint{T}`: Origin of the `Ellipsoid` which has this `EllipsoidMantle` as surface.
+* `rotation::SMatrix{3,3,T,9}`: Rotation matrix of the `Ellipsoid` which has this `EllipsoidMantle` as surface.
+"""
 @with_kw struct EllipsoidMantle{T,TR,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
     r::TR = 1
     φ::TP = nothing
