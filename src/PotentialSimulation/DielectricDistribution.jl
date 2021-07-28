@@ -32,8 +32,8 @@ end
 @inline getindex(ϵ::DielectricDistribution{T, N, S}, s::Symbol) where {T, N, S} = getindex(ϵ.grid, s)
 
 
-function DielectricDistribution(fss::PotentialSimulationSetup{T, N, S})::DielectricDistribution{T, N, S} where {T, N, S}
-    return DielectricDistribution{T, N, S}( fss.ϵ_r, fss.grid )
+function DielectricDistribution(pss::PotentialSimulationSetup{T, N, S})::DielectricDistribution{T, N, S} where {T, N, S}
+    return DielectricDistribution{T, N, S}( pss.ϵ_r, pss.grid )
 end
 
 

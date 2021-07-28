@@ -27,8 +27,8 @@ end
 @inline getindex(ρ::EffectiveChargeDensity{T, N, S}, s::Symbol) where {T, N, S} = getindex(ρ.grid, s)
 
 
-function EffectiveChargeDensity(fss::PotentialSimulationSetup{T, N, S})::EffectiveChargeDensity{T, N, S} where {T, N, S}
-    return EffectiveChargeDensity{T, N, S}( fss.ρ, fss.grid )
+function EffectiveChargeDensity(pss::PotentialSimulationSetup{T, N, S})::EffectiveChargeDensity{T, N, S} where {T, N, S}
+    return EffectiveChargeDensity{T, N, S}( pss.ρ, pss.grid )
 end
 
 

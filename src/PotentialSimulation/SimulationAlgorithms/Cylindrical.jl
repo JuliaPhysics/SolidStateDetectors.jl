@@ -1,10 +1,10 @@
 # """
-#     update!(fssrb::PotentialSimulationSetupRB{T, 3, 4, S}, RBT::DataType)::Nothing
+#     update!(pssrb::PotentialSimulationSetupRB{T, 3, 4, S}, RBT::DataType)::Nothing
 # 
 # Loop over `even` grid points. A point is `even` if the sum of its cartesian indicies (of the not extended grid) is even.
 # Even points get the red black index (rbi) = 2. ( -> rbpotential[ inds..., rbi ]).
 # """
-@fastmath function update!( fssrb::PotentialSimulationSetupRB{T, 3, 4, S}, use_nthreads::Int,
+@fastmath function update!( pssrb::PotentialSimulationSetupRB{T, 3, 4, S}, use_nthreads::Int,
                             update_even_points::Val{even_points},
                             depletion_handling::Val{depletion_handling_enabled},
                             is_weighting_potential::Val{_is_weighting_potential},
@@ -12,26 +12,26 @@
     @inbounds begin 
         rb_tar_idx::Int, rb_src_idx::Int = even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int,rb_even::Int) 
 
-        gw1::Array{T, 2} = fssrb.geom_weights[1].weights  # r or x 
-        gw2::Array{T, 2} = fssrb.geom_weights[2].weights  # φ or y
-        gw3::Array{T, 2} = fssrb.geom_weights[3].weights  # z or z
+        gw1::Array{T, 2} = pssrb.geom_weights[1].weights  # r or x 
+        gw2::Array{T, 2} = pssrb.geom_weights[2].weights  # φ or y
+        gw3::Array{T, 2} = pssrb.geom_weights[3].weights  # z or z
 
-        @onthreads 1:use_nthreads for idx3 in workpart(2:(size(fssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
-            innerloops!( idx3, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, fssrb, update_even_points, depletion_handling, is_weighting_potential, only2d)
+        @onthreads 1:use_nthreads for idx3 in workpart(2:(size(pssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
+            innerloops!( idx3, rb_tar_idx, rb_src_idx, gw1, gw2, gw3, pssrb, update_even_points, depletion_handling, is_weighting_potential, only2d)
         end 
     end 
     nothing
 end
 
 # """
-#     innerloops!(  ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
+#     innerloops!(  ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
 #                                 update_even_points::Val{even_points},
 #                                 depletion_handling::Val{depletion_handling_enabled},
 #                             )::Nothing where {T, even_points, depletion_handling_enabled}
 # 
 # (Vectorized) inner loop for Cylindrical coordinates. This function does all the work in the field calculation.                            
 # """
-@fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
+@fastmath function innerloops!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, gw_r::Array{T, 2}, gw_φ::Array{T, 2}, gw_z::Array{T, 2}, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
                                 is_weighting_potential::Val{_is_weighting_potential}, 
@@ -46,7 +46,7 @@ end
         Δr_ext_inv_l_pwmprl::T = gw_r[5, inr] 
         Δmpr_squared::T        = gw_r[6, inr]  
 
-        for iφ in 2:(size(fssrb.potential, 2) - 1)
+        for iφ in 2:(size(pssrb.potential, 2) - 1)
             # φ loop
             inφ::Int = iφ - 1
             pwwφr::T        = gw_φ[1, inφ]
@@ -77,7 +77,7 @@ end
             r_inv_pwΔmpr_Δφ_ext_inv_r::T = r_inv_pwΔmpr * Δφ_ext_inv_r
             r_inv_pwΔmpr_Δφ_ext_inv_l::T = r_inv_pwΔmpr * Δφ_ext_inv_l
 
-            @fastmath @inbounds @simd ivdep for iz in 2:(size(fssrb.potential, 1) - 1)
+            @fastmath @inbounds @simd ivdep for iz in 2:(size(pssrb.potential, 1) - 1)
                 inz::Int = nidx(iz, update_even_points, rφi_is_even_t)::Int
                 # izr::Int = get_rbidx_right_neighbour(iz, update_even_points, rφi_is_even)::Int # this is somehow slower than the two lines below
                 izr::Int = ifelse( rφi_is_even, iz, even_points ? iz - 1 : iz + 1)
@@ -89,14 +89,14 @@ end
                 Δz_ext_inv_r::T = gw_z[4, inz + 1]
                 Δz_ext_inv_l::T = gw_z[4, inz]
 
-                ϵ_rrr::T = fssrb.ϵ_r[  ir,  iφ, inz + 1]
-                ϵ_rlr::T = fssrb.ϵ_r[  ir, inφ, inz + 1]
-                ϵ_rrl::T = fssrb.ϵ_r[  ir,  iφ, inz ]
-                ϵ_rll::T = fssrb.ϵ_r[  ir, inφ, inz ]
-                ϵ_lrr::T = fssrb.ϵ_r[ inr,  iφ, inz + 1]
-                ϵ_llr::T = fssrb.ϵ_r[ inr, inφ, inz + 1]
-                ϵ_lrl::T = fssrb.ϵ_r[ inr,  iφ, inz ] 
-                ϵ_lll::T = fssrb.ϵ_r[ inr, inφ, inz ] 
+                ϵ_rrr::T = pssrb.ϵ_r[  ir,  iφ, inz + 1]
+                ϵ_rlr::T = pssrb.ϵ_r[  ir, inφ, inz + 1]
+                ϵ_rrl::T = pssrb.ϵ_r[  ir,  iφ, inz ]
+                ϵ_rll::T = pssrb.ϵ_r[  ir, inφ, inz ]
+                ϵ_lrr::T = pssrb.ϵ_r[ inr,  iφ, inz + 1]
+                ϵ_llr::T = pssrb.ϵ_r[ inr, inφ, inz + 1]
+                ϵ_lrl::T = pssrb.ϵ_r[ inr,  iφ, inz ] 
+                ϵ_lll::T = pssrb.ϵ_r[ inr, inφ, inz ] 
 
                 pwwφr_pwwzr::T = pwwφr * pwwzr
                 pwwφl_pwwzr::T = pwwφl * pwwzr
@@ -145,16 +145,16 @@ end
                 wzr *= Δz_ext_inv_r * pwΔmpφ_Δmpr_squared
                 wzl *= Δz_ext_inv_l * pwΔmpφ_Δmpr_squared
 
-                old_potential::T = fssrb.potential[iz, iφ, ir, rb_tar_idx]
+                old_potential::T = pssrb.potential[iz, iφ, ir, rb_tar_idx]
             
-                vrr::T = fssrb.potential[     iz,     iφ, ir + 1, rb_src_idx]
-                vrl::T = fssrb.potential[     iz,     iφ,    inr, rb_src_idx]
-                vφr::T = only_2d ? old_potential : fssrb.potential[ iz, iφ + 1, ir, rb_src_idx]
-                vφl::T = only_2d ? old_potential : fssrb.potential[ iz,    inφ, ir, rb_src_idx]
-                vzr::T = fssrb.potential[    izr,     iφ,     ir, rb_src_idx] 
-                vzl::T = fssrb.potential[izr - 1,     iφ,     ir, rb_src_idx]
+                vrr::T = pssrb.potential[     iz,     iφ, ir + 1, rb_src_idx]
+                vrl::T = pssrb.potential[     iz,     iφ,    inr, rb_src_idx]
+                vφr::T = only_2d ? old_potential : pssrb.potential[ iz, iφ + 1, ir, rb_src_idx]
+                vφl::T = only_2d ? old_potential : pssrb.potential[ iz,    inφ, ir, rb_src_idx]
+                vzr::T = pssrb.potential[    izr,     iφ,     ir, rb_src_idx] 
+                vzl::T = pssrb.potential[izr - 1,     iφ,     ir, rb_src_idx]
                 
-                new_potential::T = _is_weighting_potential ? 0 : (fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] + fssrb.q_eff_fix[iz, iφ, ir, rb_tar_idx])
+                new_potential::T = _is_weighting_potential ? 0 : (pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] + pssrb.q_eff_fix[iz, iφ, ir, rb_tar_idx])
 
                 new_potential = muladd( wrr, vrr, new_potential)
                 new_potential = muladd( wrl, vrl, new_potential)
@@ -163,27 +163,27 @@ end
                 new_potential = muladd( wzr, vzr, new_potential)
                 new_potential = muladd( wzl, vzl, new_potential)
 
-                new_potential *= fssrb.volume_weights[iz, iφ, ir, rb_tar_idx]
+                new_potential *= pssrb.volume_weights[iz, iφ, ir, rb_tar_idx]
 
                 new_potential -= old_potential
-                new_potential = muladd(new_potential, fssrb.sor_const[inr], old_potential)
+                new_potential = muladd(new_potential, pssrb.sor_const[inr], old_potential)
 
                 if depletion_handling_enabled
                     if inr == 1 vrl = vrr end
-                    if new_potential < fssrb.minimum_applied_potential || new_potential > fssrb.maximum_applied_potential
-                        new_potential -= fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
-                        if (fssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) fssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
-                    elseif fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] < 0 # p-type material -> charge density is negative 
+                    if new_potential < pssrb.minimum_applied_potential || new_potential > pssrb.maximum_applied_potential
+                        new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
+                        if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) pssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
+                    elseif pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] < 0 # p-type material -> charge density is negative 
                         vmin::T = ifelse( vrr <  vrl, vrr,  vrl)
                         vmin    = ifelse( vφr < vmin, vφr, vmin)
                         vmin    = ifelse( vφl < vmin, vφl, vmin)
                         vmin    = ifelse( vzr < vmin, vzr, vmin)
                         vmin    = ifelse( vzl < vmin, vzl, vmin)
                         if new_potential <= vmin # bubble point
-                            new_potential -= fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
-                            if (fssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) fssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
+                            new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
+                            if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) pssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
                         else # normal point
-                            if (fssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0) fssrb.point_types[iz, iφ, ir, rb_tar_idx] -= undepleted_bit end # unmark this point
+                            if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0) pssrb.point_types[iz, iφ, ir, rb_tar_idx] -= undepleted_bit end # unmark this point
                         end
                     else # n-type material -> charge density is positive 
                         vmax::T = ifelse( vrr >  vrl, vrr,  vrl)
@@ -192,28 +192,28 @@ end
                         vmax    = ifelse( vzr > vmax, vzr, vmax)
                         vmax    = ifelse( vzl > vmax, vzl, vmax)
                         if new_potential >= vmax # bubble point
-                            new_potential -= fssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * fssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * fssrb.sor_const[inr]
-                            if (fssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) fssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
+                            new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
+                            if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) pssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit end # mark this point as undepleted
                         else # normal point -> unmark
-                            if (fssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0) fssrb.point_types[iz, iφ, ir, rb_tar_idx] -= undepleted_bit end # unmark this point
+                            if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0) pssrb.point_types[iz, iφ, ir, rb_tar_idx] -= undepleted_bit end # unmark this point
                         end
                     end
                 end
 
-                fssrb.potential[iz, iφ, ir, rb_tar_idx]::T = ifelse(fssrb.point_types[iz, iφ, ir, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
+                pssrb.potential[iz, iφ, ir, rb_tar_idx]::T = ifelse(pssrb.point_types[iz, iφ, ir, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
             end # z loop
         end # φ loop
     end # inbounds
 end
 
 
-function update!(   fssrb::PotentialSimulationSetupRB{T}; use_nthreads::Int = Base.Threads.nthreads(), 
+function update!(   pssrb::PotentialSimulationSetupRB{T}; use_nthreads::Int = Base.Threads.nthreads(), 
                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(), only2d::Val{only_2d} = Val{false}(),
                     is_weighting_potential::Val{_is_weighting_potential} = Val{false}())::Nothing where {T, depletion_handling_enabled, only_2d, _is_weighting_potential}
-    update!(fssrb, use_nthreads, Val{true}(), depletion_handling, is_weighting_potential, only2d)
-    apply_boundary_conditions!(fssrb, Val{true}(), only2d)
-    update!(fssrb, use_nthreads, Val{false}(), depletion_handling, is_weighting_potential, only2d)
-    apply_boundary_conditions!(fssrb, Val{false}(), only2d)
+    update!(pssrb, use_nthreads, Val{true}(), depletion_handling, is_weighting_potential, only2d)
+    apply_boundary_conditions!(pssrb, Val{true}(), only2d)
+    update!(pssrb, use_nthreads, Val{false}(), depletion_handling, is_weighting_potential, only2d)
+    apply_boundary_conditions!(pssrb, Val{false}(), only2d)
     nothing
 end
    

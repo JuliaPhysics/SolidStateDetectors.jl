@@ -1,30 +1,30 @@
-function update_and_get_max_abs_diff!(  fssrb::PotentialSimulationSetupRB{T, N1, N2},
+function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, N1, N2},
                                         depletion_handling::Val{depletion_handling_enabled}, 
                                         only2d::Val{only_2d} = Val{false}(), 
                                         is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
                                         use_nthreads::Int = Base.Threads.nthreads()
                                         )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
-    tmp_potential::Array{T, N2} = copy(fssrb.potential)
+    tmp_potential::Array{T, N2} = copy(pssrb.potential)
     if depletion_handling_enabled
-        update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-        slopes::Array{T, N2} = tmp_potential - fssrb.potential
+        update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+        slopes::Array{T, N2} = tmp_potential - pssrb.potential
         @inbounds for i in 1:19
-            tmp_potential[:] = fssrb.potential[:]
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-            slopes += tmp_potential - fssrb.potential
+            tmp_potential[:] = pssrb.potential[:]
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            slopes += tmp_potential - pssrb.potential
         end
         @inbounds slopes /= 20
         return maximum(abs.(slopes))
     else
         for i in 1:10
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
         end
-        max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
+        max_diff::T = maximum(abs.(tmp_potential - pssrb.potential))
         return max_diff
     end
 end
 
-function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}, 
+function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}, 
                                     convergence_limit::T;
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
@@ -36,15 +36,15 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
     n_iterations::Int = 0
     cf::T = Inf
     cfs::Vector{T} = fill(cf, 10)
-    cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
+    cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * pssrb.bias_voltage) # to get relative change in respect to bias voltage
     # To disable automatically ProgressMeters in CI builds:
     is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
     prog = ProgressThresh(cl; dt = 0.1, desc = "Convergence: ", output = stderr, enabled = !is_logging(stderr))
     while cf > cl
         for i in 1:n_iterations_between_checks
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
         end
-        cf = update_and_get_max_abs_diff!(fssrb, depletion_handling, only2d, is_weighting_potential, use_nthreads)
+        cf = update_and_get_max_abs_diff!(pssrb, depletion_handling, only2d, is_weighting_potential, use_nthreads)
         @inbounds cfs[1:end-1] = cfs[2:end]
         @inbounds cfs[end] = cf
         slope::T = abs(mean(diff(cfs)))
@@ -61,23 +61,23 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
         end
     end
     if depletion_handling_enabled
-        tmp_point_types::Array{PointType, N2} = fssrb.point_types .& undepleted_bit
+        tmp_point_types::Array{PointType, N2} = pssrb.point_types .& undepleted_bit
         @showprogress "Checking undepleted regions " for i in 1:10
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-            @inbounds for i in eachindex(fssrb.point_types)
-                if (fssrb.point_types[i] & undepleted_bit == 0) && (tmp_point_types[i] > 0)
-                    fssrb.point_types[i] += undepleted_bit
-                elseif (fssrb.point_types[i] & undepleted_bit > 0) && (tmp_point_types[i] == 0)
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            @inbounds for i in eachindex(pssrb.point_types)
+                if (pssrb.point_types[i] & undepleted_bit == 0) && (tmp_point_types[i] > 0)
+                    pssrb.point_types[i] += undepleted_bit
+                elseif (pssrb.point_types[i] & undepleted_bit > 0) && (tmp_point_types[i] == 0)
                     tmp_point_types[i] += undepleted_bit
                 end
             end
         end
-        @inbounds for i in eachindex(fssrb.point_types)
-            if (fssrb.point_types[i] & update_bit == 0)
-                fssrb.point_types[i] = PointType(0)
+        @inbounds for i in eachindex(pssrb.point_types)
+            if (pssrb.point_types[i] & update_bit == 0)
+                pssrb.point_types[i] = PointType(0)
             else
-                if (fssrb.point_types[i] & pn_junction_bit == 0)
-                    if fssrb.point_types[i] & undepleted_bit > 0 fssrb.point_types[i] -= undepleted_bit end
+                if (pssrb.point_types[i] & pn_junction_bit == 0)
+                    if pssrb.point_types[i] & undepleted_bit > 0 pssrb.point_types[i] -= undepleted_bit end
                 end
             end
         end

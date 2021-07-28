@@ -280,7 +280,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3,
         point_types = clear(point_types)
     end # @inbounds
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)} = 
+    pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)} = 
         PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
@@ -297,12 +297,12 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3,
         depletion_handling_potential_limit,
         grid_boundary_factors
      )
-    return fssrb
+    return pssrb
 end
 
 
-function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T, 3} where {T}
-    pot::Array{T, 3} = Array{T, 3}(undef, size(fssrb.grid))
+function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T, 3} where {T}
+    pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = iz + 1
         for iy in axes(pot, 2)
@@ -311,7 +311,7 @@ function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Carte
             for ix in axes(pot, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                pot[ix, iy, iz] = fssrb.potential[ irbx, irby, irbz, rbi ]
+                pot[ix, iy, iz] = pssrb.potential[ irbx, irby, irbz, rbi ]
             end
         end
     end
@@ -319,8 +319,8 @@ function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Carte
 end
 
 
-function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{PointType, 3} where {T}
-    point_types::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
+function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{PointType, 3} where {T}
+    point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
     for iz in axes(point_types, 3)
         irbz::Int = iz + 1
         for iy in axes(point_types, 2)
@@ -329,7 +329,7 @@ function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::
             for ix in axes(point_types, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                point_types[ix, iy, iz] = fssrb.point_types[irbx, irby, irbz, rbi ]
+                point_types[ix, iy, iz] = pssrb.point_types[irbx, irby, irbz, rbi ]
             end
         end
     end
@@ -338,43 +338,43 @@ end
 
 
 
-function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
+function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = fssrb.geom_weights[3].weights[3, iz]
+        Δmpz::T = pssrb.geom_weights[3].weights[3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            Δmpy::T = fssrb.geom_weights[2].weights[3, iy]
+            Δmpy::T = pssrb.geom_weights[2].weights[3, iy]
             Δmpzy::T = Δmpz * Δmpy
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * fssrb.geom_weights[1].weights[3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[1].weights[3, ix]
 
-                ρ[ix, iy, iz] = fssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
+                ρ[ix, iy, iz] = pssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
             end
         end
     end
     return ρ
 end
-function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
+function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = fssrb.geom_weights[3].weights[3, iz]
+        Δmpz::T = pssrb.geom_weights[3].weights[3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            Δmpy::T = fssrb.geom_weights[2].weights[3, iy]
+            Δmpy::T = pssrb.geom_weights[2].weights[3, iy]
             Δmpzy::T = Δmpz * Δmpy
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * fssrb.geom_weights[1].weights[3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[1].weights[3, ix]
 
-                ρ[ix, iy, iz] = fssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
+                ρ[ix, iy, iz] = pssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
             end
         end
     end

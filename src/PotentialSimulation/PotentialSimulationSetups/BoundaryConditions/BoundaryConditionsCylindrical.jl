@@ -72,56 +72,56 @@ function apply_boundary_conditions_on_cyl_z_axis!(  rbpot::Array{T, 4}, ir::Int,
 end
 
 
-function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical, AT}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d, AT}
+function apply_boundary_conditions!(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical, AT}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d, AT}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
     nrbi::Int = even_points ? rb_odd::Int : rb_even::Int
-    ax1 = fssrb.grid.axes[1]
-    ax2 = fssrb.grid.axes[2]
-    ax3 = fssrb.grid.axes[3]
+    ax1 = pssrb.grid.axes[1]
+    ax2 = pssrb.grid.axes[2]
+    ax3 = pssrb.grid.axes[3]
     int1 = ax1.interval
     int2 = ax2.interval
     int3 = ax3.interval
     if only_2d
         iφ::Int = 2
-        @inbounds for iz in axes(fssrb.potential, 1)
-            # for ir in axes(fssrb.potential, 3)
-            #     apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, nrbi, ax2, int2, fssrb.grid_boundary_factors[2], only2d)
+        @inbounds for iz in axes(pssrb.potential, 1)
+            # for ir in axes(pssrb.potential, 3)
+            #     apply_boundary_conditions_on_φ_axis!( pssrb.potential, iz, ir, rbi, nrbi, ax2, int2, pssrb.grid_boundary_factors[2], only2d)
             # end
-            apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, ax1, int1, fssrb.grid_boundary_factors[1])
+            apply_boundary_conditions_on_r_axis!( pssrb.potential, iz, iφ, rbi, ax1, int1, pssrb.grid_boundary_factors[1])
         end
-        @inbounds for ir in axes(fssrb.potential, 3)
-            apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iφ, rbi, ax3, int3, fssrb.grid_boundary_factors[3])
+        @inbounds for ir in axes(pssrb.potential, 3)
+            apply_boundary_conditions_on_cyl_z_axis!( pssrb.potential, ir, iφ, rbi, ax3, int3, pssrb.grid_boundary_factors[3])
         end
     else
-        @inbounds for iz in axes(fssrb.potential, 1)
-            for iφ in axes(fssrb.potential, 2)
-                apply_boundary_conditions_on_r_axis!( fssrb.potential, iz, iφ, rbi, ax1, int1, fssrb.grid_boundary_factors[1])
+        @inbounds for iz in axes(pssrb.potential, 1)
+            for iφ in axes(pssrb.potential, 2)
+                apply_boundary_conditions_on_r_axis!( pssrb.potential, iz, iφ, rbi, ax1, int1, pssrb.grid_boundary_factors[1])
             end
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_φ_axis!( fssrb.potential, iz, ir, rbi, nrbi, ax2, int2, fssrb.grid_boundary_factors[2], only2d)
+            for ir in axes(pssrb.potential, 3)
+                apply_boundary_conditions_on_φ_axis!( pssrb.potential, iz, ir, rbi, nrbi, ax2, int2, pssrb.grid_boundary_factors[2], only2d)
             end
         end
-        @inbounds for iφ in axes(fssrb.potential, 2) # z boundaries
-            for ir in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_cyl_z_axis!( fssrb.potential, ir, iφ, rbi, ax3, int3, fssrb.grid_boundary_factors[3])
+        @inbounds for iφ in axes(pssrb.potential, 2) # z boundaries
+            for ir in axes(pssrb.potential, 3)
+                apply_boundary_conditions_on_cyl_z_axis!( pssrb.potential, ir, iφ, rbi, ax3, int3, pssrb.grid_boundary_factors[3])
             end
         end
         begin # r = 0 handling
-            nφ::Int = size(fssrb.potential, 2) - 1
-            gw_φ::Array{T, 2} = fssrb.geom_weights[2].weights
-            @inbounds for inz in 1:(size(fssrb.ϵ_r, 3) - 1)
+            nφ::Int = size(pssrb.potential, 2) - 1
+            gw_φ::Array{T, 2} = pssrb.geom_weights[2].weights
+            @inbounds for inz in 1:(size(pssrb.ϵ_r, 3) - 1)
                 m::T = 0
                 l::T = 0
                 for inφ in 1:nφ
                     if even_points ? isodd(inz + inφ) : iseven(inz + inφ)
                         l += gw_φ[3, inφ] 
-                        m += fssrb.potential[rbidx(inz), inφ + 1, 2, rbi] * gw_φ[3, inφ] 
+                        m += pssrb.potential[rbidx(inz), inφ + 1, 2, rbi] * gw_φ[3, inφ] 
                     end
                 end
                 m *= inv(l)
                 for inφ in 1:nφ
                     if even_points ? isodd(inz + inφ) : iseven(inz + inφ)
-                        fssrb.potential[rbidx(inz), inφ + 1, 2, rbi]::T = m
+                        pssrb.potential[rbidx(inz), inφ + 1, 2, rbi]::T = m
                     end
                 end
             end

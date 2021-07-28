@@ -154,24 +154,24 @@ function apply_boundary_conditions_on_y_axis!(  rbpot::Array{T, 4}, ix::Int, iz:
     nothing
 end
 
-function apply_boundary_conditions!(fssrb::PotentialSimulationSetupRB{T, N1, N2, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, N1, N2, even_points, only_2d}
+function apply_boundary_conditions!(pssrb::PotentialSimulationSetupRB{T, N1, N2, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, N1, N2, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
 
     if only_2d
         iy::Int = 2
         error("Boundary handling for 2D simulation (x&z) in cartesian coordinated not yet implemented.")
     else
-        @inbounds for ix in axes(fssrb.potential, 1)
-            for iy in axes(fssrb.potential, 2)
-                apply_boundary_conditions_on_z_axis!( fssrb.potential, ix, iy, rbi, fssrb.grid.axes[3], fssrb.grid.axes[3].interval, fssrb.grid_boundary_factors[3])
+        @inbounds for ix in axes(pssrb.potential, 1)
+            for iy in axes(pssrb.potential, 2)
+                apply_boundary_conditions_on_z_axis!( pssrb.potential, ix, iy, rbi, pssrb.grid.axes[3], pssrb.grid.axes[3].interval, pssrb.grid_boundary_factors[3])
             end
-            for iz in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_y_axis!( fssrb.potential, ix, iz, rbi, fssrb.grid.axes[2], fssrb.grid.axes[2].interval, fssrb.grid_boundary_factors[2], only2d)
+            for iz in axes(pssrb.potential, 3)
+                apply_boundary_conditions_on_y_axis!( pssrb.potential, ix, iz, rbi, pssrb.grid.axes[2], pssrb.grid.axes[2].interval, pssrb.grid_boundary_factors[2], only2d)
             end
         end
-        @inbounds for iy in axes(fssrb.potential, 2) # z boundaries
-            for iz in axes(fssrb.potential, 3)
-                apply_boundary_conditions_on_x_axis!( fssrb.potential, iy, iz, rbi, fssrb.grid.axes[1], fssrb.grid.axes[1].interval, fssrb.grid_boundary_factors[1])
+        @inbounds for iy in axes(pssrb.potential, 2) # z boundaries
+            for iz in axes(pssrb.potential, 3)
+                apply_boundary_conditions_on_x_axis!( pssrb.potential, iy, iz, rbi, pssrb.grid.axes[1], pssrb.grid.axes[1].interval, pssrb.grid_boundary_factors[1])
             end
         end
     end
