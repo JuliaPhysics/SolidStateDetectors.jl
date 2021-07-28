@@ -444,10 +444,27 @@ end
 
 
 """
-    apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim))::Nothing
+    apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
+            not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
 
 Applies the initial state of the electric potential calculation.
-It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`.
+It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`
+with the material properties and fixed potentials defined in `sim.detector`.
+
+## Arguments 
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which the initial state should be applied.
+* `grid::Grid{T}`: [`Grid`](@ref) to apply the initial state on. If no `grid` is given, 
+    a default `Grid` is determined from `sim`.
+    
+## Keywords
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+
+## Examples
+```julia
+apply_initial_state!(sim, ElectricPotential, paint_contacts = false)
+```
 """
 function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
@@ -466,7 +483,23 @@ end
     apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing
 
 Applies the initial state of the weighting potential calculation for the contact with the id `contact_id`.
-It overwrites `sim.weighting_potentials[contact_id]`.
+It overwrites `sim.weighting_potentials[contact_id]` with the fixed values on the contacts.
+
+## Arguments 
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which the initial state should be applied.
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the [`WeightingPotential`](@ref) is to be calculated.
+* `grid::Grid{T}`: [`Grid`](@ref) to apply the initial state on. If no `grid` is given, 
+    a default `Grid` is determined from `sim`.
+    
+## Keywords
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+
+## Examples
+```julia
+apply_initial_state!(sim, WeightingPotential, 1) # =>  applies initial state for weighting potential of contact with id 1
+```
 """
 function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
