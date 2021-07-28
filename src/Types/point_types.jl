@@ -66,8 +66,13 @@ end
 Returns a `Bool` value which is `true` if all point types are marked as depleted
 and `false` if any point in the point types is marked as undepleted.
 
+## Arguments
+* `point_types::PointTypes`: Point types of a [`Simulation`](@ref).
+
 ## Examples
-    is_depleted(sim.point_types)
+```julia
+is_depleted(sim.point_types)
+```
 """
 is_depleted(point_types::PointTypes)::Bool = 
     !any(b -> undepleted_bit & b > 0, point_types.data)
