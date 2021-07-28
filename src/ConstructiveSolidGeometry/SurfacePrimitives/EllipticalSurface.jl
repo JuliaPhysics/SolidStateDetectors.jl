@@ -1,16 +1,22 @@
 """
-    EllipticalSurface{T,TR,TP} <: AbstractSurfacePrimitive{T}
+    struct EllipticalSurface{T,TR,TP} <: AbstractPlanarSurfacePrimitive{T}
 
-* `r::TR`: 
-    * TR = Real -> Full Circle (a = b = r)
-    * TR = (Real, Real) -> Circular Annulus (r_in = r[1], r_out = r[2])
-    * TR = ((Real,), (Real,)) -> Full Ellipse (a = r[1][1], b = r[2][1])
-    * TR = ((Real, Real),(Real, Real)) -> Elliptical Annulus \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
-    * Not all are implemented yet
+Surface primitive describing circular bases, e.g. the top or bottom base of a [`Cone`](@ref).
 
-* `φ::TP`: 
-    * TP = Nothing <-> Full in φ
-    * ...
+## Parametric types
+* `T`: Precision type.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: Full Circle (constant radius `r`, no cut-out).
+    * `TR == Tuple{T, T}`: Circular Annulus (inner radius at `r[1]`, outer radius at `r[2]`).
+* `TP`: Type of the angular range `φ`.
+    * `TP == Nothing`: Full 2π Cone.
+    * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
+    
+## Fields
+* `r::TR`: Definition of the radius of the `EllipticalSurface` (in m).
+* `φ::TP`: Range in polar angle `φ` over which the `EllipticalSurface` extends (in radians).
+* `origin::CartesianPoint{T}`: The position of the center of the `EllipticalSurface`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `EllipticalSurface` around its `origin`.
 """
 @with_kw struct EllipticalSurface{T,TR,TP} <: AbstractPlanarSurfacePrimitive{T}
     r::TR = 1
