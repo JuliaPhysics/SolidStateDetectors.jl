@@ -1,4 +1,15 @@
+"""
+    struct Polygon{N,T} <: AbstractPlanarSurfacePrimitive{T}
+        
+Surface primitive describing a planar polygon, e.g. the base of a [`RegularPolygonPrism`](@ref).
 
+## Parametric types
+* `T`: Precision type.
+* `N`: Number of vertices of the `Polygon`.
+
+## Fields
+* `points::SVector{N, CartesianPoint{T}}`: Vertices of the polygon in the order with which they are connected.
+"""
 struct Polygon{N,T} <: AbstractPlanarSurfacePrimitive{T}
     points::SVector{N, CartesianPoint{T}} 
 end
