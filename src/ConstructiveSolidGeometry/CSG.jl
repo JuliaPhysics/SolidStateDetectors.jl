@@ -116,9 +116,52 @@ IntersectionDictionary(g::CSGIntersection{T}) where {T} = vcat(IntersectionDicti
 IntersectionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
 
 """
-    struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+    struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+        
+A `CSGDifference` of two geometries `a` and `b` is defined as the set of points that are 
+in `a` but not in `b` (`a && !b`).
 
-a && !b
+![CSGDifference](../../docs/src/assets/CSGDifference.png)
+
+!!! note
+Note that `b` is treated as open primitive. This means that points which are in 
+`a` and on the surface of `b` will still be in the `CSGDifference` of `a` and `b`.
+
+
+## Parametric types
+* `T`: Precision type.
+* `A`: Type of geometry `a`.
+* `B`: Type of geometry `b`.
+
+## Fields 
+* `a::A`: Main geometry.
+* `b::B`: Geometry to be subtracted from `a`.
+
+
+## Definition in Configuration File
+
+A `CSGDifference` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `difference`, followed by an array of geometries from
+which the difference is constructed. The first entry of the array is the main geometry, 
+from which all following geometry entries are subtracted.
+
+An example definition of a `CSGDifference` looks like this:
+```yaml
+difference: # a && !b
+  - tube: # a
+      r: 2
+      h: 1
+  - tube: # b
+      r: 1
+      h: 1.1
+```
+!!! note 
+    If more than two geometries are passed, all entries starting from the second will be subtracted from the first.
+    
+!!! note
+    Keep in mind that to discard the part of the surface of `a` which is on the surface of `b`, 
+    `b` should be chosen slightly bigger than `a`.
+
 """
 struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
