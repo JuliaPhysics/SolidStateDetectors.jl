@@ -57,7 +57,7 @@ function scale_to_given_temperature(m::LinearModel{T})::NTuple{4,T} where T <: S
     return scale_e100, scale_e111, scale_h100, scale_h111
 end
 
-ürint(io::IO, tm::LinearModel{T}) where {T <: SSDFloat} = print(io, "LinearModel{$T}")
+print(io::IO, tm::LinearModel{T}) where {T <: SSDFloat} = print(io, "LinearModel{$T}")
 function println(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
     println("\n________LinearModel________")
     println("Fit function: p1 + p2 * T\n")
