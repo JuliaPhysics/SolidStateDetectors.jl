@@ -925,7 +925,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
-                sim.electric_potential = refine_scalar_potential(sim.electric_potential, max_diffs, min_tick_distance, only2d = Val(only_2d))
+                refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
                 if verbose println("Grid size: $(size(sim.electric_potential.data))") end
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
@@ -937,7 +937,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
-                sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, min_tick_distance, only2d = Val(only_2d))
+                refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
                 if verbose println("Grid size: $(size(sim.weighting_potentials[contact_id].data))") end
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,

@@ -88,18 +88,18 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
 end
 
 
-"""
-    refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
-        only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
-
-Refine any scalar potential `p`. 
-
-1. Extent the grid to be a closed grid in all dimensions. 
-2. Refine the axis of the grid based on `max_diffs` and `minimum_applied_potential`:
-   Insert N new ticks between to existing ticks such that the potential difference between each tick becomes
-   smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
-3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
-"""
+# """
+#     refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
+#         only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
+# 
+# Refine any scalar potential `p`. 
+# 
+# 1. Extent the grid to be a closed grid in all dimensions. 
+# 2. Refine the axis of the grid based on `max_diffs` and `minimum_applied_potential`:
+#    Insert N new ticks between to existing ticks such that the potential difference between each tick becomes
+#    smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
+# 3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
+# """
 function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
         only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
     closed_potential = _get_closed_potential(p)
