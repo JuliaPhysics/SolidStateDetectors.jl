@@ -77,17 +77,23 @@ is_depleted(point_types::PointTypes)::Bool =
     get_active_volume(pts::PointTypes{T}) where {T}
 
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
-all depleted cells.
+all cells marked as depleted.
+
+## Arguments
+* `point_types::PointTypes{T}`: Point types.
+
+!!! note
+    Only `φ``-symmetries are taken into account. 
 """
-function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
+function get_active_volume(point_types::PointTypes{T, 3, Cylindrical}) where {T}
     active_volume::T = 0
 
-    only_2d::Bool = length(pts.grid.axes[2]) == 1
-    cyclic::T = pts.grid.axes[2].interval.right
+    only_2d::Bool = length(point_types.grid.axes[2]) == 1
+    cyclic::T = point_types.grid.axes[2].interval.right
 
-    r_ext::Vector{T} = get_extended_ticks(pts.grid.axes[1])
-    φ_ext::Vector{T} = get_extended_ticks(pts.grid.axes[2])
-    z_ext::Vector{T} = get_extended_ticks(pts.grid.axes[3])
+    r_ext::Vector{T} = get_extended_ticks(point_types.grid.axes[1])
+    φ_ext::Vector{T} = get_extended_ticks(point_types.grid.axes[2])
+    z_ext::Vector{T} = get_extended_ticks(point_types.grid.axes[3])
 
     mpr::Vector{T} = midpoints(r_ext)
     mpφ::Vector{T} = midpoints(φ_ext)
@@ -99,12 +105,12 @@ function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
         Δmpr_squared[1] = T(0.5) * (mpr[2]^2)
     end
 
-    isclosed::Bool = typeof(pts.grid.axes[2].interval).parameters[2] == :closed 
-    for iz in eachindex(pts.grid.axes[3])
+    isclosed::Bool = typeof(point_types.grid.axes[2].interval).parameters[2] == :closed 
+    for iz in eachindex(point_types.grid.axes[3])
         if !isclosed || only_2d
-            for iφ in eachindex(pts.grid.axes[2])
-                for ir in eachindex(pts.grid.axes[1])
-                    pt::PointType = pts[ir, iφ, iz]
+            for iφ in eachindex(point_types.grid.axes[2])
+                for ir in eachindex(point_types.grid.axes[1])
+                    pt::PointType = point_types[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV::T = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
                         active_volume += dV
@@ -112,12 +118,12 @@ function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
                 end
             end
         elseif isclosed && !only_2d
-            for iφ in eachindex(pts.grid.axes[2])
-                for ir in eachindex(pts.grid.axes[1])
-                    pt::PointType = pts[ir, iφ, iz]
+            for iφ in eachindex(point_types.grid.axes[2])
+                for ir in eachindex(point_types.grid.axes[1])
+                    pt::PointType = point_types[ir, iφ, iz]
                     if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                         dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
-                        active_volume += if iφ == length(pts.φ) || iφ == 1
+                        active_volume += if iφ == length(point_types.φ) || iφ == 1
                             dV / 2
                         else
                             dV
@@ -135,12 +141,12 @@ function get_active_volume(pts::PointTypes{T, 3, Cylindrical}) where {T}
     return active_volume * f * Unitful.cm * Unitful.cm * Unitful.cm
 end
 
-function get_active_volume(pts::PointTypes{T, 3, Cartesian}) where {T}
+function get_active_volume(point_types::PointTypes{T, 3, Cartesian}) where {T}
     active_volume::T = 0
 
-    x_ext::Vector{T} = get_extended_ticks(pts.grid.axes[1])
-    y_ext::Vector{T} = get_extended_ticks(pts.grid.axes[2])
-    z_ext::Vector{T} = get_extended_ticks(pts.grid.axes[3])
+    x_ext::Vector{T} = get_extended_ticks(point_types.grid.axes[1])
+    y_ext::Vector{T} = get_extended_ticks(point_types.grid.axes[2])
+    z_ext::Vector{T} = get_extended_ticks(point_types.grid.axes[3])
 
     mpx::Vector{T} = midpoints(x_ext)
     mpy::Vector{T} = midpoints(y_ext)
@@ -149,10 +155,10 @@ function get_active_volume(pts::PointTypes{T, 3, Cartesian}) where {T}
     Δmpy::Vector{T} = diff(mpy)
     Δmpz::Vector{T} = diff(mpz)
 
-    for iz in eachindex(pts.grid.axes[3])
-        for iy in eachindex(pts.grid.axes[2])
-            for ix in eachindex(pts.grid.axes[1])
-                pt::PointType = pts[ix, iy, iz]
+    for iz in eachindex(point_types.grid.axes[3])
+        for iy in eachindex(point_types.grid.axes[2])
+            for ix in eachindex(point_types.grid.axes[1])
+                pt::PointType = point_types[ix, iy, iz]
                 if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
                     dV = Δmpx[ix] * Δmpy[iy] * Δmpz[iz]
                     active_volume += dV
