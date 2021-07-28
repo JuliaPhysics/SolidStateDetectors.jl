@@ -10,9 +10,14 @@ end
 """
     struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
 
-* `x`: x-coordinate in meter
-* `y`: y-coordinate in meter
-* `z`: z-coordinate in meter
+Describes a three-dimensional point in Cartesian coordinates.
+
+## Fields 
+* `x`: x-coordinate (in m).
+* `y`: y-coordinate (in m).
+* `z`: z-coordinate (in m).
+
+See also [`CylindricalPoint`](@ref).
 """
 struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     x::T
@@ -70,9 +75,17 @@ zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero
 """
     struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
 
-* `r`: Radius in meter
-* `φ`: Polar angle in radians. φ == 0 <=> Parallel to x-axis of cartesian coordinate system."
-* `z`: z-coordinate in meter
+Describes a three-dimensional point in cylindrical coordinates. 
+
+## Fields
+* `r`: Radius (in m).
+* `φ`: Polar angle (in rad).
+* `z`: `z`-coordinate (in m).
+
+!!! note 
+    `φ == 0` corresponds to the `x`-axis in the Cartesian coordinate system.
+    
+See also [`CartesianPoint`](@ref).
 """
 struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
     r::T
