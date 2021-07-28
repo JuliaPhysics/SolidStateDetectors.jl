@@ -58,8 +58,43 @@ UnionDictionary(g::AbstractGeometry{T}) where {T} = OrderedDict[Dictionary(g)]
 
 """
     struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+        
+A `CSGIntersection` of two geometries `a` and `b` is defined as the set of points 
+that are both in `a` and in `b` (`a && b`).
 
-a && b
+![CSGIntersection](../../docs/src/assets/CSGIntersection.png)
+
+## Parametric types
+* `T`: Precision type.
+* `A`: Type of geometry `a`.
+* `B`: Type of geometry `b`.
+
+## Fields 
+* `a::A`: First geometry to build the intersection.
+* `b::B`: Second geometry to build the intersection.
+
+
+## Definition in Configuration File
+
+A `CSGIntersection` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `intersection`, followed by an array of geometries from
+which the intersection is constructed. 
+
+An example definition of a `CSGIntersection` looks like this:
+```yaml
+intersection: # a && b
+  - tube: # a
+      r: 2
+      h: 1
+  - tube: # b
+      r: 1
+      h: 1.5
+      origin: 
+        z: 0.5
+```
+
+!!! note
+    If more than two geometries are passed, the `intersection` is constructed from all of them.
 """
 struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
