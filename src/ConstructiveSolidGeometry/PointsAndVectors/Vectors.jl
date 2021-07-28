@@ -1,8 +1,7 @@
-
-struct PlanarVector{T} <: AbstractPlanarVector{T}
-    u::T
-    v::T
-end
+# struct PlanarVector{T} <: AbstractPlanarVector{T}
+#     u::T
+#     v::T
+# end
 
 """
     struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
@@ -19,20 +18,20 @@ end
 
 zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zero(T))
 
-# @inline rotate(p::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * p
-# @inline rotate(p::CylindricalPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = CylindricalPoint(rotate(CartesianPoint(p), r))
-# @inline rotate!(vp::Vector{<:AbstractCoordinatePoint{T}}, r::RotMatrix{3,T,TT}) where {T, TT} = begin for i in eachindex(vp) vp[i] = rotate(vp[i], r) end; vp end
-# @inline rotate!(vvp::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, r::RotMatrix{3,T,TT}) where {T, TT} = begin for i in eachindex(vvp) rotate!(vvp[i], r) end; vvp end
+# @inline rotate(pt::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * pt
+# @inline rotate(pt::CylindricalPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = CylindricalPoint(rotate(CartesianPoint(pt), r))
+# @inline rotate!(vpt::Vector{<:AbstractCoordinatePoint{T}}, r::RotMatrix{3,T,TT}) where {T, TT} = begin for i in eachindex(vpt) vpt[i] = rotate(vpt[i], r) end; vpt end
+# @inline rotate!(vvpt::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, r::RotMatrix{3,T,TT}) where {T, TT} = begin for i in eachindex(vvpt) rotate!(vvpt[i], r) end; vvpt end
 
-# @inline scale(p::CartesianPoint{T}, v::SVector{3,T}) where {T} = p .* v
-# @inline scale(p::CylindricalPoint{T}, v::SVector{3,T}) where {T} = CylindricalPoint(scale(CartesianPoint(p),v))
-# @inline scale!(vp::Vector{<:AbstractCoordinatePoint{T}}, v::SVector{3,T}) where {T} = begin for i in eachindex(vp) vp[i] = scale(vp[i], v) end; vp end
-# @inline scale!(vvp::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::SVector{3,T}) where {T} = begin for i in eachindex(vvp) scale!(vvp[i], v) end; vvp end
+# @inline scale(pt::CartesianPoint{T}, v::SVector{3,T}) where {T} = pt .* v
+# @inline scale(pt::CylindricalPoint{T}, v::SVector{3,T}) where {T} = CylindricalPoint(scale(CartesianPoint(pt),v))
+# @inline scale!(vpt::Vector{<:AbstractCoordinatePoint{T}}, v::SVector{3,T}) where {T} = begin for i in eachindex(vpt) vpt[i] = scale(vpt[i], v) end; vpt end
+# @inline scale!(vvpt::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::SVector{3,T}) where {T} = begin for i in eachindex(vvpt) scale!(vvpt[i], v) end; vvpt end
 
-# @inline translate(p::CartesianPoint{T}, v::CartesianVector{T}) where {T} = p + v
-# @inline translate(p::CylindricalPoint{T}, v::CartesianVector{T}) where {T} = CylindricalPoint(translate(CartesianPoint(p), v))
-# @inline translate!(vp::Vector{<:AbstractCoordinatePoint{T}}, v::CartesianVector{T}) where {T} = begin for i in eachindex(vp) vp[i] = translate(vp[i], v) end; vp end
-# @inline translate!(vvp::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::CartesianVector{T}) where {T} =  begin for i in eachindex(vvp) translate!(vvp[i], v) end; vvp end
+# @inline translate(pt::CartesianPoint{T}, v::CartesianVector{T}) where {T} = pt + v
+# @inline translate(pt::CylindricalPoint{T}, v::CartesianVector{T}) where {T} = CylindricalPoint(translate(CartesianPoint(pt), v))
+# @inline translate!(vpt::Vector{<:AbstractCoordinatePoint{T}}, v::CartesianVector{T}) where {T} = begin for i in eachindex(vpt) vpt[i] = translate(vpt[i], v) end; vpt end
+# @inline translate!(vvpt::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::CartesianVector{T}) where {T} =  begin for i in eachindex(vvpt) translate!(vvpt[i], v) end; vvpt end
 
 
 """

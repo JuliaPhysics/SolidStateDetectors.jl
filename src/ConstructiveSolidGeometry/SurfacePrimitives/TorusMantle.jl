@@ -172,14 +172,14 @@ end
 # end
 
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
-#     pcy = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
+#     pcy = CylindricalPoint(pt)
 #     return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
 # end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:AbstractInterval})::T where {T}
-#     pcy = CylindricalPoint(point)
-#     if _in_φ(point, t.φ)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:AbstractInterval})::T where {T}
+#     pcy = CylindricalPoint(pt)
+#     if _in_φ(pt, t.φ)
 #         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
 #     else
 #         φMin::T, φMax::T, _ = get_φ_limits(t)

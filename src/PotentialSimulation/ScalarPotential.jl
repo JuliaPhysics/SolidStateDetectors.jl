@@ -11,11 +11,11 @@ function getindex(ep::P, grid::Grid{T, N, S}) where {T, N, S, P <: ScalarPotenti
     gridsize::Tuple = size(grid)
     data::Array{T, N} = zeros(T, gridsize)
     ep_itp::Interpolations.Extrapolation{T, N} = interpolated_scalarfield(ep)
-    point = (S == Cylindrical ? CylindricalPoint : CartesianPoint)
+    PT = (S == Cylindrical ? CylindricalPoint : CartesianPoint)
     for i1 in eachindex(grid[1])
         for i2 in eachindex(grid[2])
             for i3 in eachindex(grid[3])
-                data[i1, i2, i3] = get_interpolation(ep_itp, point{T}(grid[i1, i2, i3]), S)
+                data[i1, i2, i3] = get_interpolation(ep_itp, PT{T}(grid[i1, i2, i3]), S)
             end
         end
     end

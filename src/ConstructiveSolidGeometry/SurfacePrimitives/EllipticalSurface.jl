@@ -71,14 +71,14 @@ function lines(sp::PartialAnnulus{T}; n = 2) where {T}
     return (circ_in, circ_out, edges)
 end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
-#     point = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
+#     pt = CylindricalPoint(pt)
 #     rMin::T, rMax::T = get_r_limits(a)
-#     _in_cyl_r(point, a.r) ? abs(point.z - a.z) : hypot(point.z - a.z, min(abs(point.r - rMin), abs(point.r - rMax)))
+#     _in_cyl_r(pt, a.r) ? abs(pt.z - a.z) : hypot(pt.z - a.z, min(abs(pt.r - rMin), abs(pt.r - rMax)))
 # end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
-#     pcy = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
+#     pcy = CylindricalPoint(pt)
 #     rMin::T, rMax::T = get_r_limits(a)
 #     φMin::T, φMax::T, _ = get_φ_limits(a)
 #     if _in_φ(pcy, a.φ)
@@ -87,9 +87,9 @@ end
 #     else
 #         φNear = _φNear(pcy.φ, φMin, φMax)
 #         if rMin == rMax
-#             return norm(CartesianPoint(point)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
+#             return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
 #         else
-#             return distance_to_line(CartesianPoint(point),
+#             return distance_to_line(CartesianPoint(pt),
 #                                     LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)),
 #                                                 CartesianPoint(CylindricalPoint{T}(rMax,φNear,a.z))
 #                                                 )

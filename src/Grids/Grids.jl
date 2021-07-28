@@ -155,16 +155,16 @@ end
 Base.convert(T::Type{NamedTuple}, x::Grid) = T(x)
 
 
-function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    return (searchsortednearest(grid.axes[1].ticks, point.r), searchsortednearest(grid.axes[2].ticks, point.φ), searchsortednearest(grid.axes[3].ticks, point.z))
+function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    return (searchsortednearest(grid.axes[1].ticks, pt.r), searchsortednearest(grid.axes[2].ticks, pt.φ), searchsortednearest(grid.axes[3].ticks, pt.z))
 end
-function find_closest_gridpoint(point::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    find_closest_gridpoint(CylindricalPoint(point),grid)
+function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpt(CylindricalPoint(pt),grid)
 end
 
-function find_closest_gridpoint(point::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    @inbounds return (searchsortednearest(grid.axes[1].ticks, point.x), searchsortednearest(grid.axes[2].ticks, point.y), searchsortednearest(grid.axes[3].ticks, point.z))
+function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    @inbounds return (searchsortednearest(grid.axes[1].ticks, pt.x), searchsortednearest(grid.axes[2].ticks, pt.y), searchsortednearest(grid.axes[3].ticks, pt.z))
 end
-function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    find_closest_gridpoint(CartesianPoint(point),grid)
+function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpt(CartesianPoint(pt),grid)
 end

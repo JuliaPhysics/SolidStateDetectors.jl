@@ -43,8 +43,8 @@ struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: Abstra
     b::B
 end
 
-in(p::AbstractCoordinatePoint{T}, csg::CSGUnion; csgtol::T = csg_default_tol(T)) where {T} = 
-    in(p, csg.a; csgtol = csgtol) || in(p, csg.b; csgtol = csgtol)
+in(pt::AbstractCoordinatePoint{T}, csg::CSGUnion; csgtol::T = csg_default_tol(T)) where {T} = 
+    in(pt, csg.a; csgtol = csgtol) || in(pt, csg.b; csgtol = csgtol)
 (+)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGUnion{T,A,B}(a, b)
 
 # read-in
@@ -101,8 +101,8 @@ struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <:
     b::B
 end
 
-in(p::AbstractCoordinatePoint{T}, csg::CSGIntersection; csgtol::T = csg_default_tol(T)) where {T} = 
-    in(p, csg.a; csgtol = csgtol) && in(p, csg.b; csgtol = csgtol)
+in(pt::AbstractCoordinatePoint{T}, csg::CSGIntersection; csgtol::T = csg_default_tol(T)) where {T} = 
+    in(pt, csg.a; csgtol = csgtol) && in(pt, csg.b; csgtol = csgtol)
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
@@ -168,8 +168,8 @@ struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: A
     b::B
 end
 
-in(p::AbstractCoordinatePoint{T}, csg::CSGDifference; csgtol::T = csg_default_tol(T)) where {T} = 
-    in(p, csg.a; csgtol = csgtol) && !in(p, csg.b; csgtol = csgtol)
+in(pt::AbstractCoordinatePoint{T}, csg::CSGDifference; csgtol::T = csg_default_tol(T)) where {T} = 
+    in(pt, csg.a; csgtol = csgtol) && !in(pt, csg.b; csgtol = csgtol)
 
 function (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractConstructiveGeometry{T}} 
     ob = switchClosedOpen(b)

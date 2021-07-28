@@ -4,6 +4,6 @@ abstract type AbstractObject{T <: SSDFloat} end
     return in(pt, c.geometry)
 end
 
-function in(p::AbstractCoordinatePoint{T}, v::AbstractVector{<:AbstractObject{T}}) where {T <: SSDFloat}
-    reduce((x, object) -> x || in(p, object), v, init = false)
+function in(pt::AbstractCoordinatePoint{T}, v::AbstractVector{<:AbstractObject{T}}) where {T <: SSDFloat}
+    reduce((x, object) -> x || in(pt, object), v, init = false)
 end

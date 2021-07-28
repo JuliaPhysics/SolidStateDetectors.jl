@@ -19,23 +19,23 @@ function sample(det::SolidStateDetector{T}, ::Type{Cylindrical}, sampling...)::V
     unique!(imp)
 end
 
-function point_type(det::SolidStateDetector{T}, grid::Grid{T, 3}, p::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
+function point_type(det::SolidStateDetector{T}, grid::Grid{T, 3}, pt::CylindricalPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in det.contacts
-        if in(searchsortednearest(grid, p), contact) || in(searchsortednearest(grid, p), contact) || p in contact || p in contact 
+        if in(searchsortednearest(grid, pt), contact) || in(searchsortednearest(grid, pt), contact) || pt in contact || pt in contact 
             return CD_ELECTRODE::UInt8, contact.id, surface_normal
         end
     end
-    on_surface, surface_normal = is_surface_point_and_normal_vector(det, p)
+    on_surface, surface_normal = is_surface_point_and_normal_vector(det, pt)
     if on_surface
         for contact in det.contacts
-            if in(searchsortednearest(grid, p), contact) #&& abs(sum(sp[2])) > 1
+            if in(searchsortednearest(grid, pt), contact) #&& abs(sum(sp[2])) > 1
                 return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
                 return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
             end
         end
-    elseif !(p in det)
+    elseif !(pt in det)
         return CD_OUTSIDE::UInt8, -1, surface_normal
     else
         return CD_BULK::UInt8, -1, surface_normal
@@ -52,23 +52,23 @@ const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operatio
 # """
 #     For charge drift...
 # """
-function point_type(det::SolidStateDetector{T}, grid::Grid{T, 3}, p::CartesianPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
+function point_type(det::SolidStateDetector{T}, grid::Grid{T, 3}, pt::CartesianPoint{T})::Tuple{UInt8, Int, CartesianVector{T}} where {T <: SSDFloat}
     surface_normal::CartesianVector{T} = CartesianVector{T}(0, 0, 0) # need undef version for this
     for contact in det.contacts
-        if p in contact
+        if pt in contact
             return CD_ELECTRODE::UInt8, contact.id, surface_normal
         end
     end
-    on_surface, surface_normal = is_surface_point_and_normal_vector(det, p) # surface_normal::CartesianVector{T}
+    on_surface, surface_normal = is_surface_point_and_normal_vector(det, pt) # surface_normal::CartesianVector{T}
     if on_surface
         for contact in det.contacts
-            if in(searchsortednearest(grid, p), contact)
+            if in(searchsortednearest(grid, pt), contact)
                 return CD_ELECTRODE::UInt8, contact.id, surface_normal
             else
                 return CD_FLOATING_BOUNDARY::UInt8, -1, surface_normal
             end
         end
-    elseif !(p in det)
+    elseif !(pt in det)
         return CD_OUTSIDE::UInt8, -1, surface_normal
     else
         return CD_BULK::UInt8, -1, surface_normal
@@ -89,17 +89,17 @@ function searchsortednearest(grid::CartesianGrid3D{T}, pt::CartesianPoint{T})::C
     CartesianPoint{T}(grid.axes[1].ticks[idx1], grid.axes[2].ticks[idx2], grid.axes[3].ticks[idx3])
 end
 
-function is_surface_point_and_normal_vector(det::SolidStateDetector{T}, p::CylindricalPoint{T})::Tuple{Bool, CartesianVector{T}} where {T <: SSDFloat}
-    if !(p in det) # contacts are already checked in 
+function is_surface_point_and_normal_vector(det::SolidStateDetector{T}, pt::CylindricalPoint{T})::Tuple{Bool, CartesianVector{T}} where {T <: SSDFloat}
+    if !(pt in det) # contacts are already checked in 
         return false, CartesianPoint{T}(0, 0, 0)
     end
     n::MVector{3,T} = @MVector T[0, 0, 0]
-    look_around::Vector{Bool} = [   CylindricalPoint{T}(prevfloat(p.r), p.φ, p.z) in det,
-                                    CylindricalPoint{T}(nextfloat(p.r), p.φ, p.z) in det,
-                                    CylindricalPoint{T}(p.r, prevfloat(p.φ), p.z) in det,
-                                    CylindricalPoint{T}(p.r, nextfloat(p.φ), p.z) in det,
-                                    CylindricalPoint{T}(p.r, p.φ, prevfloat(p.z)) in det,
-                                    CylindricalPoint{T}(p.r, p.φ, nextfloat(p.z)) in det]
+    look_around::Vector{Bool} = [   CylindricalPoint{T}(prevfloat(pt.r), pt.φ, pt.z) in det,
+                                    CylindricalPoint{T}(nextfloat(pt.r), pt.φ, pt.z) in det,
+                                    CylindricalPoint{T}(pt.r, prevfloat(pt.φ), pt.z) in det,
+                                    CylindricalPoint{T}(pt.r, nextfloat(pt.φ), pt.z) in det,
+                                    CylindricalPoint{T}(pt.r, pt.φ, prevfloat(pt.z)) in det,
+                                    CylindricalPoint{T}(pt.r, pt.φ, nextfloat(pt.z)) in det]
     if all(look_around)
         return false , CartesianPoint{T}(n...)
     else
@@ -110,22 +110,22 @@ function is_surface_point_and_normal_vector(det::SolidStateDetector{T}, p::Cylin
         if !look_around[5] n[3] -= 1 end
         if !look_around[6] n[3] += 1 end
         # println(look_around , " " , n)
-        Rα::SMatrix{3,3,T} = @SArray([cos(p.φ) -1*sin(p.φ) 0;sin(p.φ) cos(p.φ) 0;0 0 1])
+        Rα::SMatrix{3,3,T} = @SArray([cos(pt.φ) -1*sin(pt.φ) 0;sin(pt.φ) cos(pt.φ) 0;0 0 1])
         # return true, geom_round(CartesianVector{T}((Rα * n)...))
         return true, CartesianVector{T}((Rα * n)...)
     end
 end
-function is_surface_point_and_normal_vector(det::SolidStateDetector{T}, p::CartesianPoint{T})::Tuple{Bool, CartesianVector{T}} where T
-    if !(p in det) 
+function is_surface_point_and_normal_vector(det::SolidStateDetector{T}, pt::CartesianPoint{T})::Tuple{Bool, CartesianVector{T}} where T
+    if !(pt in det) 
         return false, CartesianPoint{T}(0, 0, 0)
     end
     n::MVector{3,T} = @MVector T[0.0,0.0,0.0]
-    look_around::Vector{Bool} = [   CartesianPoint{T}(prevfloat(p.x), p.y, p.z) in det,
-                                    CartesianPoint{T}(nextfloat(p.x), p.y, p.z) in det,
-                                    CartesianPoint{T}(p.x, prevfloat(p.y), p.z) in det,
-                                    CartesianPoint{T}(p.x, nextfloat(p.y), p.z) in det,
-                                    CartesianPoint{T}(p.x, p.y, prevfloat(p.z)) in det,
-                                    CartesianPoint{T}(p.x, p.y, nextfloat(p.z)) in det]
+    look_around::Vector{Bool} = [   CartesianPoint{T}(prevfloat(pt.x), pt.y, pt.z) in det,
+                                    CartesianPoint{T}(nextfloat(pt.x), pt.y, pt.z) in det,
+                                    CartesianPoint{T}(pt.x, prevfloat(pt.y), pt.z) in det,
+                                    CartesianPoint{T}(pt.x, nextfloat(pt.y), pt.z) in det,
+                                    CartesianPoint{T}(pt.x, pt.y, prevfloat(pt.z)) in det,
+                                    CartesianPoint{T}(pt.x, pt.y, nextfloat(pt.z)) in det]
     if all(look_around)
         return false, n
     else

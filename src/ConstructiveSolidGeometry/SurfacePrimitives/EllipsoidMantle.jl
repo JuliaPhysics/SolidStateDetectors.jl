@@ -138,6 +138,6 @@ function intersection(em::EllipsoidMantle{T,T}, l::Line{T}) where {T}
 end
 
 
-# distance_to_surface(point::CylindricalPoint{T}, s::SphereMantle{T}) where {T} = abs(hypot(point.r, point.z) - s.r)
+# distance_to_surface(pt::CylindricalPoint{T}, s::SphereMantle{T}) where {T} = abs(hypot(pt.r, pt.z) - s.r)
 
-# distance_to_surface(point::CartesianPoint{T}, s::SphereMantle{T}) where {T} = abs(norm(point) - s.r)
+# distance_to_surface(pt::CartesianPoint{T}, s::SphereMantle{T}) where {T} = abs(norm(pt) - s.r)

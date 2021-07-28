@@ -2,12 +2,12 @@
     return wpot(pt.x, pt.y, pt.z)::T
 end
 @inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CartesianPoint{T}, ::Type{Cylindrical})::T where {T <: SSDFloat}
-    p::CylindricalPoint{T} = CylindricalPoint(pt)
-    return wpot(p.r, p.φ, p.z)::T
+    pt_cyl::CylindricalPoint{T} = CylindricalPoint(pt)
+    return wpot(pt_cyl.r, pt_cyl.φ, pt_cyl.z)::T
 end
 @inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CylindricalPoint{T}, ::Type{Cartesian})::T where {T <: SSDFloat}
-    p::CartesianPoint{T} = CartesianPoint(pt)
-    return wpot(p.x, p.y, p.z)::T
+    pt_car::CartesianPoint{T} = CartesianPoint(pt)
+    return wpot(pt_car.x, pt_car.y, pt_car.z)::T
 end
 @inline function get_interpolation(wpot::Interpolations.Extrapolation{T, 3}, pt::CylindricalPoint{T}, ::Type{Cylindrical})::T where {T <: SSDFloat}
     return wpot(pt.r, pt.φ, pt.z)::T

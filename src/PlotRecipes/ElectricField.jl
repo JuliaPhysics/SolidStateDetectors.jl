@@ -145,9 +145,9 @@ end
                 pts = ConstructiveSolidGeometry.intersection(surf,l)
                 for pt in pts
                     if pt in c
-                        point = pt + T(ustrip(to_internal_units(offset)))*ConstructiveSolidGeometry.normal(surf, pt)
-                        if point in sim.detector && !(point in sim.detector.contacts)
-                            push!(spawn_positions, point)
+                        pt_in = pt + T(ustrip(to_internal_units(offset)))*ConstructiveSolidGeometry.normal(surf, pt)
+                        if pt_in in sim.detector && !(pt_in in sim.detector.contacts)
+                            push!(spawn_positions, pt_in)
                         end
                     end
                 end

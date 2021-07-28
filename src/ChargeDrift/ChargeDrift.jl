@@ -20,12 +20,12 @@ function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}
     range(zero(Δt), step = Δt, stop = typeof(Δt)(_common_time(dp)) + Δt)
 end
 
-function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, point::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
-    return CartesianVector{T}(interpolation_field(point.x, point.y, point.z))
+function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
+    return CartesianVector{T}(interpolation_field(pt.x, pt.y, pt.z))
 end
 
-@inline function get_velocity_vector(interpolated_vectorfield, point::CylindricalPoint{T}) where {T <: SSDFloat}
-    return CartesianVector{T}(interpolated_vectorfield(point.r, point.φ, point.z))
+@inline function get_velocity_vector(interpolated_vectorfield, pt::CylindricalPoint{T}) where {T <: SSDFloat}
+    return CartesianVector{T}(interpolated_vectorfield(pt.r, pt.φ, pt.z))
 end
 
 
@@ -56,15 +56,15 @@ function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where
     return p
 end
 
-function modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv::Vector{AbstractVirtualVolume{T}})::CartesianVector{T} where {T <: SSDFloat}
+function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Vector{AbstractVirtualVolume{T}})::CartesianVector{T} where {T <: SSDFloat}
     for i in eachindex(vdv)
-        if in(cp, vdv[i])
-            return modulate_driftvector(sv, cp, vdv[i])
+        if in(pt, vdv[i])
+            return modulate_driftvector(sv, pt, vdv[i])
         end
     end
     return sv
 end
-modulate_driftvector(sv::CartesianVector{T}, cp::CartesianPoint{T}, vdv::Missing) where {T} = sv
+modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
 @inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl in point_types || pt_cyl in det
@@ -171,22 +171,22 @@ end
 # const CD_BULK = 0x02
 # const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  det::SolidStateDetector{T}, grid::Grid{T, 3, S}, point_in::CartesianPoint{T}, point_out::CartesianPoint{T};
+function get_crossing_pos(  det::SolidStateDetector{T}, grid::Grid{T, 3, S}, pt_in::CartesianPoint{T}, pt_out::CartesianPoint{T};
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
-    point_mid::CartesianPoint{T} = T(0.5) * (point_in + point_out)
-    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(det, grid, _convert_point(point_mid, S))
+    pt_mid::CartesianPoint{T} = T(0.5) * (pt_in + pt_out)
+    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(det, grid, _convert_point(pt_mid, S))
     for i in 1:max_n_iter
         if cd_point_type == CD_BULK
-            point_in = point_mid
+            pt_in = pt_mid
         elseif cd_point_type == CD_OUTSIDE
-            point_out = point_mid
+            pt_out = pt_mid
         elseif cd_point_type == CD_ELECTRODE
             break
         else #elseif cd_point_type == CD_FLOATING_BOUNDARY
             break
         end
-        point_mid = T(0.5) * (point_in + point_out)
-        cd_point_type, contact_idx, surface_normal = point_type(det, grid, _convert_point(point_mid, S))
+        pt_mid = T(0.5) * (pt_in + pt_out)
+        cd_point_type, contact_idx, surface_normal = point_type(det, grid, _convert_point(pt_mid, S))
     end
-    return point_mid, cd_point_type, contact_idx, surface_normal
+    return pt_mid, cd_point_type, contact_idx, surface_normal
 end
