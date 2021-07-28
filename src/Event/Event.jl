@@ -84,8 +84,33 @@ function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::Re
     evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, evt.energies, contact_id, Δt = Δt)
     nothing
 end
+
+
+"""
+    get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
+    
+Generates the signals/waveforms from the drift paths of an [`Event`](@ref) for all contacts,
+for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
+    
+The output is stored in `evt.waveforms`.
+
+## Arguments 
+* `evt::Event{T}`: [`Event`](@ref) for which the waveforms should be generated.
+* `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the waveforms are generated.
+
+## Keywords
+* `Δt::RealQuantity = 5u"ns"`: Time steps with which the drift paths were calculated.
+
+## Example 
+```julia
+get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in time steps of 1ns
+```
+
+!!! note 
+    This method only works if `evt.drift_paths` has already been calculated and is not `missing`.
+"""
 function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
+    @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges!(evt::Event, sim::Simulation)` first."
     if ismissing(evt.waveforms)
         evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
