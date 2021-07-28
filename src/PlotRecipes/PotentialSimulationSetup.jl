@@ -3,34 +3,34 @@
                     φ = missing,
                     z = missing,
                     n_points_in_φ = 36 ) where {T}
-    g::Grid{T, 3, Cylindrical} = pss.grid
+    grid::Grid{T, 3, Cylindrical} = pss.grid
     layout --> (2, 2)
 
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         :φ, 1
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(g.φ.interval.left <= φ_rad <= g.φ.interval.right)
-            if φ_rad > g.φ.interval.right
-                φ_rad -= width(g.φ.interval)
-            elseif φ_rad < g.φ.interval.left
-                φ_rad += width(g.φ.interval)
+        while !(grid.φ.interval.left <= φ_rad <= grid.φ.interval.right)
+            if φ_rad > grid.φ.interval.right
+                φ_rad -= width(grid.φ.interval)
+            elseif φ_rad < grid.φ.interval.left
+                φ_rad += width(grid.φ.interval)
             end
         end
-        :φ, searchsortednearest(g.φ, φ_rad)
+        :φ, searchsortednearest(grid.φ, φ_rad)
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(g.r, T(r))
+        :r, searchsortednearest(grid.r, T(r))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(g.z, T(z))
+        :z, searchsortednearest(grid.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
     value::T = if cross_section == :φ
-        g.φ[idx]
+        grid.φ[idx]
     elseif cross_section == :r
-        g.r[idx]
+        grid.r[idx]
     elseif cross_section == :z
-        g.z[idx]
+        grid.z[idx]
     end
 
     if cross_section == :φ
@@ -64,29 +64,29 @@ end
                     x = missing,
                     y = missing,
                     z = missing ) where {T}
-    g::Grid{T, 3, Cartesian} = pss.grid
+    grid::Grid{T, 3, Cartesian} = pss.grid
     layout --> (2, 2)
 
     size --> (1000, 1000)
 
     cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
-        :x, searchsortednearest(g[:x], T(0))
+        :x, searchsortednearest(grid[:x], T(0))
     elseif !ismissing(x) && ismissing(y) && ismissing(z)
-        :x, searchsortednearest(g[:x], T(x))
+        :x, searchsortednearest(grid[:x], T(x))
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
-        :y, searchsortednearest(g[:y], T(y))
+        :y, searchsortednearest(grid[:y], T(y))
     elseif ismissing(x) && ismissing(y) && !ismissing(z)
-        :z, searchsortednearest(g.z, T(z))
+        :z, searchsortednearest(grid.z, T(z))
     else
         error(ArgumentError, ": Only one of the keywords `x, y, z` is allowed.")
     end
 
     if cross_section == :x
-        x --> g[:x][idx]
+        x --> grid[:x][idx]
     elseif cross_section == :y
-        y --> g[:y][idx]
+        y --> grid[:y][idx]
     elseif cross_section == :z
-        z --> g.z[idx]
+        z --> grid.z[idx]
     end
 
 

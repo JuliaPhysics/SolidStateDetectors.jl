@@ -5,17 +5,17 @@
                     contours_equal_potential=false,
                     full_det = false ) where {T}
 
-    g::Grid{T, 3, Cylindrical} = ef.grid
+    grid::Grid{T, 3, Cylindrical} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
     cross_section == :φ ? aspect_ratio --> 1 : nothing
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
     colorbar_title --> "Electric Field Strength in V / m"
 
-    ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential, full_det
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential, full_det
 
 end
 
@@ -25,17 +25,17 @@ end
                     z = missing,
                     contours_equal_potential = false) where {T <: SSDFloat}
 
-    g::Grid{T, 3, Cartesian} = ef.grid
+    grid::Grid{T, 3, Cartesian} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
     aspect_ratio --> 1
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
     colorbar_title --> "Electric Field Strength in V / m"
 
-    ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential
 end
 
 function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}

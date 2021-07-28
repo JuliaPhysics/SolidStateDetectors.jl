@@ -176,11 +176,11 @@ end
 # it with the respective values.
 # """
 function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
-    g = p.grid
-    closed_values = _get_closed_values(p.data, 1, g.axes[1].interval)
-    closed_values = _get_closed_values(closed_values, 2, g.axes[2].interval)
-    closed_values = _get_closed_values(closed_values, 3, g.axes[3].interval)
-    closed_axes = broadcast(i -> _get_closed_axis(g.axes[i]), (1, 2, 3))
+    grid = p.grid
+    closed_values = _get_closed_values(p.data, 1, grid.axes[1].interval)
+    closed_values = _get_closed_values(closed_values, 2, grid.axes[2].interval)
+    closed_values = _get_closed_values(closed_values, 3, grid.axes[3].interval)
+    closed_axes = broadcast(i -> _get_closed_axis(grid.axes[i]), (1, 2, 3))
     AT = typeof(closed_axes)
     closed_grid = Grid{T, 3, CS, AT}(closed_axes)
     ScalarPotential(p, closed_values, closed_grid)

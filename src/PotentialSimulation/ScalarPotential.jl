@@ -7,19 +7,19 @@ ScalarPotential(::EffectiveChargeDensity, data, grid) = EffectiveChargeDensity(d
 
 get_axes_type(::Type{Tuple{AT1, AT2, AT3}}) where {AT1, AT2, AT3} = (AT1, AT2, AT3)
 
-function getindex(ep::P, g::Grid{T, N, S}) where {T, N, S, P <: ScalarPotential{T, N, S}}
-    gridsize::Tuple = size(g)
+function getindex(ep::P, grid::Grid{T, N, S}) where {T, N, S, P <: ScalarPotential{T, N, S}}
+    gridsize::Tuple = size(grid)
     data::Array{T, N} = zeros(T, gridsize)
     ep_itp::Interpolations.Extrapolation{T, N} = interpolated_scalarfield(ep)
     point = (S == Cylindrical ? CylindricalPoint : CartesianPoint)
-    for i1 in eachindex(g[1])
-        for i2 in eachindex(g[2])
-            for i3 in eachindex(g[3])
-                data[i1, i2, i3] = get_interpolation(ep_itp, point{T}(g[i1, i2, i3]), S)
+    for i1 in eachindex(grid[1])
+        for i2 in eachindex(grid[2])
+            for i3 in eachindex(grid[3])
+                data[i1, i2, i3] = get_interpolation(ep_itp, point{T}(grid[i1, i2, i3]), S)
             end
         end
     end
-    return P(data, g)
+    return P(data, grid)
 end
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :periodic, :periodic}, int::Interval{:closed, :open, AT}) where {T, AT}
