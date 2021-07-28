@@ -1010,6 +1010,7 @@ and stores them in `sim.electron_drift_field` and `sim.hole_drift_field`.
 """
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
+    @assert !ismissing(sim.electric_field) "Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."
     sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
     nothing
@@ -1212,9 +1213,16 @@ export calculate_capacitance
 """
     calculate_capacitance(sim::Simulation{T})::T where {T <: SSDFloat}
 
-Calculates the capacitance of an detector in Farad.
+Calculates and returns the capacitance of an detector in units of pF.
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
+
+!!! note 
+    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
 """
 function calculate_capacitance(sim::Simulation{T}) where {T <: SSDFloat}
+        @assert !ismissing(sim.electric_field) "Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."
     W = calculate_stored_energy(sim)
     return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
 end
