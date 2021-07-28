@@ -1,8 +1,48 @@
 """
-    Box{T, CO} <: AbstractVolumePrimitive{T}
+    struct Box{T, CO} <: AbstractVolumePrimitive{T}
 
-T: Type of values, e.g. Float64
-CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
+Volume primitive describing a three-dimensional box with its surfaces
+being parallel to the `xy`, `xy` and `yz` plane.
+
+## Parametric types
+* `T`: Precision type.
+* `CO`: Describes whether the surface belongs to the primitive. 
+    It can be `ClosedPrimitive`, i.e. the surface points belong to the primitive,
+    or `OpenPrimitive`, i.e. the surface points do not belong to the primitive.
+    
+## Fields
+* `hX::T`: Half of the width in `x` dimension (in m).
+* `hY::T`: Half of the width in `y` dimension (in m).
+* `hZ::T`: Half of the width in `z` dimension (in m).
+* `origin::CartesianPoint{T}`: The position of the center of the `Box`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `Box` around its `origin`.
+
+## Definition in Configuration File
+
+A `Box` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `box`.
+
+Example definitions of a `Box` looks like this:
+```yaml
+box:
+  widths: [2, 4, 6] # => hX = 1; hY = 2; hZ = 3;
+  origin: [0, 0, 0] # [x, y, z] - Optional; Default: [0, 0, 0]
+  rotate: # Optional; Default: no rotation
+    Z: 0 
+```
+
+The halfwidths `hX`, `hY` and `hZ` can also be defined directly in the configuration file:
+```yaml
+box:
+  halfwidths: [1, 2, 3] # => hX = 1; hY = 2; hZ = 3;
+```
+or
+```yaml
+box:
+  hX: 1
+  hY: 2
+  hZ: 3
+```
 """
 @with_kw struct Box{T, CO} <: AbstractVolumePrimitive{T, CO}
     hX::T = 1
