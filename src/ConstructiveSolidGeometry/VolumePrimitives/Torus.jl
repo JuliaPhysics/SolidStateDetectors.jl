@@ -164,19 +164,6 @@ end
 #     Torus( T, T(r_torus), T(r_tube), nothing, T(0)..T(π/2), T(z))
 # end
 
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, Nothing}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, Nothing}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, <:AbstractInterval}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
-    
-
 # # read-in
 function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)
     length_unit = input_units.length
