@@ -26,6 +26,10 @@ end
     
 Returns the impurity density at a given point, `pt`, based on the impurity density model `id`.
 
+## Arguments
+* `id::AbstractImpurityDensity`: The [`AbstractImpurityDensity`](@ref) defining the impurity density inside a [`Semiconductor`](@ref).
+* `pt::AbstractCoordinatePoint`: The point at which `id` is to be evaluated.
+
 !!! note 
     The value returned by `get_impurity_density` is in units of 1/m³ (SI Units).
 """
