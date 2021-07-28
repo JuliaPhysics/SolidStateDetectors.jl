@@ -1038,94 +1038,128 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
 end
 
 """
-    simulate!( sim::Simulation{T};  
+    simulate!( sim::Simulation{T, S};
+                    convergence_limit::Real = 1e-7, 
                     refinement_limits = [0.2, 0.1, 0.05],
                     min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_distance_ratio::Real = 5,
-                    verbose::Bool = false,
-                    use_nthreads::Int = Base.Threads.nthreads(),
-                    sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
-                    max_n_iterations::Int = -1,
-                    depletion_handling::Bool = false, 
-                    convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
-
-# Keywords
-- `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
-    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
-    Default of `convergence_limit` is `2e-6` (times bias voltage).
-- `refinement_limits`: Defines the maximum relative (to applied bias voltage) allowed differences 
-    of the potential value of neighbored grid points 
-    in each dimension for each refinement.
-    - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions
-    - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension
-    - `rl::Vector{<:Real}` -> `length(l)` refinements with `rl[i]` being the limit for the i-th refinement. 
-    - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the i-th refinement.
-- `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
-    two grid ticks for each dimension. It prevents the refinement to make the grid to fine.
-    Default is 1e-5 for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical grid.
-- `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
-    two grid ticks for each dimension used in the initialization of the grid.
-    Default is 1/4 of size of the world of the respective dimension.
-- `max_distance_ratio::Real`: Maximum allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
-        If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
-        Default is `5`.
-- `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is false.
-- `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
-    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
-    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-- `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
-    First element contains the SOR constant for `r` = 0.
-    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
-    First element should be smaller than the second one and both should be ∈ [1.0, 2.0]. Default is [1.4, 1.85].
-    In case of cartesian coordinates only one value is taken.
-- `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `-1`. If set to `-1` there will be no limit.
-- `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-- `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
-- `verbose::Bool=true`: Boolean whether info output is produced or not.
-"""
-function simulate!( sim::Simulation{T};  
-                    refinement_limits = [0.2, 0.1, 0.05],
-                    min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
-                    max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
-                    max_distance_ratio::Real = 5,
-                    verbose::Bool = false,
+                    grid::Grid{T, 3, S} = Grid(sim),
+                    depletion_handling::Bool = false,
                     use_nthreads::Int = Base.Threads.nthreads(),
                     sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
                     max_n_iterations::Int = -1,
                     not_only_paint_contacts::Bool = true, 
                     paint_contacts::Bool = true,
-                    depletion_handling::Bool = false, 
+                    verbose::Bool = false) where {T <: SSDFloat, S}
 
-                    convergence_limit::Real = 1e-7 ) where {T <: SSDFloat}
+
+Performs a full chain simulation for a given [`Simulation`](@ref) `sim` by
+    
+1. calculating the [`ElectricPotential`](@ref),
+2. calculating the [`ElectricField`](@ref),
+3. calculating the electron and hole drift fields and
+4. calculating the [`WeightingPotential`](@ref) for each [`Contact`](@ref).
+
+The output is stored in `sim.electric_potential`, `sim.electric_field`, `sim.electron_drift_field`, `sim.hole_drift_field`
+and `sim.weighting_potentials`, respectively.
+
+There are several keyword arguments which can be used to tune the simulation.
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which the full chain simulation should be performed.
+
+
+## Keywords
+* `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
+    The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
+    Default of `convergence_limit` is `1e-7` (times bias voltage).
+* `refinement_limits`: Defines the maximum relative (to applied bias voltage) allowed differences 
+    of the potential value of neighboured grid points 
+    in each dimension for each refinement.
+    - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions.
+    - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension.
+    - `rl::Vector{<:Real}` -> `length(l)` refinements with `rl[i]` being the limit for the i-th refinement. 
+    - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the `i`-th refinement.
+* `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
+    two grid ticks for each dimension. It prevents the refinement to make the grid too fine.
+    Default is `1e-5` for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical `grid`.
+* `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
+    two grid ticks for each dimension used in the initialization of the grid.
+    Default is 1/4 of size of the world of the respective dimension.
+* `max_distance_ratio::Real`: Maximum allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
+        If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
+        Default is `5`.
+* `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
+    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
+    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
+    In case of Cartesian coordinates, only one value is taken.
+* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
+    Default is `10000`. If set to `-1` there will be no limit.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `verbose::Bool=true`: Boolean whether info output is produced or not.
+
+See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref),
+[`calculate_drift_fields!`](@ref) and [`calculate_weighting_potential!`](@ref).
+
+## Example 
+```julia 
+simulate!(sim, refinement_limits = [0.3, 0.1, 0.05], max_distance_ratio = 4, max_n_iterations = 20000)
+```
+"""
+function simulate!( sim::Simulation{T, S};
+                    convergence_limit::Real = 1e-7, 
+                    refinement_limits = [0.2, 0.1, 0.05],
+                    min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
+                    max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
+                    max_distance_ratio::Real = 5,
+                    grid::Grid{T, 3, S} = Grid(sim),
+                    depletion_handling::Bool = false,
+                    use_nthreads::Int = Base.Threads.nthreads(),
+                    sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
+                    max_n_iterations::Int = -1,
+                    not_only_paint_contacts::Bool = true, 
+                    paint_contacts::Bool = true,
+                    verbose::Bool = false) where {T <: SSDFloat, S}
     calculate_electric_potential!(  sim,
+                                    convergence_limit = convergence_limit,
                                     refinement_limits = refinement_limits,
                                     min_tick_distance = min_tick_distance,
                                     max_tick_distance = max_tick_distance,
                                     max_distance_ratio = max_distance_ratio,
+                                    grid = grid,
+                                    depletion_handling = depletion_handling,
                                     use_nthreads = use_nthreads,
                                     sor_consts = sor_consts,
                                     max_n_iterations = max_n_iterations,
-                                    verbose = verbose,
                                     not_only_paint_contacts = not_only_paint_contacts,
                                     paint_contacts = paint_contacts,
-                                    depletion_handling = depletion_handling,
-                                    convergence_limit = convergence_limit )
+                                    verbose = verbose
+                                    )
     for contact in sim.detector.contacts
         calculate_weighting_potential!(sim, contact.id, 
+                    convergence_limit = convergence_limit, 
                     refinement_limits = refinement_limits,
                     min_tick_distance = min_tick_distance,
                     max_tick_distance = max_tick_distance,
                     max_distance_ratio = max_distance_ratio,
+                    grid = grid,
+                    depletion_handling = depletion_handling,
                     use_nthreads = use_nthreads,
                     sor_consts = sor_consts,
                     max_n_iterations = max_n_iterations,
-                    verbose = verbose, 
                     not_only_paint_contacts = not_only_paint_contacts,
                     paint_contacts = paint_contacts,
-                    convergence_limit = convergence_limit)
+                    verbose = verbose
+        )
     end
     calculate_electric_field!(sim)
     calculate_drift_fields!(sim)
