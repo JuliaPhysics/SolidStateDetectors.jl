@@ -954,8 +954,8 @@ Calculates the electric field from the electric potential stored in `sim.electri
 
 ## Keywords
 * `n_points_in_φ::Union{Missing, Int}`: For 2D potentials (cylindrical coordinates and symmetric in `φ`), the electric potential 
-is extended to `n_points_in_φ` "layers" in `φ` in order to calculate a 3D electric field. If `n_points_in_φ` is `missing`, the 
-default value is 36.
+    is extended to `n_points_in_φ` "layers" in `φ` in order to calculate a 3D electric field. If `n_points_in_φ` is `missing`, the 
+    default value is 36.
 
 ## Examples 
     calculate_electric_field!(sim, n_points_in_φ = 32)
