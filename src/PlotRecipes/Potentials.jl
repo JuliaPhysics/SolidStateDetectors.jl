@@ -79,20 +79,20 @@ end
 end
 
 
-@recipe function f(pt::PointTypes{T,3,Cylindrical}; r = missing, φ = missing, z = missing, full_det = false) where {T <: SSDFloat}
+@recipe function f(point_types::PointTypes{T,3,Cylindrical}; r = missing, φ = missing, z = missing, full_det = false) where {T <: SSDFloat}
 
-    if !(pt.grid[2][end] - pt.grid[2][1] ≈ 2π)
-        pt = get_2π_potential(pt, n_points_in_φ = 72)
+    if !(point_types.grid[2][end] - point_types.grid[2][1] ≈ 2π)
+        point_types = get_2π_potential(point_types, n_points_in_φ = 72)
     end
 
-    grid::Grid{T, 3, Cylindrical} = pt.grid
+    grid::Grid{T, 3, Cylindrical} = point_types.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :viridis
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    pt, cross_section, idx, value, false, full_det
+    point_types, cross_section, idx, value, false, full_det
 end
 
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
@@ -254,16 +254,16 @@ end
 end
 
 
-@recipe function f(pt::PointTypes{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
+@recipe function f(point_types::PointTypes{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cartesian} = pt.grid
+    grid::Grid{T, 3, Cartesian} = point_types.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :viridis
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    pt, cross_section, idx, value
+    point_types, cross_section, idx, value
 end
 
 

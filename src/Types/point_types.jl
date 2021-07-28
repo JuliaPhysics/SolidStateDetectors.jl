@@ -9,11 +9,11 @@ Right now there are:
     const undepleted_bit  = 0x02
     const pn_junction_bit = 0x04
 
-How to get information out of a PointType variable `pt`:
-1. `pt & update_bit == 0` -> do not update this point (for fixed points)     
-2. `pt & update_bit >  0` -> do update this point    
-3. `pt & undepleted_bit > 0` -> this point is undepleted
-4. `pt & pn_junction_bit > 0` -> this point belongs to the solid state detector. So it is in the volume of the n-type or p-type material.
+How to get information out of a PointType variable `point_type`:
+1. `point_type & update_bit == 0` -> do not update this point (for fixed points)     
+2. `point_type & update_bit >  0` -> do update this point    
+3. `point_type & undepleted_bit > 0` -> this point is undepleted
+4. `point_type & pn_junction_bit > 0` -> this point belongs to the solid state detector. So it is in the volume of the n-type or p-type material.
 """
 const PointType       = UInt8
 
@@ -45,19 +45,19 @@ struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
     grid::Grid{T, N, S, AT}
 end
 
-@inline size(pts::PointTypes{T, N, S}) where {T, N, S} = size(pts.data)
-@inline length(pts::PointTypes{T, N, S}) where {T, N, S} = length(pts.data)
-@inline getindex(pts::PointTypes{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(pts.data, I...)
-@inline getindex(pts::PointTypes{T, N, S}, i::Int) where {T, N, S} = getindex(pts.data, i)
-@inline getindex(pts::PointTypes{T, N, S}, s::Symbol) where {T, N, S} = getindex(pts.grid, s)
+@inline size(point_types::PointTypes{T, N, S}) where {T, N, S} = size(point_types.data)
+@inline length(point_types::PointTypes{T, N, S}) where {T, N, S} = length(point_types.data)
+@inline getindex(point_types::PointTypes{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(point_types.data, I...)
+@inline getindex(point_types::PointTypes{T, N, S}, i::Int) where {T, N, S} = getindex(point_types.data, i)
+@inline getindex(point_types::PointTypes{T, N, S}, s::Symbol) where {T, N, S} = getindex(point_types.grid, s)
 
-function in(pt::AbstractCoordinatePoint{T}, pts::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
+function in(pt::AbstractCoordinatePoint{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
     cpt = _convert_point(pt, S)
-    grid::Grid{T, 3, S} = pts.grid
+    grid::Grid{T, 3, S} = point_types.grid
     i1::Int = searchsortednearest(grid.axes[1].ticks, cpt[1])
     i2::Int = searchsortednearest(grid.axes[2].ticks, cpt[2])
     i3::Int = searchsortednearest(grid.axes[3].ticks, cpt[3])
-    return pts.data[i1, i2, i3] & pn_junction_bit > 0
+    return point_types.data[i1, i2, i3] & pn_junction_bit > 0
 end
 
 """
@@ -74,7 +74,7 @@ is_depleted(point_types::PointTypes)::Bool =
 
 
 """
-    get_active_volume(pts::PointTypes{T}) where {T}
+    get_active_volume(point_types::PointTypes{T}) where {T}
 
 Returns an approximation of the active volume of the detector by summing up the cell volumes of
 all cells marked as depleted.
@@ -83,7 +83,7 @@ all cells marked as depleted.
 * `point_types::PointTypes{T}`: Point types.
 
 !!! note
-    Only `φ``-symmetries are taken into account. 
+    Only `φ`-symmetries are taken into account. 
 """
 function get_active_volume(point_types::PointTypes{T, 3, Cylindrical}) where {T}
     active_volume::T = 0
@@ -110,8 +110,8 @@ function get_active_volume(point_types::PointTypes{T, 3, Cylindrical}) where {T}
         if !isclosed || only_2d
             for iφ in eachindex(point_types.grid.axes[2])
                 for ir in eachindex(point_types.grid.axes[1])
-                    pt::PointType = point_types[ir, iφ, iz]
-                    if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
+                    point_type::PointType = point_types[ir, iφ, iz]
+                    if (point_type & pn_junction_bit > 0) && (point_type & undepleted_bit == 0) && (point_type & update_bit > 0)
                         dV::T = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
                         active_volume += dV
                     end
@@ -120,8 +120,8 @@ function get_active_volume(point_types::PointTypes{T, 3, Cylindrical}) where {T}
         elseif isclosed && !only_2d
             for iφ in eachindex(point_types.grid.axes[2])
                 for ir in eachindex(point_types.grid.axes[1])
-                    pt::PointType = point_types[ir, iφ, iz]
-                    if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
+                    point_type::PointType = point_types[ir, iφ, iz]
+                    if (point_type & pn_junction_bit > 0) && (point_type & undepleted_bit == 0) && (point_type & update_bit > 0)
                         dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
                         active_volume += if iφ == length(point_types.φ) || iφ == 1
                             dV / 2
@@ -158,8 +158,8 @@ function get_active_volume(point_types::PointTypes{T, 3, Cartesian}) where {T}
     for iz in eachindex(point_types.grid.axes[3])
         for iy in eachindex(point_types.grid.axes[2])
             for ix in eachindex(point_types.grid.axes[1])
-                pt::PointType = point_types[ix, iy, iz]
-                if (pt & pn_junction_bit > 0) && (pt & undepleted_bit == 0) && (pt & update_bit > 0)
+                point_type::PointType = point_types[ix, iy, iz]
+                if (point_type & pn_junction_bit > 0) && (point_type & undepleted_bit == 0) && (point_type & update_bit > 0)
                     dV = Δmpx[ix] * Δmpy[iy] * Δmpz[iz]
                     active_volume += dV
                 end
@@ -183,10 +183,10 @@ end
 
 Base.convert(T::Type{PointTypes}, x::NamedTuple) = T(x)
 
-function NamedTuple(pts::PointTypes{T, 3}) where {T}
+function NamedTuple(point_types::PointTypes{T, 3}) where {T}
     return (
-        grid = NamedTuple(pts.grid),
-        values = pts.data,
+        grid = NamedTuple(point_types.grid),
+        values = point_types.data,
     )
 end
 

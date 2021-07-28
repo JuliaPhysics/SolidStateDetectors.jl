@@ -1,4 +1,4 @@
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
+function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N}, potential::Array{T, N},
         grid::Grid{T, N, Cylindrical}, det::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
@@ -24,13 +24,13 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                                 else
                                     0
                                 end
-                                pointtypes[ ir, iφ, iz ] = zero(PointType)
+                                point_types[ ir, iφ, iz ] = zero(PointType)
                             end
                         end
                     end
                 end
                 if in(pt, det)
-                    pointtypes[ ir, iφ, iz ] += pn_junction_bit
+                    point_types[ ir, iφ, iz ] += pn_junction_bit
                 end
                 if NotOnlyPaintContacts
                     for contact in det.contacts
@@ -40,7 +40,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                             else
                                 contact.id == weighting_potential_contact_id ? 1 : 0
                             end
-                            pointtypes[ ir, iφ, iz ] = zero(PointType)
+                            point_types[ ir, iφ, iz ] = zero(PointType)
                         end
                     end
                 end
@@ -56,7 +56,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             end
             fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
             for face in fs
-                paint!(pointtypes, potential, face, contact.geometry, pot, grid)
+                paint!(point_types, potential, face, contact.geometry, pot, grid)
             end
         end
     end
@@ -354,20 +354,20 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3,
         end
 
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
-        pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
+        point_types::Array{PointType, 3} = ones(PointType, size(grid)...)
+        set_point_types_and_fixed_potentials!( point_types, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
             not_only_paint_contacts = Val(not_only_paint_contacts), paint_contacts = Val(paint_contacts)  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
-        rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )
+        rbpoint_types::Array{T, 4} = RBExtBy2Array( point_types, grid )
         potential = clear(potential)
-        pointtypes = clear(pointtypes)
+        point_types = clear(point_types)
     end # @inbounds
 
     fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical, typeof(geom_weights), typeof(grid.axes)} = 
         PotentialSimulationSetupRB{T, 3, 4, Cylindrical, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
-        rbpointtypes,
+        rbpoint_types,
         volume_weights,
         ρ,
         q_eff_fix,
@@ -409,20 +409,20 @@ end
 
 
 function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{PointType, 3} where {T}
-    pointtypes::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
-    for iz in axes(pointtypes, 3)
+    point_types::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
+    for iz in axes(point_types, 3)
         irbz::Int = rbidx(iz)
-        for iφ in axes(pointtypes, 2)
+        for iφ in axes(point_types, 2)
             irbφ::Int = iφ + 1
             idxsum::Int = iz + iφ
-            for ir in axes(pointtypes, 1)
+            for ir in axes(point_types, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                pointtypes[ir, iφ, iz] = fssrb.pointtypes[irbz, irbφ, irbr, rbi ]
+                point_types[ir, iφ, iz] = fssrb.point_types[irbz, irbφ, irbr, rbi ]
             end
         end
     end
-    return pointtypes
+    return point_types
 end
 
 # """
@@ -433,11 +433,11 @@ end
 # For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
 # """
 function PointTypes(setup::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical} where {T}
-    return get_2π_potential(PointTypes{T, 3, Cylindrical}(setup.pointtypes, setup.grid); kwargs...)
+    return get_2π_potential(PointTypes{T, 3, Cylindrical}(setup.point_types, setup.grid); kwargs...)
 end
 
 function PointTypes(fss::PotentialSimulationSetup{T, N, S})::PointTypes{T, N, S} where {T, N, S}
-    return PointTypes{T, N, S}( fss.pointtypes, fss.grid )
+    return PointTypes{T, N, S}( fss.point_types, fss.grid )
 end
 
 

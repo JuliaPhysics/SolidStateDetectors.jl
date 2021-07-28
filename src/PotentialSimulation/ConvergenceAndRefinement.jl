@@ -61,23 +61,23 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
         end
     end
     if depletion_handling_enabled
-        tmp_pointtypes::Array{PointType, N2} = fssrb.pointtypes .& undepleted_bit
+        tmp_point_types::Array{PointType, N2} = fssrb.point_types .& undepleted_bit
         @showprogress "Checking undepleted regions " for i in 1:10
             update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-            @inbounds for i in eachindex(fssrb.pointtypes)
-                if (fssrb.pointtypes[i] & undepleted_bit == 0) && (tmp_pointtypes[i] > 0)
-                    fssrb.pointtypes[i] += undepleted_bit
-                elseif (fssrb.pointtypes[i] & undepleted_bit > 0) && (tmp_pointtypes[i] == 0)
-                    tmp_pointtypes[i] += undepleted_bit
+            @inbounds for i in eachindex(fssrb.point_types)
+                if (fssrb.point_types[i] & undepleted_bit == 0) && (tmp_point_types[i] > 0)
+                    fssrb.point_types[i] += undepleted_bit
+                elseif (fssrb.point_types[i] & undepleted_bit > 0) && (tmp_point_types[i] == 0)
+                    tmp_point_types[i] += undepleted_bit
                 end
             end
         end
-        @inbounds for i in eachindex(fssrb.pointtypes)
-            if (fssrb.pointtypes[i] & update_bit == 0)
-                fssrb.pointtypes[i] = PointType(0)
+        @inbounds for i in eachindex(fssrb.point_types)
+            if (fssrb.point_types[i] & update_bit == 0)
+                fssrb.point_types[i] = PointType(0)
             else
-                if (fssrb.pointtypes[i] & pn_junction_bit == 0)
-                    if fssrb.pointtypes[i] & undepleted_bit > 0 fssrb.pointtypes[i] -= undepleted_bit end
+                if (fssrb.point_types[i] & pn_junction_bit == 0)
+                    if fssrb.point_types[i] & undepleted_bit > 0 fssrb.point_types[i] -= undepleted_bit end
                 end
             end
         end

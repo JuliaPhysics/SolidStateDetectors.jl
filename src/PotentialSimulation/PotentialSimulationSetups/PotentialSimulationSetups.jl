@@ -8,7 +8,7 @@ abstract type AbstractPotentialSimulationSetup{T, N} end
 struct PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, N}
     grid::Grid{T, N, S}
     potential::Array{T, N}
-    pointtypes::Array{PointType, N}
+    point_types::Array{PointType, N}
     q_eff_imp::Array{T, N}
     q_eff_fix::Array{T, N}
     ϵ_r::Array{T, N}
@@ -17,7 +17,7 @@ end
 struct PotentialSimulationSetupRB{T, N1, N2, S, TGW, AT} <: AbstractPotentialSimulationSetup{T, N1}
     grid::Grid{T, N1, S, AT}
     potential::Array{T, N2}
-    pointtypes::Array{PointType, N2}
+    point_types::Array{PointType, N2}
     volume_weights::Array{T, N2}
     q_eff_imp::Array{T, N2}
     q_eff_fix::Array{T, N2}
@@ -33,7 +33,7 @@ end
 
 function sizeof(fssrb::PotentialSimulationSetup{T, N})::Int where {T, N}
     s::Int = sizeof(fssrb.grid)
-    s += sizeof(fssrb.pointtypes)
+    s += sizeof(fssrb.point_types)
     s += sizeof(fssrb.potential)
     s += sizeof(fssrb.ϵ_r)
     s += sizeof(fssrb.q_eff_imp)
@@ -43,7 +43,7 @@ end
 
 function sizeof(fssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1, N2}
     s::Int = sizeof(fssrb.grid)
-    s += sizeof(fssrb.pointtypes)
+    s += sizeof(fssrb.point_types)
     s += sizeof(fssrb.potential)
     s += sizeof(fssrb.volume_weights)
     s += sizeof(fssrb.ϵ_r)

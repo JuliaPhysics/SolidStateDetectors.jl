@@ -1,4 +1,4 @@
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
+function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N}, potential::Array{T, N},
     grid::Grid{T, N, Cartesian}, det::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
@@ -24,13 +24,13 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                                 else
                                     0
                                 end
-                                pointtypes[ ix, iy, iz ] = zero(PointType)
+                                point_types[ ix, iy, iz ] = zero(PointType)
                             end
                         end
                     end
                 end
                 if in(pt, det)
-                    pointtypes[ ix, iy, iz ] += pn_junction_bit
+                    point_types[ ix, iy, iz ] += pn_junction_bit
                 end
                 if NotOnlyPaintContacts
                     for contact in det.contacts
@@ -40,7 +40,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                             else
                                 contact.id == weighting_potential_contact_id ? 1 : 0
                             end
-                            pointtypes[ ix, iy, iz ] = zero(PointType)
+                            point_types[ ix, iy, iz ] = zero(PointType)
                         end
                     end
                 end
@@ -56,7 +56,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             end
             fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
             for face in fs
-                paint!(pointtypes, potential, face, contact.geometry, pot, grid)
+                paint!(point_types, potential, face, contact.geometry, pot, grid)
             end
         end
     end
@@ -271,20 +271,20 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3,
         end
 
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
-        pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
+        point_types::Array{PointType, 3} = ones(PointType, size(grid)...)
+        set_point_types_and_fixed_potentials!( point_types, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
             not_only_paint_contacts = Val(not_only_paint_contacts), paint_contacts = Val(paint_contacts)  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
-        rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )
+        rbpoint_types::Array{T, 4} = RBExtBy2Array( point_types, grid )
         potential = clear(potential)
-        pointtypes = clear(pointtypes)
+        point_types = clear(point_types)
     end # @inbounds
 
     fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)} = 
         PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
-        rbpointtypes,
+        rbpoint_types,
         volume_weights,
         ρ,
         q_eff_fix,
@@ -320,20 +320,20 @@ end
 
 
 function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{PointType, 3} where {T}
-    pointtypes::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
-    for iz in axes(pointtypes, 3)
+    point_types::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
+    for iz in axes(point_types, 3)
         irbz::Int = iz + 1
-        for iy in axes(pointtypes, 2)
+        for iy in axes(point_types, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            for ix in axes(pointtypes, 1)
+            for ix in axes(point_types, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                pointtypes[ix, iy, iz] = fssrb.pointtypes[irbx, irby, irbz, rbi ]
+                point_types[ix, iy, iz] = fssrb.point_types[irbx, irby, irbz, rbi ]
             end
         end
     end
-    return pointtypes
+    return point_types
 end
 
 
