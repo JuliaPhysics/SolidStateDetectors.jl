@@ -17,4 +17,4 @@ Q_i = Q \left( \sum\limits_\text{holes} \Phi_i^w(\vec{r}_h) -  \sum\limits_\text
 
 ## Simulation Algorithm
 
-The weighting potential for an electrode is internally calculated with the same function as the electric potential when calling `calculate_weighting_potential!(simulation, contact_id)`. The differences are that $\rho(\vec{r})$ is set to zero and that the boundary conditions of fixed values on the contacts are adapted.
+The weighting potential for an electrode is internally calculated with the same function as the electric potential when calling `calculate_weighting_potential!(sim, contact_id)`. The differences are that $\rho(\vec{r})$ is set to zero and that the boundary conditions of fixed values on the contacts are adapted.

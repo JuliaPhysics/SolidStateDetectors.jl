@@ -26,7 +26,7 @@ in areas where the change of electric potential is large.
 
 ## Grid Initialization
 
-The grid can be specified in the configuration files, see [Grid](@ref), of `simulation::Simulation`.
+The grid can be specified in the configuration files, see [Grid](@ref), of `sim::Simulation`.
 
 There is a constructor method for grid: [`Grid(sim::Simulation)`](@ref).
 

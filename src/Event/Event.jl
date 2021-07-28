@@ -46,7 +46,7 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
 end
 
 in(evt::Event, detector::SolidStateDetector) = all( pt -> pt in detector, evt.locations)
-in(evt::Event, simulation::Simulation) = all( pt -> pt in simulation.detector, evt.locations)
+in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
 
 """
     drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}

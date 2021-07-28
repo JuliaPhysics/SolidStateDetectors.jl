@@ -1,6 +1,6 @@
 # Electric Field
 
-The electric field is calculated from the electric potential for each grid point ``(i,j,k)`` when calling `calculate_electric_field!(simulation)`. The field vector components on each grid point are the means of the electric field in each direction calculated as finite differences.
+The electric field is calculated from the electric potential for each grid point ``(i,j,k)`` when calling `calculate_electric_field!(sim)`. The field vector components on each grid point are the means of the electric field in each direction calculated as finite differences.
 
 On a Cartesian grid, this results in:
 ```math
@@ -32,19 +32,19 @@ where
 This discrete electric field is interpolated (via [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl)) 
 during the drift in order to get the electric field at the current position of the charge carrier.
 
-The calculated electric field is stored as a field in the Simulation object, i.e. `simulation.electric_field`, consisting of the actual field vectors for each grid point stored in `simulation.electric_field.data` and the corresponding grid in `simulation.electric_field.grid`. 
+The calculated electric field is stored as a field in the Simulation object, i.e. `sim.electric_field`, consisting of the actual field vectors for each grid point stored in `sim.electric_field.data` and the corresponding grid in `sim.electric_field.grid`. 
 
 ## Visualization
 
-The electric field can be plotted using the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package. The electric field strength is plotted using `plot(simulation.electric_field)`, whereas the electric field lines can be plotted on top of that using  `plot_electric_fieldlines!(simulation)`.
+The electric field can be plotted using the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package. The electric field strength is plotted using `plot(sim.electric_field)`, whereas the electric field lines can be plotted on top of that using  `plot_electric_fieldlines!(sim)`.
 
 Minimum working example:
 ```julia
 using SolidStateDetectors
 using Plots
-simulation = Simulation(SSD_examples[:InvertedCoax])
-calculate_electric_potential!(simulation)
-calculate_electric_field!(simulation)
-plot(simulation.electric_field, full_det = true)
-plot_electric_fieldlines!(simulation, full_det = true)
+sim = Simulation(SSD_examples[:InvertedCoax])
+calculate_electric_potential!(sim)
+calculate_electric_field!(sim)
+plot(sim.electric_field, full_det = true)
+plot_electric_fieldlines!(sim, full_det = true)
 ```

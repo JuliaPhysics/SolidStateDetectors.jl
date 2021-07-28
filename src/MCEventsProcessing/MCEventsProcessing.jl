@@ -1,7 +1,7 @@
 include("table_utils.jl")
 
 """
-    simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T})
+    simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T})
 
 1. Calculates the drift paths of all energy hits defined in `mcevents`
     based on the drift fields for electrons and holes stored in `s.electron_drift_field` and 
@@ -19,26 +19,26 @@ Note: The drift paths are just calculated temporarily and not returned.
 - `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 - `verbose = false`: Activate or deactivate additional info output. 
 """
-function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
+function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
                              verbose = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
-    n_contacts = length(s.detector.contacts)
-    S = get_coordinate_system(s)
-    contacts = s.detector.contacts;
+    n_contacts = length(sim.detector.contacts)
+    S = get_coordinate_system(sim)
+    contacts = sim.detector.contacts;
     contact_ids = Int[]
-    for contact in contacts if !ismissing(s.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
-    wps_interpolated = [ interpolated_scalarfield(s.weighting_potentials[id]) for id in contact_ids ];
-    e_drift_field = get_interpolated_drift_field(s.electron_drift_field);
-    h_drift_field = get_interpolated_drift_field(s.hole_drift_field);
+    for contact in contacts if !ismissing(sim.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
+    wps_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
+    e_drift_field = get_interpolated_drift_field(sim.electron_drift_field);
+    h_drift_field = get_interpolated_drift_field(sim.hole_drift_field);
     
-    @info "Detector has $(n_contacts) contact(s)"
+    @info "Detector has $(n_contacts) contact"*(n_contacts != 1 ? "s" : "")
     @info "Table has $(length(mcevents)) physics events ($(sum(map(edeps -> length(edeps), mcevents.edep))) single charge depositions)."
 
     # First simulate drift paths
-    drift_paths = _simulate_charge_drifts(mcevents, s, Δt, max_nsteps, e_drift_field, h_drift_field, verbose)
+    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, e_drift_field, h_drift_field, verbose)
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
@@ -60,12 +60,12 @@ function simulate_waveforms( mcevents::TypedTables.Table, s::Simulation{T};
 end
 
 
-function _simulate_charge_drifts( mcevents::TypedTables.Table, s::Simulation{T},
+function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T},
                                   Δt::RealQuantity, max_nsteps::Int, 
                                   e_drift_field::Interpolations.Extrapolation, h_drift_field::Interpolations.Extrapolation, 
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
-        _drift_charges(s.detector, s.electron_drift_field.grid, s.point_types, 
+        _drift_charges(sim.detector, sim.electron_drift_field.grid, sim.point_types, 
                         CartesianPoint{T}.(to_internal_units.(phyevt.pos)),
                         e_drift_field, h_drift_field, 
                         T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
