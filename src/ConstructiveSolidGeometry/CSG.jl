@@ -1,7 +1,42 @@
 """
     struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
         
-a || b
+A `CSGUnion` of two geometries `a` and `b` is defined as the set of points that are in at least 
+one of either `a` or `b` (`a || b`).
+
+![CSGUnion](../../docs/src/assets/CSGUnion.png)
+
+## Parametric types
+* `T`: Precision type.
+* `A`: Type of geometry `a`.
+* `B`: Type of geometry `b`.
+
+## Fields 
+* `a::A`: First geometry to build the union.
+* `b::B`: Second geometry to build the union.
+
+
+## Definition in Configuration File
+
+A `CSGUnion` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `union`, followed by an array of geometries from
+which the union is constructed. 
+
+An example definition of a `CSGUnion` looks like this:
+```yaml
+union: # a || b
+  - tube: # a
+      r: 2
+      h: 1
+  - tube: # b
+      r: 1
+      h: 1.5
+      origin: 
+        z: 0.5
+```
+
+!!! note
+    If more than two geometries are passed, the `union` is constructed from all of them.
 """
 struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
