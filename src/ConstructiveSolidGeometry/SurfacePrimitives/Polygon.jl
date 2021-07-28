@@ -1,7 +1,7 @@
 """
     struct Polygon{N,T} <: AbstractPlanarSurfacePrimitive{T}
         
-Surface primitive describing a planar polygon, e.g. the base of a [`RegularPolygonPrism`](@ref).
+Surface primitive describing a planar polygon, e.g. the base of a [`RegularPrism`](@ref).
 
 ## Parametric types
 * `T`: Precision type.
