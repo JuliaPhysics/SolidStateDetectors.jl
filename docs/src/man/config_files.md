@@ -17,7 +17,7 @@ keys(SSD_examples) # dictionary holding the full path to the corresponding confi
 ```
 
 They can be loaded via
-```@example general
+```julia
 path_to_config_file = SSD_examples[:InvertedCoax]
 sim = Simulation(path_to_config_file)
 ```
