@@ -633,10 +633,44 @@ function update_till_convergence!( sim::Simulation{T, CS},
 end
 
 """
-    refine!(sim::Simulation{T}, ::Type{ElectricPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
+    refine!(sim::Simulation{T}, ::Type{ElectricPotential}, max_diffs::Tuple, minimum_distances::Tuple, kwargs...)
 
 Takes the current state of `sim.electric_potential` and refines it with respect to the input arguments
-`max_diffs` and `minimum_distances`.
+`max_diffs` and `minimum_distances` by
+
+1. extending the `grid` of `simulation.electric_potential` to be a closed grid in all dimensions,
+2. refining the axis of the grid based on `max_diffs` and `minimum_distances`:
+   Insert new ticks between two existing ticks such that the potential difference between each tick becomes
+   smaller than `max_diff[i]` (`i` -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`, and
+3. creating the new data array for the refined grid and fill it by interpolation of the the initial `grid`.
+
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.electric_potential` will be refined.
+* `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `simulation.electric_potential.grid` after refinement.
+* `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `simulation.electric_potential.grid` after refinement.
+
+## Keywords
+* `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
+* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
+    Default is `-1`. If set to `-1` there will be no limit.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
+    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
+    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
+    In case of Cartesian coordinates, only one value is taken.
+    
+## Examples 
+```julia 
+SolidStateDetectors.refine!(sim, ElectricPotential, max_diffs = (100, 100, 100), minimum_distances = (0.01, 0.02, 0.01))
+```
 """
 function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
@@ -658,11 +692,48 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
     end
     nothing
 end
+
+
 """
     refine!(sim::Simulation{T}, ::Type{WeightingPotential}, max_diffs::Tuple{<:Real,<:Real,<:Real}, minimum_distances::Tuple{<:Real,<:Real,<:Real})
 
 Takes the current state of `sim.weighting_potentials[contact_id]` and refines it with respect to the input arguments
-`max_diffs` and `minimum_distances`.
+`max_diffs` and `minimum_distances` by
+
+1. extending the `grid` of `simulation.weighting_potentials[contact_id]` to be a closed grid in all dimensions,
+2. refining the axis of the grid based on `max_diffs` and `minimum_distances`:
+   Insert new ticks between two existing ticks such that the potential difference between each tick becomes
+   smaller than `max_diff[i]` (`i` -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`, and
+3. creating the new data array for the refined grid and fill it by interpolation of the the initial `grid`.
+
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.weighting_potentials[contact_id]` will be refined.
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the [`WeightingPotential`](@ref) is refined.
+* `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `simulation.weighting_potentials[contact_id].grid` after refinement.
+* `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `simulation.weighting_potentials[contact_id].grid` after refinement.
+
+## Keywords
+* `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
+* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
+    Default is `-1`. If set to `-1` there will be no limit.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
+    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
+    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
+* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
+    First element contains the SOR constant for `r` = 0.
+    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
+    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
+    In case of Cartesian coordinates, only one value is taken.
+    
+## Examples 
+```julia 
+SolidStateDetectors.refine!(sim, WeightingPotential, 1, max_diffs = (0.01, 0.01, 0.01), minimum_distances = (0.01, 0.02, 0.01))
+```
 """
 function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int,
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
