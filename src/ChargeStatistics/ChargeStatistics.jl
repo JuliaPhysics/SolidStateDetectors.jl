@@ -27,11 +27,11 @@ function add_fano_noise(rng::AbstractRNG, E_dep::RealQuantity, E_ionisation::Rea
 end
 
 
-function add_fano_noise(rng::AbstractRNG, events::DetectorHitEvents, E_ionisation::RealQuantity, f_fano::Real)
-    noisy_edep = deepmap(x -> add_fano_noise(x, E_ionisation, f_fano), events.edep)
+function add_fano_noise(rng::AbstractRNG, evts::DetectorHitEvents, E_ionisation::RealQuantity, f_fano::Real)
+    noisy_edep = deepmap(x -> add_fano_noise(x, E_ionisation, f_fano), evts.edep)
 
     TypedTables.Table(merge(
-        Tables.columns(events),
+        Tables.columns(evts),
         (edep = noisy_edep,)
     ))
 end

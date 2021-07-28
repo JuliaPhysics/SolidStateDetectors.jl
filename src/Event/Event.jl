@@ -37,71 +37,71 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
         }}, T = missing)
     if ismissing(T) T = eltype(to_internal_units(evt[:edep][:])) end
 
-    event = Event(
+    evt = Event(
         CartesianPoint{T}.(to_internal_units.(evt[:pos][:])),
         T.(to_internal_units.(evt[:edep][:]))
     )
 
-    return event
+    return evt
 end
 
 in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, evt.locations)
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
 
 """
-    drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
-Calculate the drift paths for the given `event` and Simulation `sim`
-    and stores them under `event.drift_paths`. 
+Calculate the drift paths for the given `evt` and Simulation `sim`
+    and stores them under `evt.drift_paths`. 
 
 # Keywords
 - `Δt::RealQuantity = 5u"ns"`: Time difference between two time stamps of the drift.
 - `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 - `verbose = false`: Activate or deactivate additional info output. 
 """
-function drift_charges!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    event.drift_paths = drift_charges(sim, CartesianPoint.(event.locations), Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
+function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
     nothing
 end
-function get_signal!(event::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(event.drift_paths) "No drift path for this event. Use `drift_charges(event::Event, sim::Simulation)` first."
+function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
+    @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
     @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
-    if ismissing(event.waveforms)
-        event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
+    if ismissing(evt.waveforms)
+        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
-    event.waveforms[contact_id] = get_signal(sim, event.drift_paths, event.energies, contact_id, Δt = Δt)
+    evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, evt.energies, contact_id, Δt = Δt)
     nothing
 end
-function get_signals!(event::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(event.drift_paths) "No drift path for this event. Use `drift_charges(event::Event, sim::Simulation)` first."
-    if ismissing(event.waveforms)
-        event.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
+function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
+    @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
+    if ismissing(evt.waveforms)
+        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
     for contact in sim.detector.contacts
         if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
         if !ismissing(sim.weighting_potentials[contact.id])
-            event.waveforms[contact.id] = get_signal(sim, event.drift_paths, event.energies, contact.id, Δt = Δt)
+            evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, evt.energies, contact.id, Δt = Δt)
         end
     end
     nothing
 end
 
 """
-    simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
-Simulates the `event` for a given Simulation `sim`:
-    1. Simulate the drift paths of all hits, at `event.locations`, and stores them under `event.drift_paths`. 
+Simulates the `evt` for a given Simulation `sim`:
+    1. Simulate the drift paths of all hits, at `evt.locations`, and stores them under `evt.drift_paths`. 
     2. Generate the signal (waveform) for all channels for which a weighting potential is specified in `sim.weighting_potentials`
-        and stores them under `event.waveforms`.
+        and stores them under `evt.waveforms`.
 
 # Keywords
 - `Δt::RealQuantity = 5u"ns"`: Time difference between two time stamps of the drift and the signals.
 - `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 - `verbose = false`: Activate or deactivate additional info output. 
 """
-function simulate!(event::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    drift_charges!(event, sim, max_nsteps = max_nsteps, Δt = Δt, verbose = verbose)
-    get_signals!(event, sim, Δt = Δt)
+function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, verbose = verbose)
+    get_signals!(evt, sim, Δt = Δt)
     nothing
 end
 
