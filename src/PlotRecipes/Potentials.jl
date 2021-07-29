@@ -288,7 +288,7 @@ end
             yguide --> "z / m"
             xlims --> (grid.x[1],grid.x[end])
             ylims --> (grid.z[1],grid.z[end])
-            gx_ext = midpoints(gridet_extended_ticks(grid.x))
+            gx_ext = midpoints(get_extended_ticks(grid.x))
             gz_ext = midpoints(get_extended_ticks(grid.z))
             midpoints(gx_ext), midpoints(gz_ext), sp.data[:,idx,:]'
         elseif cross_section == :z
