@@ -124,9 +124,9 @@ in `a` but not in `b` (`a && !b`).
 ![CSGDifference](../../docs/src/assets/CSGDifference.png)
 
 !!! note
-Note that `b` is treated as open primitive. This means that points which are in 
-`a` and on the surface of `b` will still be in the `CSGDifference` of `a` and `b`.
-
+    Note that `b` is treated as open primitive. This means that points which are in 
+    `a` and on the surface of `b` will still be in the `CSGDifference` of `a` and `b`.
+    
 
 ## Parametric types
 * `T`: Precision type.
