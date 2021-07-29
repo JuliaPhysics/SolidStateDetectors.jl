@@ -126,7 +126,7 @@ end
 """
     simulate!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
 
-Simulates the waveforms for the [`Event`](@ref) `evt` for a given [Simulation](@ref) `sim` by
+Simulates the waveforms for the [`Event`](@ref) `evt` for a given [`Simulation`](@ref) `sim` by
 
 1. calculating the drift paths of all energy hits, at `evt.locations` and 
 2. generating the waveforms for each [`Contact`], for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.

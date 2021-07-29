@@ -4,7 +4,7 @@ include("table_utils.jl")
     simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T}; kwargs...)
     simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T}, output_dir::AbstractString, output_base_name::AbstractString; kwargs...)
 
-Simulates the waveforms for all events defined in `mcevents` for a given [`Simulation`] by
+Simulates the waveforms for all events defined in `mcevents` for a given [`Simulation`](@ref) by
 
 1. calculating the drift paths of all energy hits defined in `mcevents`
     based on the drift fields for electrons and holes stored in `sim.electron_drift_field` and 
