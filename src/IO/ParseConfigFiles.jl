@@ -32,18 +32,6 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
     else
         error("Currently only .json and .yaml files are supported.")
     end
-    @assert !haskey(dict, "objects") "Configuration file deprecation.\n
-        The configuration file format was updated in v0.6.0.
-        However, this configuration file still seems to be in the old format.\n
-        To update your configuration file to the new format (v0.6.0 and newer),
-        open a new Julia session and load the following file:\n
-        \tinclude(\"<path_to_SolidStateDetectors.jl>/test/update_config_files.jl\")\n
-        Afterwards, run\n
-        \tupdate_config_file(\"<path_to_configuration_file>\")\n
-        This method returns the file name of the updated configuration file.
-        Please close the Julia session after updating the configuration files, as some
-        parsing methods are overridden with old methods."
-        
     dict
 end
 

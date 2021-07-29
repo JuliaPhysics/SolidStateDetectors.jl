@@ -92,26 +92,47 @@ function get_world_limits_from_objects(::Type{Cartesian}, det::SolidStateDetecto
 end
 
 function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where {T <: SSDFloat}
-    if haskey(config_file, "detectors")
-        config_detector = config_file["detectors"][1] # still only one detector
-
-        transformations = parse_CSG_transformation(T, config_detector, input_units)
+    
+    @assert !haskey(config_file, "objects") "Configuration file deprecation.\n
+        The configuration file format was updated in v0.6.0.
+        However, this configuration file still seems to be in the old format.\n
+        To update your configuration file to the new format (v0.6.0 and newer),
+        open a new Julia session and load the following file:\n
+        \tinclude(\"<path_to_SolidStateDetectors.jl>/test/update_config_files.jl\")\n
+        Afterwards, run\n
+        \tupdate_config_file(\"<path_to_configuration_file>\")\n
+        This method returns the file name of the updated configuration file.
+        Please close the Julia session after updating the configuration files, as some
+        parsing methods are overridden with old methods.\n
+        Note that if your old geometries were defined using `difference`, you might
+        need to increase the dimensions of the subtracted geometry as it is now treated as
+        open primitive. Please have a look at the documentation:\n
+        \thttps://juliaphysics.github.io/SolidStateDetectors.jl/stable/\n"
         
-        @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."     
-        semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
+    @assert haskey(config_file, "detectors") "Config file needs an entry `detectors` that defines the detector(s)."
+    config_detector = config_file["detectors"][1] # still only one detector
 
-        @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
-        contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
-        
-        virtual_drift_volumes = if haskey(config_detector, "virtual_drift_volumes")  
-            broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
-        else
-            missing
-        end
+    transformations = parse_CSG_transformation(T, config_detector, input_units)
+    
+    @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."     
+    semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
+
+    @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
+    contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
+    
+    passives = []
+    if haskey(config_detector, "passives") # "passives" as entry of "detectors"
+        append!(passives, broadcast(p -> Passive{T}(p, input_units, transformations), config_detector["passives"]))
     end
-    passives = if haskey(config_file, "surroundings")
-        config_surroundings = config_file["surroundings"]
-        broadcast(p -> Passive{T}(p, input_units, parse_CSG_transformation(T, p, input_units)), config_file["surroundings"])
+    if haskey(config_file, "surroundings") # "surroundings" as entry in the configuration file
+        append!(passives, broadcast(p -> Passive{T}(p, input_units, parse_CSG_transformation(T, p, input_units)), config_file["surroundings"]))
+    end
+    if isempty(passives) 
+        passives = missing 
+    end
+        
+    virtual_drift_volumes = if haskey(config_detector, "virtual_drift_volumes")  
+        broadcast(v -> construct_virtual_volume(T, v, input_units, transformations), config_detector["virtual_drift_volumes"]) 
     else
         missing
     end
