@@ -1,3 +1,25 @@
+"""
+    struct EllipsoidMantle{T,TR,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
+
+Surface primitive describing the surface of an [`Ellipsoid`](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: SphereMantle (constant radius `r` along all axes).
+* `TP`: Type of the azimuthial angle `φ`.
+    * `TP == Nothing`: Full 2π in `φ`.
+* `TT`: Type of the polar angle `θ`.
+    * `TT == Nothing`: Full 2π in `θ`.
+* `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+
+## Fields
+* `r::TR`: Definition of the radius of the `EllipsoidMantle` (in m).
+* `φ::TP`: Range in azimuthial angle `φ` of the `EllipsoidMantle`.
+* `θ::TT`: Range in polar angle `θ` of the `EllipsoidMantle`.
+* `origin::CartesianPoint{T}`: Origin of the `Ellipsoid` which has this `EllipsoidMantle` as surface.
+* `rotation::SMatrix{3,3,T,9}`: Rotation matrix of the `Ellipsoid` which has this `EllipsoidMantle` as surface.
+"""
 @with_kw struct EllipsoidMantle{T,TR,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
     r::TR = 1
     φ::TP = nothing
@@ -46,11 +68,18 @@ end
 normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
 
 """
-    intersection(cm::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
+    intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}
 
-The function will always return 2 CartesianPoint's.
-If the line just touches the mantle, the two points will be the same. 
-If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+Calculates the intersections of a `Line` with a `EllipsoidMantle`.
+
+## Arguments
+* `cm::EllipsoidMantle{T}`: The `EllipsoidMantle`.
+* `l::Line{T}`: The `Line`.
+
+!!! note 
+    The function will always return 2 CartesianPoint's.
+    If the line just touches the mantle, the two points will be the same. 
+    If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
 """
 function intersection(em::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, em) # direction is not normalized
@@ -80,13 +109,7 @@ function intersection(em::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
     return _transform_into_global_coordinate_system(ints1, em), 
            _transform_into_global_coordinate_system(ints2, em)
 end
-"""
-    intersection(cm::EllipsoidMantle{T,T}, l::Line{T}) where {T}
 
-The function will always return 2 CartesianPoint's.
-If the line just touches the mantle, the two points will be the same. 
-If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
-"""
 function intersection(em::EllipsoidMantle{T,T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, em) # direction is not normalized
     
@@ -115,6 +138,6 @@ function intersection(em::EllipsoidMantle{T,T}, l::Line{T}) where {T}
 end
 
 
-# distance_to_surface(point::CylindricalPoint{T}, s::SphereMantle{T}) where {T} = abs(hypot(point.r, point.z) - s.r)
+# distance_to_surface(pt::CylindricalPoint{T}, s::SphereMantle{T}) where {T} = abs(hypot(pt.r, pt.z) - s.r)
 
-# distance_to_surface(point::CartesianPoint{T}, s::SphereMantle{T}) where {T} = abs(norm(point) - s.r)
+# distance_to_surface(pt::CartesianPoint{T}, s::SphereMantle{T}) where {T} = abs(norm(pt) - s.r)

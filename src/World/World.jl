@@ -1,5 +1,26 @@
-abstract type AbstractWorld{T, ND} end
+abstract type AbstractWorld{T, N} end
 
+"""
+    struct SSDInterval{T <: SSDFloat, L, R, BL, BR} <: IntervalSets.TypedEndpointsInterval{L,R,T}
+        
+Interval containing boundary conditions of left and right boundary as parametric type (`BL` and `BR`).
+
+## Parametric types
+* `T`: Precision type.
+* `L`: Boundary type of the left endpoint.
+* `R`: Boundary type of the right endpoint.
+* `BL`: Boundary condition at the left endpoint.
+* `BR`: Boundary condition at the right endpoint.
+
+The boundary types of an `SSDInterval` can be `L, R ∈ {:closed, :open}`.
+
+The boundary conditions of an `SSDInterval` can be
+`BL, BR ∈ {:periodic, :reflecting, :infinite, :r0, :fixed}`.
+
+## Fields
+* `left::T`: Value of the left endpoint.
+* `right::T`: Value of the right endpoint.
+"""
 struct SSDInterval{T <: SSDFloat, L, R, BL, BR} <: IntervalSets.TypedEndpointsInterval{L,R,T}
     left::T
     right::T
@@ -19,12 +40,25 @@ const boundary_condition_mapping = Dict{String, Symbol}(
     "periodic" => :periodic,
 )
 
-struct World{T <: SSDFloat, ND, S} <: AbstractWorld{T, ND} 
-    intervals::NTuple{ND, SSDInterval{T}}
+"""
+    struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N} 
+        
+Definition of the finite volume on which a [`Simulation`](@ref) is performed.
+
+## Parametric types
+* `T`: Precision type.
+* `N`: Dimensions of the world.
+* `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+        
+## Fields 
+* `intervals::NTuple{N, SSDInterval{T}}`: A set of [`SSDInterval`](@ref) defining the dimensions of the world.
+"""
+struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N} 
+    intervals::NTuple{N, SSDInterval{T}}
 end
 
-function World{T, ND, S}(args...) where {T <: SSDFloat, ND, S} 
-    return World{T, ND, S}(args)
+function World{T, N, S}(args...) where {T <: SSDFloat, N, S} 
+    return World{T, N, S}(args)
 end
 
 

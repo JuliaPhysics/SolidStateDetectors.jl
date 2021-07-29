@@ -1,21 +1,24 @@
 """
-    struct ConeMantle{T,TR,TP,D} <: AbstractSurfacePrimitive{T}
+    struct ConeMantle{T,TR,TP,D} <: AbstractCurvedSurfacePrimitive{T}
 
-T: Type of values, e.g. Float64
+Surface primitive describing the mantle of a [`Cone`](@ref).
 
-* `r::TR`: 
-    * TR = Real -> Cylinder Mantle (a = b = r)
-    * TR = (Real, Real) -> Cone Mantle (r_bot = r[1], r_top = r[2]) 
-    * TR = ((Real,), (Real,)) -> Elliptical Cylinder Mantle (a = r[1][1], b = r[2][1])
-    * TR = ((Real, Real),(Real, Real)) -> Elliptical Cone Mantle \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
-    * Not all are implemented yet
-
-* `φ::TP`: 
-    * TP = Nothing <-> Full in φ
-    * ...
-* `hZ::T`: half hight/length of the cone mantle
-
-* `D`: `:inwards` or `:outwards`: Whethe the normal points inside or outside
+## Parametric types
+* `T`: Precision type.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: CylinderMantle (constant radius `r` at all `z`).
+    * `TR == Tuple{T, T}`: VaryingCylinderMantle (inner radius at `r[1]`, outer radius at `r[2]`).
+* `TP`: Type of the angular range `φ`.
+    * `TP == Nothing`: Full 2π Cone.
+    * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
+* `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+    
+## Fields
+* `r::TR`: Definition of the radius of the `ConeMantle` (in m).
+* `φ::TP`: Range in polar angle `φ` over which the `ConeMantle` extends (in radians).
+* `hZ::T`: Half of the height of the `ConeMantle` (in m).
+* `origin::CartesianPoint{T}`: Origin of the `Cone` which has this `ConeMantle` as surface.
+* `rotation::SMatrix{3,3,T,9}`: Rotation matrix of the `Cone` which has this `ConeMantle` as surface.
 """
 @with_kw struct ConeMantle{T,TR,TP,D} <: AbstractCurvedSurfacePrimitive{T}
     r::TR = 1
@@ -87,11 +90,18 @@ end
 """
     intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
 
-The function will always return 2 CartesianPoint's.
-If the line just touches the mantle, the two points will be the same. 
-If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
-If the line crosses the mantle only once, two points will be returned. The two points will be the same point (the intersection).
-If the line lies inside the mantle and is parallel to it. The same point will be returned which is the origin of the line. 
+Calculates the intersections of a `Line` with a `ConeMantle`.
+
+## Arguments
+* `cm::ConeMantle{T,Tuple{T,T}}`: The `ConeMantle`.
+* `l::Line{T}`: The `Line`.
+
+!!! note 
+    The function will always return 2 CartesianPoint's.
+    If the line just touches the mantle, the two points will be the same. 
+    If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+    If the line crosses the mantle only once, two points will be returned. The two points will be the same point (the intersection).
+    If the line lies inside the mantle and is parallel to it. The same point will be returned which is the origin of the line. 
 """
 function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
@@ -206,17 +216,17 @@ end
 #     return t1, t2, proj
 # end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
-#     pcy = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
+#     pcy = CylindricalPoint(pt)
 #     distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
 # end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
-#     pcy = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
+#     pcy = CylindricalPoint(pt)
 #     φMin::T, φMax::T, _ = get_φ_limits(c)
 #     if _in_φ(pcy, c.φ)
 #         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
 #     else
-#         return distance_to_line(CartesianPoint(point), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
+#         return distance_to_line(CartesianPoint(pt), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
 #     end
 # end

@@ -1,17 +1,19 @@
-@recipe function f(p::CartesianPoint)
+@recipe function f(pt::CartesianPoint)
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
+    if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+        aspect_ratio --> 1.0
+    end 
     @series begin
         seriesstyle --> :scatter
-        [p.x], [p.y], [p.z]
+        [pt.x], [pt.y], [pt.z]
     end
 end
 
-@recipe function f(p::CylindricalPoint)
+@recipe function f(pt::CylindricalPoint)
     @series begin
-        CartesianPoint(p)
+        CartesianPoint(pt)
     end
 end
 
@@ -19,7 +21,9 @@ end
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
+    if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+        aspect_ratio --> 1.0
+    end 
     @series begin
         seriesstyle --> :scatter
         [v[i].x for i in eachindex(v)], [v[i].y for i in eachindex(v)], [v[i].z for i in eachindex(v)]

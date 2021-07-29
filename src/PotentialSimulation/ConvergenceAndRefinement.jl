@@ -1,30 +1,30 @@
-function update_and_get_max_abs_diff!(  fssrb::PotentialSimulationSetupRB{T, N1, N2},
+function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, N1, N2},
                                         depletion_handling::Val{depletion_handling_enabled}, 
                                         only2d::Val{only_2d} = Val{false}(), 
                                         is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
                                         use_nthreads::Int = Base.Threads.nthreads()
                                         )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
-    tmp_potential::Array{T, N2} = copy(fssrb.potential)
+    tmp_potential::Array{T, N2} = copy(pssrb.potential)
     if depletion_handling_enabled
-        update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-        slopes::Array{T, N2} = tmp_potential - fssrb.potential
+        update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+        slopes::Array{T, N2} = tmp_potential - pssrb.potential
         @inbounds for i in 1:19
-            tmp_potential[:] = fssrb.potential[:]
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-            slopes += tmp_potential - fssrb.potential
+            tmp_potential[:] = pssrb.potential[:]
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            slopes += tmp_potential - pssrb.potential
         end
         @inbounds slopes /= 20
         return maximum(abs.(slopes))
     else
         for i in 1:10
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
         end
-        max_diff::T = maximum(abs.(tmp_potential - fssrb.potential))
+        max_diff::T = maximum(abs.(tmp_potential - pssrb.potential))
         return max_diff
     end
 end
 
-function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}, 
+function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}, 
                                     convergence_limit::T;
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
@@ -36,15 +36,15 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
     n_iterations::Int = 0
     cf::T = Inf
     cfs::Vector{T} = fill(cf, 10)
-    cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * fssrb.bias_voltage) # to get relative change in respect to bias voltage
+    cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * pssrb.bias_voltage) # to get relative change in respect to bias voltage
     # To disable automatically ProgressMeters in CI builds:
     is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
     prog = ProgressThresh(cl; dt = 0.1, desc = "Convergence: ", output = stderr, enabled = !is_logging(stderr))
     while cf > cl
         for i in 1:n_iterations_between_checks
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
         end
-        cf = update_and_get_max_abs_diff!(fssrb, depletion_handling, only2d, is_weighting_potential, use_nthreads)
+        cf = update_and_get_max_abs_diff!(pssrb, depletion_handling, only2d, is_weighting_potential, use_nthreads)
         @inbounds cfs[1:end-1] = cfs[2:end]
         @inbounds cfs[end] = cf
         slope::T = abs(mean(diff(cfs)))
@@ -61,23 +61,23 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
         end
     end
     if depletion_handling_enabled
-        tmp_pointtypes::Array{PointType, N2} = fssrb.pointtypes .& undepleted_bit
+        tmp_point_types::Array{PointType, N2} = pssrb.point_types .& undepleted_bit
         @showprogress "Checking undepleted regions " for i in 1:10
-            update!(fssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
-            @inbounds for i in eachindex(fssrb.pointtypes)
-                if (fssrb.pointtypes[i] & undepleted_bit == 0) && (tmp_pointtypes[i] > 0)
-                    fssrb.pointtypes[i] += undepleted_bit
-                elseif (fssrb.pointtypes[i] & undepleted_bit > 0) && (tmp_pointtypes[i] == 0)
-                    tmp_pointtypes[i] += undepleted_bit
+            update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
+            @inbounds for i in eachindex(pssrb.point_types)
+                if (pssrb.point_types[i] & undepleted_bit == 0) && (tmp_point_types[i] > 0)
+                    pssrb.point_types[i] += undepleted_bit
+                elseif (pssrb.point_types[i] & undepleted_bit > 0) && (tmp_point_types[i] == 0)
+                    tmp_point_types[i] += undepleted_bit
                 end
             end
         end
-        @inbounds for i in eachindex(fssrb.pointtypes)
-            if (fssrb.pointtypes[i] & update_bit == 0)
-                fssrb.pointtypes[i] = PointType(0)
+        @inbounds for i in eachindex(pssrb.point_types)
+            if (pssrb.point_types[i] & update_bit == 0)
+                pssrb.point_types[i] = PointType(0)
             else
-                if (fssrb.pointtypes[i] & pn_junction_bit == 0)
-                    if fssrb.pointtypes[i] & undepleted_bit > 0 fssrb.pointtypes[i] -= undepleted_bit end
+                if (pssrb.point_types[i] & pn_junction_bit == 0)
+                    if pssrb.point_types[i] & undepleted_bit > 0 pssrb.point_types[i] -= undepleted_bit end
                 end
             end
         end
@@ -88,18 +88,18 @@ function _update_till_convergence!( fssrb::PotentialSimulationSetupRB{T, N1, N2}
 end
 
 
-"""
-    refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
-        only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
-
-Refine any scalar potential `p`. 
-
-1. Extent the grid to be a closed grid in all dimensions. 
-2. Refine the axis of the grid based on `max_diffs` and `minimum_applied_potential`:
-   Insert N new ticks between to existing ticks such that the potential difference between each tick becomes
-   smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
-3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
-"""
+# """
+#     refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
+#         only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
+# 
+# Refine any scalar potential `p`. 
+# 
+# 1. Extent the grid to be a closed grid in all dimensions. 
+# 2. Refine the axis of the grid based on `max_diffs` and `minimum_applied_potential`:
+#    Insert N new ticks between to existing ticks such that the potential difference between each tick becomes
+#    smaller than `max_diff[i]` (i -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`.
+# 3. Create the new data array for the refined grid and fill it by interpolation of the the initial (coarse) grid.
+# """
 function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}; 
         only2d::Val{only_2d} = Val(size(p.data, 2)==1)) where {T, only_2d}
     closed_potential = _get_closed_potential(p)
@@ -167,30 +167,30 @@ function _get_closed_axis(ax::DiscreteAxis{T, BL, BR}) where {T, BL, BR}
     return DiscreteAxis{T, BL, BR, ClosedInterval{T}}(ClosedInterval(ax.interval.left, ax.interval.right), ticks)
 end
 
-"""
-    _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
-
-Returns an closed Grid & Potential:
-E.g. if one of the axis is {:closed,:open} it will turn this into {:closed,:closed}
-and also extend the `data` field of the potential in the respective dimension and fill
-it with the respective values.
-"""
+# """
+#     _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
+# 
+# Returns an closed Grid & Potential:
+# E.g. if one of the axis is {:closed,:open} it will turn this into {:closed,:closed}
+# and also extend the `data` field of the potential in the respective dimension and fill
+# it with the respective values.
+# """
 function _get_closed_potential(p::ScalarPotential{T,3,CS}) where {T, CS}
-    g = p.grid
-    closed_values = _get_closed_values(p.data, 1, g.axes[1].interval)
-    closed_values = _get_closed_values(closed_values, 2, g.axes[2].interval)
-    closed_values = _get_closed_values(closed_values, 3, g.axes[3].interval)
-    closed_axes = broadcast(i -> _get_closed_axis(g.axes[i]), (1, 2, 3))
+    grid = p.grid
+    closed_values = _get_closed_values(p.data, 1, grid.axes[1].interval)
+    closed_values = _get_closed_values(closed_values, 2, grid.axes[2].interval)
+    closed_values = _get_closed_values(closed_values, 3, grid.axes[3].interval)
+    closed_axes = broadcast(i -> _get_closed_axis(grid.axes[i]), (1, 2, 3))
     AT = typeof(closed_axes)
     closed_grid = Grid{T, 3, CS, AT}(closed_axes)
     ScalarPotential(p, closed_values, closed_grid)
 end
 
-"""
-    _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
-
-Basically the counterpart to `_get_closed_potential`.
-"""
+# """
+#     _convert_to_original_potential(::Type{P}, data, grid) where {P, T, CS}
+# 
+# Basically the counterpart to `_get_closed_potential`.
+# """
 function _convert_to_original_potential(p::ScalarPotential{T,3,CS,ATO}, data::Array{T, 3}, grid::Grid{T, 3, CS, AT}) where {T, CS, AT, ATO}
     ATs = get_axes_type(ATO)
     axs = broadcast(i -> _convert_closed_axis(ATs[i], grid.axes[i]), (1, 2, 3))

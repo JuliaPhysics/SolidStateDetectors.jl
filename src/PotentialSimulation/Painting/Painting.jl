@@ -35,7 +35,7 @@ get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, gri
 get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CylindricalGrid{T}) where {N,T} = 
     get_sub_ind_ranges((CylindricalPoint.(ConstructiveSolidGeometry.extreme_points(p)), TicksTuple(grid)))
 
-function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid) where {T}
+function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eX = CartesianVector{T}(1,0,0);
@@ -72,7 +72,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
-                    pointtypes[i1, i2, i3] = zero(PointType)
+                    point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
             end
@@ -94,7 +94,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
-                    pointtypes[i1, i2, i3] = zero(PointType)
+                    point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
             end
@@ -116,7 +116,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
-                    pointtypes[i1, i2, i3] = zero(PointType)
+                    point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
             end
@@ -126,7 +126,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
 end
 
 
-function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CylindricalGrid) where {T}
+function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CylindricalGrid) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eZ = CartesianVector{T}(0,0,1);
@@ -161,7 +161,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     csgtol = Δw_max
                 end
                 if in(pt, geometry, csgtol = csgtol)
-                    pointtypes[i1, i2, i3] = zero(PointType)
+                    point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
             end
@@ -176,7 +176,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
     #         pt = ConstructiveSolidGeometry.intersection(plane, l)
     #         i2 = searchsortednearest(ticks[2], pt[2])
     #         if in(pt, geometry, csgtol = abs(ticks[2][i2] - pt[2]))
-    #             pointtypes[i1, i2, i3] = zero(PointType)
+    #             point_types[i1, i2, i3] = zero(PointType)
     #             potential[i1, i2, i3] = pot_value
     #         end
     #     end
@@ -203,7 +203,7 @@ function paint!(pointtypes, potential, face::AbstractSurfacePrimitive{T}, geomet
                     csgtol = Δw_max
                 end
                 if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && in(pt_car, geometry, csgtol = csgtol)
-                    pointtypes[i1, i2, i3] = zero(PointType)
+                    point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
             end

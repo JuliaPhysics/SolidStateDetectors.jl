@@ -1,15 +1,52 @@
 """
     struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
         
-a || b
+A `CSGUnion` of two geometries `a` and `b` is defined as the set of points that are in at least 
+one of either `a` or `b` (`a || b`).
+
+![CSGUnion](../../docs/src/assets/CSGUnion.png)
+
+## Parametric types
+* `T`: Precision type.
+* `A`: Type of geometry `a`.
+* `B`: Type of geometry `b`.
+
+## Fields 
+* `a::A`: First geometry to build the union.
+* `b::B`: Second geometry to build the union.
+
+
+## Definition in Configuration File
+
+A `CSGUnion` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `union`, followed by an array of geometries from
+which the union is constructed. 
+
+An example definition of a `CSGUnion` looks like this:
+```yaml
+union: # a || b
+  - tube: # a
+      r: 2
+      h: 1
+  - tube: # b
+      r: 1
+      h: 1.5
+      origin: 
+        z: 0.5
+```
+
+!!! note
+    If more than two geometries are passed, the `union` is constructed from all of them.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
     b::B
 end
 
-in(p::AbstractCoordinatePoint{T}, csg::CSGUnion; csgtol::T = csg_default_tol(T)) where {T} = 
-    in(p, csg.a; csgtol = csgtol) || in(p, csg.b; csgtol = csgtol)
+in(pt::AbstractCoordinatePoint{T}, csg::CSGUnion; csgtol::T = csg_default_tol(T)) where {T} = 
+    in(pt, csg.a; csgtol = csgtol) || in(pt, csg.b; csgtol = csgtol)
 (+)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGUnion{T,A,B}(a, b)
 
 # read-in
@@ -23,16 +60,53 @@ UnionDictionary(g::AbstractGeometry{T}) where {T} = OrderedDict[Dictionary(g)]
 
 """
     struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+        
+A `CSGIntersection` of two geometries `a` and `b` is defined as the set of points 
+that are both in `a` and in `b` (`a && b`).
 
-a && b
+![CSGIntersection](../../docs/src/assets/CSGIntersection.png)
+
+## Parametric types
+* `T`: Precision type.
+* `A`: Type of geometry `a`.
+* `B`: Type of geometry `b`.
+
+## Fields 
+* `a::A`: First geometry to build the intersection.
+* `b::B`: Second geometry to build the intersection.
+
+
+## Definition in Configuration File
+
+A `CSGIntersection` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `intersection`, followed by an array of geometries from
+which the intersection is constructed. 
+
+An example definition of a `CSGIntersection` looks like this:
+```yaml
+intersection: # a && b
+  - tube: # a
+      r: 2
+      h: 1
+  - tube: # b
+      r: 1
+      h: 1.5
+      origin: 
+        z: 0.5
+```
+
+!!! note
+    If more than two geometries are passed, the `intersection` is constructed from all of them.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
     b::B
 end
 
-in(p::AbstractCoordinatePoint{T}, csg::CSGIntersection; csgtol::T = csg_default_tol(T)) where {T} = 
-    in(p, csg.a; csgtol = csgtol) && in(p, csg.b; csgtol = csgtol)
+in(pt::AbstractCoordinatePoint{T}, csg::CSGIntersection; csgtol::T = csg_default_tol(T)) where {T} = 
+    in(pt, csg.a; csgtol = csgtol) && in(pt, csg.b; csgtol = csgtol)
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
@@ -46,17 +120,61 @@ IntersectionDictionary(g::CSGIntersection{T}) where {T} = vcat(IntersectionDicti
 IntersectionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
 
 """
-    struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+    struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+        
+A `CSGDifference` of two geometries `a` and `b` is defined as the set of points that are 
+in `a` but not in `b` (`a && !b`).
 
-a && !b
+![CSGDifference](../../docs/src/assets/CSGDifference.png)
+
+!!! note
+    Note that `b` is treated as open primitive. This means that points which are in 
+    `a` and on the surface of `b` will still be in the `CSGDifference` of `a` and `b`.
+    
+
+## Parametric types
+* `T`: Precision type.
+* `A`: Type of geometry `a`.
+* `B`: Type of geometry `b`.
+
+## Fields 
+* `a::A`: Main geometry.
+* `b::B`: Geometry to be subtracted from `a`.
+
+
+## Definition in Configuration File
+
+A `CSGDifference` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `difference`, followed by an array of geometries from
+which the difference is constructed. The first entry of the array is the main geometry, 
+from which all following geometry entries are subtracted.
+
+An example definition of a `CSGDifference` looks like this:
+```yaml
+difference: # a && !b
+  - tube: # a
+      r: 2
+      h: 1
+  - tube: # b
+      r: 1
+      h: 1.1
+```
+!!! note 
+    If more than two geometries are passed, all entries starting from the second will be subtracted from the first.
+    
+!!! note
+    Keep in mind that to discard the part of the surface of `a` which is on the surface of `b`, 
+    `b` should be chosen slightly bigger than `a`.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
     b::B
 end
 
-in(p::AbstractCoordinatePoint{T}, csg::CSGDifference; csgtol::T = csg_default_tol(T)) where {T} = 
-    in(p, csg.a; csgtol = csgtol) && !in(p, csg.b; csgtol = csgtol)
+in(pt::AbstractCoordinatePoint{T}, csg::CSGDifference; csgtol::T = csg_default_tol(T)) where {T} = 
+    in(pt, csg.a; csgtol = csgtol) && !in(pt, csg.b; csgtol = csgtol)
 
 function (-)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractConstructiveGeometry{T}} 
     ob = switchClosedOpen(b)

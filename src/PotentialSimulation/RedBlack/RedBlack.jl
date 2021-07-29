@@ -53,12 +53,12 @@ end
 
 
 # """
-#     RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+#     RBExtBy2Array( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
 # 
-# Returns a RedBlack array for the grid `g`. 
+# Returns a RedBlack array for the `grid`. 
 # """
-function RBArray( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
-    nr, nφ, nz = size(g)
+function RBArray( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+    nr, nφ, nz = size(grid)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
     return zeros(T, div(nz, 2) + mod(nz, 2), nφ, nr, 2)
 end
@@ -78,12 +78,12 @@ function RBArray( a::Array{T, N}, grid::Grid{TG, N, Cylindrical} )::Array{T, N +
 end
 
 # """
-#     RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+#     RBExtBy2Array( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
 # 
-# Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
+# Returns a RedBlack array for the `grid`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 # """
-function RBExtBy2Array( et::Type, g::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
-    nr, nφ, nz = size(g)
+function RBExtBy2Array( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+    nr, nφ, nz = size(grid)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
     return zeros(T, div(nz, 2) + mod(nz, 2) + 2, nφ + 2, nr + 2, 2)
 end
@@ -106,12 +106,12 @@ end
 
 
 # """
-#     RBExtBy2Array( et::Type, g::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
+#     RBExtBy2Array( et::Type, grid::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
 # 
-# Returns a RedBlack array for the grid `g`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
+# Returns a RedBlack array for the `grid`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 # """
-function RBExtBy2Array( et::Type, g::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
-    nx, ny, nz = size(g)
+function RBExtBy2Array( et::Type, grid::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
+    nx, ny, nz = size(grid)
     return zeros(T, div(nx, 2) + mod(nx, 2) + 2, ny + 2, nz + 2, 2)
 end
 function RBExtBy2Array( a::Array{T, 3}, grid::Grid{TG, 3, Cartesian} )::Array{T, 4} where {T, TG}

@@ -1,9 +1,27 @@
-
 """
     struct CylindricalImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-Simple Impurity density model which assumes a linear gradient in Impurity density in each spatial dimension of a cylindrical coordinate system.
-`offsets::NTuple{3, T}` are the Impurity densities at 0 and `gradients::NTuple{3, T}` are the linear slopes in `r` and `z` direction.
+Impurity density model which assumes a linear gradient in impurity density in each spatial dimension 
+of a cylindrical coordinate system.
+ 
+## Fields
+* `offsets::NTuple{3,T}`: impurity density values at the origin of each dimension.
+* `gradients::NTuple{3,T}`: linear slopes in `r` and `z` direction.
+
+## Definition in Configuration File
+
+A `CylindricalImpurityDensity` is defined in the configuration file through the field `impurity_density` 
+(of a `passive` or `surrounding`) with `name: cylindrical` and optional fields `r` and `z`
+that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
+
+An example definition of a cylindrical impurity density looks like this:
+```yaml 
+impurity_density:
+  name: cylindrical
+  r:  # impurity profile with linear gradient in r
+    init: 1.0e10     # 1/m³
+    gradient: 1.0e11 # 1/m⁴
+```
 """
 struct CylindricalImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     offsets::NTuple{3, T}

@@ -1,12 +1,14 @@
 """
-    readsiggen(file_path::String[, T::Type=Float64])
-Read the '*.config' file in 'file_path' for SigGen and returns a dictionary of all parameters.
-Non-existing parameteres are set to 0.
-...
-# Arguments
-- `file_path::String`: file path for the SigGen config file.
-- `T::Type=Float64`: type of the parameters in the output dictionary.
-...
+    readsiggen(file_path::String; T::Type)
+    
+Reads a [SigGen](https://github.com/radforddc/icpc_siggen) configuration file (ending in `.config`) in 'file_path'
+and returns a dictionary of all parameters. Non-existing parameteres are set to `0`.
+
+## Arguments
+* `file_path::String`: File path leading to the [SigGen](https://github.com/radforddc/icpc_siggen) configuration file.
+
+## Keywords 
+* `T::Type`: Type of the parameters in the output dictionary. Default is `Float64`.
 """
 function readsiggen(file_path::String; T::Type=Float64)
     #detector_name = split(basename(file_path), ".config")[1]
@@ -102,18 +104,17 @@ end
 
 
 """
-    siggentodict(config::Dict[, units::Dict, detector_name::String])
-Converts the dictionary containing the parameters from a SigGen config file
-to a SSD config dictionary. This dictionary can be saved as a JSON file using
-the JSON package and 'JSON.print(file, config, 4)'.
-The 'detector_name' is set to "Public Inverted Coax" by default to inherit
-the colour scheme.
-...
-# Arguments
-- `config::Dict`: dictionary containing SigGen parameters (output of readsiggen()).
-- `units::Dict`: units used in SigGen file (set to 'mm', 'deg', 'V' and 'K').
-- `detector_name::String`: name of the detector.
-...
+    siggentodict(config::Dict; units::Dict)
+    
+Converts the dictionary containing the parameters from a [SigGen](https://github.com/radforddc/icpc_siggen) configuration file
+to a dictionary that can be understood by SolidStateDetectors.jl. 
+
+## Arguments
+* `config::Dict`: Dictionary containing [SigGen](https://github.com/radforddc/icpc_siggen) parameters (output of `readsiggen()``).
+
+## Keywords
+* `units::Dict`: Units used in [SigGen](https://github.com/radforddc/icpc_siggen) configuration file (set to `"mm"`, `"deg"`, `"V"` and `"K"`).
+    The dictionary needs the fields `"length"`, `"angle"`, `"potential"` and `"temperature"`.
 """
 function siggentodict(config::Dict;
         units::Dict = Dict("length" => "mm","angle" => "deg","potential" => "V","temperature" => "K"))

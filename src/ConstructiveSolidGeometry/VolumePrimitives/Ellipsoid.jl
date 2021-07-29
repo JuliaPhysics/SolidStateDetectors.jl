@@ -1,3 +1,52 @@
+"""
+    struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
+
+Volume primitive describing an [Ellipsoid](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `CO`: Describes whether the surface belongs to the primitive. 
+    It can be `ClosedPrimitive`, i.e. the surface points belong to the primitive,
+    or `OpenPrimitive`, i.e. the surface points do not belong to the primitive.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: Sphere (constant radius `r` along all axes).
+* `TP`: Type of the azimuthial angle `φ`.
+    * `TP == Nothing`: Full 2π in `φ`.
+* `TT`: Type of the polar angle `θ`.
+    * `TT == Nothing`: Full 2π in `θ`.
+
+## Fields
+* `r::TR`: Definition of the radius of the `Ellipsoid` (in m).
+* `φ::TP`: Range in azimuthial angle `φ` of the `Ellipsoid`.
+* `θ::TT`: Range in polar angle `θ` of the `Ellipsoid`.
+* `origin::CartesianPoint{T}`: The position of the center of the `Ellipsoid`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `Ellipsoid` around its `origin`.
+
+## Definition in Configuration File
+
+So far, the only `Ellipsoid` implemented so far is a `FullSphere`.
+A `FullSphere` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `sphere`.
+
+Example definitions of a `FullSphere` looks like this:
+```yaml
+sphere:
+  r: 2
+```
+This is a full sphere with radius 2.
+
+To define a sphere with inner cut-out, use [`CSGDifference`](@ref):
+```yaml
+difference:
+  - sphere:
+      r: 2
+  - sphere:
+      r: 1
+```
+This is a sphere with inner radius 1 and outer radius 2.
+
+See also [Constructive Solid Geometry (CSG)](@ref).
+"""
 @with_kw struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1
     φ::TP = nothing

@@ -1,23 +1,77 @@
 """
     struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
 
-T: Type of values, e.g. Float64
-CO: ClosedPrimitive or OpenPrimitive <-> whether surface belongs to it or not
+Volume primitive describing a [Cone](@ref) with its top and bottom circular base
+being aligned with the `xy` plane (before possible rotations).
 
-* `r::TR`: 
-    * TR = Real -> Cylinder
-    * TR = (Real, Real) -> Tube (r_in = r[1], r_out = r[2])
-    * TR = ((Real,), (Real,)) Solid widening Cylinder  -> (r_bot = r[1][1], r_top = r[1][2])
-    * TR = ((Real,Real), (Real,Real)) Solid widening Tube ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r[2][1], r_top_out = r[2][2])
-    * TR = (Nothing, (Real,Real)) Cone ->\n(r_bot_in = r_bot_out = 0, r_top_in = r[2][1], r_top_out = r[2][2])
-    * TR = ((Real,Real), Nothing) Cone ->\n(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r_top_out = 0)
-    * ... (+ elliptical cases -> (a, b))
-    * Not all are implemented yet
+## Parametric types
+* `T`: Precision type.
+* `CO`: Describes whether the surface belongs to the primitive. 
+    It can be `ClosedPrimitive`, i.e. the surface points belong to the primitive,
+    or `OpenPrimitive`, i.e. the surface points do not belong to the primitive.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: Cylinder (constant radius `r` at all `z`).
+    * `TR == Tuple{T, T}`: Tube (inner radius at `r[1]`, outer radius at `r[2]`).
+    * `TR == Tuple{Tuple{T}, Tuple{T}}`: Varying Cylinder (full cylinder with radius changing linearly in `z` from `r[1]` at the bottom to `r[2]` at the top).
+    * `TR == Tuple{Tuple{T, T}, Tuple{T, T}}`: Varying Tube (inner radius changes linearly in `z` from `r[1][1]` at the bottom to `r[1][2]` at the top, outer radius changes linearly in `z` from `r[2][1]` at the bottom to `r[1][2]` at the top).
+    * `TR == Tuple{Nothing, Tuple{T, T}}`: Cone (Tip at the bottom, top is a circular base with inner radius `r[2][1]` and outer radius `r[2][2]`).
+    * `TR == Tuple{Tuple{T, T}, Nothing}`: Cone (Tip at the top, bottom is a circular base with inner radius `r[1][1]` and outer radius `r[1][2]`).
+* `TP`: Type of the angular range `φ`.
+    * `TP == Nothing`: Full 2π Cone.
+    * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
+    
+## Fields
+* `r::TR`: Definition of the radius of the `Cone` (in m).
+* `φ::TP`: Range in polar angle `φ` over which the `Cone` extends (in radians).
+* `hZ::T`: Half of the height of the `Cone` (in m).
+* `origin::CartesianPoint{T}`: The position of the center of the `Cone` at the middle height.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `Cone` around its `origin`.
 
-* `φ::TP`: 
-    * TP = Nothing <-> Full in φ
-    * ...
-* `hZ::T`: half height/length of the cone
+## Definition in Configuration File
+
+A `Cone` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `cone` (or `tube`).
+
+Example definitions of a cylinder looks like this:
+```yaml
+tube:
+  r:
+    from: 1.0
+    to: 2.0  # => r = (1.0, 2.0)
+  h: 2.0     # => hZ = 1.0
+  origin:
+    z: 1.0   # => origin = [0.0, 0.0, 1.0]
+```
+This is a hollow cylinder with inner radius 1 at outer radius 2
+with a height of 2 and extending over full 2π (no `phi` given),
+translated 1 along the `z` axis.
+
+If the radius is not constant over `z`, the `r` entries are divided
+into `bottom` and `top`, where `bottom` describes the inner and outer 
+radius at the bottom circular base and `top` describes the inner and
+outer radius at the top circular base (before rotations)
+```yaml
+cone:
+  r:
+    bottom:
+      from: 1.0
+      to: 2.0
+    top:
+      from: 1.0
+      to: 4.0     # => r = ((1.0, 2.0), (1.0, 4.0))
+  phi:
+    from: 0.0°
+    to: 180.0°    # => φ = (0, π)
+  h: 2.0          # => hZ = 1.0
+```
+This is half a Cone (`φ` goes from 0 to 180°, i.e. only positive `y` are allowed)
+with a height of 2, constant inner radius of 1 and an outer radius which increases 
+from 2 at the bottom to 4 at the top circular base.
+
+!!! note
+    The names `tube` and `cone` in the configuration files are interchangeable.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 @with_kw struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1

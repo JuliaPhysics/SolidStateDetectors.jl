@@ -1,7 +1,22 @@
 """
     struct ConstantImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-Returns always a fixed impurity density.
+Impurity density model that assumes a constant impurity density everywhere.
+
+## Fields
+* `ρ::T`: the constant value of the impurity density.
+
+## Definition in Configuration File
+
+A `ConstantImpurityDensity` is defined in the configuration file through the field `impurity_density` 
+(of a `semiconductor`) with `name: constant` and a `value` for `ρ`.
+
+An example definition of a constant impurity density looks like this:
+```yaml 
+impurity_density:
+  name: constant
+  value: 1.0e10 # 1/m³
+```
 """
 struct ConstantImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T} 
     ρ::T

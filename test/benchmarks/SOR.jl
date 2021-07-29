@@ -17,7 +17,7 @@ begin
 
     plot(sim.point_types, φ = 30)
 
-    fssrb = SolidStateDetectors.PotentialSimulationSetupRB( sim.detector, 
+    pssrb = SolidStateDetectors.PotentialSimulationSetupRB( sim.detector, 
                                                             sim.electric_potential.grid, 
                                                             SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
                                                             sim.electric_potential.data, 
@@ -34,19 +34,19 @@ end
 
 begin
     depletion_handling = Val{false}()
-    @btime SolidStateDetectors.update!($fssrb, $nthreads, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
+    @btime SolidStateDetectors.update!($pssrb, $nthreads, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
 end
 begin
     depletion_handling = Val{true}()
-    @btime SolidStateDetectors.update!($fssrb, $nthreads, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
+    @btime SolidStateDetectors.update!($pssrb, $nthreads, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
 end
 
 
 # Innerloop:
 begin
-    gw1 = fssrb.geom_weights[1].weights  # r or x 
-    gw2 = fssrb.geom_weights[2].weights  # φ or y
-    gw3 = fssrb.geom_weights[3].weights  # z or z
+    gw1 = pssrb.geom_weights[1].weights  # r or x 
+    gw2 = pssrb.geom_weights[2].weights  # φ or y
+    gw3 = pssrb.geom_weights[3].weights  # z or z
     
     rb_tar_idx = 1
     rb_src_idx = 2
@@ -54,31 +54,31 @@ begin
 
     depletion_handling = Val{false}()
     @btime SolidStateDetectors.innerloops!( $idx3, $rb_tar_idx, $rb_src_idx, 
-            $gw1, $gw2, $gw3, $fssrb, $update_even_points, 
+            $gw1, $gw2, $gw3, $pssrb, $update_even_points, 
             $depletion_handling, $is_weighting_potential, $only2d)
     
     depletion_handling = Val{true}()
     @btime SolidStateDetectors.innerloops!( $idx3, $rb_tar_idx, $rb_src_idx, 
-            $gw1, $gw2, $gw3, $fssrb, $update_even_points, 
+            $gw1, $gw2, $gw3, $pssrb, $update_even_points, 
             $depletion_handling, $is_weighting_potential, $only2d)
 end
 
 # apply_boundary_conditions!
 begin 
-    @btime SolidStateDetectors.apply_boundary_conditions!($fssrb, $update_even_points, $only2d)
-    @btime SolidStateDetectors.apply_boundary_conditions!($fssrb, $update_uneven_points, $only2d)
+    @btime SolidStateDetectors.apply_boundary_conditions!($pssrb, $update_even_points, $only2d)
+    @btime SolidStateDetectors.apply_boundary_conditions!($pssrb, $update_uneven_points, $only2d)
 end
 
 begin
     depletion_handling = Val{false}()
-    SolidStateDetectors.update!(fssrb; use_nthreads = nthreads, depletion_handling = depletion_handling,
+    SolidStateDetectors.update!(pssrb; use_nthreads = nthreads, depletion_handling = depletion_handling,
         only2d = only2d, is_weighting_potential= is_weighting_potential)
-    @btime SolidStateDetectors.update!($fssrb; use_nthreads = $nthreads, depletion_handling = $depletion_handling,
+    @btime SolidStateDetectors.update!($pssrb; use_nthreads = $nthreads, depletion_handling = $depletion_handling,
         only2d = $only2d, is_weighting_potential= $is_weighting_potential)
   
     depletion_handling = Val{true}()
-    SolidStateDetectors.update!(fssrb; use_nthreads = nthreads, depletion_handling = depletion_handling,
+    SolidStateDetectors.update!(pssrb; use_nthreads = nthreads, depletion_handling = depletion_handling,
         only2d = only2d, is_weighting_potential= is_weighting_potential)
-    @btime SolidStateDetectors.update!($fssrb; use_nthreads = $nthreads, depletion_handling = $depletion_handling,
+    @btime SolidStateDetectors.update!($pssrb; use_nthreads = $nthreads, depletion_handling = $depletion_handling,
         only2d = $only2d, is_weighting_potential= $is_weighting_potential)
 end

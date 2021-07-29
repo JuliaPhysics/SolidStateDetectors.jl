@@ -3,13 +3,19 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
 """
     struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
 
-- `T`: Tick type (element type) of the axes.
-- `N`: Dimension of the grid.  
-- `S`: Coordinate system (`Cartesian` or `Cylindrical`).
-- `AT`: Axes type.
+Collection of `N` axes that define the dimensions of the grid needed to calculate 
+[`ElectricPotential`](@ref), [`ElectricField`](@ref) or [`WeightingPotential`](@ref).
 
-# Fields
-- `axes::AT`: Tuple of length `N` containing `DiscreteAxis`.
+## Parametric types
+* `T`: Tick type (element type) of the axes.
+* `N`: Dimension of the grid.
+* `S`: Coordinate system (`Cartesian` or `Cylindrical`).
+* `AT`: Axes type.
+
+## Fields
+* `axes::AT`: Tuple of length `N` containing `DiscreteAxis` for each dimension of the grid.
+
+See also [`DiscreteAxis`](@ref).
 """
 struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
     axes::AT
@@ -27,45 +33,45 @@ const CylindricalGrid{T} = Grid{T, 3, Cylindrical}
 CylindricalGrid{T}(a) where {T} = Grid{T, 3, Cylindrical, typeof(a)}(a)
 CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 
-@inline size(g::Grid{T, N, S}) where {T, N, S} = size.(g.axes, 1)
-@inline length(g::Grid{T, N, S}) where {T, N, S} = prod(size(g))
-@inline getindex(g::Grid{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = broadcast(getindex, g.axes, I)
-@inline getindex(g::Grid{T, N, S}, i::Int) where {T, N, S} = getproperty(g, :axes)[i]
-@inline getindex(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getindex(g, Val{s}())
+@inline size(grid::Grid{T, N, S}) where {T, N, S} = size.(grid.axes, 1)
+@inline length(grid::Grid{T, N, S}) where {T, N, S} = prod(size(grid))
+@inline getindex(grid::Grid{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = broadcast(getindex, grid.axes, I)
+@inline getindex(grid::Grid{T, N, S}, i::Int) where {T, N, S} = getproperty(grid, :axes)[i]
+@inline getindex(grid::Grid{T, N, S}, s::Symbol) where {T, N, S} = getindex(grid, Val{s}())
 
-@inline getproperty(g::Grid{T, N, S}, s::Symbol) where {T, N, S} = getproperty(g, Val{s}())
-@inline getproperty(g::Grid{T}, ::Val{:axes}) where {T} = getfield(g, :axes)
+@inline getproperty(grid::Grid{T, N, S}, s::Symbol) where {T, N, S} = getproperty(grid, Val{s}())
+@inline getproperty(grid::Grid{T}, ::Val{:axes}) where {T} = getfield(grid, :axes)
 
-@inline getproperty(g::CylindricalGrid{T}, ::Val{:axes}) where {T} = getfield(g, :axes)
-@inline getproperty(g::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds g.axes[1]
-@inline getproperty(g::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds g.axes[2]
-@inline getproperty(g::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
-@inline getproperty(g::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds g.axes[1]
-@inline getproperty(g::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds g.axes[2]
-@inline getproperty(g::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
+@inline getproperty(grid::CylindricalGrid{T}, ::Val{:axes}) where {T} = getfield(grid, :axes)
+@inline getproperty(grid::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds grid.axes[1]
+@inline getproperty(grid::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds grid.axes[2]
+@inline getproperty(grid::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
+@inline getproperty(grid::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds grid.axes[1]
+@inline getproperty(grid::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
+@inline getproperty(grid::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
-@inline getindex(g::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds g.axes[1]
-@inline getindex(g::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds g.axes[2]
-@inline getindex(g::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
-@inline getindex(g::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds g.axes[1]
-@inline getindex(g::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds g.axes[2]
-@inline getindex(g::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds g.axes[3]
+@inline getindex(grid::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds grid.axes[1]
+@inline getindex(grid::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds grid.axes[2]
+@inline getindex(grid::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
+@inline getindex(grid::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds grid.axes[1]
+@inline getindex(grid::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
+@inline getindex(grid::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
-function sizeof(g::Grid{T, N, S}) where {T, N, S}
-    return sum( sizeof.(g.axes) )
+function sizeof(grid::Grid{T, N, S}) where {T, N, S}
+    return sum( sizeof.(grid.axes) )
 end
 
-function print(io::IO, g::Grid{T, N, S}) where {T, N, S}
-    print(io, "Grid{$T, $N, $S}", g.axes)
+function print(io::IO, grid::Grid{T, N, S}) where {T, N, S}
+    print(io, "Grid{$T, $N, $S}", grid.axes)
 end
-function println(io::IO, g::Grid{T, N, S}) where {T, N, S}
+function println(io::IO, grid::Grid{T, N, S}) where {T, N, S}
     println(" Grid{$T, $N, $S}")
-    for (i, ax) in enumerate(g.axes)
+    for (i, ax) in enumerate(grid.axes)
         println(io, "  Axis $(i): ", ax)
     end
 end
-show(io::IO, g::Grid{T, N, S}) where {T, N, S} = print(io, g)
-show(io::IO, ::MIME"text/plain", g::Grid{T, N, S}) where {T, N, S} = show(io, g)
+show(io::IO, grid::Grid{T, N, S}) where {T, N, S} = print(io, grid)
+show(io::IO, ::MIME"text/plain", grid::Grid{T, N, S}) where {T, N, S} = show(io, grid)
 
 function check_grid(grid::CylindricalGrid{T})::Nothing where {T}
     nr::Int, nφ::Int, nz::Int = size(grid)
@@ -94,8 +100,8 @@ function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
    return get_boundary_types.(grid.axes)
 end
 
-TicksTuple(g::Grid{T, 3, Cartesian}) where {T} = (x = g.axes[1].ticks, y = g.axes[2].ticks, z = g.axes[3].ticks)
-TicksTuple(g::Grid{T, 3, Cylindrical}) where {T} = (r = g.axes[1].ticks, φ = g.axes[2].ticks, z = g.axes[3].ticks)
+TicksTuple(grid::Grid{T, 3, Cartesian}) where {T} = (x = grid.axes[1].ticks, y = grid.axes[2].ticks, z = grid.axes[3].ticks)
+TicksTuple(grid::Grid{T, 3, Cylindrical}) where {T} = (r = grid.axes[1].ticks, φ = grid.axes[2].ticks, z = grid.axes[3].ticks)
 
 function Grid(nt::NamedTuple)
     if nt.coordtype == "cylindrical"
@@ -149,16 +155,16 @@ end
 Base.convert(T::Type{NamedTuple}, x::Grid) = T(x)
 
 
-function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    return (searchsortednearest(grid.axes[1].ticks, point.r), searchsortednearest(grid.axes[2].ticks, point.φ), searchsortednearest(grid.axes[3].ticks, point.z))
+function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    return (searchsortednearest(grid.axes[1].ticks, pt.r), searchsortednearest(grid.axes[2].ticks, pt.φ), searchsortednearest(grid.axes[3].ticks, pt.z))
 end
-function find_closest_gridpoint(point::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    find_closest_gridpoint(CylindricalPoint(point),grid)
+function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpt(CylindricalPoint(pt),grid)
 end
 
-function find_closest_gridpoint(point::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    @inbounds return (searchsortednearest(grid.axes[1].ticks, point.x), searchsortednearest(grid.axes[2].ticks, point.y), searchsortednearest(grid.axes[3].ticks, point.z))
+function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    @inbounds return (searchsortednearest(grid.axes[1].ticks, pt.x), searchsortednearest(grid.axes[2].ticks, pt.y), searchsortednearest(grid.axes[3].ticks, pt.z))
 end
-function find_closest_gridpoint(point::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    find_closest_gridpoint(CartesianPoint(point),grid)
+function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+    find_closest_gridpt(CartesianPoint(pt),grid)
 end

@@ -3,7 +3,9 @@
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
+    if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+        aspect_ratio --> 1.0
+    end 
     @series begin
         label --> "Edges"
         ls[1]

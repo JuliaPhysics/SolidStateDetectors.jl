@@ -1,14 +1,29 @@
 """
     struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
 
-# Fields
-- `name::String`: Name of the detector
-- `semiconductor::SC`: Semiconductor of the detector. 
-- `contacts::CT`: Vector of `Contact`s of the detector. 
-- `passives::PT`: Vector of `Passive` objects, e.g. holding structures around the detector. 
-- `virtual_drift_volumes::VDM`: Vector of virtual drift volumes in which the drift can be modulated
-    by an user-defined method for `modulate_driftvector`.
+Struct to describe all parts of a solid state detector, i.e.
+the [`Semiconductor`](@ref), a set of [`Contact`](@ref) and (optionally) [`Passive`](@ref) and virtual drift volumes.
 
+The properties of the parts (charge densities, fixed potentials, relative permittivity
+of the materials) will be used as input to the calculation of [`ElectricPotential`](@ref) and 
+[`WeightingPotential`](@ref) in the [`Simulation`](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `SC`: Type of the `semiconductor`.
+* `CT`: Type of the `contacts`.
+* `PT`: Type of the `passives`.
+* `VDM`: Type of the `virtual_drift_volumes`.
+
+## Fields
+* `name::String`: Name of the detector.
+* `semiconductor::SC`: [`Semiconductor`](@ref) of the detector. 
+* `contacts::CT`: Vector of [`Contact`](@ref) of the detector. 
+* `passives::PT`: Vector of [`Passive`](@ref) objects, e.g. holding structures around the detector. 
+* `virtual_drift_volumes::VDM`: Vector of virtual drift volumes in which the drift can be modulated
+    by user-defined methods for `modulate_driftvector`, e.g. [`DeadVolume`](@ref).
+
+See also [`Semiconductor`](@ref), [`Contact`](@ref), [`Passive`](@ref) and [`DeadVolume`](@ref).
 """
 struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
     name::String  # optional
@@ -42,16 +57,16 @@ end
 get_precision_type(::SolidStateDetector{T}) where {T} = T
 
 
-function get_world_limits_from_objects(::Type{Cylindrical}, ssd::SolidStateDetector{T}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cylindrical}, det::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
-    t::Array{T, 2} = hcat(hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(ssd.semiconductor.geometry)))...)...)
+    t::Array{T, 2} = hcat(hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)))...)...)
     (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
-    for c in ssd.contacts
+    for c in det.contacts
         t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(c.geometry)))...)...)
         (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
     end
-    if !ismissing(ssd.passives)
-        for p in ssd.passives
+    if !ismissing(det.passives)
+        for p in det.passives
             t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(p.geometry)))...)...)
             (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
         end
@@ -59,16 +74,16 @@ function get_world_limits_from_objects(::Type{Cylindrical}, ssd::SolidStateDetec
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function get_world_limits_from_objects(::Type{Cartesian}, ssd::SolidStateDetector{T}) where {T <: SSDFloat}
+function get_world_limits_from_objects(::Type{Cartesian}, det::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
-    t::Array{T, 2} = hcat(hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(ssd.semiconductor.geometry))...)...)
+    t::Array{T, 2} = hcat(hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry))...)...)
     (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
-    for c in ssd.contacts
+    for c in det.contacts
         t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(c.geometry))...)...)
         (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
     end
-    if !ismissing(ssd.passives)
-        for p in ssd.passives
+    if !ismissing(det.passives)
+        for p in det.passives
             t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(p.geometry))...)...)
             (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
         end
@@ -109,35 +124,35 @@ function SolidStateDetector(dict::Dict)
     SolidStateDetector{Float32}(dict)
 end
 
-function in(pt::AbstractCoordinatePoint{T}, c::SolidStateDetector{T})::Bool where T
-    in(pt,c.semiconductor) || reduce((x,contact) -> x || in(pt,contact), c.contacts, init = false)
+function in(pt::AbstractCoordinatePoint{T}, det::SolidStateDetector{T})::Bool where T
+    in(pt, det.semiconductor) || reduce((x, contact) -> x || in(pt, contact), det.contacts, init = false)
 end
 
-function println(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat}
-    println("________"*d.name*"________\n")
+function println(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat}
+    println("________"*det.name*"________\n")
     println("---General Properties---")
     println("- Precision type: $(T)")
     println()
     println("\t_____Semiconductor_____\n")
-    println(d.semiconductor)
+    println(det.semiconductor)
     println()
-    println("# Contacts: $(length(d.contacts))")
-    if length(d.contacts)<=5
-        for c in d.contacts
-            println(c)
+    println("# Contacts: $(length(det.contacts))")
+    if length(det.contacts)<=5
+        for contact in det.contacts
+            println(contact)
         end
     end
-    if !ismissing(d.passives)
+    if !ismissing(det.passives)
         println()
-        println("# Passives: $(length(d.passives))")
-        if length(d.passives) <= 5
-            for p in d.passives
-                println(p)
+        println("# Passives: $(length(det.passives))")
+        if length(det.passives) <= 5
+            for passive in det.passives
+                println(passive)
             end
         end
     end
 end
 
-function show(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
-function print(io::IO, d::SolidStateDetector{T}) where {T <: SSDFloat} println(io, d) end
-function show(io::IO,::MIME"text/plain", d::SolidStateDetector) where {T <: SSDFloat} show(io, d) end
+function show(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(io, det) end
+function print(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(io, det) end
+function show(io::IO,::MIME"text/plain", det::SolidStateDetector) where {T <: SSDFloat} show(io, det) end

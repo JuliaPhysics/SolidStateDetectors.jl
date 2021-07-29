@@ -1,3 +1,64 @@
+"""
+    struct Torus{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T,CO}
+
+Volume primitive describing a [Torus](@ref). It is defined as all points that are
+within a given radius to a circle, parallel to the `xy` plane, with constant
+radius around a given origin.
+
+## Parametric types
+* `T`: Precision type.
+* `CO`: Describes whether the surface belongs to the primitive. 
+    It can be `ClosedPrimitive`, i.e. the surface points belong to the primitive,
+    or `OpenPrimitive`, i.e. the surface points do not belong to the primitive.
+* `TR`: Type of `r_tube`.
+    * `TR == T`: Full tube without cutout (constant radius `r_tube`).
+* `TP`: Type of the azimuthial angle `φ`.
+    * `TP == Nothing`: Full 2π in `φ`.
+* `TT`: Type of the polar angle `θ`.
+    * `TT == Nothing`: Full 2π in `θ`.
+    
+## Fields
+* `r_torus::T`: Distance of the center of the `Torus` to the center of the tube (in m).
+* `r_tube::TR`: Radius of the tube of the `Torus` (in m).
+* `φ::TP`: Range in azimuthial angle `φ` of the `Torus`.
+* `θ::TT`: Range in polar angle `θ` of the `Torus`.
+* `origin::CartesianPoint{T}`: The position of the center of the `Torus`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `Torus` around its `origin`.
+
+## Definition in Configuration File
+
+So far, the only `Torus` implemented so far is a `FullTorus`.
+A `FullTorus` is defined in the configuration file as part of the `geometry` field 
+of an object through the field `torus`.
+
+Example definitions of a `FullTorus` looks like this:
+```yaml
+torus:
+  r_torus: 10.0   # => r_torus = 10.0
+  r_tube: 2       # => r_tube = 2.0
+  phi: 
+      from: 0.0°
+      to: 360.0°  # => φ = nothing
+  theta: 
+      from: 0.0°
+      to: 360.0°  # => θ = nothing
+```
+The fields `phi` and `theta` do not need to defined if they are full 2π.
+
+To define a torus with inner cut-out, use [`CSGDifference`](@ref):
+```yaml
+difference:
+  - torus:
+      r_torus: 10.0   # => r_torus = 10.0
+      r_tube: 2       # => r_tube = 2.0
+  - torus:
+      r_torus: 10.0   # => r_torus = 10.0
+      r_tube: 1       # => r_tube = 1.0
+```
+This is a torus with `r_tube` having an inner radius of 1 and an outer radius of 2.
+
+See also [Constructive Solid Geometry (CSG)](@ref).
+"""
 @with_kw struct Torus{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T,CO}
     r_torus::T = 1
     r_tube::TR = 1  # (r_tube_in, r_tube_out)
@@ -104,19 +165,6 @@ end
 #     T = float(promote_type(R1, R2, TZ))
 #     Torus( T, T(r_torus), T(r_tube), nothing, T(0)..T(π/2), T(z))
 # end
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, Nothing}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z)
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, Nothing}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ)
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, Nothing, <:AbstractInterval}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
-
-# in(p::AbstractCoordinatePoint, t::Torus{<:Any, <:Any, <:AbstractInterval, <:AbstractInterval}) =
-#     _in_torr_r_tube(p, t.r_torus, t.r_tube, t.z) && _in_φ(p, t.φ) && _in_torr_θ(p, t.r_torus, t.θ, t.z)
-    
 
 # # read-in
 function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)

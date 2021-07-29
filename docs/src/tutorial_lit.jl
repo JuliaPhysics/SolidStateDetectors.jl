@@ -5,9 +5,9 @@ using SolidStateDetectors
 using Unitful
 
 T = Float32
-simulation = Simulation{T}(SSD_examples[:InvertedCoax])
+sim = Simulation{T}(SSD_examples[:InvertedCoax])
 
-plot(simulation.detector)
+plot(sim.detector, size = (700, 700))
 #jl savefig("tutorial_det.pdf") # hide
 #md savefig("tutorial_det.pdf") # hide
 #md savefig("tutorial_det.svg"); nothing # hide
@@ -15,12 +15,13 @@ plot(simulation.detector)
 
 # One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
 
-apply_initial_state!(simulation, ElectricPotential) # optional
+apply_initial_state!(sim, ElectricPotential, 
+    Grid(sim, max_tick_distance = 3u"mm")) # optional
 plot(
-    plot(simulation.electric_potential), # initial electric potential (boundary conditions)
-    plot(simulation.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
-    plot(simulation.q_eff_imp), # charge density distribution
-    plot(simulation.ϵ_r), # dielectric distribution
+    plot(sim.electric_potential), # initial electric potential (boundary conditions)
+    plot(sim.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
+    plot(sim.q_eff_imp), # charge density distribution
+    plot(sim.ϵ_r), # dielectric distribution
     layout = (1, 4), size = (1600, 500)
 )
 #jl savefig("tutorial_initial_condition.pdf") # hide
@@ -31,14 +32,14 @@ plot(
 
 # Next, calculate the electric potential:
 
-calculate_electric_potential!( simulation,
+calculate_electric_potential!( sim,
                                refinement_limits = [0.2, 0.1, 0.05, 0.01])
 
 plot(
-    plot(simulation.electric_potential, φ = 20), # initial electric potential (boundary conditions)
-    plot(simulation.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
-    plot(simulation.q_eff_imp), # charge density distribution
-    plot(simulation.ϵ_r), # dielectric distribution
+    plot(sim.electric_potential, φ = 20), # initial electric potential (boundary conditions)
+    plot(sim.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
+    plot(sim.q_eff_imp), # charge density distribution
+    plot(sim.ϵ_r), # dielectric distribution
     layout = (1, 4), size = (1600, 500)
 )
 #jl savefig("tutorial_calculated_potential.pdf") # hide
@@ -49,7 +50,7 @@ plot(
 # SolidStateDetectors.jl supports active (i.e. depleted) volume calculation:
 
 
-get_active_volume(simulation.point_types) # approximation (sum of the volume of cells marked as depleted)
+get_active_volume(sim.point_types) # approximation (sum of the volume of cells marked as depleted)
 
 
 
@@ -57,19 +58,19 @@ get_active_volume(simulation.point_types) # approximation (sum of the volume of 
 
 # SolidStateDetectors.jl can also calculate the electric potential of a partially depleted detector:
 
-simulation_undep = deepcopy(simulation)
-simulation_undep.detector = SolidStateDetector(simulation_undep.detector, contact_id = 2, contact_potential = 500); # V  <-- Bias Voltage of Mantle
+sim_undep = deepcopy(sim)
+sim_undep.detector = SolidStateDetector(sim_undep.detector, contact_id = 2, contact_potential = 500); # V  <-- Bias Voltage of Mantle
 
-calculate_electric_potential!( simulation_undep,
+calculate_electric_potential!( sim_undep,
                                depletion_handling = true,
-                               convergence_limit=1e-6,
+                               convergence_limit = 1e-6,
                                refinement_limits = [0.2, 0.1, 0.05, 0.01],
                                verbose = false)
 
 
 plot(
-    plot(simulation_undep.electric_potential),
-    plot(simulation_undep.point_types),
+    plot(sim_undep.electric_potential),
+    plot(sim_undep.point_types),
     layout = (1, 2), size = (800, 700)
 )
 #jl savefig("tutorial_calculated_potential_undep.pdf") # hide
@@ -79,8 +80,8 @@ plot(
 
 # Compare both volumes:
 
-println("Depleted:   ", get_active_volume(simulation.point_types))
-println("Undepleted: ", get_active_volume(simulation_undep.point_types));
+println("Depleted:   ", get_active_volume(sim.point_types))
+println("Undepleted: ", get_active_volume(sim_undep.point_types));
 
 
 # ## Electric field calculation
@@ -88,10 +89,10 @@ println("Undepleted: ", get_active_volume(simulation_undep.point_types));
 # Calculate the electric field of the fully depleted detector, given the already calculated electric potential:
 
 
-calculate_electric_field!(simulation, n_points_in_φ = 72)
+calculate_electric_field!(sim, n_points_in_φ = 72)
 
-plot(simulation.electric_field, full_det = true, φ = 0.0, size = (500, 500))
-plot_electric_fieldlines!(simulation, full_det = true, φ = 0.0)
+plot(sim.electric_field, full_det = true, φ = 0.0, size = (700, 700))
+plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 #jl savefig("tutorial_electric_field.pdf") # hide
 #md savefig("tutorial_electric_field.pdf") # hide
 #md savefig("tutorial_electric_field.svg"); nothing # hide
@@ -109,12 +110,12 @@ plot_electric_fieldlines!(simulation, full_det = true, φ = 0.0)
 # Set the charge drift model of the simulation:
 
 charge_drift_model = ADLChargeDriftModel()
-simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
+sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 
 
 # And apply the charge drift model to the electric field:
 
-calculate_drift_fields!(simulation)
+calculate_drift_fields!(sim)
 
 # Now, let's create an "random" (multiside) event:
 
@@ -123,13 +124,13 @@ starting_positions = [ CylindricalPoint{T}( 0.020, deg2rad(10), 0.015 ),
                        CylindricalPoint{T}( 0.022, deg2rad(35), 0.025 ) ]
 energy_depos = T[1460, 609, 1000] * u"keV" # are needed later in the signal generation
 
-event = Event(starting_positions, energy_depos);
+evt = Event(starting_positions, energy_depos);
 
 time_step = 5u"ns"
-drift_charges!(event, simulation, Δt = time_step)
+drift_charges!(evt, sim, Δt = time_step)
 
-plot(simulation.detector, size = (700, 700))
-plot!(event.drift_paths)
+plot(sim.detector, size = (700, 700))
+plot!(evt.drift_paths)
 #jl savefig("tutorial_drift_paths.pdf") # hide
 #md savefig("tutorial_drift_paths.pdf") # hide
 #md savefig("tutorial_drift_paths.svg"); nothing # hide
@@ -140,13 +141,13 @@ plot!(event.drift_paths)
 
 # We need weighting potentials to simulate the detector charge signal induced by drifting charges. We'll calculate the weighting potential for the point contact and the outer shell of the detector:
 
-for contact in simulation.detector.contacts
-    calculate_weighting_potential!(simulation, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
+for contact in sim.detector.contacts
+    calculate_weighting_potential!(sim, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
 end
 
 plot(
-    plot(simulation.weighting_potentials[1]),
-    plot(simulation.weighting_potentials[2]),
+    plot(sim.weighting_potentials[1]),
+    plot(sim.weighting_potentials[2]),
     size = (900, 700)
 )
 #jl savefig("tutorial_weighting_potentials.pdf") # hide
@@ -161,9 +162,9 @@ plot(
 
 # Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the resulting detector charge signals (e.g. at the point contact):
 
-simulate!(event, simulation) # drift_charges + signal generation of all channels
+simulate!(evt, sim) # drift_charges + signal generation of all channels
 
-p_pc_signal = plot( event.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time / ns",
+p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time / ns",
                     legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
 #jl savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.pdf") # hide

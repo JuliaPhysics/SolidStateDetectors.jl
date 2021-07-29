@@ -1,16 +1,22 @@
 """
-    EllipticalSurface{T,TR,TP} <: AbstractSurfacePrimitive{T}
+    struct EllipticalSurface{T,TR,TP} <: AbstractPlanarSurfacePrimitive{T}
 
-* `r::TR`: 
-    * TR = Real -> Full Circle (a = b = r)
-    * TR = (Real, Real) -> Circular Annulus (r_in = r[1], r_out = r[2])
-    * TR = ((Real,), (Real,)) -> Full Ellipse (a = r[1][1], b = r[2][1])
-    * TR = ((Real, Real),(Real, Real)) -> Elliptical Annulus \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
-    * Not all are implemented yet
+Surface primitive describing circular bases, e.g. the top or bottom base of a [`Cone`](@ref).
 
-* `φ::TP`: 
-    * TP = Nothing <-> Full in φ
-    * ...
+## Parametric types
+* `T`: Precision type.
+* `TR`: Type of the radius `r`.
+    * `TR == T`: Full Circle (constant radius `r`, no cut-out).
+    * `TR == Tuple{T, T}`: Circular Annulus (inner radius at `r[1]`, outer radius at `r[2]`).
+* `TP`: Type of the angular range `φ`.
+    * `TP == Nothing`: Full 2π Cone.
+    * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
+    
+## Fields
+* `r::TR`: Definition of the radius of the `EllipticalSurface` (in m).
+* `φ::TP`: Range in polar angle `φ` over which the `EllipticalSurface` extends (in radians).
+* `origin::CartesianPoint{T}`: The position of the center of the `EllipticalSurface`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `EllipticalSurface` around its `origin`.
 """
 @with_kw struct EllipticalSurface{T,TR,TP} <: AbstractPlanarSurfacePrimitive{T}
     r::TR = 1
@@ -65,14 +71,14 @@ function lines(sp::PartialAnnulus{T}; n = 2) where {T}
     return (circ_in, circ_out, edges)
 end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
-#     point = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
+#     pt = CylindricalPoint(pt)
 #     rMin::T, rMax::T = get_r_limits(a)
-#     _in_cyl_r(point, a.r) ? abs(point.z - a.z) : hypot(point.z - a.z, min(abs(point.r - rMin), abs(point.r - rMax)))
+#     _in_cyl_r(pt, a.r) ? abs(pt.z - a.z) : hypot(pt.z - a.z, min(abs(pt.r - rMin), abs(pt.r - rMax)))
 # end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
-#     pcy = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
+#     pcy = CylindricalPoint(pt)
 #     rMin::T, rMax::T = get_r_limits(a)
 #     φMin::T, φMax::T, _ = get_φ_limits(a)
 #     if _in_φ(pcy, a.φ)
@@ -81,9 +87,9 @@ end
 #     else
 #         φNear = _φNear(pcy.φ, φMin, φMax)
 #         if rMin == rMax
-#             return norm(CartesianPoint(point)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
+#             return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
 #         else
-#             return distance_to_line(CartesianPoint(point),
+#             return distance_to_line(CartesianPoint(pt),
 #                                     LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)),
 #                                                 CartesianPoint(CylindricalPoint{T}(rMax,φNear,a.z))
 #                                                 )

@@ -11,3 +11,6 @@ end
 function scale_to_given_temperature(m::VacuumModel{T})::NTuple{4,T} where {T <: SSDFloat}
     return T(1), T(1), T(1), T(1)
 end
+
+print(io::IO, tm::VacuumModel{T}) where {T <: SSDFloat} = print(io, "No temperature model defined")
+println(io::IO, tm::VacuumModel) = print(io, tm)

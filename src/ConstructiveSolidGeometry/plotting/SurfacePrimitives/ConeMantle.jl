@@ -23,25 +23,3 @@
         end
     end
 end
-
-    # RotZ(π) * -cm.rotation such that the normal vector points inside the cone (Convention)
-
-
-# function mesh(c::ConeMantle{T}; n = 30) where {T <: AbstractFloat}
-
-#     rbot::T, rtop::T = get_r_limits(c)
-#     φMin::T, φMax::T, _ = get_φ_limits(c)
-#     zMin::T, zMax::T = _linear_endpoints(c.hZ)
-#     f = (φMax - φMin)/(2π)
-#     n = Int(ceil(n*f))
-#     m = (rtop-rbot)/(zMax-zMin)
-#     φrange = range(φMin, φMax, length = n+1)
-#     scφrange = sincos.(φrange)
-#     z = (zMin, zMax)
-
-#     X::Array{T,2} = [(m*(z_i-zMin)+rbot)*cφ for (_,cφ) in scφrange, z_i in z]
-#     Y::Array{T,2} = [(m*(z_i-zMin)+rbot)*sφ for (sφ,_) in scφrange, z_i in z]
-#     Z::Array{T,2} = [j for i in φrange, j in z]
-
-#     Mesh(X, Y, Z)
-# end

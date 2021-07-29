@@ -1,5 +1,50 @@
 abstract type AbstractPassive{T} <: AbstractObject{T} end
 
+"""
+    mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
+        
+Passive object, assigned to a [`SolidStateDetector`](@ref).
+
+For the calculation of the [`ElectricPotential`](@ref) and [`WeightingPotential`](@ref), 
+passives can be fixed to a constant potential. They can additionally have a charge density 
+profile that has an influence on the [`ElectricPotential`](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `G`: Type of `geometry`.
+* `MT`: Type of `material`.
+* `CDM`: Type of `charge_density_model`.
+
+## Fields
+* `name::String`: Custom name for the passive, relevant for plotting.
+* `id::Int`: Unique id that will unambiguously identify the passive.
+* `potential::T`: Potential (in V) to which the passive will be fixed during the calculation of the electric potential.
+* `temperature::T`: Temperature (in K) of the passive.
+* `material::MT`: Material of the passive.
+* `charge_density_model::CDM`: Charge density model for the points inside the passive.
+* `geometry::G`: Geometry of the passive, see [Constructive Solid Geometry (CSG)](@ref).
+
+## Definition in Configuration File
+
+A `Passive` is defined through an entry in the `passives` array of a detector
+or an entry in the `surroundings` array in the configuration file.
+It needs `material` and `geometry` and can optionally be given a `name`, `id`, `potential`, `temperature` and `charge_density`.
+
+An example definition of passives looks like this:
+```yaml 
+passives:
+  - name: Passivated Surface
+    material: HPGe
+    charge_density: # ...
+    geometry: # ...
+  - name: Cryostat
+    id: 3
+    potential: 0
+    temperature: 293K
+    material: Al
+    geometry: # ...
+```
+"""
 mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
     name::String
     id::Int

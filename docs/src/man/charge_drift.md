@@ -24,10 +24,10 @@ The [`ElectricFieldChargeDriftModel`](@ref) describes a system in which electron
 In order to set the `ElectricFieldChargeDriftModel` for the simulation, the precision type of the calculation `T` (`Float32` or `Float64`) has to be given as an argument. Note that `T` has to be of the same precision type of the simulation:
 
 ```julia
-T = SolidStateDetectors.get_precision_type(simulation) # e.g. Float32
+T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = ElectricFieldChargeDriftModel(T)
-simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
-calculate_drift_fields!(simulation)
+sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
+calculate_drift_fields!(sim)
 ```
 
 If no charge drift model is specified for the semiconductor of the detector in the configuration files, the default is `ElectricFieldChargeDriftModel`.
@@ -84,10 +84,10 @@ If the electric field is not aligned with any of the crystal axes, the charge dr
 In order to perform the calculation of the drift fields, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
 
 ```julia
-T = SolidStateDetectors.get_precision_type(simulation) # e.g. Float32
+T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = ADLChargeDriftModel("<path_to_ADL_configuration_file>", T=T)
-simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
-calculate_drift_fields!(simulation)
+sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
+calculate_drift_fields!(sim)
 ```
 
 The `ÀDLChargeDriftModel` can also be specified already in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
@@ -124,10 +124,10 @@ The `charge_drift_model` needs:
 The values from the default configuration file correspond to germanium at 78 K. Calculations of the drift field at other temperatures are also supported by the `ADLChargeDriftModel`. While experimental observations suggest that the charge mobilities of electrons and holes in the crystal are temperature dependent, the dependency law has not yet been established. Several models have been proposed to reproduce the experimental behavior, and some examples of them can be found in the directory `<package_directory>/src/ChargeDriftModels/ADL/`. The examples include a linear model, a Boltzmann model and a power-law model. To use these models in the calculation of the drift fields, the corresponding configuration file, the temperature and the precision must be given to the function. As an example, in order to use the Boltzmann model at a temperature of 100 K:
 
 ```julia
-T = SolidStateDetectors.get_precision_type(simulation) # e.g. Float32
+T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = ADLChargeDriftModel("<path_to_drift_velocity_config_boltzmann.yaml>", T = T, temperature = 100) 
-simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
-calculate_drift_fields!(simulation)
+sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
+calculate_drift_fields!(sim)
 ```
 
 
@@ -169,9 +169,9 @@ end
 
 Then, one can apply the model to the simulation:
 ```julia
-T = SolidStateDetectors.get_precision_type(simulation) # e.g. Float32
+T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = CustomChargeDriftModel{T}()
-simulation.detector = SolidStateDetector(simulation.detector, charge_drift_model)
-calculate_drift_fields!(simulation)
+sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
+calculate_drift_fields!(sim)
 ```
 

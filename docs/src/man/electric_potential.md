@@ -10,7 +10,7 @@ $\epsilon_r$ is the dielectric distribution and $\epsilon_0$ is the dielectric c
 
 ## Simulation Algorithm
 
-The electric potential is calculated through [successive over relaxation](https://en.wikipedia.org/wiki/Successive_over-relaxation) when calling `calculate_electric_potential!(simulation)`. The equation is numerically solved on a three-dimensional adaptive red/black grid. The red/black division allows for multithreading and the adaptive grid saves computation time since it only increases the grid point density in areas where it is critical. To use multiple threads for the simulation, the environment variable `JULIA_NUM_THREADS` must be set before Julia is started. In case of bash this is done through
+The electric potential is calculated through [successive over relaxation](https://en.wikipedia.org/wiki/Successive_over-relaxation) when calling `calculate_electric_potential!(sim)`. The equation is numerically solved on a three-dimensional adaptive red/black grid. The red/black division allows for multithreading and the adaptive grid saves computation time since it only increases the grid point density in areas where it is critical. To use multiple threads for the simulation, the environment variable `JULIA_NUM_THREADS` must be set before Julia is started. In case of bash this is done through
 ```bash
 export JULIA_NUM_THREADS=4
 ```
@@ -18,15 +18,15 @@ export JULIA_NUM_THREADS=4
 
 At the beginning of the simulation, each grid point, $(i,j,k)$ is assigned its dielectric constant, $\epsilon_r(\vec{r}_{i,j,k})$, as well as its effective charge, $Q_\text{eff} = \rho(\vec{r}_{i,j,k}) \cdot V_{i,j,k} \,\epsilon_0$, where $V_{i,j,k}$ is the volume assigned to the grid point $(i,j,k)$.
 
-These quantities are stored in the fields `simulation.q_eff_imp` and `simulation.ϵ_r` and can be plotted using
+These quantities are stored in the fields `sim.q_eff_imp` and `sim.ϵ_r` and can be plotted using
 ```julia
 using SolidStateDetectors
 using Plots 
-simulation = Simulation(SSD_examples[:InvertedCoax])
-apply_initial_state!(simulation, ElectricPotential)
+sim = Simulation(SSD_examples[:InvertedCoax])
+apply_initial_state!(sim, ElectricPotential)
 plot(
-  plot(simulation.q_eff_imp),
-  plot(simulation.ϵ_r)
+  plot(sim.q_eff_imp),
+  plot(sim.ϵ_r)
 )
 ```
 

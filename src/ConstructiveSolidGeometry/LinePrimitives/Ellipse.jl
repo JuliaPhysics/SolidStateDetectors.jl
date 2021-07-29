@@ -1,17 +1,17 @@
-"""
-    struct Ellipse{T,TR} <: AbstractLinePrimitive{T}
-
-* `r::TR`: 
-    * TR = Real -> Circle (a = b = r)
-    * TR = (Real, Real) -> Circular Annulus (r_in = r[1], r_out = r[2])
-    * TR = ((Real,), (Real,)) -> Ellipse (a = r[1][1], b = r[2][1])
-    * TR = ((Real, Real),(Real, Real)) -> Elliptical Annulus \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
-    * Not all are implemented yet
-
-* `φ::TP`: 
-    * TP = Nothing <-> Full in φ
-    * ...
-"""
+# """
+#     struct Ellipse{T,TR} <: AbstractLinePrimitive{T}
+# 
+# * `r::TR`: 
+#     * TR = Real -> Circle (a = b = r)
+#     * TR = (Real, Real) -> Circular Annulus (r_in = r[1], r_out = r[2])
+#     * TR = ((Real,), (Real,)) -> Ellipse (a = r[1][1], b = r[2][1])
+#     * TR = ((Real, Real),(Real, Real)) -> Elliptical Annulus \n(a_in = r[1][1], a_out = r[1][2], b_in = r[2][1], b_out = r[2][2])
+#     * Not all are implemented yet
+# 
+# * `φ::TP`: 
+#     * TP = Nothing <-> Full in φ
+#     * ...
+# """
 @with_kw struct Ellipse{T,TR,TP} <: AbstractLinePrimitive{T}
     r::TR = 1
     φ::TP = nothing

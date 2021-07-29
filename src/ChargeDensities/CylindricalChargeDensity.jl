@@ -1,9 +1,27 @@
-
 """
     struct CylindricalChargeDensity{T <: SSDFloat} <: AbstractChargeDensity{T}
 
-Simple charge density model which assumes a linear gradient in charge density in each spatial dimension of a cylindrical coordinate system.
-`offsets::NTuple{3, T}` are the charge densities at 0 and `gradients::NTuple{3, T}` are the linear slopes in `r` and `z` direction.
+Charge density model which assumes a linear gradient in charge density in each spatial dimension 
+of a cylindrical coordinate system.
+ 
+## Fields
+* `offsets::NTuple{3,T}`: charge density values at the origin of each dimension.
+* `gradients::NTuple{3,T}`: linear slopes in `r` and `z` direction.
+
+## Definition in Configuration File
+
+A `CylindricalChargeDensity` is defined in the configuration file through the field `charge_density` 
+(of a `passive` or `surrounding`) with `name: cylindrical` and optional fields `r` and `z`
+that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
+
+An example definition of a cylindrical charge density looks like this:
+```yaml 
+charge_density:
+  name: cylindrical
+  r:  # impurity profile with linear gradient in r
+    init: 1.0e-10     # C/m³
+    gradient: 1.0e-11 # C/m⁴
+```
 """
 struct CylindricalChargeDensity{T <: SSDFloat} <: AbstractChargeDensity{T}
     offsets::NTuple{3, T}

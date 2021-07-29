@@ -2,9 +2,43 @@
 abstract type AbstractContact{T} <: AbstractObject{T} end
 
 """
-    mutable struct Contact{T} <: AbstractContact{T}
+    mutable struct Contact{T, G, MT} <: AbstractContact{T}
+        
+Contact of a [`SolidStateDetector`](@ref).
 
-T: Type of precision.
+For the simulation of the [`ElectricPotential`](@ref), all contacts are fixed to a constant potential value.
+
+## Parametric types:
+* `T`: Precision type.
+* `G`: Type of `geometry`.
+* `MT`: Type of `material`.
+
+## Fields
+* `potential::T`: Potential (in V) to which the contact will be fixed during the calculation of the [`ElectricPotential`](@ref).
+* `material::MT`: Material of the contact.
+* `id::Int`: Unique id that will unambiguously identify the contact.
+* `name::String`: Custom name for the contact, relevant for plotting.
+* `geometry::G`: Geometry of the contact, see [Constructive Solid Geometry (CSG)](@ref).
+
+## Definition in Configuration File
+
+A `Contact` is defined in the configuration file through an entry in the `contacts` array of a detector.
+It needs `id`, `potential` and `geometry` and can optionally be given a `name` and `material`.
+
+An example definition of contacts looks like this:
+```yaml 
+contacts:
+  - name: "n+ contact"
+    id: 1
+    potential: 5000V
+    material: HPGe # optional
+    geometry: # ....
+  - name: "p+ contact"
+    id: 2
+    potential: 0
+    material: HPGe #optional
+    geometry: # ....
+```
 """
 struct Contact{T,G,MT} <: AbstractContact{T}
     potential::T

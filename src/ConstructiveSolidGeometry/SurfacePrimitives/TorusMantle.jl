@@ -1,3 +1,24 @@
+"""
+    struct TorusMantle{T,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
+
+Surface primitive describing the mantle of a [`Torus`](@ref).
+
+## Parametric types
+* `T`: Precision type.
+* `TP`: Type of the azimuthial angle `φ`.
+    * `TP == Nothing`: Full 2π in `φ`.
+* `TT`: Type of the polar angle `θ`.
+    * `TT == Nothing`: Full 2π in `θ`.
+* `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+    
+## Fields
+* `r_torus::T`: Distance of the center of the `TorusMantle` to the center of the tube (in m).
+* `r_tube::T`: Radius of the tube of the `TorusMantle` (in m).
+* `φ::TP`: Range in azimuthial angle `φ` of the `TorusMantle`.
+* `θ::TT`: Range in polar angle `θ` of the `TorusMantle`.
+* `origin::CartesianPoint{T}`: The position of the center of the `TorusMantle`.
+* `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `TorusMantle` around its `origin`.
+"""
 @with_kw struct TorusMantle{T,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
     r_torus::T = 1
     r_tube::T = 1
@@ -44,11 +65,16 @@ extremum(tm::TorusMantle{T}) where {T} = tm.r_torus + tm.r_tube
 """
     intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 
-The function will always return 4 CartesianPoint's.
-If the line just touches the mantle, the points will be the same. 
-If the line does not touch the mantle at all, the points will have NaN's as there coordinates.
+Calculates the intersections of a `Line` with a `TorusMantle`.
 
-Solve: `solve (sqrt((L1 + λ*D1)^2 + (L2 + λ*D2)^2)-R)^2 + (L3 + λ*D3)^2 = r^2 for λ`
+## Arguments
+* `cm::TorusMantle{T}`: The `TorusMantle`.
+* `l::Line{T}`: The `Line`.
+
+!!! note 
+    The function will always return 4 CartesianPoint's.
+    If the line just touches the mantle, the points will be the same. 
+    If the line does not touch the mantle at all, the points will have NaN's as there coordinates.
 """
 function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, tm) # direction is not normalized
@@ -71,6 +97,8 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     b = (2*A*C + B^2 - 4*R^2*(D1^2 + D2^2)) / C^2
     c = (2*A*B - 8*R^2*(L1*D1 + L2*D2)) / C^2
     d = (A^2 - 4*R^2*(L1^2 + L2^2)) / C^2
+
+    # Solve: `solve (sqrt((L1 + λ*D1)^2 + (L2 + λ*D2)^2)-R)^2 + (L3 + λ*D3)^2 = r^2 for λ`
 
 	# λ1, λ2, λ3, λ4 = roots_of_4th_order_polynomial(a, b, c, d) # That does not work for all combinations of a, b, c, d...
 	# fallback to Polynomials.jl, which is slower... We should improve `roots_of_4th_order_polynomial`... 
@@ -144,14 +172,14 @@ end
 # end
 
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
-#     pcy = CylindricalPoint(point)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
+#     pcy = CylindricalPoint(pt)
 #     return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
 # end
 
-# function distance_to_surface(point::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:AbstractInterval})::T where {T}
-#     pcy = CylindricalPoint(point)
-#     if _in_φ(point, t.φ)
+# function distance_to_surface(pt::AbstractCoordinatePoint{T}, t::TorusMantle{T, <:AbstractInterval})::T where {T}
+#     pcy = CylindricalPoint(pt)
+#     if _in_φ(pt, t.φ)
 #         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), Arc(t))
 #     else
 #         φMin::T, φMax::T, _ = get_φ_limits(t)

@@ -1,5 +1,5 @@
-function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, potential::Array{T, N},
-    grid::Grid{T, N, Cartesian}, ssd::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
+function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N}, potential::Array{T, N},
+    grid::Grid{T, N, Cartesian}, det::SolidStateDetector{T}; weighting_potential_contact_id::Union{Missing, Int} = missing,
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
 
@@ -15,8 +15,8 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                 x::T = axx[ix]
                 pt::CartesianPoint{T} = CartesianPoint{T}( x, y, z )
 
-                if !ismissing(ssd.passives)
-                    for passive in ssd.passives
+                if !ismissing(det.passives)
+                    for passive in det.passives
                         if passive.potential != :floating
                             if pt in passive
                                 potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
@@ -24,23 +24,23 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
                                 else
                                     0
                                 end
-                                pointtypes[ ix, iy, iz ] = zero(PointType)
+                                point_types[ ix, iy, iz ] = zero(PointType)
                             end
                         end
                     end
                 end
-                if in(pt, ssd)
-                    pointtypes[ ix, iy, iz ] += pn_junction_bit
+                if in(pt, det)
+                    point_types[ ix, iy, iz ] += pn_junction_bit
                 end
                 if NotOnlyPaintContacts
-                    for contact in ssd.contacts
+                    for contact in det.contacts
                         if pt in contact
                             potential[ ix, iy, iz ] = if ismissing(weighting_potential_contact_id)
                                 contact.potential
                             else
                                 contact.id == weighting_potential_contact_id ? 1 : 0
                             end
-                            pointtypes[ ix, iy, iz ] = zero(PointType)
+                            point_types[ ix, iy, iz ] = zero(PointType)
                         end
                     end
                 end
@@ -48,7 +48,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
         end
     end
     if PaintContacts
-        for contact in ssd.contacts
+        for contact in det.contacts
             pot::T = if ismissing(weighting_potential_contact_id)
                 contact.potential
             else
@@ -56,7 +56,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
             end
             fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
             for face in fs
-                paint!(pointtypes, potential, face, contact.geometry, pot, grid)
+                paint!(point_types, potential, face, contact.geometry, pot, grid)
             end
         end
     end
@@ -64,7 +64,7 @@ function set_pointtypes_and_fixed_potentials!(pointtypes::Array{PointType, N}, p
 end
 
 
-function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3, Cartesian}, medium::NamedTuple = material_properties[materials["vacuum"]],
+function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3, Cartesian}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; weighting_potential_contact_id::Union{Missing, Int} = missing,
                 sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true ) where {T}#::PotentialSimulationSetupRB{T} where {T}
                 is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
@@ -151,11 +151,11 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-        # detector_material_ϵ_r::T = ssd.material_detector.ϵ_r
-        # environment_material_ϵ_r::T = ssd.material_environment.ϵ_r
+        # detector_material_ϵ_r::T = det.material_detector.ϵ_r
+        # environment_material_ϵ_r::T = det.material_environment.ϵ_r
 
-        contact_bias_voltages::Vector{T} = if length(ssd.contacts) > 0 
-            T[contact.potential for contact in ssd.contacts]
+        contact_bias_voltages::Vector{T} = if length(det.contacts) > 0 
+            T[contact.potential for contact in det.contacts]
         else
             T[0]
         end
@@ -175,7 +175,7 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
                 for ix in 1:size(ϵ, 1)
                     pos_x = mpx[ix]
                     pt::CartesianPoint{T} = CartesianPoint{T}(pos_x, pos_y, pos_z)
-                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, ssd, medium)
+                    ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, det, medium)
                 end
             end
         end
@@ -271,20 +271,20 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         end
 
         potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
-        pointtypes::Array{PointType, 3} = ones(PointType, size(grid)...)
-        set_pointtypes_and_fixed_potentials!( pointtypes, potential, grid, ssd, weighting_potential_contact_id = weighting_potential_contact_id,
+        point_types::Array{PointType, 3} = ones(PointType, size(grid)...)
+        set_point_types_and_fixed_potentials!( point_types, potential, grid, det, weighting_potential_contact_id = weighting_potential_contact_id,
             not_only_paint_contacts = Val(not_only_paint_contacts), paint_contacts = Val(paint_contacts)  )
         rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
-        rbpointtypes::Array{T, 4} = RBExtBy2Array( pointtypes, grid )
+        rbpoint_types::Array{T, 4} = RBExtBy2Array( point_types, grid )
         potential = clear(potential)
-        pointtypes = clear(pointtypes)
+        point_types = clear(point_types)
     end # @inbounds
 
-    fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)} = 
+    pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)} = 
         PotentialSimulationSetupRB{T, 3, 4, Cartesian, typeof(geom_weights), typeof(grid.axes)}(
         grid,
         rbpotential,
-        rbpointtypes,
+        rbpoint_types,
         volume_weights,
         ρ,
         q_eff_fix,
@@ -297,12 +297,12 @@ function PotentialSimulationSetupRB(ssd::SolidStateDetector{T}, grid::Grid{T, 3,
         depletion_handling_potential_limit,
         grid_boundary_factors
      )
-    return fssrb
+    return pssrb
 end
 
 
-function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T, 3} where {T}
-    pot::Array{T, 3} = Array{T, 3}(undef, size(fssrb.grid))
+function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T, 3} where {T}
+    pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = iz + 1
         for iy in axes(pot, 2)
@@ -311,7 +311,7 @@ function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Carte
             for ix in axes(pot, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                pot[ix, iy, iz] = fssrb.potential[ irbx, irby, irbz, rbi ]
+                pot[ix, iy, iz] = pssrb.potential[ irbx, irby, irbz, rbi ]
             end
         end
     end
@@ -319,62 +319,62 @@ function ElectricPotentialArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Carte
 end
 
 
-function PointTypeArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{PointType, 3} where {T}
-    pointtypes::Array{PointType, 3} = zeros(PointType, size(fssrb.grid))
-    for iz in axes(pointtypes, 3)
+function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{PointType, 3} where {T}
+    point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
+    for iz in axes(point_types, 3)
         irbz::Int = iz + 1
-        for iy in axes(pointtypes, 2)
+        for iy in axes(point_types, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            for ix in axes(pointtypes, 1)
+            for ix in axes(point_types, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                pointtypes[ix, iy, iz] = fssrb.pointtypes[irbx, irby, irbz, rbi ]
+                point_types[ix, iy, iz] = pssrb.point_types[irbx, irby, irbz, rbi ]
             end
         end
     end
-    return pointtypes
+    return point_types
 end
 
 
 
-function EffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
+function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = fssrb.geom_weights[3].weights[3, iz]
+        Δmpz::T = pssrb.geom_weights[3].weights[3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            Δmpy::T = fssrb.geom_weights[2].weights[3, iy]
+            Δmpy::T = pssrb.geom_weights[2].weights[3, iy]
             Δmpzy::T = Δmpz * Δmpy
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * fssrb.geom_weights[1].weights[3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[1].weights[3, ix]
 
-                ρ[ix, iy, iz] = fssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
+                ρ[ix, iy, iz] = pssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
             end
         end
     end
     return ρ
 end
-function FixedEffectiveChargeDensityArray(fssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(fssrb.grid))
+function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = fssrb.geom_weights[3].weights[3, iz]
+        Δmpz::T = pssrb.geom_weights[3].weights[3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            Δmpy::T = fssrb.geom_weights[2].weights[3, iy]
+            Δmpy::T = pssrb.geom_weights[2].weights[3, iy]
             Δmpzy::T = Δmpz * Δmpy
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * fssrb.geom_weights[1].weights[3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[1].weights[3, ix]
 
-                ρ[ix, iy, iz] = fssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
+                ρ[ix, iy, iz] = pssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
             end
         end
     end

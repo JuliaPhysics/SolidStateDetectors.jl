@@ -1,3 +1,31 @@
+@doc raw"""
+
+    struct VelocityParameters{T <: SSDFloat}
+
+Values needed to parametrize the longitudinal drift velocity of electrons or hole
+along a crystal axis as a function of the electric field strength.
+
+## Background information 
+
+The parameterization for the longitudinal drift velocity, ``v_l``, as a function of the electric 
+field strength, ``E``, was proposed by [D.M. Caughey and R.E. Thomas](https://ieeexplore.ieee.org/document/1448053)
+and later expanded by [L. Mihailescu et al.](https://www.sciencedirect.com/science/article/pii/S0168900299012863):
+```math
+v_l = \frac{\mu_0 E}{(1 + (E/E_0 )^{\beta})^{1/ \beta}} - \mu_{n} E.
+```
+with the four parameters, ``\mu_0``, ``\beta``, ``E_0`` and ``\mu_n``, which are different
+for electrons and holes and for the different crystal axes.
+
+!!! note
+    The parameter ``\mu_n`` accounts for the Gunn effects for electrons and should be 0 for holes.
+    
+## Fields
+* `mu0::T`: Parameter ``\mu_0`` in the parameterization shown above.
+* `beta::T`: Parameter ``\beta`` in the parameterization shown above.
+* `E0::T`: Parameter ``E_0`` in the parameterization shown above.
+* `mun::T`: Parameter ``\mu_n`` in the parameterization shown above.
+
+"""
 struct VelocityParameters{T <: SSDFloat}
     mu0::T
     beta::T
@@ -5,6 +33,18 @@ struct VelocityParameters{T <: SSDFloat}
     mun::T
 end
 
+@doc raw"""
+
+    struct CarrierParameters{T <: SSDFloat}
+
+Parameters needed to describe the electron or hole drift along the <100> and <111> axes.
+
+## Fields
+* `axis100::VelocityParameters{T}`: Parameters to describe the charge drift along the <100> axis.
+* `axis111::VelocityParameters{T}`: Parameters to describe the charge drift along the <111> axis.
+
+See also [`VelocityParameters`](@ref).
+"""
 struct CarrierParameters{T <: SSDFloat}
     axis100::VelocityParameters{T}
     axis111::VelocityParameters{T}
@@ -19,10 +59,7 @@ struct ADLParameters{T <: SSDFloat}
 end
 
 # Temperature models
-include("LinearModel.jl")
-include("BoltzmannModel.jl")
-include("PowerLawModel.jl")
-include("VacuumModel.jl")
+include("TemperatureModels/TemperatureModels.jl")
 
 # Electron model parametrization from [3]
 @fastmath function γj(j::Integer, crystal_orientation::SMatrix{3,3,T,9}, γ0::SMatrix{3,3,T,9}, ::Type{HPGe})::SMatrix{3,3,T,9} where {T <: SSDFloat}
@@ -81,16 +118,21 @@ end
 end
 
 
-"""
+@doc raw"""
     ADLChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}} <: AbstractChargeDriftModel{T}
 
-# Fields
-- `electrons::CarrierParameters{T}`
-- `holes::CarrierParameters{T}`
-- `crystal_orientation::SMatrix{3,3,T,9}`
-- `γ::SVector{N,SMatrix{3,3,T,9}}`
-- `parameters::ADLParameters{T}`
-- `temperaturemodel::TM`
+Charge drift model for electrons and holes based on the AGATA Detector Library.
+Find a detailed description of the calculations in [ADL Charge Drift Model](@ref).
+
+## Fields
+- `electrons::CarrierParameters{T}`: Parameters to describe the electron drift along the <100> and <111> axes.
+- `holes::CarrierParameters{T}`: Parameters to describe the hole drift along the <100> and <111> axes.
+- `crystal_orientation::SMatrix{3,3,T,9}`: Rotation matrix that transforms the global coordinate system to the crystal coordinate system given by the <100>, <010> and <001> axes of the crystal.
+- `γ::SVector{N,SMatrix{3,3,T,9}}`: Reciprocal mass tensors to the `N` valleys of the conduction band.
+- `parameters::ADLParameters{T}`: Parameters needed for the calculation of the electron drift velocity.
+- `temperaturemodel::TM`: Models to scale the resulting drift velocities with respect to temperature
+
+See also [`CarrierParameters`](@ref).
 """
 struct ADLChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}} <: AbstractChargeDriftModel{T}
     electrons::CarrierParameters{T}
@@ -212,14 +254,6 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
 end
 
 
-#= This function should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
-function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{<:Any,M,N,TM}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat, M, N, TM}
-    @warn "ADLChargeDriftModel does not have the same precision type as the electric field vector."
-    cdmT = ADLChargeDriftModel{T,M,N,TM}(cdm)
-    getVe(fv, cdmT, Emag_threshold)
-end
-=#
-
 @inline function _get_AE_and_RE(cdm::ADLChargeDriftModel{T, HPGe}, V100e::T, V111e::T)::Tuple{T,T} where{T <: SSDFloat}
     edmp::ADLParameters{T} = cdm.parameters
     AE::T = edmp.Γ0 * V100e 
@@ -288,14 +322,6 @@ end
     p1 * x + p2 * x^2 + p3 * x^3 + p4 * x^4
 end
 
-#= This function should never be called! ADLChargeDriftModel should be saved in the right format to the simulation!!
-function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{<:Any,M,N,TM}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, M, N, TM}
-    @warn "ADLChargeDriftModel does not have the same precision type as the electric field vector."
-    cdmT = ADLChargeDriftModel{T,M,N,TM}(cdm)
-    getVh(fv, cdmT, Emag_threshold)
-end
-=#
-
 @fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T, M}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, M}
     @inbounds begin
         Emag::T = norm(fv)
@@ -330,52 +356,3 @@ end
         Rz * (Ry * @SVector T[vΩ, vφ, vr])
     end
 end
-
-
-print(io::IO, tm::VacuumModel{T}) where {T <: SSDFloat} = print(io, "No temperature model defined")
-println(io::IO, tm::VacuumModel) = print(io, tm)
-
-print(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat} = print(io, "BoltzmannModel{$T}")
-function println(io::IO, tm::BoltzmannModel{T}) where {T <: SSDFloat}
-    println("\n________BoltzmannModel________")
-    println("Fit function: p1 + p2 exp(-p3/T)\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:   \t $(tm.temperature)")
-    println("Reference temperature: \t $(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
-    println("p3 \t$(tm.p3e100)   \t$(tm.p3e111)   \t$(tm.p3h100)   \t$(tm.p3h111)")
-end
-
-print(io::IO, tm::LinearModel{T}) where {T <: SSDFloat} = print(io, "LinearModel{$T}")
-function println(io::IO, tm::LinearModel{T}) where {T <: SSDFloat}
-    println("\n________LinearModel________")
-    println("Fit function: p1 + p2 * T\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:  \t$(tm.temperature)")
-    println("Reference temperature:\t$(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-    println("p2 \t$(tm.p2e100)   \t$(tm.p2e111)   \t$(tm.p2h100)   \t$(tm.p2h111)")
-end
-
-print(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat} = print(io, "PowerLawModel{$T}")
-function println(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
-    println("\n________PowerLawModel________")
-    println("Fit function: p1 * T^(3/2)\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:   \t $(tm.temperature)")
-    println("Reference temperature: \t $(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-end
-
-show(io::IO, tm::AbstractTemperatureModel) = print(io, tm) 
-show(io::IO,::MIME"text/plain", tm::AbstractTemperatureModel) = show(io, tm)

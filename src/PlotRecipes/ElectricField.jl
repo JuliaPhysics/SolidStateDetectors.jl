@@ -5,17 +5,17 @@
                     contours_equal_potential=false,
                     full_det = false ) where {T}
 
-    g::Grid{T, 3, Cylindrical} = ef.grid
+    grid::Grid{T, 3, Cylindrical} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, r, φ, z)
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
     cross_section == :φ ? aspect_ratio --> 1 : nothing
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
     colorbar_title --> "Electric Field Strength in V / m"
 
-    ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential, full_det
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential, full_det
 
 end
 
@@ -25,17 +25,17 @@ end
                     z = missing,
                     contours_equal_potential = false) where {T <: SSDFloat}
 
-    g::Grid{T, 3, Cartesian} = ef.grid
+    grid::Grid{T, 3, Cartesian} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(g, x, y, z)
+    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
     aspect_ratio --> 1
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
     colorbar_title --> "Electric Field Strength in V / m"
 
-    ElectricPotential(ef_magn,g), cross_section, idx, value, contours_equal_potential
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential
 end
 
 function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
@@ -126,7 +126,7 @@ end
     show_full_det = full_det && dim_symbol == :φ # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
     (dim_symbol != :r && !(dim_symbol == :z && S == Cylindrical) ) ? aspect_ratio --> 1 : nothing
-    title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°, (=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
+    title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°\n(=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
     xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
     yguide --> "z / m"
     (S == Cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
@@ -145,9 +145,9 @@ end
                 pts = ConstructiveSolidGeometry.intersection(surf,l)
                 for pt in pts
                     if pt in c
-                        point = pt + T(ustrip(to_internal_units(offset)))*ConstructiveSolidGeometry.normal(surf, pt)
-                        if point in sim.detector && !(point in sim.detector.contacts)
-                            push!(spawn_positions, point)
+                        pt_in = pt + T(ustrip(to_internal_units(offset)))*ConstructiveSolidGeometry.normal(surf, pt)
+                        if pt_in in sim.detector && !(pt_in in sim.detector.contacts)
+                            push!(spawn_positions, pt_in)
                         end
                     end
                 end

@@ -23,7 +23,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
@@ -35,7 +35,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: Coax" begin
         sim = Simulation{T}(SSD_examples[:Coax])
@@ -54,7 +54,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 2e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: BEGe" begin
         sim = Simulation{T}(SSD_examples[:BEGe])
@@ -72,7 +72,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
@@ -84,7 +84,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: CGD" begin
         sim = Simulation{T}(SSD_examples[:CGD])
@@ -96,7 +96,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation{T}(SSD_examples[:Spherical])
@@ -108,7 +108,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end 
     @testset "Simulate example detector: Toroidal" begin
         sim = Simulation{T}(SSD_examples[:CoaxialTorus])
@@ -122,7 +122,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation{T}(SSD_examples[:SigGen])
@@ -134,7 +134,7 @@ end
             signalsum += abs(evt.waveforms[i].value[end])
         end
         @info signalsum
-        @test isapprox( signalsum, T(2), atol = 1e-3 )
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
 end
 
