@@ -23,9 +23,9 @@ Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", documenter =
 Literate.notebook(tutorial_src, gen_content_dir, execute = false, name = "ssd_tutorial", documenter = true, credit = true)
 Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ssd_tutorial", documenter = true, credit = false)
 
-gen_content_dir = joinpath(@__DIR__, "src", "man")
-primitives_src = joinpath(@__DIR__, "src", "man", "primitives.jl")
-Literate.markdown(primitives_src, gen_content_dir, name = "primitives", documenter = true, credit = true, postprocess = fix_literate_output)
+# gen_content_dir = joinpath(@__DIR__, "src", "man")
+# primitives_src = joinpath(@__DIR__, "src", "man", "primitives.jl")
+# Literate.markdown(primitives_src, gen_content_dir, name = "primitives", documenter = true, credit = true, postprocess = fix_literate_output)
 
 
 makedocs(
@@ -36,11 +36,7 @@ makedocs(
         "Manual" => Any[
             "Installation" => "man/installation.md",
             "Configuration Files" => "man/config_files.md",
-            "Geometries (CSG)" => Any[
-                "CSG" => "man/csg.md",
-                "Primitives" => "man/primitives.md",
-                "Transformations" => "man/transformations.md"
-            ],
+            "Constructive Solid Geometry (CSG)" => "man/csg.md",
             "Grids" => "man/Grids.md",
             "Electric Potential" => "man/electric_potential.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
