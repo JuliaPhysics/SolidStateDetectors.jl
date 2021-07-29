@@ -6,9 +6,14 @@
 """
     struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
 
-* `x`: x-component in meter
-* `y`: y-component in meter
-* `z`: z-component in meter
+Describes a three-dimensional vector in Cartesian coordinates.
+
+## Fields 
+* `x`: x-coordinate (in m).
+* `y`: y-coordinate (in m).
+* `z`: z-coordinate (in m).
+
+See also [`CylindricalVector`](@ref).
 """
 struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     x::T
@@ -37,9 +42,17 @@ zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zer
 """
     struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
 
-* `r`: Radius in meter
-* `φ`: Polar angle in radians. φ == 0 <=> Parallel to x-axis of cartesian coordinate system."
-* `z`: z-coordinate in meter
+Describes a three-dimensional vector in cylindrical coordinates. 
+
+## Fields
+* `r`: Radius (in m).
+* `φ`: Polar angle (in rad).
+* `z`: `z`-coordinate (in m).
+
+!!! note 
+    `φ == 0` corresponds to the `x`-axis in the Cartesian coordinate system.
+    
+See also [`CartesianVector`](@ref).
 """
 struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
     r::T
