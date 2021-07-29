@@ -8,7 +8,8 @@ end
 """
     calculate_stored_energy(sim::Simulation{T}) where {T <: SSDFloat}
 
-Calculates and returns the energy stored in the [`ElectricField`](@ref) of an detector in units of J.
+Calculates and returns the energy stored in the [`ElectricField`](@ref) of a 
+[`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of J.
 
 ## Arguments
 * `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the stored energy is calculated.
@@ -91,7 +92,7 @@ export calculate_capacitance
 """
     calculate_capacitance(sim::Simulation{T}) where {T <: SSDFloat}
 
-Calculates and returns the capacitance of an detector in units of pF.
+Calculates and returns the capacitance of a [`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of pF.
 
 ## Arguments
 * `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.

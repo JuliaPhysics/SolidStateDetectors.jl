@@ -3,7 +3,7 @@
         
 Dielectric distribution, or distribution of the relative permittivity, ``\\epsilon_r``, 
 needed to calculate the [`ElectricPotential`](@ref).
-The units of the dielectric distribution is unitless.
+The dielectric distribution is unitless.
         
 ## Parametric types 
 * `T`: Element type of `data`.
@@ -13,7 +13,7 @@ The units of the dielectric distribution is unitless.
         
 ## Fields
 * `data::Array{T, N}`: Array containing the values of the dielectric distribution at the discrete points of the `grid`.
-* `grid::Grid{T, N, S, AT}`: Grid defining the discrete points at which the electric potential is determined.
+* `grid::Grid{T, N, S, AT}`: [`Grid`](@ref) defining the discrete points at which the electric potential is determined.
 
 !!! note
     The `data` array contains the values of the dielectric distribution at the discrete points 

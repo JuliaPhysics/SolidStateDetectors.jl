@@ -23,11 +23,6 @@ Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", documenter =
 Literate.notebook(tutorial_src, gen_content_dir, execute = false, name = "ssd_tutorial", documenter = true, credit = true)
 Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ssd_tutorial", documenter = true, credit = false)
 
-# gen_content_dir = joinpath(@__DIR__, "src", "man")
-# primitives_src = joinpath(@__DIR__, "src", "man", "primitives.jl")
-# Literate.markdown(primitives_src, gen_content_dir, name = "primitives", documenter = true, credit = true, postprocess = fix_literate_output)
-
-
 makedocs(
     sitename = "SolidStateDetectors.jl",
     modules = [SolidStateDetectors, SolidStateDetectors.ConstructiveSolidGeometry],

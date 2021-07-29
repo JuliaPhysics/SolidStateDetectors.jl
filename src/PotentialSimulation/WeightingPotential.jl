@@ -1,7 +1,7 @@
 """
     struct WeightingPotential{T, N, S, AT} <: AbstractArray{T, N}
         
-Weighting potential for a given contact which is a unitless quantity.
+Weighting potential for a given [`Contact`](@ref) which is a unitless potential.
         
 ## Parametric types 
 * `T`: Element type of `data`.
@@ -11,7 +11,7 @@ Weighting potential for a given contact which is a unitless quantity.
         
 ## Fields
 * `data::Array{T, N}`: Array containing the values of the weighting potential at the discrete points of the `grid`.
-* `grid::Grid{T, N, S, AT}`: Grid defining the discrete points for which the weighting potential is determined.
+* `grid::Grid{T, N, S, AT}`: [`Grid`](@ref) defining the discrete points for which the weighting potential is determined.
 """
 struct WeightingPotential{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractArray{T, N}
     data::Array{T, N}

@@ -16,8 +16,8 @@ v_l = \frac{\mu_0 E}{(1 + (E/E_0 )^{\beta})^{1/ \beta}} - \mu_{n} E.
 with the four parameters, ``\mu_0``, ``\beta``, ``E_0`` and ``\mu_n``, which are different
 for electrons and holes and for the different crystal axes.
 
-The parameter ``\mu_n`` accounts for the Gunn effects for electrons and should
-be 0 for holes.
+!!! note
+    The parameter ``\mu_n`` accounts for the Gunn effects for electrons and should be 0 for holes.
     
 ## Fields
 * `mu0::T`: Parameter ``\mu_0`` in the parameterization shown above.
@@ -122,7 +122,7 @@ end
     ADLChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}} <: AbstractChargeDriftModel{T}
 
 Charge drift model for electrons and holes based on the AGATA Detector Library.
-Find a detailed description of the calculations [here](../../docs/src/assets/ADLChargeDriftModel.pdf).
+Find a detailed description of the calculations in [ADL Charge Drift Model](@ref).
 
 ## Fields
 - `electrons::CarrierParameters{T}`: Parameters to describe the electron drift along the <100> and <111> axes.

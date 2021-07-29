@@ -4,9 +4,9 @@ abstract type AbstractContact{T} <: AbstractObject{T} end
 """
     mutable struct Contact{T, G, MT} <: AbstractContact{T}
         
-Contact of a semiconductor detector.
+Contact of a [`SolidStateDetector`](@ref).
 
-For the simulation of the electric potential, all contacts are fixed to a constant potential value.
+For the simulation of the [`ElectricPotential`](@ref), all contacts are fixed to a constant potential value.
 
 ## Parametric types:
 * `T`: Precision type.
@@ -14,7 +14,7 @@ For the simulation of the electric potential, all contacts are fixed to a consta
 * `MT`: Type of `material`.
 
 ## Fields
-* `potential::T`: Potential (in V) to which the contact will be fixed during the calculation of the electric potential.
+* `potential::T`: Potential (in V) to which the contact will be fixed during the calculation of the [`ElectricPotential`](@ref).
 * `material::MT`: Material of the contact.
 * `id::Int`: Unique id that will unambiguously identify the contact.
 * `name::String`: Custom name for the contact, relevant for plotting.

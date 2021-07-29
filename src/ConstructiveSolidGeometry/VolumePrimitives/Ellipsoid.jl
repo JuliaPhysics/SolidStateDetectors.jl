@@ -1,7 +1,7 @@
 """
     struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
 
-Volume primitive describing an ellipsoid.
+Volume primitive describing an [Ellipsoid](@ref).
 
 ## Parametric types
 * `T`: Precision type.
@@ -44,6 +44,8 @@ difference:
       r: 1
 ```
 This is a sphere with inner radius 1 and outer radius 2.
+
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 @with_kw struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1

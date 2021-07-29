@@ -51,7 +51,7 @@ in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
 """
     drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
 
-Calculates the drift paths for the given [`Event`](@ref) `evt` and [`Simulation`](@ref) `sim`
+Calculates the electron and hole drift paths for the given [`Event`](@ref) and [`Simulation`](@ref)
     and stores them in `evt.drift_paths`.
     
 ## Arguments 
@@ -89,7 +89,7 @@ end
 """
     get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
     
-Generates the signals/waveforms from the drift paths of an [`Event`](@ref) for all contacts,
+Generates the signals/waveforms from the drift paths of an [`Event`](@ref) for each [`Contact`](@ref),
 for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
     
 The output is stored in `evt.waveforms`.
@@ -126,10 +126,10 @@ end
 """
     simulate!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
 
-Simulates the waveforms for the [`Event`](@ref) `evt` for a given [`Simulation`](@ref) `sim` by
+Simulates the waveforms for the [`Event`](@ref) for a given [`Simulation`](@ref) by
 
 1. calculating the drift paths of all energy hits, at `evt.locations` and 
-2. generating the waveforms for each [`Contact`], for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
+2. generating the waveforms for each [`Contact`](@ref), for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
 The output is stored in `evt.drift_paths` and `evt.waveforms`.
 
@@ -159,7 +159,7 @@ end
 """
     add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,U,TV,UV}, n_baseline_samples::Int, total_waveform_length::Int) where {T,U,TV,UV}
 
-Add a zero-valued baseline in front of the waveform `wv` and extends (or cuts off) the waveform at the end with the last value of `wv`.
+Adds a zero-valued baseline in front of the waveform `wv` and extends (or cuts off) the waveform at the end with the last value of `wv`.
 A waveform of length `total_waveform_length` is returned.
 
 ## Arguments

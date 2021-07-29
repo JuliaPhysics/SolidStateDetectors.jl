@@ -44,7 +44,7 @@ box = CSG.Geometry(T, cfn)
 plot(box)
 ````
 
-### Cone:
+### Cone
 #### Tube
 
 ````@example primitives

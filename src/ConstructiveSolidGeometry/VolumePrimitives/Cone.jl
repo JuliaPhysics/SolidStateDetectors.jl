@@ -1,7 +1,7 @@
 """
     struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
 
-Volume primitive describing a cone with its top and bottom circular base
+Volume primitive describing a [Cone](@ref) with its top and bottom circular base
 being aligned with the `xy` plane (before possible rotations).
 
 ## Parametric types
@@ -70,6 +70,8 @@ from 2 at the bottom to 4 at the top circular base.
 
 !!! note
     The names `tube` and `cone` in the configuration files are interchangeable.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 @with_kw struct Cone{T,CO,TR,TP} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1

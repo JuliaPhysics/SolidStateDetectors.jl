@@ -3,13 +3,15 @@
 
 Stores certain information about a grid point via bit-flags. 
 
-Right now there are:
+Right now, there are:
 
     const update_bit      = 0x01
     const undepleted_bit  = 0x02
     const pn_junction_bit = 0x04
 
-How to get information out of a PointType variable `point_type`:
+## Examples
+
+How to get information out of a `PointType` variable `point_type`:
 1. `point_type & update_bit == 0` -> do not update this point (for fixed points)     
 2. `point_type & update_bit >  0` -> do update this point    
 3. `point_type & undepleted_bit > 0` -> this point is undepleted
@@ -36,7 +38,7 @@ stored via bit-flags. Data is stored as [`PointType`](@ref) which is an `UInt8`.
         
 ## Fields
 * `data::Array{PointType, N}`: Array containing the point type values at the discrete points of the `grid`.
-* `grid::Grid{T, N, S, AT}`: Grid defining the discrete points for which the point types are determined.
+* `grid::Grid{T, N, S, AT}`: [`Grid`](@ref) defining the discrete points for which the point types are determined.
 
 See also [`PointType`](@ref).
 """
@@ -63,11 +65,15 @@ end
 """
     is_depleted(point_types::PointTypes)::Bool
     
-Returns a `Bool` value which is `true` if all point types are marked as depleted
-and `false` if any point in the point types is marked as undepleted.
+Returns `true` if all [`PointType`](@ref) values of
+the [`PointTypes`](@ref) of a [`Simulation`](@ref) are marked as depleted
+and `false` if any point in the [`PointTypes`](@ref) is marked as undepleted.
+
+It can be used to determine whether the [`SolidStateDetector`](@ref) is
+depleted at the provided bias voltage.
 
 ## Arguments
-* `point_types::PointTypes`: Point types of a [`Simulation`](@ref).
+* `point_types::PointTypes`: [`PointTypes`](@ref) of a [`Simulation`](@ref).
 
 ## Examples
 ```julia

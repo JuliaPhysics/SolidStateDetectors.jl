@@ -3,10 +3,11 @@ abstract type AbstractPassive{T} <: AbstractObject{T} end
 """
     mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
         
-Passive object in the world.
+Passive object, assigned to a [`SolidStateDetector`](@ref).
 
-For the simulation of the electric potential, passives can be fixed to a constant potential.
-They can additionally have a charge density profile that has an influence on the electric potential.
+For the calculation of the [`ElectricPotential`](@ref) and [`WeightingPotential`](@ref), 
+passives can be fixed to a constant potential. They can additionally have a charge density 
+profile that has an influence on the [`ElectricPotential`](@ref).
 
 ## Parametric types
 * `T`: Precision type.

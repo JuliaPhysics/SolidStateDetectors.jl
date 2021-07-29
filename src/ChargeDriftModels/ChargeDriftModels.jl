@@ -10,7 +10,7 @@ Applies the electron charge drift model onto the electric field vectors and retu
     The field vectors in `ef` have to be in Cartesian coordinates. 
 
 ## Arguments
-* `ef::Array{SVector{3, T},3}`: Three-dimensional array with [`ElectricField`](@ref) vectors, e.g. `simulation.electric_field.data`.
+* `ef::Array{SVector{3, T},3}`: Three-dimensional array with [`ElectricField`](@ref) vectors, e.g. `sim.electric_field.data`.
 * `chargedriftmodel::AbstractChargeDriftModel`: Model that describes the electron drift in the [`Semiconductor`](@ref).
 
 ## Keywords 
@@ -18,7 +18,7 @@ Applies the electron charge drift model onto the electric field vectors and retu
 
 ## Example 
 ```julia 
-get_electron_drift_field(simulation.electric_field.data, simulation.detector.semiconductor.charge_drift_model)
+get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model)
 ```
 
 !!! note 
@@ -46,15 +46,15 @@ Applies the hole charge drift model onto the electric field vectors and returns 
     The field vectors in `ef` have to be in Cartesian coordinates. 
 
 ## Arguments
-* `ef::Array{SVector{3, T},3}`: Three-dimensional array with [`ElectricField`](@ref) vectors, e.g. `simulation.electric_field.data`.
-* `chargedriftmodel::AbstractChargeDriftModel`: Model that describes the electron drift in the [`Semiconductor`](@ref).
+* `ef::Array{SVector{3, T},3}`: Three-dimensional array with [`ElectricField`](@ref) vectors, e.g. `sim.electric_field.data`.
+* `chargedriftmodel::AbstractChargeDriftModel`: Model that describes the hole drift in the [`Semiconductor`](@ref).
 
 ## Keywords 
 * `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
 
 ## Example 
 ```julia 
-get_hole_drift_field(simulation.electric_field.data, simulation.detector.semiconductor.charge_drift_model)
+get_hole_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model)
 ```
 
 !!! note 

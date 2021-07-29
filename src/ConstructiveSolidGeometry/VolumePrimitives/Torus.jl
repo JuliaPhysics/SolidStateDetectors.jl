@@ -1,7 +1,7 @@
 """
     struct Torus{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T,CO}
 
-Volume primitive describing a torus. It is defined as all points that are
+Volume primitive describing a [Torus](@ref). It is defined as all points that are
 within a given radius to a circle, parallel to the `xy` plane, with constant
 radius around a given origin.
 
@@ -56,6 +56,8 @@ difference:
       r_tube: 1       # => r_tube = 1.0
 ```
 This is a torus with `r_tube` having an inner radius of 1 and an outer radius of 2.
+
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 @with_kw struct Torus{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T,CO}
     r_torus::T = 1

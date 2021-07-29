@@ -1,11 +1,11 @@
 """
     readsiggen(file_path::String; T::Type)
     
-Reads a SigGen configuration file (ending in `.config`) in 'file_path'
-and returns a dictionary of all parameters. Non-existing parameteres are set to 0.
+Reads a [SigGen](https://github.com/radforddc/icpc_siggen) configuration file (ending in `.config`) in 'file_path'
+and returns a dictionary of all parameters. Non-existing parameteres are set to `0`.
 
 ## Arguments
-* `file_path::String`: File path to the SigGen config file.
+* `file_path::String`: File path leading to the [SigGen](https://github.com/radforddc/icpc_siggen) configuration file.
 
 ## Keywords 
 * `T::Type`: Type of the parameters in the output dictionary. Default is `Float64`.
@@ -106,14 +106,14 @@ end
 """
     siggentodict(config::Dict; units::Dict)
     
-Converts the dictionary containing the parameters from a SigGen config file
+Converts the dictionary containing the parameters from a [SigGen](https://github.com/radforddc/icpc_siggen) configuration file
 to a dictionary that can be understood by SolidStateDetectors.jl. 
 
 ## Arguments
-* `config::Dict`: Dictionary containing SigGen parameters (output of readsiggen()).
+* `config::Dict`: Dictionary containing [SigGen](https://github.com/radforddc/icpc_siggen) parameters (output of `readsiggen()``).
 
 ## Keywords
-* `units::Dict`: Units used in SigGen file (set to 'mm', 'deg', 'V' and 'K').
+* `units::Dict`: Units used in [SigGen](https://github.com/radforddc/icpc_siggen) configuration file (set to `"mm"`, `"deg"`, `"V"` and `"K"`).
     The dictionary needs the fields `"length"`, `"angle"`, `"potential"` and `"temperature"`.
 """
 function siggentodict(config::Dict;

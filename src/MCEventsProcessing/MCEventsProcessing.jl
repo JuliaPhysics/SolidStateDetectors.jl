@@ -9,8 +9,8 @@ Simulates the waveforms for all events defined in `mcevents` for a given [`Simul
 1. calculating the drift paths of all energy hits defined in `mcevents`
     based on the drift fields for electrons and holes stored in `sim.electron_drift_field` and 
     `sim.hole_drift_field`, 
-2. determining the signal (waveforms) of all channels, for which a weighting potential 
-    is given in the simulation object `sim`, from the generated drift paths of the hits.
+2. determining the signal (waveforms) for each [`Contact`](@ref), 
+    for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
 
 ## Arguments

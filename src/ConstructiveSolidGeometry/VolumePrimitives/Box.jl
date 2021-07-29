@@ -1,7 +1,7 @@
 """
     struct Box{T, CO} <: AbstractVolumePrimitive{T}
 
-Volume primitive describing a three-dimensional box with its surfaces
+Volume primitive describing a three-dimensional [Box](@ref) with its surfaces
 being parallel to the `xy`, `xy` and `yz` plane.
 
 ## Parametric types
@@ -43,6 +43,8 @@ box:
   hY: 2
   hZ: 3
 ```
+
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 @with_kw struct Box{T, CO} <: AbstractVolumePrimitive{T, CO}
     hX::T = 1

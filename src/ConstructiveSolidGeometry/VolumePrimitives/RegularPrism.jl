@@ -1,8 +1,8 @@
 """
     struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
 
-Volume primitive describing a prism with base plates parallel to the `xy` plane
-that are regular polygons. If the regular polygon base plate is projected to 
+Volume primitive describing a [Prism](@ref) with base plates are regular polygons
+which are parallel to the `xy` plane. If the regular polygon base plate is projected to 
 the `xy` plane, one of the vertices lays on the `x` axis.
 
 
@@ -33,6 +33,8 @@ HexagonalPrism:
   r: 1.0 # => r = 1.0
   h: 2.0 # => hZ = 1.0
 ```
+
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 @with_kw struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
     r::TR = 1

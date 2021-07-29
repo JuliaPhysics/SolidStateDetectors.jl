@@ -37,6 +37,8 @@ union: # a || b
 
 !!! note
     If more than two geometries are passed, the `union` is constructed from all of them.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
@@ -95,6 +97,8 @@ intersection: # a && b
 
 !!! note
     If more than two geometries are passed, the `intersection` is constructed from all of them.
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A
@@ -161,7 +165,8 @@ difference: # a && !b
 !!! note
     Keep in mind that to discard the part of the surface of `a` which is on the surface of `b`, 
     `b` should be chosen slightly bigger than `a`.
-
+    
+See also [Constructive Solid Geometry (CSG)](@ref).
 """
 struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
     a::A

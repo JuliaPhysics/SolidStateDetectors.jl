@@ -8,7 +8,7 @@ on a 3-dimensional grid. SolidStateDetectors.jl can calculate the electric poten
 The system to simulate, e.g. a cryostat with a detector inside, is called "the world".
 This world is divided into a set of discrete points, called the `grid::Grid`.
 It is defined through three axes: `grid.axes`. Each of the three axes is divided into a
-discrete number of points: $N_1, N_2, N_3$.  
+discrete number of points (ticks): $N_1, N_2, N_3$.  
 The linear combinations of those points form the set of all
 $N_\mathrm{gp} = N_1 \times N_2 \times N_3$ grid points.
 
@@ -21,8 +21,8 @@ A `DiscreteAxis`, e.g. `ax::DiscreteAxis`, stores the boundary conditions (refle
 at the endpoints of the axis as well as the discrete ticks, `ax.ticks`, of the axis in the interval `ax.interval`.
 The interval also specifies whether the endpoints of the interval are included in the ticks or not
 via `:closed` or `:open` in the type of the interval.
-The ticks do not need to be evenly spaced, allowing for a adaptive refinement of the grid
-in areas where the change of electric potential is large.
+The ticks do not need to be evenly spaced, allowing for an adaptive refinement of the grid
+in areas where the gradient of the electric potential is large.
 
 ## Grid Initialization
 
@@ -32,7 +32,7 @@ There is a constructor method for grid: [`Grid(sim::Simulation)`](@ref).
 
 In [`calculate_electric_potential!`](@ref),[`calculate_weighting_potential!`](@ref) and [`simulate!(sim::Simulation)`](@ref)
 the calculation of the potentials start with an initial grid, which can be passed to these functions via the keyword `grid`.
-If no grid is passed, the grid is generated via [`Grid(::Simulation)`](@ref)`.
+If no grid is passed, the grid is generated via [`Grid(::Simulation)`](@ref).
 
 The two keywords `max_tick_distance` and `max_distance_ratio` can also be passed to the functions
 [`calculate_electric_potential!`](@ref),[`calculate_weighting_potential!`](@ref) and [`simulate!(sim::Simulation)`](@ref)
@@ -65,7 +65,7 @@ It defines the maximum (relative to applied bias voltage) allowed differences
 of the potential values of neighbored grid points in each dimension for each refinement.
 It can be specified in different ways, see e.g. [`calculate_electric_potential!`](@ref).
 
-One simple example would be `refinement_levels = [0.2, 0.1, 0.05]`.
+One simple example would be `refinement_limits = [0.2, 0.1, 0.05]`.
 This would mean that the grid would be refined three times and the refinement limit would be
 the same for each dimension of the grid in each refinement.
 In the first refinement, the refinement limit would be 0.2. Thus, if the bias voltage of the detector in the simulation
@@ -78,5 +78,9 @@ The potential values at the added grid points are determined through linear inte
 Then, the potential values of all grid points are updated (through the SOR) until convergence
 is reached again and the next refinement with `0.1` is executed.
 
-Another keyword can be used to set a minimum allowed distance between to ticks: `min_tick_distance`, see e.g. [`calculate_electric_potential!`](@ref), which prohibits the insertion of new
-ticks if the new resulting distances between the ticks would be below this limit.
+Another keyword can be used to set a minimum allowed distance between to ticks: `min_tick_distance`, see e.g. [`calculate_electric_potential!`](@ref), which prohibits the insertion of new ticks if the new resulting distances between the ticks would be below this limit.
+
+!!! note
+    It is usually favourable to make more refinements with smaller differences in the limits.
+    Thus, for example, `refinement_limits = [0.2, 0.1, 0.05, 0.03, 0.01]` is usually better than
+    `refinement_limits = [0.2, 0.01]`.

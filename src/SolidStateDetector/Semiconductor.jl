@@ -3,7 +3,7 @@ abstract type AbstractSemiconductor{T} <: AbstractObject{T} end
 """
     struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
         
-Bulk of a semiconductor detector.
+Semiconductor bulk of a [`SolidStateDetector`](@ref).
 
 This is the volume in which electrons and holes will drift during the signal development.
 

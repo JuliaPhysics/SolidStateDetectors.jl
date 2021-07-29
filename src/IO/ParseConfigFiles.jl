@@ -4,7 +4,7 @@
 Reads in a configuration file and returns a parsed dictionary which holds all the
 information specified in the configuration file.
 
-Find detailed information on configuration files [here](https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/config_files/#Config-Files).
+Find detailed information on configuration files in [Configuration Files](@ref).
 
 ## Arguments 
 * `filename::AbstractString`: File name of the configuration file. If the file is not

@@ -3,7 +3,7 @@ abstract type AbstractGrid{T, N} <: AbstractArray{T, N} end
 """
     struct Grid{T, N, S <: AbstractCoordinateSystem, AT} <: AbstractGrid{T, N}
 
-Collecting of `N` axes that define the dimensions of the grid needed to calculate 
+Collection of `N` axes that define the dimensions of the grid needed to calculate 
 [`ElectricPotential`](@ref), [`ElectricField`](@ref) or [`WeightingPotential`](@ref).
 
 ## Parametric types

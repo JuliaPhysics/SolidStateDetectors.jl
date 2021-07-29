@@ -3,7 +3,7 @@ abstract type AbstractSimulation{T <: SSDFloat} end
 """
     mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
 
-Collection of all parts of a simulation of a semiconductor detector.
+Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 
 ## Parametric types
 * `T`: Precision type.
@@ -15,12 +15,12 @@ Collection of all parts of a simulation of a semiconductor detector.
 * `medium::NamedTuple`: Medium of the world.
 * `detector::Union{SolidStateDetector{T}, Missing}`: The [`SolidStateDetector`](@ref) of the simulation.
 * `world::World{T, 3, CS}`: The [`World`](@ref) of the simulation.
-* `q_eff_imp::Union{EffectiveChargeDensity{T}, Missing}`: Effective charge resulting from the impurites of the semiconductor.
-* `q_eff_fix::Union{EffectiveChargeDensity{T}, Missing}`: Fixed charge resulting from fixed space charges in passives.
+* `q_eff_imp::Union{EffectiveChargeDensity{T}, Missing}`: Effective charge resulting from the impurites in the [`Semiconductor`](@ref) of the `detector`.
+* `q_eff_fix::Union{EffectiveChargeDensity{T}, Missing}`: Fixed charge resulting from fixed space charges in [`Passive`](@ref) of the `detector`.
 * `ϵ_r::Union{DielectricDistribution{T}, Missing}`: The [`DielectricDistribution`](@ref) of the simulation.
 * `point_types::Union{PointTypes{T}, Missing}`: The [`PointTypes`](@ref) of the simulation.
 * `electric_potential::Union{ElectricPotential{T}, Missing}`: The [`ElectricPotential`](@ref) of the simulation.
-* `weighting_potentials::Vector{Any}`: The [`WeightingPotential`](@ref) for all detector contacts in the simulation.
+* `weighting_potentials::Vector{Any}`: The [`WeightingPotential`](@ref) for each [`Contact`](@ref) of the `detector` in the simulation.
 * `electric_field::Union{ElectricField{T}, Missing}`: The [`ElectricField`](@ref) of the simulation.
 * `electron_drift_field::Union{ElectricField{T}, Missing}`: The electron drift field of the simulation.
 * `hole_drift_field::Union{ElectricField{T}, Missing}`: The hole drift field of the simulation.
@@ -197,21 +197,22 @@ end
     Grid(sim::Simulation{T, Cartesian}; kwargs...)
     Grid(sim::Simulation{T, Cylindrical}; kwargs...)
 
-Initialize a grid based on the objects defined in a `Simulation`.\n
+Initializes a [`Grid`](@ref) based on the objects defined in a [`Simulation`](@ref).
+
 The important points of all objects are sampled and added to the ticks of the grid.
 The grid initialization can be tuned using a set of keyword arguments listed below.
 
 ## Arguments
-* `sim::Simulation{T, S}`: Simulation for which the grid will be defined.
+* `sim::Simulation{T, S}`: [`Simulation`](@ref) for which the grid will be defined.
 
 ## Keywords
-* `max_tick_distance = missing`: Maximum distance between neighbouring ticks of the grid.\n
+* `max_tick_distance = missing`: Maximum distance between neighbouring ticks of the grid.
     Additional grid ticks will be added if two neighbouring ticks are too far apart.
     `max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of `Quantity`, 
     e.g. `(1u"mm", 15u"°", 3u"mm")`,
     to set it for each axis of the `Grid` separately. Note that a `CartesianGrid` requires a 
     `Tuple{LengthQuantity, LengthQuantity, LengthQuantity}` while a `CylindricalGrid` requires a
-    `Tuple{LengthQuantity, AngleQuantity, LengthQuantity}`.\n
+    `Tuple{LengthQuantity, AngleQuantity, LengthQuantity}`.
     If `max_tick_distance` is `missing`, one fourth of the axis length is used.
 * `max_distance_ratio::Real = 5`: If the ratio between a tick and its left and right neighbour
    is greater than `max_distance_ratio`, additional ticks are added between the ticks that are
@@ -220,11 +221,11 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     will be added in between the important points obtained from sampling the objects of the
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
-
-## Additional Keywords for a `CylindricalGrid`
 * `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of 
     an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
     if set to `false`.
+
+## Additional Keyword for a `CylindricalGrid`
 * `full_2π::Bool = false`: Grid will be extended to `2π` if set to `true` and be left as is
     if set to `false`.
 """
@@ -447,7 +448,7 @@ end
     apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
             not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
 
-Applies the initial state of the electric potential calculation.
+Applies the initial state for the calculation of the [`ElectricPotential`](@ref).
 It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`
 with the material properties and fixed potentials defined in `sim.detector`.
 
@@ -457,9 +458,10 @@ with the material properties and fixed potentials defined in `sim.detector`.
     a default `Grid` is determined from `sim`.
     
 ## Keywords
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.    
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 
 ## Examples
 ```julia
@@ -482,8 +484,8 @@ end
 """
     apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim))::Nothing
 
-Applies the initial state of the weighting potential calculation for the contact with the id `contact_id`.
-It overwrites `sim.weighting_potentials[contact_id]` with the fixed values on the contacts.
+Applies the initial state for the calculation of the [`WeightingPotential`](@ref) for the [`Contact`}(@ref) with the id `contact_id`.
+It overwrites `sim.weighting_potentials[contact_id]` with the fixed values on the [`Contact`}(@ref).
 
 ## Arguments 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which the initial state should be applied.
@@ -492,9 +494,10 @@ It overwrites `sim.weighting_potentials[contact_id]` with the fixed values on th
     a default `Grid` is determined from `sim`.
     
 ## Keywords
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.    
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 
 ## Examples
 ```julia
@@ -521,7 +524,7 @@ Takes the current state of `sim.electric_potential` and updates it until it has 
 There are several keyword arguments which can be used to tune the simulation.
 
 ## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.electric_potential` will be updated.
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_potential` will be updated.
 * `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default is `1e-7`.
@@ -534,9 +537,10 @@ There are several keyword arguments which can be used to tune the simulation.
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
     First element contains the SOR constant for `r` = 0.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
@@ -627,7 +631,7 @@ Takes the current state of `sim.weighting_potentials[contact_id]` and updates it
 There are several keyword arguments which can be used to tune the simulation.
 
 ## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.weighting_potentials[contact_id]` will be updated.
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.weighting_potentials[contact_id]` will be updated.
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the [`WeightingPotential`](@ref) is to be calculated.
 * `convergence_limit::Real`: `convergence_limit` times the bias voltage sets the convergence limit of the relaxation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
@@ -641,9 +645,10 @@ There are several keyword arguments which can be used to tune the simulation.
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
     First element contains the SOR constant for `r` = 0.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
@@ -700,7 +705,7 @@ end
 Takes the current state of `sim.electric_potential` and refines it with respect to the input arguments
 `max_diffs` and `minimum_distances` by
 
-1. extending the `grid` of `simulation.electric_potential` to be a closed grid in all dimensions,
+1. extending the `grid` of `sim.electric_potential` to be a closed grid in all dimensions,
 2. refining the axis of the grid based on `max_diffs` and `minimum_distances`:
    Insert new ticks between two existing ticks such that the potential difference between each tick becomes
    smaller than `max_diff[i]` (`i` -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`, and
@@ -708,9 +713,9 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 
 
 ## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.electric_potential` will be refined.
-* `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `simulation.electric_potential.grid` after refinement.
-* `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `simulation.electric_potential.grid` after refinement.
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_potential` will be refined.
+* `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `sim.electric_potential.grid` after refinement.
+* `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `sim.electric_potential.grid` after refinement.
 
 ## Keywords
 * `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
@@ -720,9 +725,10 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
     First element contains the SOR constant for `r` = 0.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
@@ -762,7 +768,7 @@ end
 Takes the current state of `sim.weighting_potentials[contact_id]` and refines it with respect to the input arguments
 `max_diffs` and `minimum_distances` by
 
-1. extending the `grid` of `simulation.weighting_potentials[contact_id]` to be a closed grid in all dimensions,
+1. extending the `grid` of `sim.weighting_potentials[contact_id]` to be a closed grid in all dimensions,
 2. refining the axis of the grid based on `max_diffs` and `minimum_distances`:
    Insert new ticks between two existing ticks such that the potential difference between each tick becomes
    smaller than `max_diff[i]` (`i` -> dimension) but that the distances between the ticks stays larger than `minimum_distances[i]`, and
@@ -770,10 +776,10 @@ Takes the current state of `sim.weighting_potentials[contact_id]` and refines it
 
 
 ## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) from which `simulation.weighting_potentials[contact_id]` will be refined.
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.weighting_potentials[contact_id]` will be refined.
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the [`WeightingPotential`](@ref) is refined.
-* `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `simulation.weighting_potentials[contact_id].grid` after refinement.
-* `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `simulation.weighting_potentials[contact_id].grid` after refinement.
+* `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `sim.weighting_potentials[contact_id].grid` after refinement.
+* `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `sim.weighting_potentials[contact_id].grid` after refinement.
 
 ## Keywords
 * `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
@@ -783,9 +789,10 @@ Takes the current state of `sim.weighting_potentials[contact_id]` and refines it
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
     First element contains the SOR constant for `r` = 0.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
@@ -1015,9 +1022,10 @@ There are several keyword arguments which can be used to tune the calculation.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `10000`. If set to `-1` there will be no limit.
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
 
 ## Example 
@@ -1075,9 +1083,10 @@ There are several keyword arguments which can be used to tune the calculation.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `10000`. If set to `-1` there will be no limit.
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
 
 ## Example 
@@ -1093,16 +1102,16 @@ end
 """
     calculate_electric_field!(sim::Simulation{T}; n_points_in_φ::Union{Missing, Int} = missing)::Nothing
 
-Calculates the electric field from the electric potential stored in `sim.electric_potential` and stores it in
+Calculates the [`ElectricField`](@ref) from the [`ElectricPotential`](@ref) stored in `sim.electric_potential` and stores it in
 `sim.electric_field`. 
 
 ## Arguments
-* `sim::Simulation{T}`: Simulation, for which `sim.electric_potential` has already been calculated.
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_potential` has already been calculated.
 
 ## Keywords
-* `n_points_in_φ::Union{Missing, Int}`: For 2D potentials (cylindrical coordinates and symmetric in `φ`), the electric potential 
-    is extended to `n_points_in_φ` "layers" in `φ` in order to calculate a 3D electric field. If `n_points_in_φ` is `missing`, the 
-    default value is 36.
+* `n_points_in_φ::Union{Missing, Int}`: For a 2D [`ElectricPotential`](@ref) (cylindrical coordinates and symmetric in `φ`), `sim.electric_potential`
+    is extended to `n_points_in_φ` "layers" in `φ` in order to calculate a 3D [`ElectricField`]. If `n_points_in_φ` is `missing`, the 
+    default value is `36`.
 
 ## Examples 
     calculate_electric_field!(sim, n_points_in_φ = 32)
@@ -1139,12 +1148,12 @@ end
 """
     calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
 
-Calculates the drift fields for electrons and holes from the electric field,
+Calculates the drift fields for electrons and holes from the [`ElectricField`](@ref),
 `sim.electric_field` and the charge drift model `sim.detector.semiconductor.charge_drift_model`
 and stores them in `sim.electron_drift_field` and `sim.hole_drift_field`.
     
 ## Arguments
-* `sim::Simulation{T}`: Simulation, for which `sim.electric_field` has already been calculated.
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_field` has already been calculated.
 
 ## Keywords 
 * `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
@@ -1188,7 +1197,7 @@ end
     simulate!( sim::Simulation{T}; kwargs...) where {T, S}
 
 
-Performs a full chain simulation for a given [`Simulation`](@ref) `sim` by
+Performs a full chain simulation for a given [`Simulation`](@ref) by
     
 1. calculating the [`ElectricPotential`](@ref),
 2. calculating the [`ElectricField`](@ref),
@@ -1236,9 +1245,10 @@ There are several keyword arguments which can be used to tune the simulation.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `10000`. If set to `-1` there will be no limit.
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the contacts.
-    Setting it to `false` should improve the performance but the inside of contacts are not fixed points anymore.
-* `paint_contacts::Bool = true`: Enable or disable the paining of the surfaces of the contacts onto the grid.
+* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
+    without checking if points are actually inside them.
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
 
 See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref),
