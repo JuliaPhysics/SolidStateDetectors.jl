@@ -18,7 +18,7 @@ For the simulation of the electric potential, all contacts are fixed to a consta
 * `material::MT`: Material of the contact.
 * `id::Int`: Unique id that will unambiguously identify the contact.
 * `name::String`: Custom name for the contact, relevant for plotting.
-* `geometry::G`: Geometry of the contact.
+* `geometry::G`: Geometry of the contact, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
 

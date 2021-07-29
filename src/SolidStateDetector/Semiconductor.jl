@@ -19,7 +19,7 @@ This is the volume in which electrons and holes will drift during the signal dev
 * `material::MT`: Material of the semiconductor.
 * `impurity_density_model::IDM`: Impurity density model for the points inside the semiconductor.
 * `charge_drift_model::CDM`: Model that describes the drift of electrons and holes inside the semiconductor.
-* `geometry::G`: Geometry of the semiconductor.
+* `geometry::G`: Geometry of the semiconductor, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
 

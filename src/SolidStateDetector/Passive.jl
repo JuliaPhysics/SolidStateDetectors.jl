@@ -21,7 +21,7 @@ They can additionally have a charge density profile that has an influence on the
 * `temperature::T`: Temperature (in K) of the passive.
 * `material::MT`: Material of the passive.
 * `charge_density_model::CDM`: Charge density model for the points inside the passive.
-* `geometry::G`: Geometry of the passive.
+* `geometry::G`: Geometry of the passive, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
 

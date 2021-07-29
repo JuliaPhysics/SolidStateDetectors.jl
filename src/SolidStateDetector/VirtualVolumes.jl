@@ -18,7 +18,7 @@ Volume inside which the charge drift is set to zero.
 
 ## Fields
 * `name::String`: Name of the dead volume, relevant for plotting.
-* `geometry::G`: Geometry of the dead volume.
+* `geometry::G`: Geometry of the dead volume, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
 A `DeadVolume` is defined through an entry in the `virtual_drift_volumes`
