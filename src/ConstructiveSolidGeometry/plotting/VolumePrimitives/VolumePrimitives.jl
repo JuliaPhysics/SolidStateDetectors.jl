@@ -6,7 +6,6 @@
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
     @series begin
         label --> "$(nameof(typeof(p)))"
         [fs...]

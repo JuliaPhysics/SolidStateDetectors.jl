@@ -2,7 +2,6 @@
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
     @series begin
         seriesstyle --> :scatter
         [pt.x], [pt.y], [pt.z]
@@ -19,7 +18,6 @@ end
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
     @series begin
         seriesstyle --> :scatter
         [v[i].x for i in eachindex(v)], [v[i].y for i in eachindex(v)], [v[i].z for i in eachindex(v)]

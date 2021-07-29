@@ -21,7 +21,6 @@ end
     xguide --> "X"
     yguide --> "Y"
     zguide --> "Z"
-    aspect_ratio --> 1.0
     @series begin
         label --> "Ellipse"
         edges(e, n = n)
