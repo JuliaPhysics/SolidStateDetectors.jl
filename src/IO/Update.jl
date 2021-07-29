@@ -117,6 +117,10 @@ function restructure_config_file_dict!(config_file_dict::AbstractDict, T::DataTy
     contacts = [
         begin 
         delete!(contact, "type")
+        if "channel" in keys(contact)
+            contact["id"] = contact["channel"]
+            delete!(contact, "id")
+        end
         update_geometry!(contact, T, update_units)
         contact
         end
