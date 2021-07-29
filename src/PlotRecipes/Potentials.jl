@@ -4,7 +4,7 @@ function get_crosssection_idx_and_value(grid::Grid{T, 3, Cylindrical}, r, φ, z)
         return get_crosssection_idx_and_value(grid, r, T(0.0), z)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
         φ_rad::T = T(deg2rad(φ))
-        while !(grid.φ.interval.left <= φ_rad in grid.φ.interval.right) && grid.φ.interval.right != grid.φ.interval.left
+        while !(grid.φ.interval.left <= φ_rad <= grid.φ.interval.right) && grid.φ.interval.right != grid.φ.interval.left
             if φ_rad > grid.φ.interval.right
                 φ_rad -= width(grid.φ.interval)
             elseif φ_rad < grid.φ.interval.left
