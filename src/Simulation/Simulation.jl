@@ -663,7 +663,7 @@ SolidStateDetectors.update_till_convergence!(sim, WeightingPotential, 1, 1e-6, u
 function update_till_convergence!( sim::Simulation{T, CS},
                                    ::Type{WeightingPotential},
                                    contact_id::Int,
-                                   convergence_limit::Real;
+                                   convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
                                    depletion_handling::Bool = false,
