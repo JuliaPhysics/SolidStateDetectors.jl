@@ -546,6 +546,7 @@ There are several keyword arguments which can be used to tune the simulation.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
+* `verbose::Bool=true`: Boolean whether info output is produced or not.
     
 ## Example 
 ```julia
@@ -561,7 +562,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
-                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing
+                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing,
+                                   verbose::Bool = true
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
         sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -582,7 +584,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                        is_weighting_potential = Val{false}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
-                                       max_n_iterations = max_n_iterations )
+                                       max_n_iterations = max_n_iterations,
+                                       verbose = verbose )
 
     grid::Grid = Grid(pssrb)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
@@ -615,7 +618,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                             is_weighting_potential = Val{false}(),
                                             use_nthreads = use_nthreads,
                                             n_iterations_between_checks = n_iterations_between_checks,
-                                            max_n_iterations = max_n_iterations )
+                                            max_n_iterations = max_n_iterations,
+                                            verbose = verbose )
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
         end
     end
@@ -654,6 +658,7 @@ There are several keyword arguments which can be used to tune the simulation.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
+* `verbose::Bool=true`: Boolean whether info output is produced or not.
     
 ## Example 
 ```julia
@@ -670,7 +675,8 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
                                    use_nthreads::Int = Base.Threads.nthreads(),
-                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing
+                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing,
+                                   verbose::Bool = true
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
         sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -692,7 +698,8 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                        is_weighting_potential = Val{true}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
-                                       max_n_iterations = max_n_iterations )
+                                       max_n_iterations = max_n_iterations,
+                                       verbose = verbose )
 
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), sim.weighting_potentials[contact_id].grid)
 
