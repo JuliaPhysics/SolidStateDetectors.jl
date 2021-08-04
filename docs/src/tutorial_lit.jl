@@ -49,6 +49,9 @@ plot(
 
 # SolidStateDetectors.jl supports active (i.e. depleted) volume calculation:
 
+is_depleted(sim.point_types)
+
+# 
 
 get_active_volume(sim.point_types) # approximation (sum of the volume of cells marked as depleted)
 
@@ -78,6 +81,10 @@ plot(
 #md savefig("tutorial_calculated_potential_undep.svg"); nothing # hide
 #md # [![tutorial_calculated_potential_undep](tutorial_calculated_potential_undep.svg)](tutorial_calculated_potential_undep.pdf)
 
+# 
+
+is_depleted(sim_undep.point_types)
+
 # Compare both volumes:
 
 println("Depleted:   ", get_active_volume(sim.point_types))
@@ -103,7 +110,7 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 
 # Given the electric field and a charge drift model, calculate drift fields for electrons and holes. Precalculating the drift fields saves time during charge drift simulation:
 
-# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the Bruyneel model from the Agata Data Library (ADL) is used. Other configurations are saved in their configuration files and can be found under:
+# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
 
 # `<package_directory>/examples/example_config_files/ADLChargeDriftModel/<config_filename>.yaml.`
 
@@ -117,7 +124,7 @@ sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 
 calculate_drift_fields!(sim)
 
-# Now, let's create an "random" (multiside) event:
+# Now, let's create an "random" multi-site event:
 
 starting_positions = [ CylindricalPoint{T}( 0.020, deg2rad(10), 0.015 ),
                        CylindricalPoint{T}( 0.015, deg2rad(20), 0.045 ),
