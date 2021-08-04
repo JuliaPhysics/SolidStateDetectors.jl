@@ -27,6 +27,15 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
     return evt
 end
 
+
+function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
+    evt = Event{T}()
+    evt.locations = nbcc.points
+    evt.energies = nbcc.energies
+    evt.waveforms = missing
+    return evt
+end
+
 function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
          <:Tuple{
             Union{Integer, AbstractVector{<:Integer}},
