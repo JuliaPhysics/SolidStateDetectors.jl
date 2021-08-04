@@ -1,0 +1,5 @@
+include("Tetrahedron.jl")
+include("Hexahedron.jl")
+include("Octahedron.jl")
+include("Dodecahedron.jl")
+include("Icosahedron.jl")
