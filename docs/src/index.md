@@ -33,18 +33,20 @@ Pages = ["man/IO.md"]
 ## Citing SolidStateDetectors.jl
 
 When using SolidStateDetectors.jl for research, teaching or similar, please cite
-the [paper](https://arxiv.org/abs/2104.00109).
+the [paper](https://doi.org/10.1088/1748-0221/16/08/p08007).
 
 ```
 @article{Abt:2021SSD,
   author        = {Abt, I. and Fischer, F. and Hagemann, F. and Hauertmann, L. and Schulz, O. and Schuster, M. and Zsigmond, A. J.},
   title         = {Simulation of semiconductor detectors in 3D with SolidStateDetectors.jl},
   year          = {2021},
-  month         = {3},
+  month         = {8},
   journal       = {Journal of Instrumentation},
-  pubstate      = {Accepted},
-  eprint        = {2104.00109},
-  archiveprefix = {ArXiv},
-  primaryclass  = {physics.ins-det},
+  publisher     = {{IOP} Publishing},
+  volume        = {16},
+  number        = {08},
+  pages         = {P08007},
+  doi           = {10.1088/1748-0221/16/08/p08007},
+  url           = {https://doi.org/10.1088/1748-0221/16/08/p08007}
 }
 ```

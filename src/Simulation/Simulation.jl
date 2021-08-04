@@ -546,6 +546,7 @@ There are several keyword arguments which can be used to tune the simulation.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
+* `verbose::Bool=true`: Boolean whether info output is produced or not.
     
 ## Example 
 ```julia
@@ -561,7 +562,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
-                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing
+                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing,
+                                   verbose::Bool = true
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
         sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -582,7 +584,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                        is_weighting_potential = Val{false}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
-                                       max_n_iterations = max_n_iterations )
+                                       max_n_iterations = max_n_iterations,
+                                       verbose = verbose )
 
     grid::Grid = Grid(pssrb)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
@@ -615,7 +618,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                             is_weighting_potential = Val{false}(),
                                             use_nthreads = use_nthreads,
                                             n_iterations_between_checks = n_iterations_between_checks,
-                                            max_n_iterations = max_n_iterations )
+                                            max_n_iterations = max_n_iterations,
+                                            verbose = verbose )
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
         end
     end
@@ -654,6 +658,7 @@ There are several keyword arguments which can be used to tune the simulation.
     Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
+* `verbose::Bool=true`: Boolean whether info output is produced or not.
     
 ## Example 
 ```julia
@@ -663,14 +668,15 @@ SolidStateDetectors.update_till_convergence!(sim, WeightingPotential, 1, 1e-6, u
 function update_till_convergence!( sim::Simulation{T, CS},
                                    ::Type{WeightingPotential},
                                    contact_id::Int,
-                                   convergence_limit::Real;
+                                   convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
                                    depletion_handling::Bool = false,
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
                                    use_nthreads::Int = Base.Threads.nthreads(),
-                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing
+                                   sor_consts::Union{Missing, T, NTuple{2, T}} = missing,
+                                   verbose::Bool = true
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     if ismissing(sor_consts)
         sor_consts = CS == Cylindrical ? (T(1.4), T(1.85)) : T(1.4)
@@ -692,7 +698,8 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                        is_weighting_potential = Val{true}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
-                                       max_n_iterations = max_n_iterations )
+                                       max_n_iterations = max_n_iterations,
+                                       verbose = verbose )
 
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), sim.weighting_potentials[contact_id].grid)
 
@@ -962,16 +969,16 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         minimum_applied_potential = minimum(broadcast(c -> c.potential, sim.detector.contacts))
         @inbounds for i in eachindex(sim.electric_potential.data)
             if sim.electric_potential.data[i] < minimum_applied_potential # p-type
-                @warn """Detector seems not to be fully depleted at a bias voltage of $(pssrb.bias_voltage) V.
+                @warn """Detector seems not to be fully depleted at a bias voltage of $(bias_voltage) V.
                     At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
-                    than the minimum applied potential ($(pssrb.minimum_applied_potential) V). This should not be.
+                    than the minimum applied potential ($(minimum_applied_potential) V). This should not be.
                     However, small overshoots could be due to numerical precision."""
                 break
             end
             if sim.electric_potential.data[i] > maximum_applied_potential # n-type
-                @warn """Detector seems not to be not fully depleted at a bias voltage of $(pssrb.bias_voltage) V.
+                @warn """Detector seems not to be not fully depleted at a bias voltage of $(bias_voltage) V.
                     At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
-                    than the maximum applied potential ($(pssrb.maximum_applied_potential) V). This should not be.
+                    than the maximum applied potential ($(maximum_applied_potential) V). This should not be.
                     However, small overshoots could be due to numerical precision."""
                 break
             end

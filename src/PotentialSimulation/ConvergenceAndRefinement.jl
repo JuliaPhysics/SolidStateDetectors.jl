@@ -31,7 +31,8 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
                                     only2d::Val{only_2d} = Val{false}(), 
                                     is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
                                     use_nthreads::Int = Base.Threads.nthreads(), 
-                                    max_n_iterations::Int = -1
+                                    max_n_iterations::Int = -1,
+                                    verbose::Bool = true
                                     )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
     n_iterations::Int = 0
     cf::T = Inf
@@ -39,7 +40,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
     cl::T = _is_weighting_potential ? convergence_limit : abs(convergence_limit * pssrb.bias_voltage) # to get relative change in respect to bias voltage
     # To disable automatically ProgressMeters in CI builds:
     is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
-    prog = ProgressThresh(cl; dt = 0.1, desc = "Convergence: ", output = stderr, enabled = !is_logging(stderr))
+    if verbose prog = ProgressThresh(cl; dt = 0.1, desc = "Convergence: ", output = stderr, enabled = !is_logging(stderr)) end
     while cf > cl
         for i in 1:n_iterations_between_checks
             update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
@@ -48,7 +49,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
         @inbounds cfs[1:end-1] = cfs[2:end]
         @inbounds cfs[end] = cf
         slope::T = abs(mean(diff(cfs)))
-        ProgressMeter.update!(prog, cf)
+        if verbose ProgressMeter.update!(prog, cf) end
         n_iterations += n_iterations_between_checks
         if slope < cl
             # @info "Slope is basically 0 -> Converged: $slope"
@@ -83,7 +84,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
         end
     end
 
-    ProgressMeter.finish!(prog)
+    if verbose ProgressMeter.finish!(prog) end
     return cf
 end
 

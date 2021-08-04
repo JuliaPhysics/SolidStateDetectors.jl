@@ -18,9 +18,7 @@ T = Float32
 
 plot() # creates a plot so that the plots during the following loop pop up.
 
-key = :CGD
-
-for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
+for key in [:InvertedCoax, :BEGe, :Coax, :CGD, :Hexagon]
 
     @info "Now test detector type: $key"
 
@@ -45,11 +43,7 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     end
     savefig(joinpath(outputdir, "$(key)_0_init_setup"))
 
-    nrefs = if key == :InvertedCoax
-        0:3
-    elseif key == :Spherical
-        0:3
-    elseif key == :CGD
+    nrefs = if key in [:InvertedCoax, :Heaxgon, :CGD]
         0:3
     else
         0:1
@@ -91,15 +85,16 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
 
     calculate_electric_field!(sim)
 
-    plot( sim.electric_field.grid[1], sim.electric_field.grid[3], norm.(sim.electric_field)[:, div(length(sim.electric_field.grid[2].ticks), 2), :]',
-          st=:heatmap, title = "Electric Field Streng [V / m]", xlabel = "x / m", ylabel = "x / m", aspect_ratio = 1, size = (900, 900))
-    savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
 
     if S == SSD.Cylindrical
-        plot(sim.electric_field, φ = 0, spacing = 3.0)
+        plot(sim.electric_field, φ = 30)
+        savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
+        plot_electric_fieldlines!(sim, φ = 30)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     else
-        plot(sim.electric_field, y = 0, spacing = 3.0)
+        plot(sim.electric_field, y = 0)
+        savefig(joinpath(outputdir, "$(key)_3_Electric_Field_strength"))
+        plot_electric_fieldlines!(sim, y = 0)
         savefig(joinpath(outputdir, "$(key)_3_1_Electric_Field_Lines"))
     end
 
@@ -110,13 +105,15 @@ for key in  [:InvertedCoax, :BEGe, :Coax, :CGD, :Spherical]
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
     elseif key == :CGD
-        CartesianPoint{T}[ CartesianPoint{T}( 0.006, 0.005, 0.005  ) ]
+        CartesianPoint{T}[ CartesianPoint{T}( 0.003, 0.003, 0.003 ) ]
     elseif key == :BEGe
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.015  ) ]
     elseif key == :Coax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.016, deg2rad(10), 0.005  ) ]
     elseif key == :Spherical
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.00, deg2rad(0), 0.0  ) ]
+    elseif key == :Hexagon 
+        CartesianPoint{T}[ CartesianPoint{T}( 0.0004, 0.0, 0.0 )]
     end
     energy_depos = T[1460]
     @assert in(pos[1], sim.detector) "Test point $(pos[1]) not inside the detector $(key)."
