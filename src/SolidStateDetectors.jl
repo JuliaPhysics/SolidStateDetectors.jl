@@ -88,7 +88,7 @@ include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
 
-#include("ChargeCloudModels/ChargeCloudModels.jl")
+include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")
 
