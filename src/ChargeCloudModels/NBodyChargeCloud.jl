@@ -14,7 +14,7 @@ See also [`create_charge_cloud`](@ref).
 """
 struct NBodyChargeCloud{T} <: AbstractChargeCloud
     points::Vector{CartesianPoint{T}}
-    energies::Vector{T}
+    energies::Vector{T} # in units of eV
     shell_structure::Vector{Type{<:AbstractChargeCloud}}
 end
 
