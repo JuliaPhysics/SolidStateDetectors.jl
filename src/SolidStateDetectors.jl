@@ -62,7 +62,7 @@ export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribu
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
 export ElectricFieldChargeDriftModel, ADLChargeDriftModel
-export get_active_volume
+export get_active_volume, is_depleted
 export simulate_waveforms
 export Simulation, simulate!
 export Event, drift_charges!
