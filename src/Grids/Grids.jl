@@ -46,16 +46,16 @@ CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 @inline getproperty(grid::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds grid.axes[1]
 @inline getproperty(grid::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds grid.axes[2]
 @inline getproperty(grid::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
-@inline getproperty(grid::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds grid.axes[1]
-@inline getproperty(grid::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
-@inline getproperty(grid::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
+@inline getproperty(grid::CartesianGrid3D{T}, ::Val{:x}) where {T} = @inbounds grid.axes[1]
+@inline getproperty(grid::CartesianGrid3D{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
+@inline getproperty(grid::CartesianGrid3D{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
 @inline getindex(grid::CylindricalGrid{T}, ::Val{:r}) where {T} = @inbounds grid.axes[1]
 @inline getindex(grid::CylindricalGrid{T}, ::Val{:φ}) where {T} = @inbounds grid.axes[2]
 @inline getindex(grid::CylindricalGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
-@inline getindex(grid::CartesianGrid{T}, ::Val{:x}) where {T} = @inbounds grid.axes[1]
-@inline getindex(grid::CartesianGrid{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
-@inline getindex(grid::CartesianGrid{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
+@inline getindex(grid::CartesianGrid3D{T}, ::Val{:x}) where {T} = @inbounds grid.axes[1]
+@inline getindex(grid::CartesianGrid3D{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
+@inline getindex(grid::CartesianGrid3D{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
 function sizeof(grid::Grid{T, N, S}) where {T, N, S}
     return sum( sizeof.(grid.axes) )
@@ -162,9 +162,9 @@ function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CylindricalGrid{T})
     find_closest_gridpoint(CylindricalPoint(pt),grid)
 end
 
-function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
     @inbounds return (searchsortednearest(grid.axes[1].ticks, pt.x), searchsortednearest(grid.axes[2].ticks, pt.y), searchsortednearest(grid.axes[3].ticks, pt.z))
 end
-function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
+function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
     find_closest_gridpoint(CartesianPoint(pt),grid)
 end

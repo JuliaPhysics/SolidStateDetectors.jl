@@ -210,7 +210,7 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     Additional grid ticks will be added if two neighbouring ticks are too far apart.
     `max_tick_distance` can either be a `Quantity`, e.g. `1u"mm"`, or a Tuple of `Quantity`, 
     e.g. `(1u"mm", 15u"°", 3u"mm")`,
-    to set it for each axis of the `Grid` separately. Note that a `CartesianGrid` requires a 
+    to set it for each axis of the `Grid` separately. Note that a `CartesianGrid3D` requires a 
     `Tuple{LengthQuantity, LengthQuantity, LengthQuantity}` while a `CylindricalGrid` requires a
     `Tuple{LengthQuantity, AngleQuantity, LengthQuantity}`.
     If `max_tick_distance` is `missing`, one fourth of the axis length is used.

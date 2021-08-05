@@ -30,12 +30,12 @@ function get_sub_ind_ranges(a::Union{
     t_idx_range_ax1, t_idx_range_ax2, t_idx_range_ax3
 end
 
-get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CartesianGrid{T}) where {N,T} = 
+get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CartesianGrid3D{T}) where {N,T} = 
     get_sub_ind_ranges((ConstructiveSolidGeometry.extreme_points(p), TicksTuple(grid)))
 get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CylindricalGrid{T}) where {N,T} = 
     get_sub_ind_ranges((CylindricalPoint.(ConstructiveSolidGeometry.extreme_points(p)), TicksTuple(grid)))
 
-function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid) where {T}
+function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid3D{T}) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eX = CartesianVector{T}(1,0,0);
