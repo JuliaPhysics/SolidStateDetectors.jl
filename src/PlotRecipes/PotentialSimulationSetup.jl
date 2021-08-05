@@ -3,7 +3,7 @@
                     φ = missing,
                     z = missing,
                     n_points_in_φ = 36 ) where {T}
-    grid::Grid{T, 3, Cylindrical} = pss.grid
+    grid::CylindricalGrid{T} = pss.grid
     layout --> (2, 2)
 
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
@@ -64,7 +64,7 @@ end
                     x = missing,
                     y = missing,
                     z = missing ) where {T}
-    grid::Grid{T, 3, Cartesian} = pss.grid
+    grid::CartesianGrid3D{T} = pss.grid
     layout --> (2, 2)
 
     size --> (1000, 1000)

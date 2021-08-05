@@ -100,8 +100,8 @@ function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
    return get_boundary_types.(grid.axes)
 end
 
-TicksTuple(grid::Grid{T, 3, Cartesian}) where {T} = (x = grid.axes[1].ticks, y = grid.axes[2].ticks, z = grid.axes[3].ticks)
-TicksTuple(grid::Grid{T, 3, Cylindrical}) where {T} = (r = grid.axes[1].ticks, φ = grid.axes[2].ticks, z = grid.axes[3].ticks)
+TicksTuple(grid::CartesianGrid3D{T}) where {T} = (x = grid.axes[1].ticks, y = grid.axes[2].ticks, z = grid.axes[3].ticks)
+TicksTuple(grid::CylindricalGrid{T}) where {T} = (r = grid.axes[1].ticks, φ = grid.axes[2].ticks, z = grid.axes[3].ticks)
 
 function Grid(nt::NamedTuple)
     if nt.coordtype == "cylindrical"
@@ -109,13 +109,13 @@ function Grid(nt::NamedTuple)
         axφ::DiscreteAxis = DiscreteAxis(nt.axes.phi, unit=u"rad")
         axz::DiscreteAxis = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axr.ticks[1])
-        return Grid{T, 3, Cylindrical}( (axr, axφ, axz) )
+        return CylindricalGrid{T}( (axr, axφ, axz) )
     elseif nt.coordtype == "cartesian"
         axx::DiscreteAxis = DiscreteAxis(nt.axes.x, unit=u"m")
         axy::DiscreteAxis = DiscreteAxis(nt.axes.y, unit=u"m")
         axz = DiscreteAxis(nt.axes.z, unit=u"m")
         T = typeof(axx.ticks[1])
-        return Grid{T, 3, Cartesian}( (axx, axy, axz) )
+        return CartesianGrid3D{T}( (axx, axy, axz) )
     else
         error("`coordtype` = $(nt.coordtype) is not valid.")
     end
@@ -123,7 +123,7 @@ end
 
 Base.convert(T::Type{Grid}, x::NamedTuple) = T(x)
 
-function NamedTuple(grid::Grid{T, 3, Cylindrical}) where {T}
+function NamedTuple(grid::CylindricalGrid{T}) where {T}
     axr::DiscreteAxis{T} = grid.axes[1]
     axφ::DiscreteAxis{T} = grid.axes[2]
     axz::DiscreteAxis{T} = grid.axes[3]
@@ -137,7 +137,7 @@ function NamedTuple(grid::Grid{T, 3, Cylindrical}) where {T}
         )
     )
 end
-function NamedTuple(grid::Grid{T, 3, Cartesian}) where {T}
+function NamedTuple(grid::CartesianGrid3D{T}) where {T}
     axx::DiscreteAxis{T} = grid.axes[1]
     axy::DiscreteAxis{T} = grid.axes[2]
     axz::DiscreteAxis{T} = grid.axes[3]

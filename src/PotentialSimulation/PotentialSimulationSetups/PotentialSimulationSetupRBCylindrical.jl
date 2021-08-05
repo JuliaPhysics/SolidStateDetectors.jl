@@ -64,7 +64,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
 end
 
 
-function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Grid{T, 3, Cylindrical}, medium::NamedTuple = material_properties[materials["vacuum"]],
+function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CylindricalGrid{T}, medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; sor_consts = (1.0, 1.0),
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialSimulationSetupRB{T} where {T}
