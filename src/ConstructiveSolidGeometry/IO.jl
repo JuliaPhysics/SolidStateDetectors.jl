@@ -148,13 +148,13 @@ function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units
         if r_top_in == 0
             return ((r_bot_in, r_bot_out), nothing)
         else
-            return ((r_bot_in, r_bot_out), r_top_in)
+            return r # return ((r_bot_in, r_bot_out), r_top_in)
         end
     elseif r_top_in != r_top_out && r_bot_in == r_bot_out
         if r_bot_in == 0
             return (nothing, (r_top_in, r_top_out))
         else
-            return (r_bot_in, (r_top_in, r_top_out))
+            return r # return (r_bot_in, (r_top_in, r_top_out))
         end
     else
         r # VaryingTube

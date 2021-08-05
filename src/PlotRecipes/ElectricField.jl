@@ -5,7 +5,7 @@
                     contours_equal_potential=false,
                     full_det = false ) where {T}
 
-    grid::Grid{T, 3, Cylindrical} = ef.grid
+    grid::CylindricalGrid{T} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
@@ -25,7 +25,7 @@ end
                     z = missing,
                     contours_equal_potential = false) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cartesian} = ef.grid
+    grid::CartesianGrid3D{T} = ef.grid
     ef_magn  = norm.(ef)
 
     seriescolor --> :inferno
@@ -38,7 +38,7 @@ end
     ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential
 end
 
-function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
+function get_sample_lines(dim_symbol::Symbol, v::T, grid::CartesianGrid3D{T}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
     
     xrange = range(round.(endpoints(grid.x.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
     yrange = range(round.(endpoints(grid.y.interval)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)
@@ -64,7 +64,7 @@ function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cartesian}, s
 end
 
 
-function get_sample_lines(dim_symbol::Symbol, v::T, grid::Grid{T,3,Cylindrical}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
+function get_sample_lines(dim_symbol::Symbol, v::T, grid::CylindricalGrid{T}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
     
     φsampling = 2π * sampling / (dim_symbol == :r ? v : grid.r.interval.right) # or use sampling together with the unit ?
     rrange = range(round.((-grid.r.interval.right,grid.r.interval.right)./sampling, (RoundDown, RoundUp)).*sampling..., step = sampling)

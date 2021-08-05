@@ -106,11 +106,11 @@ end
 
 
 # """
-#     RBExtBy2Array( et::Type, grid::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
+#     RBExtBy2Array( et::Type, grid::CartesianGrid3D{T} )::Array{et, 4} where {T}
 # 
 # Returns a RedBlack array for the `grid`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 # """
-function RBExtBy2Array( et::Type, grid::Grid{T, 3, Cartesian} )::Array{et, 4} where {T}
+function RBExtBy2Array( et::Type, grid::CartesianGrid3D{T} )::Array{et, 4} where {T}
     nx, ny, nz = size(grid)
     return zeros(T, div(nx, 2) + mod(nx, 2) + 2, ny + 2, nz + 2, 2)
 end

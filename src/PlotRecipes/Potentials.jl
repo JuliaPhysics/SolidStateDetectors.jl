@@ -1,4 +1,4 @@
-function get_crosssection_idx_and_value(grid::Grid{T, 3, Cylindrical}, r, φ, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
+function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r, φ, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         return get_crosssection_idx_and_value(grid, r, T(0.0), z)
@@ -37,7 +37,7 @@ end
 
     if !(epot.grid[2][end] - epot.grid[2][1] ≈ 2π) epot = get_2π_potential(epot, n_points_in_φ = 72) end
 
-    grid::Grid{T, 3, Cylindrical} = epot.grid
+    grid::CylindricalGrid{T} = epot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :viridis
@@ -53,7 +53,7 @@ end
         wpot = get_2π_potential(wpot, n_points_in_φ = 72)
     end
 
-    grid::Grid{T, 3, Cylindrical} = wpot.grid
+    grid::CylindricalGrid{T} = wpot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :viridis
@@ -70,7 +70,7 @@ end
         ρ = get_2π_potential(ρ, n_points_in_φ = 72)
     end
 
-    grid::Grid{T, 3, Cylindrical} = ρ.grid
+    grid::CylindricalGrid{T} = ρ.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :inferno
@@ -85,7 +85,7 @@ end
         point_types = get_2π_potential(point_types, n_points_in_φ = 72)
     end
 
-    grid::Grid{T, 3, Cylindrical} = point_types.grid
+    grid::CylindricalGrid{T} = point_types.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriescolor --> :viridis
@@ -96,7 +96,7 @@ end
 end
 
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
-    grid::Grid{T, 3, Cylindrical} = sp.grid
+    grid::CylindricalGrid{T} = sp.grid
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -168,7 +168,7 @@ end
 
 @recipe function f(ϵ::DielectricDistribution{T,3,Cylindrical}; φ = 0) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cylindrical} = ϵ.grid
+    grid::CylindricalGrid{T} = ϵ.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, missing, φ, missing)
 
     seriestype --> :heatmap
@@ -203,7 +203,7 @@ end
 
 
 
-function get_crosssection_idx_and_value(grid::Grid{T, 3, Cartesian}, x, y, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
+function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x, y, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
         return get_crosssection_idx_and_value(grid, T(0.0), y, z)
@@ -221,7 +221,7 @@ function get_crosssection_idx_and_value(grid::Grid{T, 3, Cartesian}, x, y, z)::T
 end
 
 @recipe function f(epot::ElectricPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
-    grid::Grid{T, 3, Cartesian} = epot.grid
+    grid::CartesianGrid3D{T} = epot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :viridis
@@ -232,7 +232,7 @@ end
 
 @recipe function f(wpot::WeightingPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cartesian} = wpot.grid
+    grid::CartesianGrid3D{T} = wpot.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :viridis
@@ -244,7 +244,7 @@ end
 
 
 @recipe function f(ρ::EffectiveChargeDensity{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
-    grid::Grid{T, 3, Cartesian} = ρ.grid
+    grid::CartesianGrid3D{T} = ρ.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :inferno
@@ -256,7 +256,7 @@ end
 
 @recipe function f(point_types::PointTypes{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cartesian} = point_types.grid
+    grid::CartesianGrid3D{T} = point_types.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriescolor --> :viridis
@@ -268,7 +268,7 @@ end
 
 
 @recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
-    grid::Grid{T, 3, Cartesian} = sp.grid
+    grid::CartesianGrid3D{T} = sp.grid
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -340,7 +340,7 @@ end
 
 @recipe function f(ϵ::DielectricDistribution{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
 
-    grid::Grid{T, 3, Cartesian} = ϵ.grid
+    grid::CartesianGrid3D{T} = ϵ.grid
     cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
 
     seriestype --> :heatmap

@@ -187,7 +187,7 @@ function get_interpolated_drift_field(velocityfield, grid::CylindricalGrid{T}) w
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
 end
-function get_interpolated_drift_field(velocityfield, grid::CartesianGrid{T}) where {T}
+function get_interpolated_drift_field(velocityfield, grid::CartesianGrid3D{T}) where {T}
     @inbounds knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
     i = interpolate(knots, velocityfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
