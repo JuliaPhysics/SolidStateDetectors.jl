@@ -17,7 +17,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
 
                 if !ismissing(det.passives)
                     for passive in det.passives
-                        if passive.potential != :floating
+                        if !isnan(passive.potential)
                             if pt in passive
                                 potential[ ir, iφ, iz ] = if ismissing(weighting_potential_contact_id)
                                     passive.potential
