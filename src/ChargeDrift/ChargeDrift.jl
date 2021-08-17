@@ -104,14 +104,13 @@ function _drift_charge!(
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
     last_real_step_index::Int = 1
     @inbounds for istep in eachindex(drift_path)[2:end]
-        if done == false
+        if !done
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
             # if geom_round.(stepvector) == null_step
-            if stepvector == null_step
-                done = true
-            end
+            done = (stepvector == null_step)
+
             next_pos::CartesianPoint{T} = current_pos + stepvector
             next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
             if _is_next_point_in_det(next_pos, next_pos_cyl, det, point_types)
@@ -119,8 +118,9 @@ function _drift_charge!(
                 drifttime += Δt
                 timestamps[istep] = drifttime
                 last_real_step_index += 1
+                done = _convert_point(next_pos, S) in det.contacts # end the drift if step ended in a contact
             else
-                crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, boundary_index::Int, surface_normal::CartesianVector{T} = get_crossing_pos(det, grid, current_pos, next_pos)
+                crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = get_crossing_pos(det, point_types, current_pos, next_pos)
                 if cd_point_type == CD_ELECTRODE
                     drift_path[istep] = crossing_pos
                     drifttime += Δt
@@ -148,9 +148,7 @@ function _drift_charge!(
                     timestamps[istep] = drifttime
                     last_real_step_index += 1
                     # if geom_round.(next_pos - current_pos) == null_step
-                    if next_pos - current_pos == null_step
-                        done = true
-                    end
+                    done = (next_pos - current_pos == null_step)
                 else # elseif cd_point_type == CD_BULK  -- or -- cd_point_type == CD_OUTSIDE
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
@@ -165,28 +163,57 @@ function _drift_charge!(
     return last_real_step_index
 end
 
-# Point types for charge drift: Defined in DetectorGeometries/DetectorGeometries.jl
-# const CD_ELECTRODE = 0x00
-# const CD_OUTSIDE = 0x01
-# const CD_BULK = 0x02
-# const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
+# Point types for charge drift
+const CD_ELECTRODE = 0x00
+const CD_OUTSIDE = 0x01
+const CD_BULK = 0x02
+const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  det::SolidStateDetector{T}, grid::Grid{T, 3, S}, pt_in::CartesianPoint{T}, pt_out::CartesianPoint{T};
-                            max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
-    pt_mid::CartesianPoint{T} = T(0.5) * (pt_in + pt_out)
-    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(det, grid, _convert_point(pt_mid, S))
-    for i in 1:max_n_iter
-        if cd_point_type == CD_BULK
-            pt_in = pt_mid
-        elseif cd_point_type == CD_OUTSIDE
-            pt_out = pt_mid
-        elseif cd_point_type == CD_ELECTRODE
-            break
-        else #elseif cd_point_type == CD_FLOATING_BOUNDARY
-            break
+
+function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{T, 3, S}, pt_in::CartesianPoint{T}, pt_out::CartesianPoint{T};
+                            max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} where {T <: SSDFloat, S}
+    
+    # check if the points are already in contacts                    
+    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
+    if pt_out in det.contacts return (pt_out, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
+    
+    
+    direction::CartesianVector{T} = normalize(pt_out - pt_in)
+    crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, CartesianVector{T}(0,0,0)) # need undef version for this
+    
+    # define a Line between pt_in and pt_out
+    line::ConstructiveSolidGeometry.Line{T} = ConstructiveSolidGeometry.Line{T}(pt_in, direction)
+    
+    # check if the Line intersects with a surface of a Contact
+    for contact in det.contacts
+        for surf in ConstructiveSolidGeometry.surfaces(contact.geometry)
+            for pt in ConstructiveSolidGeometry.intersection(surf, line)
+                if pt in contact && 
+                    0 ≤ (pt - pt_in) ⋅ direction ≤ 1 &&              # pt within pt_in and pt_out
+                    norm(pt - pt_in) < norm(crossing_pos[1] - pt_in) # pt closer to pt_in that previous crossing_pos
+                    crossing_pos = (pt, CD_ELECTRODE, normalize(ConstructiveSolidGeometry.normal(surf, pt)))
+                end
+            end
         end
-        pt_mid = T(0.5) * (pt_in + pt_out)
-        cd_point_type, contact_idx, surface_normal = point_type(det, grid, _convert_point(pt_mid, S))
     end
-    return pt_mid, cd_point_type, contact_idx, surface_normal
+    
+    # if the Line does not intersect with a surface of a Contact, check if it does intersect with the surface of the Semiconductor
+    if crossing_pos[2] & CD_OUTSIDE > 0 
+        tol::T = 1000 * ConstructiveSolidGeometry.csg_default_tol(T)
+        # check if the Line intersects with a surface of the Semiconductor
+        for surf in ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)
+            for pt in ConstructiveSolidGeometry.intersection(surf, line)
+                if pt - tol * direction in det.semiconductor &&    # point "before" crossing_pos should be in
+                    !(pt + tol * direction in det.semiconductor) && # point "after" crossing_pos should be out
+                    0 ≤ (pt - pt_in) ⋅ direction ≤ 1 &&                      # pt within pt_in and pt_out
+                    norm(pt - pt_in) < norm(crossing_pos[1] - pt_in)         # pt closer to pt_in that previous crossing_pos
+                    CD_POINTTYPE::UInt8 = point_types[pt] & update_bit == 0 ? CD_ELECTRODE : CD_FLOATING_BOUNDARY 
+                    crossing_pos = (pt, CD_POINTTYPE, normalize(ConstructiveSolidGeometry.normal(surf, pt)))
+                end
+            end 
+        end
+    end
+
+    # if crossing_pos[2] & CD_OUTSIDE > 0 @warn "Determination of boundary point did not work as intended." end
+    crossing_pos
 end

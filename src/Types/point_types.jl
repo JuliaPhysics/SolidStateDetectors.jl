@@ -52,6 +52,7 @@ end
 @inline getindex(point_types::PointTypes{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(point_types.data, I...)
 @inline getindex(point_types::PointTypes{T, N, S}, i::Int) where {T, N, S} = getindex(point_types.data, i)
 @inline getindex(point_types::PointTypes{T, N, S}, s::Symbol) where {T, N, S} = getindex(point_types.grid, s)
+@inline getindex(point_types::PointTypes{T, N, S}, pt::AbstractCoordinatePoint{T}) where {T, N, S} = point_types.data[find_closest_gridpoint(pt, point_types.grid)...]
 
 function in(pt::AbstractCoordinatePoint{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
     cpt = _convert_point(pt, S)
