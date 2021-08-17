@@ -13,6 +13,7 @@ include("ElectricPotential.jl")
 include("WeightingPotential.jl")
 include("ScalarPotential.jl")
 
+include("SimulationAlgorithms/SOR.jl")
 include("SimulationAlgorithms/Cylindrical.jl")
 include("SimulationAlgorithms/Cartesian3D.jl")
 include("ConvergenceAndRefinement.jl")
