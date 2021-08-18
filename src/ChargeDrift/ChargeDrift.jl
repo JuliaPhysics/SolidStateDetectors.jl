@@ -66,11 +66,12 @@ function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv
 end
 modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
+@inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
+    pt_cyl::CylindricalPoint{T} = CylindricalPoint(pt)
     pt_cyl in point_types || pt_cyl in det
 end
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
-    pt_car in point_types || pt_car in det
+@inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
+    pt in point_types || pt in det
 end
 
 function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
@@ -111,8 +112,7 @@ function _drift_charge!(
             done = (stepvector == null_step)
 
             next_pos::CartesianPoint{T} = current_pos + stepvector
-            next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
-            if _is_next_point_in_det(next_pos, next_pos_cyl, det, point_types)
+            if _is_next_point_in_det(next_pos, det, point_types)
                 drift_path[istep] = next_pos
                 drifttime += Δt
                 timestamps[istep] = drifttime
