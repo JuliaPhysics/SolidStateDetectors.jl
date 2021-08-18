@@ -108,7 +108,6 @@ function _drift_charge!(
             current_pos::CartesianPoint{T} = drift_path[istep - 1]
             stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
             stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
-            # if geom_round.(stepvector) == null_step
             done = (stepvector == null_step)
 
             next_pos::CartesianPoint{T} = current_pos + stepvector
@@ -118,7 +117,7 @@ function _drift_charge!(
                 drifttime += Δt
                 timestamps[istep] = drifttime
                 last_real_step_index += 1
-                done = _convert_point(next_pos, S) in det.contacts # end the drift if step ended in a contact
+                done |= next_pos in det.contacts # end the drift if step ended in a contact
             else
                 crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = get_crossing_pos(det, point_types, current_pos, next_pos)
                 if cd_point_type == CD_ELECTRODE
@@ -148,7 +147,7 @@ function _drift_charge!(
                     timestamps[istep] = drifttime
                     last_real_step_index += 1
                     # if geom_round.(next_pos - current_pos) == null_step
-                    done = (next_pos - current_pos == null_step)
+                    done |= (next_pos - current_pos == null_step)
                 else # elseif cd_point_type == CD_BULK  -- or -- cd_point_type == CD_OUTSIDE
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
