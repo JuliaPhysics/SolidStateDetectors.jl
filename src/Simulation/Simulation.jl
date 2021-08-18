@@ -299,7 +299,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     # r
     L, R, BL, BR = get_boundary_types(world.intervals[1])
     int_r = Interval{L, R, T}(endpoints(world.intervals[1])...)
-    ax_r = DiscreteAxis{T, BL, BR}(int_r, important_r_points)
+    ax_r = even_tick_axis(DiscreteAxis{T, BL, BR}(int_r, important_r_points))
 
     # φ
     L, R, BL, BR = get_boundary_types(world.intervals[2])
@@ -335,16 +335,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     #z
     L, R, BL, BR = get_boundary_types(world.intervals[3])
     int_z = Interval{L, R, T}(endpoints(world.intervals[3])...)
-    ax_z = DiscreteAxis{T, BL, BR}(int_z, important_z_points)
-    if isodd(length(ax_z)) # must be even
-        int_z = ax_z.interval
-        zticks = ax_z.ticks
-        imax = findmax(diff(zticks))[2]
-        push!(zticks, (zticks[imax] + zticks[imax+1]) / 2)
-        sort!(zticks)
-        ax_z = typeof(ax_z)(int_z, zticks) # must be even
-    end
-    @assert iseven(length(ax_z)) "CylindricalGrid must have even number of points in z."
+    ax_z = even_tick_axis(DiscreteAxis{T, BL, BR}(int_z, important_z_points))
 
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
@@ -420,25 +411,17 @@ function Grid(  sim::Simulation{T, Cartesian};
     # x
     L, R, BL, BR = get_boundary_types(world.intervals[1])
     int_x = Interval{L, R, T}(endpoints(world.intervals[1])...)
-    ax_x = DiscreteAxis{T, BL, BR}(int_x, important_x_points)
-    if isodd(length(ax_x)) # RedBlack dimension must be of even length
-        xticks = ax_x.ticks
-        imax = findmax(diff(xticks))[2]
-        push!(xticks, (xticks[imax] + xticks[imax+1]) / 2)
-        sort!(xticks)
-        ax_x = typeof(ax_x)(int_x, xticks) # must be even
-    end
-    @assert iseven(length(ax_x)) "CartesianGrid3D must have even number of points in z."
-
+    ax_x = even_tick_axis(DiscreteAxis{T, BL, BR}(int_x, important_x_points))
+   
     # y
     L, R, BL, BR = get_boundary_types(world.intervals[2])
     int_y = Interval{L, R, T}(endpoints(world.intervals[2])...)
-    ax_y = DiscreteAxis{T, BL, BR}(int_y, important_y_points)
+    ax_y = even_tick_axis(DiscreteAxis{T, BL, BR}(int_y, important_y_points))
 
     # z
     L, R, BL, BR = get_boundary_types(world.intervals[3])
     int_z = Interval{L, R, T}(endpoints(world.intervals[3])...)
-    ax_z = DiscreteAxis{T, BL, BR}(int_z, important_z_points)
+    ax_z = even_tick_axis(DiscreteAxis{T, BL, BR}(int_z, important_z_points))
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end
