@@ -82,6 +82,13 @@ function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to b
 end
 
 
+function _get_stepvector_drift(current_pos::CartesianPoint{T}, ::Type{S}, det::SolidStateDetector{T}, 
+                               velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, Δt::T) where {T, S}
+    stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
+    stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
+end
+
+
 # """
 #     _drift_charge!(...)
 # 
@@ -104,14 +111,18 @@ function _drift_charge!(
     timestamps[1] = zero(T)
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
     last_real_step_index::Int = 1
+    
+    current_pos::CartesianPoint{T} = CartesianPoint{T}(0, 0, 0)
+    step_vector::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
+    next_pos::CartesianPoint{T} = CartesianPoint{T}(0, 0, 0)
+    
     @inbounds for istep in eachindex(drift_path)[2:end]
         if !done
-            current_pos::CartesianPoint{T} = drift_path[istep - 1]
-            stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
-            stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
+            current_pos = drift_path[istep - 1]
+            stepvector = _get_stepvector_drift(current_pos, S, det, velocity_field, Δt)
             done = (stepvector == null_step)
-
-            next_pos::CartesianPoint{T} = current_pos + stepvector
+            next_pos = current_pos + stepvector
+            
             if _is_next_point_in_det(next_pos, det, point_types)
                 drift_path[istep] = next_pos
                 drifttime += Δt
