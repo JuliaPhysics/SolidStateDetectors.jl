@@ -20,12 +20,12 @@ function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}
     range(zero(Δt), step = Δt, stop = typeof(Δt)(_common_time(dp)) + Δt)
 end
 
-function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
-    return CartesianVector{T}(interpolation_field(pt.x, pt.y, pt.z))
+@inline function get_velocity_vector(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
+    return CartesianVector{T}(velocity_field(pt.x, pt.y, pt.z))
 end
 
-@inline function get_velocity_vector(interpolated_vectorfield, pt::CylindricalPoint{T}) where {T <: SSDFloat}
-    return CartesianVector{T}(interpolated_vectorfield(pt.r, pt.φ, pt.z))
+@inline function get_velocity_vector(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CylindricalPoint{T}) where {T <: SSDFloat}
+    return CartesianVector{T}(velocity_field(pt.r, pt.φ, pt.z))
 end
 
 
