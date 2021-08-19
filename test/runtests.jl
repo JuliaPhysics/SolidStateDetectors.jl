@@ -172,6 +172,4 @@ end
     @test sim == Simulation(nt)
 end 
 
-# include("ConstructiveSolidGeometry/CSG_test.jl")
 include("ConstructiveSolidGeometry/CSG_IO.jl")
-# include("ConstructiveSolidGeometry/CSG_decomposition.jl")
