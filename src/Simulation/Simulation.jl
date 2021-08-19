@@ -106,7 +106,9 @@ function Simulation(nt::NamedTuple)
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
 
-
+function Base.:(==)(sim1::P, sim2::P) where {P <: Union{Simulation, SolidStateDetector, AbstractObject, AbstractChargeDriftModel, AbstractTemperatureModel}}
+    return typeof(sim1) == typeof(sim2) && all(broadcast(field -> isequal(getfield(sim1, field), getfield(sim2, field)), fieldnames(P)))
+end
 
 
 function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
