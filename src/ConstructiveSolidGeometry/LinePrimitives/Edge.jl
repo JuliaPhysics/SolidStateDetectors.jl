@@ -29,7 +29,7 @@ end
 function sample(es::Vector{Edge{T}}; n = 2)::Vector{CartesianPoint{T}} where {T}
     pts = Vector{CartesianPoint{T}}(undef, length(es) * n)
     for i in eachindex(es)
-        pts[i:i+n-1] = sample(es[i], n = n)
+        pts[(i-1)*n+1:i*n] = sample(es[i], n = n)
     end
     pts
 end
