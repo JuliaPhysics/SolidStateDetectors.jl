@@ -211,3 +211,13 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     end 
     nothing
 end
+
+function mark_surface_bits!(point_types::Array{PointType, 3})
+    i1max, i2max, i3max = size(point_types)
+    for i in findall(point_types .& pn_junction_bit .> 0)
+        i1, i2, i3 = i[1], i[2], i[3]
+        point_types[i1,i2,i3] += surface_bit * !(all([point_types[j1,j2,j3] & pn_junction_bit > 0 
+            for j1 in max(i1-1,1):min(i1+1,i1max), j2 in max(i2-1,1):min(i2+1,i2max), j3 in max(i3-1,1):min(i3+1,i3max)]))
+    end
+    point_types
+end
