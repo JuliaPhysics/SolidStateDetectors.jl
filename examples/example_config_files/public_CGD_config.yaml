@@ -33,8 +33,8 @@ detectors:
           init: 0
           gradient: 0
         z:
-          init: 10000000
-          gradient: 50000
+          init: 1e7
+          gradient: 5e4
       charge_drift_model:
         include: ADLChargeDriftModel/drift_velocity_config.yaml
       geometry:
