@@ -706,24 +706,6 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_potential` will be refined.
 * `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `sim.electric_potential.grid` after refinement.
 * `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `sim.electric_potential.grid` after refinement.
-
-## Keywords
-* `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
-* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `-1`. If set to `-1` there will be no limit.
-* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
-* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
-    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
-    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
-    without checking if points are actually inside them.
-    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
-* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
-* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
-    First element contains the SOR constant for `r` = 0.
-    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
-    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
-    In case of Cartesian coordinates, only one value is taken.
     
 ## Examples 
 ```julia 
@@ -770,25 +752,7 @@ Takes the current state of `sim.weighting_potentials[contact_id]` and refines it
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the [`WeightingPotential`](@ref) is refined.
 * `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `sim.weighting_potentials[contact_id].grid` after refinement.
 * `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `sim.weighting_potentials[contact_id].grid` after refinement.
-
-## Keywords
-* `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
-* `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `-1`. If set to `-1` there will be no limit.
-* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
-* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
-    The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
-    started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
-* `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
-    without checking if points are actually inside them.
-    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
-* `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
-* `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
-    First element contains the SOR constant for `r` = 0.
-    Second contains the constant at the outer most grid point in `r`. A linear scaling is applied in between.
-    First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
-    In case of Cartesian coordinates, only one value is taken.
-    
+   
 ## Examples 
 ```julia 
 SolidStateDetectors.refine!(sim, WeightingPotential, 1, max_diffs = (0.01, 0.01, 0.01), minimum_distances = (0.01, 0.02, 0.01))
@@ -810,7 +774,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
         max_distance_ratio::Real = 5,
         depletion_handling::Bool = false,
-        use_nthreads::Int = Base.Threads.nthreads(),
+        use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
         n_iterations_between_checks::Int = 1000,
@@ -862,13 +826,22 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 (T(1e-5), T(1e-5), T(1e-5))
             end
         end
-        if use_nthreads > Base.Threads.nthreads()
-            use_nthreads = Base.Threads.nthreads();
-            @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
-        end
         refine = !ismissing(refinement_limits)
         if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
         n_refinement_steps = length(refinement_limits)
+
+        max_nthreads, guess_nt = if use_nthreads isa Int 
+            if use_nthreads > Base.Threads.nthreads()
+                use_nthreads = Base.Threads.nthreads();
+                @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
+            end
+            fill(use_nthreads, n_refinement_steps+1), true
+        else
+            _nt = fill(maximum(use_nthreads), n_refinement_steps+1)
+            _nt[1:length(use_nthreads)] = use_nthreads
+            _nt, false
+        end
+
         only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
         if CS == Cylindrical
             cyclic::T = width(grid.axes[2].interval)
@@ -891,7 +864,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
                 "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n",
-                "Threads: $use_nthreads\n",
+                "Max. Threads: $(maximum(max_nthreads))\n",
                 "Coordinate system: $(CS)\n",
                 "N Refinements: -> $(n_refinement_steps)\n",
                 "Initial grid size: $(size(grid))\n",
@@ -904,7 +877,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                   n_iterations_between_checks = n_iterations_between_checks,
                                   max_n_iterations = max_n_iterations,
                                   depletion_handling = depletion_handling,
-                                  use_nthreads = use_nthreads,
+                                  use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
                                   sor_consts = sor_consts )
     else
         apply_initial_state!(sim, potential_type, contact_id, grid, not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
@@ -912,7 +885,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
                                     depletion_handling = depletion_handling,
-                                    use_nthreads = use_nthreads,
+                                    use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
                                     sor_consts = sor_consts )
     end
 
@@ -928,7 +901,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
-                                                use_nthreads = use_nthreads,
+                                                use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1],
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
@@ -940,7 +913,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
-                                                use_nthreads = use_nthreads,
+                                                use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1],
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
@@ -986,7 +959,7 @@ There are several keyword arguments which can be used to tune the calculation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `1e-7`.
 * `refinement_limits`: Defines the maximum relative allowed differences 
-    of the potential value of neighboured grid points 
+    of the potential value of neighbored grid points 
     in each dimension for each refinement.
     - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions.
     - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension.
@@ -1002,7 +975,9 @@ There are several keyword arguments which can be used to tune the calculation.
         If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
         Default is `5`.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
-* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+* `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
+    Less thread might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
+    If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
@@ -1046,7 +1021,7 @@ There are several keyword arguments which can be used to tune the calculation.
     The convergence value is the absolute maximum difference of the potential between two iterations of all grid points.
     Default of `convergence_limit` is `1e-7` (times bias voltage).
 * `refinement_limits`: Defines the maximum relative (to applied bias voltage) allowed differences 
-    of the potential value of neighboured grid points 
+    of the potential value of neighbored grid points 
     in each dimension for each refinement.
     - `rl::Real` -> One refinement with `rl` equal in all 3 dimensions.
     - `rl::Tuple{<:Real,<:Real,<:Real}` -> One refinement with `rl` set individual for each dimension.
@@ -1063,7 +1038,9 @@ There are several keyword arguments which can be used to tune the calculation.
         Default is `5`.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
 * `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
-* `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
+* `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
+    Less thread might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
+    If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
@@ -1257,7 +1234,7 @@ function simulate!( sim::Simulation{T, S};
                     max_distance_ratio::Real = 5,
                     grid::Grid{T, 3, S} = Grid(sim),
                     depletion_handling::Bool = false,
-                    use_nthreads::Int = Base.Threads.nthreads(),
+                    use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
                     sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
                     max_n_iterations::Int = -1,
                     not_only_paint_contacts::Bool = true, 
