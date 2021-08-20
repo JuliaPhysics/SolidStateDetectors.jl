@@ -24,7 +24,7 @@ using LegendHDF5IO
 using SolidStateDetectors
 sim = Simulation(SSD_examples[:InvertedCoax])
 simulate!(sim)
-SolidStateDetectors.ssd_write("example_sim.h5", sim)
+ssd_write("example_sim.h5", sim)
 ```
 
 !!! warn
@@ -38,6 +38,7 @@ SolidStateDetectors.ssd_write("example_sim.h5", sim)
 See also [`ssd_read`](@ref).
 """
 function ssd_write end
+export ssd_write
 
 
 """
@@ -54,7 +55,7 @@ using [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl).
 using HDF5 
 using LegendHDF5IO
 using SolidStateDetectors
-sim = SolidStateDetectors.ssd_read("example_sim.h5", Simulation)
+sim = ssd_read("example_sim.h5", Simulation)
 ```
 
 !!! note 
@@ -65,5 +66,6 @@ sim = SolidStateDetectors.ssd_read("example_sim.h5", Simulation)
 See also [`ssd_write`](@ref).
 """
 function ssd_read end
+export ssd_read
 
 
