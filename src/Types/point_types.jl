@@ -59,11 +59,8 @@ end
 
 function in(pt::AbstractCoordinatePoint{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
     cpt = _convert_point(pt, S)
-    grid::Grid{T, 3, S} = point_types.grid
-    i1::Int = searchsortednearest(grid.axes[1].ticks, cpt[1])
-    i2::Int = searchsortednearest(grid.axes[2].ticks, cpt[2])
-    i3::Int = searchsortednearest(grid.axes[3].ticks, cpt[3])
-    return point_types.data[i1, i2, i3] & pn_junction_bit > 0
+    point_type::PointType = point_types[cpt]
+    return (point_type & pn_junction_bit > 0) && (point_type & surface_bit == 0)
 end
 
 """
