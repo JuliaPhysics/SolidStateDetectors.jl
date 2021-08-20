@@ -209,21 +209,21 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
     
     # if the Line does not intersect with a surface of a Contact, check if it does intersect with the surface of the Semiconductor
     if crossing_pos[2] & CD_OUTSIDE > 0 
-        tol::T = 1000 * ConstructiveSolidGeometry.csg_default_tol(T)
+        tol::T = 5000 * ConstructiveSolidGeometry.csg_default_tol(T)
         # check if the Line intersects with a surface of the Semiconductor
         for surf in ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)
             for pt in ConstructiveSolidGeometry.intersection(surf, line)
-                if pt - tol * direction in det.semiconductor &&    # point "before" crossing_pos should be in
-                    !(pt + tol * direction in det.semiconductor) && # point "after" crossing_pos should be out
-                    0 ≤ (pt - pt_in) ⋅ direction ≤ 1 &&                      # pt within pt_in and pt_out
-                    norm(pt - pt_in) < norm(crossing_pos[1] - pt_in)         # pt closer to pt_in that previous crossing_pos
+                normal = normalize(ConstructiveSolidGeometry.normal(surf, pt))
+                if pt + tol * normal in det.semiconductor &&         # point "before" crossing_pos should be in
+                   !(pt - tol * normal in det.semiconductor) &&      # point "after" crossing_pos should be out
+                    0 ≤ (pt - pt_in) ⋅ direction ≤ 1 &&              # pt within pt_in and pt_out
+                    norm(pt - pt_in) < norm(crossing_pos[1] - pt_in) # pt closer to pt_in that previous crossing_pos
                     CD_POINTTYPE::UInt8 = point_types[pt] & update_bit == 0 ? CD_ELECTRODE : CD_FLOATING_BOUNDARY 
-                    crossing_pos = (pt, CD_POINTTYPE, normalize(ConstructiveSolidGeometry.normal(surf, pt)))
+                    crossing_pos = (pt, CD_POINTTYPE, normal)
                 end
             end 
         end
     end
 
-    # if crossing_pos[2] & CD_OUTSIDE > 0 @warn "Determination of boundary point did not work as intended." end
     crossing_pos
 end
