@@ -92,7 +92,7 @@ end
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    point_types, cross_section, idx, value, false, full_det
+    PointTypes(point_types.data .& 0x07, point_types.grid), cross_section, idx, value, false, full_det
 end
 
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
