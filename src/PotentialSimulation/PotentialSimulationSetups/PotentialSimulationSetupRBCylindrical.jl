@@ -29,7 +29,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
                         end
                     end
                 end
-                if in(pt, det)
+                if in(pt, det.semiconductor)
                     point_types[ ir, iφ, iz ] += pn_junction_bit
                 end
                 if NotOnlyPaintContacts
