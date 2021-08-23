@@ -979,7 +979,7 @@ There are several keyword arguments which can be used to tune the calculation.
         Default is `5`.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
 * `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
-    Less thread might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
+    Fewer threads might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
     If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
@@ -1042,7 +1042,7 @@ There are several keyword arguments which can be used to tune the calculation.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
 * `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
 * `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
-    Less thread might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
+    Fewer threads might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
     If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
