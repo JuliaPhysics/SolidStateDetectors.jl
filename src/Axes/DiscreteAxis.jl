@@ -421,3 +421,16 @@ function fill_up_ticks(v::AbstractVector{T}, max_diff::T) where {T}
     r[end] = v[end]
     r
 end
+
+function even_tick_axis(ax::DiscreteAxis) 
+    if isodd(length(ax)) 
+        int = ax.interval
+        ticks = ax.ticks
+        imax = findmax(diff(ticks))[2]
+        push!(ticks, (ticks[imax] + ticks[imax+1]) / 2)
+        sort!(ticks)
+        typeof(ax)(int, ticks)
+    else 
+        ax
+    end
+end
