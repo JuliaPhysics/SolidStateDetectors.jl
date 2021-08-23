@@ -47,6 +47,5 @@ function _guess_optimal_number_of_threads_for_SOR(gs::NTuple{3, Integer}, max_nt
         #     max_nthreads
         # end
     =#
-    nt = min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
-    return min(nt, max_nthreads)
+    return min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
 end
