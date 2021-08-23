@@ -65,13 +65,7 @@ get_precision_type(::Simulation{T}) where {T} = T
 get_coordinate_system(::Simulation{T, CS}) where {T, CS} = CS
 
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
-    wpots_strings = AbstractString[]
-    for contact in sim.detector.contacts
-        if !ismissing(sim.weighting_potentials[contact.id])
-            push!(wpots_strings, "WeightingPotential_$(contact.id)")
-        end
-    end
-    wpots_syms = Symbol.(wpots_strings)
+    wpots_strings = ["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts]
     nt = (
         detector_json_string = NamedTuple(sim.config_dict),
         electric_potential = NamedTuple(sim.electric_potential),
@@ -81,40 +75,40 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
         electron_drift_field = NamedTuple(sim.electron_drift_field),
-        hole_drift_field = NamedTuple(sim.hole_drift_field)
+        hole_drift_field = NamedTuple(sim.hole_drift_field),
+        weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(sim.weighting_potentials))
     )
-    if length(wpots_strings) > 0
-        nt = merge(nt, (weighting_potentials = NamedTuple{Tuple(wpots_syms)}(NamedTuple.( skipmissing(sim.weighting_potentials))),))
-    end
     return nt
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
 function Simulation(nt::NamedTuple)
+    missing_tuple = NamedTuple(missing)
     epot = ElectricPotential(nt.electric_potential)
     T = eltype(epot.data)
     sim = Simulation{T}( Dict(nt.detector_json_string) )
-    if !ismissing(nt.electric_potential) sim.electric_potential = epot end
-    if !ismissing(nt.q_eff_imp) sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp) end
-    if !ismissing(nt.q_eff_fix) sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix) end
-    if !ismissing(nt.ϵ_r) sim.ϵ_r = DielectricDistribution(nt.ϵ_r) end
-    if !ismissing(nt.point_types) sim.point_types = PointTypes(nt.point_types) end
-    if !ismissing(nt.electric_field) sim.electric_field = ElectricField(nt.electric_field) end
-    sim.weighting_potentials = [missing for contact in sim.detector.contacts]
-    if !ismissing(nt.weighting_potentials)
-        for contact in sim.detector.contacts
-            if !ismissing(values(nt.weighting_potentials[contact.id])[1])
-                sim.weighting_potentials[contact.id] = WeightingPotential(nt.weighting_potentials[contact.id])
-            end
-        end
+    sim.electric_potential = epot
+    sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp)
+    sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix)
+    sim.ϵ_r = DielectricDistribution(nt.ϵ_r)
+    sim.point_types = PointTypes(nt.point_types)
+    sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
+    sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
+        [let wp = Symbol("WeightingPotential_$(contact.id)")
+            haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials, wp)) : missing 
+        end for contact in sim.detector.contacts]
+    else
+        [missing for contact in sim.detector.contacts]
     end
-    if !ismissing(nt.electron_drift_field) sim.electron_drift_field = ElectricField(nt.electron_drift_field) end
-    if !ismissing(nt.hole_drift_field) sim.hole_drift_field = ElectricField(nt.hole_drift_field) end
+    sim.electron_drift_field = haskey(nt, :electron_drift_field) && nt.electron_drift_field !== missing_tuple ? ElectricField(nt.electron_drift_field) : missing
+    sim.hole_drift_field = haskey(nt, :hole_drift_field) && nt.hole_drift_field !== missing_tuple ? ElectricField(nt.hole_drift_field) : missing
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
 
-
+function Base.:(==)(sim1::P, sim2::P) where {P <: Union{Simulation, SolidStateDetector, AbstractObject, AbstractChargeDriftModel, AbstractTemperatureModel}}
+    return typeof(sim1) == typeof(sim2) && all(broadcast(field -> isequal(getfield(sim1, field), getfield(sim2, field)), fieldnames(P)))
+end
 
 
 function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}

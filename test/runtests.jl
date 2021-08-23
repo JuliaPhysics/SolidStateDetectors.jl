@@ -24,6 +24,8 @@ end
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
+        nt = NamedTuple(sim)
+        @test sim == Simulation(nt)
     end
     @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
@@ -73,6 +75,8 @@ end
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
+        nt = NamedTuple(sim)
+        @test sim == Simulation(nt)
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
@@ -97,6 +101,8 @@ end
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
+        nt = NamedTuple(sim)
+        @test sim == Simulation(nt)
     end
     @testset "Simulate example detector: Spherical" begin
         sim = Simulation{T}(SSD_examples[:Spherical])
@@ -142,6 +148,28 @@ end
     include("ADLChargeDriftModel.jl")
 end
 
-# include("ConstructiveSolidGeometry/CSG_test.jl")
+@testset "IO" begin
+    sim = Simulation(SSD_examples[:InvertedCoax])
+    
+    calculate_electric_potential!(sim, verbose = false)
+    nt = NamedTuple(sim)
+    @test sim == Simulation(nt)
+    
+    calculate_electric_field!(sim)
+    nt = NamedTuple(sim)
+    @test sim == Simulation(nt)
+    
+    calculate_drift_fields!(sim)
+    nt = NamedTuple(sim)
+    @test sim == Simulation(nt)
+
+    calculate_weighting_potential!(sim, 1, verbose = false)
+    nt = NamedTuple(sim)
+    @test sim == Simulation(nt)
+
+    for i in findall(ismissing.(sim.weighting_potentials)) calculate_weighting_potential!(sim, i, verbose = false) end
+    nt = NamedTuple(sim)
+    @test sim == Simulation(nt)
+end 
+
 include("ConstructiveSolidGeometry/CSG_IO.jl")
-# include("ConstructiveSolidGeometry/CSG_decomposition.jl")
