@@ -833,10 +833,13 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         max_nthreads, guess_nt = if use_nthreads isa Int 
             if use_nthreads > Base.Threads.nthreads()
                 use_nthreads = Base.Threads.nthreads();
-                @warn "`use_nthreads` was set to `1`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
+                @warn "`use_nthreads` was set to `Base.Threads.nthreads()`. The environment variable `JULIA_NUM_THREADS` must be set appropriately before the julia session is started."
             end
             fill(use_nthreads, n_refinement_steps+1), true
         else
+            if length(use_nthreads) > n_refinement_steps+1
+                use_nthreads = use_nthreads[1:n_refinement_steps+1]
+            end
             _nt = fill(maximum(use_nthreads), n_refinement_steps+1)
             _nt[1:length(use_nthreads)] = use_nthreads
             _nt, false
