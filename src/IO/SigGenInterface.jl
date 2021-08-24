@@ -11,9 +11,8 @@ and returns a dictionary of all parameters. Non-existing parameteres are set to 
 * `T::Type`: Type of the parameters in the output dictionary. Default is `Float64`.
 """
 function readsiggen(file_path::String; T::Type=Float64)
-    #detector_name = split(basename(file_path), ".config")[1]
-    #In order to use the plotting recipe:
-    detector_name = "Public Inverted Coax"
+    
+    detector_name = split(basename(file_path), ".config")[1]
     
     config = Dict("name"       => detector_name,
         "verbosity_level"      => 0,
