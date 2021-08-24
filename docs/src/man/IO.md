@@ -7,7 +7,7 @@ After simulating the potentials and fields of a detector setup, the results shou
 One easy way to do this is using [JLD2.jl](https://github.com/JuliaIO/JLD2.jl) and [FileIO.jl](https://github.com/JuliaIO/FileIO.jl).
 
 Simulation results can be saved to a JLD file using `FileIO.save`:
-```yaml
+```julia
 using SolidStateDetectors
 sim = Simulation("<config-file-name>")
 # ...
@@ -17,7 +17,7 @@ FileIO.save("<name-of-simulation-file>.jld", Dict("Simulation" => sim))
 ```
 
 It can be read back in using `FileIO.load`:
-```yaml 
+```julia
 using FileIO
 sim = FileIO.load("<name-of-simulation.file>.jld", "Simulation")
 ```
