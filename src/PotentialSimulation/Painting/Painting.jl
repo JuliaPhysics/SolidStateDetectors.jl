@@ -44,7 +44,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     widths_ax1 = diff(get_extended_ticks(grid[1]))
     widths_ax2 = diff(get_extended_ticks(grid[2]))
     widths_ax3 = diff(get_extended_ticks(grid[3]))
-    Δw_max_factor = T(1e-2)
+    Δw_max_factor = T(1e-5)
     #= 
         Δw_max_factor is chosen by trying out different values for it. 
         This value seems to be okay if the grid is not to unevenly spaced. 
@@ -62,15 +62,10 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
             pts = ConstructiveSolidGeometry.intersection(face, l)
             for pt in pts
                 i3 = searchsortednearest(ticks[3], pt[3])
-                csgtol = abs(ticks[3][i3] - pt[3])
-                Δw_max = Δw_max_factor * max(
+                csgtol = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
-                    # widths_ax3[i3], widths_ax3[i3+1]
                 ) 
-                if csgtol < Δw_max
-                    csgtol = Δw_max
-                end
                 if in(pt, geometry, csgtol = csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
@@ -84,15 +79,10 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
             pts = ConstructiveSolidGeometry.intersection(face, l)
             for pt in pts
                 i2 = searchsortednearest(ticks[2], pt[2])
-                csgtol = abs(ticks[2][i2] - pt[2])
-                Δw_max = Δw_max_factor * max(
+                csgtol = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
-                    # widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
                 )
-                if csgtol < Δw_max
-                    csgtol = Δw_max
-                end
                 if in(pt, geometry, csgtol = csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
@@ -106,15 +96,10 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
             pts = ConstructiveSolidGeometry.intersection(face, l)
             for pt in pts
                 i1 = searchsortednearest(ticks[1], pt[1])
-                csgtol = abs(ticks[1][i1] - pt[1])
-                Δw_max = Δw_max_factor * max(
-                    # widths_ax1[i1], widths_ax1[i1+1],
+                csgtol = Δw_max_factor * max(
                     widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
                 )
-                if csgtol < Δw_max
-                    csgtol = Δw_max
-                end
                 if in(pt, geometry, csgtol = csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
@@ -134,7 +119,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     widths_ax1 = diff(get_extended_ticks(grid[1]))
     widths_ax2 = diff(get_extended_ticks(grid[2]))
     widths_ax3 = diff(get_extended_ticks(grid[3]))
-    Δw_max_factor = T(1e-2)
+    Δw_max_factor = T(1e-5)
     #= 
         Δw_max_factor is chosen by trying out different values for it. 
         This value seems to be okay if the grid is not to unevenly spaced. 
@@ -152,14 +137,9 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
             pts = ConstructiveSolidGeometry.intersection(face, l)
             for pt in pts
                 i3 = searchsortednearest(ticks[3], pt[3])
-                csgtol = abs(ticks[3][i3] - pt[3])
-                Δw_max = Δw_max_factor * max(
-                    widths_ax1[i1], widths_ax1[i1+1],
-                    # widths_ax2[i2], widths_ax2[i2+1],
-                )
-                if csgtol < Δw_max
-                    csgtol = Δw_max
-                end
+                csgtol = Δw_max_factor * max(
+                    widths_ax3[i3], widths_ax3[i3+1],
+                ) 
                 if in(pt, geometry, csgtol = csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
@@ -194,14 +174,10 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 # Use `abs(pt_cyl[2] - ticks[2][i2]) < 0.1` to avoid rounding issues
                 # if it differs, it would always differ by π = 3.141... -> 0.1 is fine
                 i1 = searchsortednearest(ticks[1], pt_cyl[1])
-                csgtol = abs(ticks[1][i1] - pt_cyl[1])
-                Δw_max = Δw_max_factor * max(
-                    widths_ax3[i3], widths_ax3[i3+1],
-                    # widths_ax2[i2], widths_ax2[i2+1],
-                )
-                if csgtol < Δw_max
-                    csgtol = Δw_max
-                end
+                csgtol = Δw_max_factor * max(
+                    widths_ax1[i1], widths_ax1[i1+1],
+                    widths_ax2[i2], widths_ax2[i2+1],
+                ) 
                 if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && in(pt_car, geometry, csgtol = csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
