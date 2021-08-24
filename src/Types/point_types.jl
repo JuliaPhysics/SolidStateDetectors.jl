@@ -24,6 +24,7 @@ const update_bit      = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update
 const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
 const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is not inside a bubble; 1 -> point is inside a bubble
 
+is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
         
