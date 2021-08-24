@@ -147,21 +147,15 @@ function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T wh
     get_charge_density(p.charge_density_model, pt)
 end
 
-function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, det::SolidStateDetector{T}, medium::NamedTuple = material_properties[materials["vacuum"]])::Tuple{T, T, T} where {T <: SSDFloat}
-    ρ_semiconductor::T = 0
-    q_eff_fix::T = 0
-    ϵ::T = medium.ϵ_r
-    if pt in det.semiconductor
-        ρ_semiconductor = get_charge_density(det.semiconductor, pt) 
-        ϵ = det.semiconductor.material.ϵ_r
-    elseif !ismissing(det.passives) && in(pt, det.passives)
-        for passive in det.passives
-            if pt in passive
-                q_eff_fix = get_charge_density(passive, pt)
-                ϵ = passive.material.ϵ_r
-                break
-            end
-        end
-    end
-    return ρ_semiconductor, ϵ, q_eff_fix
+in(pt::AbstractCoordinatePoint, ::Missing) = false
+
+@inline function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, obj::Semiconductor)::Tuple{T, T, T} where {T <: SSDFloat}
+    ρ_semiconductor = get_charge_density(obj, pt) 
+    ϵ = obj.material.ϵ_r
+    return ρ_semiconductor, ϵ, zero(T)
+end
+@inline function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, obj::Passive)::Tuple{T, T, T} where {T <: SSDFloat}
+    q_eff_fix = get_charge_density(obj, pt) 
+    ϵ = obj.material.ϵ_r
+    return zero(T), ϵ, q_eff_fix
 end
