@@ -15,8 +15,7 @@ plot(sim.detector, size = (700, 700))
 
 # One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
 
-apply_initial_state!(sim, ElectricPotential, 
-    Grid(sim, max_tick_distance = 3u"mm")) # optional
+apply_initial_state!(sim, ElectricPotential) # optional
 plot(
     plot(sim.electric_potential), # initial electric potential (boundary conditions)
     plot(sim.point_types), # map of different point types: fixed point / inside or outside detector volume / depleted/undepleted
