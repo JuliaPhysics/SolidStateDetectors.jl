@@ -11,9 +11,8 @@ and returns a dictionary of all parameters. Non-existing parameteres are set to 
 * `T::Type`: Type of the parameters in the output dictionary. Default is `Float64`.
 """
 function readsiggen(file_path::String; T::Type=Float64)
-    #detector_name = split(basename(file_path), ".config")[1]
-    #In order to use the plotting recipe:
-    detector_name = "Public Inverted Coax"
+    
+    detector_name = split(basename(file_path), ".config")[1]
     
     config = Dict("name"       => detector_name,
         "verbosity_level"      => 0,
@@ -23,7 +22,7 @@ function readsiggen(file_path::String; T::Type=Float64)
         "bottom_bullet_radius" => 0, # not implemented in later conversions
         "pc_length"            => 0,
         "pc_radius"            => 0,
-        "bulletize_PC"         => 0, # not implemented in later conversions
+        "bulletize_PC"         => 0,
         "wrap_around_radius"   => 0,
         "ditch_depth"          => 0,
         "ditch_thickness"      => 0,
@@ -176,16 +175,16 @@ function siggentodict(config::Dict;
 
     #>----------------Lower Cone / Taper on bottom-----------------------------<
     # 45-degree taper at bottom of ORTEC-type crystal
-    lower_cone   = Dict("translate"   => Dict("z"      => config["taper_length"]/2,
+    lower_cone   = Dict("translate"   => Dict("z"      => 0.4*config["taper_length"],
                         "cone"        => Dict(
                         "name"        => "Lower Cone",
                         "r"           => Dict("top"    => Dict("from" => config["xtal_radius"],
                                                                "to"   => ceil(config["xtal_radius"] + 1.0)),
                                               "bottom" => Dict("from" => config["xtal_radius"] -
-                                                                            config["taper_length"],
+                                                                            1.2 * config["taper_length"],
                                                                "to"   => ceil(config["xtal_radius"] + 1.0))),
                         "phi"         => Dict("from"   => 0.0, "to" => 360.0),
-                        "h"           => config["taper_length"])));
+                        "h"           => 1.2*config["taper_length"])));
                         
 
     #>----------------Ditch around the bottom contact--------------------------<
@@ -201,37 +200,60 @@ function siggentodict(config::Dict;
 
     #>----------------Borehole on bottom as contact----------------------------<
     # If not existing, everything will be set to 0
-    borehole     = Dict("translate"   => Dict("z"    => config["pc_length"]/2,
-                        "tube"        => Dict(
-                        "name"        => "Borehole",
-                        "r"           => Dict("from" => 0.0, "to" => config["pc_radius"]),
-                        "phi"         => Dict("from" => 0.0, "to" => 360.0),
-                        "h"           => config["pc_length"])));
+    borehole = if config["bulletize_PC"] == 1
+        if config["pc_length"] < config["pc_radius"]
+            Dict( "union"   => [ 
+            Dict( "tube"    => Dict(
+                  "r"       => config["pc_radius"] - config["pc_length"],
+                  "h"       => 1.2*config["pc_length"],
+                  "origin"  => Dict("z" => 0.4*config["pc_length"]))),
+            Dict( "torus"   => Dict(
+                  "r_torus" => config["pc_radius"] - config["pc_length"],
+                  "r_tube"  => config["pc_length"]))])
+        elseif config["pc_length"] > config["pc_radius"]
+            Dict( "union"  => [
+            Dict( "tube"   => Dict(
+                  "r"      => config["pc_radius"],
+                  "h"      => 1.2*config["pc_length"] - config["pc_radius"],
+                  "origin" => Dict("z" => (0.8*config["pc_length"] - config["pc_radius"])/2))),
+            Dict( "sphere" => Dict(
+                  "r"      => config["pc_radius"],
+                  "origin" => Dict("z" => config["pc_length"] - config["pc_radius"])))])
+        else
+            Dict( "sphere" => Dict(
+                       "r" => config["pc_radius"]))
+        end
+    else # not bulletized
+            Dict( "tube"   => Dict(
+                  "name"   => "Borehole",
+                  "r"      => Dict("from" => 0.0, "to" => config["pc_radius"]),
+                  "h"      => config["pc_length"],
+                  "origin" => Dict("z" => config["pc_length"]/2)));
+    end
 
     #>----------------Hole on top of the detector------------------------------<
     # If not existing, everything will be set to 0
-    hole = Dict()
-    if config["inner_taper_width"] != 0 && config["inner_taper_length"] != 0
-        hole         = Dict("translate"   => Dict("z"      => config["xtal_length"] -
-                                               config["inner_taper_length"]/2,
-                            "cone"        => Dict(
-                            "name"        => "Inner Cone",
-                            "r"           => Dict("top"    => Dict("from" => 0,
-                                                                   "to"   => config["hole_radius"] +
-                                                                                config["inner_taper_width"]),
-                                                  "bottom" => Dict("from" => 0,
-                                                                   "to"   => config["hole_radius"])),
-                            "phi"         => Dict("from"   => 0.0, "to" => 360.0),
-                            "h"           => config["inner_taper_length"])));
+    hole = if config["inner_taper_width"] != 0 && config["inner_taper_length"] != 0
+        Dict("translate"   => Dict("z"      => config["xtal_length"] -
+                               config["inner_taper_length"]/2,
+             "cone"        => Dict(
+             "name"        => "Inner Cone",
+             "r"           => Dict("top"    => Dict("from" => 0,
+                                                   "to"   => config["hole_radius"] +
+                                                                config["inner_taper_width"]),
+                                  "bottom" => Dict("from" => 0,
+                                                   "to"   => config["hole_radius"])),
+             "phi"         => Dict("from"   => 0.0, "to" => 360.0),
+             "h"           => config["inner_taper_length"])));
                             
     else
-        hole         = Dict("translate"   => Dict("z"    => config["xtal_length"] -
+        Dict("translate"   => Dict("z"    => config["xtal_length"] -
                                                0.8*config["hole_length"]/2,
-                            "tube"        => Dict(
-                            "name"        => "Top Hole",
-                            "r"           => Dict("from" => 0.0, "to" => config["hole_radius"]),
-                            "phi"         => Dict("from" => 0.0, "to" => 360.0),
-                            "h"           => 1.2*config["hole_length"])));
+             "tube"        => Dict(
+             "name"        => "Top Hole",
+             "r"           => Dict("from" => 0.0, "to" => config["hole_radius"]),
+             "phi"         => Dict("from" => 0.0, "to" => 360.0),
+             "h"           => 1.2*config["hole_length"])));
     end
 
     #>----------------Subtract volumes-----------------------------------------<
@@ -248,7 +270,7 @@ function siggentodict(config::Dict;
     if config["ditch_thickness"] != 0
         geometry = Dict("difference" => [geometry, ditch])
     end
-    if config["pc_radius"] != 0 && config["pc_length"] >= 0.1 # below this, it is the thickness of the layer
+    if config["bulletize_PC"] == 1 || (config["pc_radius"] != 0 && config["pc_length"] >= 0.1) # below this, it is the thickness of the layer
         geometry = Dict("difference" => [geometry, borehole])
     end
 
@@ -256,58 +278,92 @@ function siggentodict(config::Dict;
     #>----------------Volume END-----------------------------------------------<
     #<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
     #>----------------Contacts START-------------------------------------------<
-
-
-    geometry_1   = Any[] # gathers all parts of contact_1
+    
 
     #>----------------Area/volume of point contact-----------------------------<
     #>----------------Contact 1------------------------------------------------<
     # Depending on whether the contact is a borehole or not
-    if config["pc_radius"] != 0 && config["pc_length"] >= 5 # below this, it is the thickness of the layer
-        borehole_wall = Dict("translate" => Dict("z" => config["pc_length"]/2,
-                                 "tube" => Dict(
-             "r"         => Dict("from" => config["pc_radius"],
-                                   "to" => config["pc_radius"]),
-             "phi"       => Dict("from" => 0.0,
-                                   "to" => 360.0),
-             "h"         => config["pc_length"])))
-        borehole_top = Dict("translate" => Dict("z" => config["pc_length"],
-                                 "tube" => Dict(
-             "r"         => Dict("from" => 0.0,
-                                   "to" => config["pc_radius"]),
-             "phi"       => Dict("from" => 0.0,
-                                   "to" => 360.0),
-             "h"         => 0.0)))
-        borehole_around = Dict(  "tube" => Dict(
-             "r"         => Dict("from" => config["pc_radius"],
-                                   "to" => config["wrap_around_radius"] - config["ditch_thickness"]),
-             "phi"       => Dict("from" => 0.0,
-                                   "to" => 360.0),
-             "h"         => 0.0))
-        push!(geometry_1, borehole_wall)
-        push!(geometry_1, borehole_top)
-        push!(geometry_1, borehole_around)
-
+    
+    geometry_1 = if config["bulletize_PC"] == 1.0
+        if config["pc_length"] < config["pc_radius"]
+            Dict( "union"      => [
+            Dict( "tube"       => Dict(
+                  "r"          => config["pc_radius"] - config["pc_length"],
+                  "h"          => 0,
+                  "origin"     => Dict("z" => config["pc_length"]))),
+            Dict( "difference" => [
+            Dict( "torus"      => Dict(
+                  "r_torus"    => config["pc_radius"] - config["pc_length"],
+                  "r_tube"     => Dict("from" => config["pc_length"], 
+                                       "to"   => config["pc_length"]))),
+            Dict( "tube"       => Dict(
+                  "r"          => config["pc_radius"] - config["pc_length"],
+                  "h"          => 1.2*config["pc_length"],
+                  "origin"     => Dict("z" => 0.4*config["pc_length"]))),
+            Dict( "tube"       => Dict(
+                  "r"          => 1.2*config["pc_radius"],
+                  "h"          => 1.2*config["pc_radius"],
+                  "origin"     => Dict("z" => -0.6 * config["pc_radius"])))])])
+        elseif config["pc_length"] > config["pc_radius"]
+            Dict( "union"      => [
+            Dict( "tube"       => Dict(
+                  "r"          => Dict("from" => config["pc_radius"], "to" => config["pc_radius"]),
+                  "h"          => config["pc_length"] - config["pc_radius"],
+                  "origin"     => Dict("z" => (config["pc_length"] - config["pc_radius"])/2))),
+            Dict( "difference" => [
+            Dict( "sphere"     => Dict(
+                  "r"          => Dict("from" => config["pc_radius"], 
+                                       "to"   => config["pc_radius"]),
+                  "origin"     => Dict("z" => config["pc_length"] - config["pc_radius"]))),
+            Dict( "tube"       => Dict(
+                  "r"          => 1.2*config["pc_radius"],
+                  "h"          => 1.2*config["pc_radius"],
+                  "origin"     => Dict("z" => config["pc_length"] - 1.6*config["pc_radius"])))])])
+        else
+            Dict( "difference" => [
+            Dict( "sphere"     => Dict(
+                  "r"          => Dict("from" => config["pc_radius"], 
+                                       "to"   => config["pc_radius"]))),
+            Dict( "tube"       => Dict(
+                  "r"          => 1.2*config["pc_radius"],
+                  "h"          => 1.2*config["pc_radius"],
+                  "origin"     => Dict("z" => -0.6 * config["pc_radius"])))]) 
+        end
+    elseif config["pc_radius"] != 0 && config["pc_length"] >= 5 # below this, it is the thickness of the layer
+            Dict( "union"      => [
+            # borehole_wall
+            Dict( "tube"       => Dict(
+                  "r"          => Dict("from" => config["pc_radius"],
+                                       "to"   => config["pc_radius"]),
+                  "h"          => config["pc_length"],
+                  "origin"     => Dict("z" => config["pc_length"]/2))),
+            # borehole_top
+            Dict( "tube"       => Dict(
+                  "r"          => Dict("from" => 0.0,
+                                       "to"   => config["pc_radius"]),
+                  "h"          => 0.0,
+                  "origin"     => Dict("z" => config["pc_length"]))),
+            # borehole_around
+            Dict( "tube"       => Dict(
+                  "r"          => Dict("from" => config["pc_radius"],
+                                       "to"   => config["wrap_around_radius"] - config["ditch_thickness"]),
+                  "h"          => 0.0))])
     elseif config["pc_radius"] != 0 && config["pc_length"] < 5
-        pc_vol = Dict(      "translate" => Dict("z" => config["pc_length"]/2,
-                                 "tube" => Dict(
-             "r"         => Dict("from" => 0.0,
-                                   "to" => config["pc_radius"]),
-             "phi"       => Dict("from" => 0.0,
-                                   "to" => 360.0),
-             "h"         => config["pc_length"])))
-        push!(geometry_1, pc_vol)
+            Dict( "tube"       => Dict(
+                  "r"          => config["pc_radius"],
+                  "h"          => config["pc_length"],
+                  "origin"     => Dict("z" => config["pc_length"]/2)))
     end
 
     #>----------------Define contact 1-----------------------------------------<
 
     contact_1 = Dict("material"    => "HPGe",
-                     "id"     => 1,
+                     "id"          => 1,
                      "potential"   => 0.0,
-                     "geometry"    => Dict("union" => geometry_1));
+                     "geometry"    => geometry_1);
 
     #>----------------Contact 2------------------------------------------------<
-    geometry_2 = Any[]
+    geometry_2 = Dict[]
 
     if config["wrap_around_radius"] != 0.0
         bottom = Dict("tube" => Dict(
