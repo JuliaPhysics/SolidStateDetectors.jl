@@ -984,6 +984,9 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             end
         end
     end
+    
+    if isEP mark_bulk_bits!(sim.point_types.data) end
+    
     nothing
 end
 
