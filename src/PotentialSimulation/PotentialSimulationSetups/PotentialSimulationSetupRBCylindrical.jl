@@ -61,7 +61,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
             end
         end
     end
-    mark_surface_bits!(point_types)
+    mark_bulk_bits!(point_types)
     nothing
 end
 

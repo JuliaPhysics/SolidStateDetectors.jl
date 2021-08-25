@@ -8,7 +8,7 @@ Right now, there are:
     const update_bit      = 0x01
     const undepleted_bit  = 0x02
     const pn_junction_bit = 0x04
-    const surface_bit     = 0x08
+    const bulk_bit     = 0x08
 
 ## Examples
 
@@ -17,7 +17,7 @@ How to get information out of a `PointType` variable `point_type`:
 2. `point_type & update_bit >  0` -> do update this point    
 3. `point_type & undepleted_bit > 0` -> this point is undepleted
 4. `point_type & pn_junction_bit > 0` -> this point belongs to the solid state detector, meaning that it is in the volume of the n-type or p-type material.
-5. `point_type & surface_bit > 0` -> this point is surrounded by points that are not in the semiconductor
+5. `point_type & bulk_bit > 0` -> this point is only surrounded by points marked as `pn_junction_bit`
 """
 const PointType       = UInt8
 
@@ -25,7 +25,7 @@ const PointType       = UInt8
 const update_bit      = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
 const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
 const pn_junction_bit = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
-const surface_bit     = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
+const bulk_bit     = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
 
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
@@ -60,7 +60,7 @@ end
 function in(pt::AbstractCoordinatePoint{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
     cpt = _convert_point(pt, S)
     point_type::PointType = point_types[cpt]
-    return (point_type & pn_junction_bit > 0) && (point_type & surface_bit == 0)
+    return point_type & bulk_bit > 0
 end
 
 """
