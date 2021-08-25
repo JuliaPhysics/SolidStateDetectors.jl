@@ -68,10 +68,10 @@ modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing
 
 @inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl::CylindricalPoint{T} = CylindricalPoint(pt)
-    pt_cyl in point_types || pt_cyl in det
+    pt_cyl in point_types || pt_cyl in det.semiconductor
 end
 @inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
-    pt in point_types || pt in det
+    pt in point_types || pt in det.semiconductor
 end
 
 function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
