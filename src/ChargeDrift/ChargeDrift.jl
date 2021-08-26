@@ -20,12 +20,12 @@ function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}
     range(zero(Δt), step = Δt, stop = typeof(Δt)(_common_time(dp)) + Δt)
 end
 
-function get_velocity_vector(interpolation_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
-    return CartesianVector{T}(interpolation_field(pt.x, pt.y, pt.z))
+@inline function get_velocity_vector(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
+    return CartesianVector{T}(velocity_field(pt.x, pt.y, pt.z))
 end
 
-@inline function get_velocity_vector(interpolated_vectorfield, pt::CylindricalPoint{T}) where {T <: SSDFloat}
-    return CartesianVector{T}(interpolated_vectorfield(pt.r, pt.φ, pt.z))
+@inline function get_velocity_vector(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CylindricalPoint{T}) where {T <: SSDFloat}
+    return CartesianVector{T}(velocity_field(pt.r, pt.φ, pt.z))
 end
 
 
@@ -66,11 +66,12 @@ function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv
 end
 modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
-    pt_cyl in point_types || pt_cyl in det
+@inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
+    pt_cyl::CylindricalPoint{T} = CylindricalPoint(pt)
+    pt_cyl in point_types || pt_cyl in det.semiconductor
 end
-@inline function _is_next_point_in_det(pt_car::CartesianPoint{T}, pt_cyl::CylindricalPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
-    pt_car in point_types || pt_car in det
+@inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
+    pt in point_types || pt in det.semiconductor
 end
 
 function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
@@ -78,6 +79,13 @@ function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to b
     # n⃗ = n⃗ ./ norm(n⃗)
     λ = -1 * dot(v⃗, n⃗) / dot(n⃗, n⃗)
     SVector{3,eltype(v⃗)}(v⃗[1] + λ * n⃗[1], v⃗[2] + λ * n⃗[2], v⃗[3] + λ * n⃗[3])
+end
+
+
+function _get_stepvector_drift(current_pos::CartesianPoint{T}, ::Type{S}, det::SolidStateDetector{T}, 
+                               velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, Δt::T) where {T, S}
+    stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
+    stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
 end
 
 
@@ -103,24 +111,26 @@ function _drift_charge!(
     timestamps[1] = zero(T)
     null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
     last_real_step_index::Int = 1
+    
+    current_pos::CartesianPoint{T} = CartesianPoint{T}(0, 0, 0)
+    step_vector::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
+    next_pos::CartesianPoint{T} = CartesianPoint{T}(0, 0, 0)
+    
     @inbounds for istep in eachindex(drift_path)[2:end]
-        if done == false
-            current_pos::CartesianPoint{T} = drift_path[istep - 1]
-            stepvector::CartesianVector{T} = get_velocity_vector(velocity_field, _convert_point(current_pos, S)) * Δt
-            stepvector = modulate_driftvector(stepvector, current_pos, det.virtual_drift_volumes)
-            # if geom_round.(stepvector) == null_step
-            if stepvector == null_step
-                done = true
-            end
-            next_pos::CartesianPoint{T} = current_pos + stepvector
-            next_pos_cyl::CylindricalPoint{T} = CylindricalPoint(next_pos)
-            if _is_next_point_in_det(next_pos, next_pos_cyl, det, point_types)
+        if !done
+            current_pos = drift_path[istep - 1]
+            stepvector = _get_stepvector_drift(current_pos, S, det, velocity_field, Δt)
+            done = (stepvector == null_step)
+            next_pos = current_pos + stepvector
+            
+            if _is_next_point_in_det(next_pos, det, point_types)
                 drift_path[istep] = next_pos
                 drifttime += Δt
                 timestamps[istep] = drifttime
                 last_real_step_index += 1
+                done |= next_pos in det.contacts # end the drift if step ended in a contact
             else
-                crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, boundary_index::Int, surface_normal::CartesianVector{T} = get_crossing_pos(det, grid, current_pos, next_pos)
+                crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = get_crossing_pos(det, point_types, current_pos, next_pos)
                 if cd_point_type == CD_ELECTRODE
                     drift_path[istep] = crossing_pos
                     drifttime += Δt
@@ -148,9 +158,7 @@ function _drift_charge!(
                     timestamps[istep] = drifttime
                     last_real_step_index += 1
                     # if geom_round.(next_pos - current_pos) == null_step
-                    if next_pos - current_pos == null_step
-                        done = true
-                    end
+                    done |= (next_pos - current_pos == null_step)
                 else # elseif cd_point_type == CD_BULK  -- or -- cd_point_type == CD_OUTSIDE
                     if verbose @warn ("Internal error for charge starting at $startpos") end
                     drift_path[istep] = current_pos
@@ -165,28 +173,57 @@ function _drift_charge!(
     return last_real_step_index
 end
 
-# Point types for charge drift: Defined in DetectorGeometries/DetectorGeometries.jl
-# const CD_ELECTRODE = 0x00
-# const CD_OUTSIDE = 0x01
-# const CD_BULK = 0x02
-# const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
+# Point types for charge drift
+const CD_ELECTRODE = 0x00
+const CD_OUTSIDE = 0x01
+const CD_BULK = 0x02
+const CD_FLOATING_BOUNDARY = 0x04 # not 0x03, so that one could use bit operations here...
 
-function get_crossing_pos(  det::SolidStateDetector{T}, grid::Grid{T, 3, S}, pt_in::CartesianPoint{T}, pt_out::CartesianPoint{T};
-                            max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, Int, CartesianVector{T}} where {T <: SSDFloat, S}
-    pt_mid::CartesianPoint{T} = T(0.5) * (pt_in + pt_out)
-    cd_point_type::UInt8, contact_idx::Int, surface_normal::CartesianVector{T} = point_type(det, grid, _convert_point(pt_mid, S))
-    for i in 1:max_n_iter
-        if cd_point_type == CD_BULK
-            pt_in = pt_mid
-        elseif cd_point_type == CD_OUTSIDE
-            pt_out = pt_mid
-        elseif cd_point_type == CD_ELECTRODE
-            break
-        else #elseif cd_point_type == CD_FLOATING_BOUNDARY
-            break
+
+function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{T, 3, S}, pt_in::CartesianPoint{T}, pt_out::CartesianPoint{T};
+                            max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} where {T <: SSDFloat, S}
+    
+    # check if the points are already in contacts                    
+    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
+    if pt_out in det.contacts return (pt_out, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
+    
+    
+    direction::CartesianVector{T} = normalize(pt_out - pt_in)
+    crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, CartesianVector{T}(0,0,0)) # need undef version for this
+    
+    # define a Line between pt_in and pt_out
+    line::ConstructiveSolidGeometry.Line{T} = ConstructiveSolidGeometry.Line{T}(pt_in, direction)
+    
+    # check if the Line intersects with a surface of a Contact
+    for contact in det.contacts
+        for surf in ConstructiveSolidGeometry.surfaces(contact.geometry)
+            for pt in ConstructiveSolidGeometry.intersection(surf, line)
+                if pt in contact && 
+                    0 ≤ (pt - pt_in) ⋅ direction ≤ 1 &&              # pt within pt_in and pt_out
+                    norm(pt - pt_in) < norm(crossing_pos[1] - pt_in) # pt closer to pt_in that previous crossing_pos
+                    crossing_pos = (pt, CD_ELECTRODE, normalize(ConstructiveSolidGeometry.normal(surf, pt)))
+                end
+            end
         end
-        pt_mid = T(0.5) * (pt_in + pt_out)
-        cd_point_type, contact_idx, surface_normal = point_type(det, grid, _convert_point(pt_mid, S))
     end
-    return pt_mid, cd_point_type, contact_idx, surface_normal
+    
+    # if the Line does not intersect with a surface of a Contact, check if it does intersect with the surface of the Semiconductor
+    if crossing_pos[2] & CD_OUTSIDE > 0 
+        tol::T = 5000 * ConstructiveSolidGeometry.csg_default_tol(T)
+        # check if the Line intersects with a surface of the Semiconductor
+        for surf in ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)
+            for pt in ConstructiveSolidGeometry.intersection(surf, line)
+                normal = normalize(ConstructiveSolidGeometry.normal(surf, pt))
+                if pt + tol * normal in det.semiconductor &&         # point "before" crossing_pos should be in
+                   !(pt - tol * normal in det.semiconductor) &&      # point "after" crossing_pos should be out
+                    0 ≤ (pt - pt_in) ⋅ direction ≤ 1 &&              # pt within pt_in and pt_out
+                    norm(pt - pt_in) < norm(crossing_pos[1] - pt_in) # pt closer to pt_in that previous crossing_pos
+                    CD_POINTTYPE::UInt8 = point_types[pt] & update_bit == 0 ? CD_ELECTRODE : CD_FLOATING_BOUNDARY 
+                    crossing_pos = (pt, CD_POINTTYPE, normal)
+                end
+            end 
+        end
+    end
+
+    crossing_pos
 end

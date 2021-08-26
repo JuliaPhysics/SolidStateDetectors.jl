@@ -47,6 +47,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
             end
         end
     end
+    
     if PaintContacts
         for contact in det.contacts
             pot::T = if ismissing(weighting_potential_contact_id)
