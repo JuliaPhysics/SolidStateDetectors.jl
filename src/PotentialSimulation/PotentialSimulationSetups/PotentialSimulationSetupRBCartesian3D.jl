@@ -1,5 +1,21 @@
+function set_passive_or_contact_points(point_types::Array{PointType, N}, potential::Array{T, N},
+                        grid::CartesianGrid3D{T}, obj, pot::T, use_nthreads::Int = 1) where {T, N}
+    @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
+        @inbounds for iy in axes(potential, 2)
+            for ix in axes(potential, 1)
+                pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
+                if pt in obj
+                    potential[ ix, iy, iz ] = pot
+                    point_types[ ix, iy, iz ] = zero(PointType)
+                end
+            end
+        end
+    end
+    nothing
+end
+
 function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N}, potential::Array{T, N},
-        grid::Grid{T, N, Cartesian}, det::SolidStateDetector{T}; 
+        grid::CartesianGrid3D{T}, det::SolidStateDetector{T}; 
         weighting_potential_contact_id::Union{Missing, Int} = missing,
         use_nthreads::Int = Base.Threads.nthreads(),
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
@@ -14,46 +30,14 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
                 end
             end
         end
-    end
-    function set_passive_points(g, pot::T) where {T}
-        @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
-            @inbounds for iy in axes(potential, 2)
-                for ix in axes(potential, 1)
-                    pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
-                    # if !is_pn_junction_point_type(point_types[ ix, iy, iz ]) 
-                        if pt in g
-                            potential[ ix, iy, iz ] = pot
-                            point_types[ ix, iy, iz ] = zero(PointType)
-                        end
-                    # end
-                end
-            end
-        end
-        nothing
-    end
+    end   
     if !ismissing(det.passives)
         for passive in det.passives
             if !isnan(passive.potential)
                 pot::T = ismissing(weighting_potential_contact_id) ? passive.potential : zero(T)
-                set_passive_points(passive.geometry, pot)                              
+                set_passive_or_contact_points(point_types, potential, grid, passive.geometry, pot, use_nthreads)                              
             end
         end
-    end
-    function set_contact_points(g, pot::T) where {T}
-        @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
-            @inbounds for iy in axes(potential, 2)
-                for ix in axes(potential, 1)
-                    pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
-                    # if is_pn_junction_point_type(point_types[ ix, iy, iz ]) 
-                        if pt in g
-                            potential[ ix, iy, iz ] = pot
-                            point_types[ ix, iy, iz ] = zero(PointType)
-                        end
-                    # end
-                end
-            end
-        end
-        nothing
     end
     if NotOnlyPaintContacts
         for contact in det.contacts
@@ -62,7 +46,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
             else
                 contact.id == weighting_potential_contact_id ? 1 : 0
             end
-            set_contact_points(contact.geometry, pot)
+            set_passive_or_contact_points(point_types, potential, grid, contact.geometry, pot, use_nthreads)
         end
     end
     if PaintContacts
@@ -81,14 +65,29 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
     nothing
 end
 
-
+function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}, 
+    ::Type{Cartesian}, mpz::Vector{T}, mpy::Vector{T}, mpx::Vector{T}, use_nthreads::Int, obj) where {T}
+    @inbounds begin
+        @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
+            for iy in axes(ϵ, 2)
+                for ix in axes(ϵ, 1)
+                    pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
+                    if pt in obj
+                        ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, obj)
+                    end
+                end
+            end
+        end
+    end
+    nothing
+end
 
 function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
-                sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true ) where {T}#::PotentialSimulationSetupRB{T} where {T}
+                sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true ) where {T}
                 is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
 
     @inbounds begin
@@ -188,26 +187,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         ϵ = fill(medium_ϵ_r, length(mpx), length(mpy), length(mpz))
         ρ_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
         q_eff_fix_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
-        function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}, obj) where {T}
-            @inbounds begin
-                @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
-                # for iz in axes(ϵ, 3)
-                    for iy in axes(ϵ, 2)
-                        for ix in axes(ϵ, 1)
-                            pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
-                            if pt in obj
-                                ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, obj)
-                            end
-                        end
-                    end
-                end
-            end
-            nothing
-        end
-        fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, det.semiconductor)
+        fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
         if !ismissing(det.passives)
             for passive in det.passives
-                fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, passive)
+                fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
             end
         end
         ϵ0_inv::T = inv(ϵ0)
