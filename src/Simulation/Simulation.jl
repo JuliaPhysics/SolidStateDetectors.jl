@@ -445,10 +445,11 @@ with the material properties and fixed potentials defined in `sim.detector`.
 apply_initial_state!(sim, ElectricPotential, paint_contacts = false)
 ```
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
-        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
-        PotentialSimulationSetupRB(sim.detector, grid, sim.medium; not_only_paint_contacts, paint_contacts);
+function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
+        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat, CS}
+    pssrb = PotentialSimulationSetupRB(sim.detector, grid, sim.medium; 
+            use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
+            not_only_paint_contacts, paint_contacts);
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
@@ -551,10 +552,9 @@ function update_till_convergence!( sim::Simulation{T,CS},
     end
     only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
 
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
-        PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
-            not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
-
+    pssrb = PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
+        use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
+        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
@@ -664,9 +664,9 @@ function update_till_convergence!( sim::Simulation{T, CS},
     end
 
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.weighting_potentials[contact_id].grid)} =
-        PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
+    pssrb = PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
+                use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
                 not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
@@ -894,24 +894,26 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
-                if verbose println("Grid size: $(size(sim.electric_potential.data))") end
+                nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
+                verbose && println("Grid size: $(size(sim.electric_potential.data)) - using $(nt) threads now:") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
-                                                use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1],
+                                                use_nthreads = nt,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
-                if verbose println("Grid size: $(size(sim.weighting_potentials[contact_id].data))") end
+                nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
+                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - using $(nt) threads now:")
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
-                                                use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1],
+                                                use_nthreads = nt,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
