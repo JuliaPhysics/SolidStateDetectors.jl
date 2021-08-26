@@ -140,19 +140,16 @@ function is_surface_point_and_normal_vector(det::SolidStateDetector{T}, pt::Cart
 end
 
 
-function get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T}) where {T <: SSDFloat} = 
     get_impurity_density(sc.impurity_density_model, pt) * elementary_charge
-end
-function get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
-    get_charge_density(p.charge_density_model, pt)
-end
 
-in(pt::AbstractCoordinatePoint, ::Missing) = false
+get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T}) where {T <: SSDFloat} =
+    get_charge_density(p.charge_density_model, pt)
 
 @inline function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, obj::Semiconductor)::Tuple{T, T, T} where {T <: SSDFloat}
-    ρ_semiconductor = get_charge_density(obj, pt) 
+    q_eff_imp = get_charge_density(obj, pt) 
     ϵ = obj.material.ϵ_r
-    return ρ_semiconductor, ϵ, zero(T)
+    return q_eff_imp, ϵ, zero(T)
 end
 @inline function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, obj::Passive)::Tuple{T, T, T} where {T <: SSDFloat}
     q_eff_fix = get_charge_density(obj, pt) 

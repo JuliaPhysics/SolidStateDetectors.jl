@@ -1,12 +1,14 @@
-function set_passive_or_contact_points(point_types::Array{PointType, N}, potential::Array{T, N},
-                        grid::CartesianGrid3D{T}, obj, pot::T, use_nthreads::Int = 1) where {T, N}
-    @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
-        @inbounds for iy in axes(potential, 2)
-            for ix in axes(potential, 1)
-                pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
-                if pt in obj
-                    potential[ ix, iy, iz ] = pot
-                    point_types[ ix, iy, iz ] = zero(PointType)
+function set_passive_or_contact_points(point_types::Array{PointType, 3}, potential::Array{T, 3},
+                        grid::CartesianGrid3D{T}, obj, pot::T, use_nthreads::Int = 1) where {T}
+    if !isnan(pot)
+        @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
+            @inbounds for iy in axes(potential, 2)
+                for ix in axes(potential, 1)
+                    pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
+                    if pt in obj
+                        potential[ ix, iy, iz ] = pot
+                        point_types[ ix, iy, iz ] = zero(PointType)
+                    end
                 end
             end
         end
@@ -14,12 +16,12 @@ function set_passive_or_contact_points(point_types::Array{PointType, N}, potenti
     nothing
 end
 
-function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N}, potential::Array{T, N},
+function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3}, potential::Array{T, 3},
         grid::CartesianGrid3D{T}, det::SolidStateDetector{T}; 
         weighting_potential_contact_id::Union{Missing, Int} = missing,
         use_nthreads::Int = Base.Threads.nthreads(),
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
-        paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, N, NotOnlyPaintContacts, PaintContacts}
+        paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, NotOnlyPaintContacts, PaintContacts}
 
     @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
         @inbounds for iy in axes(potential, 2)
@@ -33,29 +35,19 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, N},
     end   
     if !ismissing(det.passives)
         for passive in det.passives
-            if !isnan(passive.potential)
-                pot::T = ismissing(weighting_potential_contact_id) ? passive.potential : zero(T)
-                set_passive_or_contact_points(point_types, potential, grid, passive.geometry, pot, use_nthreads)                              
-            end
+            pot::T = ismissing(weighting_potential_contact_id) ? passive.potential : zero(T)
+            set_passive_or_contact_points(point_types, potential, grid, passive.geometry, pot, use_nthreads)                              
         end
     end
     if NotOnlyPaintContacts
         for contact in det.contacts
-            pot::T = if ismissing(weighting_potential_contact_id)
-                contact.potential
-            else
-                contact.id == weighting_potential_contact_id ? 1 : 0
-            end
+            pot::T = ismissing(weighting_potential_contact_id) ? contact.potential : contact.id == weighting_potential_contact_id
             set_passive_or_contact_points(point_types, potential, grid, contact.geometry, pot, use_nthreads)
         end
     end
     if PaintContacts
         for contact in det.contacts
-            pot::T = if ismissing(weighting_potential_contact_id)
-                contact.potential
-            else
-                contact.id == weighting_potential_contact_id ? 1 : 0
-            end
+            pot::T = ismissing(weighting_potential_contact_id) ? contact.potential : contact.id == weighting_potential_contact_id
             fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
             for face in fs
                 paint!(point_types, potential, face, contact.geometry, pot, grid)
