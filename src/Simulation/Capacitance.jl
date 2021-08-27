@@ -113,23 +113,6 @@ function calculate_stored_energy(sim::Simulation{T}, ::Type{ElectricPotential}; 
     calculate_stored_energy(sim.electric_potential, sim.ϵ_r; consider_multiplicity)
 end
 
-function w1_w2_w3(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int) where {T} 
-    wx::T = grid[1].ticks[i1 + 1] - grid[1].ticks[i1]
-    wy::T = grid[2].ticks[i2 + 1] - grid[2].ticks[i2]
-    wz::T = grid[3].ticks[i3 + 1] - grid[3].ticks[i3]
-    wx, wy, wz
-end
-function w1_w2_w3(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int) where {T} 
-    wr::T =  grid[1].ticks[i1 + 1] - grid[1].ticks[i1]
-    wφ::T = (grid[2].ticks[i2 + 1] - grid[2].ticks[i2]) * (grid[1].ticks[i1 + 1] + grid[1].ticks[i1])/2
-    wz::T =  grid[3].ticks[i3 + 1] - grid[3].ticks[i3]
-    wr, wφ, wz
-end
-
-voxel_volume(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} = 
-    (grid[2].ticks[i2 + 1] - grid[2].ticks[i2]) * w3 * (grid[1].ticks[i1 + 1]^2 - grid[1].ticks[i1]^2) / 2  
-voxel_volume(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} =
-    w1 * w2 * w3
 
 function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
     cylindrical = CS == Cylindrical
@@ -140,7 +123,7 @@ function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDi
     for i3 in 1:size(grid, 3)-1
         for i2 in 1:size(grid, 2)-1
             for i1 in 1:size(grid, 1)-1
-                w1, w2, w3 = w1_w2_w3(grid, i1, i2, i3)
+                w1, w2, w3 = voxel_widths(grid, i1, i2, i3)
                 dV = voxel_volume(grid, i1, i2, i3, w1, w2, w3)
 
                 _ϵ = ϵ.data[i1 + 1, i2 + 1, i3 + 1]

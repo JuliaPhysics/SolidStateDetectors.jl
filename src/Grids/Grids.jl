@@ -179,3 +179,22 @@ function multiplicities(g::CylindricalGrid{T}) where {T}
 end
 
 multiplicities(g::CartesianGrid3D) = broadcast(ax -> multiplicity(ax, Cartesian), g.axes)
+
+
+function voxel_widths(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int) where {T} 
+    wx::T = grid[1].ticks[i1 + 1] - grid[1].ticks[i1]
+    wy::T = grid[2].ticks[i2 + 1] - grid[2].ticks[i2]
+    wz::T = grid[3].ticks[i3 + 1] - grid[3].ticks[i3]
+    wx, wy, wz
+end
+function voxel_widths(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int) where {T} 
+    wr::T =  grid[1].ticks[i1 + 1] - grid[1].ticks[i1]
+    wφ::T = (grid[2].ticks[i2 + 1] - grid[2].ticks[i2]) * (grid[1].ticks[i1 + 1] + grid[1].ticks[i1])/2
+    wz::T =  grid[3].ticks[i3 + 1] - grid[3].ticks[i3]
+    wr, wφ, wz
+end
+
+voxel_volume(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} = 
+    (grid[2].ticks[i2 + 1] - grid[2].ticks[i2]) * w3 * (grid[1].ticks[i1 + 1]^2 - grid[1].ticks[i1]^2) / 2  
+voxel_volume(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} =
+    w1 * w2 * w3
