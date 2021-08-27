@@ -103,14 +103,14 @@ function calculate_capacitance(sim::Simulation{T}) where {T <: SSDFloat}
 end
 
 
-function calculate_capacitance(sim::Simulation{T}, ::Type{ElectricPotential}) where {T <: SSDFloat}
+function calculate_capacitance(sim::Simulation{T}, ::Type{ElectricPotential}; consider_multiplicity::Bool = true) where {T <: SSDFloat}
     @assert !ismissing(sim.electric_potential) "Electric potential has not been calculated yet. Please run `calculate_electric_potential!(sim)` first."
-    W = calculate_stored_energy(sim, ElectricPotential)
+    W = calculate_stored_energy(sim, ElectricPotential; consider_multiplicity)
     return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
 end
 
-function calculate_stored_energy(sim::Simulation{T}, ::Type{ElectricPotential}) where {T <: SSDFloat}
-    calculate_stored_energy(sim.electric_potential, sim.ϵ_r)
+function calculate_stored_energy(sim::Simulation{T}, ::Type{ElectricPotential}; consider_multiplicity::Bool = true) where {T <: SSDFloat}
+    calculate_stored_energy(sim.electric_potential, sim.ϵ_r; consider_multiplicity)
 end
 
 function w1_w2_w3(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int) where {T} 
@@ -131,7 +131,7 @@ voxel_volume(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, 
 voxel_volume(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} =
     w1 * w2 * w3
 
-function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}) where {T <: SSDFloat, CS}
+function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
     cylindrical = CS == Cylindrical
     phi_2D = cylindrical && size(ep, 2) == 1
     ep3d = phi_2D ? get_2π_potential(ep, n_points_in_φ = 2) : _get_closed_potential(ep)
@@ -176,5 +176,6 @@ function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDi
     end
     E = W * ϵ0 / 2 * u"J"
     phi_2D && (E *= 2)
-    return E
+    return consider_multiplicity ? E * multiplicity(grid) : E
 end
+
