@@ -3,8 +3,6 @@ function _get_abs_bias_voltage(det::SolidStateDetector{T}) where {T <: SSDFloat}
     return (maximum(potentials) - minimum(potentials)) * u"V"
 end
 
-
-
 """
     calculate_stored_energy(sim::Simulation{T}) where {T <: SSDFloat}
 
@@ -113,8 +111,7 @@ function calculate_stored_energy(sim::Simulation{T}, ::Type{ElectricPotential}; 
     calculate_stored_energy(sim.electric_potential, sim.ϵ_r; consider_multiplicity)
 end
 
-
-function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
+function calculate_stored_energy(ep::ScalarPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
     cylindrical = CS == Cylindrical
     phi_2D = cylindrical && size(ep, 2) == 1
     ep3d = phi_2D ? get_2π_potential(ep, n_points_in_φ = 2) : _get_closed_potential(ep)
@@ -162,3 +159,14 @@ function calculate_stored_energy(ep::ElectricPotential{T,3,CS}, ϵ::DielectricDi
     return consider_multiplicity ? E * multiplicity(grid) : E
 end
 
+function calculate_capacitance(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int = 1; consider_multiplicity::Bool = true) where {T <: SSDFloat}
+    @assert !ismissing(sim.weighting_potentials[contact_id]) "Weighting potential of contact $contact_id has not been calculated yet. Please run `calculate_weighting_potential!(sim, $contact_id)` first."
+    W = calculate_stored_energy(sim, WeightingPotential, contact_id; consider_multiplicity)
+    return uconvert(u"pF", 2 * W / u"V^2")
+end
+function calculate_stored_energy(sim::Simulation{T, CS}, ::Type{WeightingPotential}, contact_id::Int = 1; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
+    ϵ_r = DielectricDistribution(DielectricDistributionArray(PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
+                weighting_potential_contact_id = contact_id, use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
+                not_only_paint_contacts = false, paint_contacts = false)), sim.weighting_potentials[contact_id].grid)
+    calculate_stored_energy(sim.weighting_potentials[contact_id], ϵ_r; consider_multiplicity)
+end
