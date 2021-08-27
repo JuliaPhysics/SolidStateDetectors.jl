@@ -434,3 +434,12 @@ function even_tick_axis(ax::DiscreteAxis)
         ax
     end
 end
+
+multiplicity(g::DiscreteAxis{T, :infinite, :infinite, I}, ::Type{Cartesian}) where {T, I} = one(T)
+multiplicity(g::DiscreteAxis{T, :reflecting, :infinite, I}, ::Type{Cartesian}) where {T, I} = T(2)
+multiplicity(g::DiscreteAxis{T, :infinite, :reflecting, I}, ::Type{Cartesian}) where {T, I} = T(2)
+
+function multiplicity(g::DiscreteAxis{T, :reflecting, :reflecting, I}, ::Type{Cartesian}) where {T, I} 
+    @warn "Multiplicity of Cartesian axis, $(g) (:reflecting, :reflecting), would be infinite. It is set to 1 here." 
+    one(T)
+end

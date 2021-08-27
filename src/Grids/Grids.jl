@@ -168,3 +168,14 @@ end
 function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
     find_closest_gridpoint(CartesianPoint(pt),grid)
 end
+
+multiplicity(g::Grid) = prod(multiplicities(g))
+
+function multiplicities(g::CylindricalGrid{T}) where {T}
+    mr = one(T)
+    mφ = T(2π) / width(g.axes[2].interval)
+    mz = multiplicity(g.axes[3], Cartesian)
+    mr, mφ, mz
+end
+
+multiplicities(g::CartesianGrid3D) = broadcast(ax -> multiplicity(ax, Cartesian), g.axes)
