@@ -19,7 +19,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
     W_true = uconvert(u"J", (ϵr * ϵ0 * E_true^2 / 2) * A * Δd)
     W_ssd = SolidStateDetectors.calculate_stored_energy(sim);
     C_true = uconvert(u"pF", 2 * W_true / (BV_true^2))
-    C_ssd = SolidStateDetectors.calculate_capacitance(sim) 
+    C_ssd = SolidStateDetectors.calculate_capacitance(sim, ElectricPotential, consider_multiplicity = false)
     @testset "Capacity" begin
         @test isapprox(C_ssd, C_true, rtol = 0.001) 
     end
@@ -54,8 +54,8 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     C_true = uconvert(u"pF", 2π * ϵr * ϵ0 / log(R2/R1) * L )
     W_true = uconvert(u"J", C_true * BV_true^2 / 2)
 
-    C_cyl_ssd = SolidStateDetectors.calculate_capacitance(sim_cyl)
-    C_car_ssd = SolidStateDetectors.calculate_capacitance(sim_car)
+    C_cyl_ssd = SolidStateDetectors.calculate_capacitance(sim_cyl, ElectricPotential, consider_multiplicity = false)
+    C_car_ssd = SolidStateDetectors.calculate_capacitance(sim_car, ElectricPotential, consider_multiplicity = false)
     W_cyl_ssd = SolidStateDetectors.calculate_stored_energy(sim_cyl)
     W_car_ssd = SolidStateDetectors.calculate_stored_energy(sim_car)
 
