@@ -1,8 +1,10 @@
 The SolidStateDetectors.jl package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2018:
->
+> 
+>    Felix Hagemann <hagemann@mpp.mpg.de>
 >    Lukas Hauertmann <lhauert@mpp.mpg.de>
+>    David Hervas <hervasa2@mpp.mpg.de>
 >    Oliver Schulz <oschulz@mpp.mpg.de>
 >    Martin Schuster <schuster@mpp.mpg.de>
 >    Anna Julia Zsigmond <azsigmon@mpp.mpg.de>
