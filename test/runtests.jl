@@ -43,7 +43,6 @@ end
         sim = Simulation{T}(SSD_examples[:Coax])
         calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         calculate_electric_field!(sim)
-        calculate_drift_fields!(sim)
         calculate_weighting_potential!(sim, 1, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         calculate_weighting_potential!(sim, 2, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         for i in 3:19
@@ -62,7 +61,6 @@ end
         sim = Simulation{T}(SSD_examples[:BEGe])
         calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         calculate_electric_field!(sim)
-        calculate_drift_fields!(sim)
         calculate_weighting_potential!(sim, 1, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         for i in 2:5
             calculate_weighting_potential!(sim, i, convergence_limit = 5e-6, refinement_limits = [0.2], verbose = false)
@@ -156,10 +154,6 @@ end
     @test sim == Simulation(nt)
     
     calculate_electric_field!(sim)
-    nt = NamedTuple(sim)
-    @test sim == Simulation(nt)
-    
-    calculate_drift_fields!(sim)
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 

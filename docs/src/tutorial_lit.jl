@@ -105,11 +105,9 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 #md # [![tutorial_electric_field](tutorial_electric_field.svg)](tutorial_electric_field.pdf)
 
 
-# ## Drift field calculation
+# ## Simulation of charge drifts
 
-# Given the electric field and a charge drift model, calculate drift fields for electrons and holes. Precalculating the drift fields saves time during charge drift simulation:
-
-# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
+# Any charge drift model can be used for the calculation of the electric field. If no model is explicitely given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
 
 # `<package_directory>/examples/example_config_files/ADLChargeDriftModel/<config_filename>.yaml.`
 
@@ -117,11 +115,6 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 
 charge_drift_model = ADLChargeDriftModel()
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
-
-
-# And apply the charge drift model to the electric field:
-
-calculate_drift_fields!(sim)
 
 # Now, let's create an "random" multi-site event:
 

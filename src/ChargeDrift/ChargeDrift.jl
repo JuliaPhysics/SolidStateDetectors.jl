@@ -10,6 +10,10 @@ struct EHDriftPath{T <: SSDFloat, TT <: RealQuantity}
     timestamps_h::Vector{TT}
 end
 
+abstract type ChargeCarrier end
+abstract type Electron <: ChargeCarrier end 
+abstract type Hole <: ChargeCarrier end
+
 function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
@@ -31,8 +35,7 @@ end
 
 function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                         starting_points::Vector{CartesianPoint{T}},
-                        velocity_field_e::Interpolations.Extrapolation{<:SVector{3}, 3},
-                        velocity_field_h::Interpolations.Extrapolation{<:SVector{3}, 3},
+                        electric_field::Interpolations.Extrapolation{<:SVector{3}, 3},
                         Δt::RQ; max_nsteps::Int = 2000, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
     drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points))
@@ -44,8 +47,8 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
     timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
     timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
     
-    n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, starting_points, dt, velocity_field_e, verbose = verbose )
-    n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, starting_points, dt, velocity_field_h, verbose = verbose )
+    n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, starting_points, dt, electric_field, Electron, verbose = verbose )
+    n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, starting_points, dt, electric_field, Hole, verbose = verbose )
     
     for i in eachindex(starting_points)
         drift_paths[i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
@@ -85,12 +88,28 @@ end
 
 
 function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
-                                done::Vector{Bool}, velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, 
-                                det::SolidStateDetector{T}, S, Δt::T)::Nothing where {T}
+                                done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, 
+                                det::SolidStateDetector{T}, ::Type{S}, ::Type{Electron}, Δt::T)::Nothing where {T, S}
     for n in eachindex(step_vectors)
        step_vectors[n] = CartesianVector{T}(0, 0, 0)
        if !done[n]
-           step_vectors[n] += get_velocity_vector(velocity_field, _convert_point(current_pos[n], S)) * Δt
+           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
+           step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
+           step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], det.virtual_drift_volumes)
+           done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
+       end
+    end
+    nothing
+end
+
+function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
+                                done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
+                                det::SolidStateDetector{T}, ::Type{S}, ::Type{Hole}, Δt::T)::Nothing where {T, S}
+    for n in eachindex(step_vectors)
+       step_vectors[n] = CartesianVector{T}(0, 0, 0)
+       if !done[n]
+           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
+           step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
            step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], det.virtual_drift_volumes)
            done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
        end
@@ -169,12 +188,6 @@ function _check_and_update_position!(
 end
 
 
-
-# """
-#     _drift_charge!(...)
-# 
-# Before calling this function one should check that `startpos` is inside `det`: `in(startpos, det)`
-# """
 function _drift_charge!(
                             drift_path::Array{CartesianPoint{T},2},
                             timestamps::Vector{T},
@@ -183,9 +196,10 @@ function _drift_charge!(
                             grid::Grid{T, 3, S},
                             startpos::Vector{CartesianPoint{T}},
                             Δt::T,
-                            velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3};
+                            electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
+                            ::Type{CC};
                             verbose::Bool = true
-                        )::Int where {T <: SSDFloat, S}
+                        )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
                         
     n_hits::Int, max_nsteps::Int = size(drift_path)
     drift_path[:,1] = startpos
@@ -201,7 +215,7 @@ function _drift_charge!(
     
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
-        _get_stepvector_drift!(step_vectors, current_pos, done, velocity_field, det, S, Δt)
+        _get_stepvector_drift!(step_vectors, current_pos, done, electric_field, det, S, CC, Δt)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
     end

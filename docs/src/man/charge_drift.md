@@ -7,7 +7,7 @@ v_{d} = \mu E,
 ```
 where $v_{d}$ is the drift velocity, $\mu$ the mobility and $E$ the electric field strength.
 
-The scattering with matter not only limits the absolute drift velocity, it might also deviate the trajectories from the electric field lines: e.g., in crystals, the principal axes orientation has an impact on the resulting drift trajectory. The influence of the scattering on the drift trajectories can be expressed by a 3x3 tensor, the so-called mobility tensor $\mu_{ij}$, which transforms the electric field, $E$, into the drift field, $v_{i}$:
+The scattering with matter not only limits the absolute drift velocity, it might also deviate the trajectories from the electric field lines: e.g., in crystals, the principal axes orientation has an impact on the resulting drift trajectory. The influence of the scattering on the drift trajectories can be expressed by a 3x3 tensor, the so-called mobility tensor $\mu_{ij}$, which transforms the electric field, $E$, into the drift velocity, $v_{i}$:
 
 ```math
 v_{i} =  \mu_{ij} \cdot E_{j}.
@@ -15,7 +15,7 @@ v_{i} =  \mu_{ij} \cdot E_{j}.
 
 The mobility varies for different materials and depends also on other parameters such as temperature, impurity density and the electric field strength, as explained later.
 
-Electrons and holes have different mobilities, resulting in different drift fields. There are several models for the mobility tensor of electrons and holes in certain materials. Right now, two models are implemented. The first one is a pseudo-drift model, the [`ElectricFieldChargeDriftModel`](@ref), which just takes the electric field vectors as drift vectors, see section [Electric Field Charge Drift Model](@ref). The second one, [`ADLChargeDriftModel`](@ref), is a drift model for high purity germanium, see section [ADL Charge Drift Model](@ref). However, the implementation of an own model is possible and explained in section [Custom Charge Drift Model](@ref).
+Electrons and holes have different mobilities, resulting in different drift velocities. There are several models for the mobility tensor of electrons and holes in certain materials. Right now, two models are implemented. The first one is a pseudo-drift model, the [`ElectricFieldChargeDriftModel`](@ref), which just takes the electric field vectors as drift vectors, see section [Electric Field Charge Drift Model](@ref). The second one, [`ADLChargeDriftModel`](@ref), is a drift model for high purity germanium, see section [ADL Charge Drift Model](@ref). However, the implementation of an own model is possible and explained in section [Custom Charge Drift Model](@ref).
 
 ## Electric Field Charge Drift Model
 
@@ -27,7 +27,6 @@ In order to set the `ElectricFieldChargeDriftModel` for the simulation, the prec
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = ElectricFieldChargeDriftModel(T)
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
-calculate_drift_fields!(sim)
 ```
 
 If no charge drift model is specified for the semiconductor of the detector in the configuration files, the default is `ElectricFieldChargeDriftModel`.
@@ -81,13 +80,12 @@ By default, in `SolidStateDetectors.jl` the $\langle$001$\rangle$ axis is aligne
 If the electric field is not aligned with any of the crystal axes, the charge drift velocity is not necessarily aligned with the electric field. In the [`ADLChargeDriftModel`](@ref), two models are implemented to describe the charge drift of electrons and holes between the axes. Detailed information about the charge drift models is provided in the papers from [L. Mihailescu et al. ](https://www.sciencedirect.com/science/article/pii/S0168900299012863) for electrons and from [B.Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) for holes. Find the detailed calculations and modifications from the publications as implemented in SolidStateDetectors.jl [here](../assets/ADLChargeDriftModel.pdf).
 
 
-In order to perform the calculation of the drift fields, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
+In order to perform the calculation of the drift velocities, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
 
 ```julia
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = ADLChargeDriftModel("<path_to_ADL_configuration_file>", T=T)
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
-calculate_drift_fields!(sim)
 ```
 
 The `ÀDLChargeDriftModel` can also be specified already in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
@@ -121,13 +119,12 @@ The `charge_drift_model` needs:
 - `material` (optional): the semiconductor material. If no material is given, the `material` of the semiconductor is taken by default.
 - `drift`: the parameters needed to describe the longitudinal drift velocity along the $\langle$100$\rangle$ and $\langle$111$\rangle$ axes, see above.
 
-The values from the default configuration file correspond to germanium at 78 K. Calculations of the drift field at other temperatures are also supported by the `ADLChargeDriftModel`. While experimental observations suggest that the charge mobilities of electrons and holes in the crystal are temperature dependent, the dependency law has not yet been established. Several models have been proposed to reproduce the experimental behavior, and some examples of them can be found in the directory `<package_directory>/src/ChargeDriftModels/ADL/`. The examples include a linear model, a Boltzmann model and a power-law model. To use these models in the calculation of the drift fields, the corresponding configuration file, the temperature and the precision must be given to the function. As an example, in order to use the Boltzmann model at a temperature of 100 K:
+The values from the default configuration file correspond to germanium at 78 K. Calculations of the drift velocities at other temperatures are also supported by the `ADLChargeDriftModel`. While experimental observations suggest that the charge mobilities of electrons and holes in the crystal are temperature dependent, the dependency law has not yet been established. Several models have been proposed to reproduce the experimental behavior, and some examples of them can be found in the directory `<package_directory>/src/ChargeDriftModels/ADL/`. The examples include a linear model, a Boltzmann model and a power-law model. To use these models in the calculation of the drift velocities, the corresponding configuration file, the temperature and the precision must be given to the function. As an example, in order to use the Boltzmann model at a temperature of 100 K:
 
 ```julia
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = ADLChargeDriftModel("<path_to_drift_velocity_config_boltzmann.yaml>", T = T, temperature = 100) 
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
-calculate_drift_fields!(sim)
 ```
 
 
@@ -172,6 +169,5 @@ Then, one can apply the model to the simulation:
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = CustomChargeDriftModel{T}()
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
-calculate_drift_fields!(sim)
 ```
 

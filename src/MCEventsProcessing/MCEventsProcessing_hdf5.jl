@@ -13,8 +13,6 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
     if !ispath(output_dir) mkpath(output_dir) end
     nfmt(i::Int) = format(i, zeropadding = true, width = length(digits(n_total_physics_events)))
     evt_ranges = chunked_ranges(n_total_physics_events, chunk_n_physics_events)
-    e_drift_field = get_interpolated_drift_field(sim.electron_drift_field);
-    h_drift_field = get_interpolated_drift_field(sim.hole_drift_field);
     @info "-> $(length(flatview(mcevents.edep))) energy depositions to simulate."
 
     for evtrange in evt_ranges

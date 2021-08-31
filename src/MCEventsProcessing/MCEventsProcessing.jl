@@ -6,9 +6,7 @@ include("table_utils.jl")
 
 Simulates the waveforms for all events defined in `mcevents` for a given [`Simulation`](@ref) by
 
-1. calculating the drift paths of all energy hits defined in `mcevents`
-    based on the drift fields for electrons and holes stored in `sim.electron_drift_field` and 
-    `sim.hole_drift_field`, 
+1. calculating the drift paths of all energy hits defined in `mcevents`,
 2. determining the signal (waveforms) for each [`Contact`](@ref), 
     for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
@@ -57,14 +55,13 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     contact_ids = Int[]
     for contact in contacts if !ismissing(sim.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
     wpots_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
-    e_drift_field = get_interpolated_drift_field(sim.electron_drift_field);
-    h_drift_field = get_interpolated_drift_field(sim.hole_drift_field);
+    electric_field = interpolated_vectorfield(sim.electric_field)
     
     @info "Detector has $(n_contacts) contact"*(n_contacts != 1 ? "s" : "")
     @info "Table has $(length(mcevents)) physics events ($(sum(map(edeps -> length(edeps), mcevents.edep))) single charge depositions)."
 
     # First simulate drift paths
-    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, e_drift_field, h_drift_field, verbose)
+    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, verbose)
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
@@ -88,13 +85,12 @@ end
 
 function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T},
                                   Δt::RealQuantity, max_nsteps::Int, 
-                                  e_drift_field::Interpolations.Extrapolation, h_drift_field::Interpolations.Extrapolation, 
+                                  electric_field::Interpolations.Extrapolation,
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
-        _drift_charges(sim.detector, sim.electron_drift_field.grid, sim.point_types, 
+        _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
                         CartesianPoint{T}.(to_internal_units.(phyevt.pos)),
-                        e_drift_field, h_drift_field, 
-                        T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
+                        electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
     end
 end
 
