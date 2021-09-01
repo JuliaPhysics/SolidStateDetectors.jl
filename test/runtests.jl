@@ -49,7 +49,7 @@ end
             calculate_weighting_potential!(sim, i, convergence_limit = 5e-6, refinement_limits = [0.2], verbose = false)
         end
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
-        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
@@ -120,7 +120,7 @@ end
         simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05], 
             max_tick_distance = 0.5u"mm", verbose = false)
         evt = Event([CartesianPoint{T}(0.01,0,0.003)])
-        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
