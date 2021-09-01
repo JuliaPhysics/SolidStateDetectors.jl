@@ -58,7 +58,7 @@ in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, evt.locations)
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
 
 """
-    drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
 
 Calculates the electron and hole drift paths for the given [`Event`](@ref) and [`Simulation`](@ref)
     and stores them in `evt.drift_paths`.
@@ -70,6 +70,7 @@ Calculates the electron and hole drift paths for the given [`Event`](@ref) and [
 ## Keywords
 * `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
+* `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `verbose = true`: Activate or deactivate additional info output.
 
@@ -81,8 +82,8 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
-function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), evt.energies, Δt = Δt, max_nsteps = max_nsteps, self_repulsion = self_repulsion, verbose = verbose)
+function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
@@ -150,6 +151,8 @@ The output is stored in `evt.drift_paths` and `evt.waveforms`.
 ## Keywords
 * `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
+* `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
+* `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -159,8 +162,8 @@ simulate!(evt, sim, Δt = 1u"ns", verbose = false)
 
 See also [`drift_charges!`](@ref) and [`get_signals!`](@ref).
 """
-function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, self_repulsion = self_repulsion, verbose = verbose)
+function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     get_signals!(evt, sim, Δt = Δt)
     nothing
 end
