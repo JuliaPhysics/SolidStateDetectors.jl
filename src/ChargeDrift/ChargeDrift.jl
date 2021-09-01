@@ -148,19 +148,6 @@ function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vect
     nothing
 end
 
-function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
-                                done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
-                                det::SolidStateDetector{T}, ::Type{S}, ::Type{CC}, Δt::T)::Nothing where {T, S, CC <: ChargeCarrier}
-    _set_to_zero_vector!(step_vectors)
-    _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-    _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
-    _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
-    for n in eachindex(step_vectors)
-         done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
-     end
-    nothing
-end
-
 function _check_and_update_position!(
             step_vectors::Vector{CartesianVector{T}}, 
             current_pos::Vector{CartesianPoint{T}},
@@ -176,8 +163,9 @@ function _check_and_update_position!(
             Δt::T,
             verbose::Bool
         )::Nothing where {T <: SSDFloat, S}
-
+        
     for n in eachindex(normal)
+        done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
         normal[n] = done[n] || _is_next_point_in_det(current_pos[n]+step_vectors[n], det, point_types)
     end
     
@@ -260,7 +248,10 @@ function _drift_charge!(
     
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
-        _get_stepvector_drift!(step_vectors, current_pos, done, electric_field, det, S, CC, Δt)
+        _set_to_zero_vector!(step_vectors)
+        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
+        _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
+        _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
     end
