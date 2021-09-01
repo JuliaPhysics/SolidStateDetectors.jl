@@ -24,6 +24,7 @@ If [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) is loaded, this function has ad
 ## Keywords
 * `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 * `Δt::RealQuantity = 4u"ns"`: Time step used for the drift.
+* `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `verbose = false`: Activate or deactivate additional info output.
 * `chunk_n_physics_events::Int = 1000` (HDF5 only): Number of events that should be saved in a single HDF5 output file.
 
@@ -46,7 +47,8 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
 function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
-                             verbose = false ) where {T <: SSDFloat}
+                             self_repulsion::Bool = false,
+                             verbose::Bool = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -61,7 +63,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     @info "Table has $(length(mcevents)) physics events ($(sum(map(edeps -> length(edeps), mcevents.edep))) single charge depositions)."
 
     # First simulate drift paths
-    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, verbose)
+    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, self_repulsion, verbose)
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
@@ -86,11 +88,12 @@ end
 function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T},
                                   Δt::RealQuantity, max_nsteps::Int, 
                                   electric_field::Interpolations.Extrapolation,
+                                  self_repulsion::Bool,
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
         _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
                         CartesianPoint{T}.(to_internal_units.(phyevt.pos)), T.(to_internal_units(phyevt.edep)),
-                        electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
+                        electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, self_repulsion = self_repulsion, verbose = verbose)
     end
 end
 
