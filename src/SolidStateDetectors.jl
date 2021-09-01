@@ -66,6 +66,7 @@ export get_active_volume, is_depleted
 export simulate_waveforms
 export Simulation, simulate!
 export Event, drift_charges!
+export add_baseline_and_extend_tail
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
