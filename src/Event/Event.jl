@@ -203,3 +203,65 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
     end
     return RDWaveform( new_times, new_signal )
 end
+
+
+"""
+    get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T}, contact_id::Int)
+    
+Returns the electron and hole contribution to the waveform of a [`Contact`](@ref) with a given
+`contact_id` of an [`Event`](@ref) as a `NamedTuple` with two entries: 
+`electron_contribution` and `hole_contribution`.
+
+## Arguments
+* `evt::Event{T}`: [`Event`](@ref) in which the charges have already been drifted.
+* `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `evt` were drifted.
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the waveform should be split into electron and hole contribution.
+
+## Example
+```julia 
+using Plots
+using SolidStateDetector
+T = Float32
+
+simulation = Simulation{T}(SSD_examples[:InvertedCoax])
+simulate!(simulation)
+event = Event([CartesianPoint{T}(0.02,0.01,0.05)])
+simulate!(event, simulation)
+
+contact_id = 1
+wf = get_electron_and_hole_contribution(evt, sim, contact_id)
+plot(add_baseline_and_extend_tail(wf.electron_contribution, 0, 500), label = "Electron contribution", color = :red, lw = 2)
+plot!(add_baseline_and_extend_tail(wf.hole_contribution, 0, 500), label = "Hole contribution", color = :green, lw = 2)
+plot!(add_baseline_and_extend_tail(event.waveforms[contact_id], 0, 500), label = "Sum", color = contact_id, lw = 2, alpha = 0.5)
+```
+
+!!! note 
+    The drift paths in `evt` need to be calculated using [`drift_charges!`](@ref) before calling this function.
+"""
+function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}, contact_id::Int
+            )::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} where {T <: SSDFloat, S}
+    
+    @assert !ismissing(evt.drift_paths) "The charge drift is not yet simulated. Please use `drift_charges!(evt, sim)`!"
+    
+    dt::T = T(ustrip(uconvert(u"ns", diff(evt.drift_paths[1].timestamps_e)[1]*u"s")))
+    wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
+    signal_e::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_e, evt.drift_paths))))
+    signal_h::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_h, evt.drift_paths))))
+
+    for i in eachindex(evt.drift_paths)
+        energy = evt.energies[i]
+        
+        dp_e::Vector{CartesianPoint{T}} = evt.drift_paths[i].e_path
+        dp_e_t::Vector{T} = evt.drift_paths[i].timestamps_e
+        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, T(-1)*energy, wp, S)
+        
+        dp_h::Vector{CartesianPoint{T}} = evt.drift_paths[i].h_path
+        dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
+        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S)
+    end
+    
+    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e),
+            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h))
+end
+
+export get_electron_and_hole_contribution
