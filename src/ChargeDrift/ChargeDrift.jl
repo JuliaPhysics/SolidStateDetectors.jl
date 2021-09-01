@@ -111,13 +111,24 @@ function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <
     nothing
 end
 
+function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, 
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+    for n in eachindex(step_vectors)
+       if !done[n]
+           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
+           done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
+       end
+    end
+    nothing
+end
+
 function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
                                 done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
                                 det::SolidStateDetector{T}, ::Type{S}, ::Type{Hole}, Δt::T)::Nothing where {T, S}
     _set_to_zero_vector!(step_vectors)
+    _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
     for n in eachindex(step_vectors)
        if !done[n]
-           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
            step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], det.virtual_drift_volumes)
            done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
