@@ -122,6 +122,14 @@ function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, curre
     nothing
 end
 
+function _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, vdv::Vector{V})::Nothing where {T <: SSDFloat, V <: AbstractVirtualVolume{T}}
+    for n in eachindex(step_vectors)
+        step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], vdv)
+    end
+    nothing
+end
+_modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, ::Missing) where {T <: SSDFloat} = nothing
+
 function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
                                 done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
                                 det::SolidStateDetector{T}, ::Type{S}, ::Type{Hole}, Δt::T)::Nothing where {T, S}
@@ -130,10 +138,12 @@ function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, curren
     for n in eachindex(step_vectors)
        if !done[n]
            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
-           step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], det.virtual_drift_volumes)
-           done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
        end
     end
+    _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
+    for n in eachindex(step_vectors)
+         done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
+     end
     nothing
 end
 
