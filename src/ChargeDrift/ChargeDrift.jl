@@ -104,11 +104,18 @@ function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, curren
     nothing
 end
 
+function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
+    for n in eachindex(v)
+        v[n] = CartesianVector{T}(0,0,0)
+    end
+    nothing
+end
+
 function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
                                 done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
                                 det::SolidStateDetector{T}, ::Type{S}, ::Type{Hole}, Δt::T)::Nothing where {T, S}
+    _set_to_zero_vector!(step_vectors)
     for n in eachindex(step_vectors)
-       step_vectors[n] = CartesianVector{T}(0, 0, 0)
        if !done[n]
            step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
