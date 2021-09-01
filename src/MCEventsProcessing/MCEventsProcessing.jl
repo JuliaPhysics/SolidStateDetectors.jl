@@ -89,7 +89,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
         _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
-                        CartesianPoint{T}.(to_internal_units.(phyevt.pos)),
+                        CartesianPoint{T}.(to_internal_units.(phyevt.pos)), T.(to_internal_units(phyevt.edep)),
                         electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
     end
 end

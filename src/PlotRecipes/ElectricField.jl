@@ -161,7 +161,7 @@ end
 
     for el_field in (el_field_itp, el_field_itp_inv)
         paths::Array{CartesianPoint{T}, 2} = fill(zero(CartesianVector{T}), length(spawn_positions), max_nsteps)
-        last_step::Int = _drift_charge!(paths, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint.(spawn_positions), T(1e-9), el_field, Electron, verbose = false )
+        last_step::Int = _drift_charge!(paths, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint.(spawn_positions), ones(T, length(spawn_positions)), T(1e-9), el_field, Electron, verbose = false )
         for i in 1:size(paths, 1)
             path = @view paths[i, 1:last_step]
             @series begin

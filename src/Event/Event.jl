@@ -81,7 +81,7 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
+    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), evt.energies, Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
