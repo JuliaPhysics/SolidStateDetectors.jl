@@ -170,3 +170,15 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 #md savefig("tutorial_waveforms.svg"); nothing # hide
 #md # [![tutorial_waveforms](tutorial_waveforms.svg)](tutorial_waveforms.pdf)
 
+# SolidStateDetectors.jl also allows to separate the waveform into the two contributions from electrons and holes
+
+contact_id = 1
+plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time / ns",
+                    legend = :topleft, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
+#jl savefig("tutorial_waveform_contributions.pdf") # hide
+#md savefig("tutorial_waveform_contributions.pdf") # hide
+#md savefig("tutorial_waveform_contributions.svg"); nothing # hide
+#md # [![tutorial_waveform_contributions](tutorial_waveform_contributions.svg)](tutorial_waveform_contributions.pdf)
+
+
+
