@@ -35,7 +35,7 @@ Returns an [`NBodyChargeCloud`](@ref) for a given `energy` deposition at a posit
 
 ## Arguments
 * `center::CartesianPoint{T}`: Center position of the [`NBodyChargeCloud`](@ref).
-* `energy::RealQuantity{T}`: Deposited energy with units. If no units are given, the value is parsed in units of eV.
+* `energy::RealQuantity`: Deposited energy with units. If no units are given, the value is parsed in units of eV.
 * `particle_type`: [`ParticleType`](@ref) of the particle that deposited the energy. Default is `Gamma`.
 
 ## Keywords
@@ -55,8 +55,8 @@ create_charge_cloud(center, energy, number_of_shells = 3, shell_structure = Soli
 
 See also [`NBodyChargeCloud`](@ref).
 """
-function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity{T}, particle_type::Type{PT} = Gamma;
-        radius::T = radius_guess(energy, particle_type), number_of_shells::Int = 2, shell_structure = Dodecahedron
+function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity, particle_type::Type{PT} = Gamma;
+        radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2, shell_structure = Dodecahedron
     )::NBodyChargeCloud{T, number_of_shells, typeof(shell_structure{T})} where {T, PT <: ParticleType}
     
     points::Vector{CartesianPoint{T}} = CartesianPoint{T}[center]
@@ -70,5 +70,5 @@ function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity{T},
         n_shell += 1
     end
     
-    return NBodyChargeCloud{T, number_of_shells, typeof(shell_structure{T})}( points, energies./sum(energies) * to_internal_units(energy), shell_structure{T})
+    return NBodyChargeCloud{T, number_of_shells, typeof(shell_structure{T})}( points, energies./sum(energies) * T(to_internal_units(energy)), shell_structure{T})
 end
