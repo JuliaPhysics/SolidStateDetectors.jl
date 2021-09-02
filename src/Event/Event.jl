@@ -318,14 +318,14 @@ function plot_electron_and_hole_contribution end
     wf::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} = get_electron_and_hole_contribution(evt, sim, contact_id)
     
     @series begin
-        linecolor --> :red 
+        linecolor := :red 
         linewidth --> linewidth
         label --> "Electron contribution"
         add_baseline_and_extend_tail(wf.electron_contribution, 0, n_samples)
     end
     
     @series begin
-        linecolor --> :green 
+        linecolor := :green 
         linewidth --> linewidth
         label --> "Hole contribution"
         add_baseline_and_extend_tail(wf.hole_contribution, 0, n_samples)
@@ -336,6 +336,6 @@ function plot_electron_and_hole_contribution end
         linewidth --> linewidth
         seriesalpha --> 0.5
         label --> "Sum"
-        evt.waveforms[contact_id]
+        add_baseline_and_extend_tail(evt.waveforms[contact_id], 0, n_samples)
     end
 end
