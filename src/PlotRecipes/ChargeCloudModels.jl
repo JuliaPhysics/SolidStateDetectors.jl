@@ -12,30 +12,30 @@
 end
 
 
-@recipe function f(nbc::NBodyChargeCloud{T}; connect = true, markersize = 10) where {T}
+@recipe function f(nbc::NBodyChargeCloud{T, N, SH}; connect = true, markersize = 10) where {T, N, SH}
     
     seriescolor --> :blue
+    points = nbc.points
     
-    @series begin
-        seriescolor --> seriescolor
-        connect --> connect
-        seriestype --> :scatter
-        markersize --> markersize
-        markerstrokewidth --> 0
+    #Center point
+    @series begin 
+        markersize := markersize
         label --> "NBodyChargeCloud"
-        []
+        seriescolor --> seriescolor
+        PointCharge{T}(points[1])
     end
     
-    points = nbc.points
-    vertex_no = 0
-    for (shell, shell_structure) in enumerate(nbc.shell_structure)
-        vertices = get_vertices(shell_structure)
+    vertex_no = 1
+    
+    #Shells
+    for shell in Base.OneTo(N)
+        vertices = get_vertices(nbc.shell_structure)
         @series begin
-            markersize --> markersize * exp(-(shell - 1))
+            markersize := markersize * exp(-(shell))
             label --> ""
             connect --> connect
             seriescolor --> seriescolor
-            shell_structure(points[vertex_no+1:vertex_no+vertices])
+            nbc.shell_structure(points[vertex_no+1:vertex_no+vertices])
         end
         vertex_no += vertices
     end
