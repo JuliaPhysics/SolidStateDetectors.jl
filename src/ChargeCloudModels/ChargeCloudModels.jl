@@ -72,3 +72,47 @@ function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity, pa
     
     return NBodyChargeCloud{T, number_of_shells, typeof(shell_structure{T})}( points, energies./sum(energies) * T(to_internal_units(energy)), shell_structure{T})
 end
+
+function create_regular_sphere(center::CartesianPoint{T}, N::Integer, R::T)::Vector{CartesianPoint{T}} where {T <: SSDFloat}
+    
+    # Source: https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf
+    
+    # There might be fluctuations of the order 10 points or 1% (whatever is larger)
+    points = Vector{CartesianPoint{T}}(undef, N + max(10, round(Int,1.01*N)))
+    Ncount = 0
+    a = 4π / N
+    Mθ = round(π/sqrt(a))
+    dθ = π/Mθ
+    for m in 0:Mθ-1
+        θ = π * (m + 0.5)/Mθ
+        Mφ = round(2π * sin(θ)*dθ/a)
+        for n in 0:Mφ-1
+            φ = 2π*n/Mφ
+            Ncount += 1
+            points[Ncount] = CartesianPoint{T}(R*cos(φ)*sin(θ), R*sin(φ)*sin(θ), R*cos(θ))
+        end
+    end
+    
+    return points[1:Ncount]
+end
+
+function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
+        radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2,
+    )::NBodyChargeCloud{T, number_of_shells, NTuple{number_of_shells, Int}} where {T, PT <: ParticleType}
+    
+    points::Vector{CartesianPoint{T}} = CartesianPoint{T}[center]
+    energies::Vector{T} = T[1]
+    n = Int[]
+    
+    n_shell = 1
+    expected_points_in_shells::Int = div(4 * (4^(number_of_shells) - 1), 3)
+    while n_shell <= number_of_shells
+        shell = create_regular_sphere(center, round(Int, N * (4^n_shell)/expected_points_in_shells), radius * n_shell)
+        points = vcat(points, shell)
+        push!(n, length(shell))
+        energies = vcat(energies, [exp(-n_shell^2 / 2) for i in 1:length(shell)])
+        n_shell += 1
+    end
+    
+    return NBodyChargeCloud{T, number_of_shells, NTuple{number_of_shells, Int}}( points, energies./sum(energies) * T(to_internal_units(energy)), Tuple(n))
+end

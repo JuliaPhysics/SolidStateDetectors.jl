@@ -41,6 +41,35 @@ end
     end
 end
 
+@recipe function f(nbc::NBodyChargeCloud{T, N, NTuple{N, Int}}; connect = true, markersize = 10) where {T, N}
+    
+    seriescolor --> :blue
+    points = nbc.points
+    seriestype := :scatter
+    
+    @series begin 
+        markersize := markersize
+        label --> "NBodyChargeCloud"
+        seriescolor --> seriescolor
+        PointCharge{T}(points[1])
+    end
+    
+    vertex_no = 1
+    
+    #Shells
+    for shell in Base.OneTo(N)
+        vertices = nbc.shell_structure[shell]
+        @series begin
+            markersize := markersize * exp(-(shell))
+            label --> ""
+            connect --> connect
+            seriescolor --> seriescolor
+            points[vertex_no+1:vertex_no+vertices]
+        end
+        vertex_no += vertices
+    end
+end
+
 
 @recipe function f(t::Tetrahedron{T}; connect = true) where {T}
     
