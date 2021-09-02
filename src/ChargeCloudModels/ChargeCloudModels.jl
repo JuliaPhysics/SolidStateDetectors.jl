@@ -1,9 +1,27 @@
 abstract type AbstractChargeCloud end
 
-include("NBodyChargeCloud.jl")
-
 include("PlatonicSolids/PlatonicSolids.jl")
 include("ParticleTypes.jl")
+
+"""
+    struct NBodyChargeCloud{T} <: AbstractChargeCloud
+
+Struct which defines a charge cloud consisting of multiple point-like charge carriers,
+initially distributed around a given center.
+
+## Fields
+* `points::Vector{CartesianPoint{T}}`: Positions of the charge carriers that are part of the charge cloud.
+* `energies::Vector{T}`: Energies of the respective charge carriers, in the same order as `points`.
+* `shell_structure::Vector{Type{<:AbstractChargeCloud}}`: Initial geometry of the charge carriers around the
+    `center` point, relevant for plotting.
+
+See also [`create_charge_cloud`](@ref).
+"""
+struct NBodyChargeCloud{T} <: AbstractChargeCloud
+    points::Vector{CartesianPoint{T}}
+    energies::Vector{T} # in units of eV
+    shell_structure::Vector{PlatonicSolid}
+end
 
 
 """
