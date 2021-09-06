@@ -18,8 +18,6 @@ initially distributed around a given center.
 * `points::Vector{CartesianPoint{T}}`: Positions of the charge carriers that are part of the charge cloud.
 * `energies::Vector{T}`: Energies of the respective charge carriers, in the same order as `points`.
 * `shell_structure::SH`: Initial geometry of the charge carriers around the `center` point, relevant for plotting.
-
-See also [`create_charge_cloud`](@ref).
 """
 struct NBodyChargeCloud{T <: SSDFloat, N, SH} <: AbstractChargeCloud
     points::Vector{CartesianPoint{T}}
@@ -29,7 +27,7 @@ end
 
 
 """
-    create_charge_cloud(center::CartesianPoint{T}, energy::T, particle_type::Type{PT} = Gamma; kwargs...)
+    NBodyChargeCloud(center::CartesianPoint{T}, energy::T, particle_type::Type{PT} = Gamma; kwargs...)
 
 Returns an [`NBodyChargeCloud`](@ref) for a given `energy` deposition at a position that defines the `center` of the charge cloud.
 
@@ -47,15 +45,13 @@ Returns an [`NBodyChargeCloud`](@ref) for a given `energy` deposition at a posit
 ```julia
 center = CartesianPoint{T}([0,0,0])
 energy = 1460u"keV"
-create_charge_cloud(center, energy, number_of_shells = 3, shell_structure = SolidStateDetectors.Icosahedron)
+NBodyChargeCloud(center, energy, number_of_shells = 3, shell_structure = SolidStateDetectors.Icosahedron)
 ```
 
 !!! note
     Using values with units for `energy` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
-
-See also [`NBodyChargeCloud`](@ref).
 """
-function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity, particle_type::Type{PT} = Gamma;
+function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2, shell_structure = Dodecahedron
     )::NBodyChargeCloud{T, number_of_shells, typeof(shell_structure{T})} where {T, PT <: ParticleType}
     
@@ -96,7 +92,7 @@ function create_regular_sphere(center::CartesianPoint{T}, N::Integer, R::T)::Vec
     return points[1:Ncount]
 end
 
-function create_charge_cloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
+function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2,
     )::NBodyChargeCloud{T, number_of_shells, NTuple{number_of_shells, Int}} where {T, PT <: ParticleType}
     
