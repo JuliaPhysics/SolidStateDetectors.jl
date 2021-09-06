@@ -125,6 +125,12 @@ where ``W_{WP}`` is the (pseudo) energy stored in the "electric field" (gradient
 ## Arguments
 * `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
 * `contact_id::Int`: The ID of the contact for which the capacitance should be calculated.
+
+## Keywords 
+* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
+    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
+    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
+    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
 """
 function calculate_capacitance(sim::Simulation, contact_id::Int; consider_multiplicity::Bool = true)
     @assert !ismissing(sim.weighting_potentials[contact_id]) "Weighting potential of contact $contact_id has not been calculated yet. Please run `calculate_weighting_potential!(sim, $contact_id)` first."
