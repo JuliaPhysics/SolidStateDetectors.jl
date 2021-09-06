@@ -2,7 +2,6 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: SSDFloat
 
 using Unitful
 
