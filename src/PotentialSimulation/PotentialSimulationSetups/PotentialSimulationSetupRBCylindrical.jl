@@ -83,6 +83,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
+                point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
                 sor_consts = (1.0, 1.0),
                 not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialSimulationSetupRB{T} where {T}
@@ -91,6 +92,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
 
     is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
+    depletion_handling::Bool = is_weighting_potential && !ismissing(point_types)
 
     @inbounds begin
         begin # Geometrical weights of the Axes
@@ -210,10 +212,28 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
                 fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, passive)
             end
         end
+        if depletion_handling
+            for iz in axes(ϵ, 3)
+                pos_z = mpz[iz]
+                for iφ in axes(ϵ, 2)
+                    pos_φ = mpφ[iφ]
+                    for ir in axes(ϵ, 1)
+                        pos_r = mpr[ir]
+                        if (ir == 1 && axr[1] == 0) pos_r = axr[2] * 0.5 end
+                        pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
+                        ig = find_closest_gridpoint(pt, point_types.grid)
+                        if is_undepleted_point_type(point_types.data[ig...]) 
+                            ϵ[ir, iφ, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor)
+                        end
+                    end
+                end
+            end
+        end  
+        
         ϵ0_inv::T = inv(ϵ0)
         ρ_tmp *= ϵ0_inv
         q_eff_fix_tmp *= ϵ0_inv
-    
+
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
         ρ::Array{T, 4} = RBExtBy2Array(T, grid)
