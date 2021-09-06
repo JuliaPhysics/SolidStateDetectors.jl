@@ -486,7 +486,7 @@ function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, co
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat}
     pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
         PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
-            not_only_paint_contacts, paint_contacts, point_types = sim.point_types);
+            not_only_paint_contacts, paint_contacts, point_types = depletion_handling ? sim.point_types : missing);
 
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), grid)
     nothing
@@ -670,7 +670,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
     pssrb = PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
-                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = sim.point_types)
+                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing)
 
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
@@ -784,7 +784,6 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
-        if isWP depletion_handling = false end
         if ismissing(grid)
             grid = Grid(sim, for_weighting_potential = isWP, max_tick_distance = max_tick_distance, max_distance_ratio = max_distance_ratio)
         end
