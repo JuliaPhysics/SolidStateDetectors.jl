@@ -622,7 +622,10 @@ There are several keyword arguments which can be used to tune the simulation.
 * `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `-1`. If set to `-1` there will be no limit.
-* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`. This is an experimental feature:
+    In undepleted regions (determined in `calculate_electric_potential!(sim; depletion_handling = true)`), the dielectric permittivity
+    of the semiconductor is scaled up to mimic conductive behavior. The scale factor can be tuned via 
+    the function [`scaling_factor_for_permittivity_in_undepleted_region`](@ref).
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).

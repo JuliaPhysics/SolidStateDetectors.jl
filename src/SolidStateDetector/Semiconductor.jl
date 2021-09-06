@@ -107,6 +107,7 @@ a very high value should be returned in order to mimic perfect conductivity if t
 
 !!! danger "Experimental feature!"
     This feature is under research. The goal is to study the properties / signal response of undepleted detector. 
+    This function is indented to be overwritten by the user to study the response. 
 """
 function scaling_factor_for_permittivity_in_undepleted_region(sc::Semiconductor{T})::T where {T}
     100000
