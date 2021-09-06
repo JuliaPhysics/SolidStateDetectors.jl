@@ -3,8 +3,49 @@ function _get_abs_bias_voltage(det::SolidStateDetector{T}) where {T <: SSDFloat}
     return (maximum(potentials) - minimum(potentials)) * u"V"
 end
 
+
+export calculate_capacitance
+@doc raw"""
+    calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = true)
+
+Returns the capacitance, ``C``, of a [`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of pF
+calculated via 
+```math
+C = 2 W_{E} / V_{BV}~,
+```
+where ``W_{E}`` is the energy stored in the electric field ([`calculate_stored_energy`](@ref)) 
+created by the detector with the applied bias voltage ``V_{BV}``. 
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
+
+## Keywords 
+* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
+    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
+    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
+    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
+
+!!! danger 
+    In general, this method is only valid if the system, detector and its surroundings, is symmetric with respect to the contacts
+    and the impurity density is zero and no fixed charge densities are present (or in the limit of very high bias voltages where
+    the contribution of those densities become negligible).
+    Than, the returned capacitance equals the capacitance of each contact.
+    
+    For asymmetric cases and zero impurity/charge densities, 
+    the calculated capacitance of this method equals the contact capacitance
+    of the contact which is not at ground.
+
+    In general, use [`calculate_capacitance(::Simulation, ::Int)`](@ref) 
+    to calculate the capacitance of a specific contact via its weighting potential.
 """
-    calculate_stored_energy(sim::Simulation{T}) where {T <: SSDFloat}
+function calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = true)
+    W = calculate_stored_energy(sim; consider_multiplicity)
+    return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
+end
+
+
+"""
+    calculate_stored_energy(sim::Simulation; consider_multiplicity::Bool = true)
 
 Calculates and returns the energy stored in the [`ElectricField`](@ref) of a 
 [`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of J.
@@ -12,104 +53,17 @@ Calculates and returns the energy stored in the [`ElectricField`](@ref) of a
 ## Arguments
 * `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the stored energy is calculated.
 
-!!! note 
-    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
+## Keywords 
+* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
+    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
+    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
+    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
 """
-function calculate_stored_energy(sim::Simulation{T}) where {T <: SSDFloat}
-    @assert !ismissing(sim.electric_field) "Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."
-    calculate_stored_energy(sim.electric_field, sim.ϵ_r)
-end
-
-function calculate_stored_energy(ef::ElectricField{T,3,S}, ϵ::DielectricDistribution{T,3,S}) where {T <: SSDFloat, S}
-    W::T = 0
-
-    cylindric::Bool = S == Cylindrical
-    cartesian::Bool = !cylindric
-
-    ax1::Vector{T} = collect(ef.grid[1])
-    ax2::Vector{T} = collect(ef.grid[2])
-    ax3::Vector{T} = collect(ef.grid[3])
-    mp1::Vector{T} = midpoints(get_extended_ticks(ef.grid[1]))
-    mp2::Vector{T} = midpoints(get_extended_ticks(ef.grid[2]))
-    mp3::Vector{T} = midpoints(get_extended_ticks(ef.grid[3]))
-    Δmp1::Vector{T} = diff(mp1)
-    Δmp2::Vector{T} = diff(mp2)
-    Δmp3::Vector{T} = diff(mp3)
-
-    w1r::Vector{T} = inv.(Δmp1) .* (mp1[2:end] .- ax1)
-    w1l::Vector{T} = inv.(Δmp1) .* (ax1 - mp1[1:end-1])
-    w2r::Vector{T} = inv.(Δmp2) .* (mp2[2:end] .- ax2)
-    w2l::Vector{T} = inv.(Δmp2) .* (ax2 - mp2[1:end-1])
-    w3r::Vector{T} = inv.(Δmp3) .* (mp3[2:end] .- ax3)
-    w3l::Vector{T} = inv.(Δmp3) .* (ax3 - mp3[1:end-1])
-
-    if cylindric
-        mp1[1] = 0
-        mp1[end] = ax1[end]
-        Δmp1 = ((mp1[2:end].^2) .- (mp1[1:end-1].^2)) ./ 2
-    end
-    V::T = 0
-    for i3 in 1:size(ϵ, 3)-1
-        _Δmp3::T = Δmp3[i3]
-        if (i3 == 1 || i3 == size(ϵ, 3)-1) _Δmp3 /= 2 end
-        for i2 in 1:size(ϵ, 2)-1
-            _Δmp2::T = Δmp2[i2]
-            if (cartesian && (i2 == 1 || i2 == size(ϵ, 2)-1)) _Δmp2 /= 2 end
-            for i1 in 1:size(ϵ, 1)-1
-                _Δmp1::T = Δmp1[i1]
-                if (cartesian && (i1 == 1 || i1 == size(ϵ, 1)-1)) _Δmp1 /= 2 end
-                ev::SArray{Tuple{3},Float32,1,3} = ef.data[i1, i2, i3]
-                dV::T = _Δmp3 * _Δmp2 * _Δmp1
-                _ϵ::T = sum([
-                    ϵ[i1, i2, i3]             * w1l[i1] * w2l[i2] * w3l[i3],
-                    ϵ[i1 + 1, i2, i3]         * w1r[i1] * w2l[i2] * w3l[i3],
-                    ϵ[i1, i2 + 1, i3]         * w1l[i1] * w2r[i2] * w3l[i3],
-                    ϵ[i1, i2, i3 + 1]         * w1l[i1] * w2l[i2] * w3r[i3],
-                    ϵ[i1 + 1, i2 + 1, i3]     * w1r[i1] * w2r[i2] * w3l[i3],
-                    ϵ[i1 + 1, i2, i3 + 1]     * w1r[i1] * w2l[i2] * w3r[i3],
-                    ϵ[i1, i2 + 1, i3 + 1]     * w1l[i1] * w2r[i2] * w3r[i3],
-                    ϵ[i1 + 1, i2 + 1, i3 + 1] * w1r[i1] * w2r[i2] * w3r[i3]
-                ])
-                V += dV
-                W += sum(ev.^2) * dV * _ϵ
-            end
-        end
-    end
-    E =  W * ϵ0 / 2 * u"J"
-    if cylindric && (size(ϵ, 2) - 1 != size(ef, 2))
-        E *= size(ef, 2) / (size(ϵ, 2) - 1)
-    end
-    return E
-end
-
-export calculate_capacitance
-"""
-    calculate_capacitance(sim::Simulation{T}) where {T <: SSDFloat}
-
-Calculates and returns the capacitance of a [`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of pF.
-
-## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
-
-!!! note 
-    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
-"""
-function calculate_capacitance(sim::Simulation{T}) where {T <: SSDFloat}
-    @assert !ismissing(sim.electric_field) "Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."
-    W = calculate_stored_energy(sim)
-    return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
-end
-
-
-function calculate_capacitance(sim::Simulation{T}, ::Type{ElectricPotential}; consider_multiplicity::Bool = true) where {T <: SSDFloat}
+function calculate_stored_energy(sim::Simulation; consider_multiplicity::Bool = true)
     @assert !ismissing(sim.electric_potential) "Electric potential has not been calculated yet. Please run `calculate_electric_potential!(sim)` first."
-    W = calculate_stored_energy(sim, ElectricPotential; consider_multiplicity)
-    return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
-end
-
-function calculate_stored_energy(sim::Simulation{T}, ::Type{ElectricPotential}; consider_multiplicity::Bool = true) where {T <: SSDFloat}
     calculate_stored_energy(sim.electric_potential, sim.ϵ_r; consider_multiplicity)
 end
+
 
 function calculate_stored_energy(ep::ScalarPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
     cylindrical = CS == Cylindrical
@@ -159,12 +113,26 @@ function calculate_stored_energy(ep::ScalarPotential{T,3,CS}, ϵ::DielectricDist
     return consider_multiplicity ? E * multiplicity(grid) : E
 end
 
-function calculate_capacitance(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int = 1; consider_multiplicity::Bool = true) where {T <: SSDFloat}
+@doc raw"""
+    calculate_capacitance(sim::Simulation, contact_id::Int = 1; consider_multiplicity::Bool = true)
+
+Returns the capacitance, ``C``, of the contact with ID `contact_id` in units of pF calculated via 
+```math
+C = 2 W_{WP} / 1 V^2~,
+```
+where ``W_{WP}`` is the (pseudo) energy stored in the "electric field" (gradient) of the weighting potential of the contact. 
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
+* `contact_id::Int`: The ID of the contact for which the capacitance should be calculated.
+"""
+function calculate_capacitance(sim::Simulation, contact_id::Int; consider_multiplicity::Bool = true)
     @assert !ismissing(sim.weighting_potentials[contact_id]) "Weighting potential of contact $contact_id has not been calculated yet. Please run `calculate_weighting_potential!(sim, $contact_id)` first."
-    W = calculate_stored_energy(sim, WeightingPotential, contact_id; consider_multiplicity)
+    W = calculate_stored_energy(sim, contact_id; consider_multiplicity)
     return uconvert(u"pF", 2 * W / u"V^2")
 end
-function calculate_stored_energy(sim::Simulation{T, CS}, ::Type{WeightingPotential}, contact_id::Int = 1; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
+
+function calculate_stored_energy(sim::Simulation{T, CS}, contact_id::Int = 1; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
     ϵ_r = DielectricDistribution(DielectricDistributionArray(PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 weighting_potential_contact_id = contact_id, use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
                 not_only_paint_contacts = false, paint_contacts = false)), sim.weighting_potentials[contact_id].grid)
