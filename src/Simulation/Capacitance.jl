@@ -29,7 +29,7 @@ created by the detector with the applied bias voltage ``V_{BV}``.
     In general, this method is only valid if the system, detector and its surroundings, is symmetric with respect to the contacts
     and the impurity density is zero and no fixed charge densities are present (or in the limit of very high bias voltages where
     the contribution of those densities become negligible).
-    Than, the returned capacitance equals the capacitance of each contact.
+    Then, the returned capacitance equals the capacitance of each contact.
     
     For asymmetric cases and zero impurity/charge densities, 
     the calculated capacitance of this method equals the contact capacitance
