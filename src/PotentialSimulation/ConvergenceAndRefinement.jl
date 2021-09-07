@@ -220,6 +220,7 @@ _get_ind_range_of_closed_axis(l::Int, ::Type{DiscreteAxis{T, BL, BR, Interval{:o
 
 
 function _create_refined_grid(p::ScalarPotential{T,3}, max_diffs::NTuple{3, T}, minimum_distances::NTuple{3, T}) where {T}
+    max_diffs = broadcast(md -> iszero(md) ? Inf : md, max_diffs)
     n_1 = floor.(Int, [maximum(abs.(p.data[i+1,:,:] .- p.data[i,:,:])) for i in 1:size(p.data, 1)-1] ./ max_diffs[1]) 
     n_2 = floor.(Int, [maximum(abs.(p.data[:,i+1,:] .- p.data[:,i,:])) for i in 1:size(p.data, 2)-1] ./ max_diffs[2]) 
     n_3 = floor.(Int, [maximum(abs.(p.data[:,:,i+1] .- p.data[:,:,i])) for i in 1:size(p.data, 3)-1] ./ max_diffs[3]) 
