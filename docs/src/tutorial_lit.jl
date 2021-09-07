@@ -105,11 +105,9 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 #md # [![tutorial_electric_field](tutorial_electric_field.svg)](tutorial_electric_field.pdf)
 
 
-# ## Drift field calculation
+# ## Simulation of charge drifts
 
-# Given the electric field and a charge drift model, calculate drift fields for electrons and holes. Precalculating the drift fields saves time during charge drift simulation:
-
-# Any drift field model can be used for the calculation of the electric field. If no model is explicitely given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
+# Any charge drift model can be used for the calculation of the electric field. If no model is explicitely given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
 
 # `<package_directory>/examples/example_config_files/ADLChargeDriftModel/<config_filename>.yaml.`
 
@@ -117,11 +115,6 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 
 charge_drift_model = ADLChargeDriftModel()
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
-
-
-# And apply the charge drift model to the electric field:
-
-calculate_drift_fields!(sim)
 
 # Now, let's create an "random" multi-site event:
 
@@ -176,4 +169,16 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 #md savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.svg"); nothing # hide
 #md # [![tutorial_waveforms](tutorial_waveforms.svg)](tutorial_waveforms.pdf)
+
+# SolidStateDetectors.jl also allows to separate the waveform into the two contributions from electrons and holes
+
+contact_id = 1
+plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time / ns",
+                    legend = :topleft, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
+#jl savefig("tutorial_waveform_contributions.pdf") # hide
+#md savefig("tutorial_waveform_contributions.pdf") # hide
+#md savefig("tutorial_waveform_contributions.svg"); nothing # hide
+#md # [![tutorial_waveform_contributions](tutorial_waveform_contributions.svg)](tutorial_waveform_contributions.pdf)
+
+
 
