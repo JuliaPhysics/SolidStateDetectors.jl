@@ -78,10 +78,13 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
+                point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
                 sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true ) where {T}
-                is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
-
+    
+    is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
+    depletion_handling::Bool = is_weighting_potential && !ismissing(point_types)
+    
     @inbounds begin
         begin # Geometrical weights of the Axes
             nx, ny, nz = size(grid)
@@ -185,6 +188,20 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
                 fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
             end
         end
+        if depletion_handling
+            for iz in axes(ϵ, 3)
+                for iy in axes(ϵ, 2)
+                    for ix in axes(ϵ, 1)
+                        pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
+                        ig = find_closest_gridpoint(pt, point_types.grid)
+                        if is_undepleted_point_type(point_types.data[ig...]) 
+                            ϵ[ix, iy, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor)
+                        end
+                    end
+                end
+            end
+        end  
+
         ϵ0_inv::T = inv(ϵ0)
         ρ_tmp *= ϵ0_inv
         q_eff_fix_tmp *= ϵ0_inv

@@ -93,3 +93,23 @@ end
 function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, chargedriftmodel::AbstractChargeDriftModel{T}) where {T,G,MT,CDM,IDM}
     Semiconductor(sc.temperature, sc.material, sc.impurity_density_model, chargedriftmodel, sc.geometry)
 end
+
+"""
+    scaling_factor_for_permittivity_in_undepleted_region(sc::Semiconductor{T})::T where {T}
+
+This function is called in the calculations of weighting potentials of undepleted detectors. 
+The electric permittivity, ``ϵ_{r}``, is scaled with this function in areas where the detector is undepleted.
+A value between `[0, +Inf]` should be returned. However, `Inf` should not be returned but instead
+a very high value should be returned in order to mimic perfect conductivity if that is desired. 
+
+## Arguments
+* `sc::Semiconductor{T}`: Semiconductor for which the dielectric permittivity should be scaled up.
+
+!!! danger "Experimental feature!"
+    This feature is under research. The goal is to study the properties / signal response of undepleted detector. 
+    This function is indented to be overwritten by the user to study the response. 
+"""
+function scaling_factor_for_permittivity_in_undepleted_region(sc::Semiconductor{T})::T where {T}
+    100000
+end
+
