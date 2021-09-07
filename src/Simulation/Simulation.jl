@@ -977,6 +977,10 @@ There are several keyword arguments which can be used to tune the calculation.
         If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
         Default is `5`.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`. This is an experimental feature:
+    In undepleted regions (determined in `calculate_electric_potential!(sim; depletion_handling = true)`), the dielectric permittivity
+    of the semiconductor is scaled up to mimic conductive behavior. The scale factor can be tuned via 
+    the function [`scaling_factor_for_permittivity_in_undepleted_region`](@ref).
 * `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
     Fewer threads might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
     If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
