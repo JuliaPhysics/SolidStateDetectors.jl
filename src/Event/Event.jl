@@ -27,6 +27,15 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
     return evt
 end
 
+
+function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
+    evt = Event{T}()
+    evt.locations = nbcc.points
+    evt.energies = nbcc.energies
+    evt.waveforms = missing
+    return evt
+end
+
 function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
          <:Tuple{
             Union{Integer, AbstractVector{<:Integer}},
@@ -49,7 +58,7 @@ in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, evt.locations)
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
 
 """
-    drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
 
 Calculates the electron and hole drift paths for the given [`Event`](@ref) and [`Simulation`](@ref)
     and stores them in `evt.drift_paths`.
@@ -61,6 +70,8 @@ Calculates the electron and hole drift paths for the given [`Event`](@ref) and [
 ## Keywords
 * `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
+* `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
+* `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -71,8 +82,8 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
-function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), Δt = Δt, max_nsteps = max_nsteps, verbose = verbose)
+function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
@@ -140,6 +151,8 @@ The output is stored in `evt.drift_paths` and `evt.waveforms`.
 ## Keywords
 * `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
+* `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
+* `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -149,8 +162,8 @@ simulate!(evt, sim, Δt = 1u"ns", verbose = false)
 
 See also [`drift_charges!`](@ref) and [`get_signals!`](@ref).
 """
-function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, verbose = verbose)
+function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     get_signals!(evt, sim, Δt = Δt)
     nothing
 end
@@ -189,4 +202,140 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
         error("Not yet definted for timestamps of type `$(TV)`")
     end
     return RDWaveform( new_times, new_signal )
+end
+
+
+"""
+    get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T}, contact_id::Int)
+    
+Returns the electron and hole contribution to the waveform of a [`Contact`](@ref) with a given
+`contact_id` of an [`Event`](@ref) as a `NamedTuple` with two entries: 
+`electron_contribution` and `hole_contribution`.
+
+## Arguments
+* `evt::Event{T}`: [`Event`](@ref) in which the charges have already been drifted.
+* `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `evt` were drifted.
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the waveform should be split into electron and hole contribution.
+
+## Example
+```julia 
+using Plots
+using SolidStateDetector
+T = Float32
+
+simulation = Simulation{T}(SSD_examples[:InvertedCoax])
+simulate!(simulation)
+event = Event([CartesianPoint{T}(0.02,0.01,0.05)])
+simulate!(event, simulation)
+
+contact_id = 1
+wf = get_electron_and_hole_contribution(evt, sim, contact_id)
+```
+
+!!! note 
+    The drift paths in `evt` need to be calculated using [`drift_charges!`](@ref) before calling this function.
+    
+See also [`plot_electron_and_hole_contribution`](@ref).
+"""
+function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}, contact_id::Int
+            )::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} where {T <: SSDFloat, S}
+    
+    @assert !ismissing(evt.drift_paths) "The charge drift is not yet simulated. Please use `drift_charges!(evt, sim)`!"
+    
+    dt::T = T(ustrip(uconvert(u"ns", diff(evt.drift_paths[1].timestamps_e)[1]*u"s")))
+    wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
+    signal_e::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_e, evt.drift_paths))))
+    signal_h::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_h, evt.drift_paths))))
+
+    for i in eachindex(evt.drift_paths)
+        energy = evt.energies[i]
+        
+        dp_e::Vector{CartesianPoint{T}} = evt.drift_paths[i].e_path
+        dp_e_t::Vector{T} = evt.drift_paths[i].timestamps_e
+        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, T(-1)*energy, wp, S)
+        
+        dp_h::Vector{CartesianPoint{T}} = evt.drift_paths[i].h_path
+        dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
+        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S)
+    end
+    
+    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e),
+            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h))
+end
+
+export get_electron_and_hole_contribution
+
+
+"""
+    plot_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T}, contact_id::Int)
+    
+Plots the waveform as well as the electron and hole contribution to the waveform 
+of a [`Contact`](@ref) with a given `contact_id` of an [`Event`](@ref).
+
+## Arguments
+* `evt::Event{T}`: [`Event`](@ref) in which the charges have already been drifted.
+* `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `evt` were drifted.
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) for which the waveform should be split into electron and hole contribution.
+
+## Keywords 
+* `n_samples::Int`: Number of samples with which the waveforms will be plotted. The default is the number of samples of the original waveform.
+
+## Example
+```julia 
+using Plots
+using SolidStateDetector
+T = Float32
+
+simulation = Simulation{T}(SSD_examples[:InvertedCoax])
+simulate!(simulation)
+event = Event([CartesianPoint{T}(0.02,0.01,0.05)])
+simulate!(event, simulation)
+
+contact_id = 1
+plot_electron_and_hole_contribution(evt, sim, contact_id, n_samples = 300)
+```
+
+!!! note 
+    The drift paths in `evt` need to be calculated using [`drift_charges!`](@ref) before calling this function.
+    
+!!! note 
+    This method requires to load the package [Plots.jl](https://github.com/JuliaPlots/Plots.jl).
+    
+See also [`get_electron_and_hole_contribution`](@ref).
+"""
+function plot_electron_and_hole_contribution end
+
+@userplot Plot_electron_and_hole_contribution
+@recipe function f(gdd::Plot_electron_and_hole_contribution; linewidth = 2, n_samples = missing)
+    
+    sim::Simulation = gdd.args[2]
+    T = get_precision_type(sim)
+    evt::Event{T} = gdd.args[1]
+    contact_id::Int = gdd.args[3]
+    
+    ismissing(n_samples) ? n_samples = length(evt.waveforms[contact_id].value) : nothing
+    
+    wf::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} = get_electron_and_hole_contribution(evt, sim, contact_id)
+    
+    @series begin
+        linecolor := :red 
+        linewidth --> linewidth
+        label --> "Electron contribution"
+        add_baseline_and_extend_tail(wf.electron_contribution, 0, n_samples)
+    end
+    
+    @series begin
+        linecolor := :green 
+        linewidth --> linewidth
+        label --> "Hole contribution"
+        add_baseline_and_extend_tail(wf.hole_contribution, 0, n_samples)
+    end
+    
+    @series begin
+        linecolor --> contact_id
+        linewidth --> linewidth
+        seriesalpha --> 0.5
+        label --> "Sum"
+        add_baseline_and_extend_tail(evt.waveforms[contact_id], 0, n_samples)
+    end
 end

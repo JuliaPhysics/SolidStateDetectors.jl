@@ -6,9 +6,7 @@ include("table_utils.jl")
 
 Simulates the waveforms for all events defined in `mcevents` for a given [`Simulation`](@ref) by
 
-1. calculating the drift paths of all energy hits defined in `mcevents`
-    based on the drift fields for electrons and holes stored in `sim.electron_drift_field` and 
-    `sim.hole_drift_field`, 
+1. calculating the drift paths of all energy hits defined in `mcevents`,
 2. determining the signal (waveforms) for each [`Contact`](@ref), 
     for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
@@ -26,6 +24,8 @@ If [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) is loaded, this function has ad
 ## Keywords
 * `max_nsteps::Int = 1000`: Maximum number of steps in the drift of each hit. 
 * `Δt::RealQuantity = 4u"ns"`: Time step used for the drift.
+* `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
+* `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `verbose = false`: Activate or deactivate additional info output.
 * `chunk_n_physics_events::Int = 1000` (HDF5 only): Number of events that should be saved in a single HDF5 output file.
 
@@ -48,7 +48,9 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
 function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
-                             verbose = false ) where {T <: SSDFloat}
+                             diffusion::Bool = false,
+                             self_repulsion::Bool = false,
+                             verbose::Bool = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -57,14 +59,13 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     contact_ids = Int[]
     for contact in contacts if !ismissing(sim.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
     wpots_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
-    e_drift_field = get_interpolated_drift_field(sim.electron_drift_field);
-    h_drift_field = get_interpolated_drift_field(sim.hole_drift_field);
+    electric_field = interpolated_vectorfield(sim.electric_field)
     
     @info "Detector has $(n_contacts) contact"*(n_contacts != 1 ? "s" : "")
     @info "Table has $(length(mcevents)) physics events ($(sum(map(edeps -> length(edeps), mcevents.edep))) single charge depositions)."
 
     # First simulate drift paths
-    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, e_drift_field, h_drift_field, verbose)
+    drift_paths = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, diffusion, self_repulsion, verbose)
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
@@ -88,13 +89,15 @@ end
 
 function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T},
                                   Δt::RealQuantity, max_nsteps::Int, 
-                                  e_drift_field::Interpolations.Extrapolation, h_drift_field::Interpolations.Extrapolation, 
+                                  electric_field::Interpolations.Extrapolation,
+                                  diffusion::Bool,
+                                  self_repulsion::Bool,
                                   verbose::Bool ) where {T <: SSDFloat}
     return @showprogress map(mcevents) do phyevt
-        _drift_charges(sim.detector, sim.electron_drift_field.grid, sim.point_types, 
-                        CartesianPoint{T}.(to_internal_units.(phyevt.pos)),
-                        e_drift_field, h_drift_field, 
-                        T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, verbose = verbose)
+        _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
+                        CartesianPoint{T}.(to_internal_units.(phyevt.pos)), T.(to_internal_units(phyevt.edep)),
+                        electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, 
+                        diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     end
 end
 

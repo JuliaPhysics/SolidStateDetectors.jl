@@ -100,8 +100,6 @@ for key in [:InvertedCoax, :BEGe, :Coax, :CGD, :Hexagon]
 
     sim.detector = SolidStateDetector(sim.detector, ADLChargeDriftModel(T = T))
 
-    calculate_drift_fields!(sim)
-
     pos = if key == :InvertedCoax
         CylindricalPoint{T}[ CylindricalPoint{T}( 0.02, deg2rad(10), 0.025 ) ]
     elseif key == :CGD

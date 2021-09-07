@@ -22,8 +22,6 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `electric_potential::Union{ElectricPotential{T}, Missing}`: The [`ElectricPotential`](@ref) of the simulation.
 * `weighting_potentials::Vector{Any}`: The [`WeightingPotential`](@ref) for each [`Contact`](@ref) of the `detector` in the simulation.
 * `electric_field::Union{ElectricField{T}, Missing}`: The [`ElectricField`](@ref) of the simulation.
-* `electron_drift_field::Union{ElectricField{T}, Missing}`: The electron drift field of the simulation.
-* `hole_drift_field::Union{ElectricField{T}, Missing}`: The hole drift field of the simulation.
 """
 mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
     config_dict::Dict
@@ -38,8 +36,6 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     electric_potential::Union{ElectricPotential{T}, Missing}
     weighting_potentials::Vector{Any}
     electric_field::Union{ElectricField{T}, Missing}
-    electron_drift_field::Union{ElectricField{T}, Missing}
-    hole_drift_field::Union{ElectricField{T}, Missing}
 end
 
 function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -55,8 +51,6 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         missing,
         missing,
         [missing],
-        missing,
-        missing,
         missing
     )
 end
@@ -74,8 +68,6 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         ϵ_r = NamedTuple(sim.ϵ_r),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
-        electron_drift_field = NamedTuple(sim.electron_drift_field),
-        hole_drift_field = NamedTuple(sim.hole_drift_field),
         weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(sim.weighting_potentials))
     )
     return nt
@@ -100,8 +92,6 @@ function Simulation(nt::NamedTuple)
     else
         [missing for contact in sim.detector.contacts]
     end
-    sim.electron_drift_field = haskey(nt, :electron_drift_field) && nt.electron_drift_field !== missing_tuple ? ElectricField(nt.electron_drift_field) : missing
-    sim.hole_drift_field = haskey(nt, :hole_drift_field) && nt.hole_drift_field !== missing_tuple ? ElectricField(nt.hole_drift_field) : missing
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -126,8 +116,6 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
         print("    Contact $(contact.id): ")
         println(!ismissing(sim.weighting_potentials[contact.id]) ? size(sim.weighting_potentials[contact.id]) : missing)
     end
-    println("  Electron drift field: ", !ismissing(sim.electron_drift_field) ? size(sim.electron_drift_field) : missing)
-    println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
 
 function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
@@ -942,6 +930,9 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             end
         end
     end
+    
+    if isEP mark_bulk_bits!(sim.point_types.data) end
+    
     nothing
 end
 
@@ -1118,43 +1109,22 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
     nothing
 end
 
-"""
-    calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
-
-Calculates the drift fields for electrons and holes from the [`ElectricField`](@ref),
-`sim.electric_field` and the charge drift model `sim.detector.semiconductor.charge_drift_model`
-and stores them in `sim.electron_drift_field` and `sim.hole_drift_field`.
-    
-## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_field` has already been calculated.
-
-## Keywords 
-* `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
-
-## Examples 
-    calculate_drift_fields!(sim, use_nthreads = 4)
-    
-!!! note 
-    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
-"""
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
-    @assert !ismissing(sim.electric_field) "Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."
-    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
-    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
+    @warn "Since v0.7.0, drift fields do not need to be calculated anymore.\n`calculate_drift_fields!(sim)` can be removed."
     nothing
 end
 @deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
 
-function get_interpolated_drift_field(ef::ElectricField)
-    get_interpolated_drift_field(ef.data, ef.grid)
+function interpolated_vectorfield(ef::ElectricField)
+    interpolated_vectorfield(ef.data, ef.grid)
 end
 
-function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
-                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions,
-                             get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
-                             Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
+function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}}, energies::Vector{T};
+                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
+    return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions, energies, 
+                             interpolated_vectorfield(sim.electric_field), Δt, 
+                             max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
 end
 
 function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
@@ -1174,11 +1144,9 @@ Performs a full chain simulation for a given [`Simulation`](@ref) by
     
 1. calculating the [`ElectricPotential`](@ref),
 2. calculating the [`ElectricField`](@ref),
-3. calculating the electron and hole drift fields and
-4. calculating the [`WeightingPotential`](@ref) for each [`Contact`](@ref).
+3. calculating the [`WeightingPotential`](@ref) for each [`Contact`](@ref).
 
-The output is stored in `sim.electric_potential`, `sim.electric_field`, `sim.electron_drift_field`, `sim.hole_drift_field`
-and `sim.weighting_potentials`, respectively.
+The output is stored in `sim.electric_potential`, `sim.electric_field` and `sim.weighting_potentials`, respectively.
 
 There are several keyword arguments which can be used to tune the simulation.
 
@@ -1224,8 +1192,7 @@ There are several keyword arguments which can be used to tune the simulation.
 * `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
 
-See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref),
-[`calculate_drift_fields!`](@ref) and [`calculate_weighting_potential!`](@ref).
+See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref) and [`calculate_weighting_potential!`](@ref).
 
 ## Example 
 ```julia 
@@ -1279,7 +1246,6 @@ function simulate!( sim::Simulation{T, S};
         )
     end
     calculate_electric_field!(sim)
-    calculate_drift_fields!(sim)
     @info "Detector simulation done"
 end
 

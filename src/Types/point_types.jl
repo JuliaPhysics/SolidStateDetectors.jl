@@ -8,6 +8,7 @@ Right now, there are:
     const update_bit      = 0x01
     const undepleted_bit  = 0x02
     const pn_junction_bit = 0x04
+    const bulk_bit     = 0x08
 
 ## Examples
 
@@ -15,14 +16,16 @@ How to get information out of a `PointType` variable `point_type`:
 1. `point_type & update_bit == 0` -> do not update this point (for fixed points)     
 2. `point_type & update_bit >  0` -> do update this point    
 3. `point_type & undepleted_bit > 0` -> this point is undepleted
-4. `point_type & pn_junction_bit > 0` -> this point belongs to the solid state detector. So it is in the volume of the n-type or p-type material.
+4. `point_type & pn_junction_bit > 0` -> this point belongs to the solid state detector, meaning that it is in the volume of the n-type or p-type material.
+5. `point_type & bulk_bit > 0` -> this point is only surrounded by points marked as `pn_junction_bit`
 """
 const PointType       = UInt8
 
 # Point types for electric potential calculation
 const update_bit      = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
 const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
-const pn_junction_bit = 0x04 # parse(UInt8, "00001000", base=2) # 0 -> point is not inside a bubble; 1 -> point is inside a bubble
+const pn_junction_bit = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
+const bulk_bit     = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
 
 is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
 is_undepleted_point_type(p::PointType) = p & undepleted_bit > 0
@@ -54,15 +57,31 @@ end
 @inline getindex(point_types::PointTypes{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(point_types.data, I...)
 @inline getindex(point_types::PointTypes{T, N, S}, i::Int) where {T, N, S} = getindex(point_types.data, i)
 @inline getindex(point_types::PointTypes{T, N, S}, s::Symbol) where {T, N, S} = getindex(point_types.grid, s)
+@inline getindex(point_types::PointTypes{T, N, S}, pt::AbstractCoordinatePoint{T}) where {T, N, S} = point_types.data[find_closest_gridpoint(pt, point_types.grid)...]
 
 function in(pt::AbstractCoordinatePoint{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
     cpt = _convert_point(pt, S)
-    grid::Grid{T, 3, S} = point_types.grid
-    i1::Int = searchsortednearest(grid.axes[1].ticks, cpt[1])
-    i2::Int = searchsortednearest(grid.axes[2].ticks, cpt[2])
-    i3::Int = searchsortednearest(grid.axes[3].ticks, cpt[3])
-    return point_types.data[i1, i2, i3] & pn_junction_bit > 0
+    point_type::PointType = point_types[cpt]
+    return point_type & bulk_bit > 0
 end
+
+
+function mark_bulk_bits!(point_types::Array{PointType, 3})
+    i1max, i2max, i3max = size(point_types)
+    for i1 in Base.OneTo(i1max), i2 in Base.OneTo(i2max), i3 in Base.OneTo(i3max)
+        (point_types[i1,i2,i3] & pn_junction_bit == 0) && continue 
+        point_types[i1,i2,i3] += bulk_bit * begin
+            in_bulk = true
+            for j1 in max(i1-1,1):min(i1+1,i1max), j2 in max(i2-1,1):min(i2+1,i2max), j3 in max(i3-1,1):min(i3+1,i3max)
+                in_bulk &= point_types[j1,j2,j3] & pn_junction_bit > 0
+                !in_bulk && break
+            end
+            in_bulk
+        end
+    end
+    point_types
+end
+
 
 """
     is_depleted(point_types::PointTypes)::Bool

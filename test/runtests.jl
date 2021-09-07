@@ -42,14 +42,13 @@ end
         sim = Simulation{T}(SSD_examples[:Coax])
         calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         calculate_electric_field!(sim)
-        calculate_drift_fields!(sim)
         calculate_weighting_potential!(sim, 1, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         calculate_weighting_potential!(sim, 2, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         for i in 3:19
             calculate_weighting_potential!(sim, i, convergence_limit = 5e-6, refinement_limits = [0.2], verbose = false)
         end
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
-        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
@@ -61,7 +60,6 @@ end
         sim = Simulation{T}(SSD_examples[:BEGe])
         calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         calculate_electric_field!(sim)
-        calculate_drift_fields!(sim)
         calculate_weighting_potential!(sim, 1, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
         for i in 2:5
             calculate_weighting_potential!(sim, i, convergence_limit = 5e-6, refinement_limits = [0.2], verbose = false)
@@ -121,7 +119,7 @@ end
         simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05], 
             max_tick_distance = 0.5u"mm", verbose = false)
         evt = Event([CartesianPoint{T}(0.01,0,0.003)])
-        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
@@ -155,10 +153,6 @@ end
     @test sim == Simulation(nt)
     
     calculate_electric_field!(sim)
-    nt = NamedTuple(sim)
-    @test sim == Simulation(nt)
-    
-    calculate_drift_fields!(sim)
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 

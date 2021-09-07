@@ -102,16 +102,8 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 
 	# λ1, λ2, λ3, λ4 = roots_of_4th_order_polynomial(a, b, c, d) # That does not work for all combinations of a, b, c, d...
 	# fallback to Polynomials.jl, which is slower... We should improve `roots_of_4th_order_polynomial`... 
-	λ1, λ2, λ3, λ4 = real.(Polynomials.roots(Polynomial((d, c, b, a, one(T)))))
-	
-	ints1 = obj_l.origin + λ1 * obj_l.direction 
-    ints2 = obj_l.origin + λ2 * obj_l.direction 
-    ints3 = obj_l.origin + λ3 * obj_l.direction 
-    ints4 = obj_l.origin + λ4 * obj_l.direction 
-    return _transform_into_global_coordinate_system(ints1, tm), 
-	_transform_into_global_coordinate_system(ints2, tm),
-	_transform_into_global_coordinate_system(ints3, tm),
-	_transform_into_global_coordinate_system(ints4, tm)
+    return broadcast(λ -> _transform_into_global_coordinate_system(obj_l.origin + λ * obj_l.direction, tm), 
+        real.(Polynomials.roots(Polynomial((d, c, b, a, one(T))))))
 end
 
 

@@ -155,44 +155,43 @@ end
         end
     end
 
-    el_field_itp     = get_interpolated_drift_field(sim.electric_field.data      , sim.electric_field.grid) #Interpolate the Electric fields, in which the charges will drift. Is passed to the drift function.
-    el_field_itp_inv = get_interpolated_drift_field(sim.electric_field.data .* -1, sim.electric_field.grid)
+    el_field_itp     = interpolated_vectorfield(sim.electric_field.data      , sim.electric_field.grid) #Interpolate the Electric fields, in which the charges will drift. Is passed to the drift function.
+    el_field_itp_inv = interpolated_vectorfield(sim.electric_field.data .* -1, sim.electric_field.grid)
+    spawn_positions = spawn_positions[findall(ipos -> ((spacing-1)+ipos)%spacing == 0, 1:length(spawn_positions))]
 
-    for (ipos, pos) in enumerate(spawn_positions) # Charge drift and plotting loop. Not optimized for speed, but it doesnt have to be. Uses low level drift function for more contorl.
-        for el_field in (el_field_itp, el_field_itp_inv)
-            if ((spacing-1)+ipos)%spacing == 0
-                path = CartesianPoint{T}[CartesianPoint{T}(0.0,0.0,0.0) for i in 1:max_nsteps]
-                _drift_charge!(path, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint(pos), T(1e-9), el_field, verbose = false )
-                filter!(x->x != CartesianPoint{T}(0.0,0.0,0.0), path)
-                @series begin
-                    seriescolor --> :white
-                    label --> ""
-                    x, y = if dim_symbol == :φ
-                        map(x -> x[1] * cos(v) + x[2] * sin(v), path), #project to the φ-plane
-                        map(x -> x[3], path)
-                    elseif dim_symbol == :x
-                        map(x -> x[2], path),
-                        map(x -> x[3], path)
-                    elseif dim_symbol == :y
-                        map(x -> x[1], path),
-                        map(x -> x[3], path)
-                    elseif dim_symbol == :z
-                        if S == Cylindrical
-                            projection --> :polar
-                            path = CylindricalPoint.(path)
-                            map(x -> x[2], path),
-                            map(x -> x[1], path)
-                        else
-                            map(x -> x[1], path),
-                            map(x -> x[2], path)
-                        end
-                    elseif dim_symbol == :r
+    for el_field in (el_field_itp, el_field_itp_inv)
+        paths::Array{CartesianPoint{T}, 2} = fill(zero(CartesianVector{T}), length(spawn_positions), max_nsteps)
+        last_step::Int = _drift_charge!(paths, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint.(spawn_positions), ones(T, length(spawn_positions)), T(1e-9), el_field, Electron, verbose = false )
+        for i in 1:size(paths, 1)
+            path = @view paths[i, 1:last_step]
+            @series begin
+                seriescolor --> :white
+                label --> ""
+                x, y = if dim_symbol == :φ
+                    broadcast(x -> x[1] * cos(v) + x[2] * sin(v), path), #project to the φ-plane
+                    broadcast(x -> x[3], path)
+                elseif dim_symbol == :x
+                    broadcast(x -> x[2], path),
+                    broadcast(x -> x[3], path)
+                elseif dim_symbol == :y
+                    broadcast(x -> x[1], path),
+                    broadcast(x -> x[3], path)
+                elseif dim_symbol == :z
+                    if S == Cylindrical
+                        projection --> :polar
                         path = CylindricalPoint.(path)
-                        map(x -> x[2], path),
-                        map(x -> x[3], path)
+                        broadcast(x -> x[2], path),
+                        broadcast(x -> x[1], path)
+                    else
+                        broadcast(x -> x[1], path),
+                        broadcast(x -> x[2], path)
                     end
-                    x, y
+                elseif dim_symbol == :r
+                    path = CylindricalPoint.(path)
+                    broadcast(x -> x[2], path),
+                    broadcast(x -> x[3], path)
                 end
+                x, y
             end
         end
     end
