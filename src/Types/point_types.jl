@@ -27,6 +27,8 @@ const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted 
 const pn_junction_bit = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
 const bulk_bit     = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
 
+is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
+is_undepleted_point_type(p::PointType) = p & undepleted_bit > 0
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
         

@@ -433,10 +433,11 @@ with the material properties and fixed potentials defined in `sim.detector`.
 apply_initial_state!(sim, ElectricPotential, paint_contacts = false)
 ```
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
-        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
-        PotentialSimulationSetupRB(sim.detector, grid, sim.medium; not_only_paint_contacts, paint_contacts);
+function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
+        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat, CS}
+    pssrb = PotentialSimulationSetupRB(sim.detector, grid, sim.medium; 
+            use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
+            not_only_paint_contacts, paint_contacts);
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
@@ -470,10 +471,10 @@ apply_initial_state!(sim, WeightingPotential, 1) # =>  applies initial state for
 ```
 """
 function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim);
-        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
+        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat}
     pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
         PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
-            not_only_paint_contacts, paint_contacts);
+            not_only_paint_contacts, paint_contacts, point_types = depletion_handling ? sim.point_types : missing);
 
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), grid)
     nothing
@@ -539,10 +540,9 @@ function update_till_convergence!( sim::Simulation{T,CS},
     end
     only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
 
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
-        PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
-            not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
-
+    pssrb = PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
+        use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
+        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
@@ -610,7 +610,10 @@ There are several keyword arguments which can be used to tune the simulation.
 * `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `-1`. If set to `-1` there will be no limit.
-* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`. This is an experimental feature:
+    In undepleted regions (determined in `calculate_electric_potential!(sim; depletion_handling = true)`), the dielectric permittivity
+    of the semiconductor is scaled up to mimic conductive behavior. The scale factor can be tuned via 
+    the function [`scaling_factor_for_permittivity_in_undepleted_region`](@ref).
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
@@ -652,10 +655,10 @@ function update_till_convergence!( sim::Simulation{T, CS},
     end
 
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.weighting_potentials[contact_id].grid)} =
-        PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
+    pssrb = PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
-                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
+                use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
+                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing)
 
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
@@ -769,7 +772,6 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
-        if isWP depletion_handling = false end
         if ismissing(grid)
             grid = Grid(sim, for_weighting_potential = isWP, max_tick_distance = max_tick_distance, max_distance_ratio = max_distance_ratio)
         end
@@ -858,7 +860,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         end
     end
     if isEP
-        apply_initial_state!(sim, potential_type, grid, not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
+        apply_initial_state!(sim, potential_type, grid; not_only_paint_contacts, paint_contacts)
         update_till_convergence!( sim, potential_type, convergence_limit,
                                   n_iterations_between_checks = n_iterations_between_checks,
                                   max_n_iterations = max_n_iterations,
@@ -866,7 +868,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                   use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
                                   sor_consts = sor_consts )
     else
-        apply_initial_state!(sim, potential_type, contact_id, grid, not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
+        apply_initial_state!(sim, potential_type, contact_id, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
         update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
@@ -882,24 +884,26 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
-                if verbose println("Grid size: $(size(sim.electric_potential.data))") end
+                nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
+                verbose && println("Grid size: $(size(sim.electric_potential.data)) - using $(nt) threads now:") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
-                                                use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1],
+                                                use_nthreads = nt,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
             else
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
-                if verbose println("Grid size: $(size(sim.weighting_potentials[contact_id].data))") end
+                nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
+                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - using $(nt) threads now:")
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
-                                                use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1],
+                                                use_nthreads = nt,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
@@ -964,6 +968,10 @@ There are several keyword arguments which can be used to tune the calculation.
         If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
         Default is `5`.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`. This is an experimental feature:
+    In undepleted regions (determined in `calculate_electric_potential!(sim; depletion_handling = true)`), the dielectric permittivity
+    of the semiconductor is scaled up to mimic conductive behavior. The scale factor can be tuned via 
+    the function [`scaling_factor_for_permittivity_in_undepleted_region`](@ref).
 * `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
     Fewer threads might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
     If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
