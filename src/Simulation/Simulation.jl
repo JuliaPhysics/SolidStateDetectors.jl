@@ -1249,4 +1249,5 @@ function simulate!( sim::Simulation{T, S};
     @info "Detector simulation done"
 end
 
+include("ElectricFieldEnergy.jl")
 include("Capacitance.jl")
