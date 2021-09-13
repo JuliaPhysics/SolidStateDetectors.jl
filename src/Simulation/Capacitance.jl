@@ -1,72 +1,82 @@
-function _get_abs_bias_voltage(det::SolidStateDetector{T}) where {T <: SSDFloat}
-    potentials::Vector{T} = map(c -> c.potential, det.contacts)
-    return (maximum(potentials) - minimum(potentials)) * u"V"
+export calculate_mutual_capacitance
+
+function calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int})
+    calculate_mutual_capacitance(sim.weighting_potentials[ij[1]], sim.weighting_potentials[ij[2]], sim.ϵ_r)
 end
 
+function calculate_mutual_capacitance(
+            wpi::WeightingPotential{T,3,CS}, wpj::WeightingPotential{T,3,CS},
+            ϵ_r::DielectricDistribution{T,3,CS};
+            consider_multiplicity::Bool = true ) where {T, CS}
+    c_ij::T = zero(T)
 
-export calculate_capacitance
-@doc raw"""
-    calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = true)
+    int_p1 = interpolated_scalarfield(wpi)
+    int_p2 = interpolated_scalarfield(wpj)
+    int_ϵ_r = interpolated_scalarfield(ϵ_r)
+    cylindrical = CS == Cylindrical
+    phi_2D = cylindrical && size(wpi, 2) == size(wpj, 2) == 1
+    grid = phi_2D ? get_2π_potential(wpi, n_points_in_φ = 2).grid : _get_closed_potential(wpi).grid
+    grid_mps = get_extended_midpoints_grid(grid)
+    for i3 in 1:size(grid, 3)-1
+        for i2 in 1:size(grid, 2)-1
+            for i1 in 1:size(grid, 1)-1
+                w1, w2, w3 = voxel_widths(grid, i1, i2, i3)
+                dV = voxel_volume(grid, i1, i2, i3, w1, w2, w3)
 
-Returns the capacitance, ``C``, of a [`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of pF
-calculated via 
-```math
-C = 2 W_{E} / V_{BV}~,
-```
-where ``W_{E}`` is the energy stored in the electric field ([`calculate_stored_energy`](@ref)) 
-created by the detector with the applied bias voltage ``V_{BV}``. 
+                pt_voxel_mid = GridPoint(grid_mps, (i1 + 1, i2 + 1, i3 + 1))
+                ϵ_r_voxel = get_interpolation(int_ϵ_r, pt_voxel_mid, CS)
 
-## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
+                efs = (Vector{T}(undef, 3), Vector{T}(undef, 3))
+                for (i, int_p) in enumerate((int_p1, int_p2))
+                    p000 = get_interpolation(int_p, GridPoint(grid, (i1    , i2    , i3    )), CS)
+                    p100 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2    , i3    )), CS)
+                    p010 = get_interpolation(int_p, GridPoint(grid, (i1    , i2 + 1, i3    )), CS)
+                    p110 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2 + 1, i3    )), CS)
+                    p001 = get_interpolation(int_p, GridPoint(grid, (i1    , i2    , i3 + 1)), CS)
+                    p101 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2    , i3 + 1)), CS)
+                    p011 = get_interpolation(int_p, GridPoint(grid, (i1    , i2 + 1, i3 + 1)), CS)
+                    p111 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2 + 1, i3 + 1)), CS)
+                    efv1 = ( (p100 - p000) + (p110 - p010) + (p101 - p001) + (p111 - p011) ) / (4 * w1)
+                    efv2 = if cylindrical
+                        _w2 = (grid[2].ticks[i2 + 1] - grid[2].ticks[i2])
+                        if i1 == 1
+                            ((p110 - p100)/(_w2*grid[1].ticks[i1+1]) +
+                             (p111 - p101)/(_w2*grid[1].ticks[i1+1]) ) / 2
+                        else
+                            ((p010 - p000)/(_w2*grid[1].ticks[i1]) +
+                             (p110 - p100)/(_w2*grid[1].ticks[i1+1]) +
+                             (p011 - p001)/(_w2*grid[1].ticks[i1]) +
+                             (p111 - p101)/(_w2*grid[1].ticks[i1+1])) / 4
+                        end
+                    else
+                        ( (p010 - p000) + (p110 - p100) + (p011 - p001) + (p111 - p101) ) / (4 * w2)
+                    end
+                    efv3 = ( (p001 - p000) + (p101 - p100) + (p011 - p010) + (p111 - p110) ) / (4 * w3)
+                    efs[i][:] = [efv1, efv2, efv3]
+                end
+                c_ij += sum(efs[1] .* efs[2]) * dV * ϵ_r_voxel
+            end
+        end
+    end
+    phi_2D && (c_ij *= 2)
+    consider_multiplicity && (c_ij *= multiplicity(grid))
+    return uconvert(u"pF", c_ij*u"m" * ϵ0*u"F/m" )
+end
 
-## Keywords 
-* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
-    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
-    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
-    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
-
-!!! danger 
-    In general, this method is only valid if the system, detector and its surroundings, is symmetric with respect to the contacts
-    and the impurity density is zero and no fixed charge densities are present (or in the limit of very high bias voltages where
-    the contribution of those densities become negligible).
-    Then, the returned capacitance equals the capacitance of each contact.
-    
-    For asymmetric cases and zero impurity/charge densities, 
-    the calculated capacitance of this method equals the contact capacitance
-    of the contact which is not at ground.
-
-    In general, use [`calculate_capacitance(::Simulation, ::Int)`](@ref) 
-    to calculate the capacitance of a specific contact via its weighting potential.
+export calculate_capacitance_matrix
 """
-function calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = true)
-    W = calculate_stored_energy(sim; consider_multiplicity)
-    return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
-end
+    calculate_capacitance_matrix(sim::Simulation{T}) where {T}
 
-
-@doc raw"""
-    calculate_capacitance(sim::Simulation, contact_id::Int = 1; consider_multiplicity::Bool = true)
-
-Returns the capacitance, ``C``, of the contact with ID `contact_id` in units of pF calculated via 
-```math
-C = 2 W_{WP} / 1 V^2~,
-```
-where ``W_{WP}`` is the (pseudo) energy stored in the "electric field" (gradient) of the weighting potential of the contact. 
-
-## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
-* `contact_id::Int`: The ID of the contact for which the capacitance should be calculated.
-
-## Keywords 
-* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
-    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
-    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
-    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
+Calculates the Maxwell Capacitance Matrix.
 """
-function calculate_capacitance(sim::Simulation, contact_id::Int; consider_multiplicity::Bool = true)
-    @assert !ismissing(sim.weighting_potentials[contact_id]) "Weighting potential of contact $contact_id has not been calculated yet. Please run `calculate_weighting_potential!(sim, $contact_id)` first."
-    W = calculate_stored_energy(sim, contact_id; consider_multiplicity)
-    return uconvert(u"pF", 2 * W / u"V^2")
+function calculate_capacitance_matrix(sim::Simulation{T}) where {T}
+    @assert !ismissing(sim.weighting_potentials) "The weighting_potentials needs to be calculated first."
+    n = length(sim.weighting_potentials)
+    C = zeros(typeof(one(T) * u"pF"), (n, n))
+    for i in 1:n
+        for j in i:n
+            C[j, i] = C[i, j] = calculate_mutual_capacitance(sim, (i, j))
+        end
+    end
+    return C
 end
-
-
