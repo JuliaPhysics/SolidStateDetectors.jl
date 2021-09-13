@@ -206,17 +206,12 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
 * `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of 
     an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
     if set to `false`.
-
-## Additional Keyword for a `CylindricalGrid`
-* `full_2π::Bool = false`: Grid will be extended to `2π` if set to `true` and be left as is
-    if set to `false`.
 """
 function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_points_between_important_point::Bool = true,
-                full_2π::Bool = false)::CylindricalGrid{T} where {T}
+                add_points_between_important_point::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
     world = sim.world 
                 
@@ -292,10 +287,6 @@ function Grid(sim::Simulation{T, Cylindrical};
     # φ
     L, R, BL, BR = get_boundary_types(world_φ_int)
     int_φ = Interval{L, R, T}(endpoints(world_φ_int)...)
-    if full_2π || (for_weighting_potential && (world_φ_int.left != world_φ_int.right))
-        L, R, BL, BR = :closed, :open, :periodic, :periodic
-        int_φ = Interval{L, R, T}(0, 2π)
-    end
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
