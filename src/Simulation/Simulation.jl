@@ -227,7 +227,13 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     world_Δr, world_Δφ, world_Δz = width.(world.intervals)
     world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
-    
+    if for_weighting_potential && world_Δφ > 0 
+        world_φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(0, 2π)
+        world_Δφ = width(world_φ_int)
+    else
+        world_φ_int = world.intervals[2]
+    end
+
     max_distance_z = T(world_Δz / 4)
     max_distance_φ = T(world_Δφ / 4)
     max_distance_r = T(world_Δr / 4)
@@ -266,13 +272,13 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
     important_z_points = fill_up_ticks(important_z_points, max_distance_z)
 
-    append!(important_φ_points, endpoints(world.intervals[2])...)
+    append!(important_φ_points, endpoints(world_φ_int)...)
     important_φ_points = unique!(sort!(important_φ_points))
     if add_points_between_important_point
         important_φ_points = sort!(vcat(important_φ_points, StatsBase.midpoints(important_φ_points)))
     end
-    iL = searchsortedfirst(important_φ_points, world.intervals[2].left)
-    iR = searchsortedfirst(important_φ_points, world.intervals[2].right)
+    iL = searchsortedfirst(important_φ_points, world_φ_int.left)
+    iR = searchsortedfirst(important_φ_points, world_φ_int.right)
     important_φ_points = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_points[iL:iR]))
     important_φ_points = merge_close_ticks(important_φ_points, min_diff = T(1e-3))
     important_φ_points = initialize_axis_ticks(important_φ_points; max_ratio = T(max_distance_ratio))
@@ -284,9 +290,9 @@ function Grid(sim::Simulation{T, Cylindrical};
     ax_r = even_tick_axis(DiscreteAxis{T, BL, BR}(int_r, important_r_points))
 
     # φ
-    L, R, BL, BR = get_boundary_types(world.intervals[2])
-    int_φ = Interval{L, R, T}(endpoints(world.intervals[2])...)
-    if full_2π || (for_weighting_potential && (world.intervals[2].left != world.intervals[2].right))
+    L, R, BL, BR = get_boundary_types(world_φ_int)
+    int_φ = Interval{L, R, T}(endpoints(world_φ_int)...)
+    if full_2π || (for_weighting_potential && (world_φ_int.left != world_φ_int.right))
         L, R, BL, BR = :closed, :open, :periodic, :periodic
         int_φ = Interval{L, R, T}(0, 2π)
     end
@@ -1174,7 +1180,6 @@ There are several keyword arguments which can be used to tune the simulation.
 * `max_distance_ratio::Real`: Maximum allowed ratio between the two distances in any dimension to the two neighbouring grid points. 
         If the ratio is too large, additional ticks are generated such that the new ratios are smaller than `max_distance_ratio`.
         Default is `5`.
-* `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
 * `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
@@ -1205,7 +1210,6 @@ function simulate!( sim::Simulation{T, S};
                     min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                     max_distance_ratio::Real = 5,
-                    grid::Grid{T, 3, S} = Grid(sim),
                     depletion_handling::Bool = false,
                     use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
                     sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
@@ -1219,7 +1223,6 @@ function simulate!( sim::Simulation{T, S};
                                     min_tick_distance = min_tick_distance,
                                     max_tick_distance = max_tick_distance,
                                     max_distance_ratio = max_distance_ratio,
-                                    grid = grid,
                                     depletion_handling = depletion_handling,
                                     use_nthreads = use_nthreads,
                                     sor_consts = sor_consts,
@@ -1235,7 +1238,6 @@ function simulate!( sim::Simulation{T, S};
                     min_tick_distance = min_tick_distance,
                     max_tick_distance = max_tick_distance,
                     max_distance_ratio = max_distance_ratio,
-                    grid = grid,
                     depletion_handling = depletion_handling,
                     use_nthreads = use_nthreads,
                     sor_consts = sor_consts,
