@@ -204,3 +204,10 @@ voxel_volume(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, 
     (grid[2].ticks[i2 + 1] - grid[2].ticks[i2]) * w3 * (grid[1].ticks[i1 + 1]^2 - grid[1].ticks[i1]^2) / 2  
 voxel_volume(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} =
     w1 * w2 * w3
+
+    
+function get_extended_midpoints_grid(grid::Grid{T,3}) where {T}
+    ticks = broadcast(i -> midpoints(get_extended_ticks(grid.axes[i])), (1,2,3))
+    axes = broadcast(i -> typeof(grid.axes[i])(grid.axes[i].interval, ticks[i]) , (1,2,3))
+    typeof(grid)(axes)
+end
