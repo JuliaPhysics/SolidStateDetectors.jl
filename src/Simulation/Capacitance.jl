@@ -44,6 +44,7 @@ function calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = tr
 end
 
 
+export calculate_stored_energy
 """
     calculate_stored_energy(sim::Simulation; consider_multiplicity::Bool = true)
 
