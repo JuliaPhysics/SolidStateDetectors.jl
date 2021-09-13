@@ -1,8 +1,34 @@
 export calculate_mutual_capacitance
 
-function calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int})
-    calculate_mutual_capacitance(sim.weighting_potentials[ij[1]], sim.weighting_potentials[ij[2]], sim.ϵ_r)
+@doc raw"""
+    calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int}; consider_multiplicity::Bool = true)
+
+Returns the mutual capacitance between the contacts with ID `i = ij[1]` and `j = ij[2]`.
+It is calculated via the weighting potentials of the contacts, ``\Phi_i^w(\vec{r})`` and ``\Phi_j^w(\vec{r})``:
+```math
+c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \Phi_i^w(\vec{r}) d\vec{r}
+```
+
+!!! note 
+    These are elements of the Maxwell Capactiance Matrix notation!
+
+!!! note 
+    The electric potential as well as the two weighting potentials of both contacts have to be calculated.
+
+## Arguments
+* `sim::Simulation`: [`Simulation`](@ref) for which the capacitance matrix is calculated.
+* `ij::Tuple{Int,Int}`: Tuple of indices of the contacts for which the capacitance should be calculated. 
+
+## Keywords 
+* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
+    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
+    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
+    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
+"""
+function calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int}; consider_multiplicity::Bool = true)
+    calculate_mutual_capacitance(sim.weighting_potentials[ij[1]], sim.weighting_potentials[ij[2]], sim.ϵ_r; consider_multiplicity)
 end
+
 
 function calculate_mutual_capacitance(
             wpi::WeightingPotential{T,3,CS}, wpj::WeightingPotential{T,3,CS},
@@ -64,18 +90,35 @@ function calculate_mutual_capacitance(
 end
 
 export calculate_capacitance_matrix
-"""
-    calculate_capacitance_matrix(sim::Simulation{T}) where {T}
+@doc raw"""
+    calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
 
-Calculates the Maxwell Capacitance Matrix.
+Calculates the Maxwell Capacitance `N×N`-Matrix in units of pF,
+where `N` is the number of contacts of `sim.detector`.
+The individual elements, ``c_{i,j}``, are calculated via 
+[`calculate_mutual_capacitance(sim::Simulation, (i,j)::Tuple{Int,Int})`](@ref).
+
+## Arguments
+* `sim::Simulation`: [`Simulation`](@ref) for which the capacitance matrix is calculated.
+
+## Keywords 
+* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
+    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
+    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
+    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
 """
-function calculate_capacitance_matrix(sim::Simulation{T}) where {T}
+function calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
+    @assert !ismissing(sim.ϵ_r) "The electric potential needs to be calculated first."
     @assert !ismissing(sim.weighting_potentials) "The weighting_potentials needs to be calculated first."
     n = length(sim.weighting_potentials)
     C = zeros(typeof(one(T) * u"pF"), (n, n))
     for i in 1:n
         for j in i:n
-            C[j, i] = C[i, j] = calculate_mutual_capacitance(sim, (i, j))
+            C[j, i] = C[i, j] = if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j]) 
+                calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
+            else
+                missing
+            end
         end
     end
     return C
