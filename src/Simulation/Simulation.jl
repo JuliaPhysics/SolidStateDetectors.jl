@@ -441,7 +441,7 @@ function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential},
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
-    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), grid)
+    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(grid))
     sim.point_types = PointTypes(PointTypeArray(pssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
     nothing
@@ -555,7 +555,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
     grid::Grid = Grid(pssrb)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
-    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), grid)
+    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(grid))
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(pssrb), grid)
 
@@ -712,7 +712,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
 
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), sim.electric_potential.grid)
-        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), sim.electric_potential.grid)
+        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(sim.electric_potential.grid))
         sim.point_types = PointTypes(PointTypeArray(pssrb), sim.electric_potential.grid)
     end
     nothing
