@@ -116,10 +116,10 @@ end
     @testset "Simulate example detector: Toroidal" begin
         sim = Simulation{T}(SSD_examples[:CoaxialTorus])
         SolidStateDetectors.apply_initial_state!(sim, ElectricPotential)
-        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05], 
+        simulate!(sim, convergence_limit = 1e-5, refinement_limits = [0.2, 0.1, 0.05, 0.02, 0.01], 
             max_tick_distance = 0.5u"mm", verbose = false)
-        evt = Event([CartesianPoint{T}(0.01,0,0.003)])
-        simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
+        evt = Event([CartesianPoint{T}(0.0075,0,0)])
+        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
             signalsum += abs(evt.waveforms[i].value[end])
