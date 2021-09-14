@@ -26,6 +26,50 @@ e = SolidStateDetectors.elementary_charge * u"C"
     end
 end
 
+@testset "Two Spehres Capacitor" begin
+    sim = Simulation{T}(SSD_examples[:TwoSpheresCapactior])
+    simulate!(sim, refinement_limits = [0.2, 0.1, 0.05, 0.02], convergence_limit = 1e-7)
+    C_ssd = calculate_capacitance_matrix(sim)
+
+    R_1 = sim.detector.contacts[1].geometry.r * u"m"
+    R_2 = sim.detector.contacts[2].geometry.r * u"m"
+    d = abs((sim.detector.contacts[1].geometry.origin - sim.detector.contacts[2].geometry.origin)[3]) * u"m"
+
+    # Analytical solutions for the elements of the capacitance matrix:
+    function c_ii(r1, r2, d; n = 10)
+        r1 = ustrip(uconvert(u"m", r1))
+        r2 = ustrip(uconvert(u"m", r2))
+        d  = ustrip(uconvert(u"m", d))
+        c = 0
+        F = 4π*ϵ0 * 1u"m"
+        u = acosh((d^2 - r1^2 - r2^2) / (2*r1*r2))
+        for i in 0:n
+            c += inv(r1*sinh(i*u) + r2*sinh((i + 1)*u))
+        end
+        uconvert(u"pF", F * r1 * r2 * sinh(u) * c)
+    end
+    function c_ij(r1, r2, d; n = 10)
+        r1 = ustrip(uconvert(u"m", r1))
+        r2 = ustrip(uconvert(u"m", r2))
+        d  = ustrip(uconvert(u"m", d))
+        c = 0
+        F = 4π*ϵ0 * 1u"m"
+        u = acosh((d^2 - r1^2 - r2^2) / (2*r1*r2))
+        for i in 1:n
+            c += inv(sinh(i*u))
+        end
+        uconvert(u"pF", -F * r1 * r2 * sinh(u) * c / d)
+    end
+    A_c11 = c_ii(R_1, R_2, d)
+    A_c22 = c_ii(R_2, R_1, d)
+    A_c12 = c_ij(R_1, R_2, d)
+    C_Analytical = [A_c11 A_c12; A_c12 A_c22]
+    @test isapprox(A_c11, C_ssd[1, 1], rtol = 0.03 )
+    @test isapprox(A_c12, C_ssd[1, 2], rtol = 0.03 )
+    @test isapprox(A_c12, C_ssd[2, 1], rtol = 0.03 )
+    @test isapprox(A_c22, C_ssd[2, 2], rtol = 0.03 )
+end
+
 
 struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
 
