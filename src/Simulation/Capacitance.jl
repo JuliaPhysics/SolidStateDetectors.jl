@@ -6,7 +6,7 @@ export calculate_mutual_capacitance
 Returns the mutual capacitance between the contacts with ID `i = ij[1]` and `j = ij[2]`.
 It is calculated via the weighting potentials of the contacts, ``\Phi_i^w(\vec{r})`` and ``\Phi_j^w(\vec{r})``:
 ```math
-c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \Phi_i^w(\vec{r}) d\vec{r}
+c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \Phi_j^w(\vec{r}) d\vec{r}
 ```
 
 !!! note 
