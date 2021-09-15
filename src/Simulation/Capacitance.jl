@@ -9,8 +9,8 @@ It is calculated via the weighting potentials of the contacts, ``\Phi_i^w(\vec{r
 c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \Phi_j^w(\vec{r}) d\vec{r}
 ```
 
-!!! note 
-    These are elements of the Maxwell Capactiance Matrix notation!
+!!! note
+    These are elements of the Mawell Capcitance Matrix. Lock up [Capacitances](@ref) for more information.
 
 !!! note 
     The electric potential as well as the two weighting potentials of both contacts have to be calculated.

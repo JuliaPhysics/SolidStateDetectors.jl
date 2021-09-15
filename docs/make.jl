@@ -35,6 +35,7 @@ makedocs(
             "Grids" => "man/Grids.md",
             "Electric Potential" => "man/electric_potential.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
+            "Capacitances" => "man/capacitances.md",
             "Electric Field" => "man/electric_field.md",
             "Charge Drift" => "man/charge_drift.md",
             "IO" => "man/IO.md",
