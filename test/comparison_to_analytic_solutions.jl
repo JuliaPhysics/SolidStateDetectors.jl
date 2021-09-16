@@ -18,16 +18,15 @@ e = SolidStateDetectors.elementary_charge * u"C"
     ϵr = sim.detector.semiconductor.material.ϵ_r
     W_true = uconvert(u"J", (ϵr * ϵ0 * E_true^2 / 2) * A * Δd)
     C_true = uconvert(u"pF", 2 * W_true / (BV_true^2))
+    C_Analytical = [C_true -C_true; -C_true C_true]
     C_ssd = calculate_capacitance_matrix(sim)
     @testset "Capacity" begin
-        @test isapprox( C_ssd[1,1], C_true, rtol = 0.001) 
-        @test isapprox(-C_ssd[1,2], C_true, rtol = 0.001) 
-        @test isapprox( C_ssd[2,2], C_true, rtol = 0.001) 
+        @test all(isapprox.(C_ssd, C_Analytical, rtol = 0.001))
     end
 end
 
 @testset "Two Spehres Capacitor" begin
-    sim = Simulation{T}(SSD_examples[:TwoSpheresCapactior])
+    sim = Simulation{T}(SSD_examples[:TwoSpheresCapacitor])
     simulate!(sim, refinement_limits = [0.2, 0.1, 0.05, 0.02], convergence_limit = 1e-7)
     C_ssd = calculate_capacitance_matrix(sim)
 
@@ -64,10 +63,7 @@ end
     A_c22 = c_ii(R_2, R_1, d)
     A_c12 = c_ij(R_1, R_2, d)
     C_Analytical = [A_c11 A_c12; A_c12 A_c22]
-    @test isapprox(A_c11, C_ssd[1, 1], rtol = 0.03 )
-    @test isapprox(A_c12, C_ssd[1, 2], rtol = 0.03 )
-    @test isapprox(A_c12, C_ssd[2, 1], rtol = 0.03 )
-    @test isapprox(A_c22, C_ssd[2, 2], rtol = 0.03 )
+    @test all(isapprox.(C_Analytical, C_ssd, rtol = 0.03))
 end
 
 
@@ -107,18 +103,14 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     )
 
     C_true = uconvert(u"pF", 2π * ϵr * ϵ0 / log(R2/R1) * L )
-    W_true = uconvert(u"J", C_true * BV_true^2 / 2)
+    C_Analytical = [C_true -C_true; -C_true C_true]
 
     C_cyl_ssd = calculate_capacitance_matrix(sim_cyl)
     C_car_ssd = calculate_capacitance_matrix(sim_car)
 
     @testset "Capacity" begin
-        @test isapprox( C_cyl_ssd[1,1], C_true, rtol = 0.01) 
-        @test isapprox(-C_cyl_ssd[1,2], C_true, rtol = 0.01) 
-        @test isapprox( C_cyl_ssd[2,2], C_true, rtol = 0.01) 
-        @test isapprox( C_car_ssd[1,1], C_true, rtol = 0.06) 
-        @test isapprox(-C_car_ssd[1,2], C_true, rtol = 0.06) 
-        @test isapprox( C_car_ssd[2,2], C_true, rtol = 0.06) 
+        @test all(isapprox.(C_cyl_ssd, C_Analytical, rtol = 0.01))
+        @test all(isapprox.(C_car_ssd, C_Analytical, rtol = 0.06))
     end
 
     # Add impurity density and compare resulting potential to analytic solution

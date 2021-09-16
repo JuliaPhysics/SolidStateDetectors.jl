@@ -17,7 +17,7 @@ which fulfills
 \vec{\mathbf{Q}} = \mathbf{Q} \cdot \vec{\mathbf{V}}
 ```
 
-The hole matrix can also be obtained via 
+The whole matrix can also be obtained via
 ```julia
 calculate_capacitance_matrix(sim)
 ```

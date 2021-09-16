@@ -1,5 +1,3 @@
-export calculate_mutual_capacitance
-
 @doc raw"""
     calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int}; consider_multiplicity::Bool = true)
 
@@ -10,7 +8,7 @@ c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \
 ```
 
 !!! note
-    These are elements of the Mawell Capcitance Matrix. Lock up [Capacitances](@ref) for more information.
+    These are elements of the Mawell Capcitance Matrix. Look up [Capacitances](@ref) for more information.
 
 !!! note 
     The electric potential as well as the two weighting potentials of both contacts have to be calculated.
@@ -89,7 +87,7 @@ function calculate_mutual_capacitance(
     return uconvert(u"pF", c_ij*u"m" * ϵ0*u"F/m" )
 end
 
-export calculate_capacitance_matrix
+
 @doc raw"""
     calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
 
