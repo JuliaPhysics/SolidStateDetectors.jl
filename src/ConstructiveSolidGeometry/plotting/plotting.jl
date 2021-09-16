@@ -3,7 +3,7 @@ include("LinePrimitives/LinePrimitives.jl")
 include("SurfacePrimitives/SurfacePrimitives.jl")
 include("VolumePrimitives/VolumePrimitives.jl")
 
-# include("Meshing.jl")
+include("Meshing.jl")
 
 # include("Wireframe.jl")
 

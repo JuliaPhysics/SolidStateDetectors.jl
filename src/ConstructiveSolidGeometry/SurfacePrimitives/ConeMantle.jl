@@ -7,7 +7,7 @@ Surface primitive describing the mantle of a [`Cone`](@ref).
 * `T`: Precision type.
 * `TR`: Type of the radius `r`.
     * `TR == T`: CylinderMantle (constant radius `r` at all `z`).
-    * `TR == Tuple{T, T}`: VaryingCylinderMantle (inner radius at `r[1]`, outer radius at `r[2]`).
+    * `TR == Tuple{T, T}`: VaryingCylinderMantle (bottom radius at `r[1]`, top radius at `r[2]`).
 * `TP`: Type of the angular range `φ`.
     * `TP == Nothing`: Full 2π Cone.
     * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
@@ -33,6 +33,12 @@ end
 radius_at_z(hZ::T, rBot::T, rTop::T, z::T) where {T} = iszero(hZ) ? rBot : rBot + (hZ+z)*(rTop - rBot)/(2hZ) 
 radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
 radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, cm.r[1], cm.r[2], z)
+
+get_r_limits(cm::ConeMantle{T,T}) where {T} = cm.r, cm.r
+get_r_limits(cm::ConeMantle{T,Tuple{T,T}}) where {T} = cm.r[1], cm.r[2]
+
+get_φ_limits(cm::ConeMantle{T,<:Any,Tuple{T,T}}) where {T} = cm.φ[1], cm.φ[2]
+get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function normal(cm::ConeMantle{T,T}, pt::CartesianPoint{T}) where {T}
     pto = _transform_into_object_coordinate_system(pt, cm)
