@@ -39,6 +39,12 @@ normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) 
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
 
+get_r_limits(es::EllipticalSurface{T,T}) where {T} = (T(0), es.r)
+get_r_limits(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r
+
+get_φ_limits(es::EllipticalSurface{T,<:Any,Tuple{T,T}}) where {T} = es.φ[1], es.φ[2]
+get_φ_limits(cm::EllipticalSurface{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+
 function lines(sp::CircularArea{T}; n = 2) where {T} 
     circ = Circle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
     φs = range(T(0), step = T(2π) / n, length = n)
