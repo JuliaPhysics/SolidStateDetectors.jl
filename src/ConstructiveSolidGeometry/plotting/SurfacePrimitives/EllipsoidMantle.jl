@@ -1,14 +1,44 @@
+function mesh(em::EllipsoidMantle{T}; n = 30) where {T}
+    rx, ry, rz = get_radii(em) 
+    φMin::T, φMax::T = get_φ_limits(em)
+    θMin::T, θMax::T = get_θ_limits(em)
+
+    fφ = (φMax - φMin)/(2π)
+    nφ = Int(ceil(n*fφ))
+
+    fθ = (θMax - θMin)/(2π)
+    nθ = Int(ceil(n*fθ))
+    
+    φ = range(φMin, φMax, length = nφ + 1)
+    θ = range(θMin, θMax, length = nθ + 1)
+
+    X = [rx*cos(θ_j)*cos(φ_i) for φ_i in φ, θ_j in θ]
+    Y = [ry*cos(θ_j)*sin(φ_i) for φ_i in φ, θ_j in θ]
+    Z = [rz*sin(θ_j) for i in φ, θ_j in θ]
+    
+    em.rotation*Mesh{T}(X,Y,Z) + em.origin
+end
+
 @recipe function f(em::EllipsoidMantle, n = 40; subn = 10)
-    ls = lines(em)
-    linecolor --> :black
-    @series begin
-        label --> "Ellipsoid Mantle"
-        ls[1]
-    end
-    for i in 2:length(ls)
+    colorbar := false
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
+            m = mesh(em, n = n)
+            @series begin
+                label --> "Ellipsoid Mantle"
+                occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend))) ? polymesh(m) : m
+            end
+    else
+        ls = lines(em)
+        linecolor --> :black
         @series begin
-            label := nothing
-            ls[i]
+            label --> "Ellipsoid Mantle"
+            ls[1]
+        end
+        for i in 2:length(ls)
+            @series begin
+                label := nothing
+                ls[i]
+            end
         end
     end
     if (!haskey(plotattributes, :show_normal) || plotattributes[:show_normal]) &&

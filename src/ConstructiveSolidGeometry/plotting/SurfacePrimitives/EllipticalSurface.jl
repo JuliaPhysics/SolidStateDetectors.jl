@@ -1,4 +1,4 @@
-function mesh(es::EllipticalSurface{T}; n = 30) where {T <: AbstractFloat}
+function mesh(es::EllipticalSurface{T}; n = 30) where {T}
 
     rMin::T, rMax::T = get_r_limits(es)
     φMin::T, φMax::T = get_φ_limits(es)

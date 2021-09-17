@@ -35,6 +35,15 @@ flip(em::EllipsoidMantle{T,TR,TP,TT,:inwards}) where {T,TR,TP,TT} =
 const FullSphereMantle{T,D} = EllipsoidMantle{T,T,Nothing,Nothing,D}
 const FullEllipsoidMantle{T,D} = EllipsoidMantle{T,NTuple{3,T},Nothing,Nothing,D}
 
+get_φ_limits(em::EllipsoidMantle{T,<:Any,Tuple{T,T}}) where {T} = em.φ[1], em.φ[2]
+get_φ_limits(em::EllipsoidMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+
+get_θ_limits(em::EllipsoidMantle{T,<:Any,<:Any,Tuple{T,T}}) where {T} = em.θ[1], em.θ[2]
+get_θ_limits(em::EllipsoidMantle{T,<:Any,<:Any,Nothing}) where {T} = T(-π/2), T(π/2)
+
+get_radii(em::EllipsoidMantle{T,T}) where {T} = (em.r, em.r, em.r)
+get_radii(em::EllipsoidMantle{T,NTuple{3,T}}) where {T} = em.r
+
 function lines(em::FullSphereMantle{T}) where {T} 
     ellipse_xy = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation)
     ellipse_xz = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation * RotX(T(π)/2))
