@@ -1,5 +1,4 @@
 function mesh(cm::ConeMantle{T}; n = 30)::Mesh{T} where {T}
-    rbot, rtop = get_r_limits(cm)
     φMin, φMax = get_φ_limits(cm)
     
     f = (φMax - φMin)/(2π)
@@ -7,30 +6,20 @@ function mesh(cm::ConeMantle{T}; n = 30)::Mesh{T} where {T}
     φ = range(φMin, φMax, length = n+1)
     z = range(-cm.hZ, cm.hZ, length = 2)
 
-    X::Array{T,2} = [radius_at_z(cm,z[j])*cos(φ_i) for φ_i in φ, j in 1:length(z)]
-    Y::Array{T,2} = [radius_at_z(cm,z[j])*sin(φ_i) for φ_i in φ, j in 1:length(z)]
-    Z::Array{T,2} = [j for i in 1:length(φ), j in z]
-    if cm.rotation != one(SMatrix{3, 3, T, 9})
-        cm.rotation*Mesh{T}(X,Y,Z) + cm.origin
-    else
-        Mesh{T}(X,Y,Z) + cm.origin
-    end
+    X::Array{T,2} = [radius_at_z(cm,z_j)*cos(φ_i) for φ_i in φ, z_j in z]
+    Y::Array{T,2} = [radius_at_z(cm,z_j)*sin(φ_i) for φ_i in φ, z_j in z]
+    Z::Array{T,2} = [z_j for i in φ, z_j in z]
+    
+    cm.rotation*Mesh{T}(X,Y,Z) + cm.origin
 end
 
 @recipe function f(cm::ConeMantle, n = 40; subn = 10)
     colorbar := false
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
             m = mesh(cm, n = n)
-            if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
-                @series begin
-                    label --> "Cone Mantle"
-                    polymesh(m)
-                end
-            else
-                @series begin
-                    label --> "Cone Mantle"
-                    m
-                end
+            @series begin
+                label --> "Cone Mantle"
+                occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend))) ? polymesh(m) : m
             end
     else
         ls = lines(cm)

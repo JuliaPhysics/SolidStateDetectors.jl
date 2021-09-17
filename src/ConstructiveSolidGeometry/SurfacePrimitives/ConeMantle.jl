@@ -34,9 +34,6 @@ radius_at_z(hZ::T, rBot::T, rTop::T, z::T) where {T} = iszero(hZ) ? rBot : rBot 
 radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
 radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, cm.r[1], cm.r[2], z)
 
-get_r_limits(cm::ConeMantle{T,T}) where {T} = cm.r, cm.r
-get_r_limits(cm::ConeMantle{T,Tuple{T,T}}) where {T} = cm.r[1], cm.r[2]
-
 get_φ_limits(cm::ConeMantle{T,<:Any,Tuple{T,T}}) where {T} = cm.φ[1], cm.φ[2]
 get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
