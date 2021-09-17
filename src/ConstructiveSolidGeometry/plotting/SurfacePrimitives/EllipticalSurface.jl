@@ -12,7 +12,7 @@ function mesh(es::EllipticalSurface{T}; n = 30) where {T <: AbstractFloat}
     Y::Array{T,2} = [r_j*sin(φ_i) for φ_i in φ, r_j in r]
     Z::Array{T,2} = [z_j for i in φ, z_j in z]
 
-    Mesh{T}(X, Y, Z)
+    es.rotation*Mesh{T}(X,Y,Z) + es.origin
 end
 
 @recipe function f(es::EllipticalSurface; n = 40)
