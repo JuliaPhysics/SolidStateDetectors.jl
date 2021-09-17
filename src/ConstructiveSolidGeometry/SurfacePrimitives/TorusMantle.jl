@@ -42,6 +42,12 @@ normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT}
 
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
 
+get_φ_limits(tm::TorusMantle{T,Tuple{T,T}}) where {T} = tm.φ[1], tm.φ[2]
+get_φ_limits(tm::TorusMantle{T,Nothing}) where {T} = T(0), T(2π)
+
+get_θ_limits(tm::TorusMantle{T,<:Any,Tuple{T,T}}) where {T} = tm.θ[1], tm.θ[2]
+get_θ_limits(tm::TorusMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+
 function lines(tm::FullTorusMantle{T}) where {T} 
     top_circ_origin = CartesianPoint{T}(zero(T), zero(T),  tm.r_tube)
     top_circ_origin = _transform_into_global_coordinate_system(top_circ_origin, tm)

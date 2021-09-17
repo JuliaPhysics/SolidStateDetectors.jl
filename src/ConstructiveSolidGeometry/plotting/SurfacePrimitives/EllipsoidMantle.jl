@@ -9,12 +9,16 @@ function mesh(em::EllipsoidMantle{T}; n = 30) where {T}
     fθ = (θMax - θMin)/(2π)
     nθ = Int(ceil(n*fθ))
     
-    φ = range(φMin, φMax, length = nφ + 1)
-    θ = range(θMin, θMax, length = nθ + 1)
+    θrange = range(θMin, θMax, length = nθ + 1)
+    sθrange = sin.(θrange)
+    cθrange = cos.(θrange)
+    φrange = range(φMin, φMax, length = nφ + 1)
+    sφrange = sin.(φrange)
+    cφrange = cos.(φrange)
 
-    X = [rx*cos(θ_j)*cos(φ_i) for φ_i in φ, θ_j in θ]
-    Y = [ry*cos(θ_j)*sin(φ_i) for φ_i in φ, θ_j in θ]
-    Z = [rz*sin(θ_j) for i in φ, θ_j in θ]
+    X::Array{T,2} = [rx*cθ*cφ for cφ in cφrange, cθ in cθrange]
+    Y::Array{T,2} = [ry*cθ*sφ for sφ in sφrange, cθ in cθrange]
+    Z::Array{T,2} = [rz*sθ for i in φrange, sθ in sθrange]
     
     em.rotation*Mesh{T}(X,Y,Z) + em.origin
 end
