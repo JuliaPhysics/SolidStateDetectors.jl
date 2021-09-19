@@ -48,7 +48,15 @@ translate(mesh::Mesh{T}, t::CartesianPoint) where {T} =
 (+)(mesh::Mesh, t::CartesianPoint) = translate(mesh,t)
 
 function polymesh(mesh::Mesh{T})::PolyMesh{T,4} where {T}
-    #PolyMesh{T,4} is not recommended for use in pyplot(). For pyplot() a much more efficient construction (Mesh{T}) is provided. Furtheremore, pyplot will fail if PolyMesh{T,4} has repeated z values (vertical meshes). However, PolyMesh{T,3} is used by pyplot() for cases when Mesh{T} can't be used. In these cases the meshing algorithm takes care by slightly rotating vertical meshes, but at the surface primitive level eg. trimesh/polymesh(s::SurfacePrimitive).
+    #PolyMesh{T,4} is not recommended for use in pyplot(). 
+    #For pyplot() a much more efficient construction (Mesh{T}) is provided.
+    #Furtheremore, pyplot will fail if PolyMesh{T,4} has repeated z values
+    #(vertical meshes). 
+    #However, PolyMesh{T,3} is used by pyplot() for cases when Mesh{T} can't be
+    #used. 
+    #In these cases the meshing algorithm takes care by slightly rotating 
+    #vertical meshes, but at the surface primitive level 
+    #eg. trimesh/polymesh(s::SurfacePrimitive).
     n, m = size(mesh)
     x = [reshape(mesh.x[i:i+1,j:j+1], 4) for i in 1:n-1, j in 1:m-1]
     y = [reshape(mesh.y[i:i+1,j:j+1], 4) for i in 1:n-1, j in 1:m-1]
@@ -58,6 +66,7 @@ function polymesh(mesh::Mesh{T})::PolyMesh{T,4} where {T}
 end
 
 @recipe function f(m::PolyMesh{T,4}) where {T}
+    #only meant for use in gr()
     seriestype := :mesh3d
     colorbar := false
     seriescolor --> 1
