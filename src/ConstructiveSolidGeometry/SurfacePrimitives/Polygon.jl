@@ -63,18 +63,13 @@ function _rotate_on_xy_plane(p::Polygon{<:Any, T}) where {T}
     map(pt -> rot * pt, p.points)
 end
 
-
-function in(pt::CartesianPoint{T}, p::Quadrangle{T}) where {T}
+function in(pt::CartesianPoint{T}, p::Polygon{N,T}) where {N,T}
     b::Bool = in(pt, Plane(p)) 
     if b
         rot = _get_rot_for_rotation_on_xy_plane(p)
         vs = vertices(p)
-        pts2d = SVector{5, SVector{2, T}}(
-            view(rot * vs[1], 1:2), 
-            view(rot * vs[2], 1:2), 
-            view(rot * vs[3], 1:2), 
-            view(rot * vs[4], 1:2), 
-            view(rot * vs[1], 1:2), 
+        pts2d = SVector{N+1, SVector{2, T}}(
+            view(rot * vs[i%N + 1], 1:2) for i in 0:N  
         )
         # PolygonOps.inpolygon -> in = 1, on = -1, out = 0)
         b = PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0 

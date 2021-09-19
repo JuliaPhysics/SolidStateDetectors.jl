@@ -1,4 +1,4 @@
-function mesh(es::EllipticalSurface{T}; n = 30) where {T}
+function mesh(es::EllipticalSurface{T}; n = 30)::Mesh{T} where {T}
 
     rMin::T, rMax::T = get_r_limits(es)
     φMin::T, φMax::T = get_φ_limits(es)
@@ -18,11 +18,10 @@ end
 @recipe function f(es::EllipticalSurface; n = 40)
     colorbar := false
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
-            m = mesh(es, n = n)
-            @series begin
-                label --> "Elliptical Surface"
-                occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend))) ? polymesh(m) : m
-            end
+        @series begin
+            label --> "Elliptical Surface"
+            mesh(es, n = n)
+        end
     else
         ls = lines(es)
         linecolor --> :black

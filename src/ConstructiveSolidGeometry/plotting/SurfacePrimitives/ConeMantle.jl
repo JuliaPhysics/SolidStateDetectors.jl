@@ -16,11 +16,10 @@ end
 @recipe function f(cm::ConeMantle, n = 40; subn = 10)
     colorbar := false
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
-            m = mesh(cm, n = n)
-            @series begin
-                label --> "Cone Mantle"
-                occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend))) ? polymesh(m) : m
-            end
+        @series begin
+            label --> "Cone Mantle"
+            mesh(cm, n = n)
+        end
     else
         ls = lines(cm)
         linecolor --> :black

@@ -1,4 +1,4 @@
-function mesh(em::EllipsoidMantle{T}; n = 30) where {T}
+function mesh(em::EllipsoidMantle{T}; n = 30)::Mesh{T} where {T}
     rx, ry, rz = get_radii(em) 
     φMin::T, φMax::T = get_φ_limits(em)
     θMin::T, θMax::T = get_θ_limits(em)
@@ -26,11 +26,10 @@ end
 @recipe function f(em::EllipsoidMantle, n = 40; subn = 10)
     colorbar := false
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
-            m = mesh(em, n = n)
-            @series begin
-                label --> "Ellipsoid Mantle"
-                occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend))) ? polymesh(m) : m
-            end
+        @series begin
+            label --> "Ellipsoid Mantle"
+            mesh(em, n = n)
+        end
     else
         ls = lines(em)
         linecolor --> :black
