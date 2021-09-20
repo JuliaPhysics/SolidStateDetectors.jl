@@ -64,8 +64,8 @@ function _rotate_on_xy_plane(p::Polygon{<:Any, T}) where {T}
 end
 
 function in(pt::CartesianPoint{T}, p::Polygon{N,T}) where {N,T}
-    b::Bool = in(pt, Plane(p)) 
-    if b
+    plane = Plane(p)
+    if (pt - origin(plane)) ⋅ normal(plane) == 0
         rot = _get_rot_for_rotation_on_xy_plane(p)
         vs = vertices(p)
         pts2d = SVector{N+1, SVector{2, T}}(
