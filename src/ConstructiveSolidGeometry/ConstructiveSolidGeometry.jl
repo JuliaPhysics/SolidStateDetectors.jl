@@ -18,7 +18,6 @@ module ConstructiveSolidGeometry
     using Statistics
     using Unitful
     using YAML
-    using VoronoiDelaunay
 
     using DataStructures: OrderedDict
 

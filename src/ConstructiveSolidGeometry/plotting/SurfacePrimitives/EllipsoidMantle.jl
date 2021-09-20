@@ -44,7 +44,7 @@ end
             end
         end
     end
-    if (!haskey(plotattributes, :show_normal) || plotattributes[:show_normal]) &&
+    if (haskey(plotattributes, :show_normal) && plotattributes[:show_normal]) &&
             em.φ === nothing && em.θ === nothing
         @series begin
             label := nothing

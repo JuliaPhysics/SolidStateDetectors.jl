@@ -40,7 +40,7 @@ end
             end
         end
     end
-    if !haskey(plotattributes, :show_normal) || plotattributes[:show_normal]
+    if haskey(plotattributes, :show_normal) && plotattributes[:show_normal]
         @series begin
             label := nothing
             seriestype := :vector
