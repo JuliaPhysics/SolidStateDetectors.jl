@@ -268,6 +268,16 @@ function _drift_charge!(
     timestamps[1] = zero(T)
     ϵ_r::T = T(det.semiconductor.material.ϵ_r)
     
+    diffusion_length::T = if diffusion
+        if CC == Electron
+            det.semiconductor.material.diffusion_fieldvector_electrons
+        else # CC == Hole
+            det.semiconductor.material.diffusion_fieldvector_holes
+        end
+    else
+        zero(T)
+    end
+    
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
@@ -280,7 +290,7 @@ function _drift_charge!(
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done)
+        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)

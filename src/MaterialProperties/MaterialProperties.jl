@@ -27,7 +27,9 @@ material_properties[:HPGe] = (
     ρ = 5.323u"g*cm^-3",
     name = "High Purity Germanium",
     ml = 1.64,
-    mt = 0.0819
+    mt = 0.0819,
+    diffusion_fieldvector_electrons = 700,
+    diffusion_fieldvector_holes = 250
 )
 
 
