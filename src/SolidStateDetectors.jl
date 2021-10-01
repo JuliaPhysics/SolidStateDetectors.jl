@@ -32,7 +32,6 @@ using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
-            CartesianTicksTuple, CylindricalTicksTuple,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
@@ -68,6 +67,7 @@ export simulate_waveforms
 export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
+export NBodyChargeCloud
 
 const SSDFloat = Union{Float16, Float32, Float64}
 

@@ -106,6 +106,10 @@ function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
    return get_boundary_types.(grid.axes)
 end
 
+# Tuples with ticks to sample with differently spaced ticks
+const CartesianTicksTuple{T} = NamedTuple{(:x,:y,:z), NTuple{3,Vector{T}}}
+const CylindricalTicksTuple{T} = NamedTuple{(:r,:φ,:z), NTuple{3,Vector{T}}}
+
 TicksTuple(grid::CartesianGrid3D{T}) where {T} = (x = grid.axes[1].ticks, y = grid.axes[2].ticks, z = grid.axes[3].ticks)
 TicksTuple(grid::CylindricalGrid{T}) where {T} = (r = grid.axes[1].ticks, φ = grid.axes[2].ticks, z = grid.axes[3].ticks)
 
