@@ -86,7 +86,7 @@ function create_regular_sphere(center::CartesianPoint{T}, N::Integer, R::T)::Vec
         for n in 0:Mφ-1
             φ = 2π*n/Mφ
             Ncount += 1
-            points[Ncount] = CartesianPoint{T}(R*cos(φ)*sin(θ), R*sin(φ)*sin(θ), R*cos(θ))
+            points[Ncount] = center + CartesianVector{T}(R*cos(φ)*sin(θ), R*sin(φ)*sin(θ), R*cos(θ))
         end
     end
     
