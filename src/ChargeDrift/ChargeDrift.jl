@@ -88,22 +88,6 @@ function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to b
     SVector{3,eltype(v⃗)}(v⃗[1] + λ * n⃗[1], v⃗[2] + λ * n⃗[2], v⃗[3] + λ * n⃗[3])
 end
 
-
-function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
-                                done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, 
-                                det::SolidStateDetector{T}, ::Type{S}, ::Type{Electron}, Δt::T)::Nothing where {T, S}
-    for n in eachindex(step_vectors)
-       step_vectors[n] = CartesianVector{T}(0, 0, 0)
-       if !done[n]
-           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
-           step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
-           step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], det.virtual_drift_volumes)
-           done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
-       end
-    end
-    nothing
-end
-
 function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
     for n in eachindex(v)
         v[n] = CartesianVector{T}(0,0,0)
