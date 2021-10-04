@@ -114,6 +114,9 @@ function __init__()
         end
         include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
     end
+    @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" begin
+        include("PotentialSimulation/GPU_BACKEND.jl")
+    end
 end
 
 end # module
