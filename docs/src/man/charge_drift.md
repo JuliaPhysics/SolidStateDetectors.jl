@@ -1,6 +1,6 @@
 # Charge Drift
 
-Charged particles in vacuum move along the electric field lines under Coulomb's force, $\bm{F} = q \bm{E}$, where $\bm{F}$ corresponds to the force experienced by the particle, $q$ is the charge of the particle and $\bm{E}$ is the electric field. Charged particles in vacuum would be continuously accelerated until approaching the speed of light (called ballistic transport), however, inside a material, scattering prevents this constant acceleration and leads to a constant drift velocity 
+Charged particles in vacuum move along the electric field lines under Coulomb's force, $\vec{F} = q \vec{E}$, where $\vec{F}$ corresponds to the force experienced by the particle, $q$ is the charge of the particle and $\vec{E}$ is the electric field. Charged particles in vacuum would be continuously accelerated until approaching the speed of light (called ballistic transport). However, inside a material, scattering prevents this constant acceleration and leads to a constant drift velocity 
 
 ```math
 v_{d} = \mu E,
