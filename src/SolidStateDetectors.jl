@@ -24,6 +24,7 @@ using Rotations
 using StaticArrays
 using StatsBase
 using Unitful
+using UnitfulRecipes
 using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
