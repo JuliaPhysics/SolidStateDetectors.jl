@@ -13,7 +13,7 @@
     cross_section == :φ ? aspect_ratio --> 1 : nothing
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-    colorbar_title --> "Electric Field Strength in V / m"
+    colorbar_title --> "Electric Field Strength"
 
     ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential, full_det
 
@@ -33,7 +33,7 @@ end
     aspect_ratio --> 1
 
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
-    colorbar_title --> "Electric Field Strength in V / m"
+    colorbar_title --> "Electric Field Strength"
 
     ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential
 end
@@ -127,8 +127,9 @@ end
 
     (dim_symbol != :r && !(dim_symbol == :z && S == Cylindrical) ) ? aspect_ratio --> 1 : nothing
     title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°\n(=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
-    xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
-    yguide --> "z / m"
+    xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ" : "r") : (dim_symbol == :x ? "y" : "x"))
+    yguide --> "z"
+    unitformat --> :slash
     (S == Cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
     (S == Cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
 

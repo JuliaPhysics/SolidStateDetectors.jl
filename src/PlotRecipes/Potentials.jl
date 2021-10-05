@@ -103,8 +103,9 @@ end
         tick_direction --> :out
         if cross_section == :φ
             aspect_ratio --> 1
-            xguide --> "r / m"
-            yguide --> "z / m"
+            xguide --> "r"
+            yguide --> "z"
+            unitformat --> :slash
             xlims --> (grid.r[1],grid.r[end])
             ylims --> (grid.z[1],grid.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
@@ -113,20 +114,20 @@ end
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                 extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                 xlims := (-1*grid.r[end],grid.r[end])
-                vcat(-1 .* grid.r[end:-1:2], grid.r), grid.z, extended_data
+                vcat(-1 .* grid.r[end:-1:2], grid.r)u"m", grid.z*u"m", extended_data
              else
-                midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+                midpoints(gr_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'
             end
         elseif cross_section == :r
-            xguide --> "φ / °"
-            yguide --> "z / m"
+            xguide --> "φ"
+            yguide --> "z"
             ylims --> (grid.z[1],grid.z[end])
-            grid.φ, grid.z, sp.data[idx,:,:]'
+            grid.φ*u"rad", grid.z*u"m", sp.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
             xguide --> ""
             yguide --> ""
-            grid.φ, grid.r, sp.data[:,:,idx]
+            grid.φ*u"rad", grid.r*u"m", sp.data[:,:,idx]
         end
     end
 
@@ -136,18 +137,19 @@ end
             seriestype := :contours
             #if cross_section == :φ
                 aspect_ratio --> 1
-                xguide := "r / m"
-                yguide := "z / m"
+                xguide := "r"
+                yguide := "z"
+                unitformat --> :slash
                 xlims --> (grid.r[1],grid.r[end])
                 ylims --> (grid.z[1],grid.z[end])
                 if full_det
                     cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                     extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                     xlims := (-1*grid.r[end],grid.r[end])
-                    vcat(-1 .* grid.r[end:-1:2], grid.r), grid.z, extended_data
+                    vcat(-1 .* grid.r[end:-1:2], grid.r)u"m", grid.z*u"m", extended_data
                  else
                     # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
-                    grid.r, grid.z, sp.data[:,idx,:]'
+                    grid.r*u"m", grid.z*u"m", sp.data[:,idx,:]'
                 end
                 #=
             elseif cross_section == :r
@@ -184,19 +186,20 @@ end
     @series begin
         if cross_section == :φ
             aspect_ratio --> 1
-            xguide --> "r / m"
-            yguide --> "z / m"
+            xguide --> "r"
+            yguide --> "z"
+            unitformat --> :slash
             xlims --> (grid.r[1],grid.r[end])
             ylims --> (grid.z[1],grid.z[end])
-            gr_ext, gz_ext, ϵ.data[:,idx,:]'
+            gr_ext*u"m", gz_ext*u"m", ϵ.data[:,idx,:]'
         elseif cross_section == :r
-            xguide --> "φ / °"
-            yguide --> "z / m"
+            xguide --> "φ"
+            yguide --> "z"
             ylims --> (grid.z[1],grid.z[end])
-            rad2deg_backend.(gφ_ext), gz_ext, ϵ.data[idx,:,:]'
+            rad2deg_backend.(gφ_ext)*u"°", gz_ext*u"m", ϵ.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
-            rad2deg_backend.(gφ_ext), gr_ext, ϵ.data[:,:,idx]
+            rad2deg_backend.(gφ_ext)*u"°", gr_ext*u"m", ϵ.data[:,:,idx]
         end
     end
 end
@@ -273,33 +276,34 @@ end
         seriestype := :heatmap
         foreground_color_border --> nothing
         tick_direction --> :out
+        unitformat --> :slash
         if cross_section == :x
             aspect_ratio --> 1
-            xguide --> "y / m"
-            yguide --> "z / m"
+            xguide --> "y"
+            yguide --> "z"
             xlims --> (grid.y[1],grid.y[end])
             ylims --> (grid.z[1],grid.z[end])
             gy_ext = midpoints(get_extended_ticks(grid.y))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gy_ext), midpoints(gz_ext), sp.data[idx,:,:]'
+            midpoints(gy_ext)u"m", midpoints(gz_ext)u"m", sp.data[idx,:,:]'
         elseif cross_section == :y
             aspect_ratio --> 1
-            xguide --> "x / m"
-            yguide --> "z / m"
+            xguide --> "x"
+            yguide --> "z"
             xlims --> (grid.x[1],grid.x[end])
             ylims --> (grid.z[1],grid.z[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gx_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+            midpoints(gx_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'
         elseif cross_section == :z
             aspect_ratio --> 1
-            xguide --> "x / m"
-            yguide --> "y / m"
+            xguide --> "x"
+            yguide --> "y"
             xlims --> (grid.x[1],grid.x[end])
             ylims --> (grid.y[1],grid.y[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gy_ext = midpoints(get_extended_ticks(grid.y))
-            midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
+            midpoints(gx_ext)u"m", midpoints(gy_ext)u"m", sp.data[:,:,idx]'
         end
     end
 
@@ -308,30 +312,31 @@ end
             seriescolor := :thermal
             seriestype := :contours
             aspect_ratio --> 1
+            unitformat --> :slash
             if cross_section == :x
-                xguide --> "y / m"
-                yguide --> "z / m"
+                xguide --> "y"
+                yguide --> "z"
                 xlims --> (grid.y[1],grid.y[end])
                 ylims --> (grid.z[1],grid.z[end])
                 gy_ext = midpoints(get_extended_ticks(grid.y))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gy_ext), midpoints(gz_ext), sp.data[idx,:,:]'
+                midpoints(gy_ext)u"m", midpoints(gz_ext)u"m", sp.data[idx,:,:]'
             elseif cross_section == :y
-                xguide --> "x / m"
-                yguide --> "z / m"
+                xguide --> "x"
+                yguide --> "z"
                 xlims --> (grid.x[1],grid.x[end])
                 ylims --> (grid.z[1],grid.z[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gx_ext), midpoints(gz_ext), sp.data[:,idx,:]'
+                midpoints(gx_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'
             elseif cross_section == :z
-                xguide --> "x / m"
-                yguide --> "y / m"
+                xguide --> "x"
+                yguide --> "y"
                 xlims --> (grid.x[1],grid.x[end])
                 ylims --> (grid.y[1],grid.y[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gy_ext = midpoints(get_extended_ticks(grid.y))
-                midpoints(gx_ext), midpoints(gy_ext), sp.data[:,:,idx]'
+                midpoints(gx_ext)u"m", midpoints(gy_ext)u"m", sp.data[:,:,idx]'
             end
         end
     end
@@ -354,27 +359,28 @@ end
     gz_ext::Array{T,1} = midpoints(get_extended_ticks(grid.z))
 
     @series begin
+        unitformat --> :slash
         if cross_section == :x
             aspect_ratio --> 1
-            xguide --> "y / m"
-            yguide --> "z / m"
+            xguide --> "y"
+            yguide --> "z"
             xlims --> (grid.y[1],grid.y[end])
             ylims --> (grid.z[1],grid.z[end])
-            gy_ext, gz_ext, ϵ.data[idx,:,:]'
+            gy_ext*u"m", gz_ext*u"m", ϵ.data[idx,:,:]'
         elseif cross_section == :y
             aspect_ratio --> 1
-            xguide --> "x / m"
-            yguide --> "z / m"
+            xguide --> "x"
+            yguide --> "z"
             xlims --> (grid.x[1],grid.x[end])
             ylims --> (grid.z[1],grid.z[end])
-            gx_ext, gz_ext, ϵ.data[:,idx,:]'
+            gx_ext*u"m", gz_ext*u"m", ϵ.data[:,idx,:]'
         elseif cross_section == :z
             aspect_ratio --> 1
-            xguide --> "x / m"
-            yguide --> "y / m"
+            xguide --> "x"
+            yguide --> "y"
             xlims --> (grid.x[1],grid.x[end])
             ylims --> (grid.y[1],grid.y[end])
-            gx_ext, gy_ext, ϵ.data[:,:,idx]'
+            gx_ext*u"m", gy_ext*u"m", ϵ.data[:,:,idx]'
         end
     end
 end
