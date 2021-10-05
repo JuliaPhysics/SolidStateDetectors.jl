@@ -42,8 +42,9 @@ end
 
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
+    colorbar_title --> "ElectricPotential"
 
-    epot, cross_section, idx, value, contours_equal_potential, full_det
+    epot, cross_section, idx, value, u"V", contours_equal_potential, full_det
 end
 
 
@@ -60,7 +61,7 @@ end
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    wpot, cross_section, idx, value, contours_equal_potential, full_det
+    wpot, cross_section, idx, value, Unitful.NoUnits, contours_equal_potential, full_det
 end
 
 
@@ -75,7 +76,7 @@ end
 
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-    ρ, cross_section, idx, value, false, full_det
+    ρ, cross_section, idx, value, u"V*m", false, full_det
 end
 
 
@@ -92,10 +93,10 @@ end
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
 
-    point_types, cross_section, idx, value, false, full_det
+    point_types, cross_section, idx, value, Unitful.NoUnits, false, full_det
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, unit::Unitful.Units, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
     grid::CylindricalGrid{T} = sp.grid
     @series begin
         seriestype := :heatmap
@@ -114,20 +115,20 @@ end
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                 extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                 xlims := (-1*grid.r[end],grid.r[end])
-                vcat(-1 .* grid.r[end:-1:2], grid.r)u"m", grid.z*u"m", extended_data
+                vcat(-1 .* grid.r[end:-1:2], grid.r)u"m", grid.z*u"m", extended_data*unit
              else
-                midpoints(gr_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'
+                midpoints(gr_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'*unit
             end
         elseif cross_section == :r
             xguide --> "φ"
             yguide --> "z"
             ylims --> (grid.z[1],grid.z[end])
-            grid.φ*u"rad", grid.z*u"m", sp.data[idx,:,:]'
+            grid.φ*u"rad", grid.z*u"m", sp.data[idx,:,:]'*unit
         elseif cross_section == :z
             projection --> :polar
             xguide --> ""
             yguide --> ""
-            grid.φ*u"rad", grid.r*u"m", sp.data[:,:,idx]
+            grid.φ*u"rad", grid.r*u"m", sp.data[:,:,idx]*unit
         end
     end
 
@@ -146,10 +147,10 @@ end
                     cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                     extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                     xlims := (-1*grid.r[end],grid.r[end])
-                    vcat(-1 .* grid.r[end:-1:2], grid.r)u"m", grid.z*u"m", extended_data
+                    vcat(-1 .* grid.r[end:-1:2], grid.r)u"m", grid.z*u"m", extended_data*unit
                  else
-                    # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'
-                    grid.r*u"m", grid.z*u"m", sp.data[:,idx,:]'
+                    # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'*unit
+                    grid.r*u"m", grid.z*u"m", sp.data[:,idx,:]'*unit
                 end
                 #=
             elseif cross_section == :r
@@ -230,7 +231,7 @@ end
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    epot, cross_section, idx, value, contours_equal_potential
+    epot, cross_section, idx, value, u"V", contours_equal_potential
 end
 
 @recipe function f(wpot::WeightingPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
@@ -242,7 +243,7 @@ end
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    wpot, cross_section, idx, value, contours_equal_potential
+    wpot, cross_section, idx, value, Unitful.NoUnits, contours_equal_potential
 end
 
 
@@ -253,7 +254,7 @@ end
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    ρ, cross_section, idx, value
+    ρ, cross_section, idx, value, u"V*m"
 end
 
 
@@ -266,11 +267,11 @@ end
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))m"
 
-    point_types, cross_section, idx, value
+    point_types, cross_section, idx, value, Unitful.NoUnits
 end
 
 
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, contours_equal_potential::Bool = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, unit::Unitful.Units, contours_equal_potential::Bool = false) where {T <: SSDFloat}
     grid::CartesianGrid3D{T} = sp.grid
     @series begin
         seriestype := :heatmap
@@ -285,7 +286,7 @@ end
             ylims --> (grid.z[1],grid.z[end])
             gy_ext = midpoints(get_extended_ticks(grid.y))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gy_ext)u"m", midpoints(gz_ext)u"m", sp.data[idx,:,:]'
+            midpoints(gy_ext)u"m", midpoints(gz_ext)u"m", sp.data[idx,:,:]'*unit
         elseif cross_section == :y
             aspect_ratio --> 1
             xguide --> "x"
@@ -294,7 +295,7 @@ end
             ylims --> (grid.z[1],grid.z[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gx_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'
+            midpoints(gx_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'*unit
         elseif cross_section == :z
             aspect_ratio --> 1
             xguide --> "x"
@@ -303,7 +304,7 @@ end
             ylims --> (grid.y[1],grid.y[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gy_ext = midpoints(get_extended_ticks(grid.y))
-            midpoints(gx_ext)u"m", midpoints(gy_ext)u"m", sp.data[:,:,idx]'
+            midpoints(gx_ext)u"m", midpoints(gy_ext)u"m", sp.data[:,:,idx]'*unit
         end
     end
 
@@ -320,7 +321,7 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 gy_ext = midpoints(get_extended_ticks(grid.y))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gy_ext)u"m", midpoints(gz_ext)u"m", sp.data[idx,:,:]'
+                midpoints(gy_ext)u"m", midpoints(gz_ext)u"m", sp.data[idx,:,:]'*unit
             elseif cross_section == :y
                 xguide --> "x"
                 yguide --> "z"
@@ -328,7 +329,7 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gx_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'
+                midpoints(gx_ext)u"m", midpoints(gz_ext)u"m", sp.data[:,idx,:]'*unit
             elseif cross_section == :z
                 xguide --> "x"
                 yguide --> "y"
@@ -336,7 +337,7 @@ end
                 ylims --> (grid.y[1],grid.y[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gy_ext = midpoints(get_extended_ticks(grid.y))
-                midpoints(gx_ext)u"m", midpoints(gy_ext)u"m", sp.data[:,:,idx]'
+                midpoints(gx_ext)u"m", midpoints(gy_ext)u"m", sp.data[:,:,idx]'*unit
             end
         end
     end
