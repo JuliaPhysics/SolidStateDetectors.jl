@@ -16,7 +16,7 @@ export JULIA_NUM_THREADS=4
 ```
 
 
-At the beginning of the simulation, each grid point, $(i,j,k)$ is assigned its dielectric constant, $\epsilon_r(\vec{r}_{i,j,k})$, as well as its effective charge, $Q_\text{eff} = \rho(\vec{r}_{i,j,k}) \cdot V_{i,j,k} \,\epsilon_0$, where $V_{i,j,k}$ is the volume assigned to the grid point $(i,j,k)$.
+At the beginning of the simulation, each grid point, $(i,j,k)$ is assigned its dielectric constant, $\epsilon_r(\vec{r}_{i,j,k})$, as well as its effective charge, $Q_\text{eff} = \rho(\vec{r}_{i,j,k}) \cdot V_{i,j,k} / \epsilon_0$, where $V_{i,j,k}$ is the volume assigned to the grid point $(i,j,k)$.
 
 These quantities are stored in the fields `sim.q_eff_imp` and `sim.ϵ_r` and can be plotted using
 ```julia
