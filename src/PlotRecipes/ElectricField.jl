@@ -15,7 +15,7 @@
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
     colorbar_title --> "Electric Field Strength"
 
-    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential, full_det
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, u"V/m", contours_equal_potential, full_det
 
 end
 
@@ -35,7 +35,7 @@ end
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
     colorbar_title --> "Electric Field Strength"
 
-    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, u"V/m", contours_equal_potential
 end
 
 function get_sample_lines(dim_symbol::Symbol, v::T, grid::CartesianGrid3D{T}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
