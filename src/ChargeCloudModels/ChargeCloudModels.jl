@@ -12,7 +12,7 @@ initially distributed around a given center.
 ## Parametric Types 
 * `T`: Precision type.
 * `N`: Number of shells.
-* `SH`: Geometry of the shells (should be a `PlatonicSolid`).
+* `SH`: Geometry of the shells.
 
 ## Fields
 * `points::Vector{CartesianPoint{T}}`: Positions of the charge carriers that are part of the charge cloud.
@@ -29,7 +29,8 @@ end
 """
     NBodyChargeCloud(center::CartesianPoint{T}, energy::T, particle_type::Type{PT} = Gamma; kwargs...)
 
-Returns an [`NBodyChargeCloud`](@ref) for a given `energy` deposition at a position that defines the `center` of the charge cloud.
+Returns an [`NBodyChargeCloud`](@ref) for a given `energy` deposition at a position that defines the `center` of the charge cloud,
+given by a center charge surrounded by shells consisting of platonic solids.
 
 ## Arguments
 * `center::CartesianPoint{T}`: Center position of the [`NBodyChargeCloud`](@ref).
@@ -85,13 +86,41 @@ function create_regular_sphere(center::CartesianPoint{T}, N::Integer, R::T)::Vec
         for n in 0:Mφ-1
             φ = 2π*n/Mφ
             Ncount += 1
-            points[Ncount] = CartesianPoint{T}(R*cos(φ)*sin(θ), R*sin(φ)*sin(θ), R*cos(θ))
+            points[Ncount] = center + CartesianVector{T}(R*cos(φ)*sin(θ), R*sin(φ)*sin(θ), R*cos(θ))
         end
     end
     
     return points[1:Ncount]
 end
 
+
+"""
+    NBodyChargeCloud(center::CartesianPoint{T}, energy::T, N::Integer, particle_type::Type{PT} = Gamma; kwargs...)
+
+Returns an [`NBodyChargeCloud`](@ref) for a given `energy` deposition at a position that defines the `center` of the charge cloud,
+given by a center charge surrounded by shells of approximately `N` point charges equally distributed on the surface of a sphere.
+Find the algorithm to create the shells [here](https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf).
+
+## Arguments
+* `center::CartesianPoint{T}`: Center position of the [`NBodyChargeCloud`](@ref).
+* `energy::RealQuantity`: Deposited energy with units. If no units are given, the value is parsed in units of eV.
+* `N::Integer`: Approximate number of charges in the [`NBodyChargeCloud`](@ref) (might vary by around 1%).
+* `particle_type`: [`ParticleType`](@ref) of the particle that deposited the energy. Default is `Gamma`.
+
+## Keywords
+* `radius::T`: Estimate for the radius of the [`NBodyChargeCloud`](@ref). Default is determined from `particle_type` via `radius_guess`.
+* `number_of_shells::Int`: Number of shells around the `center` point. Default is `2`.
+
+## Example
+```julia
+center = CartesianPoint{T}([0,0,0])
+energy = 1460u"keV"
+NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
+```
+
+!!! note
+    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+"""
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2,
     )::NBodyChargeCloud{T, number_of_shells, NTuple{number_of_shells, Int}} where {T, PT <: ParticleType}

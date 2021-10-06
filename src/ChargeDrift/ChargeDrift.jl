@@ -88,22 +88,6 @@ function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to b
     SVector{3,eltype(v⃗)}(v⃗[1] + λ * n⃗[1], v⃗[2] + λ * n⃗[2], v⃗[3] + λ * n⃗[3])
 end
 
-
-function _get_stepvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, 
-                                done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, 
-                                det::SolidStateDetector{T}, ::Type{S}, ::Type{Electron}, Δt::T)::Nothing where {T, S}
-    for n in eachindex(step_vectors)
-       step_vectors[n] = CartesianVector{T}(0, 0, 0)
-       if !done[n]
-           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
-           step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), det.semiconductor.charge_drift_model) * Δt
-           step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], det.virtual_drift_volumes)
-           done[n] = current_pos[n] == current_pos[n] + step_vectors[n]
-       end
-    end
-    nothing
-end
-
 function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
     for n in eachindex(v)
         v[n] = CartesianVector{T}(0,0,0)
@@ -268,6 +252,16 @@ function _drift_charge!(
     timestamps[1] = zero(T)
     ϵ_r::T = T(det.semiconductor.material.ϵ_r)
     
+    diffusion_length::T = if diffusion
+        if CC == Electron
+            det.semiconductor.material.diffusion_fieldvector_electrons
+        else # CC == Hole
+            det.semiconductor.material.diffusion_fieldvector_holes
+        end
+    else
+        zero(T)
+    end
+    
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
@@ -280,7 +274,7 @@ function _drift_charge!(
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done)
+        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)

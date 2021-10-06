@@ -39,7 +39,7 @@ The calculated electric field is stored as a field in the Simulation object, i.e
 The electric field can be plotted using the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package. The electric field strength is plotted using `plot(sim.electric_field)`, whereas the electric field lines can be plotted on top of that using  `plot_electric_fieldlines!(sim)`.
 
 Minimum working example:
-```julia
+````@example plotting
 using SolidStateDetectors
 using Plots
 sim = Simulation(SSD_examples[:InvertedCoax])
@@ -47,4 +47,4 @@ calculate_electric_potential!(sim)
 calculate_electric_field!(sim)
 plot(sim.electric_field, full_det = true)
 plot_electric_fieldlines!(sim, full_det = true)
-```
+````

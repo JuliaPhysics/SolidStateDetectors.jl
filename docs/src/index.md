@@ -18,9 +18,6 @@ Pages = ["man/Grids.md"]
 Pages = ["man/electric_potential.md"]
 ```
 ```@contents
-Pages = ["man/weighting_potentials.md"]
-```
-```@contents
 Pages = ["man/capacitances.md"]
 ```
 ```@contents
@@ -28,6 +25,9 @@ Pages = ["man/electric_field.md"]
 ```
 ```@contents
 Pages = ["man/charge_drift.md"]
+```
+```@contents
+Pages = ["man/weighting_potentials.md"]
 ```
 ```@contents
 Pages = ["man/IO.md"]
