@@ -197,10 +197,10 @@ end
             xguide --> "φ"
             yguide --> "z"
             ylims --> (grid.z[1],grid.z[end])
-            rad2deg_backend.(gφ_ext)*internal_angle_unit, gz_ext*internal_length_unit, ϵ.data[idx,:,:]'
+            gφ_ext*internal_angle_unit, gz_ext*internal_length_unit, ϵ.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
-            rad2deg_backend.(gφ_ext)*internal_angle_unit, gr_ext*internal_length_unit, ϵ.data[:,:,idx]
+            gφ_ext*internal_angle_unit, gr_ext*internal_length_unit, ϵ.data[:,:,idx]
         end
     end
 end
