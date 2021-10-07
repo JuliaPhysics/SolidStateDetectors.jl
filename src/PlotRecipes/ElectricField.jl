@@ -170,28 +170,28 @@ end
                     seriescolor --> :white
                     label --> ""
                     x, y = if dim_symbol == :φ
-                        map(x -> x[1] * cos(v) + x[2] * sin(v), path), #project to the φ-plane
-                        map(x -> x[3], path)
+                        map(x -> x[1] * cos(v) + x[2] * sin(v), path)*internal_length_unit, #project to the φ-plane
+                        map(x -> x[3], path)*internal_length_unit
                     elseif dim_symbol == :x
-                        map(x -> x[2], path),
-                        map(x -> x[3], path)
+                        map(x -> x[2], path)*internal_length_unit,
+                        map(x -> x[3], path)*internal_length_unit
                     elseif dim_symbol == :y
-                        map(x -> x[1], path),
-                        map(x -> x[3], path)
+                        map(x -> x[1], path)*internal_length_unit,
+                        map(x -> x[3], path)*internal_length_unit
                     elseif dim_symbol == :z
                         if S == Cylindrical
                             projection --> :polar
                             path = CylindricalPoint.(path)
-                            map(x -> x[2], path),
-                            map(x -> x[1], path)
+                            map(x -> x[2], path)*internal_angle_unit,
+                            map(x -> x[1], path)*internal_length_unit
                         else
-                            map(x -> x[1], path),
-                            map(x -> x[2], path)
+                            map(x -> x[1], path)*internal_length_unit,
+                            map(x -> x[2], path)*internal_length_unit
                         end
                     elseif dim_symbol == :r
                         path = CylindricalPoint.(path)
-                        map(x -> x[2], path),
-                        map(x -> x[3], path)
+                        map(x -> x[2], path)*internal_angle_unit,
+                        map(x -> x[3], path)*internal_length_unit
                     end
                     x, y
                 end
