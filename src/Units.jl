@@ -12,7 +12,6 @@ const internal_voltage_unit = u"V"
 const internal_efield_unit  = u"V / m"
 const internal_energy_unit  = u"eV"
 
-to_internal_units(x::Quantity) = ustrip(uconvert(u_internal, x))
 to_internal_units(x::Quantity{<:Real, Unitful.𝐓}) = ustrip(uconvert(internal_time_unit, x))
 to_internal_units(x::Quantity{<:Real, dimension(1u"V")}) = ustrip(uconvert(internal_voltage_unit, x))
 to_internal_units(x::Quantity{<:Real, dimension(1u"V / m")}) = ustrip(uconvert(internal_efield_unit, x))

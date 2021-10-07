@@ -1,7 +1,25 @@
-function get_crosssection_idx_and_value(grid::Grid, ::Any, ::Any, ::Any)
-    error(ArgumentError, ": The cross section your are trying to plot is not given in the right format.\nPlease pass a number with or without units.")
+function _get_potential_plot_information(::ElectricPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:viridis, (-Inf, Inf), "Electric Potential", internal_voltage_unit)
 end
 
+function _get_potential_plot_information(::WeightingPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:viridis, (0, 1), "Weighting Potential", Unitful.NoUnits)
+end
+
+function _get_potential_plot_information(::EffectiveChargeDensity)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:inferno, (-Inf, Inf), "Effective Charge Density", u"V * m")
+end
+
+function _get_potential_plot_information(::PointTypes)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:viridis, (0, 7), "Point Type Map", Unitful.NoUnits)
+end
+
+function get_crosssection_idx_and_value(grid::Grid, ::Any, ::Any, ::Any)
+    error(ArgumentError, ": The cross section your are trying to plot is not given in the right format.\nPlease pass a number with matching or no units.")
+end
+
+
+## Potentials with cylindrical grids
 
 function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r::Union{Real, LengthQuantity, Missing}, φ::Union{Real, AngleQuantity, Missing}, z::Union{Real, LengthQuantity, Missing})::Tuple{Symbol,Int,T,Unitful.Units} where {T <: SSDFloat}
 
@@ -36,76 +54,27 @@ function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r::Union{Real,
     cross_section, idx, value, units
 end
 
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
+    gradient::Symbol, clims::Tuple{Real, Real}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
-@recipe function f(epot::ElectricPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
+    if !(sp.grid[2][end] - sp.grid[2][1] ≈ 2π) sp = get_2π_potential(sp, n_points_in_φ = 72) end
 
-    if !(epot.grid[2][end] - epot.grid[2][1] ≈ 2π) epot = get_2π_potential(epot, n_points_in_φ = 72) end
-
-    grid::CylindricalGrid{T} = epot.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
-    seriescolor --> :viridis
-    title --> "Electric Potential @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
-    colorbar_title --> "ElectricPotential"
-
-    epot, cross_section, idx, value, internal_voltage_unit, contours_equal_potential, full_det
-end
-
-
-@recipe function f(wpot::WeightingPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
-
-    if !(wpot.grid[2][end] - wpot.grid[2][1] ≈ 2π)
-        wpot = get_2π_potential(wpot, n_points_in_φ = 72)
-    end
-
-    grid::CylindricalGrid{T} = wpot.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
-
-    seriescolor --> :viridis
-    clims --> (0,1)
-    title --> "Weighting Potential @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
-    colorbar_title --> "Weighting Potential"
-
-    wpot, cross_section, idx, value, Unitful.NoUnits, contours_equal_potential, full_det
-end
-
-
-@recipe function f(ρ::EffectiveChargeDensity{T,3,Cylindrical}; r = missing, φ = missing, z = missing, full_det = false) where {T <: SSDFloat}
-
-    if !(ρ.grid[2][end] - ρ.grid[2][1] ≈ 2π)
-        ρ = get_2π_potential(ρ, n_points_in_φ = 72)
-    end
-
-    grid::CylindricalGrid{T} = ρ.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
-
-    seriescolor --> :inferno
-    title --> "Effective Charge Density @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
-    colorbar_title --> "Effective Charge Density"
-
-    ρ, cross_section, idx, value, u"V*m", false, full_det
-end
-
-
-@recipe function f(point_types::PointTypes{T,3,Cylindrical}; r = missing, φ = missing, z = missing, full_det = false) where {T <: SSDFloat}
-
-    if !(point_types.grid[2][end] - point_types.grid[2][1] ≈ 2π)
-        point_types = get_2π_potential(point_types, n_points_in_φ = 72)
-    end
-
-    grid::CylindricalGrid{T} = point_types.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
-
-    seriescolor --> :viridis
-    clims --> (0,7)
-    title --> "Point Type Map @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
-    colorbar_title --> "Point Type"
-
-    point_types, cross_section, idx, value, Unitful.NoUnits, false, full_det
-end
-
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, unit::Unitful.Units, contours_equal_potential::Bool = false, full_det::Bool = false) where {T <: SSDFloat}
     grid::CylindricalGrid{T} = sp.grid
+    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
+    
+    title --> name * " @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=3))"
+    colorbar_title --> name
+    seriescolor --> gradient
+    clims --> clims
+
+    sp, cross_section, idx, value, punit, contours_equal_potential, full_det
+end
+
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool) where {T <: SSDFloat}
+
+    grid::CylindricalGrid{T} = sp.grid
+
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -123,20 +92,20 @@ end
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                 extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                 xlims := (-1*grid.r[end],grid.r[end])
-                vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data*unit
+                vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data*punit
              else
-                midpoints(gr_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*unit
+                midpoints(gr_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*punit
             end
         elseif cross_section == :r
             xguide --> "φ"
             yguide --> "z"
             ylims --> (grid.z[1],grid.z[end])
-            grid.φ*internal_angle_unit, grid.z*internal_length_unit, sp.data[idx,:,:]'*unit
+            grid.φ*internal_angle_unit, grid.z*internal_length_unit, sp.data[idx,:,:]'*punit
         elseif cross_section == :z
             projection --> :polar
             xguide --> ""
             yguide --> ""
-            grid.φ*internal_angle_unit, grid.r*internal_length_unit, sp.data[:,:,idx]*unit
+            grid.φ*internal_angle_unit, grid.r*internal_length_unit, sp.data[:,:,idx].*punit
         end
     end
 
@@ -155,10 +124,10 @@ end
                     cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                     extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
                     xlims := (-1*grid.r[end],grid.r[end])
-                    vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data*unit
+                    vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data.*punit
                  else
                     # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'*unit
-                    grid.r*internal_length_unit, grid.z*internal_length_unit, sp.data[:,idx,:]'*unit
+                    grid.r*internal_length_unit, grid.z*internal_length_unit, sp.data[:,idx,:]'.*punit
                 end
                 #=
             elseif cross_section == :r
@@ -186,7 +155,7 @@ end
     seriescolor --> :inferno
     foreground_color_border --> nothing
     tick_direction --> :out
-    title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
+    title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=3))"
     colorbar_title --> "Dielectric Distribution"
 
     gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
@@ -216,6 +185,8 @@ end
 
 
 
+## Potentials with Cartesian grids
+
 function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x::Union{Real, LengthQuantity, Missing}, y::Union{Real, LengthQuantity, Missing}, z::Union{Real, LengthQuantity, Missing})::Tuple{Symbol,Int,T,Unitful.Units} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int, units::Unitful.Units = if ismissing(x) && ismissing(y) && ismissing(z)
@@ -233,59 +204,25 @@ function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x::Union{Real,
     cross_section, idx, value, units
 end
 
-@recipe function f(epot::ElectricPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
-    grid::CartesianGrid3D{T} = epot.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
+    
+    gradient::Symbol, clims::Tuple{Real, Real}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
-    seriescolor --> :viridis
-    title --> "Electric Potential @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
-    colorbar_title --> "Electric Potential"
-
-    epot, cross_section, idx, value, internal_voltage_unit, contours_equal_potential
-end
-
-@recipe function f(wpot::WeightingPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
-
-    grid::CartesianGrid3D{T} = wpot.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
-
-    seriescolor --> :viridis
-    clims --> (0,1)
-    title --> "Weighting Potential @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
-    colorbar_title --> "Weighting Potential"
-
-    wpot, cross_section, idx, value, Unitful.NoUnits, contours_equal_potential
-end
-
-
-@recipe function f(ρ::EffectiveChargeDensity{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
-    grid::CartesianGrid3D{T} = ρ.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
-
-    seriescolor --> :inferno
-    title --> "Effective Charge Density @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
-    colorbar_title --> "Effective Charge Density"
-
-    ρ, cross_section, idx, value, u"V*m"
-end
-
-
-@recipe function f(point_types::PointTypes{T,3,Cartesian}; x = missing, y = missing, z = missing) where {T <: SSDFloat}
-
-    grid::CartesianGrid3D{T} = point_types.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
-
-    seriescolor --> :viridis
-    clims --> (0,7)
-    title --> "Point Type Map @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
-    colorbar_title --> "Point Type"
-
-    point_types, cross_section, idx, value, Unitful.NoUnits
-end
-
-
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, unit::Unitful.Units, contours_equal_potential::Bool = false) where {T <: SSDFloat}
     grid::CartesianGrid3D{T} = sp.grid
+    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
+    
+    title --> name * " @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=3))"
+    colorbar_title --> name
+    seriescolor --> gradient
+    clims --> clims
+
+    sp, cross_section, idx, value, punit, contours_equal_potential
+end
+
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool) where {T <: SSDFloat}
+
+    grid::CartesianGrid3D{T} = sp.grid
+
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -299,7 +236,7 @@ end
             ylims --> (grid.z[1],grid.z[end])
             gy_ext = midpoints(get_extended_ticks(grid.y))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[idx,:,:]'*unit
+            midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[idx,:,:]'*punit
         elseif cross_section == :y
             aspect_ratio --> 1
             xguide --> "x"
@@ -308,7 +245,7 @@ end
             ylims --> (grid.z[1],grid.z[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*unit
+            midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*punit
         elseif cross_section == :z
             aspect_ratio --> 1
             xguide --> "x"
@@ -317,7 +254,7 @@ end
             ylims --> (grid.y[1],grid.y[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gy_ext = midpoints(get_extended_ticks(grid.y))
-            midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, sp.data[:,:,idx]'*unit
+            midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, sp.data[:,:,idx]'*punit
         end
     end
 
@@ -334,7 +271,7 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 gy_ext = midpoints(get_extended_ticks(grid.y))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[idx,:,:]'*unit
+                midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[idx,:,:]'*punit
             elseif cross_section == :y
                 xguide --> "x"
                 yguide --> "z"
@@ -342,7 +279,7 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*unit
+                midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*punit
             elseif cross_section == :z
                 xguide --> "x"
                 yguide --> "y"
@@ -350,7 +287,7 @@ end
                 ylims --> (grid.y[1],grid.y[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gy_ext = midpoints(get_extended_ticks(grid.y))
-                midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, sp.data[:,:,idx]'*unit
+                midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, sp.data[:,:,idx]'*punit
             end
         end
     end
@@ -365,7 +302,7 @@ end
     seriescolor --> :inferno
     foreground_color_border --> nothing
     tick_direction --> :out
-    title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
+    title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=3))"
     colorbar_title --> "Dielectric Distribution"
 
     gx_ext::Array{T,1} = midpoints(get_extended_ticks(grid.x))
