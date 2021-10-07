@@ -184,7 +184,6 @@ function _check_and_update_position!(
         #all charges are either finished or still inside the detector => drift normally
         current_pos .+= step_vectors
         drift_path[:,istep] .= current_pos
-        timestamps[istep] = timestamps[istep-1] + Δt
     else
         #all charges that would not be inside after the drift step
         for n in findall(.!normal)
@@ -193,7 +192,6 @@ function _check_and_update_position!(
             if cd_point_type == CD_ELECTRODE
                 done[n] = true
                 drift_path[n,istep] = crossing_pos
-                timestamps[istep] = timestamps[istep-1] + Δt      
             elseif cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
@@ -211,22 +209,22 @@ function _check_and_update_position!(
                 end
                 drift_path[n,istep] = next_pos
                 step_vectors *= (1 - i * T(0.001))  # scale down the step_vectors for all other charge clouds
-                #Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
+                Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
             else # if cd_point_type == CD_BULK or CD_OUTSIDE
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
-                timestamps[istep] = timestamps[istep-1] + Δt
             end  
-        end
+        end    
         #drift all other charge clouds normally according to the new Δt_min
         for n in findall(normal)
             current_pos[n] += step_vectors[n]
             drift_path[n,istep] = current_pos[n]
         end
     end
+    timestamps[istep] = timestamps[istep-1] + Δt
     nothing
 end
 
