@@ -124,7 +124,7 @@ function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}
             if done[m] continue end
             if m > n
                 direction::CartesianVector{T} = current_pos[n] .- current_pos[m]
-                tmp::T = elementary_charge * inv(4 * pi * ϵ0 * ϵ_r * sum(direction.^2))
+                tmp::T = elementary_charge * inv(4 * pi * ϵ0 * ϵ_r * max(sum(direction.^2), T(1e-10))) # minimum distance is 10µm 
                 step_vectors[n] += charges[m] * tmp * normalize(direction)
                 step_vectors[m] -= charges[n] * tmp * normalize(direction)
             end
