@@ -1,9 +1,14 @@
-function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r, φ, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
+function get_crosssection_idx_and_value(grid::Grid, ::Any, ::Any, ::Any)
+    error(ArgumentError, ": The cross section your are trying to plot is not given in the right format.\nPlease pass a number with or without units.")
+end
+
+
+function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r::Union{Real, LengthQuantity, Missing}, φ::Union{Real, AngleQuantity, Missing}, z::Union{Real, LengthQuantity, Missing})::Tuple{Symbol,Int,T} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int = if ismissing(φ) && ismissing(r) && ismissing(z)
         return get_crosssection_idx_and_value(grid, r, T(0.0), z)
     elseif !ismissing(φ) && ismissing(r) && ismissing(z)
-        φ_rad::T = T(deg2rad(φ))
+        φ_rad::T = T(to_internal_units(φ isa Real ? deg2rad(φ) : φ))
         while !(grid.φ.interval.left <= φ_rad <= grid.φ.interval.right) && grid.φ.interval.right != grid.φ.interval.left
             if φ_rad > grid.φ.interval.right
                 φ_rad -= width(grid.φ.interval)
@@ -13,9 +18,9 @@ function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r, φ, z)::Tup
         end
         :φ, searchsortednearest(grid.φ, φ_rad)
     elseif ismissing(φ) && !ismissing(r) && ismissing(z)
-        :r, searchsortednearest(grid.r, T(r))
+        :r, searchsortednearest(grid.r, T(to_internal_units(r)))
     elseif ismissing(φ) && ismissing(r) && !ismissing(z)
-        :z, searchsortednearest(grid.z, T(z))
+        :z, searchsortednearest(grid.z, T(to_internal_units(z)))
     else
         error(ArgumentError, ": Only one of the keywords `r, φ, z` is allowed.")
     end
@@ -207,16 +212,16 @@ end
 
 
 
-function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x, y, z)::Tuple{Symbol,Int,T} where {T <: SSDFloat}
+function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x::Union{Real, LengthQuantity, Missing}, y::Union{Real, LengthQuantity, Missing}, z::Union{Real, LengthQuantity, Missing})::Tuple{Symbol,Int,T} where {T <: SSDFloat}
 
     cross_section::Symbol, idx::Int = if ismissing(x) && ismissing(y) && ismissing(z)
         return get_crosssection_idx_and_value(grid, T(0.0), y, z)
     elseif !ismissing(x) && ismissing(y) && ismissing(z)
-        :x, searchsortednearest(grid.x, T(x))
+        :x, searchsortednearest(grid.x, T(to_internal_units(x)))
     elseif ismissing(x) && !ismissing(y) && ismissing(z)
-        :y, searchsortednearest(grid.y, T(y))
+        :y, searchsortednearest(grid.y, T(to_internal_units(y)))
     elseif ismissing(x) && ismissing(y) && !ismissing(z)
-        :z, searchsortednearest(grid.z, T(z))
+        :z, searchsortednearest(grid.z, T(to_internal_units(z)))
     else
         error(ArgumentError, ": Only one of the keywords `x, y, z` is allowed.")
     end
