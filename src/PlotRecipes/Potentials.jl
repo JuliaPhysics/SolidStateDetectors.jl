@@ -67,6 +67,7 @@ end
     colorbar_title --> name
     seriescolor --> gradient
     clims --> clims
+    unitformat --> :slash
 
     sp, cross_section, idx, value, punit, contours_equal_potential, full_det
 end
@@ -79,11 +80,11 @@ end
         seriestype := :heatmap
         foreground_color_border --> nothing
         tick_direction --> :out
+        unitformat --> :slash
         if cross_section == :φ
             aspect_ratio --> 1
             xguide --> "r"
             yguide --> "z"
-            unitformat --> :slash
             xlims --> (grid.r[1],grid.r[end])
             ylims --> (grid.z[1],grid.z[end])
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
@@ -113,11 +114,11 @@ end
         @series begin
             seriescolor := :thermal
             seriestype := :contours
+            unitformat --> :slash
             #if cross_section == :φ
                 aspect_ratio --> 1
                 xguide := "r"
                 yguide := "z"
-                unitformat --> :slash
                 xlims --> (grid.r[1],grid.r[end])
                 ylims --> (grid.z[1],grid.z[end])
                 if full_det
@@ -157,6 +158,7 @@ end
     tick_direction --> :out
     title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=3))"
     colorbar_title --> "Dielectric Distribution"
+    unitformat --> :slash
 
     gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
     gφ_ext::Array{T,1} = midpoints(get_extended_ticks(grid.φ))
@@ -167,7 +169,6 @@ end
             aspect_ratio --> 1
             xguide --> "r"
             yguide --> "z"
-            unitformat --> :slash
             xlims --> (grid.r[1],grid.r[end])
             ylims --> (grid.z[1],grid.z[end])
             gr_ext*internal_length_unit, gz_ext*internal_length_unit, ϵ.data[:,idx,:]'

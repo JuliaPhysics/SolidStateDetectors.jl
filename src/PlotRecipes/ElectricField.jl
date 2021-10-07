@@ -13,6 +13,7 @@
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
     colorbar_title --> "Electric Field Strength"
     seriescolor --> :inferno
+    unitformat --> :slash
 
     ef_magn = norm.(ef)
     ElectricPotential(ef_magn, grid),  cross_section, idx, value, internal_efield_unit, contours_equal_potential, full_det
@@ -30,6 +31,7 @@ end
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
     colorbar_title --> "Electric Field Strength"
     seriescolor --> :inferno
+    unitformat --> :slash
 
     ef_magn = norm.(ef)
     ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential
