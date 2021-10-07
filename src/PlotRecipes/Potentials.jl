@@ -65,6 +65,7 @@ end
     seriescolor --> :viridis
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
+    colorbar_title --> "Weighting Potential"
 
     wpot, cross_section, idx, value, Unitful.NoUnits, contours_equal_potential, full_det
 end
@@ -81,6 +82,8 @@ end
 
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
+    colorbar_title --> "Effective Charge Density"
+
     ρ, cross_section, idx, value, u"V*m", false, full_det
 end
 
@@ -97,6 +100,7 @@ end
     seriescolor --> :viridis
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
+    colorbar_title --> "Point Type"
 
     point_types, cross_section, idx, value, Unitful.NoUnits, false, full_det
 end
@@ -184,6 +188,7 @@ end
     foreground_color_border --> nothing
     tick_direction --> :out
     title --> "Dielectric Distribution @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
+    colorbar_title --> "Dielectric Distribution"
 
     gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
     gφ_ext::Array{T,1} = midpoints(get_extended_ticks(grid.φ))
@@ -235,6 +240,7 @@ end
 
     seriescolor --> :viridis
     title --> "Electric Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
+    colorbar_title --> "Electric Potential"
 
     epot, cross_section, idx, value, internal_voltage_unit, contours_equal_potential
 end
@@ -247,6 +253,7 @@ end
     seriescolor --> :viridis
     clims --> (0,1)
     title --> "Weighting Potential @ $(cross_section) = $(round(value,sigdigits=2))m"
+    colorbar_title --> "Weighting Potential"
 
     wpot, cross_section, idx, value, Unitful.NoUnits, contours_equal_potential
 end
@@ -258,6 +265,7 @@ end
 
     seriescolor --> :inferno
     title --> "Effective Charge Density @ $(cross_section) = $(round(value,sigdigits=2))m"
+    colorbar_title --> "Effective Charge Density"
 
     ρ, cross_section, idx, value, u"V*m"
 end
@@ -271,6 +279,7 @@ end
     seriescolor --> :viridis
     clims --> (0,7)
     title --> "Point Type Map @ $(cross_section) = $(round(value,sigdigits=2))m"
+    colorbar_title --> "Point Type"
 
     point_types, cross_section, idx, value, Unitful.NoUnits
 end
@@ -359,6 +368,7 @@ end
     foreground_color_border --> nothing
     tick_direction --> :out
     title --> "Dielectric Distribution @ $(cross_section) = $(round(value,sigdigits=2))m"
+    colorbar_title --> "Dielectric Distribution"
 
     gx_ext::Array{T,1} = midpoints(get_extended_ticks(grid.x))
     gy_ext::Array{T,1} = midpoints(get_extended_ticks(grid.y))
