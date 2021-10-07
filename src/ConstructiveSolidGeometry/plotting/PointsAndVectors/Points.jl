@@ -8,7 +8,7 @@
     end 
     @series begin
         seriesstyle --> :scatter
-        [pt.x]u"m", [pt.y]u"m", [pt.z]u"m"
+        [pt.x]*internal_length_unit, [pt.y]*internal_length_unit, [pt.z]*internal_length_unit
     end
 end
 
@@ -28,7 +28,7 @@ end
     end 
     @series begin
         seriesstyle --> :scatter
-        [v[i].x for i in eachindex(v)]u"m", [v[i].y for i in eachindex(v)]u"m", [v[i].z for i in eachindex(v)]u"m"
+        [v[i].x for i in eachindex(v)]*internal_length_unit, [v[i].y for i in eachindex(v)]*internal_length_unit, [v[i].z for i in eachindex(v)]*internal_length_unit
     end
 end
 

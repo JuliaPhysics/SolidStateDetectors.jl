@@ -10,7 +10,7 @@
     end 
     @series begin
         seriestype --> :path3d
-        [e.a[1], e.b[1]]u"m", [e.a[2], e.b[2]]u"m", [e.a[3], e.b[3]]u"m"
+        [e.a[1], e.b[1]]*internal_length_unit, [e.a[2], e.b[2]]*internal_length_unit, [e.a[3], e.b[3]]*internal_length_unit
     end
 end
 

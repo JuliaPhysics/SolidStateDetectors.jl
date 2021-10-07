@@ -5,8 +5,8 @@
 # mature enough).
 
 # Internal units should be SI units
-const internal_length_unit  = u"m"
-const internal_angle_unit   = u"rad"
+const internal_length_unit  = ConstructiveSolidGeometry.internal_length_unit
+const internal_angle_unit   = ConstructiveSolidGeometry.internal_angle_unit
 const internal_time_unit    = u"s"
 const internal_voltage_unit = u"V"
 const internal_efield_unit  = u"V / m"
