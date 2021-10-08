@@ -10,7 +10,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, D
                                 )::T where {T, S, DAT<:GPUArrays.AnyGPUArray, depletion_handling_enabled, only_2d, _is_weighting_potential}
     device = CUDADevice() # device = KernelAbstractions.get_device(a)
     N_grid_points = prod(size(pssrb.potential)[1:3] .- 2)
-    kernel = sor_gpu!(device, 512, N_grid_points)
+    kernel = get_sor_kernel(S, device, 512, N_grid_points)
     @showprogress for i in 1:max_n_iterations
         update_even_points = true
         wait(kernel( pssrb.potential, pssrb.point_types, pssrb.volume_weights, pssrb.q_eff_imp, pssrb.q_eff_fix, pssrb.ϵ_r,
@@ -23,3 +23,6 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, D
     end
     return 0
 end                             
+
+get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
+get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)

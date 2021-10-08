@@ -1,4 +1,4 @@
-@kernel function sor_gpu!(
+@kernel function sor_cyl_gpu!(
         potential::AbstractArray{T},
         point_types,
         volume_weights,
