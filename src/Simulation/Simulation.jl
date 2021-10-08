@@ -542,7 +542,6 @@ function update_till_convergence!( sim::Simulation{T,CS},
         sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
-        device_array_type = device_array_type
     ))
 
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);

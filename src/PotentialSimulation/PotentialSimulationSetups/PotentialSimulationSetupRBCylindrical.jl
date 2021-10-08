@@ -83,7 +83,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
-                device_array_type::Type{<:AbstractArray} = Array,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
                 sor_consts = (1.0, 1.0),
