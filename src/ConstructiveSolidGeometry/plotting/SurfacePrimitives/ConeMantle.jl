@@ -4,18 +4,19 @@ function mesh(cm::ConeMantle{T}; n = 30)::Mesh{T} where {T}
     f = (φMax - φMin)/(2π)
     n = Int(ceil(n*f))
     φ = range(φMin, φMax, length = n+1)
-    z = range(-cm.hZ, cm.hZ, length = 2)
+    rtop = radius_at_z(cm,cm.hZ)
+    rbot = radius_at_z(cm,-cm.hZ)
+    x = append!(rbot*cos.(φ), rtop*cos.(φ))
+    y = append!(rbot*sin.(φ), rtop*sin.(φ))
+    z = append!(rbot*ones(n+1), rtop*ones(n+1))
+    connections = [[i,i+1,i+n+2,i+n+1] for i in 1:n]
 
-    X::Array{T,2} = [radius_at_z(cm,z_j)*cos(φ_i) for φ_i in φ, z_j in z]
-    Y::Array{T,2} = [radius_at_z(cm,z_j)*sin(φ_i) for φ_i in φ, z_j in z]
-    Z::Array{T,2} = [z_j for i in φ, z_j in z]
-    
-    cm.rotation*Mesh{T}(X,Y,Z) + cm.origin
+    cm.rotation*Mesh{T}(x,y,z,connections) + cm.origin
 end
 
 @recipe function f(cm::ConeMantle, n = 40; subn = 10)
-    colorbar := false
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
+    seriestype --> :mesh3d
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Cone Mantle"
             mesh(cm, n = n)
