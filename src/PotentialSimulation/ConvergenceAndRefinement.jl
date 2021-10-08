@@ -1,9 +1,9 @@
-function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, N1, N2},
+function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, S, DAT, N1, N2},
                                         depletion_handling::Val{depletion_handling_enabled}, 
                                         only2d::Val{only_2d} = Val{false}(), 
                                         is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
                                         use_nthreads::Int = Base.Threads.nthreads()
-                                        )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
+                                        )::T where {T, S, DAT, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
     tmp_potential::Array{T, N2} = copy(pssrb.potential)
     if depletion_handling_enabled
         update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
@@ -24,7 +24,7 @@ function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, N1,
     end
 end
 
-function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}, 
+function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}}, 
                                     convergence_limit::T;
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
@@ -33,7 +33,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
                                     use_nthreads::Int = Base.Threads.nthreads(), 
                                     max_n_iterations::Int = -1,
                                     verbose::Bool = true
-                                    )::T where {T, N1, N2, depletion_handling_enabled, only_2d, _is_weighting_potential}
+                                    )::T where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential}
     n_iterations::Int = 0
     cf::T = Inf
     cfs::Vector{T} = fill(cf, 10)
@@ -62,7 +62,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, N1, N2}
         end
     end
     if depletion_handling_enabled
-        tmp_point_types::Array{PointType, N2} = pssrb.point_types .& undepleted_bit
+        tmp_point_types = pssrb.point_types .& undepleted_bit
         @showprogress "Checking undepleted regions " for i in 1:10
             update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
             @inbounds for i in eachindex(pssrb.point_types)

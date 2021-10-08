@@ -8,12 +8,15 @@ using LinearAlgebra
 using Random
 using Statistics
 
+using Adapt
 using ArraysOfArrays
 using FillArrays
 using Formatting
+using GPUArrays
 using Interpolations
 using IntervalSets
 using JSON
+using KernelAbstractions
 using LaTeXStrings
 using ParallelProcessingTools
 using ProgressMeter
@@ -114,8 +117,15 @@ function __init__()
         end
         include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
     end
+    CUDA_loaded = false
     @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" begin
-        include("PotentialSimulation/GPU_BACKEND.jl")
+        CUDA_loaded = true
+        include("PotentialSimulation/ConvergenceGPU.jl")
+    end
+    if !CUDA_loaded
+        @require AMDGPU="21141c5a-9bdb-4563-92ae-f87d6854732e" begin
+            include("PotentialSimulation/ConvergenceGPU.jl")
+        end
     end
 end
 
