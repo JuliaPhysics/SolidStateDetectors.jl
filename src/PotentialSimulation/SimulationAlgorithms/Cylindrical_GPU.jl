@@ -1,4 +1,3 @@
-
 @kernel function sor_gpu!(
         potential::AbstractArray{T},
         point_types,

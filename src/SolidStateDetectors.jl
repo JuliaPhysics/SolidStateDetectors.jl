@@ -118,15 +118,18 @@ function __init__()
         include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
     end
     CUDA_loaded = false
-    @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" begin
+    #     @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" begin
+    @require CUDAKernels="72cfdca4-0801-4ab0-bf6a-d52aa10adc57" begin
+        using .CUDAKernels
         CUDA_loaded = true
         include("PotentialSimulation/ConvergenceGPU.jl")
     end
     if !CUDA_loaded
-        @require AMDGPU="21141c5a-9bdb-4563-92ae-f87d6854732e" begin
-            include("PotentialSimulation/ConvergenceGPU.jl")
-        end
+        # @require AMDGPU="21141c5a-9bdb-4563-92ae-f87d6854732e" begin
+        #     include("PotentialSimulation/ConvergenceGPU.jl")
+        # end
     end
 end
+include("PotentialSimulation/ConvergenceGPU.jl")
 
 end # module
