@@ -1,14 +1,14 @@
 @kernel function sor_car_gpu!(
-        potential::AbstractArray{T},
-        point_types,
-        volume_weights,
-        q_eff_imp,
-        q_eff_fix,
-        ϵ_r,
-        geom_weights,
-        sor_const,
+        potential::AbstractArray{T, 4},
+        point_types::AbstractArray{PointType, 4},
+        volume_weights::AbstractArray{T, 4},
+        q_eff_imp::AbstractArray{T, 4},
+        q_eff_fix::AbstractArray{T, 4},
+        ϵ_r::AbstractArray{T, 3},
+        geom_weights::NTuple{3, <:AbstractArray{T, 2}},
+        sor_const::AbstractArray{T, 1},
         update_even_points::Bool,
-        depletion_handling::Bool,
+        depletion_handling_enabled::Bool,
         is_weighting_potential::Bool,
         only2d::Bool
     ) where {T}
@@ -140,22 +140,23 @@
         new_potential -= old_potential
         new_potential = muladd(new_potential, sor_const[1], old_potential)
 
-        # if depletion_handling_enabled
-        #     vmin::T = min(vxr, vxl, vyr, vyl, vzr, vzl)
-        #     vmax::T = max(vxr, vxl, vyr, vyl, vzr, vzl)
+        if depletion_handling_enabled
+            vmin::T = min(vxr, vxl, vyr, vyl, vzr, vzl)
+            vmax::T = max(vxr, vxl, vyr, vyl, vzr, vzl)
             
-        #     new_point_type = point_types[ix, iy, iz, rb_tar_idx] 
-        #     if new_potential < vmin || new_potential > vmax
-        #         new_potential -= q_eff_imp[ix, iy, iz, rb_tar_idx] * volume_weights[ix, iy, iz, rb_tar_idx] * sor_const[1]
-        #         if (point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) 
-        #             # point_types[ix, iy, iz, rb_tar_idx] += undepleted_bit 
-        #             new_point_type += undepleted_bit
-        #         end # mark this point as undepleted
-        #     elseif point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0
-        #         new_point_type -= undepleted_bit
-        #     end
-        #     point_types[ix, iy, iz, rb_tar_idx] = new_point_type
-        # end 
+            new_point_type = point_types[ix, iy, iz, rb_tar_idx] 
+            if new_potential < vmin || new_potential > vmax
+                new_potential -= q_eff_imp[ix, iy, iz, rb_tar_idx] * volume_weights[ix, iy, iz, rb_tar_idx] * sor_const[1]
+                if (point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0 &&
+                    point_types[ix, iy, iz, rb_tar_idx] & pn_junction_bit > 0) 
+                    # point_types[ix, iy, iz, rb_tar_idx] += undepleted_bit 
+                    new_point_type += undepleted_bit
+                end # mark this point as undepleted
+            elseif point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0
+                new_point_type -= undepleted_bit
+            end
+            point_types[ix, iy, iz, rb_tar_idx] = new_point_type
+        end 
 
         potential[ix, iy, iz, rb_tar_idx]::T = ifelse(point_types[ix, iy, iz, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
     end
