@@ -1235,6 +1235,7 @@ function simulate!( sim::Simulation{T, S};
                                     use_nthreads = use_nthreads,
                                     sor_consts = sor_consts,
                                     max_n_iterations = max_n_iterations,
+                                    device_array_type = device_array_type,
                                     not_only_paint_contacts = not_only_paint_contacts,
                                     paint_contacts = paint_contacts,
                                     verbose = verbose
@@ -1250,6 +1251,7 @@ function simulate!( sim::Simulation{T, S};
                     use_nthreads = use_nthreads,
                     sor_consts = sor_consts,
                     max_n_iterations = max_n_iterations,
+                    device_array_type = device_array_type,
                     not_only_paint_contacts = not_only_paint_contacts,
                     paint_contacts = paint_contacts,
                     verbose = verbose
