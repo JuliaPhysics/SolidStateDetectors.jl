@@ -291,7 +291,8 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindric
             new_point_type = pssrb.point_types[iz, iφ, ir, rb_tar_idx] 
             if new_potential < vmin || new_potential > vmax
                 new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
-                if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) 
+                if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0 && 
+                    pssrb.point_types[iz, iφ, ir, rb_tar_idx] & pn_junction_bit > 0)
                     # pssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit 
                     new_point_type += undepleted_bit
                 end # mark this point as undepleted

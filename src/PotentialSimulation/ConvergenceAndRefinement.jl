@@ -73,15 +73,6 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, A
                 end
             end
         end
-        @inbounds for i in eachindex(pssrb.point_types)
-            if (pssrb.point_types[i] & update_bit == 0)
-                pssrb.point_types[i] = PointType(0)
-            else
-                if (pssrb.point_types[i] & pn_junction_bit == 0)
-                    if pssrb.point_types[i] & undepleted_bit > 0 pssrb.point_types[i] -= undepleted_bit end
-                end
-            end
-        end
     end
 
     if verbose ProgressMeter.finish!(prog) end
