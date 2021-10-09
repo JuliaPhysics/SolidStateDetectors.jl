@@ -661,10 +661,10 @@ function update_till_convergence!( sim::Simulation{T, CS},
     end
 
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    pssrb = PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
+    pssrb = adapt(device_array_type, PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
-                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing)
+                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing));
 
     cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
                                        only2d = Val{only_2d}(),
@@ -675,6 +675,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
+    pssrb = adapt(Array, pssrb)
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), sim.weighting_potentials[contact_id].grid)
 
     cf
