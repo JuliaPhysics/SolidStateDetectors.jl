@@ -775,7 +775,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
     begin # preperations
-        onCPU = device_array_type isa Array
+        onCPU = !(device_array_type <: GPUArrays.AnyGPUArray)
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
@@ -1220,6 +1220,7 @@ function simulate!( sim::Simulation{T, S};
                     use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
                     sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
                     max_n_iterations::Int = -1,
+                    device_array_type::Type{<:AbstractArray} = Array,
                     not_only_paint_contacts::Bool = true, 
                     paint_contacts::Bool = true,
                     verbose::Bool = false) where {T <: SSDFloat, S}
