@@ -8,7 +8,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, D
                                     max_n_iterations::Int = 10_000, # -1
                                     verbose::Bool = true
                                 )::T where {T, S, DAT<:GPUArrays.AnyGPUArray, depletion_handling_enabled, only_2d, _is_weighting_potential}
-    device = CUDADevice() # device = KernelAbstractions.get_device(a)
+    device = DAT <: CUDAKernels.CUDA.CuArray ? CUDADevice() : ROCDevice() # device = KernelAbstractions.get_device(a)
     N_grid_points = prod(size(pssrb.potential)[1:3] .- 2)
     kernel = get_sor_kernel(S, device)
     @showprogress for i in 1:max_n_iterations

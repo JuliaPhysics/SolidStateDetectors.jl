@@ -125,9 +125,10 @@ function __init__()
         include("PotentialSimulation/ConvergenceGPU.jl")
     end
     if !CUDA_loaded
-        # @require AMDGPU="21141c5a-9bdb-4563-92ae-f87d6854732e" begin
-        #     include("PotentialSimulation/ConvergenceGPU.jl")
-        # end
+        @require ROCKernels="7eb9e9f0-4bd3-4c4c-8bef-26bd9629d9b9" begin
+            using .ROCKernels
+            include("PotentialSimulation/ConvergenceGPU.jl")
+        end
     end
 end
 include("PotentialSimulation/ConvergenceGPU.jl")
