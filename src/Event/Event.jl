@@ -6,33 +6,51 @@ This (mutable) struct is meant to be used to look at individual events,
 not to process a huge amount of events.
 
 ## Fields
-* `locations::Union{Vector{CartesianPoint{T}}, Missing}`: Vector of the positions of all hits of the event.
-* `energies::Union{Vector{T}, Missing}`: Vector of energies corresponding to the hits of the event.
+* `locations::Union{VectorOfArrays{CartesianPoint{T}}, Missing}`: Vector of the positions of all hits of the event.
+* `energies::Union{VectorOfArrays{T}, Missing}`: Vector of energies corresponding to the hits of the event.
 * `drift_paths::Union{Vector{EHDriftPath{T}}, Missing}`: Calculated drift paths of each hit position. 
 * `waveforms::Union{Vector{<:Any}, Missing}`: Generated signals (waveforms) of the event.
 """
 mutable struct Event{T <: SSDFloat}
-    locations::Union{Vector{CartesianPoint{T}}, Missing}
-    energies::Union{Vector{T}, Missing}
+    locations::VectorOfArrays{CartesianPoint{T}}
+    energies::VectorOfArrays{T}
     drift_paths::Union{Vector{EHDriftPath{T}}, Missing}
     waveforms::Union{Vector{<:Any}, Missing}
-    Event{T}() where {T <: SSDFloat} = new{T}(missing, missing, missing, missing)
+    Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity{T}} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
+function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(T))::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = CartesianPoint.(locations)
-    evt.energies = to_internal_units(energies)
-    evt.waveforms = missing
+    evt.locations = VectorOfArrays([[CartesianPoint(location)]])
+    evt.energies = VectorOfArrays([[T(to_internal_units(energy))]])
     return evt
 end
 
+function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
+    evt = Event{T}()
+    evt.locations = VectorOfArrays([CartesianPoint.(locations)])
+    evt.energies = VectorOfArrays([T.(to_internal_units(energies))])
+    return evt
+end
+
+function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, energies::Vector{<:Vector{<:RealQuantity}} = [[one(T) for i in j] for j in locations])::Event{T} where {T <: SSDFloat}
+    evt = Event{T}()
+    evt.locations = VectorOfArrays(broadcast(pts -> CartesianPoint{T}.(pts), locations))
+    evt.energies = VectorOfArrays(Vector{T}.(to_internal_units.(energies)))
+    return evt
+end
 
 function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = nbcc.points
-    evt.energies = nbcc.energies
-    evt.waveforms = missing
+    evt.locations = VectorOfArrays([nbcc.points])
+    evt.energies = VectorOfArrays([nbcc.energies])
+    return evt
+end
+
+function Event(nbccs::Vector{NBodyChargeCloud{T}})::Event{T} where {T <: SSDFloat}
+    evt = Event{T}()
+    evt.locations = VectorOfArrays(broadcast(nbcc -> nbcc.points, nbccs))
+    evt.energies = VectorOfArrays(broadcast(nbcc -> nbcc.energies, nbccs))
     return evt
 end
 
@@ -47,15 +65,15 @@ function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
     if ismissing(T) T = eltype(to_internal_units(evt[:edep][:])) end
 
     evt = Event(
-        CartesianPoint{T}.(to_internal_units.(evt[:pos][:])),
-        T.(to_internal_units.(evt[:edep][:]))
+        [CartesianPoint{T}.(to_internal_units.(evt[:pos][:]))],
+        [T.(to_internal_units.(evt[:edep][:]))]
     )
 
     return evt
 end
 
-in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, evt.locations)
-in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, evt.locations)
+in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.locations))
+in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, flatview(evt.locations))
 
 """
     drift_charges!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
@@ -92,7 +110,7 @@ function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::Re
     if ismissing(evt.waveforms)
         evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
-    evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, evt.energies, contact_id, Δt = Δt)
+    evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact_id, Δt = Δt)
     nothing
 end
 
@@ -128,7 +146,7 @@ function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"
     for contact in sim.detector.contacts
         if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
         if !ismissing(sim.weighting_potentials[contact.id])
-            evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, evt.energies, contact.id, Δt = Δt)
+            evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact.id, Δt = Δt)
         end
     end
     nothing

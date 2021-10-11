@@ -34,26 +34,33 @@ end
 
 
 function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
-                        starting_points::Vector{CartesianPoint{T}}, energies::Vector{T},
+                        starting_points::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T},
                         electric_field::Interpolations.Extrapolation{<:SVector{3}, 3},
                         Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
-    drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points))
-    n_hits::Int = length(starting_points)
+    drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(flatview(starting_points)))
     dt::T = T(to_internal_units(Δt))
     
-    charges::Vector{T} = energies ./ to_internal_units(det.semiconductor.material.E_ionisation)
-
-    drift_path_e::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
-    drift_path_h::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
-    timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
-    timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
+    drift_path_counter::Int = 0
     
-    n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, starting_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
-    n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, starting_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
+    for (i, start_points) in enumerate(starting_points)
+        
+        n_hits::Int = length(start_points)
+        charges::Vector{T} = energies[i] ./ to_internal_units(det.semiconductor.material.E_ionisation)
+        
+        drift_path_e::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
+        drift_path_h::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
+        timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
+        timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
+        
+        n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
+        n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
     
-    for i in eachindex(starting_points)
-        drift_paths[i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
+        for i in eachindex(start_points)
+            drift_paths[drift_path_counter + i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
+        end
+        
+        drift_path_counter += n_hits
     end
     
     return drift_paths
@@ -170,7 +177,7 @@ function _check_and_update_position!(
             det::SolidStateDetector{T},
             g::Grid{T, 3, S},
             point_types::PointTypes{T, 3, S},
-            startpos::Vector{CartesianPoint{T}},
+            startpos::AbstractVector{CartesianPoint{T}},
             Δt::T,
             verbose::Bool
         )::Nothing where {T <: SSDFloat, S}
@@ -235,7 +242,7 @@ function _drift_charge!(
                             det::SolidStateDetector{T},
                             point_types::PointTypes{T, 3, S},
                             grid::Grid{T, 3, S},
-                            startpos::Vector{CartesianPoint{T}},
+                            startpos::AbstractVector{CartesianPoint{T}},
                             charges::Vector{T},
                             Δt::T,
                             electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
