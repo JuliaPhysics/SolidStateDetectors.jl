@@ -6,13 +6,13 @@ This (mutable) struct is meant to be used to look at individual events,
 not to process a huge amount of events.
 
 ## Fields
-* `locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}`: Vector of the positions of all hits of the event.
+* `locations::Union{Vector{CartesianPoint{T}}, Missing}`: Vector of the positions of all hits of the event.
 * `energies::Union{Vector{T}, Missing}`: Vector of energies corresponding to the hits of the event.
 * `drift_paths::Union{Vector{EHDriftPath{T}}, Missing}`: Calculated drift paths of each hit position. 
 * `waveforms::Union{Vector{<:Any}, Missing}`: Generated signals (waveforms) of the event.
 """
 mutable struct Event{T <: SSDFloat}
-    locations::Union{Vector{<:AbstractCoordinatePoint{T}}, Missing}
+    locations::Union{Vector{CartesianPoint{T}}, Missing}
     energies::Union{Vector{T}, Missing}
     drift_paths::Union{Vector{EHDriftPath{T}}, Missing}
     waveforms::Union{Vector{<:Any}, Missing}
@@ -21,7 +21,7 @@ end
 
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity{T}} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = locations
+    evt.locations = CartesianPoint.(locations)
     evt.energies = to_internal_units(energies)
     evt.waveforms = missing
     return evt
@@ -83,7 +83,7 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    evt.drift_paths = drift_charges(sim, CartesianPoint.(evt.locations), evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
+    evt.drift_paths = drift_charges(sim, evt.locations, evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
