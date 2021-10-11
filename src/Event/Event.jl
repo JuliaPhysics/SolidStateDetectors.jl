@@ -266,7 +266,7 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
     signal_h::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_h, evt.drift_paths))))
 
     for i in eachindex(evt.drift_paths)
-        energy = evt.energies[i]
+        energy = flatview(evt.energies)[i]
         
         dp_e::Vector{CartesianPoint{T}} = evt.drift_paths[i].e_path
         dp_e_t::Vector{T} = evt.drift_paths[i].timestamps_e
