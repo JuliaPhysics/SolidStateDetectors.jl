@@ -194,6 +194,11 @@ function interpolated_vectorfield(vectorfield, grid::CartesianGrid3D{T}) where {
     return velocity_field_itp
 end
 
+function interpolated_vectorfield(ef::ElectricField)
+    interpolated_vectorfield(ef.data, ef.grid)
+end
+
+
 
 function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, point_types::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(epot.grid.axes[1])
