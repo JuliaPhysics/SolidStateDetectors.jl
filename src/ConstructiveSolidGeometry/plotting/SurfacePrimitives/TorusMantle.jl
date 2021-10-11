@@ -8,25 +8,26 @@ function mesh(tm::TorusMantle{T}; n = 30)::Mesh{T} where {T}
     fθ = (θMax - θMin)/(2π)
     nθ = Int(ceil(n*fθ))
     
-    θrange = range(θMin, θMax, length = nθ + 1)
-    sθrange = sin.(θrange)
-    cθrange = cos.(θrange)
-    φrange = range(φMin, φMax, length = nφ + 1)
-    sφrange = sin.(φrange)
-    cφrange = cos.(φrange)
-
-    X::Array{T,2} = [(tm.r_torus + tm.r_tube*cθ)*cφ for cφ in cφrange, cθ in cθrange]
-    Y::Array{T,2} = [(tm.r_torus + tm.r_tube*cθ)*sφ for sφ in sφrange, cθ in cθrange]
-    Z::Array{T,2} = [tm.r_tube*sθ for i in φrange, sθ in sθrange]
+    θ = range(θMin, θMax, length = nθ + 1)
+    sθ = sin.(θ)
+    cθ = cos.(θ)
+    φ = range(φMin, φMax, length = nφ + 1)
+    sφ = sin.(φ)
+    cφ = cos.(φ)
     
-    tm.rotation*Mesh{T}(X,Y,Z) + tm.origin
+    x = [(tm.r_torus + tm.r_tube*cθ)*cφ for cθ in cθ for cφ in cφ]
+    y = [(tm.r_torus + tm.r_tube*cθ)*sφ for cθ in cθ for sφ in sφ]
+    z = [tm.r_tube*sθ for sθ in sθ for i in φ]
+    connections = [[i+(nφ+1)*j,i+1+(nφ+1)*j,i+1+(nφ+1)*(j+1),i+(nφ+1)*(j+1)] for j in 0:nθ-1 for i in 1:nφ]
+    
+    tm.rotation*Mesh{T}(x,y,z,connections) + tm.origin
 end
 
 @recipe function f(tm::TorusMantle, n = 40; subn = 10)
-    colorbar := false
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
+    seriestype --> :mesh3d
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
-            label --> "Ellipsoid Mantle"
+            label --> "Torus Mantle"
             mesh(tm, n = n)
         end
     else

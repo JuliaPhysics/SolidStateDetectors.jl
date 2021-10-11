@@ -5,19 +5,25 @@ function mesh(es::EllipticalSurface{T}; n = 30)::Mesh{T} where {T}
     f = (φMax - φMin)/(2π)
     n = Int(ceil(n*f))
     φ = range(φMin, φMax, length = n+1)
-    r = range(rMin, rMax, length = 2)
-    z = [0,0]
+    r = [rMin, rMax]
+    if rMin == 0
+        x = append!([0.0],rMax*cos.(φ))
+        y = append!([0.0],rMax*sin.(φ))
+        z = zeros(n+2)
+        connections = [[1,i,i+1] for i in 2:n+1]
+    else
+        x = append!(rMin*cos.(φ), rMax*cos.(φ))
+        y = append!(rMin*sin.(φ), rMax*sin.(φ))
+        z = zeros(2(n+1))
+        connections = [[i,i+1,i+n+2,i+n+1] for i in 1:n]
+    end
 
-    X::Array{T,2} = [r_j*cos(φ_i) for φ_i in φ, r_j in r]
-    Y::Array{T,2} = [r_j*sin(φ_i) for φ_i in φ, r_j in r]
-    Z::Array{T,2} = [z_j for i in φ, z_j in z]
-
-    es.rotation*Mesh{T}(X,Y,Z) + es.origin
+    es.rotation*Mesh{T}(x,y,z,connections) + es.origin
 end
 
 @recipe function f(es::EllipticalSurface; n = 40)
-    colorbar := false
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :surface
+    seriestype --> :mesh3d
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Elliptical Surface"
             mesh(es, n = n)
