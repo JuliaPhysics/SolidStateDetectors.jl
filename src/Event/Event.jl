@@ -47,11 +47,22 @@ function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
     return evt
 end
 
-function Event(nbccs::Vector{NBodyChargeCloud{T}})::Event{T} where {T <: SSDFloat}
+function Event(nbccs::Vector{<:NBodyChargeCloud{T}})::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
     evt.locations = VectorOfArrays(broadcast(nbcc -> nbcc.points, nbccs))
     evt.energies = VectorOfArrays(broadcast(nbcc -> nbcc.energies, nbccs))
     return evt
+end
+
+function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity}, N::Int; 
+               particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
+               radius::Vector{<:RealQuantity{T}} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
+              )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
+    
+    return Event(broadcast(i -> 
+                NBodyChargeCloud(locations[i], energies[i], N, particle_type, 
+                radius = radius[i], number_of_shells = number_of_shells),
+           eachindex(locations)))
 end
 
 function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
