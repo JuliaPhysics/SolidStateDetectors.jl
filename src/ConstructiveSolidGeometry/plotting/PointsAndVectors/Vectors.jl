@@ -18,15 +18,16 @@
 
     label --> nothing
     linecolor --> :black
-    xguide --> "X"
-    yguide --> "Y"
-    zguide --> "Z"
+    xguide --> "x"
+    yguide --> "y"
+    zguide --> "z"
+    unitformat --> :slash
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         aspect_ratio --> 1.0
     end 
-    x := [origin[1], target[1], apxl[1], target[1], apxr[1], target[1], apyl[1], target[1], apyr[1], target[1], apzl[1], target[1], apzr[1]]
-    y := [origin[2], target[2], apxl[2], target[2], apxr[2], target[2], apyl[2], target[2], apyr[2], target[2], apzl[2], target[2], apzr[2]]
-    z := [origin[3], target[3], apxl[3], target[3], apxr[3], target[3], apyl[3], target[3], apyr[3], target[3], apzl[3], target[3], apzr[3]]
+    x := [origin[1], target[1], apxl[1], target[1], apxr[1], target[1], apyl[1], target[1], apyr[1], target[1], apzl[1], target[1], apzr[1]]*internal_length_unit
+    y := [origin[2], target[2], apxl[2], target[2], apxr[2], target[2], apyl[2], target[2], apyr[2], target[2], apzl[2], target[2], apzr[2]]*internal_length_unit
+    z := [origin[3], target[3], apxl[3], target[3], apxr[3], target[3], apyl[3], target[3], apyr[3], target[3], apzl[3], target[3], apzr[3]]*internal_length_unit
     seriestype := :path3d
     ()
 end

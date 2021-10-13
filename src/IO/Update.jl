@@ -1,5 +1,4 @@
-using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, CSGDifference,
-        internal_unit_length, internal_unit_angle, CSG_dict,
+using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGIntersection, CSGDifference, CSG_dict,
         parse_r_of_primitive, parse_height_of_primitive, parse_translate_vector, parse_rotation_matrix
 using SolidStateDetectors: construct_units
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary

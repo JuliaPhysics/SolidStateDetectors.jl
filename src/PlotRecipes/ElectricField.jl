@@ -1,3 +1,5 @@
+## Electric field strength plotting
+
 @recipe function f( ef::ElectricField{T, 3, Cylindrical};
                     r = missing,
                     φ = missing,
@@ -6,17 +8,15 @@
                     full_det = false ) where {T}
 
     grid::CylindricalGrid{T} = ef.grid
-    ef_magn  = norm.(ef)
-
+    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
+    
+    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
+    colorbar_title --> "Electric Field Strength"
     seriescolor --> :inferno
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, r, φ, z)
-    cross_section == :φ ? aspect_ratio --> 1 : nothing
+    unitformat --> :slash
 
-    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))"*(cross_section == :φ ? "°" : "m")
-    colorbar_title --> "Electric Field Strength in V / m"
-
-    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential, full_det
-
+    ef_magn = norm.(ef)
+    ElectricPotential(ef_magn, grid),  cross_section, idx, value, internal_efield_unit, contours_equal_potential, full_det
 end
 
 @recipe function f(ef::ElectricField{T, 3, Cartesian};
@@ -26,17 +26,19 @@ end
                     contours_equal_potential = false) where {T <: SSDFloat}
 
     grid::CartesianGrid3D{T} = ef.grid
-    ef_magn  = norm.(ef)
-
+    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
+    
+    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
+    colorbar_title --> "Electric Field Strength"
     seriescolor --> :inferno
-    cross_section::Symbol, idx::Int, value::T = get_crosssection_idx_and_value(grid, x, y, z)
-    aspect_ratio --> 1
+    unitformat --> :slash
 
-    title --> "Electric Field (Magn.) @ $(cross_section) = $(round(value,sigdigits=2))m"
-    colorbar_title --> "Electric Field Strength in V / m"
-
-    ElectricPotential(ef_magn, grid), cross_section, idx, value, contours_equal_potential
+    ef_magn = norm.(ef)
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential
 end
+
+
+## Electric field line plotting
 
 function get_sample_lines(dim_symbol::Symbol, v::T, grid::CartesianGrid3D{T}, sampling::T)::Vector{ConstructiveSolidGeometry.Line} where {T}
     
@@ -95,7 +97,7 @@ end
     sim = gdd.args[1]
     S = get_coordinate_system(sim.electric_field.grid)
     T = get_precision_type(sim.detector)
-    dim_array = (S == Cartesian ? [x, y, z] : [r, φ, z])
+    dim_array::Vector{Union{Missing, RealQuantity}} = (S == Cartesian ? [x, y, z] : [r, φ, z])
     dim_symbols_array = (S == Cartesian ? [:x, :y, :z] : [:r, :φ, :z])
 
     if isempty(skipmissing(dim_array))
@@ -104,20 +106,21 @@ end
             dim_symbol = :x
             v::T = sim.electric_field.grid[dim_number][ div(length(sim.electric_field.grid[dim_number]), 2) ]
             x = v
+            units::Unitful.Units = u"m"
         else # S == Cylindrical
             v = 0
             φ = 0
             dim_number = 2
             dim_symbol = :φ
+            units = u"°"
         end
         dim_array = (S == Cartesian ? [x, y, z] : [r, φ, z])
-    end
-    
-    if sum(ismissing.(dim_array)) == 2
+    elseif sum(ismissing.(dim_array)) == 2
         dim_number = findfirst(x -> !ismissing(x), dim_array)
         dim_symbol = dim_symbols_array[dim_number]
-        v = dim_array[dim_number]
-        if dim_symbol == :φ v = deg2rad(v) end
+        vtmp = dim_array[dim_number]
+        units = vtmp isa Real ? (dim_symbol == :φ ? internal_angle_unit : internal_length_unit) : unit(vtmp)
+        v = T(to_internal_units(dim_symbol == :φ && φ isa Real ? deg2rad(vtmp) : vtmp))
     else
         throw(ArgumentError("Only one keyword for a certain dimension is allowed. Please choose one of "*
             (S == Cartesian ? "'x', 'y', 'z'." : "'r', 'φ', 'z'.")))
@@ -126,9 +129,10 @@ end
     show_full_det = full_det && dim_symbol == :φ # The full_det keyword only makes sense for crossections in the xz plane in cylindrical grids
 
     (dim_symbol != :r && !(dim_symbol == :z && S == Cylindrical) ) ? aspect_ratio --> 1 : nothing
-    title --> (show_full_det ? "Electric Field Lines @$(dim_symbol)=$(round(rad2deg(v),sigdigits = 3))°\n(=$(round(rad2deg(T((v+π)%(2π))),sigdigits = 3))° on left side) " : "Electric Field Lines @$(dim_symbol)=$(round(dim_symbol == :φ ? rad2deg(v) : v, sigdigits=3))" * (dim_symbol == :φ ? "°" : "m"))
-    xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ / rad" : "r / m") : (dim_symbol == :x ? "y / m" : "x / m"))
-    yguide --> "z / m"
+    title --> "Electric Field Lines @ $(dim_symbol) = $(round(units, Float64(uconvert(units, v*(dim_symbol == :φ ? u"rad" : internal_length_unit))), sigdigits=3))" * (show_full_det ? "\n(= $(round(units, Float64(uconvert(units, (v+π)%2π * u"rad")), sigdigits=3)) on left side)" : "")
+    xguide --> (S == Cylindrical ? (dim_symbol == :r ? "φ" : "r") : (dim_symbol == :x ? "y" : "x"))
+    yguide --> "z"
+    unitformat --> :slash
     (S == Cylindrical && dim_symbol == :z) ? xguide :=  "" : nothing
     (S == Cylindrical && dim_symbol == :z) ? yguide :=  "" : nothing
 
@@ -168,28 +172,28 @@ end
                     seriescolor --> :white
                     label --> ""
                     x, y = if dim_symbol == :φ
-                        map(x -> x[1] * cos(v) + x[2] * sin(v), path), #project to the φ-plane
-                        map(x -> x[3], path)
+                        map(x -> x[1] * cos(v) + x[2] * sin(v), path)*internal_length_unit, #project to the φ-plane
+                        map(x -> x[3], path)*internal_length_unit
                     elseif dim_symbol == :x
-                        map(x -> x[2], path),
-                        map(x -> x[3], path)
+                        map(x -> x[2], path)*internal_length_unit,
+                        map(x -> x[3], path)*internal_length_unit
                     elseif dim_symbol == :y
-                        map(x -> x[1], path),
-                        map(x -> x[3], path)
+                        map(x -> x[1], path)*internal_length_unit,
+                        map(x -> x[3], path)*internal_length_unit
                     elseif dim_symbol == :z
                         if S == Cylindrical
                             projection --> :polar
                             path = CylindricalPoint.(path)
-                            map(x -> x[2], path),
-                            map(x -> x[1], path)
+                            map(x -> x[2], path)*internal_angle_unit,
+                            map(x -> x[1], path)*internal_length_unit
                         else
-                            map(x -> x[1], path),
-                            map(x -> x[2], path)
+                            map(x -> x[1], path)*internal_length_unit,
+                            map(x -> x[2], path)*internal_length_unit
                         end
                     elseif dim_symbol == :r
                         path = CylindricalPoint.(path)
-                        map(x -> x[2], path),
-                        map(x -> x[3], path)
+                        map(x -> x[2], path)*internal_angle_unit,
+                        map(x -> x[3], path)*internal_length_unit
                     end
                     x, y
                 end
