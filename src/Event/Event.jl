@@ -28,8 +28,8 @@ end
 
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = VectorOfArrays([CartesianPoint.(locations)])
-    evt.energies = VectorOfArrays([T.(to_internal_units(energies))])
+    evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
+    evt.energies = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
     return evt
 end
 
