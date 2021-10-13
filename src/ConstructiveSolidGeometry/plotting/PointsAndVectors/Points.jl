@@ -7,7 +7,7 @@
         aspect_ratio --> 1.0
     end 
     @series begin
-        seriesstyle --> :scatter
+        seriestype --> :scatter
         [pt.x]*internal_length_unit, [pt.y]*internal_length_unit, [pt.z]*internal_length_unit
     end
 end
@@ -27,7 +27,7 @@ end
         aspect_ratio --> 1.0
     end 
     @series begin
-        seriesstyle --> :scatter
+        seriestype --> :scatter
         [v[i].x for i in eachindex(v)]*internal_length_unit, [v[i].y for i in eachindex(v)]*internal_length_unit, [v[i].z for i in eachindex(v)]*internal_length_unit
     end
 end
