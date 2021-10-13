@@ -9,8 +9,8 @@ const internal_length_unit  = ConstructiveSolidGeometry.internal_length_unit
 const internal_angle_unit   = ConstructiveSolidGeometry.internal_angle_unit
 const internal_time_unit    = u"s"
 const internal_voltage_unit = u"V"
-const internal_efield_unit  = u"V / m"
 const internal_energy_unit  = u"eV"
+const internal_efield_unit  = internal_voltage_unit / internal_length_unit
 
 to_internal_units(x::Quantity{<:Real, Unitful.𝐓}) = ustrip(uconvert(internal_time_unit, x))
 to_internal_units(x::Quantity{<:Real, dimension(1u"V")}) = ustrip(uconvert(internal_voltage_unit, x))
