@@ -42,14 +42,14 @@ end
 
 function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = VectorOfArrays([nbcc.points])
+    evt.locations = VectorOfArrays([nbcc.locations])
     evt.energies = VectorOfArrays([nbcc.energies])
     return evt
 end
 
 function Event(nbccs::Vector{<:NBodyChargeCloud{T}})::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = VectorOfArrays(broadcast(nbcc -> nbcc.points, nbccs))
+    evt.locations = VectorOfArrays(broadcast(nbcc -> nbcc.locations, nbccs))
     evt.energies = VectorOfArrays(broadcast(nbcc -> nbcc.energies, nbccs))
     return evt
 end
