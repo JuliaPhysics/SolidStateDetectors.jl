@@ -40,7 +40,7 @@ using .ConstructiveSolidGeometry:
             ConfigFileError, _parse_value,
             LengthQuantity, AngleQuantity
         
-import .ConstructiveSolidGeometry: sample, to_internal_units
+import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_units
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering

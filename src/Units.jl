@@ -12,16 +12,16 @@ const internal_voltage_unit = u"V"
 const internal_energy_unit  = u"eV"
 const internal_efield_unit  = internal_voltage_unit / internal_length_unit
 
-to_internal_units(x::Quantity{<:Real, Unitful.𝐓}) = ustrip(uconvert(internal_time_unit, x))
-to_internal_units(x::Quantity{<:Real, dimension(1u"V")}) = ustrip(uconvert(internal_voltage_unit, x))
-to_internal_units(x::Quantity{<:Real, dimension(1u"V / m")}) = ustrip(uconvert(internal_efield_unit, x))
-to_internal_units(x::Quantity{<:Real, dimension(1u"eV")}) = ustrip(uconvert(internal_energy_unit, x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_time_unit)})    = ustrip(uconvert(internal_time_unit,    x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_voltage_unit)}) = ustrip(uconvert(internal_voltage_unit, x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})   = ustrip(uconvert(internal_efield_unit,  x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_energy_unit)})  = ustrip(uconvert(internal_energy_unit,  x))
 
-from_internal_units(u_external::typeof(Unitful.NoUnits), u_internal::Unitful.Units, x::Real) where {T<:Real} = x
-from_internal_units(u_external::Unitful.Units, u_internal::Unitful.Units, x::Real) where {T<:Quantity} = uconvert(u_external, x * u_internal)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_efield_unit)})  = uconvert(unit, x * internal_efield_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_energy_unit)})  = uconvert(unit, x * internal_energy_unit)
 
-from_internal_units(u_external::typeof(Unitful.NoUnits), u_internal::Unitful.Units, x::AbstractArray{<:Real}) where {T<:Real} = x
-from_internal_units(u_external::Unitful.Units, u_internal::Unitful.Units, x::AbstractArray{<:Real}) where {T<:Quantity} = uconvert.(u_external, x * u_internal)
 
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
