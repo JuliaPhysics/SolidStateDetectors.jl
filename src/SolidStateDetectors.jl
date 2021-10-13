@@ -105,6 +105,7 @@ include("IO/IO.jl")
 include("examples.jl")
 
 include("PlotRecipes/PlotRecipes.jl")
+export @P_str # protected strings to overwrite plot labels with units
 
 function __init__()
     @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
