@@ -1,9 +1,9 @@
-@recipe function f(em::EllipsoidMantle, n = 40; subn = 10)
+@recipe function f(em::EllipsoidMantle; n_arc = 40, subn = 10)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Ellipsoid Mantle"
-            mesh(em, n = n)
+            mesh(em, n_arc = n_arc)
         end
     else
         ls = lines(em)

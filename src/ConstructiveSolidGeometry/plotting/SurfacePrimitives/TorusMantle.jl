@@ -1,9 +1,9 @@
-@recipe function f(tm::TorusMantle, n = 40; subn = 10)
+@recipe function f(tm::TorusMantle; n_arc = 40, subn = 10)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Torus Mantle"
-            mesh(tm, n = n)
+            mesh(tm, n_arc = n_arc)
         end
     else
         ls = lines(tm)

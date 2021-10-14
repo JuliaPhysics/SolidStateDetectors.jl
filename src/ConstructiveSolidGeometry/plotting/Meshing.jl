@@ -15,10 +15,10 @@ struct Mesh{T}
     connections::Vector{Vector{Int64}} 
 end
 
-function mesh(p::AbstractSurfacePrimitive{T}; n = 40)::Mesh{T} where {T}
-    vs = vertices(p, n)
+function mesh(p::AbstractSurfacePrimitive{T}; n_arc = 40)::Mesh{T} where {T}
+    vs = vertices(p, n_arc)
     x, y, z = broadcast(i -> getindex.(vs, i), (1,2,3))
-    c = connections(p, n)
+    c = connections(p, n_arc)
     Mesh{T}(x,y,z,c)
 end
 

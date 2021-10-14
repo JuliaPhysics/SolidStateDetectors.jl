@@ -46,22 +46,22 @@ function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where
 end
 normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT} = -normal(flip(tm), pt)
 
-function vertices(tm::TorusMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
+function vertices(tm::TorusMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(tm)
     θMin, θMax = get_θ_limits(tm)
-    nφ = _get_n_points_in_arc_φ(tm, n) 
-    nθ = _get_n_points_in_arc_θ(tm, n)
+    n_arcφ = _get_n_points_in_arc_φ(tm, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(tm, n_arc)
     
-    θ = range(θMin, θMax, length = nθ + 1)
-    φ = range(φMin, φMax, length = nφ + 1)
+    θ = range(θMin, θMax, length = n_arcθ + 1)
+    φ = range(φMin, φMax, length = n_arcφ + 1)
     
     [_transform_into_global_coordinate_system(CartesianPoint{T}((tm.r_torus + tm.r_tube*cos(θ))*cos(φ), (tm.r_torus + tm.r_tube*cos(θ))*sin(φ), tm.r_tube*sin(θ)), tm) for θ in θ for φ in φ]
 end
 
-function connections(tm::TorusMantle, n::Int64)::Vector{Vector{Int64}}
-    nφ = _get_n_points_in_arc_φ(tm, n) 
-    nθ = _get_n_points_in_arc_θ(tm, n)
-    [[i+(nφ+1)*j,i+1+(nφ+1)*j,i+1+(nφ+1)*(j+1),i+(nφ+1)*(j+1)] for j in 0:nθ-1 for i in 1:nφ]
+function connections(tm::TorusMantle, n_arc::Int64)::Vector{Vector{Int64}}
+    n_arcφ = _get_n_points_in_arc_φ(tm, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(tm, n_arc)
+    [[i+(n_arcφ+1)*j,i+1+(n_arcφ+1)*j,i+1+(n_arcφ+1)*(j+1),i+(n_arcφ+1)*(j+1)] for j in 0:n_arcθ-1 for i in 1:n_arcφ]
 end
 
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}

@@ -1,23 +1,21 @@
-@recipe function f(es::EllipticalSurface; n = 40)
+@recipe function f(es::EllipticalSurface; n_arc = 40)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Elliptical Surface"
-            mesh(es, n = n)
+            mesh(es, n_arc = n_arc)
         end
     else
         ls = lines(es)
         linecolor --> :black
         @series begin
             label --> "Elliptical Surface"
-            n := n
             ls[1]
         end
         if length(ls) > 1 
             for i in 2:length(ls)
                 @series begin 
                     label := nothing
-                    n := n
                     ls[i]
                 end
             end

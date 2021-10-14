@@ -60,10 +60,10 @@ function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint
             CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz)), cm))
 end
 
-function vertices(cm::ConeMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
+function vertices(cm::ConeMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(cm)
-    n = _get_n_points_in_arc_φ(cm, n)
-    φ = range(φMin, φMax, length = n+1)
+    n_arc = _get_n_points_in_arc_φ(cm, n_arc)
+    φ = range(φMin, φMax, length = n_arc+1)
     rbot = radius_at_z(cm,-cm.hZ)
     rtop = radius_at_z(cm,cm.hZ)
     botcircle = [_transform_into_global_coordinate_system(CartesianPoint{T}(rbot*cos(φ), rbot*sin(φ), -cm.hZ), cm) for φ in φ]
@@ -71,9 +71,9 @@ function vertices(cm::ConeMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where 
     append!(botcircle, topcircle)
 end
 
-function connections(cm::ConeMantle, n::Int64)::Vector{Vector{Int64}} 
-    n = _get_n_points_in_arc_φ(cm, n)
-    [[i,i+1,i+n+2,i+n+1] for i in 1:n]
+function connections(cm::ConeMantle, n_arc::Int64)::Vector{Vector{Int64}} 
+    n_arc = _get_n_points_in_arc_φ(cm, n_arc)
+    [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
 
 const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
