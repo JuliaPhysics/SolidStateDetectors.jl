@@ -1,5 +1,6 @@
-function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, DAT}, 
-                                    convergence_limit::T;
+function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3}, 
+                                    convergence_limit::T,
+                                    device_array_type::Type{DAT};
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
                                     only2d::Val{only_2d} = Val{false}(), 
@@ -7,8 +8,8 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, D
                                     use_nthreads::Int = Base.Threads.nthreads(), 
                                     max_n_iterations::Int = 10_000, # -1
                                     verbose::Bool = true
-                                )::T where {T, S, DAT<:GPUArrays.AnyGPUArray, depletion_handling_enabled, only_2d, _is_weighting_potential}
-    device = DAT <: CUDAKernels.CUDA.CuArray ? CUDADevice() : ROCDevice() # device = KernelAbstractions.get_device(a)
+                                )::T where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential, DAT <: GPUArrays.AbstractGPUArray}
+    device = get_device(DAT)
     N_grid_points = prod(size(pssrb.potential)[1:3] .- 2)
     kernel = get_sor_kernel(S, device)
     @showprogress for i in 1:max_n_iterations
@@ -28,7 +29,10 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, D
         apply_boundary_conditions!(pssrb, Val(update_even_points), only2d)
     end
     return 0
-end                             
+end                
+
+get_device(DAT::Type{<:GPUArrays.AbstractGPUArray}) = DAT <: CUDAKernels.CUDA.CuArray ? CUDADevice() : ROCDevice() # This function is supposed to be replaced by KernelAbstractions.get_device
+
 
 get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
 get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)

@@ -24,8 +24,9 @@ function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, S, 
     end
 end
 
-function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}}, 
-                                    convergence_limit::T;
+function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3}, 
+                                    convergence_limit::T, 
+                                    ::Type{Array};
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
                                     only2d::Val{only_2d} = Val{false}(), 

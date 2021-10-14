@@ -543,8 +543,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
     ))
-
-    cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
+    
+    cf::T = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{false}(),
@@ -581,7 +581,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
         if update_again
             pssrb.sor_const[:] .= T(1)
             pssrb = adapt(device_array_type, pssrb)
-            cf = _update_till_convergence!( pssrb, T(convergence_limit);
+            cf = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
                                             only2d = Val{only_2d}(),
                                             depletion_handling = Val{depletion_handling}(),
                                             is_weighting_potential = Val{false}(),
@@ -666,7 +666,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
                 not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing));
 
-    cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
+    cf::T = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{true}(),
