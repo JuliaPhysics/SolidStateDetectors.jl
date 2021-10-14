@@ -85,3 +85,6 @@ calculate_electric_potential!(
     There is no convergence check implemented yet on the GPU backend.
     Take care that `max_n_iterations` is large enough.
     The keyword `convergence_limit` is ignored with the GPU backend for now.
+
+!!! note
+    The AMD backend was not yet tested due to lack of an AMD GPU (we are working on that).
