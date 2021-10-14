@@ -46,18 +46,6 @@ function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where
 end
 normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT} = -normal(flip(tm), pt)
 
-function _get_n_points_in_arc_φ(tm::TorusMantle, n::Int64)::Int64
-    φMin, φMax = get_φ_limits(tm)
-    f = (φMax - φMin)/(2π)
-    Int(ceil(n*f))
-end
-
-function _get_n_points_in_arc_θ(tm::TorusMantle, n::Int64)::Int64
-    θMin, θMax = get_θ_limits(tm)
-    f = (θMax - θMin)/(2π)
-    Int(ceil(n*f))
-end
-
 function vertices(tm::TorusMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(tm)
     θMin, θMax = get_θ_limits(tm)

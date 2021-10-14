@@ -3,7 +3,6 @@
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Cone Mantle"
-            println(n)
             mesh(cm, n = n)
         end
     else

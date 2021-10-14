@@ -76,18 +76,6 @@ function normal(em::EllipsoidMantle{T,T,TP,TT,:outwards}, pt::CartesianPoint{T})
 end
 normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
 
-function _get_n_points_in_arc_φ(em::EllipsoidMantle, n::Int64)::Int64
-    φMin, φMax = get_φ_limits(em)
-    f = (φMax - φMin)/(2π)
-    Int(ceil(n*f))
-end
-
-function _get_n_points_in_arc_θ(em::EllipsoidMantle, n::Int64)::Int64
-    θMin, θMax = get_θ_limits(em)
-    f = (θMax - θMin)/(π)
-    Int(ceil(n*f))
-end
-
 function vertices(em::EllipsoidMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
     rx, ry, rz = get_radii(em) 
     φMin, φMax = get_φ_limits(em)

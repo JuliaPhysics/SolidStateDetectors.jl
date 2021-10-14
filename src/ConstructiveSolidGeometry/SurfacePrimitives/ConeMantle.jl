@@ -60,15 +60,9 @@ function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint
             CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz)), cm))
 end
 
-function _get_n_points_in_arc(cm::ConeMantle, n::Int64)::Int64
-    φMin, φMax = get_φ_limits(cm)
-    f = (φMax - φMin)/(2π)
-    Int(ceil(n*f))
-end
-
 function vertices(cm::ConeMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(cm)
-    n = _get_n_points_in_arc(cm, n)
+    n = _get_n_points_in_arc_φ(cm, n)
     φ = range(φMin, φMax, length = n+1)
     rbot = radius_at_z(cm,-cm.hZ)
     rtop = radius_at_z(cm,cm.hZ)
@@ -78,7 +72,7 @@ function vertices(cm::ConeMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where 
 end
 
 function connections(cm::ConeMantle, n::Int64)::Vector{Vector{Int64}} 
-    n = _get_n_points_in_arc(cm, n)
+    n = _get_n_points_in_arc_φ(cm, n)
     [[i,i+1,i+n+2,i+n+1] for i in 1:n]
 end
 
