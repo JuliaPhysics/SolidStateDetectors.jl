@@ -1,17 +1,25 @@
-@recipe function f(cm::ConeMantle, n = 40; subn = 10)
-    ls = lines(cm)
-    linecolor --> :black
-    @series begin
-        label --> "Cone Mantle"
-        ls[1]
-    end
-    for i in 2:length(ls)
+@recipe function f(cm::ConeMantle; n_arc = 40, subn = 10)
+    seriestype --> :mesh3d
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
-            label := nothing
-            ls[i]
+            label --> "Cone Mantle"
+            mesh(cm, n_arc = n_arc)
+        end
+    else
+        ls = lines(cm)
+        linecolor --> :black
+        @series begin
+            label --> "Cone Mantle"
+            ls[1]
+        end
+        for i in 2:length(ls)
+            @series begin
+                label := nothing
+                ls[i]
+            end
         end
     end
-     if !haskey(plotattributes, :show_normal) || plotattributes[:show_normal]
+    if haskey(plotattributes, :show_normal) && plotattributes[:show_normal]
         @series begin
             label := nothing
             seriestype := :vector

@@ -36,8 +36,36 @@ Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * Ca
 
 normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
 
+function vertices(es::EllipticalSurface{T, T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+    φMin, φMax = get_φ_limits(es)
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    φ = range(φMin, φMax, length = n_arc+1)
+    append!([es.origin],[_transform_into_global_coordinate_system(CartesianPoint{T}(es.r*cos(φ), es.r*sin(φ), 0), es) for φ in φ])
+end
+
+function vertices(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+    rMin, rMax = es.r
+    φMin, φMax = get_φ_limits(es)
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    φ = range(φMin, φMax, length = n_arc+1)
+    [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in (rMin,rMax) for φ in φ]
+end
+
+function connections(es::EllipticalSurface{T, T}, n_arc::Int64)::Vector{Vector{Int64}} where {T}
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    [[1,i,i+1] for i in 2:n_arc+1]
+end
+
+function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector{Vector{Int64}} where {T}
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
+end
+
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
+
+get_φ_limits(es::EllipticalSurface{T,<:Any,Tuple{T,T}}) where {T} = es.φ[1], es.φ[2]
+get_φ_limits(cm::EllipticalSurface{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function lines(sp::CircularArea{T}; n = 2) where {T} 
     circ = Circle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)

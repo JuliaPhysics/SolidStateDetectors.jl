@@ -35,6 +35,15 @@ flip(em::EllipsoidMantle{T,TR,TP,TT,:inwards}) where {T,TR,TP,TT} =
 const FullSphereMantle{T,D} = EllipsoidMantle{T,T,Nothing,Nothing,D}
 const FullEllipsoidMantle{T,D} = EllipsoidMantle{T,NTuple{3,T},Nothing,Nothing,D}
 
+get_φ_limits(em::EllipsoidMantle{T,<:Any,Tuple{T,T}}) where {T} = em.φ[1], em.φ[2]
+get_φ_limits(em::EllipsoidMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+
+get_θ_limits(em::EllipsoidMantle{T,<:Any,<:Any,Tuple{T,T}}) where {T} = em.θ[1], em.θ[2]
+get_θ_limits(em::EllipsoidMantle{T,<:Any,<:Any,Nothing}) where {T} = T(-π/2), T(π/2)
+
+get_radii(em::EllipsoidMantle{T,T}) where {T} = (em.r, em.r, em.r)
+get_radii(em::EllipsoidMantle{T,NTuple{3,T}}) where {T} = em.r
+
 function lines(em::FullSphereMantle{T}) where {T} 
     ellipse_xy = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation)
     ellipse_xz = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation * RotX(T(π)/2))
@@ -66,6 +75,25 @@ function normal(em::EllipsoidMantle{T,T,TP,TT,:outwards}, pt::CartesianPoint{T})
     CartesianVector(_transform_into_global_coordinate_system(obj_normal, em))
 end
 normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
+
+function vertices(em::EllipsoidMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+    rx, ry, rz = get_radii(em) 
+    φMin, φMax = get_φ_limits(em)
+    θMin, θMax = get_θ_limits(em)
+    n_arcφ = _get_n_points_in_arc_φ(em, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(em, n_arc)
+    
+    θ = range(θMin, θMax, length = n_arcθ + 1)
+    φ = range(φMin, φMax, length = n_arcφ + 1)
+    
+    [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) for θ in θ for φ in φ]
+end
+
+function connections(em::EllipsoidMantle, n_arc::Int64)::Vector{Vector{Int64}}
+    n_arcφ = _get_n_points_in_arc_φ(em, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(em, n_arc)
+    [[i+(n_arcφ+1)*j,i+1+(n_arcφ+1)*j,i+1+(n_arcφ+1)*(j+1),i+(n_arcφ+1)*(j+1)] for j in 0:n_arcθ-1 for i in 1:n_arcφ]
+end
 
 """
     intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}

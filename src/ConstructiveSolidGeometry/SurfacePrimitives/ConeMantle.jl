@@ -7,7 +7,7 @@ Surface primitive describing the mantle of a [`Cone`](@ref).
 * `T`: Precision type.
 * `TR`: Type of the radius `r`.
     * `TR == T`: CylinderMantle (constant radius `r` at all `z`).
-    * `TR == Tuple{T, T}`: VaryingCylinderMantle (inner radius at `r[1]`, outer radius at `r[2]`).
+    * `TR == Tuple{T, T}`: VaryingCylinderMantle (bottom radius at `r[1]`, top radius at `r[2]`).
 * `TP`: Type of the angular range `φ`.
     * `TP == Nothing`: Full 2π Cone.
     * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
@@ -34,6 +34,9 @@ radius_at_z(hZ::T, rBot::T, rTop::T, z::T) where {T} = iszero(hZ) ? rBot : rBot 
 radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
 radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, cm.r[1], cm.r[2], z)
 
+get_φ_limits(cm::ConeMantle{T,<:Any,Tuple{T,T}}) where {T} = cm.φ[1], cm.φ[2]
+get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+
 function normal(cm::ConeMantle{T,T}, pt::CartesianPoint{T}) where {T}
     pto = _transform_into_object_coordinate_system(pt, cm)
     cyl = CylindricalPoint(pto)
@@ -55,6 +58,22 @@ function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint
     Δz = 2cm.hZ
     return CartesianVector(_transform_into_global_coordinate_system(
             CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz)), cm))
+end
+
+function vertices(cm::ConeMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+    φMin, φMax = get_φ_limits(cm)
+    n_arc = _get_n_points_in_arc_φ(cm, n_arc)
+    φ = range(φMin, φMax, length = n_arc+1)
+    rbot = radius_at_z(cm,-cm.hZ)
+    rtop = radius_at_z(cm,cm.hZ)
+    botcircle = [_transform_into_global_coordinate_system(CartesianPoint{T}(rbot*cos(φ), rbot*sin(φ), -cm.hZ), cm) for φ in φ]
+    topcircle = [_transform_into_global_coordinate_system(CartesianPoint{T}(rtop*cos(φ), rtop*sin(φ), cm.hZ), cm) for φ in φ]
+    append!(botcircle, topcircle)
+end
+
+function connections(cm::ConeMantle, n_arc::Int64)::Vector{Vector{Int64}} 
+    n_arc = _get_n_points_in_arc_φ(cm, n_arc)
+    [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
 
 const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
