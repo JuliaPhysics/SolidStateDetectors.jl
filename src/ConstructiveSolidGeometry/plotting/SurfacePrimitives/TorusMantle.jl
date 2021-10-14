@@ -1,28 +1,3 @@
-function mesh(tm::TorusMantle{T}; n = 30)::Mesh{T} where {T}
-    φMin::T, φMax::T = get_φ_limits(tm)
-    θMin::T, θMax::T = get_θ_limits(tm)
-
-    fφ = (φMax - φMin)/(2π)
-    nφ = Int(ceil(n*fφ))
-
-    fθ = (θMax - θMin)/(2π)
-    nθ = Int(ceil(n*fθ))
-    
-    θ = range(θMin, θMax, length = nθ + 1)
-    sθ = sin.(θ)
-    cθ = cos.(θ)
-    φ = range(φMin, φMax, length = nφ + 1)
-    sφ = sin.(φ)
-    cφ = cos.(φ)
-    
-    x = [(tm.r_torus + tm.r_tube*cθ)*cφ for cθ in cθ for cφ in cφ]
-    y = [(tm.r_torus + tm.r_tube*cθ)*sφ for cθ in cθ for sφ in sφ]
-    z = [tm.r_tube*sθ for sθ in sθ for i in φ]
-    connections = [[i+(nφ+1)*j,i+1+(nφ+1)*j,i+1+(nφ+1)*(j+1),i+(nφ+1)*(j+1)] for j in 0:nθ-1 for i in 1:nφ]
-    
-    tm.rotation*Mesh{T}(x,y,z,connections) + tm.origin
-end
-
 @recipe function f(tm::TorusMantle, n = 40; subn = 10)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d

@@ -19,6 +19,9 @@ const Quadrangle{T} = Polygon{4, T}
 normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.points[1]))
 
 vertices(p::Polygon) = p.points
+vertices(p::Polygon, n::Int64) = vertices(p)
+connections(p::Polygon{N}) where {N} = [collect(1:N)]
+connections(p::Polygon, n::Int64) = connections(p)
 
 extreme_points(p::Polygon) = p.points
 

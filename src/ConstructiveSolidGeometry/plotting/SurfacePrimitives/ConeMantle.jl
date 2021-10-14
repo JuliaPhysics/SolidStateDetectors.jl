@@ -1,24 +1,9 @@
-function mesh(cm::ConeMantle{T}; n = 30)::Mesh{T} where {T}
-    φMin, φMax = get_φ_limits(cm)
-    
-    f = (φMax - φMin)/(2π)
-    n = Int(ceil(n*f))
-    φ = range(φMin, φMax, length = n+1)
-    rtop = radius_at_z(cm,cm.hZ)
-    rbot = radius_at_z(cm,-cm.hZ)
-    x = append!(rbot*cos.(φ), rtop*cos.(φ))
-    y = append!(rbot*sin.(φ), rtop*sin.(φ))
-    z = append!(rbot*ones(n+1), rtop*ones(n+1))
-    connections = [[i,i+1,i+n+2,i+n+1] for i in 1:n]
-
-    cm.rotation*Mesh{T}(x,y,z,connections) + cm.origin
-end
-
 @recipe function f(cm::ConeMantle, n = 40; subn = 10)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         @series begin
             label --> "Cone Mantle"
+            println(n)
             mesh(cm, n = n)
         end
     else

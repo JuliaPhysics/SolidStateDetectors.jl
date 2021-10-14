@@ -1,26 +1,3 @@
-function mesh(es::EllipticalSurface{T}; n = 30)::Mesh{T} where {T}
-
-    rMin::T, rMax::T = get_r_limits(es)
-    φMin::T, φMax::T = get_φ_limits(es)
-    f = (φMax - φMin)/(2π)
-    n = Int(ceil(n*f))
-    φ = range(φMin, φMax, length = n+1)
-    r = [rMin, rMax]
-    if rMin == 0
-        x = append!([0.0],rMax*cos.(φ))
-        y = append!([0.0],rMax*sin.(φ))
-        z = zeros(n+2)
-        connections = [[1,i,i+1] for i in 2:n+1]
-    else
-        x = append!(rMin*cos.(φ), rMax*cos.(φ))
-        y = append!(rMin*sin.(φ), rMax*sin.(φ))
-        z = zeros(2(n+1))
-        connections = [[i,i+1,i+n+2,i+n+1] for i in 1:n]
-    end
-
-    es.rotation*Mesh{T}(x,y,z,connections) + es.origin
-end
-
 @recipe function f(es::EllipticalSurface; n = 40)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d

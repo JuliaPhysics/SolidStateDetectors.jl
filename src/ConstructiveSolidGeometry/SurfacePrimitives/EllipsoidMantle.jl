@@ -76,6 +76,37 @@ function normal(em::EllipsoidMantle{T,T,TP,TT,:outwards}, pt::CartesianPoint{T})
 end
 normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
 
+function _get_n_points_in_arc_φ(em::EllipsoidMantle, n::Int64)::Int64
+    φMin, φMax = get_φ_limits(em)
+    f = (φMax - φMin)/(2π)
+    Int(ceil(n*f))
+end
+
+function _get_n_points_in_arc_θ(em::EllipsoidMantle, n::Int64)::Int64
+    θMin, θMax = get_θ_limits(em)
+    f = (θMax - θMin)/(π)
+    Int(ceil(n*f))
+end
+
+function vertices(em::EllipsoidMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
+    rx, ry, rz = get_radii(em) 
+    φMin, φMax = get_φ_limits(em)
+    θMin, θMax = get_θ_limits(em)
+    nφ = _get_n_points_in_arc_φ(em, n) 
+    nθ = _get_n_points_in_arc_θ(em, n)
+    
+    θ = range(θMin, θMax, length = nθ + 1)
+    φ = range(φMin, φMax, length = nφ + 1)
+    
+    [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) for θ in θ for φ in φ]
+end
+
+function connections(em::EllipsoidMantle, n::Int64)::Vector{Vector{Int64}}
+    nφ = _get_n_points_in_arc_φ(em, n) 
+    nθ = _get_n_points_in_arc_θ(em, n)
+    [[i+(nφ+1)*j,i+1+(nφ+1)*j,i+1+(nφ+1)*(j+1),i+(nφ+1)*(j+1)] for j in 0:nθ-1 for i in 1:nφ]
+end
+
 """
     intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}
 

@@ -32,6 +32,12 @@ end
 flip(t::TorusMantle{T,TP,TT,:inwards}) where {T,TP,TT} = 
 TorusMantle{T,TP,TT,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation )
 
+get_φ_limits(tm::TorusMantle{T,Tuple{T,T}}) where {T} = tm.φ[1], tm.φ[2]
+get_φ_limits(tm::TorusMantle{T,Nothing}) where {T} = T(0), T(2π)
+
+get_θ_limits(tm::TorusMantle{T,<:Any,Tuple{T,T}}) where {T} = tm.θ[1], tm.θ[2]
+get_θ_limits(tm::TorusMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+
 function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where {T,TP,TT}
     pto = _transform_into_object_coordinate_system(pt, tm)
     cyl = CylindricalPoint(pto)
@@ -40,13 +46,37 @@ function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where
 end
 normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT} = -normal(flip(tm), pt)
 
+function _get_n_points_in_arc_φ(tm::TorusMantle, n::Int64)::Int64
+    φMin, φMax = get_φ_limits(tm)
+    f = (φMax - φMin)/(2π)
+    Int(ceil(n*f))
+end
+
+function _get_n_points_in_arc_θ(tm::TorusMantle, n::Int64)::Int64
+    θMin, θMax = get_θ_limits(tm)
+    f = (θMax - θMin)/(2π)
+    Int(ceil(n*f))
+end
+
+function vertices(tm::TorusMantle{T}, n::Int64)::Vector{CartesianPoint{T}} where {T}
+    φMin, φMax = get_φ_limits(tm)
+    θMin, θMax = get_θ_limits(tm)
+    nφ = _get_n_points_in_arc_φ(tm, n) 
+    nθ = _get_n_points_in_arc_θ(tm, n)
+    
+    θ = range(θMin, θMax, length = nθ + 1)
+    φ = range(φMin, φMax, length = nφ + 1)
+    
+    [_transform_into_global_coordinate_system(CartesianPoint{T}((tm.r_torus + tm.r_tube*cos(θ))*cos(φ), (tm.r_torus + tm.r_tube*cos(θ))*sin(φ), tm.r_tube*sin(θ)), tm) for θ in θ for φ in φ]
+end
+
+function connections(tm::TorusMantle, n::Int64)::Vector{Vector{Int64}}
+    nφ = _get_n_points_in_arc_φ(tm, n) 
+    nθ = _get_n_points_in_arc_θ(tm, n)
+    [[i+(nφ+1)*j,i+1+(nφ+1)*j,i+1+(nφ+1)*(j+1),i+(nφ+1)*(j+1)] for j in 0:nθ-1 for i in 1:nφ]
+end
+
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
-
-get_φ_limits(tm::TorusMantle{T,Tuple{T,T}}) where {T} = tm.φ[1], tm.φ[2]
-get_φ_limits(tm::TorusMantle{T,Nothing}) where {T} = T(0), T(2π)
-
-get_θ_limits(tm::TorusMantle{T,<:Any,Tuple{T,T}}) where {T} = tm.θ[1], tm.θ[2]
-get_θ_limits(tm::TorusMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function lines(tm::FullTorusMantle{T}) where {T} 
     top_circ_origin = CartesianPoint{T}(zero(T), zero(T),  tm.r_tube)

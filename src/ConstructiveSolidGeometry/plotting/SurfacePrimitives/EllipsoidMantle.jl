@@ -1,29 +1,3 @@
-function mesh(em::EllipsoidMantle{T}; n = 30)::Mesh{T} where {T}
-    rx, ry, rz = get_radii(em) 
-    φMin::T, φMax::T = get_φ_limits(em)
-    θMin::T, θMax::T = get_θ_limits(em)
-
-    fφ = (φMax - φMin)/(2π)
-    nφ = Int(ceil(n*fφ))
-
-    fθ = (θMax - θMin)/(π)
-    nθ = Int(ceil(n*fθ))
-    
-    θ = range(θMin, θMax, length = nθ + 1)
-    sθ = sin.(θ)
-    cθ = cos.(θ)
-    φ = range(φMin, φMax, length = nφ + 1)
-    sφ = sin.(φ)
-    cφ = cos.(φ)
-
-    x = [rx*cθ*cφ for cθ in cθ for cφ in cφ]
-    y = [ry*cθ*sφ for cθ in cθ for sφ in sφ]
-    z = [rz*sθ for sθ in sθ for i in φ]
-    connections = [[i+(nφ+1)*j,i+1+(nφ+1)*j,i+1+(nφ+1)*(j+1),i+(nφ+1)*(j+1)] for j in 0:nθ-1 for i in 1:nφ]
-    
-    em.rotation*Mesh{T}(x,y,z,connections) + em.origin
-end
-
 @recipe function f(em::EllipsoidMantle, n = 40; subn = 10)
     seriestype --> :mesh3d
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
