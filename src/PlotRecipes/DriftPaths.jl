@@ -1,6 +1,7 @@
 @recipe function f(dp::EHDriftPath{T}; showlabel = true, scaling = 1.0) where {T <: Real}
     legendfont --> 15
     linewidth --> 3
+    seriestype --> :path3d
     @series begin
         showlabel ? label --> "e-" : label --> ""
         seriescolor --> :red
