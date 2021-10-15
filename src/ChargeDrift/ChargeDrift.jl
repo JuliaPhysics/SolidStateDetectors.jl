@@ -34,26 +34,33 @@ end
 
 
 function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
-                        starting_points::Vector{CartesianPoint{T}}, energies::Vector{T},
+                        starting_points::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T},
                         electric_field::Interpolations.Extrapolation{<:SVector{3}, 3},
                         Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
-    drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(starting_points))
-    n_hits::Int = length(starting_points)
+    drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(flatview(starting_points)))
     dt::T = T(to_internal_units(Δt))
     
-    charges::Vector{T} = energies ./ to_internal_units(det.semiconductor.material.E_ionisation)
-
-    drift_path_e::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
-    drift_path_h::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
-    timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
-    timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
+    drift_path_counter::Int = 0
     
-    n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, starting_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
-    n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, starting_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
+    for (i, start_points) in enumerate(starting_points)
+        
+        n_hits::Int = length(start_points)
+        charges::Vector{T} = energies[i] ./ to_internal_units(det.semiconductor.material.E_ionisation)
+        
+        drift_path_e::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
+        drift_path_h::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
+        timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
+        timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
+        
+        n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
+        n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
     
-    for i in eachindex(starting_points)
-        drift_paths[i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
+        for i in eachindex(start_points)
+            drift_paths[drift_path_counter + i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
+        end
+        
+        drift_path_counter += n_hits
     end
     
     return drift_paths
@@ -124,7 +131,7 @@ function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}
             if done[m] continue end
             if m > n
                 direction::CartesianVector{T} = current_pos[n] .- current_pos[m]
-                tmp::T = elementary_charge * inv(4 * pi * ϵ0 * ϵ_r * sum(direction.^2))
+                tmp::T = elementary_charge * inv(4 * pi * ϵ0 * ϵ_r * max(sum(direction.^2), T(1e-10))) # minimum distance is 10µm 
                 step_vectors[n] += charges[m] * tmp * normalize(direction)
                 step_vectors[m] -= charges[n] * tmp * normalize(direction)
             end
@@ -170,7 +177,7 @@ function _check_and_update_position!(
             det::SolidStateDetector{T},
             g::Grid{T, 3, S},
             point_types::PointTypes{T, 3, S},
-            startpos::Vector{CartesianPoint{T}},
+            startpos::AbstractVector{CartesianPoint{T}},
             Δt::T,
             verbose::Bool
         )::Nothing where {T <: SSDFloat, S}
@@ -184,7 +191,6 @@ function _check_and_update_position!(
         #all charges are either finished or still inside the detector => drift normally
         current_pos .+= step_vectors
         drift_path[:,istep] .= current_pos
-        timestamps[istep] = timestamps[istep-1] + Δt
     else
         #all charges that would not be inside after the drift step
         for n in findall(.!normal)
@@ -193,7 +199,6 @@ function _check_and_update_position!(
             if cd_point_type == CD_ELECTRODE
                 done[n] = true
                 drift_path[n,istep] = crossing_pos
-                timestamps[istep] = timestamps[istep-1] + Δt      
             elseif cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
@@ -211,22 +216,22 @@ function _check_and_update_position!(
                 end
                 drift_path[n,istep] = next_pos
                 step_vectors *= (1 - i * T(0.001))  # scale down the step_vectors for all other charge clouds
-                #Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
+                Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
             else # if cd_point_type == CD_BULK or CD_OUTSIDE
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
-                timestamps[istep] = timestamps[istep-1] + Δt
             end  
-        end
+        end    
         #drift all other charge clouds normally according to the new Δt_min
         for n in findall(normal)
             current_pos[n] += step_vectors[n]
             drift_path[n,istep] = current_pos[n]
         end
     end
+    timestamps[istep] = timestamps[istep-1] + Δt
     nothing
 end
 
@@ -237,7 +242,7 @@ function _drift_charge!(
                             det::SolidStateDetector{T},
                             point_types::PointTypes{T, 3, S},
                             grid::Grid{T, 3, S},
-                            startpos::Vector{CartesianPoint{T}},
+                            startpos::AbstractVector{CartesianPoint{T}},
                             charges::Vector{T},
                             Δt::T,
                             electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},

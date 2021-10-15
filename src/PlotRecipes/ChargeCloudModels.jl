@@ -7,7 +7,7 @@
         seriestype --> :scatter
         markersize --> 6
         label --> "PointCharge"
-        t.points
+        t.locations
     end
 end
 
@@ -15,7 +15,7 @@ end
 @recipe function f(nbc::NBodyChargeCloud{T, N, SH}; connect = true, markersize = 10) where {T, N, SH}
     
     seriescolor --> :blue
-    points = nbc.points
+    points = nbc.locations
     
     #Center point
     @series begin 
@@ -44,7 +44,7 @@ end
 @recipe function f(nbc::NBodyChargeCloud{T, N, NTuple{N, Int}}; connect = true, markersize = 10) where {T, N}
     
     seriescolor --> :blue
-    points = nbc.points
+    points = nbc.locations
     seriestype := :scatter
     
     @series begin 
@@ -81,7 +81,7 @@ end
         seriestype --> :scatter
         markersize --> 6
         label --> "Tetrahedron"
-        t.points
+        t.locations
     end
     
    
@@ -91,7 +91,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            t.points[vcat(1,2,3,4,2)]
+            t.locations[vcat(1,2,3,4,2)]
         end
 
         @series begin
@@ -99,13 +99,13 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            t.points[vcat(3,1,4)]
+            t.locations[vcat(3,1,4)]
         end
     end
 end
 
 
-@recipe function f(i::Octahedron{T}; connect = true) where {T}
+@recipe function f(o::Octahedron{T}; connect = true) where {T}
     
     linestyle --> :dot
     seriescolor --> :blue
@@ -115,7 +115,7 @@ end
         seriestype --> :scatter
         markersize --> 6
         label --> "Octahedron"
-        i.points
+        o.locations
     end
     
     if connect    
@@ -124,13 +124,13 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(1,2,3,4,5,2,6,5,1,3,6,4,1)]
+            o.locations[vcat(1,2,3,4,5,2,6,5,1,3,6,4,1)]
         end
     end
 end
 
 
-@recipe function f(i::Hexahedron{T}; connect = true) where {T}
+@recipe function f(h::Hexahedron{T}; connect = true) where {T}
     
     linestyle --> :dot
     seriescolor --> :blue
@@ -140,7 +140,7 @@ end
         seriestype --> :scatter
         markersize --> 6
         label --> "Hexahedron"
-        i.points
+        h.locations
     end
     
    
@@ -150,7 +150,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(1,2,5,3,6,4,7,8,5)]
+            h.locations[vcat(1,2,5,3,6,4,7,8,5)]
         end
 
         @series begin
@@ -158,7 +158,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(3,1,4)]
+            h.locations[vcat(3,1,4)]
         end
 
         @series begin
@@ -166,7 +166,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(2,7)]
+            h.locations[vcat(2,7)]
         end
 
         @series begin
@@ -174,7 +174,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(6,8)]
+            h.locations[vcat(6,8)]
         end
     end
 end
@@ -190,7 +190,7 @@ end
         seriestype --> :scatter
         markersize --> 6
         label --> "Icosahedron"
-        i.points
+        i.locations
     end
     
    
@@ -200,7 +200,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(1,2,7,8,9,10,11,7,3,8,4,9,5,10,6,11,2,3,4,5,6,2)]
+            i.locations[vcat(1,2,7,8,9,10,11,7,3,8,4,9,5,10,6,11,2,3,4,5,6,2)]
         end
 
         @series begin
@@ -208,7 +208,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(3,1,6)]
+            i.locations[vcat(3,1,6)]
         end
 
         @series begin
@@ -216,7 +216,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(5,1,4)]
+            i.locations[vcat(5,1,4)]
         end
 
         @series begin
@@ -224,7 +224,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(7,12,8)]
+            i.locations[vcat(7,12,8)]
         end
         
         @series begin
@@ -232,7 +232,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(9,12,10)]
+            i.locations[vcat(9,12,10)]
         end
         
         @series begin
@@ -240,13 +240,13 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(11,12)]
+            i.locations[vcat(11,12)]
         end
     end
 end
 
 
-@recipe function f(i::Dodecahedron{T}; connect = true) where {T}
+@recipe function f(d::Dodecahedron{T}; connect = true) where {T}
     
     linestyle --> :dot
     seriescolor --> :blue
@@ -256,7 +256,7 @@ end
         seriestype --> :scatter
         markersize --> 6
         label --> "Dodecahedron"
-        i.points
+        d.locations
     end
     
    
@@ -266,7 +266,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(1,2,3,4,5,1,6,11,7,12,8,13,9,14,10,15,6)]
+            d.locations[vcat(1,2,3,4,5,1,6,11,7,12,8,13,9,14,10,15,6)]
         end
 
         @series begin
@@ -274,7 +274,7 @@ end
             seriestype --> :line3d
             label --> ""
             linewidth --> 1
-            i.points[vcat(15,20,16,17,18,19,20)]
+            d.locations[vcat(15,20,16,17,18,19,20)]
         end
         
         for j in [2,3,4,5,11,12,13,14]
@@ -283,7 +283,7 @@ end
                 seriestype --> :line3d
                 label --> ""
                 linewidth --> 1
-                i.points[vcat(j,j+5)]
+                d.locations[vcat(j,j+5)]
             end
         end
     end

@@ -1129,11 +1129,7 @@ function calculate_drift_fields!(sim::Simulation{T};
 end
 @deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
 
-function interpolated_vectorfield(ef::ElectricField)
-    interpolated_vectorfield(ef.data, ef.grid)
-end
-
-function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}}, energies::Vector{T};
+function drift_charges( sim::Simulation{T}, starting_positions::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T};
                         Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions, energies, 
                              interpolated_vectorfield(sim.electric_field), Δt, 
