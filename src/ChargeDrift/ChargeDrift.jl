@@ -70,7 +70,7 @@ function modulate_surface_drift(p::CartesianVector{T})::CartesianVector{T} where
     return p
 end
 
-function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Vector{AbstractVirtualVolume{T}})::CartesianVector{T} where {T <: SSDFloat}
+function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Vector{<:AbstractVirtualVolume{T}})::CartesianVector{T} where {T <: SSDFloat}
     for i in eachindex(vdv)
         if in(pt, vdv[i])
             return modulate_driftvector(sv, pt, vdv[i])

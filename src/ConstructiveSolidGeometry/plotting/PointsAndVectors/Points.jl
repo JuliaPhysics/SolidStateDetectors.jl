@@ -1,13 +1,14 @@
 @recipe function f(pt::CartesianPoint)
-    xguide --> "X"
-    yguide --> "Y"
-    zguide --> "Z"
+    xguide --> "x"
+    yguide --> "y"
+    zguide --> "z"
+    unitformat --> :slash
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         aspect_ratio --> 1.0
     end 
     @series begin
-        seriesstyle --> :scatter
-        [pt.x], [pt.y], [pt.z]
+        seriestype --> :scatter
+        [pt.x]*internal_length_unit, [pt.y]*internal_length_unit, [pt.z]*internal_length_unit
     end
 end
 
@@ -18,15 +19,16 @@ end
 end
 
 @recipe function f(v::AbstractVector{<:CartesianPoint})
-    xguide --> "X"
-    yguide --> "Y"
-    zguide --> "Z"
+    xguide --> "x"
+    yguide --> "y"
+    zguide --> "z"
+    unitformat --> :slash
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         aspect_ratio --> 1.0
     end 
     @series begin
-        seriesstyle --> :scatter
-        [v[i].x for i in eachindex(v)], [v[i].y for i in eachindex(v)], [v[i].z for i in eachindex(v)]
+        seriestype --> :scatter
+        [v[i].x for i in eachindex(v)]*internal_length_unit, [v[i].y for i in eachindex(v)]*internal_length_unit, [v[i].z for i in eachindex(v)]*internal_length_unit
     end
 end
 

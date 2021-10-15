@@ -27,6 +27,7 @@ using Rotations
 using StaticArrays
 using StatsBase
 using Unitful
+using UnitfulRecipes
 using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
@@ -41,7 +42,7 @@ using .ConstructiveSolidGeometry:
             ConfigFileError, _parse_value,
             LengthQuantity, AngleQuantity
         
-import .ConstructiveSolidGeometry: sample, to_internal_units
+import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_units
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
@@ -109,6 +110,7 @@ include("IO/IO.jl")
 include("examples.jl")
 
 include("PlotRecipes/PlotRecipes.jl")
+export @P_str # protected strings to overwrite plot labels with units
 
 function __init__()
     @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin

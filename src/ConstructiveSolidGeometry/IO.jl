@@ -308,7 +308,7 @@ function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, outer_
     Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end
 
-function Geometry(::Type{T}, filename::String, input_units::NamedTuple = (length = internal_unit_length, angle = internal_unit_angle)) where {T}
+function Geometry(::Type{T}, filename::String, input_units::NamedTuple = (length = internal_length_unit, angle = internal_angle_unit)) where {T}
     @assert isfile(filename) "The given filename '$(filename)' does not lead to a valid file."
     dict = if endswith(filename, ".json")
         JSON.parsefile(filename)

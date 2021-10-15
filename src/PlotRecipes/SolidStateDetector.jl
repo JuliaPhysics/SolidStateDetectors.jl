@@ -20,9 +20,7 @@ end
 end
 
 @recipe function f(det::SolidStateDetector; show_semiconductor = false)
-    xguide --> "x / m"
-    yguide --> "y / m"
-    zguide --> "z / m"
+
     show_normal --> false
 
     if show_semiconductor

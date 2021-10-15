@@ -33,6 +33,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+UnitfulRecipes = "42071c24-d89e-48dd-8a24-8a12d9b8861f"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
@@ -60,6 +61,7 @@ StatsBase = "0.32, 0.33"
 Tables = "0.2, 1"
 TypedTables = "1.2"
 Unitful = "0.18, 1"
+UnitfulRecipes = "1.5"
 YAML = "0.3, 0.4"
 julia = "1.6"
 
