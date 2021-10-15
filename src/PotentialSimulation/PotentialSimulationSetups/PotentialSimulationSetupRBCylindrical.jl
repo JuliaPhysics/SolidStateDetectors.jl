@@ -378,21 +378,20 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
             end
         end
 
-        potential::Array{T, 3} = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
-        point_types::Array{PointType, 3} = ones(PointType, size(grid)...)
+        potential = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
+        point_types = ones(PointType, size(grid)...)
         set_point_types_and_fixed_potentials!( point_types, potential, grid, det, 
                 weighting_potential_contact_id = weighting_potential_contact_id,
                 use_nthreads = use_nthreads,
                 not_only_paint_contacts = Val(not_only_paint_contacts), 
                 paint_contacts = Val(paint_contacts)  )
-        rbpotential::Array{T, 4}  = RBExtBy2Array( potential, grid )
-        rbpoint_types::Array{T, 4} = RBExtBy2Array( point_types, grid )
+        rbpotential  = RBExtBy2Array( potential, grid )
+        rbpoint_types = RBExtBy2Array( point_types, grid )
         potential = clear(potential)
         point_types = clear(point_types)
     end # @inbounds
 
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical, typeof(geom_weights), typeof(grid.axes)} = 
-        PotentialSimulationSetupRB{T, 3, 4, Cylindrical, typeof(geom_weights), typeof(grid.axes)}(
+    pssrb = PotentialSimulationSetupRB(
         grid,
         rbpotential,
         rbpoint_types,
@@ -400,7 +399,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
         ρ,
         q_eff_fix,
         ϵ,
-        geom_weights,
+        broadcast(gw -> gw.weights, geom_weights),
         sor_const,
         bias_voltage,
         maximum_applied_potential,
@@ -414,11 +413,9 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
     return pssrb
 end
 
-function Grid(pssrb::PotentialSimulationSetupRB{T, N1, N2, S})::Grid{T, N1, S} where {T, N1, N2, S}
-    return pssrb.grid
-end
+Grid(pssrb::PotentialSimulationSetupRB) = pssrb.grid
 
-function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{T, 3} where {T}
+function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
     pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = rbidx(iz)
@@ -432,11 +429,15 @@ function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylin
             end
         end
     end
+    for iz in axes(pot, 3)
+        p_r0 = mean(pot[1,:,iz])
+        pot[1,:,iz] .= p_r0
+    end
     return pot
 end
 
 
-function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{PointType, 3} where {T}
+function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{PointType, 3} where {T}
     point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
     for iz in axes(point_types, 3)
         irbz::Int = rbidx(iz)
@@ -469,20 +470,20 @@ function PointTypes(pss::PotentialSimulationSetup{T, N, S})::PointTypes{T, N, S}
 end
 
 
-function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{T} where {T}
+function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
-        Δmpz::T = pssrb.geom_weights[3].weights[3, iz]
+        Δmpz::T = pssrb.geom_weights[3][3, iz]
         for iφ in axes(ρ, 2)
             irbφ::Int = iφ + 1
             idxsum::Int = iz + iφ
-            Δmpφ::T = pssrb.geom_weights[2].weights[3, iφ]
+            Δmpφ::T = pssrb.geom_weights[2][3, iφ]
             Δmpzφ::T = Δmpz * Δmpφ
             for ir in axes(ρ, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                dV::T = pssrb.geom_weights[1].weights[6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
+                dV::T = pssrb.geom_weights[1][6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                 if ir == 1
                     dV = dV * 2π / Δmpφ
                 end
@@ -493,20 +494,20 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, 
     return ρ
 end
 
-function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical})::Array{T} where {T}
+function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
-        Δmpz::T = pssrb.geom_weights[3].weights[3, iz]
+        Δmpz::T = pssrb.geom_weights[3][3, iz]
         for iφ in axes(ρ, 2)
             irbφ::Int = iφ + 1
             idxsum::Int = iz + iφ
-            Δmpφ::T = pssrb.geom_weights[2].weights[3, iφ]
+            Δmpφ::T = pssrb.geom_weights[2][3, iφ]
             Δmpzφ::T = Δmpz * Δmpφ
             for ir in axes(ρ, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                dV::T = pssrb.geom_weights[1].weights[6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
+                dV::T = pssrb.geom_weights[1][6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                 if ir == 1
                     dV = dV * 2π / Δmpφ
                 end
@@ -518,6 +519,6 @@ function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, 3
 end
 
 
-function DielectricDistributionArray(pssrb::PotentialSimulationSetupRB{T, 3, 4, S})::Array{T, 3} where {T, S}
+function DielectricDistributionArray(pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}})::Array{T, 3} where {T, S}
     return pssrb.ϵ_r
 end

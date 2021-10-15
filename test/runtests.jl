@@ -11,6 +11,10 @@ T = Float32
     include("comparison_to_analytic_solutions.jl")
 end
 
+@testset "SOR GPU Backend" begin
+    include("SOR_GPU_Backend.jl")
+end
+
 @testset "Test real detectors" begin
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoax])

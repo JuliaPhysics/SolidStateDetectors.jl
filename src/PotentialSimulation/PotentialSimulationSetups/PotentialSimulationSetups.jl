@@ -14,51 +14,47 @@ struct PotentialSimulationSetup{T, N, S} <: AbstractPotentialSimulationSetup{T, 
     ϵ_r::Array{T, N}
 end
 
-struct PotentialSimulationSetupRB{T, N1, N2, S, TGW, AT} <: AbstractPotentialSimulationSetup{T, N1}
+struct PotentialSimulationSetupRB{
+            T, S, N1, DATN1<:AbstractArray{T,N1}, 
+            N2, AT, 
+            DATN2<:AbstractArray{T,N2}, 
+            DATPT<:AbstractArray{PointType,N2}, 
+            DATGW<:AbstractArray{T,2},
+            DATSOR<:AbstractArray{T,1}
+        } <: AbstractPotentialSimulationSetup{T, N1}
     grid::Grid{T, N1, S, AT}
-    potential::Array{T, N2}
-    point_types::Array{PointType, N2}
-    volume_weights::Array{T, N2}
-    q_eff_imp::Array{T, N2}
-    q_eff_fix::Array{T, N2}
-    ϵ_r::Array{T, N1}
-    geom_weights::TGW   
-    sor_const::Array{T, 1}
+    potential::DATN2 # Array{T, N2} or e.g. CuArray{T, N2}
+    point_types::DATPT # Array{PointType, N2} or ...
+    volume_weights::DATN2 # Array{T, N2}
+    q_eff_imp::DATN2 # Array{T, N2}
+    q_eff_fix::DATN2 # Array{T, N2}
+    ϵ_r::DATN1 # Array{T, N1}
+    geom_weights::NTuple{3, DATGW} # NTuple{3, Array{T, 2}}
+    sor_const::DATSOR # Array{T, 1}
     bias_voltage::T
     maximum_applied_potential::T
-    minimum_applied_potential::T
+    minimum_applied_potential::T    
     depletion_handling_potential_limit::T
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
-function sizeof(pss::PotentialSimulationSetup{T, N})::Int where {T, N}
-    s::Int = sizeof(pss.grid)
-    s += sizeof(pss.point_types)
-    s += sizeof(pss.potential)
-    s += sizeof(pss.ϵ_r)
-    s += sizeof(pss.q_eff_imp)
-    s += sizeof(pss.q_eff_fix)
-    return s
-end
-
-function sizeof(pssrb::PotentialSimulationSetupRB{T, N1, N2})::Int where {T, N1, N2}
-    s::Int = sizeof(pssrb.grid)
-    s += sizeof(pssrb.point_types)
-    s += sizeof(pssrb.potential)
-    s += sizeof(pssrb.volume_weights)
-    s += sizeof(pssrb.ϵ_r)
-    s += sizeof(pssrb.q_eff_imp)
-    s += sizeof(pssrb.q_eff_fix)
-    for idim in 1:N1
-        s += sizeof(pssrb.geom_weights[idim].weights)
-    end
-    s += sizeof(pssrb.sor_const)
-    s += sizeof(pssrb.bias_voltage)
-    s += sizeof(pssrb.maximum_applied_potential)
-    s += sizeof(pssrb.minimum_applied_potential)
-    s += sizeof(pssrb.depletion_handling_potential_limit)
-    s += sizeof(pssrb.grid_boundary_factors)
-    return s
+function Adapt.adapt_structure(to, pssrb::PotentialSimulationSetupRB{T, S, 3}) where {T, S}
+    PotentialSimulationSetupRB(
+        pssrb.grid,
+        adapt(to, pssrb.potential),
+        adapt(to, pssrb.point_types),
+        adapt(to, pssrb.volume_weights),
+        adapt(to, pssrb.q_eff_imp),
+        adapt(to, pssrb.q_eff_fix),
+        adapt(to, pssrb.ϵ_r),
+        adapt(to, pssrb.geom_weights),
+        adapt(to, pssrb.sor_const),
+        pssrb.bias_voltage,
+        pssrb.maximum_applied_potential,
+        pssrb.minimum_applied_potential,
+        pssrb.depletion_handling_potential_limit,
+        pssrb.grid_boundary_factors
+    )
 end
 
 include("BoundaryConditions/BoundaryConditions.jl")

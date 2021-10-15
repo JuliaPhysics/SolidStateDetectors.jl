@@ -8,11 +8,11 @@ function update!(   pssrb::PotentialSimulationSetupRB{T}; use_nthreads::Int = Ba
     nothing
 end
 
-@fastmath function outerloop!( pssrb::PotentialSimulationSetupRB{T, 3, 4, S}, use_nthreads::Int,
+@fastmath function outerloop!( pssrb::PotentialSimulationSetupRB{T}, use_nthreads::Int,
     update_even_points::Val{even_points},
     depletion_handling::Val{depletion_handling_enabled},
     is_weighting_potential::Val{_is_weighting_potential},
-    only2d::Val{only_2d})::Nothing where {T, S, even_points, depletion_handling_enabled, _is_weighting_potential, only_2d}
+    only2d::Val{only_2d})::Nothing where {T, even_points, depletion_handling_enabled, _is_weighting_potential, only_2d}
     @inbounds begin 
         rb_tar_idx::Int, rb_src_idx::Int = even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 

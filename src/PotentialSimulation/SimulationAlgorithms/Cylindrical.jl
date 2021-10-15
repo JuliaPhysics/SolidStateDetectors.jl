@@ -1,5 +1,5 @@
 @fastmath function middleloop!( ir::Int, rb_tar_idx::Int, rb_src_idx::Int, 
-                                pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
+                                pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
                                 is_weighting_potential::Val{_is_weighting_potential}, 
@@ -8,12 +8,12 @@
     @inbounds begin 
         inr = ir - 1 
                 
-        pwwrr               = pssrb.geom_weights[1].weights[1, inr]
-        pwwrl               = pssrb.geom_weights[1].weights[2, inr]
-        r_inv_pwΔmpr        = pssrb.geom_weights[1].weights[3, inr]
-        Δr_ext_inv_r_pwmprr = pssrb.geom_weights[1].weights[4, inr] 
-        Δr_ext_inv_l_pwmprl = pssrb.geom_weights[1].weights[5, inr] 
-        Δmpr_squared        = pssrb.geom_weights[1].weights[6, inr]  
+        pwwrr               = pssrb.geom_weights[1][1, inr]
+        pwwrl               = pssrb.geom_weights[1][2, inr]
+        r_inv_pwΔmpr        = pssrb.geom_weights[1][3, inr]
+        Δr_ext_inv_r_pwmprr = pssrb.geom_weights[1][4, inr] 
+        Δr_ext_inv_l_pwmprl = pssrb.geom_weights[1][5, inr] 
+        Δmpr_squared        = pssrb.geom_weights[1][6, inr]  
 
         line_weights::Array{T, 2} = Array{T, 2}(undef, size(pssrb.potential, 1) - 2, 6)
         # Even though this causes some allocations it is faster than using a predefined array, e.g. stored in pssrb
@@ -23,11 +23,11 @@
             iφ = 2
             inφ = iφ - 1
 
-            pwwφr        = pssrb.geom_weights[2].weights[1, inφ]
-            pwwφl        = pssrb.geom_weights[2].weights[2, inφ]
-            pwΔmpφ       = pssrb.geom_weights[2].weights[3, inφ]
-            Δφ_ext_inv_r = pssrb.geom_weights[2].weights[4,  iφ]
-            Δφ_ext_inv_l = pssrb.geom_weights[2].weights[4, inφ]
+            pwwφr        = pssrb.geom_weights[2][1, inφ]
+            pwwφl        = pssrb.geom_weights[2][2, inφ]
+            pwΔmpφ       = pssrb.geom_weights[2][3, inφ]
+            Δφ_ext_inv_r = pssrb.geom_weights[2][4,  iφ]
+            Δφ_ext_inv_l = pssrb.geom_weights[2][4, inφ]
 
             if inr == 1
                 pwwφr = T(0.5)
@@ -69,11 +69,11 @@
             for iφ in 2:2:(size(pssrb.potential, 2) - 1)
                 inφ = iφ - 1
 
-                pwwφr        = pssrb.geom_weights[2].weights[1, inφ]
-                pwwφl        = pssrb.geom_weights[2].weights[2, inφ]
-                pwΔmpφ       = pssrb.geom_weights[2].weights[3, inφ]
-                Δφ_ext_inv_r = pssrb.geom_weights[2].weights[4,  iφ]
-                Δφ_ext_inv_l = pssrb.geom_weights[2].weights[4, inφ]
+                pwwφr        = pssrb.geom_weights[2][1, inφ]
+                pwwφl        = pssrb.geom_weights[2][2, inφ]
+                pwΔmpφ       = pssrb.geom_weights[2][3, inφ]
+                Δφ_ext_inv_r = pssrb.geom_weights[2][4,  iφ]
+                Δφ_ext_inv_l = pssrb.geom_weights[2][4, inφ]
 
                 if inr == 1
                     pwwφr = T(0.5)
@@ -109,11 +109,11 @@
             for iφ in 3:2:(size(pssrb.potential, 2) - 1)
                 inφ = iφ - 1
                 
-                pwwφr        = pssrb.geom_weights[2].weights[1, inφ]
-                pwwφl        = pssrb.geom_weights[2].weights[2, inφ]
-                pwΔmpφ       = pssrb.geom_weights[2].weights[3, inφ]
-                Δφ_ext_inv_r = pssrb.geom_weights[2].weights[4,  iφ]
-                Δφ_ext_inv_l = pssrb.geom_weights[2].weights[4, inφ]
+                pwwφr        = pssrb.geom_weights[2][1, inφ]
+                pwwφl        = pssrb.geom_weights[2][2, inφ]
+                pwΔmpφ       = pssrb.geom_weights[2][3, inφ]
+                Δφ_ext_inv_r = pssrb.geom_weights[2][4,  iφ]
+                Δφ_ext_inv_l = pssrb.geom_weights[2][4, inφ]
 
                 if inr == 1
                     pwwφr = T(0.5)
@@ -150,7 +150,7 @@
     end # inbounds
 end
 
-function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical},
+function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}},
                     iφ, inφ, ir, inr,
                     update_even_points, rφi_is_even_t::Val{rφi_is_even},
                     pwwrr, pwwrl, pwwφr, pwwφl, 
@@ -164,11 +164,11 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
     # @fastmath @inbounds for iz in 2:(size(pssrb.potential, 1) - 1)
         inz::Int = nidx(iz, update_even_points, rφi_is_even_t)
 
-        pwwzr::T        = pssrb.geom_weights[3].weights[1, inz]
-        pwwzl::T        = pssrb.geom_weights[3].weights[2, inz]
-        pwΔmpz::T       = pssrb.geom_weights[3].weights[3, inz]
-        Δz_ext_inv_r::T = pssrb.geom_weights[3].weights[4, inz + 1]
-        Δz_ext_inv_l::T = pssrb.geom_weights[3].weights[4, inz]
+        pwwzr::T        = pssrb.geom_weights[3][1, inz]
+        pwwzl::T        = pssrb.geom_weights[3][2, inz]
+        pwΔmpz::T       = pssrb.geom_weights[3][3, inz]
+        Δz_ext_inv_r::T = pssrb.geom_weights[3][4, inz + 1]
+        Δz_ext_inv_l::T = pssrb.geom_weights[3][4, inz]
 
         ϵ_rrr::T = pssrb.ϵ_r[  ir,  iφ, inz + 1]
         ϵ_rlr::T = pssrb.ϵ_r[  ir, inφ, inz + 1]
@@ -243,7 +243,7 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
     nothing
 end
 
-function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cylindrical}, 
+function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}}, 
                     iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx, 
                     update_even_points, rφi_is_even_t::Val{rφi_is_even},
                     depletion_handling::Val{depletion_handling_enabled},
@@ -291,7 +291,8 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cyl
             new_point_type = pssrb.point_types[iz, iφ, ir, rb_tar_idx] 
             if new_potential < vmin || new_potential > vmax
                 new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
-                if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0) 
+                if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0 && 
+                    pssrb.point_types[iz, iφ, ir, rb_tar_idx] & pn_junction_bit > 0)
                     # pssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit 
                     new_point_type += undepleted_bit
                 end # mark this point as undepleted

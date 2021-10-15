@@ -32,6 +32,13 @@ end
 @inline function nidx( rbidx::Int, ::Val{false}, ::Val{false})::Int
    return (rbidx - 1) * 2 
 end
+@inline function nidx( rbidx::Int, b1::Bool, b2::Bool)::Int
+    if xor(b1, b2)
+        (rbidx - 1) * 2 - 1
+    else
+        (rbidx - 1) * 2 
+    end
+end
 
 # """
 #     get_rbidx_right_neighbour(rbidx::Int, ::Val{true}, ::Val{true})::Int
@@ -49,6 +56,13 @@ end
 end
 @inline function get_rbidx_right_neighbour(rbidx::Int, ::Val{false}, ::Val{false})::Int
     return rbidx + 1
+end
+@inline function get_rbidx_right_neighbour(rbidx::Int, b1::Bool, b2::Bool)::Int
+    if xor(b1, b2)
+        rbidx
+    else
+        rbidx + 1
+    end
 end
 
 

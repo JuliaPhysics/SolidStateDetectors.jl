@@ -1,5 +1,5 @@
 @fastmath function middleloop!( iz::Int, rb_tar_idx::Int, rb_src_idx::Int, 
-                                pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian},
+                                pssrb::PotentialSimulationSetupRB{T, Cartesian, 3, Array{T, 3}},
                                 update_even_points::Val{even_points},
                                 depletion_handling::Val{depletion_handling_enabled},
                                 is_weighting_potential::Val{_is_weighting_potential},
@@ -8,11 +8,11 @@
     @inbounds begin 
         inz::Int = iz - 1 
                 
-        pwwzr::T        = pssrb.geom_weights[3].weights[1, inz]
-        pwwzl::T        = pssrb.geom_weights[3].weights[2, inz]
-        pwΔmpz::T       = pssrb.geom_weights[3].weights[3, inz]
-        Δz_ext_inv_r::T = pssrb.geom_weights[3].weights[4, inz + 1]
-        Δz_ext_inv_l::T = pssrb.geom_weights[3].weights[4, inz]
+        pwwzr::T        = pssrb.geom_weights[3][1, inz]
+        pwwzl::T        = pssrb.geom_weights[3][2, inz]
+        pwΔmpz::T       = pssrb.geom_weights[3][3, inz]
+        Δz_ext_inv_r::T = pssrb.geom_weights[3][4, inz + 1]
+        Δz_ext_inv_l::T = pssrb.geom_weights[3][4, inz]
 
         line_weights::Array{T, 2} = Array{T, 2}(undef, size(pssrb.potential, 1) - 2, 6)
         # Even though this causes some allocations it is faster than using a predefined array, e.g. stored in pssrb
@@ -27,12 +27,12 @@
         for iy in 2:2:(size(pssrb.potential, 2) - 1)
             iny::Int = iy - 1
 
-            pwwyr::T  = pssrb.geom_weights[2].weights[1, iny]
-            pwwyl::T  = pssrb.geom_weights[2].weights[2, iny]
-            pwΔmpy::T = pssrb.geom_weights[2].weights[3, iny] 
+            pwwyr::T  = pssrb.geom_weights[2][1, iny]
+            pwwyl::T  = pssrb.geom_weights[2][2, iny]
+            pwΔmpy::T = pssrb.geom_weights[2][3, iny] 
             pwΔmpy_pwΔmpz::T = pwΔmpy * pwΔmpz
-            Δy_ext_inv_r_pwΔmpz::T  = pssrb.geom_weights[2].weights[4, iny + 1] * pwΔmpz
-            Δy_ext_inv_l_pwΔmpz::T  = pssrb.geom_weights[2].weights[4, iny]     * pwΔmpz
+            Δy_ext_inv_r_pwΔmpz::T  = pssrb.geom_weights[2][4, iny + 1] * pwΔmpz
+            Δy_ext_inv_l_pwΔmpz::T  = pssrb.geom_weights[2][4, iny]     * pwΔmpz
             Δz_ext_inv_r_pwΔmpy::T = Δz_ext_inv_r * pwΔmpy
             Δz_ext_inv_l_pwΔmpy::T = Δz_ext_inv_l * pwΔmpy
 
@@ -57,12 +57,12 @@
         for iy in 3:2:(size(pssrb.potential, 2) - 1)
             iny::Int = iy - 1
 
-            pwwyr::T  = pssrb.geom_weights[2].weights[1, iny]
-            pwwyl::T  = pssrb.geom_weights[2].weights[2, iny]
-            pwΔmpy::T = pssrb.geom_weights[2].weights[3, iny] 
+            pwwyr::T  = pssrb.geom_weights[2][1, iny]
+            pwwyl::T  = pssrb.geom_weights[2][2, iny]
+            pwΔmpy::T = pssrb.geom_weights[2][3, iny] 
             pwΔmpy_pwΔmpz::T = pwΔmpy * pwΔmpz
-            Δy_ext_inv_r_pwΔmpz::T  = pssrb.geom_weights[2].weights[4, iny + 1] * pwΔmpz
-            Δy_ext_inv_l_pwΔmpz::T  = pssrb.geom_weights[2].weights[4, iny]     * pwΔmpz
+            Δy_ext_inv_r_pwΔmpz::T  = pssrb.geom_weights[2][4, iny + 1] * pwΔmpz
+            Δy_ext_inv_l_pwΔmpz::T  = pssrb.geom_weights[2][4, iny]     * pwΔmpz
             Δz_ext_inv_r_pwΔmpy::T = Δz_ext_inv_r * pwΔmpy
             Δz_ext_inv_l_pwΔmpy::T = Δz_ext_inv_l * pwΔmpy
 
@@ -87,7 +87,7 @@
     end 
 end
 
-function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian},
+function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian, 3, Array{T, 3}},
         iy, iny, iz, inz, 
         update_even_points, zyi_is_even_t::Val{zyi_is_even}, 
         pwwzr, pwwzl, pwwyr, pwwyl,
@@ -99,11 +99,11 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
     @fastmath @inbounds @simd ivdep for ix in 2:(size(pssrb.potential, 1) - 1)
         inx::Int = nidx(ix, update_even_points, zyi_is_even_t)::Int
 
-        pwwxr::T        = pssrb.geom_weights[1].weights[1, inx]
-        pwwxl::T        = pssrb.geom_weights[1].weights[2, inx]
-        pwΔmpx::T       = pssrb.geom_weights[1].weights[3, inx]
-        Δx_ext_inv_r::T = pssrb.geom_weights[1].weights[4, inx + 1]
-        Δx_ext_inv_l::T = pssrb.geom_weights[1].weights[4, inx]
+        pwwxr::T        = pssrb.geom_weights[1][1, inx]
+        pwwxl::T        = pssrb.geom_weights[1][2, inx]
+        pwΔmpx::T       = pssrb.geom_weights[1][3, inx]
+        Δx_ext_inv_r::T = pssrb.geom_weights[1][4, inx + 1]
+        Δx_ext_inv_l::T = pssrb.geom_weights[1][4, inx]
         
         pwwxr_pwwzr::T = pwwxr * pwwzr
         pwwxl_pwwzr::T = pwwxl * pwwzr
@@ -161,12 +161,6 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
         wzr *= Δz_ext_inv_r_pwΔmpy * pwΔmpx 
         wzl *= Δz_ext_inv_l_pwΔmpy * pwΔmpx 
 
-        # pssrb.weights_line[ix-1, 1, Base.Threads.threadid()] = wxr 
-        # pssrb.weights_line[ix-1, 2, Base.Threads.threadid()] = wxl 
-        # pssrb.weights_line[ix-1, 3, Base.Threads.threadid()] = wyr 
-        # pssrb.weights_line[ix-1, 4, Base.Threads.threadid()] = wyl 
-        # pssrb.weights_line[ix-1, 5, Base.Threads.threadid()] = wzr 
-        # pssrb.weights_line[ix-1, 6, Base.Threads.threadid()] = wzl 
         line_weights[ix-1, 1] = wxr 
         line_weights[ix-1, 2] = wxl 
         line_weights[ix-1, 3] = wyr 
@@ -178,7 +172,7 @@ end
 
 
 
-function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Cartesian},
+function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian, 3, Array{T, 3}},
         iy, iny, iz, inz, rb_tar_idx, rb_src_idx,
         update_even_points, zyi_is_even_t::Val{zyi_is_even}, 
         depletion_handling::Val{depletion_handling_enabled},
@@ -188,12 +182,6 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Car
     # for ix in 2:(size(pssrb.potential, 1) - 1)
         ixr::Int = get_rbidx_right_neighbour(ix, update_even_points, zyi_is_even_t)
 
-        # wxr = pssrb.weights_line[ix-1, 1, Base.Threads.threadid()]
-        # wxl = pssrb.weights_line[ix-1, 2, Base.Threads.threadid()]
-        # wyr = pssrb.weights_line[ix-1, 3, Base.Threads.threadid()]
-        # wyl = pssrb.weights_line[ix-1, 4, Base.Threads.threadid()]
-        # wzr = pssrb.weights_line[ix-1, 5, Base.Threads.threadid()]
-        # wzl = pssrb.weights_line[ix-1, 6, Base.Threads.threadid()]
         wxr = line_weights[ix-1, 1] 
         wxl = line_weights[ix-1, 2] 
         wyr = line_weights[ix-1, 3] 
@@ -208,7 +196,7 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Car
         vzr::T = pssrb.potential[     ix,     iy, iz + 1, rb_src_idx]
         vzl::T = pssrb.potential[     ix,     iy,    inz, rb_src_idx]
 
-        new_potential::T = _is_weighting_potential ? 0 : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
+        new_potential::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
         new_potential = muladd( wxr, vxr, new_potential)
         new_potential = muladd( wxl, vxl, new_potential)
         new_potential = muladd( wyr, vyr, new_potential)
@@ -230,8 +218,8 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, 3, 4, Car
             new_point_type = pssrb.point_types[ix, iy, iz, rb_tar_idx] 
             if new_potential < vmin || new_potential > vmax
                 new_potential -= pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] * pssrb.volume_weights[ix, iy, iz, rb_tar_idx] * pssrb.sor_const[1]
-                if (pssrb.point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0) 
-                    # pssrb.point_types[ix, iy, iz, rb_tar_idx] += undepleted_bit 
+                if (pssrb.point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0 &&
+                    pssrb.point_types[ix, iy, iz, rb_tar_idx] & pn_junction_bit > 0) 
                     new_point_type += undepleted_bit
                 end # mark this point as undepleted
             elseif pssrb.point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0
