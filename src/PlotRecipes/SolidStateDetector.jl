@@ -19,7 +19,7 @@ end
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector; show_semiconductor = false)
+@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true)
 
     show_normal --> false
 
@@ -33,10 +33,12 @@ end
             c
         end
     end
-    if !ismissing(det.passives)
-        for p in det.passives
-            @series begin
-                p
+    if show_passives
+        if !ismissing(det.passives)
+            for p in det.passives
+                @series begin
+                    p
+                end
             end
         end
     end
