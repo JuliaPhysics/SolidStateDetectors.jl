@@ -25,6 +25,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
@@ -39,6 +40,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
@@ -57,6 +59,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
@@ -74,6 +77,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
@@ -88,6 +92,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
@@ -100,6 +105,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
@@ -114,6 +120,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end 
@@ -128,6 +135,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
@@ -140,6 +148,7 @@ end
         for i in 1:length(evt.waveforms)
             signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end

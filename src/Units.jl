@@ -11,17 +11,24 @@ const internal_time_unit    = u"s"
 const internal_voltage_unit = u"V"
 const internal_energy_unit  = u"eV"
 const internal_efield_unit  = internal_voltage_unit / internal_length_unit
+const internal_charge_unit  = u"C"
+const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
 to_internal_units(x::Quantity{<:Real, dimension(internal_time_unit)})    = ustrip(uconvert(internal_time_unit,    x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_voltage_unit)}) = ustrip(uconvert(internal_voltage_unit, x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})   = ustrip(uconvert(internal_efield_unit,  x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_energy_unit)})  = ustrip(uconvert(internal_energy_unit,  x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustrip(uconvert(internal_charge_unit,  x))
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_efield_unit)})  = uconvert(unit, x * internal_efield_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_energy_unit)})  = uconvert(unit, x * internal_energy_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_charge_unit)})  = uconvert(unit, x * internal_charge_unit)
 
+
+# Internal function for now: We should also fano noise here (optionally)
+_convert_internal_energy_to_external_charge(material) = inv(to_internal_units(material.E_ionisation)) * external_charge_unit
 
 unit_conversion = Dict{String, Unitful.Units}(
     "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length

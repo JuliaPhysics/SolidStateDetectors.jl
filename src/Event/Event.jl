@@ -319,9 +319,9 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
         dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
         add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S)
     end
-    
-    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * internal_energy_unit),
-            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h * internal_energy_unit))
+    unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
+    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * unitless_energy_to_charge),
+            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h * unitless_energy_to_charge))
 end
 
 export get_electron_and_hole_contribution
@@ -379,6 +379,7 @@ function plot_electron_and_hole_contribution end
     wf::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} = get_electron_and_hole_contribution(evt, sim, contact_id)
     
     unitformat --> :slash
+    yguide --> "Charge"
 
     @series begin
         linecolor := :red 

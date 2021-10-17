@@ -171,7 +171,7 @@ calculate_capacitance_matrix(sim)
 simulate!(evt, sim) # drift_charges + signal generation of all channels
 
 p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time", unitformat = :slash,
-                    legend = false, tickfontsize = 12, ylabel = "Energy", guidefontsize = 14)
+                    legend = false, tickfontsize = 12, ylabel = "Charge", guidefontsize = 14)
 #jl savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.svg"); nothing # hide
@@ -181,7 +181,7 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 
 contact_id = 1
 plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time",
-                    legend = :topleft, tickfontsize = 12, ylabel = "Energy", guidefontsize = 14)
+                    legend = :topleft, tickfontsize = 12, ylabel = "Charge", guidefontsize = 14)
 #jl savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.svg"); nothing # hide

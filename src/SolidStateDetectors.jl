@@ -27,6 +27,7 @@ using Rotations
 using StaticArrays
 using StatsBase
 using Unitful
+using UnitfulAtomic
 using UnitfulRecipes
 using YAML
 
