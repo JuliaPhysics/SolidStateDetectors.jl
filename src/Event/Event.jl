@@ -378,6 +378,8 @@ function plot_electron_and_hole_contribution end
     
     wf::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} = get_electron_and_hole_contribution(evt, sim, contact_id)
     
+    unitformat --> :slash
+
     @series begin
         linecolor := :red 
         linewidth --> linewidth
