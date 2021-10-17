@@ -154,6 +154,13 @@ plot(
 #md savefig("tutorial_weighting_potentials.svg"); nothing # hide
 #md # [![tutorial_weighting_potentials](tutorial_weighting_potentials.svg)](tutorial_weighting_potentials.pdf)
 
+# ## Detector Capacitance Matrix
+
+# After the weighting potentials are calculated, the detector capacitance matrix can be calculated in the **Maxwell Capacitance Matrix Notation**:
+
+calculate_capacitance_matrix(sim)
+
+# See [Capacitances](@ref) for more information.
 
 # ## Detector waveform generation
 
