@@ -33,12 +33,10 @@ end
             c
         end
     end
-    if show_passives
-        if !ismissing(det.passives)
-            for p in det.passives
-                @series begin
-                    p
-                end
+    if show_passives && !ismissing(det.passives)
+        for p in det.passives
+            @series begin
+                p
             end
         end
     end
