@@ -30,5 +30,8 @@ end
     seriescolor --> 1
     seriesalpha --> 0.5
     connections := m.connections
-    m.x, m.y, m.z
+    xguide --> "x"
+    yguide --> "y"
+    zguide --> "z"
+    m.x*internal_length_unit, m.y*internal_length_unit, m.z*internal_length_unit
 end
