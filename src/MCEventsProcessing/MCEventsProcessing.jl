@@ -110,7 +110,7 @@ function _generate_waveform( drift_paths::Vector{EHDriftPath{T}}, charges::Vecto
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))
     add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S)
-    RDWaveform( timestamps_with_units, signal )
+    RDWaveform( timestamps_with_units, signal * internal_energy_unit)
 end
 
 

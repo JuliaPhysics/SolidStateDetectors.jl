@@ -320,8 +320,8 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
         add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S)
     end
     
-    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e),
-            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h))
+    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * internal_energy_unit),
+            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h * internal_energy_unit))
 end
 
 export get_electron_and_hole_contribution

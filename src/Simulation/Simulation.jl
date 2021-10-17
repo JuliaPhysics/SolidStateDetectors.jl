@@ -1142,7 +1142,7 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
     add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS)
-    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal )
+    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * internal_energy_unit)
 end
 
 """
