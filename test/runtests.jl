@@ -23,7 +23,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -37,7 +37,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -55,7 +55,7 @@ end
         simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -72,7 +72,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -86,7 +86,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -98,7 +98,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -112,7 +112,7 @@ end
         simulate!(evt, sim)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -126,7 +126,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
@@ -138,7 +138,7 @@ end
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(evt.waveforms[i].value[end])
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
         end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
