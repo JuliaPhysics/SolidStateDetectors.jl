@@ -57,7 +57,6 @@ CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 @inline getindex(grid::CartesianGrid3D{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
 @inline getindex(grid::CartesianGrid3D{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
-export GridPoint
 @inline GridPoint(grid::Grid{T, 3, Cylindrical}, inds::NTuple{3, Int}) where {T} = 
     CylindricalPoint{T}(broadcast(i -> grid.axes[i].ticks[inds[i]], (1, 2, 3)))
 @inline GridPoint(grid::Grid{T, 3, Cartesian}, inds::NTuple{3, Int}) where {T} = 

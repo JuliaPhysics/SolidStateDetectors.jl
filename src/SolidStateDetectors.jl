@@ -59,7 +59,7 @@ import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broad
 export SolidStateDetector
 export SSD_examples
 
-export Grid
+export Grid, GridPoint
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
