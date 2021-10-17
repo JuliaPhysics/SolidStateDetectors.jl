@@ -9,7 +9,7 @@
         ls = lines(tm)
         linecolor --> :black
         @series begin
-            label --> "Ellipsoid Mantle"
+            label --> "Torus Mantle"
             ls[1]
         end
         for i in 2:length(ls)
