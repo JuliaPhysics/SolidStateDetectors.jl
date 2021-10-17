@@ -14,7 +14,7 @@ c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \
 The function returns the elements of the Maxwell capacitance matrix, $\mathbf{C}$,
 which fulfills
 ```math
-\vec{\mathbf{Q}} = \mathbf{Q} \cdot \vec{\mathbf{V}}
+\vec{\mathbf{Q}} = \mathbf{C} \cdot \vec{\mathbf{V}}
 ```
 
 The whole matrix can also be obtained via
