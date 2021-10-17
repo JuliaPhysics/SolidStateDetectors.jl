@@ -170,7 +170,7 @@ calculate_capacitance_matrix(sim)
 
 simulate!(evt, sim) # drift_charges + signal generation of all channels
 
-p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time", unitformat --> :slash,
+p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time", unitformat = :slash,
                     legend = false, tickfontsize = 12, ylabel = "Energy", guidefontsize = 14)
 #jl savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.pdf") # hide
