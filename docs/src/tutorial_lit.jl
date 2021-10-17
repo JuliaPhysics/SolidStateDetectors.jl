@@ -170,8 +170,8 @@ calculate_capacitance_matrix(sim)
 
 simulate!(evt, sim) # drift_charges + signal generation of all channels
 
-p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time / ns",
-                    legend = false, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
+p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Time", unitformat --> :slash,
+                    legend = false, tickfontsize = 12, ylabel = "Energy", guidefontsize = 14)
 #jl savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.pdf") # hide
 #md savefig("tutorial_waveforms.svg"); nothing # hide
@@ -180,8 +180,8 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 # SolidStateDetectors.jl also allows to separate the waveform into the two contributions from electrons and holes
 
 contact_id = 1
-plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time / ns",
-                    legend = :topleft, tickfontsize = 12, ylabel = "Energy / eV", guidefontsize = 14)
+plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time",
+                    legend = :topleft, tickfontsize = 12, ylabel = "Energy", guidefontsize = 14)
 #jl savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.svg"); nothing # hide
