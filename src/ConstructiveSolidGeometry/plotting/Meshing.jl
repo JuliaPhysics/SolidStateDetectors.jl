@@ -25,7 +25,7 @@ end
 
 @recipe function f(m::Mesh{T}) where {T}
     seriestype := :mesh3d
-    linewidth --> 0.1
+    linewidth --> 0.75
     linecolor --> :white
     seriescolor --> 1
     seriesalpha --> 0.5
