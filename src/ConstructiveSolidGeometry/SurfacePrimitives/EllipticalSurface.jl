@@ -61,6 +61,18 @@ function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector
     [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
 
+function mesh_edges(es::EllipticalSurface{T, T}, n_arc::Int64,n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    edges = n_vert_lines == 0 ? [] : [[1, i + 1] for i in Int.(floor.(range(1, n_arc+1, length = n_vert_lines+1)))]
+    append!(edges, [collect(2:n_arc+2)])
+end
+
+function mesh_edges(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64,n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    edges = n_vert_lines == 0 ? [] : [[i, i + n_arc + 1] for i in Int.(floor.(range(1, n_arc+1, length = n_vert_lines+1)))]
+    append!(edges, [collect(1:n_arc+1), collect(n_arc+2:2(n_arc+1))])
+end
+
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
 

@@ -10,12 +10,19 @@ end
     sc.geometry
 end
 
-@recipe function f(contact::Contact)
+@recipe function f(contact::Contact{T}) where {T}
     linecolor --> contact.id
     fillcolor --> contact.id
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
-    label --> l
+    @series begin
+        #add empty line so that label is shown with alpha = 1
+        seriestype := :path
+        label --> l
+        linewidth := 1
+        T[], T[]
+    end 
+    label := ""
     contact.geometry
 end
 
