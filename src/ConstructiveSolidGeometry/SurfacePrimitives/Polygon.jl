@@ -21,7 +21,9 @@ normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.p
 vertices(p::Polygon) = p.points
 vertices(p::Polygon, n::Int64) = vertices(p)
 connections(p::Polygon{N}) where {N} = [collect(1:N)]
-connections(p::Polygon, n::Int64) = connections(p)
+connections(p::Polygon, ::Int64) = connections(p)
+connections(p::Polygon{N}, ::Int64, ::Int64) where {N} = [[i%N+1, (i+1)%N+1] for i in 0:N-1]
+get_label_name(::Polygon) = "Polygon"
 
 extreme_points(p::Polygon) = p.points
 

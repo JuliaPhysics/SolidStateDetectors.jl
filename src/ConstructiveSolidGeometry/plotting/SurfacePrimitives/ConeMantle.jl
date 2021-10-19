@@ -2,7 +2,11 @@
     seriestype --> :mesh3d
     @series begin
         label --> "Cone Mantle"
-        mesh(cm, n_arc = n_arc, n_vert_lines = n_vert_lines)
+        if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d   
+            mesh(cm, n_arc)
+        else
+            mesh(cm, n_arc, n_vert_lines)
+        end    
     end
     if haskey(plotattributes, :show_normal) && plotattributes[:show_normal]
         @series begin

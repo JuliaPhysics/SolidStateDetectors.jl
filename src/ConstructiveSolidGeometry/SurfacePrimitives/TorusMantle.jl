@@ -64,6 +64,16 @@ function connections(tm::TorusMantle, n_arc::Int64)::Vector{Vector{Int64}}
     [[i+(n_arcφ+1)*j,i+1+(n_arcφ+1)*j,i+1+(n_arcφ+1)*(j+1),i+(n_arcφ+1)*(j+1)] for j in 0:n_arcθ-1 for i in 1:n_arcφ]
 end
 
+function connections(tm::TorusMantle{T}, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+    n_arcφ = _get_n_points_in_arc_φ(tm, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(tm, n_arc)
+    vcircs = [[i*(n_arcφ+1)+c, (i+1)*(n_arcφ+1)+c] for c in _get_vert_lines_range(tm,n_arcφ,n_vert_lines) for i in 0:n_arcθ-1]
+    hcircs =  [[i + c*(n_arcφ+1), i + c*(n_arcφ+1) + 1] for c in [0, Int(floor(n_arcθ/2)), n_arcθ] for i in 1:n_arcφ]
+    append!(vcircs, hcircs)
+end
+
+get_label_name(::TorusMantle) = "TorusMantle"
+
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
 
 function lines(tm::FullTorusMantle{T}) where {T} 

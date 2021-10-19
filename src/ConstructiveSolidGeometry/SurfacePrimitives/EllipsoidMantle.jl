@@ -95,6 +95,16 @@ function connections(em::EllipsoidMantle, n_arc::Int64)::Vector{Vector{Int64}}
     [[i+(n_arcφ+1)*j,i+1+(n_arcφ+1)*j,i+1+(n_arcφ+1)*(j+1),i+(n_arcφ+1)*(j+1)] for j in 0:n_arcθ-1 for i in 1:n_arcφ]
 end
 
+function connections(em::EllipsoidMantle, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} 
+    n_arcφ = _get_n_points_in_arc_φ(em, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(em, n_arc)
+    vcircs = [[i*(n_arcφ+1)+1+c, (i+1)*(n_arcφ+1)+1+c] for c in _get_vert_lines_range(em,n_arcφ,n_vert_lines) for i in 0:n_arcθ-1]
+    hcircs =  [[i + c*(n_arcφ+1), i + c*(n_arcφ+1) + 1] for c in [0, Int(floor(n_arcθ/2)), n_arcθ] for i in 1:n_arcφ]
+    append!(vcircs, hcircs)
+end
+
+get_label_name(::EllipsoidMantle) = "EllipsoidMantle"
+
 """
     intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}
 

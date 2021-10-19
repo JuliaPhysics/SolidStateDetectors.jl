@@ -75,11 +75,16 @@ function connections(cm::ConeMantle, n_arc::Int64)::Vector{Vector{Int64}}
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
     [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
-function mesh_edges(cm::ConeMantle, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} 
+
+function connections(cm::ConeMantle, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} 
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
-    edges = n_vert_lines == 0 ? [] : [[i, i + n_arc + 1] for i in Int.(floor.(range(1, n_arc+1, length = n_vert_lines+1)))]
-    append!(edges, [collect(1:n_arc+1), collect(n_arc+2:2(n_arc+1))])
+    verts = [[i, i + n_arc + 1] for i in _get_vert_lines_range(cm,n_arc,n_vert_lines)]
+    circ1 =  [[i, i + 1] for i in 1:n_arc]
+    circ2 =  [[i, i + 1] for i in n_arc+2:2*n_arc+1]
+    append!(verts, circ1, circ2)
 end
+
+get_label_name(::ConeMantle) = "Cone Mantle"
 
 const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
 const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Tuple{T,T},D}
