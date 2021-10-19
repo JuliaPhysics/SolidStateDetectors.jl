@@ -27,6 +27,8 @@ using Plots
 The backends supported by SolidStateDetectors.jl are `gr` and `pyplot`.
 By default, `gr` is loaded when importing `Plots`.
 
+For more information about the plot recipes of this package look up the [Plotting](@ref) section.
+
 This documentation was build with
 ```@example
 using Pkg, Plots # hide

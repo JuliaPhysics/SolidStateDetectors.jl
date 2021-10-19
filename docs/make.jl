@@ -39,6 +39,7 @@ makedocs(
             "Charge Drift" => "man/charge_drift.md",
             "Weighting Potentials" => "man/weighting_potentials.md",
             "IO" => "man/IO.md",
+            "Plotting" => "man/plotting.md",
         ],
         "Tutorial" => "tutorial.md",
         "API" => "api.md",
