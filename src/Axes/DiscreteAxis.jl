@@ -438,6 +438,11 @@ end
 multiplicity(g::DiscreteAxis{T, :infinite, :infinite, I}, ::Type{Cartesian}) where {T, I} = one(T)
 multiplicity(g::DiscreteAxis{T, :reflecting, :infinite, I}, ::Type{Cartesian}) where {T, I} = T(2)
 multiplicity(g::DiscreteAxis{T, :infinite, :reflecting, I}, ::Type{Cartesian}) where {T, I} = T(2)
+multiplicity(g::DiscreteAxis{T, :fixed, :fixed, I}, ::Type{Cartesian}) where {T, I} = one(T)
+multiplicity(g::DiscreteAxis{T, :fixed, :reflecting, I}, ::Type{Cartesian}) where {T, I} = T(2)
+multiplicity(g::DiscreteAxis{T, :reflecting, :fixed, I}, ::Type{Cartesian}) where {T, I} = T(2)
+multiplicity(g::DiscreteAxis{T, :fixed, :infinite, I}, ::Type{Cartesian}) where {T, I} = one(T)
+multiplicity(g::DiscreteAxis{T, :infinite, :fixed, I}, ::Type{Cartesian}) where {T, I} = one(T)
 
 function multiplicity(g::DiscreteAxis{T, :reflecting, :reflecting, I}, ::Type{Cartesian}) where {T, I} 
     @warn "Multiplicity of Cartesian axis, $(g) (:reflecting, :reflecting), would be infinite. It is set to 1 here." 

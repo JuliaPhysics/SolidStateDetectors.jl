@@ -4,6 +4,8 @@ using Test
 using SolidStateDetectors
 
 using Unitful
+using StaticArrays
+using Tables, TypedTables
 
 T = Float32
 
@@ -152,6 +154,51 @@ end
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
+end
+
+@testset "Diffusion and Self-Repulsion" begin
+    sim = Simulation(SSD_examples[:InvertedCoax])
+    simulate!(sim, convergence_limit = 1e-5, refinement_limits = [0.2, 0.1], verbose = false)
+
+    pos = CartesianPoint{T}(0.02,0,0.05); Edep = 1u"eV"
+    nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)
+
+    evt = Event(nbcc)
+    simulate!(evt, sim, self_repulsion = true, diffusion = true)
+    signalsum = T(0)
+    for i in 1:length(evt.waveforms)
+        signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+    end
+    signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+    @info signalsum
+    @test isapprox( signalsum, T(2), atol = 5e-3 )
+end
+
+@testset "Table Simulation" begin 
+    sim = Simulation(SSD_examples[:InvertedCoax])
+    simulate!(sim, convergence_limit = 1e-5, refinement_limits = [0.2, 0.1], verbose = false)
+
+    evt_table = Table(
+        evtno = Int32[1], 
+        detno = Int32[1],
+        thit = [T[0] * u"s"],
+        edep = [T[1] * u"eV"],
+        pos = [[SVector{3, T}.(0.01, 0.01, 0.01) * u"m"]]
+    )
+    contact_charge_signals = simulate_waveforms(      
+        evt_table,
+        sim,
+        max_nsteps = 4000, 
+        Δt = 1u"ns", 
+        number_of_carriers = 20,
+        number_of_shells = 2,
+        verbose = false);
+    signalsum = T(0)
+    for i in 1:length(contact_charge_signals.waveform)
+        signalsum += abs(ustrip(contact_charge_signals.waveform[i].value[end]))
+    end
+    signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+    @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
 
 @testset "ADLChargeDriftModel" begin

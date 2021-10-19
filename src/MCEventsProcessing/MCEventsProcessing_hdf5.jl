@@ -6,6 +6,8 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
                              max_nsteps::Int = 1000,
                              diffusion::Bool = false,
                              self_repulsion::Bool = false,
+                             number_of_carriers::Int = 1,
+                             number_of_shells::Int = 1,
                              verbose = false) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
@@ -20,7 +22,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
-        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
+        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose)
       
         HDF5.h5open(ofn, "w") do output
             LegendHDF5IO.writedata(output, "generated_waveforms", mcevents_sub)
