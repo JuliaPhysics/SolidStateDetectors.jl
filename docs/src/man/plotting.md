@@ -136,6 +136,6 @@ plot(evt.waveforms, unitformat = :slash, label = "Contact ".*string.((1:2)'), le
 The length of the waveforms is given by the length of the charge drift.
 By default, no baseline and no tail are added to the waveforms. However, this might be desired in waveforms plots.
 The waveforms can be extended by calling [`add_baseline_and_extend_tail`](@ref) on the waveforms:
-````@examples tutorial
+````@example tutorial
 plot(add_baseline_and_extend_tail.(evt.waveforms,0,400), linewidth = 8, linestyle = :dash, label = "", unitformat = :slash)
 ````
