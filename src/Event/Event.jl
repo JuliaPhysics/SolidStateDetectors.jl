@@ -87,15 +87,21 @@ in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.loc
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, flatview(evt.locations))
 
 function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2))::Event{T} where {T <: SSDFloat}
-    
-    for n in eachindex(evt.locations)
-        idx_in = broadcast( pt -> pt in det.semiconductor, evt.locations[n]);
+    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction)
+    evt
+end
+
+function move_charges_inside_semiconductor!(
+        locations::AbstractVector{<:AbstractVector{CartesianPoint{T}}}, energies::AbstractVector{<:AbstractVector{T}},
+        det::SolidStateDetector{T}; fraction::T = T(0.2)) where {T <: SSDFloat}
+    for n in eachindex(locations)
+        idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
-            charge_center = sum(evt.locations[n] .* evt.energies[n]) / sum(evt.energies[n])
+            charge_center = sum(locations[n] .* energies[n]) / sum(energies[n])
             @assert charge_center in det.semiconductor "The center of the charge cloud ($(charge_center)) is not inside the semiconductor."
             surf = ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)
             for (k,m) in enumerate(findall(.!idx_in))
-                l = evt.locations[n][m]
+                l = locations[n][m]
                 line = ConstructiveSolidGeometry.Line(charge_center, CartesianVector{T}(l - charge_center))
                 for s in surf
                     int = ConstructiveSolidGeometry.intersection(s, line)
@@ -103,18 +109,19 @@ function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetect
                         proj::T = (i - charge_center) ⋅ (l - charge_center) / sum((l - charge_center).^2)
                         if 0 ≤ proj ≤ 1
                             if i in det.semiconductor
-                                evt.locations[n][m] = (1 - fraction * proj) * i + fraction * proj * charge_center
+                                locations[n][m] = (1 - fraction * proj) * i + fraction * proj * charge_center
                             end
                         end
                     end
                 end
             end
-            charge_center_new = sum(evt.locations[n] .* evt.energies[n]) / sum(evt.energies[n])
+            charge_center_new = sum(locations[n] .* energies[n]) / sum(energies[n])
             @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
             " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
         end
     end
-    evt
+    @info "_"
+    nothing
 end
 
 """
