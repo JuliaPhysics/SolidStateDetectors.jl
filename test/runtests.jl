@@ -164,7 +164,7 @@ end
     nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)
 
     evt = Event(nbcc)
-    simulate!(evt, sim, self_repulsion = true)
+    simulate!(evt, sim, self_repulsion = true, diffusion = true)
     signalsum = T(0)
     for i in 1:length(evt.waveforms)
         signalsum += abs(ustrip(evt.waveforms[i].value[end]))
