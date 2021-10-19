@@ -120,7 +120,6 @@ function move_charges_inside_semiconductor!(
             " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
         end
     end
-    @info "_"
     nothing
 end
 
