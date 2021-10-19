@@ -28,7 +28,7 @@
         label --> get_label_name(s)
         seriescolor --> :black
         fillalpha := 1
-        linewidth --> 1
+        linewidth --> 2
         mesh(s, n_arc, n_vert_lines)
     end    
 end
