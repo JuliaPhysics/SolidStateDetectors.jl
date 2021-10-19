@@ -32,6 +32,9 @@ Pages = ["man/weighting_potentials.md"]
 ```@contents
 Pages = ["man/IO.md"]
 ```
+```@contents
+Plotting = ["man/plotting.md"]
+```
 
 ## Citing SolidStateDetectors.jl
 

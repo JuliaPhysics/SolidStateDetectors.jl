@@ -1,5 +1,9 @@
 # Plotting
 
-## 3D Plotting
+## Detector Plots
 
-## 2D Plotting
+## Scalar Potential Plots
+
+## Drift Plots
+
+## Waveform Plots
