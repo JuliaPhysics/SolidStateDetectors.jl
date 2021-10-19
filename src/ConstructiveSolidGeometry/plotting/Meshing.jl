@@ -33,5 +33,6 @@ end
     xguide --> "x"
     yguide --> "y"
     zguide --> "z"
+    unitformat --> :slash
     m.x*internal_length_unit, m.y*internal_length_unit, m.z*internal_length_unit
 end
