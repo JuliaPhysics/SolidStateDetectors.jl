@@ -35,13 +35,15 @@ plot(det, size = (500, 500))
 ````
 
 ### Optional keywords:
-* `seriestype`: Can be `:mesh3d` (default).
-* `linewidth`: Sets the line width of the edges of the mesh.
-* `linecolor`: Sets the line color of all edges of the mesh.
-* `fillcolor`: Sets the face color of all faces.
+* `seriestype`: Can be `:ssd` (default), `:wireframe`, or `:mesh`. `:ssd` plots a wireframe on top of a mesh (with no mesh gridlines). For fastest plotting use either `:wireframe` or `:mesh` and consider changing `n_arc` (see bellow).
+* `linewidth`: Sets the line width of the edges of the mesh gridlines when using `seriestype = :mesh`. When using `seriestype = :mesh` or `seriestype = :wireframe`, `linewidth` sets the line width of the wireframe.
+* `linecolor`: Sets the line color of the edges of the mesh gridlines when using `seriestype = :mesh`. When using `seriestype = :ssd` or `seriestype = :wireframe`, `linecolor` sets the line color of the wireframe.
+* `fillcolor`: Sets the face color of all faces of the mesh.
 * `fillalpha`: Sets the alpha value of all faces of the mesh.
 * `show_semiconductor`: Whether also the primitives of the semiconductor should be plotted. Default is `false`.
 * `show_passives`: Whether also the primitives of the surrounding objects of the detector should be plotted. Default is `true`.
+* `n_arc`: Controls the discretization of curved objects. Each full ellipsoid is divided into `n_arc` segments. `n_arc = 40` is the default value. Smaller `n_arc` values will result in faster plotting. 
+* `n_vert_lines`: Controls the number of wireframe "vertical" lines. `n_vert_lines = 2` is the default value. A maximum of `n_arc` vertical lines can be drawn. 
 
 #### How does the plot recipe work?
 
@@ -54,12 +56,12 @@ If one wants more control over the plot one can plot the individual components, 
 ````@example tutorial
 plot( det.contacts[1], fillcolor = :red, fillalpha = 1, linecolor = :black, 
       camera = (10, 20), size = (500, 500))
-plot!(det.contacts[2], fillcolor = :green, fillalpha = 0.25, linecolor = :white)
+plot!(det.contacts[2], seriestype = :mesh, fillcolor = :green, fillalpha = 0.25, linecolor = :white)
 ````
 
 !!! note
     So far, everything is plotted by plotting the individual primitives. Thus, usually, nicer plots are produced
-    if the geometry consists only of unions of primitives and not differences or intersections.
+    if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thiner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
 
 
 ## Scalar Potential Plots
