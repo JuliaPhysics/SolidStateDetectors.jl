@@ -17,7 +17,7 @@
         end 
         @series begin 
             linewidth := 0
-            linecolor --> :black
+            linecolor --> :white
             mesh(s, n_arc)
         end
     elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] in [:mesh3d, :mesh]
