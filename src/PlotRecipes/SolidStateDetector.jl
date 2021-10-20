@@ -1,6 +1,7 @@
 @recipe function f(p::Passive{T}) where {T}
     seriestype --> :ssd
     linecolor --> :grey
+    fillcolor --> :grey
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
