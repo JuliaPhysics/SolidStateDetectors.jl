@@ -2,11 +2,21 @@
 
 In order to plot geometries or simulation results, the user will need to load the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
-````@example tutorial
+First, we have to calculate something in order to demonstrate the plotting tools:
+````@setup tutorial
 using Plots
 using SolidStateDetectors
 using Unitful
 gr(fmt = :png) #hide
+
+T = Float32
+sim = Simulation{T}(SSD_examples[:InvertedCoax]);
+simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01]);
+````
+````julia
+using Plots
+using SolidStateDetectors
+using Unitful
 
 T = Float32
 sim = Simulation{T}(SSD_examples[:InvertedCoax]);
@@ -42,13 +52,14 @@ and the color of the contact primitives is defined internally through their `id`
 
 If one wants more control over the plot one can plot the individual components, e.g.
 ````@example tutorial
-plot(det.contacts[1], fillcolor = :red, fillalpha = 1, linecolor = :black, camera = (10, 20), size = (500, 500))
+plot( det.contacts[1], fillcolor = :red, fillalpha = 1, linecolor = :black, 
+      camera = (10, 20), size = (500, 500))
 plot!(det.contacts[2], fillcolor = :green, fillalpha = 0.25, linecolor = :white)
 ````
 
 !!! note
     So far, everything is plotted by plotting the individual primitives. Thus, usually, nicer plots are produced
-    if the geometry consists only of union of primitives and not differences or intersections.
+    if the geometry consists only of unions of primitives and not differences or intersections.
 
 
 ## Scalar Potential Plots
@@ -71,7 +82,9 @@ In addition to all plot attributes that are implemented in [Plots.jl](https://gi
 * `full_det`: By default, cross sections in `φ` are only displayed for positive radii `r`. If `full_det` is set to `true`, cross sections in `φ` are also extended to "negative" `r`, by additionally plotting the potential values at `φ + 180°` on the left side of the plot.
 
 ````@example tutorial
-plot(sim.electric_potential, φ = 30u"°", contours_equal_potential = true, full_det = true, linecolor = :white, levels = 34)
+plot( sim.electric_potential, φ = 30u"°", 
+      contours_equal_potential = true, full_det = true, 
+      linecolor = :white, levels = 34)
 ````
 
 
@@ -138,5 +151,7 @@ The waveforms can be extended by calling [`add_baseline_and_extend_tail`](@ref) 
 Again, the units of the axes can be set by calling a `plot` command with units before plotting the waveforms.
 ````@example tutorial
 plot(u"µs", u"fC")
-plot!(add_baseline_and_extend_tail.(evt.waveforms,0,400), linewidth = 8, linestyle = :dash, label = "", unitformat = :slash)
+plot!(add_baseline_and_extend_tail.(evt.waveforms,0,400), 
+      linewidth = 4, linestyle = :dash, 
+      label = "", unitformat = :slash)
 ````
