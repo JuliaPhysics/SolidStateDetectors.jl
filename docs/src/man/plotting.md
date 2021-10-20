@@ -2,7 +2,18 @@
 
 In order to plot geometries or simulation results, the user will need to load the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
-````@example tutorial
+First, we have to calculate something in order to demonstrate the plotting tools:
+````@setup tutorial
+using Plots
+using SolidStateDetectors
+using Unitful
+gr(fmt = :png) #hide
+
+T = Float32
+sim = Simulation{T}(SSD_examples[:InvertedCoax]);
+simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01]);
+````
+````julia
 using Plots
 using SolidStateDetectors
 using Unitful
@@ -12,7 +23,7 @@ sim = Simulation{T}(SSD_examples[:InvertedCoax]);
 simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01]);
 ````
 
-Besides the usual [Plots.jl](https://github.com/JuliaPlots/Plots.jl) keywords settings, like `size = (900, 900)`,
+Besides the usual [Plots.jl](https://github.com/JuliaPlots/Plots.jl) keywords settings, like `size = (500, 500)`,
 there are some additional settings to tune the plots which are described in the following sections.
 
 ## Detector Plots
@@ -20,7 +31,7 @@ there are some additional settings to tune the plots which are described in the 
 The geometry of a detector, together with its environment, can be simply plotted via
 ````@example tutorial
 det = sim.detector
-plot(det, size = (900,900))
+plot(det, size = (500, 500))
 ````
 
 ### Optional keywords:
@@ -41,13 +52,14 @@ and the color of the contact primitives is defined internally through their `id`
 
 If one wants more control over the plot one can plot the individual components, e.g.
 ````@example tutorial
-plot(det.contacts[1], fillcolor = :red, fillalpha = 1, linecolor = :black, camera = (10, 20), size = (900,900))
+plot( det.contacts[1], fillcolor = :red, fillalpha = 1, linecolor = :black, 
+      camera = (10, 20), size = (500, 500))
 plot!(det.contacts[2], fillcolor = :green, fillalpha = 0.25, linecolor = :white)
 ````
 
 !!! note
     So far, everything is plotted by plotting the individual primitives. Thus, usually, nicer plots are produced
-    if the geometry consists only of union of primitives and not differences or intersections.
+    if the geometry consists only of unions of primitives and not differences or intersections.
 
 
 ## Scalar Potential Plots
@@ -66,12 +78,13 @@ plot(sim.electric_potential, z = 20u"mm")
 ````
 
 In addition to all plot attributes that are implemented in [Plots.jl](https://github.com/JuliaPlots/Plots.jl), plots of scalar potentials can take two additional keyword arguments, `contours_equal_potential` and `full_det`, which both are of type `Bool`:
-* `contours_equal_potential`: If this set to `true`, the plot will additionally display contour lines at points with equal potential value. 
+* `contours_equal_potential`: If this set to `true`, the plot will additionally display contour lines at points with equal potential value.
 * `full_det`: By default, cross sections in `φ` are only displayed for positive radii `r`. If `full_det` is set to `true`, cross sections in `φ` are also extended to "negative" `r`, by additionally plotting the potential values at `φ + 180°` on the left side of the plot.
 
-
 ````@example tutorial
-plot(sim.electric_potential, φ = 30u"°", contours_equal_potential = true, full_det = true)
+plot( sim.electric_potential, φ = 30u"°", 
+      contours_equal_potential = true, full_det = true, 
+      linecolor = :white, levels = 34)
 ````
 
 
@@ -80,7 +93,7 @@ plot(sim.electric_potential, φ = 30u"°", contours_equal_potential = true, full
 The magnitude of the electric field can be plotted using the same syntax as [Scalar Potential Plots](@ref).
 
 ````@example tutorial
-plot(sim.electric_field, full_det = true)
+plot(sim.electric_field, full_det = true, clims = (0, 5e5))
 ````
 
 In addition, SolidStateDetectors.jl offers the possibilities to plot electric field lines via `plot_electric_fieldlines`.
@@ -96,18 +109,15 @@ the syntax for specifying the cross section and `full_det` (see [Scalar Potentia
 the plot recipe for electric field lines can additionally understand the following arguments to tune the plot.
 * `sampling`: Specifies the steps at which the contacts are sampled to generate equally spaced charges at the surface. The default is `2u"mm"`, but the optimal value depends on the geometry of the detector and contacts. If no unit is given, `sampling` is interpreted in units of meter.
 * `offset`: The charges are created on the surface and have to be moved slightly inside the semiconductor to be able to drift (charges that are in the contacts will not drift). This keyword defines how much the charges will be moved inside along the normal vector of the surface. The default is `0.5u"mm"`, but the optimal value again depends on the detector geometry. Unitless quantities are interpreted in units of meter.
-* `spacing`: Fine sampling can cause the plot two be too cluttered. The `spacing` keyword allows to skip some field lines. The default is `1`, which means that every line is plotted. If only every second line is to be plotted, set `spacing = 2`, etc.
 * `skip_contact`: Detectors will usually have positively and negatively biased contacts. The charges should only be spawned on either of them, but not both. This keyword defines which contact should be skipped in the charge spawn algorithm. Default is `1`, i.e. that no charges will be spawned at the surface of contact with `id = 1`.
 * `max_nsteps`: After all, the generation of electric field lines is based on the charge drift code, which requires a maximum number of steps, which is set to `5000` by default here. If the drift ends before the charges reach a contact, the electric field line will not be fully displayed. In this case, it is recommended to increase `max_nsteps`.
 
 
 
-The electric field can be plotted using the . The electric field strength is plotted using `plot(sim.electric_field)`, whereas the electric field lines can be plotted on top of that using  `plot_electric_fieldlines!(sim)`.
-
-Minimum working example:
+In case the electric field line plots do not look good, adjust `sampling`, `offset` and `max_nsteps` until obtaining the desired result.
 ````@example tutorial
-plot(sim.electric_field, full_det = true)
-plot_electric_fieldlines!(sim, full_det = true)
+plot(sim.electric_field, full_det = true, size = (500,500), clims = (0,5e5))
+plot_electric_fieldlines!(sim, full_det = true, sampling = 3u"mm", offset = 2u"mm")
 ````
 
 ## Event Plots
@@ -116,15 +126,17 @@ SolidStateDetectors.jl also provides plot recipes to display charge drift paths 
 in the semiconductor body of the detector. To simulate and plot an individual event, the `Event` struct is recommended.
 
 ````@example tutorial
-evt = Event([CartesianPoint{T}(0.01,0.01,0.075)])
+evt = Event([CartesianPoint{T}(0.01,0.01,0.075)], [2u"MeV"])
 simulate!(evt, sim)
 plot(sim.detector, size = (500,500), label = "")
 plot!(evt.drift_paths)
 ````
 
-The drift path plots can be modified using the keywords implemented in [Plots.jl](https://github.com/JuliaPlots/Plots.jl):
+The drift path plots can be modified using the keywords implemented in [Plots.jl](https://github.com/JuliaPlots/Plots.jl).
+The units of the axes can be set by calling a `plot` command with units beforehand:
 ````@example tutorial
-plot(sim.detector, size = (500,500), label = "")
+plot(u"mm", u"mm", u"mm")
+plot!(sim.detector, size = (500,500), label = "")
 plot!(evt.drift_paths, linewidth = 2, linestyle = :dash, markersize = 6)
 ````
 
@@ -135,7 +147,11 @@ plot(evt.waveforms, unitformat = :slash, label = "Contact ".*string.((1:2)'), le
 
 The length of the waveforms is given by the length of the charge drift.
 By default, no baseline and no tail are added to the waveforms. However, this might be desired in waveforms plots.
-The waveforms can be extended by calling [`add_baseline_and_extend_tail`](@ref) on the waveforms:
+The waveforms can be extended by calling [`add_baseline_and_extend_tail`](@ref) on the waveforms.
+Again, the units of the axes can be set by calling a `plot` command with units before plotting the waveforms.
 ````@example tutorial
-plot(add_baseline_and_extend_tail.(evt.waveforms,0,400), linewidth = 8, linestyle = :dash, label = "", unitformat = :slash)
+plot(u"µs", u"fC")
+plot!(add_baseline_and_extend_tail.(evt.waveforms,0,400), 
+      linewidth = 4, linestyle = :dash, 
+      label = "", unitformat = :slash)
 ````

@@ -119,7 +119,7 @@ end
         dim_number = findfirst(x -> !ismissing(x), dim_array)
         dim_symbol = dim_symbols_array[dim_number]
         vtmp = dim_array[dim_number]
-        units = vtmp isa Real ? (dim_symbol == :φ ? internal_angle_unit : internal_length_unit) : unit(vtmp)
+        units = vtmp isa Real ? (dim_symbol == :φ ? u"°" : internal_length_unit) : unit(vtmp)
         v = T(to_internal_units(dim_symbol == :φ && φ isa Real ? deg2rad(vtmp) : vtmp))
     else
         throw(ArgumentError("Only one keyword for a certain dimension is allowed. Please choose one of "*

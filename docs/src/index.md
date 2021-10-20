@@ -33,7 +33,7 @@ Pages = ["man/capacitances.md"]
 Pages = ["man/IO.md"]
 ```
 ```@contents
-Plotting = ["man/plotting.md"]
+Pages = ["man/plotting.md"]
 ```
 
 ## Citing SolidStateDetectors.jl
