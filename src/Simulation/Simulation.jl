@@ -22,8 +22,6 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `electric_potential::Union{ElectricPotential{T}, Missing}`: The [`ElectricPotential`](@ref) of the simulation.
 * `weighting_potentials::Vector{Any}`: The [`WeightingPotential`](@ref) for each [`Contact`](@ref) of the `detector` in the simulation.
 * `electric_field::Union{ElectricField{T}, Missing}`: The [`ElectricField`](@ref) of the simulation.
-* `electron_drift_field::Union{ElectricField{T}, Missing}`: The electron drift field of the simulation.
-* `hole_drift_field::Union{ElectricField{T}, Missing}`: The hole drift field of the simulation.
 """
 mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
     config_dict::Dict
@@ -38,8 +36,6 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     electric_potential::Union{ElectricPotential{T}, Missing}
     weighting_potentials::Vector{Any}
     electric_field::Union{ElectricField{T}, Missing}
-    electron_drift_field::Union{ElectricField{T}, Missing}
-    hole_drift_field::Union{ElectricField{T}, Missing}
 end
 
 function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -55,8 +51,6 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         missing,
         missing,
         [missing],
-        missing,
-        missing,
         missing
     )
 end
@@ -74,8 +68,6 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         ϵ_r = NamedTuple(sim.ϵ_r),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
-        electron_drift_field = NamedTuple(sim.electron_drift_field),
-        hole_drift_field = NamedTuple(sim.hole_drift_field),
         weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(sim.weighting_potentials))
     )
     return nt
@@ -100,8 +92,6 @@ function Simulation(nt::NamedTuple)
     else
         [missing for contact in sim.detector.contacts]
     end
-    sim.electron_drift_field = haskey(nt, :electron_drift_field) && nt.electron_drift_field !== missing_tuple ? ElectricField(nt.electron_drift_field) : missing
-    sim.hole_drift_field = haskey(nt, :hole_drift_field) && nt.hole_drift_field !== missing_tuple ? ElectricField(nt.hole_drift_field) : missing
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -126,8 +116,6 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
         print("    Contact $(contact.id): ")
         println(!ismissing(sim.weighting_potentials[contact.id]) ? size(sim.weighting_potentials[contact.id]) : missing)
     end
-    println("  Electron drift field: ", !ismissing(sim.electron_drift_field) ? size(sim.electron_drift_field) : missing)
-    println("  Hole drift field: ", !ismissing(sim.hole_drift_field) ? size(sim.hole_drift_field) : missing)
 end
 
 function print(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
@@ -444,13 +432,15 @@ apply_initial_state!(sim, ElectricPotential, paint_contacts = false)
 """
 function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat, CS}
-    pssrb = PotentialSimulationSetupRB(sim.detector, grid, sim.medium; 
-            use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
-            not_only_paint_contacts, paint_contacts);
+    pssrb = PotentialSimulationSetupRB(
+                sim.detector, grid, sim.medium; 
+                use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
+                not_only_paint_contacts, paint_contacts
+    );
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
-    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), grid)
+    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(grid))
     sim.point_types = PointTypes(PointTypeArray(pssrb), grid)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
     nothing
@@ -481,10 +471,8 @@ apply_initial_state!(sim, WeightingPotential, 1) # =>  applies initial state for
 """
 function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat}
-    pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim)} =
-        PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
+    pssrb = PotentialSimulationSetupRB(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
             not_only_paint_contacts, paint_contacts, point_types = depletion_handling ? sim.point_types : missing);
-
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), grid)
     nothing
 end
@@ -537,6 +525,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
+                                   device_array_type::Type{<:AbstractArray} = Array,
                                    sor_consts::Union{Missing, T, NTuple{2, T}} = missing,
                                    verbose::Bool = true
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -547,12 +536,15 @@ function update_till_convergence!( sim::Simulation{T,CS},
     elseif length(sor_consts) > 1 && CS == Cartesian
         sor_consts = T(sor_consts[1])
     end
-    only_2d::Bool = length(sim.electric_potential.grid.axes[2]) == 1
+    only_2d = length(sim.electric_potential.grid.axes[2]) == 1
 
-    pssrb = PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
+    pssrb = adapt(device_array_type, PotentialSimulationSetupRB(
+        sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
-        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
-    cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
+        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
+    ))
+    
+    cf::T = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{false}(),
@@ -561,10 +553,12 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
-    grid::Grid = Grid(pssrb)
+    pssrb = adapt(Array, pssrb)
+
+    grid = Grid(pssrb)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
-    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), grid)
+    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(grid))
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
     sim.point_types = PointTypes(PointTypeArray(pssrb), grid)
 
@@ -586,7 +580,8 @@ function update_till_convergence!( sim::Simulation{T,CS},
         end
         if update_again
             pssrb.sor_const[:] .= T(1)
-            cf = _update_till_convergence!( pssrb, T(convergence_limit);
+            pssrb = adapt(device_array_type, pssrb)
+            cf = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
                                             only2d = Val{only_2d}(),
                                             depletion_handling = Val{depletion_handling}(),
                                             is_weighting_potential = Val{false}(),
@@ -594,6 +589,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                             n_iterations_between_checks = n_iterations_between_checks,
                                             max_n_iterations = max_n_iterations,
                                             verbose = verbose )
+            pssrb = adapt(Array, pssrb)
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
         end
     end
@@ -652,6 +648,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
                                    use_nthreads::Int = Base.Threads.nthreads(),
+                                   device_array_type::Type{<:AbstractArray} = Array,
                                    sor_consts::Union{Missing, T, NTuple{2, T}} = missing,
                                    verbose::Bool = true
                                     )::T where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -664,12 +661,12 @@ function update_till_convergence!( sim::Simulation{T, CS},
     end
 
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    pssrb = PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
+    pssrb = adapt(device_array_type, PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
-                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing)
+                not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing));
 
-    cf::T = _update_till_convergence!( pssrb, T(convergence_limit);
+    cf::T = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{true}(),
@@ -678,6 +675,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
+    pssrb = adapt(Array, pssrb)
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), sim.weighting_potentials[contact_id].grid)
 
     cf
@@ -715,13 +713,12 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
-        pssrb::PotentialSimulationSetupRB{T, 3, 4, get_coordinate_system(sim.electric_potential.grid)} =
-            PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
+        pssrb = PotentialSimulationSetupRB(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
                                         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), sim.electric_potential.grid)
-        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), sim.electric_potential.grid)
+        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(sim.electric_potential.grid))
         sim.point_types = PointTypes(PointTypeArray(pssrb), sim.electric_potential.grid)
     end
     nothing
@@ -775,9 +772,11 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         not_only_paint_contacts::Bool = true, 
         paint_contacts::Bool = true,
         verbose::Bool = true,
+        device_array_type::Type{<:AbstractArray} = Array,
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
     begin # preperations
+        onCPU = !(device_array_type <: GPUArrays.AnyGPUArray)
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
@@ -860,10 +859,11 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 if isEP "Bias voltage: $(bias_voltage) V\n" else "" end,
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
-                "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n",
-                "Max. Threads: $(maximum(max_nthreads))\n",
+                "Device: $(onCPU ? "CPU" : "GPU")\n",
+                onCPU && "Max. CPU Threads: $(maximum(max_nthreads))\n",
                 "Coordinate system: $(CS)\n",
                 "N Refinements: -> $(n_refinement_steps)\n",
+                onCPU ? "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n" : "No convergence check (not yet supported by GPU backend)\n",
                 "Initial grid size: $(size(grid))\n",
             )
         end
@@ -874,6 +874,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                   n_iterations_between_checks = n_iterations_between_checks,
                                   max_n_iterations = max_n_iterations,
                                   depletion_handling = depletion_handling,
+                                  device_array_type = device_array_type,
                                   use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
                                   sor_consts = sor_consts )
     else
@@ -882,6 +883,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
                                     depletion_handling = depletion_handling,
+                                    device_array_type = device_array_type,
                                     use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
                                     sor_consts = sor_consts )
     end
@@ -894,12 +896,13 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 max_diffs = abs.(ref_limits .* bias_voltage)
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
-                verbose && println("Grid size: $(size(sim.electric_potential.data)) - using $(nt) threads now:") 
+                verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
                                                 use_nthreads = nt,
+                                                device_array_type = device_array_type,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
@@ -907,12 +910,13 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
-                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - using $(nt) threads now:")
+                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
                                                 depletion_handling = depletion_handling,
                                                 use_nthreads = nt,
+                                                device_array_type = device_array_type,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = sor_consts )
@@ -939,6 +943,9 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             end
         end
     end
+    
+    if isEP mark_bulk_bits!(sim.point_types.data) end
+    
     nothing
 end
 
@@ -1115,43 +1122,18 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
     nothing
 end
 
-"""
-    calculate_drift_fields!(sim::Simulation{T}; use_nthreads::Int = Base.Threads.nthreads())
-
-Calculates the drift fields for electrons and holes from the [`ElectricField`](@ref),
-`sim.electric_field` and the charge drift model `sim.detector.semiconductor.charge_drift_model`
-and stores them in `sim.electron_drift_field` and `sim.hole_drift_field`.
-    
-## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_field` has already been calculated.
-
-## Keywords 
-* `use_nthreads::Int = Base.Threads.nthreads()`: Number of threads that should be used when calculating the drift fields.
-
-## Examples 
-    calculate_drift_fields!(sim, use_nthreads = 4)
-    
-!!! note 
-    This method only works if `sim.electric_field` has already been calculated and is not `missing`.
-"""
 function calculate_drift_fields!(sim::Simulation{T};
     use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
-    @assert !ismissing(sim.electric_field) "Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."
-    sim.electron_drift_field = ElectricField(get_electron_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
-    sim.hole_drift_field = ElectricField(get_hole_drift_field(sim.electric_field.data, sim.detector.semiconductor.charge_drift_model, use_nthreads = use_nthreads), sim.electric_field.grid)
+    @warn "Since v0.7.0, drift fields do not need to be calculated anymore.\n`calculate_drift_fields!(sim)` can be removed."
     nothing
 end
 @deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
 
-function get_interpolated_drift_field(ef::ElectricField)
-    get_interpolated_drift_field(ef.data, ef.grid)
-end
-
-function drift_charges( sim::Simulation{T}, starting_positions::Vector{CartesianPoint{T}};
-                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
-    return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions,
-                             get_interpolated_drift_field(sim.electron_drift_field), get_interpolated_drift_field(sim.hole_drift_field),
-                             Δt, max_nsteps = max_nsteps, verbose = verbose)::Vector{EHDriftPath{T}}
+function drift_charges( sim::Simulation{T}, starting_positions::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T};
+                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
+    return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions, energies, 
+                             interpolated_vectorfield(sim.electric_field), Δt, 
+                             max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
 end
 
 function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
@@ -1160,7 +1142,8 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
     add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS)
-    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal )
+    unitless_energy_to_charge = unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
+    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * unitless_energy_to_charge)
 end
 
 """
@@ -1171,11 +1154,9 @@ Performs a full chain simulation for a given [`Simulation`](@ref) by
     
 1. calculating the [`ElectricPotential`](@ref),
 2. calculating the [`ElectricField`](@ref),
-3. calculating the electron and hole drift fields and
-4. calculating the [`WeightingPotential`](@ref) for each [`Contact`](@ref).
+3. calculating the [`WeightingPotential`](@ref) for each [`Contact`](@ref).
 
-The output is stored in `sim.electric_potential`, `sim.electric_field`, `sim.electron_drift_field`, `sim.hole_drift_field`
-and `sim.weighting_potentials`, respectively.
+The output is stored in `sim.electric_potential`, `sim.electric_field` and `sim.weighting_potentials`, respectively.
 
 There are several keyword arguments which can be used to tune the simulation.
 
@@ -1220,8 +1201,7 @@ There are several keyword arguments which can be used to tune the simulation.
 * `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
 
-See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref),
-[`calculate_drift_fields!`](@ref) and [`calculate_weighting_potential!`](@ref).
+See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref) and [`calculate_weighting_potential!`](@ref).
 
 ## Example 
 ```julia 
@@ -1238,6 +1218,7 @@ function simulate!( sim::Simulation{T, S};
                     use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
                     sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
                     max_n_iterations::Int = -1,
+                    device_array_type::Type{<:AbstractArray} = Array,
                     not_only_paint_contacts::Bool = true, 
                     paint_contacts::Bool = true,
                     verbose::Bool = false) where {T <: SSDFloat, S}
@@ -1251,6 +1232,7 @@ function simulate!( sim::Simulation{T, S};
                                     use_nthreads = use_nthreads,
                                     sor_consts = sor_consts,
                                     max_n_iterations = max_n_iterations,
+                                    device_array_type = device_array_type,
                                     not_only_paint_contacts = not_only_paint_contacts,
                                     paint_contacts = paint_contacts,
                                     verbose = verbose
@@ -1266,14 +1248,15 @@ function simulate!( sim::Simulation{T, S};
                     use_nthreads = use_nthreads,
                     sor_consts = sor_consts,
                     max_n_iterations = max_n_iterations,
+                    device_array_type = device_array_type,
                     not_only_paint_contacts = not_only_paint_contacts,
                     paint_contacts = paint_contacts,
                     verbose = verbose
         )
     end
     calculate_electric_field!(sim)
-    calculate_drift_fields!(sim)
     @info "Detector simulation done"
 end
 
+include("ElectricFieldEnergy.jl")
 include("Capacitance.jl")

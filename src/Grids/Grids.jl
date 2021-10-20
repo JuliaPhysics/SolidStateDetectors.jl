@@ -57,6 +57,11 @@ CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 @inline getindex(grid::CartesianGrid3D{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
 @inline getindex(grid::CartesianGrid3D{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
+@inline GridPoint(grid::Grid{T, 3, Cylindrical}, inds::NTuple{3, Int}) where {T} = 
+    CylindricalPoint{T}(broadcast(i -> grid.axes[i].ticks[inds[i]], (1, 2, 3)))
+@inline GridPoint(grid::Grid{T, 3, Cartesian}, inds::NTuple{3, Int}) where {T} = 
+    CartesianPoint{T}(broadcast(i -> grid.axes[i].ticks[inds[i]], (1, 2, 3)))
+
 function sizeof(grid::Grid{T, N, S}) where {T, N, S}
     return sum( sizeof.(grid.axes) )
 end
@@ -99,6 +104,10 @@ end
 function get_boundary_types(grid::Grid{T, N, S}) where {T, N, S}
    return get_boundary_types.(grid.axes)
 end
+
+# Tuples with ticks to sample with differently spaced ticks
+const CartesianTicksTuple{T} = NamedTuple{(:x,:y,:z), NTuple{3,Vector{T}}}
+const CylindricalTicksTuple{T} = NamedTuple{(:r,:φ,:z), NTuple{3,Vector{T}}}
 
 TicksTuple(grid::CartesianGrid3D{T}) where {T} = (x = grid.axes[1].ticks, y = grid.axes[2].ticks, z = grid.axes[3].ticks)
 TicksTuple(grid::CylindricalGrid{T}) where {T} = (r = grid.axes[1].ticks, φ = grid.axes[2].ticks, z = grid.axes[3].ticks)
@@ -198,3 +207,10 @@ voxel_volume(grid::CylindricalGrid{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, 
     (grid[2].ticks[i2 + 1] - grid[2].ticks[i2]) * w3 * (grid[1].ticks[i1 + 1]^2 - grid[1].ticks[i1]^2) / 2  
 voxel_volume(grid::CartesianGrid3D{T}, i1::Int, i2::Int, i3::Int, w1::T, w2::T, w3::T) where {T} =
     w1 * w2 * w3
+
+    
+function get_extended_midpoints_grid(grid::Grid{T,3}) where {T}
+    ticks = broadcast(i -> midpoints(get_extended_ticks(grid.axes[i])), (1,2,3))
+    axes = broadcast(i -> typeof(grid.axes[i])(grid.axes[i].interval, ticks[i]) , (1,2,3))
+    typeof(grid)(axes)
+end

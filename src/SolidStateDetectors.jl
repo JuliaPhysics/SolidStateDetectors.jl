@@ -8,12 +8,15 @@ using LinearAlgebra
 using Random
 using Statistics
 
+using Adapt
 using ArraysOfArrays
 using FillArrays
 using Formatting
+using GPUArrays
 using Interpolations
 using IntervalSets
 using JSON
+using KernelAbstractions
 using LaTeXStrings
 using ParallelProcessingTools
 using ProgressMeter
@@ -24,6 +27,7 @@ using Rotations
 using StaticArrays
 using StatsBase
 using Unitful
+using UnitfulAtomic
 using UnitfulRecipes
 using YAML
 
@@ -33,7 +37,6 @@ using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
             CartesianVector, CylindricalVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
-            CartesianTicksTuple, CylindricalTicksTuple,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
@@ -57,16 +60,19 @@ import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broad
 export SolidStateDetector
 export SSD_examples
 
-export Grid
+export Grid, GridPoint
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
 export ElectricFieldChargeDriftModel, ADLChargeDriftModel
 export get_active_volume, is_depleted
+export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
 export Simulation, simulate!
 export Event, drift_charges!
+export add_baseline_and_extend_tail
+export NBodyChargeCloud
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
@@ -89,7 +95,7 @@ include("PotentialSimulation/PotentialSimulation.jl")
 
 include("ElectricField/ElectricField.jl")
 
-#include("ChargeCloudModels/ChargeCloudModels.jl")
+include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")
 
@@ -114,6 +120,20 @@ function __init__()
         end
         include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
     end
+    CUDA_loaded = false
+    #     @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" begin
+    @require CUDAKernels="72cfdca4-0801-4ab0-bf6a-d52aa10adc57" begin
+        using .CUDAKernels
+        CUDA_loaded = true
+        include("PotentialSimulation/ConvergenceGPU.jl")
+    end
+    if !CUDA_loaded
+        @require ROCKernels="7eb9e9f0-4bd3-4c4c-8bef-26bd9629d9b9" begin
+            using .ROCKernels
+            include("PotentialSimulation/ConvergenceGPU.jl")
+        end
+    end
 end
+include("PotentialSimulation/ConvergenceGPU.jl")
 
 end # module

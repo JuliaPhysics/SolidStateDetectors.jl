@@ -12,12 +12,14 @@ end
 
 @recipe function f(contact::Contact)
     linecolor --> contact.id
+    fillcolor --> contact.id
+    fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     label --> l
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector; show_semiconductor = false)
+@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true)
 
     show_normal --> false
 
@@ -31,7 +33,7 @@ end
             c
         end
     end
-    if !ismissing(det.passives)
+    if show_passives && !ismissing(det.passives)
         for p in det.passives
             @series begin
                 p

@@ -26,7 +26,7 @@ Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ss
 makedocs(
     sitename = "SolidStateDetectors.jl",
     modules = [SolidStateDetectors, SolidStateDetectors.ConstructiveSolidGeometry],
-    pages=[
+    pages = [
         "Home" => "index.md",
         "Manual" => Any[
             "Installation" => "man/installation.md",
@@ -34,10 +34,12 @@ makedocs(
             "Constructive Solid Geometry (CSG)" => "man/csg.md",
             "Grids" => "man/Grids.md",
             "Electric Potential" => "man/electric_potential.md",
-            "Weighting Potentials" => "man/weighting_potentials.md",
             "Electric Field" => "man/electric_field.md",
             "Charge Drift" => "man/charge_drift.md",
+            "Weighting Potentials" => "man/weighting_potentials.md",
+            "Capacitances" => "man/capacitances.md",
             "IO" => "man/IO.md",
+            "Plotting" => "man/plotting.md",
         ],
         "Tutorial" => "tutorial.md",
         "API" => "api.md",

@@ -180,19 +180,24 @@ function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cartesian}) where 
 end
 
 
-function get_interpolated_drift_field(velocityfield, grid::CylindricalGrid{T}) where {T}
-    extended_velocityfield = cat(velocityfield, velocityfield[:,1:1,:], dims=2)
+function interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
+    extended_vectorfield = cat(vectorfield, vectorfield[:,1:1,:], dims=2)
     @inbounds knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
-    i = interpolate(knots, extended_velocityfield, Gridded(Linear()))
+    i = interpolate(knots, extended_vectorfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
 end
-function get_interpolated_drift_field(velocityfield, grid::CartesianGrid3D{T}) where {T}
+function interpolated_vectorfield(vectorfield, grid::CartesianGrid3D{T}) where {T}
     @inbounds knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
-    i = interpolate(knots, velocityfield, Gridded(Linear()))
+    i = interpolate(knots, vectorfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return velocity_field_itp
 end
+
+function interpolated_vectorfield(ef::ElectricField)
+    interpolated_vectorfield(ef.data, ef.grid)
+end
+
 
 
 function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, point_types::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}

@@ -445,8 +445,8 @@ function siggentodict(config::Dict;
                                                       "to"   => config["xtal_radius"]),
                                      "bottom" => Dict("from" => config["xtal_radius"] - config["taper_length"],
                                                       "to"   => config["xtal_radius"] - config["taper_length"])),
-                      "phi"       => Dict("from"   => 0.0, "to" => 360.0),
-                      "h"         => config["taper_length"])))
+                      "phi"   => Dict("from"   => 0.0, "to" => 360.0),
+                      "h"     => config["taper_length"])))
         push!(geometry_2, taper)
     end
 
@@ -454,7 +454,7 @@ function siggentodict(config::Dict;
     #>----------------Define contact 2-----------------------------------------<
 
     contact_2 = Dict("material"    => "HPGe",
-                     "id"     => 2,
+                     "id"          => 2,
                      "potential"   => config["xtal_HV"],
                      "geometry"    => Dict("union" => geometry_2));
 

@@ -75,7 +75,10 @@ end
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool) where {T <: SSDFloat}
 
     grid::CylindricalGrid{T} = sp.grid
-
+    data = sp.data
+    if eltype(data) == PointType
+        data = data .& 0x07
+    end
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -91,22 +94,22 @@ end
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(grid.z))
             if full_det
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
-                extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
+                extended_data =  cat(data[end:-1:2, idx_mirror, :]', data[:, idx, :]', dims = 2)
                 xlims := (-1*grid.r[end],grid.r[end])
                 vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data*punit
              else
-                midpoints(gr_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*punit
+                midpoints(gr_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[:,idx,:]'*punit
             end
         elseif cross_section == :r
             xguide --> "φ"
             yguide --> "z"
             ylims --> (grid.z[1],grid.z[end])
-            grid.φ*internal_angle_unit, grid.z*internal_length_unit, sp.data[idx,:,:]'*punit
+            grid.φ*internal_angle_unit, grid.z*internal_length_unit, data[idx,:,:]'*punit
         elseif cross_section == :z
             projection --> :polar
             xguide --> ""
             yguide --> ""
-            grid.φ*internal_angle_unit, grid.r*internal_length_unit, sp.data[:,:,idx].*punit
+            grid.φ*internal_angle_unit, grid.r*internal_length_unit, data[:,:,idx].*punit
         end
     end
 
@@ -123,22 +126,22 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 if full_det
                     cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
-                    extended_data =  cat(sp.data[end:-1:2, idx_mirror, :]', sp.data[:, idx, :]', dims = 2)
+                    extended_data =  cat(data[end:-1:2, idx_mirror, :]', data[:, idx, :]', dims = 2)
                     xlims := (-1*grid.r[end],grid.r[end])
                     vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data.*punit
                  else
-                    # midpoints(gr_ext), midpoints(gz_ext), sp.data[:,idx,:]'*unit
-                    grid.r*internal_length_unit, grid.z*internal_length_unit, sp.data[:,idx,:]'.*punit
+                    # midpoints(gr_ext), midpoints(gz_ext), data[:,idx,:]'*unit
+                    grid.r*internal_length_unit, grid.z*internal_length_unit, data[:,idx,:]'.*punit
                 end
                 #=
             elseif cross_section == :r
                 xguide --> "φ / °"
                 yguide --> "z / m"
                 ylims --> (grid.z[1],grid.z[end])
-                grid.φ, grid.z, sp.data[idx,:,:]'
+                grid.φ, grid.z, data[idx,:,:]'
             elseif cross_section == :z
                 projection --> :polar
-                grid.φ, grid.r, sp.data[:,:,idx]
+                grid.φ, grid.r, data[:,:,idx]
             end
             =#
         end

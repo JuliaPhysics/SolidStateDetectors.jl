@@ -1,4 +1,4 @@
-const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, WeightingPotential{T, N, S, AT}, PointTypes{T, N, S, AT}, EffectiveChargeDensity{T, N, S, AT}}
+const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, WeightingPotential{T, N, S, AT}, PointTypes{T, N, S, AT}, EffectiveChargeDensity{T, N, S, AT}, DielectricDistribution{T, N, S, AT}}
 
 ScalarPotential(::ElectricPotential, data, grid) = ElectricPotential(data, grid)
 ScalarPotential(::WeightingPotential, data, grid) = WeightingPotential(data, grid)
@@ -90,6 +90,11 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}; n_points_in_�
             return extend_2D_to_3D_by_n_points(sp, axφ, int, n_points_in_φ)
         end
     else
-        return get_2π_potential(sp, axφ, int)
+        if isclosedset(axφ.interval) 
+            sp_tmp = get_2π_potential(sp, axφ, int)
+            return get_2π_potential(sp_tmp, sp_tmp.grid[2], sp_tmp.grid[2].interval)
+        else
+            return get_2π_potential(sp, axφ, int)
+        end
     end
 end

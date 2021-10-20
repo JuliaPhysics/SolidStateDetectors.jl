@@ -15,6 +15,9 @@ The electric potential is calculated through [successive over relaxation](https:
 export JULIA_NUM_THREADS=4
 ```
 
+!!! note "GPU"
+    The electric potential can be calculated on GPUs. See [GPU Support in Field Calculations](@ref).
+
 
 At the beginning of the simulation, each grid point, $(i,j,k)$ is assigned its dielectric constant, $\epsilon_r(\vec{r}_{i,j,k})$, as well as its effective charge, $Q_\text{eff} = \rho(\vec{r}_{i,j,k}) \cdot V_{i,j,k} / \epsilon_0$, where $V_{i,j,k}$ is the volume assigned to the grid point $(i,j,k)$.
 

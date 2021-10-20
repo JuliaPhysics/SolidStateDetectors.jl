@@ -1,57 +1,21 @@
-function _get_abs_bias_voltage(det::SolidStateDetector{T}) where {T <: SSDFloat}
-    potentials::Vector{T} = map(c -> c.potential, det.contacts)
-    return (maximum(potentials) - minimum(potentials)) * u"V"
-end
-
-
-export calculate_capacitance
 @doc raw"""
-    calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = true)
+    calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int}; consider_multiplicity::Bool = true)
 
-Returns the capacitance, ``C``, of a [`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of pF
-calculated via 
+Returns the mutual capacitance between the contacts with ID `i = ij[1]` and `j = ij[2]`.
+It is calculated via the weighting potentials of the contacts, ``\Phi_i^w(\vec{r})`` and ``\Phi_j^w(\vec{r})``:
 ```math
-C = 2 W_{E} / V_{BV}~,
+c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \Phi_j^w(\vec{r}) d\vec{r}
 ```
-where ``W_{E}`` is the energy stored in the electric field ([`calculate_stored_energy`](@ref)) 
-created by the detector with the applied bias voltage ``V_{BV}``. 
+
+!!! note
+    These are elements of the Mawell Capcitance Matrix. Look up [Capacitances](@ref) for more information.
+
+!!! note 
+    The electric potential as well as the two weighting potentials of both contacts have to be calculated.
 
 ## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
-
-## Keywords 
-* `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
-    For example, in case of true coaxial detector center around the origin and calculated on a cartesian grid 
-    with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
-    and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
-
-!!! danger 
-    In general, this method is only valid if the system, detector and its surroundings, is symmetric with respect to the contacts
-    and the impurity density is zero and no fixed charge densities are present (or in the limit of very high bias voltages where
-    the contribution of those densities become negligible).
-    Then, the returned capacitance equals the capacitance of each contact.
-    
-    For asymmetric cases and zero impurity/charge densities, 
-    the calculated capacitance of this method equals the contact capacitance
-    of the contact which is not at ground.
-
-    In general, use [`calculate_capacitance(::Simulation, ::Int)`](@ref) 
-    to calculate the capacitance of a specific contact via its weighting potential.
-"""
-function calculate_capacitance(sim::Simulation; consider_multiplicity::Bool = true)
-    W = calculate_stored_energy(sim; consider_multiplicity)
-    return uconvert(u"pF", 2 * W / (_get_abs_bias_voltage(sim.detector)^2))
-end
-
-
-"""
-    calculate_stored_energy(sim::Simulation; consider_multiplicity::Bool = true)
-
-Calculates and returns the energy stored in the [`ElectricField`](@ref) of a 
-[`SolidStateDetector`](@ref) in a given [`Simulation`](@ref) in units of J.
-
-## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the stored energy is calculated.
+* `sim::Simulation`: [`Simulation`](@ref) for which the capacitance matrix is calculated.
+* `ij::Tuple{Int,Int}`: Tuple of indices of the contacts for which the capacitance should be calculated. 
 
 ## Keywords 
 * `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
@@ -59,72 +23,92 @@ Calculates and returns the energy stored in the [`ElectricField`](@ref) of a
     with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
     and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
 """
-function calculate_stored_energy(sim::Simulation; consider_multiplicity::Bool = true)
-    @assert !ismissing(sim.electric_potential) "Electric potential has not been calculated yet. Please run `calculate_electric_potential!(sim)` first."
-    calculate_stored_energy(sim.electric_potential, sim.ϵ_r; consider_multiplicity)
+function calculate_mutual_capacitance(sim::Simulation, ij::Tuple{Int, Int}; consider_multiplicity::Bool = true)
+    _calculate_mutual_capacitance(sim.weighting_potentials[ij[1]], sim.weighting_potentials[ij[2]], sim.ϵ_r; consider_multiplicity)
 end
 
 
-function calculate_stored_energy(ep::ScalarPotential{T,3,CS}, ϵ::DielectricDistribution{T,3,CS}; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
+function _calculate_mutual_capacitance(
+            wpi::WeightingPotential{T,3,CS}, wpj::WeightingPotential{T,3,CS},
+            ϵ_r::DielectricDistribution{T,3,CS};
+            consider_multiplicity::Bool = true ) where {T, CS}
+
+    int_p1 = interpolated_scalarfield(wpi)
+    int_p2 = interpolated_scalarfield(wpj)
+    int_ϵ_r = interpolated_scalarfield(ϵ_r)
     cylindrical = CS == Cylindrical
-    phi_2D = cylindrical && size(ep, 2) == 1
-    ep3d = phi_2D ? get_2π_potential(ep, n_points_in_φ = 2) : _get_closed_potential(ep)
-    grid = ep3d.grid
-    W::T = 0
+    phi_2D = cylindrical && size(wpi, 2) == size(wpj, 2) == 1
+    grid = phi_2D ? get_2π_potential(wpi, n_points_in_φ = 2).grid : _get_closed_potential(wpi).grid
+    grid_mps = get_extended_midpoints_grid(grid)
+    
+    c_ij::T = _calculate_mutual_capacitance(grid, grid_mps, int_ϵ_r, int_p1, int_p2)
+
+    phi_2D && (c_ij *= 2)
+    consider_multiplicity && (c_ij *= multiplicity(grid))
+    return uconvert(u"pF", c_ij*u"m" * ϵ0*u"F/m" )
+end
+
+function _calculate_mutual_capacitance(grid::Grid{T, 3, CS}, grid_mps, int_ϵ_r, int_p1, int_p2) where {T, CS}
+    c_ij::T = zero(T)
     for i3 in 1:size(grid, 3)-1
         for i2 in 1:size(grid, 2)-1
             for i1 in 1:size(grid, 1)-1
                 w1, w2, w3 = voxel_widths(grid, i1, i2, i3)
                 dV = voxel_volume(grid, i1, i2, i3, w1, w2, w3)
 
-                _ϵ = ϵ.data[i1 + 1, i2 + 1, i3 + 1]
+                pt_voxel_mid = GridPoint(grid_mps, (i1 + 1, i2 + 1, i3 + 1))
+                ϵ_r_voxel = get_interpolation(int_ϵ_r, pt_voxel_mid, CS)
 
-                ep000 = ep3d.data[i1    , i2    , i3    ]
-                ep100 = ep3d.data[i1 + 1, i2    , i3    ]
-                ep010 = ep3d.data[i1    , i2 + 1, i3    ]
-                ep110 = ep3d.data[i1 + 1, i2 + 1, i3    ]
-                ep001 = ep3d.data[i1    , i2    , i3 + 1]
-                ep101 = ep3d.data[i1 + 1, i2    , i3 + 1]
-                ep011 = ep3d.data[i1    , i2 + 1, i3 + 1]
-                ep111 = ep3d.data[i1 + 1, i2 + 1, i3 + 1]
+                efs_1 = _approximate_potential_gradient(int_p1, grid, i1, i2, i3, w1, w2, w3) 
+                efs_2 = _approximate_potential_gradient(int_p2, grid, i1, i2, i3, w1, w2, w3) 
 
-                efv1 = ( (ep100 - ep000) + (ep110 - ep010) + (ep101 - ep001) + (ep111 - ep011) ) / (4 * w1)
-                efv2 = if cylindrical
-                    _w2 = (grid[2].ticks[i2 + 1] - grid[2].ticks[i2])
-                    if i1 == 1
-                        ((ep110 - ep100)/(_w2*grid[1].ticks[i1+1]) +
-                        (ep111 - ep101)/(_w2*grid[1].ticks[i1+1])) / 2
-                    else
-                        ((ep010 - ep000)/(_w2*grid[1].ticks[i1]) +
-                         (ep110 - ep100)/(_w2*grid[1].ticks[i1+1]) +
-                         (ep011 - ep001)/(_w2*grid[1].ticks[i1]) +
-                         (ep111 - ep101)/(_w2*grid[1].ticks[i1+1])) / 4
-                    end
-                else
-                    ( (ep010 - ep000) + (ep110 - ep100) + (ep011 - ep001) + (ep111 - ep101) ) / (4 * w2)
-                end
-                efv3 = ( (ep001 - ep000) + (ep101 - ep100) + (ep011 - ep010) + (ep111 - ep110) ) / (4 * w3)
-                W += sum((efv1, efv2, efv3).^2) * dV * _ϵ
+                c_ij += sum(efs_1 .* efs_2) * dV * ϵ_r_voxel
             end
         end
     end
-    E = W * ϵ0 / 2 * u"J"
-    phi_2D && (E *= 2)
-    return consider_multiplicity ? E * multiplicity(grid) : E
+    return c_ij
 end
 
-@doc raw"""
-    calculate_capacitance(sim::Simulation, contact_id::Int = 1; consider_multiplicity::Bool = true)
+function _approximate_potential_gradient(int_p, grid::Grid{T, 3, CS}, i1, i2, i3, w1, w2, w3) where {T, CS}
+    p000 = get_interpolation(int_p, GridPoint(grid, (i1    , i2    , i3    )), CS)
+    p100 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2    , i3    )), CS)
+    p010 = get_interpolation(int_p, GridPoint(grid, (i1    , i2 + 1, i3    )), CS)
+    p110 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2 + 1, i3    )), CS)
+    p001 = get_interpolation(int_p, GridPoint(grid, (i1    , i2    , i3 + 1)), CS)
+    p101 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2    , i3 + 1)), CS)
+    p011 = get_interpolation(int_p, GridPoint(grid, (i1    , i2 + 1, i3 + 1)), CS)
+    p111 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2 + 1, i3 + 1)), CS)
+    efv1 = ( (p100 - p000) + (p110 - p010) + (p101 - p001) + (p111 - p011) ) / (4 * w1)
+    efv2 = if CS == Cylindrical
+        _w2 = (grid.axes[2].ticks[i2 + 1] - grid.axes[2].ticks[i2])
+        if i1 == 1
+            ((p110 - p100)/(_w2*grid.axes[1].ticks[i1+1]) +
+                (p111 - p101)/(_w2*grid.axes[1].ticks[i1+1]) ) / 2
+        else
+            ((p010 - p000)/(_w2*grid.axes[1].ticks[i1]) +
+                (p110 - p100)/(_w2*grid.axes[1].ticks[i1+1]) +
+                (p011 - p001)/(_w2*grid.axes[1].ticks[i1]) +
+                (p111 - p101)/(_w2*grid.axes[1].ticks[i1+1])) / 4
+        end
+    else
+        ( (p010 - p000) + (p110 - p100) + (p011 - p001) + (p111 - p101) ) / (4 * w2)
+    end
+    efv3 = ( (p001 - p000) + (p101 - p100) + (p011 - p010) + (p111 - p110) ) / (4 * w3)
+    return (efv1, efv2, efv3)
+end
 
-Returns the capacitance, ``C``, of the contact with ID `contact_id` in units of pF calculated via 
-```math
-C = 2 W_{WP} / 1 V^2~,
-```
-where ``W_{WP}`` is the (pseudo) energy stored in the "electric field" (gradient) of the weighting potential of the contact. 
+
+
+@doc raw"""
+    calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
+
+Calculates the Maxwell Capacitance `N×N`-Matrix in units of pF,
+where `N` is the number of contacts of `sim.detector`.
+The individual elements, ``c_{i,j}``, are calculated via 
+[`calculate_mutual_capacitance(sim::Simulation, (i,j)::Tuple{Int,Int})`](@ref).
 
 ## Arguments
-* `sim::Simulation{T}`: [`Simulation`](@ref) with `sim.detector` for which the capacitance is calculated.
-* `contact_id::Int`: The ID of the contact for which the capacitance should be calculated.
+* `sim::Simulation`: [`Simulation`](@ref) for which the capacitance matrix is calculated.
 
 ## Keywords 
 * `consider_multiplicity::Bool = true`: Whether symmetries of the system should be taken into account. 
@@ -132,15 +116,19 @@ where ``W_{WP}`` is the (pseudo) energy stored in the "electric field" (gradient
     with the `x-axis` going from `[0, x_max]` and the `y-axis` going from `[0, y_max]` the multiplicity is 4
     and, if `consider_multiplicity == true`, the returned value is already multiplied by 4.
 """
-function calculate_capacitance(sim::Simulation, contact_id::Int; consider_multiplicity::Bool = true)
-    @assert !ismissing(sim.weighting_potentials[contact_id]) "Weighting potential of contact $contact_id has not been calculated yet. Please run `calculate_weighting_potential!(sim, $contact_id)` first."
-    W = calculate_stored_energy(sim, contact_id; consider_multiplicity)
-    return uconvert(u"pF", 2 * W / u"V^2")
-end
-
-function calculate_stored_energy(sim::Simulation{T, CS}, contact_id::Int = 1; consider_multiplicity::Bool = true) where {T <: SSDFloat, CS}
-    ϵ_r = DielectricDistribution(DielectricDistributionArray(PotentialSimulationSetupRB(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
-                weighting_potential_contact_id = contact_id, use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
-                not_only_paint_contacts = false, paint_contacts = false)), sim.weighting_potentials[contact_id].grid)
-    calculate_stored_energy(sim.weighting_potentials[contact_id], ϵ_r; consider_multiplicity)
+function calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
+    @assert !ismissing(sim.ϵ_r) "The electric potential needs to be calculated first."
+    @assert !ismissing(sim.weighting_potentials) "The weighting_potentials needs to be calculated first."
+    n = length(sim.weighting_potentials)
+    C = zeros(typeof(one(T) * u"pF"), (n, n))
+    for i in 1:n
+        for j in i:n
+            C[j, i] = C[i, j] = if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j]) 
+                calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
+            else
+                missing
+            end
+        end
+    end
+    return C
 end

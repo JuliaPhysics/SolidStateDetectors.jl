@@ -13,8 +13,9 @@ The net charge induced on each electrode $C_i$, $Q_i$, by electrons and hole wit
 Q_i = Q \left( \sum\limits_\text{holes} \Phi_i^w(\vec{r}_h) -  \sum\limits_\text{electrons} \Phi_i^w(\vec{r}_e) \right)
 ```
 
-
-
 ## Simulation Algorithm
 
 The weighting potential for an electrode is internally calculated with the same function as the electric potential when calling `calculate_weighting_potential!(sim, contact_id)`. The differences are that $\rho(\vec{r})$ is set to zero and that the boundary conditions of fixed values on the contacts are adapted.
+
+!!! note "GPU"
+    Weighting potentials can be calculated on GPUs. See [GPU Support in Field Calculations](@ref).
