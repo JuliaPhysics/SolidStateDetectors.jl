@@ -95,6 +95,26 @@ function connections(em::EllipsoidMantle, n_arc::Int64)::Vector{Vector{Int64}}
     [[i+(n_arcφ+1)*j,i+1+(n_arcφ+1)*j,i+1+(n_arcφ+1)*(j+1),i+(n_arcφ+1)*(j+1)] for j in 0:n_arcθ-1 for i in 1:n_arcφ]
 end
 
+function _get_hor_lines_idx(em::EllipsoidMantle{T}, n_arcθ::Int64)::Vector{Int64} where {T}
+    θMin, θMax = get_θ_limits(em) 
+    θMin, θMax = minmax(mod(θMin, T(2π)), mod(θMax, T(2π)))
+    if θMin == T(π/2) && θMax == T(3π/2) 
+        [Int(floor(n_arcθ/2)) + 1]
+    else
+        [1, n_arcθ+1]
+    end
+end
+
+function connections(em::EllipsoidMantle, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} 
+    n_arcφ = _get_n_points_in_arc_φ(em, n_arc) 
+    n_arcθ = _get_n_points_in_arc_θ(em, n_arc)
+    vcircs = [[i*(n_arcφ+1)+c, (i+1)*(n_arcφ+1)+c] for c in _get_vert_lines_range(em,n_arcφ,n_vert_lines) for i in 0:n_arcθ-1]
+    hcircs =  [[i + (c-1)*(n_arcφ+1), i + (c-1)*(n_arcφ+1) + 1] for c in _get_hor_lines_idx(em, n_arcθ) for i in 1:n_arcφ]
+    append!(vcircs, hcircs)
+end
+
+get_label_name(::EllipsoidMantle) = "Ellipsoid Mantle"
+
 """
     intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}
 

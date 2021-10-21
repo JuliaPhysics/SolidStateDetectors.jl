@@ -1,21 +1,48 @@
-@recipe function f(p::Passive)
+@recipe function f(p::Passive{T}) where {T}
+    seriestype --> :csg
     linecolor --> :grey
+    fillcolor --> :grey
+    fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
-    label --> l
+    @series begin
+        #add empty line so that label is shown with alpha = 1
+        seriestype := :path
+        label --> l
+        linewidth := 1
+        T[], T[]
+    end 
+    label := ""
     p.geometry
 end
-@recipe function f(sc::Semiconductor)
+
+@recipe function f(sc::Semiconductor{T}) where {T}
+    seriestype --> :csg
     linecolor --> :black
-    label --> "Semiconductor"
+    @series begin
+        #add empty line so that label is shown with alpha = 1
+        seriestype := :path
+        label --> "Semiconductor"
+        linewidth := 1
+        T[], T[]
+    end 
+    label := ""
     sc.geometry
 end
 
-@recipe function f(contact::Contact)
+@recipe function f(contact::Contact{T}) where {T}
+    seriestype --> :csg
     linecolor --> contact.id
     fillcolor --> contact.id
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
-    label --> l
+    @series begin
+        #add empty line so that label is shown with alpha = 1
+        seriestype := :path
+        label --> l
+        linewidth := 1
+        T[], T[]
+    end 
+    label := ""
     contact.geometry
 end
 

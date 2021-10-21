@@ -61,6 +61,23 @@ function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector
     [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
 
+function connections(es::EllipticalSurface{T, T}, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    radii = [[1, i + 1] for i in _get_vert_lines_range(es,n_arc,n_vert_lines)]
+    circ =  [[i, i+1] for i in 2:n_arc+1]
+    append!(radii, circ)
+end
+
+function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+    n_arc = _get_n_points_in_arc_φ(es, n_arc)
+    radii = [[i, i + n_arc + 1] for i in _get_vert_lines_range(es,n_arc,n_vert_lines)]
+    circ1 =  [[i, i + 1] for i in 1:n_arc]
+    circ2 =  [[i, i + 1] for i in n_arc+2:2*n_arc+1]
+    append!(radii, circ1, circ2)
+end
+
+get_label_name(::EllipticalSurface) = "Elliptical Surface"
+
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
 
