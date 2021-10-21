@@ -38,6 +38,7 @@ UnitfulRecipes = "42071c24-d89e-48dd-8a24-8a12d9b8861f"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+Adapt = "3"
 ArraysOfArrays = "0.4, 0.5"
 Clustering = "0.13, 0.14"
 DataStructures = "0.18"
