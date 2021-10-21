@@ -73,7 +73,7 @@ using ROCKernels.AMDGPU: ROCArray
 using CUDAKernels, SolidStateDetectors # CUDAKernels has to be loaded before SSD
 using CUDAKernels.CUDA: CuArray
 
-Simulation(SSD_examples[:CGD])
+sim = Simulation(SSD_examples[:CGD])
 calculate_electric_potential!( 
     sim, 
     device_array_type = CuArray, 
