@@ -14,7 +14,7 @@ end
             fillcolor := :white
             fillalpha --> 0.2
             if haskey(plotattributes, :seriestype) 
-                if plotattributes[:seriestype] in [:ssd, :path, :wireframe] 
+                if plotattributes[:seriestype] in [:csg, :wireframe] 
                     linewidth := 0.5
                 end
             end
@@ -28,7 +28,7 @@ end
                 fillcolor := :white
                 fillalpha --> 0.2
                 if haskey(plotattributes, :seriestype) 
-                    if plotattributes[:seriestype] in [:ssd, :path, :wireframe] 
+                    if plotattributes[:seriestype] in [:csg, :wireframe] 
                         linewidth := 0.5
                     end
                 end

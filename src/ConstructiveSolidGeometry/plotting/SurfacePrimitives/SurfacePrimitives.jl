@@ -6,8 +6,13 @@
 #include("TorusMantle.jl")
 
 @recipe function f(s::AbstractSurfacePrimitive; n_arc = 40, n_vert_lines = 2)
-    seriestype --> :ssd
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :ssd 
+    seriestype --> :csg
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :csg 
+        @series begin 
+            linewidth := 0
+            linecolor --> :white
+            mesh(s, n_arc)
+        end
         @series begin 
             label --> get_label_name(s)
             linecolor --> :black
@@ -15,16 +20,11 @@
             linewidth --> 1.5
             mesh(s, n_arc, n_vert_lines)
         end 
-        @series begin 
-            linewidth := 0
-            linecolor --> :white
-            mesh(s, n_arc)
-        end
-    elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] in [:mesh3d, :mesh]
+    elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
         label --> get_label_name(s)   
         linecolor --> :white
         mesh(s, n_arc)
-    elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] in [:path, :wireframe]
+    elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :wireframe
         label --> get_label_name(s)
         seriescolor --> :black
         fillalpha := 1

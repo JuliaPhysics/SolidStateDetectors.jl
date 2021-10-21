@@ -83,7 +83,7 @@ function connections(tm::TorusMantle{T}, n_arc::Int64, n_vert_lines::Int64)::Vec
     append!(vcircs, hcircs)
 end
 
-get_label_name(::TorusMantle) = "TorusMantle"
+get_label_name(::TorusMantle) = "Torus Mantle"
 
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
 

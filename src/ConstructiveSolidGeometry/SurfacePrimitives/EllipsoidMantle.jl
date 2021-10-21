@@ -113,7 +113,7 @@ function connections(em::EllipsoidMantle, n_arc::Int64, n_vert_lines::Int64)::Ve
     append!(vcircs, hcircs)
 end
 
-get_label_name(::EllipsoidMantle) = "EllipsoidMantle"
+get_label_name(::EllipsoidMantle) = "Ellipsoid Mantle"
 
 """
     intersection(em::EllipsoidMantle{T}, l::Line{T}) where {T}

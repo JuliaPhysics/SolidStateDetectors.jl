@@ -1,5 +1,5 @@
 @recipe function f(p::Passive{T}) where {T}
-    seriestype --> :ssd
+    seriestype --> :csg
     linecolor --> :grey
     fillcolor --> :grey
     fillalpha --> 0.2
@@ -16,7 +16,7 @@
 end
 
 @recipe function f(sc::Semiconductor{T}) where {T}
-    seriestype --> :ssd
+    seriestype --> :csg
     linecolor --> :black
     @series begin
         #add empty line so that label is shown with alpha = 1
@@ -30,7 +30,7 @@ end
 end
 
 @recipe function f(contact::Contact{T}) where {T}
-    seriestype --> :ssd
+    seriestype --> :csg
     linecolor --> contact.id
     fillcolor --> contact.id
     fillalpha --> 0.2

@@ -76,7 +76,7 @@ function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64, n_vert_
     append!(radii, circ1, circ2)
 end
 
-get_label_name(::EllipticalSurface) = "EllipticalSurface"
+get_label_name(::EllipticalSurface) = "Elliptical Surface"
 
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
 extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
