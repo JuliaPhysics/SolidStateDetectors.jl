@@ -9,6 +9,7 @@
     seriestype --> :csg
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :csg 
         @series begin 
+            label := ""
             linewidth := 0
             linecolor --> :white
             mesh(s, n_arc)
