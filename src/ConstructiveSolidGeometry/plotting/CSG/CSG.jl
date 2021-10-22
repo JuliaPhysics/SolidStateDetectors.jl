@@ -6,7 +6,7 @@ function primitives(csg::AbstractConstructiveGeometry)
     ps
 end
 
-@recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 100) where {T}
+@recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 80) where {T}
     ps = primitives(csg)
     spacing = (haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface) ? T(maximum([extremum(s) + norm(s.origin) for p in ps for s in surfaces(p)])/n_samples) : nothing
     @series begin
