@@ -31,6 +31,7 @@ end
 
 @recipe function f(contact::Contact{T}) where {T}
     seriestype --> :csg
+    seriescolor --> contact.id
     linecolor --> contact.id
     fillcolor --> contact.id
     fillalpha --> 0.2
