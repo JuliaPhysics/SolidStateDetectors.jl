@@ -123,21 +123,23 @@ NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
 """
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2,
-    )::NBodyChargeCloud{T, number_of_shells, NTuple{number_of_shells, Int}} where {T, PT <: ParticleType}
+    )::NBodyChargeCloud{T, number_of_shells, NTuple{N > 1 ? number_of_shells : 0, Int}} where {T, PT <: ParticleType}
     
     locations::Vector{CartesianPoint{T}} = CartesianPoint{T}[center]
     energies::Vector{T} = T[1]
     n = Int[]
     
-    n_shell = 1
-    expected_points_in_shells::Int = div(4 * (4^(number_of_shells) - 1), 3)
-    while n_shell <= number_of_shells
-        shell = create_regular_sphere(center, round(Int, N * (4^n_shell)/expected_points_in_shells), radius * n_shell)
-        locations = vcat(locations, shell)
-        push!(n, length(shell))
-        energies = vcat(energies, [exp(-n_shell^2 / 2) for i in 1:length(shell)])
-        n_shell += 1
+    if N > 1
+        n_shell = 1
+        expected_points_in_shells::Int = div(4 * (4^(number_of_shells) - 1), 3)
+        while n_shell <= number_of_shells
+            shell = create_regular_sphere(center, round(Int, N * (4^n_shell)/expected_points_in_shells), radius * n_shell)
+            locations = vcat(locations, shell)
+            push!(n, length(shell))
+            energies = vcat(energies, [exp(-n_shell^2 / 2) for i in 1:length(shell)])
+            n_shell += 1
+        end
     end
     
-    return NBodyChargeCloud{T, number_of_shells, NTuple{number_of_shells, Int}}( locations, energies./sum(energies) * T(to_internal_units(energy)), Tuple(n))
+    return NBodyChargeCloud{T, number_of_shells, NTuple{length(n), Int}}( locations, energies./sum(energies) * T(to_internal_units(energy)), Tuple(n))
 end
