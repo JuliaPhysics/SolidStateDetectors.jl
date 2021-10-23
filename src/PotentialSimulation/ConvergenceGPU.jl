@@ -31,8 +31,7 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3},
     return 0
 end                
 
-get_device(DAT::Type{<:GPUArrays.AbstractGPUArray}) = DAT <: CUDAKernels.CUDA.CuArray ? CUDADevice() : ROCDevice() # This function is supposed to be replaced by KernelAbstractions.get_device
-
-
 get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
 get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)
+
+function get_device end

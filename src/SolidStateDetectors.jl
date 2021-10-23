@@ -92,6 +92,7 @@ include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")
+include("PotentialSimulation/ConvergenceGPU.jl")
 
 include("ElectricField/ElectricField.jl")
 
@@ -120,20 +121,12 @@ function __init__()
         end
         include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
     end
-    CUDA_loaded = false
-    #     @require CUDA="052768ef-5323-5732-b1bb-66c8b64840ba" begin
     @require CUDAKernels="72cfdca4-0801-4ab0-bf6a-d52aa10adc57" begin
-        using .CUDAKernels
-        CUDA_loaded = true
-        include("PotentialSimulation/ConvergenceGPU.jl")
+        get_device(::Type{CUDAKernels.CUDA.CuArray}) = CUDAKernels.CUDADevice()
     end
-    if !CUDA_loaded
-        @require ROCKernels="7eb9e9f0-4bd3-4c4c-8bef-26bd9629d9b9" begin
-            using .ROCKernels
-            include("PotentialSimulation/ConvergenceGPU.jl")
-        end
+    @require ROCKernels="7eb9e9f0-4bd3-4c4c-8bef-26bd9629d9b9" begin
+        get_device(::Type{ROCKernels.AMDGPU.ROCArray}) = CUDAKernels.ROCDevice()
     end
 end
-include("PotentialSimulation/ConvergenceGPU.jl")
 
 end # module
