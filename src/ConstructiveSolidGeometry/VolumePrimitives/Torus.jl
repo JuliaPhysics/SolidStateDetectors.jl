@@ -14,8 +14,10 @@ radius around a given origin.
     * `TR == T`: Full tube without cutout (constant radius `r_tube`).
 * `TP`: Type of the azimuthial angle `φ`.
     * `TP == Nothing`: Full 2π in `φ`.
+    * `TP == Tuple{T,T}`: Partial Torus ranging from `φ[1]` to `φ[2]`.
 * `TT`: Type of the polar angle `θ`.
     * `TT == Nothing`: Full 2π in `θ`.
+    * `TP == Tuple{T,T}`: Partial Torus ranging from `θ[1]` to `θ[2]`.
     
 ## Fields
 * `r_torus::T`: Distance of the center of the `Torus` to the center of the tube (in m).
@@ -27,11 +29,10 @@ radius around a given origin.
 
 ## Definition in Configuration File
 
-So far, the only `Torus` implemented so far is a `FullTorus`.
-A `FullTorus` is defined in the configuration file as part of the `geometry` field 
+A `Torus` is defined in the configuration file as part of the `geometry` field 
 of an object through the field `torus`.
 
-Example definitions of a `FullTorus` looks like this:
+Example definitions of a `Torus` looks like this:
 ```yaml
 torus:
   r_torus: 10.0   # => r_torus = 10.0
@@ -45,7 +46,7 @@ torus:
 ```
 The fields `phi` and `theta` do not need to defined if they are full 2π.
 
-To define a torus with inner cut-out, use [`CSGDifference`](@ref):
+To define a `Torus` with an inner cut-out, use [`CSGDifference`](@ref):
 ```yaml
 difference:
   - torus:
@@ -55,7 +56,7 @@ difference:
       r_torus: 10.0   # => r_torus = 10.0
       r_tube: 1       # => r_tube = 1.0
 ```
-This is a torus with `r_tube` having an inner radius of 1 and an outer radius of 2.
+This is a `Torus` with `r_tube` having an inner radius of 1 and an outer radius of 2.
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
@@ -85,13 +86,7 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
     r_torus = _parse_value(T, dict["r_torus"], length_unit)
     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
-    if !(φ === nothing)
-        error("Partial Torus (`φ = φ`) is not yet supported.")
-    end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    if !(θ === nothing)
-        error("Partial Torus (`θ = θ`) is not yet supported.")
-    end
     if haskey(dict, "z")
         @warn "Deprecation warning: Field `z` for `Torus` is deprecated. 
                 Use instead (only) `origin` to specify the origin of the primitive.
@@ -120,8 +115,8 @@ function Dictionary(t::Torus{T})::OrderedDict{String, Any} where {T}
     dict = OrderedDict{String, Any}()
     dict["r_torus"] = t.r_torus
     dict["r_tube"] = t.r_tube # always a Real
-    if !isnothing(t.φ) error("Partial Torus (`φ = φ`) is not yet supported.") end
-    if !isnothing(t.θ) error("Partial Torus (`θ = θ`) is not yet supported.") end
+    if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => string(t.φ[1])*"rad", "to" => string(t.φ[2])*"rad") end
+    if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(t.θ[1])*"rad", "to" => string(t.θ[2])*"rad") end
     if t.origin != zero(CartesianVector{T}) dict["origin"] = t.origin end
     if t.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(t.rotation) end
     OrderedDict{String, Any}("torus" => dict)
@@ -166,17 +161,6 @@ end
 #     Torus( T, T(r_torus), T(r_tube), nothing, T(0)..T(π/2), T(z))
 # end
 
-# # read-in
-function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple)
-    length_unit = input_units.length
-    angle_unit = input_units.angle
-    r_torus::T = _parse_value(T, dict["r_torus"], length_unit)
-    r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
-    φ = parse_φ_of_primitive(T, dict, angle_unit)
-    θ = parse_θ_of_primitive(T, dict, angle_unit)
-    z::T = ("z" in keys(dict) ? _parse_value(T, dict["z"], length_unit) : T(0))
-    Torus(T, r_torus, r_tube, φ, θ, z)
-end
 
 # function Dictionary(t::Torus{T}) where {T}
 #     dict = OrderedDict{String,Any}()
