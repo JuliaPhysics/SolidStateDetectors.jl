@@ -76,6 +76,8 @@ Torus{T,CO,TR,TP,TT}( t::Torus{T,CO,TR,TP,TT}; COT = CO,
     Torus{T,COT,TR,TP,TT}(t.r_torus, t.r_tube, t.φ, t.θ, origin, rotation)
 
 const FullTorus{T,CO} = Torus{T,CO,T,Nothing,Nothing}
+const FullPhiTorus{T,CO} = Torus{T,CO,T,Nothing,Tuple{T,T}}
+const FullThetaTorus{T,CO} = Torus{T,CO,T,Tuple{T,T},Nothing}
 
 function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     length_unit = input_units.length
@@ -130,6 +132,55 @@ function surfaces(t::FullTorus{T,OpenPrimitive}) where {T}
     tm = FullTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     (tm, )
 end
+function surfaces(t::FullPhiTorus{T,ClosedPrimitive}) where {T}
+    tm = FullPhiTorusMantle{T,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    θ1, θ2 = t.θ
+    cm1 = FullConeMantle{T,:inwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation)
+    cm2 = FullConeMantle{T,:inwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation)
+    (tm, cm1, cm2)
+end
+function surfaces(t::FullPhiTorus{T,OpenPrimitive}) where {T}
+    tm = FullPhiTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    θ1, θ2 = t.θ
+    cm1 = FullConeMantle{T,:outwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation)
+    cm2 = FullConeMantle{T,:outwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation)
+    (tm, cm1, cm2)
+end
+function surfaces(t::FullThetaTorus{T,ClosedPrimitive}) where {T}
+    tm = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    φ1, φ2 = t.φ
+    es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(-π/2) )
+    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
+    (tm, es1, es2)
+end
+function surfaces(t::FullThetaTorus{T,OpenPrimitive}) where {T}
+    tm = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    φ1, φ2 = t.φ
+    es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2) )
+    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
+    (tm, es1, es2)
+end
+function surfaces(t::Torus{T,ClosedPrimitive,T,Tuple{T,T},Tuple{T,T}}) where {T}
+    tm = TorusMantle{T,Tuple{T,T},Tuple{T,T},:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    θ1, θ2 = t.θ
+    cm1 = PartialConeMantle{T,:inwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation)
+    cm2 = PartialConeMantle{T,:inwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation)
+    φ1, φ2 = t.φ
+    es1 = PartialCircularArea{T}(t.r_tube, (2π-t.θ[2], 2π-t.θ[1]), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(-π/2) )
+    es2 = PartialCircularArea{T}(t.r_tube, (2π-t.θ[2], 2π-t.θ[1]), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
+    (tm, cm1, cm2, es1, es2)
+end
+function surfaces(t::Torus{T,OpenPrimitive,T,Tuple{T,T},Tuple{T,T}}) where {T}
+    tm = TorusMantle{T,Tuple{T,T},Tuple{T,T},:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+    θ1, θ2 = t.θ
+    cm1 = PartialConeMantle{T,:outwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation)
+    cm2 = PartialConeMantle{T,:outwards}((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation)
+    φ1, φ2 = t.φ
+    es1 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2) )
+    es2 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
+    (tm, cm1, cm2, es1, es2)
+end
+
 
 function _in(pt::CartesianPoint{T}, t::FullTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)

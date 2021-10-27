@@ -7,9 +7,12 @@ Surface primitive describing the mantle of a [`Torus`](@ref).
 * `T`: Precision type.
 * `TP`: Type of the azimuthial angle `φ`.
     * `TP == Nothing`: Full 2π in `φ`.
+    * `TP == Tuple{T,T}`: Partial Torus Mantle ranging from `φ[1]` to `φ[2]`.
 * `TT`: Type of the polar angle `θ`.
     * `TT == Nothing`: Full 2π in `θ`.
+    * `TP == Tuple{T,T}`: Partial Torus Mantle ranging from `θ[1]` to `θ[2]`.
 * `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+
     
 ## Fields
 * `r_torus::T`: Distance of the center of the `TorusMantle` to the center of the tube (in m).
@@ -86,6 +89,8 @@ end
 get_label_name(::TorusMantle) = "Torus Mantle"
 
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
+const FullPhiTorusMantle{T,D} = TorusMantle{T,Nothing,Tuple{T,T},D}
+const FullThetaTorusMantle{T,D} = TorusMantle{T,Tuple{T,T},Nothing,D}
 
 function lines(tm::FullTorusMantle{T}) where {T} 
     top_circ_origin = CartesianPoint{T}(zero(T), zero(T),  tm.r_tube)
