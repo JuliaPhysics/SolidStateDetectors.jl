@@ -226,7 +226,10 @@ end
 @recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool) where {T <: SSDFloat}
 
     grid::CartesianGrid3D{T} = sp.grid
-
+    data = sp.data
+    if eltype(data) == PointType
+        data = data .& 0x07
+    end
     @series begin
         seriestype := :heatmap
         foreground_color_border --> nothing
@@ -240,7 +243,7 @@ end
             ylims --> (grid.z[1],grid.z[end])
             gy_ext = midpoints(get_extended_ticks(grid.y))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[idx,:,:]'*punit
+            midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[idx,:,:]'*punit
         elseif cross_section == :y
             aspect_ratio --> 1
             xguide --> "x"
@@ -249,7 +252,7 @@ end
             ylims --> (grid.z[1],grid.z[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gz_ext = midpoints(get_extended_ticks(grid.z))
-            midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*punit
+            midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[:,idx,:]'*punit
         elseif cross_section == :z
             aspect_ratio --> 1
             xguide --> "x"
@@ -258,7 +261,7 @@ end
             ylims --> (grid.y[1],grid.y[end])
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gy_ext = midpoints(get_extended_ticks(grid.y))
-            midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, sp.data[:,:,idx]'*punit
+            midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, data[:,:,idx]'*punit
         end
     end
 
@@ -275,7 +278,7 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 gy_ext = midpoints(get_extended_ticks(grid.y))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[idx,:,:]'*punit
+                midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[idx,:,:]'*punit
             elseif cross_section == :y
                 xguide --> "x"
                 yguide --> "z"
@@ -283,7 +286,7 @@ end
                 ylims --> (grid.z[1],grid.z[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
-                midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, sp.data[:,idx,:]'*punit
+                midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[:,idx,:]'*punit
             elseif cross_section == :z
                 xguide --> "x"
                 yguide --> "y"
@@ -291,7 +294,7 @@ end
                 ylims --> (grid.y[1],grid.y[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gy_ext = midpoints(get_extended_ticks(grid.y))
-                midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, sp.data[:,:,idx]'*punit
+                midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, data[:,:,idx]'*punit
             end
         end
     end
