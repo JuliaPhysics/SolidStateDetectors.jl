@@ -182,13 +182,17 @@ function surfaces(t::Torus{T,OpenPrimitive,T,Tuple{T,T},Tuple{T,T}}) where {T}
 end
 
 
-function _in(pt::CartesianPoint{T}, t::FullTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+function _in(pt::CartesianPoint{T}, t::Torus{T,ClosedPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    return _r <= t.r_tube + csgtol
+    return _r <= t.r_tube + csgtol &&
+        (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
+        (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
 end
-function _in(pt::CartesianPoint{T}, t::FullTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    return _r < t.r_tube - csgtol
+    return _r < t.r_tube - csgtol &&
+        (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
+        (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
 end
 
 # #Constructors
