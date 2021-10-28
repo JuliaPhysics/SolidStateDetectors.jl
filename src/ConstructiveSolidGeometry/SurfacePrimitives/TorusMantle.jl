@@ -164,6 +164,9 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     return pts
 end
 
+TorusThetaSurface(r::TR, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:flat}) where {T,TR,TP} = EllipticalSurface{T,TR,TP}(r,φ,origin,rotation)
+TorusThetaSurface(r::TR, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:inwards}) where {T,TR,TP} = ConeMantle{T,TR,TP,:inwards}(r,φ,hZ,origin,rotation)
+TorusThetaSurface(r::TR, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:outwards}) where {T,TR,TP} = ConeMantle{T,TR,TP,:outwards}(r,φ,hZ,origin,rotation)
 
 # """
 #     roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T, e::T)
