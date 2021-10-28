@@ -20,10 +20,6 @@ extremum(p::AbstractVolumePrimitive) = maximum([extremum(s) + norm(s.origin) for
     @series begin
         label --> "$(nameof(typeof(p)))"
         if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-            seriestype := :scatter
-            seriescolor --> 1
-            seriesalpha --> 0.2
-            markerstrokewidth --> 0
             vertices(p, extremum(p)/n_samples)
         else
             [fs...]

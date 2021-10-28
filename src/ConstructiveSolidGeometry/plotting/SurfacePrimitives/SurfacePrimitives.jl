@@ -34,15 +34,20 @@
             linewidth --> 2
             mesh(s, n_arc, n_vert_lines)
         elseif plotattributes[:seriestype] == :samplesurface
-            seriestype := :scatter
             label --> l
-            seriescolor --> 1
-            seriesalpha --> 0.5
-            markerstrokewidth --> 0
-            markersize --> 2
+            seriesalpha --> 0.3
             vertices(s, extremum(s)/n_samples)
         end
     end    
+end
+
+@recipe function f(::Type{Val{:samplesurface}}, x, y, z)
+    seriescolor --> 1
+    seriesalpha --> 0.2
+    markerstrokewidth --> 0
+    markersize --> 2
+    seriestype := :scatter
+    ()
 end
 
 @recipe function f(vp::AbstractVector{<:AbstractSurfacePrimitive})

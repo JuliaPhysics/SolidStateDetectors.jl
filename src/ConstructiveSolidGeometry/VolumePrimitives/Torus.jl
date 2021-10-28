@@ -178,6 +178,8 @@ function Geometry(T::DataType, ::Type{Torus}, dict::AbstractDict, input_units::N
     Torus(T, r_torus, r_tube, φ, θ, z)
 end
 
+extremum(t::TorusMantle{T}) where {T} = t.r_torus + max(t.r_tube...)
+
 # function Dictionary(t::Torus{T}) where {T}
 #     dict = OrderedDict{String,Any}()
 #     dict["r_torus"] = t.r_torus

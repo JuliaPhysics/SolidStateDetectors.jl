@@ -150,6 +150,8 @@ function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}; csgto
     end
 end
 
+extremum(rp::RegularPrism{T}) where {T} = sqrt(rp.hZ^2 + max(rp.r...)^2) 
+
 # # Convenience functions
 # const TriangularPrism{T,TR,TZ} = RegularPrism{3,T,TR,TZ}
 # const SquarePrism{T,TR,TZ}  = RegularPrism{4,T,TR,TZ}

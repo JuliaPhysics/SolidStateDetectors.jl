@@ -6,7 +6,7 @@ function primitives(csg::AbstractConstructiveGeometry)
     ps
 end
 
-extremum(csg::AbstractConstructiveGeometry{T}) where {T} = maximum([extremum(s) + norm(s.origin) for p in primitives(csg) for s in surfaces(p)])
+extremum(csg::AbstractConstructiveGeometry{T}) where {T} = maximum([extremum(p) for p in primitives(csg)])
 
 @recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 200) where {T}
     ps = primitives(csg)
@@ -24,10 +24,7 @@ extremum(csg::AbstractConstructiveGeometry{T}) where {T} = maximum([extremum(s) 
         end
         if haskey(plotattributes, :seriestype) 
             if plotattributes[:seriestype] == :samplesurface
-                seriestype := :scatter
-                seriescolor --> 1
                 seriesalpha --> 0.2
-                markerstrokewidth --> 0
                 filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), vertices(ps[1], spacing))
             else
                 ps[1]
@@ -48,10 +45,7 @@ extremum(csg::AbstractConstructiveGeometry{T}) where {T} = maximum([extremum(s) 
             end
             if haskey(plotattributes, :seriestype) 
                 if plotattributes[:seriestype] == :samplesurface
-                    seriestype := :scatter
-                    seriescolor --> 1
                     seriesalpha --> 0.2
-                    markerstrokewidth --> 0
                     filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), vertices(ps[i], spacing))
                 else
                     ps[i]

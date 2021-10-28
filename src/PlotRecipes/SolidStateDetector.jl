@@ -3,7 +3,6 @@
     linecolor --> :grey
     fillcolor --> :grey
     fillalpha --> 0.2
-    markersize --> 2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
         #add empty line so that label is shown with alpha = 1
@@ -19,7 +18,6 @@ end
 @recipe function f(sc::Semiconductor{T}) where {T}
     seriestype --> :csg
     linecolor --> :black
-    markersize --> 2
     @series begin
         #add empty line so that label is shown with alpha = 1
         seriestype := :path
@@ -37,7 +35,6 @@ end
     linecolor --> contact.id
     fillcolor --> contact.id
     fillalpha --> 0.2
-    markersize --> 2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     @series begin
         #add empty line so that label is shown with alpha = 1
