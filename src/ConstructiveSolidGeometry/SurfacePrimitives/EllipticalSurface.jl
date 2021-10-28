@@ -51,6 +51,14 @@ function vertices(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector{Ca
     [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in (rMin,rMax) for φ in φ]
 end
 
+function vertices(es::EllipticalSurface{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+    φMin, φMax = get_φ_limits(es)
+    Δφ = abs(φMax - φMin)
+    full2π = mod(Δφ, T(2π)) == 0
+    rMin, rMax = length(es.r) == 1 ? (0, es.r) : es.r
+    [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in range(rMin, rMax, length = max(2,1+Int(ceil((rMax-rMin)/spacing)))) for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/r, length = max(2,1+Int(ceil(Δφ*r/spacing)))))]
+end
+
 function connections(es::EllipticalSurface{T, T}, n_arc::Int64)::Vector{Vector{Int64}} where {T}
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
     [[1,i,i+1] for i in 2:n_arc+1]

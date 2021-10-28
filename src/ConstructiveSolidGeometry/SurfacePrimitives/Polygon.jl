@@ -20,6 +20,29 @@ normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.p
 
 vertices(p::Polygon) = p.points
 vertices(p::Polygon, n::Int64) = vertices(p)
+
+function vertices(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+    c = sum(t.points)/3
+    points = [p + min(spacing/1.2,norm(c-p))*normalize(c-p) for p in t.points]
+    tv = t.points[3] - t.points[1]
+    u = points[2] - points[1]
+    v = points[3] - points[1]
+    [(a*u + b*v) + points[1] for a in range(0, 1, length = max(2, 1 + Int(ceil(norm(u)/spacing)))) for b in range(0, (1 - a), length = max(2, 1 + Int(ceil(norm(tv*(1 - a))/spacing))))]
+end
+
+triangles(p::Polygon{N,T}) where {N,T} = [Triangle{T}([p.points[1], p.points[i], p.points[i+1]]) for i in 2:N-1]
+triangles(p::Polygon, n_arc::Int64) = triangles(p)
+
+function vertices(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N,T}
+    v = CartesianPoint{T}[]
+    for t in triangles(p)
+        append!(v, vertices(t, spacing))
+    end
+    v
+end
+
+extremum(p::Polygon{N}) where {N} = maximum([norm(p.points[i]-p.points[j]) for i in 1:N for j in 1:N+1-i])
+
 connections(p::Polygon{N}) where {N} = [collect(1:N)]
 connections(p::Polygon, ::Int64) = connections(p)
 connections(p::Polygon{N}, ::Int64, ::Int64) where {N} = [[i%N+1, (i+1)%N+1] for i in 0:N-1]
