@@ -106,6 +106,7 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
 
     r_torus = _parse_value(T, dict["r_torus"], length_unit)
     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
+    r_tube isa Tuple{T,T} && iszero(r_tube[1]) ? r_tube = r_tube[2] : nothing
     φ = parse_φ_of_primitive(T, dict, angle_unit)
     θ = parse_θ_of_primitive(T, dict, angle_unit)
     TT1, TT2 = _get_conemantle_type(θ)
