@@ -1,7 +1,7 @@
 abstract type AbstractPassive{T} <: AbstractObject{T} end
 
 """
-    mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
+    struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
         
 Passive object, assigned to a [`SolidStateDetector`](@ref).
 
@@ -46,7 +46,7 @@ passives:
     geometry: # ...
 ```
 """
-mutable struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
+struct Passive{T,G,MT,CDM} <: AbstractPassive{T}
     name::String
     id::Int
     potential::T # NaN is floating
