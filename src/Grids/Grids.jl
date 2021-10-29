@@ -214,3 +214,10 @@ function get_extended_midpoints_grid(grid::Grid{T,3}) where {T}
     axes = broadcast(i -> typeof(grid.axes[i])(grid.axes[i].interval, ticks[i]) , (1,2,3))
     typeof(grid)(axes)
 end
+
+in(pt::CartesianPoint{T}, grid::Grid{T, 3, Cartesian}) where {T} =
+    all(broadcast(i -> pt[i] in grid.axes[i].interval, (1, 2, 3)))
+in(pt::CylindricalPoint{T}, grid::Grid{T, 3, Cylindrical}) where {T} =
+    all(broadcast(i -> pt[i] in grid.axes[i].interval, (1, 2, 3)))
+in(pt::CartesianPoint{T}, grid::Grid{T, 3, Cylindrical}) where {T} =
+    in(CylindricalPoint(pt), grid)
