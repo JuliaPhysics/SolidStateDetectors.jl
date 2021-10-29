@@ -92,21 +92,22 @@ const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
 const FullPhiTorusMantle{T,D} = TorusMantle{T,Nothing,Tuple{T,T},D}
 const FullThetaTorusMantle{T,D} = TorusMantle{T,Tuple{T,T},Nothing,D}
 
-function lines(tm::FullTorusMantle{T}) where {T} 
+function lines(tm::TorusMantle{T,TP,TT}) where {T,TP,TT}
     top_circ_origin = CartesianPoint{T}(zero(T), zero(T),  tm.r_tube)
     top_circ_origin = _transform_into_global_coordinate_system(top_circ_origin, tm)
-    top_circ = Circle{T}(r = tm.r_torus, origin = top_circ_origin, rotation = tm.rotation)
+    top_circ = Ellipse{T,T,TP}(r = tm.r_torus, φ = tm.φ, origin = top_circ_origin, rotation = tm.rotation)
     bot_circ_origin = CartesianPoint{T}(zero(T), zero(T), -tm.r_tube)
     bot_circ_origin = _transform_into_global_coordinate_system(bot_circ_origin, tm)
-    bot_circ = Circle{T}(r = tm.r_torus, origin = bot_circ_origin, rotation = tm.rotation)
-    inner_circ = Circle{T}(r = tm.r_torus - tm.r_tube, origin = tm.origin, rotation = tm.rotation)
-    outer_circ = Circle{T}(r = tm.r_torus + tm.r_tube, origin = tm.origin, rotation = tm.rotation)
-    tube_circ_1_origin = CartesianPoint{T}(tm.r_torus, zero(T), zero(T))
+    bot_circ = Ellipse{T,T,TP}(r = tm.r_torus, φ = tm.φ, origin = bot_circ_origin, rotation = tm.rotation)
+    inner_circ = Ellipse{T,T,TP}(r = tm.r_torus - tm.r_tube, φ = tm.φ, origin = tm.origin, rotation = tm.rotation)
+    outer_circ = Ellipse{T,T,TP}(r = tm.r_torus + tm.r_tube, φ = tm.φ, origin = tm.origin, rotation = tm.rotation)
+    φmin::T, φmax::T = isnothing(tm.φ) ? (0, π) : get_φ_limits(tm)
+    tube_circ_1_origin = CartesianPoint(CylindricalPoint{T}(tm.r_torus, φmin, zero(T)))
     tube_circ_1_origin = _transform_into_global_coordinate_system(tube_circ_1_origin, tm)
-    tube_circ_1 = Circle{T}(r = tm.r_tube, origin = tube_circ_1_origin, rotation = tm.rotation * RotX(T(π)/2))
-    tube_circ_2_origin = CartesianPoint{T}(-tm.r_torus, zero(T), zero(T))
+    tube_circ_1 = Ellipse{T,T,TT}(r = tm.r_tube, φ = tm.θ, origin = tube_circ_1_origin, rotation = tm.rotation * RotZ(φmin) *RotX(T(π)/2))
+    tube_circ_2_origin = CartesianPoint(CylindricalPoint{T}(tm.r_torus, φmax, zero(T)))
     tube_circ_2_origin = _transform_into_global_coordinate_system(tube_circ_2_origin, tm)
-    tube_circ_2 = Circle{T}(r = tm.r_tube, origin = tube_circ_2_origin, rotation = tm.rotation * RotX(T(π)/2))
+    tube_circ_2 = Ellipse{T,T,TT}(r = tm.r_tube, φ = tm.θ, origin = tube_circ_2_origin, rotation = tm.rotation * RotZ(φmax) * RotX(T(π)/2))
     (bot_circ, outer_circ, top_circ, inner_circ, tube_circ_1, tube_circ_2)
 end 
 
