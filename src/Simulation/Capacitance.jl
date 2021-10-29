@@ -106,6 +106,8 @@ Calculates the Maxwell Capacitance `N×N`-Matrix in units of pF,
 where `N` is the number of contacts of `sim.detector`.
 The individual elements, ``c_{i,j}``, are calculated via 
 [`calculate_mutual_capacitance(sim::Simulation, (i,j)::Tuple{Int,Int})`](@ref).
+The matrix should be symmetric. The difference of `C[i,j]` and `C[j,i]` are due 
+to numerical precision in the integration due to the different grids of the two weighting potentials.
 
 ## Arguments
 * `sim::Simulation`: [`Simulation`](@ref) for which the capacitance matrix is calculated.
@@ -122,8 +124,8 @@ function calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity:
     n = length(sim.weighting_potentials)
     C = zeros(typeof(one(T) * u"pF"), (n, n))
     for i in 1:n
-        for j in i:n
-            C[j, i] = C[i, j] = if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j]) 
+        for j in 1:n
+            C[j, i] = if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j]) 
                 calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
             else
                 missing
