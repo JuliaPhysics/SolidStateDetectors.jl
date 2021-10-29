@@ -164,9 +164,14 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     return pts
 end
 
-TorusThetaSurface(r::TR, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:flat}) where {T,TR,TP} = EllipticalSurface{T,TR,TP}(r,φ,origin,rotation)
-TorusThetaSurface(r::TR, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:inwards}) where {T,TR,TP} = ConeMantle{T,TR,TP,:inwards}(r,φ,hZ,origin,rotation)
-TorusThetaSurface(r::TR, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:outwards}) where {T,TR,TP} = ConeMantle{T,TR,TP,:outwards}(r,φ,hZ,origin,rotation)
+# These function compose cross sections of Tori at constant θ and ensure that the height is always positive
+TorusThetaSurface(r::T, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:flat}) where {T,TP} = EllipticalSurface{T,T,TP}(r,φ,origin,rotation)
+TorusThetaSurface(r::T, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:inwards}) where {T,TP} = ConeMantle{T,T,TP,:inwards}(r,φ,abs(hZ),origin,rotation)
+TorusThetaSurface(r::T, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:outwards}) where {T,TP} = ConeMantle{T,T,TP,:outwards}(r,φ,abs(hZ),origin,rotation)
+TorusThetaSurface(r::Tuple{T,T}, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:flat}) where {T,TP} = EllipticalSurface{T,Tuple{T,T},TP}(ordered(r),φ,origin,rotation)
+TorusThetaSurface(r::Tuple{T,T}, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:inwards}) where {T,TP} = ConeMantle{T,Tuple{T,T},TP,:inwards}(hZ < 0 ? reverse(r) : r, φ, abs(hZ), origin, rotation)
+TorusThetaSurface(r::Tuple{T,T}, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:outwards}) where {T,TP} = ConeMantle{T,Tuple{T,T},TP,:outwards}(hZ < 0 ? reverse(r) : r, φ, abs(hZ), origin, rotation)
+
 
 # """
 #     roots_of_4th_order_polynomial(a::T, b::T, c::T, d::T, e::T)
