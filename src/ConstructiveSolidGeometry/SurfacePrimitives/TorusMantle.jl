@@ -113,10 +113,10 @@ end
 extremum(tm::TorusMantle{T}) where {T} = tm.r_torus + tm.r_tube
 
 
-function _in(pt::CartesianPoint{T}, t::TorusMantle{T}; csgtol::T = csg_default_tol(T)) where {T}
-    return (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
-           (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
-end
+# function _in(pt::CartesianPoint{T}, t::TorusMantle{T}; csgtol::T = csg_default_tol(T)) where {T}
+#     return (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
+#            (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
+# end
 
 """
     intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
@@ -158,10 +158,10 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 
 	# λ1, λ2, λ3, λ4 = roots_of_4th_order_polynomial(a, b, c, d) # That does not work for all combinations of a, b, c, d...
 	# fallback to Polynomials.jl, which is slower... We should improve `roots_of_4th_order_polynomial`... 
-    pts = broadcast(λ -> _transform_into_global_coordinate_system(obj_l.origin + λ * obj_l.direction, tm), 
+    return broadcast(λ -> _transform_into_global_coordinate_system(obj_l.origin + λ * obj_l.direction, tm), 
         real.(Polynomials.roots(Polynomial((d, c, b, a, one(T))))))
-    pts[.!in.(pts, Ref(tm))] .= Ref(CartesianPoint{T}(NaN,NaN,NaN)) # for Partial Tori: discard all intersection points that are not part of the Torus
-    return pts
+    # pts[.!in.(pts, Ref(tm))] .= Ref(CartesianPoint{T}(NaN,NaN,NaN)) # for Partial Tori: discard all intersection points that are not part of the Torus
+    # return pts
 end
 
 # These function compose cross sections of Tori at constant θ and ensure that the height is always positive
