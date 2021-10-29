@@ -567,15 +567,18 @@ function update_till_convergence!( sim::Simulation{T,CS},
         @inbounds for i in eachindex(sim.electric_potential.data)
             if sim.electric_potential.data[i] < pssrb.minimum_applied_potential # p-type
                 sim.electric_potential.data[i] = pssrb.minimum_applied_potential
-                update_again = true
-            end
-        end
-        if !update_again
-            @inbounds for i in eachindex(sim.electric_potential.data)
-                if sim.electric_potential.data[i] > pssrb.maximum_applied_potential # n-type
-                    sim.electric_potential.data[i] = pssrb.maximum_applied_potential
-                    update_again = true
+                if sim.point_types.data[i] & undepleted_bit == 0 && 
+                   sim.point_types.data[i] & pn_junction_bit > 0
+                        sim.point_types.data[i] += undepleted_bit
                 end
+                update_again = true
+            elseif sim.electric_potential.data[i] > pssrb.maximum_applied_potential # n-type
+                sim.electric_potential.data[i] = pssrb.maximum_applied_potential
+                if sim.point_types.data[i] & undepleted_bit == 0 && 
+                   sim.point_types.data[i] & pn_junction_bit > 0
+                        sim.point_types.data[i] += undepleted_bit
+                end
+                update_again = true
             end
         end
         if update_again
@@ -586,11 +589,26 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                             depletion_handling = Val{depletion_handling}(),
                                             is_weighting_potential = Val{false}(),
                                             use_nthreads = use_nthreads,
-                                            n_iterations_between_checks = n_iterations_between_checks,
-                                            max_n_iterations = max_n_iterations,
-                                            verbose = verbose )
+                                            n_iterations_between_checks = 1,
+                                            max_n_iterations = 0,
+                                            verbose = false )
             pssrb = adapt(Array, pssrb)
             sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
+        end
+        @inbounds for i in eachindex(sim.electric_potential.data)
+            if sim.electric_potential.data[i] < pssrb.minimum_applied_potential # p-type
+                sim.electric_potential.data[i] = pssrb.minimum_applied_potential
+                if sim.point_types.data[i] & undepleted_bit == 0 && 
+                   sim.point_types.data[i] & pn_junction_bit > 0
+                        sim.point_types.data[i] += undepleted_bit
+                end
+            elseif sim.electric_potential.data[i] > pssrb.maximum_applied_potential # n-type
+                sim.electric_potential.data[i] = pssrb.maximum_applied_potential
+                if sim.point_types.data[i] & undepleted_bit == 0 && 
+                   sim.point_types.data[i] & pn_junction_bit > 0
+                        sim.point_types.data[i] += undepleted_bit
+                end
+            end
         end
     end
 
