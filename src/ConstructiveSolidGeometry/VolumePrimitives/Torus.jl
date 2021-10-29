@@ -154,22 +154,22 @@ end
 function surfaces(t::FullPhiTorus{T,OpenPrimitive,TT1,TT2}) where {T,TT1,TT2}
     tm = FullPhiTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
-    cm1 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}())
-    cm2 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}())
+    cm1 = flip(TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}()))
+    cm2 = flip(TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}()))
     (tm, cm1, cm2)
 end
 function surfaces(t::FullThetaTorus{T,ClosedPrimitive}) where {T}
     tm = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     φ1, φ2 = t.φ
     es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(-π/2) )
-    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
+    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
     (tm, es1, es2)
 end
 function surfaces(t::FullThetaTorus{T,OpenPrimitive}) where {T}
     tm = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     φ1, φ2 = t.φ
     es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2) )
-    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
+    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
     (tm, es1, es2)
 end
 function surfaces(t::Torus{T,ClosedPrimitive,T,Tuple{T,T},Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
@@ -178,18 +178,18 @@ function surfaces(t::Torus{T,ClosedPrimitive,T,Tuple{T,T},Tuple{T,T},TT1,TT2}) w
     cm1 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}())
     cm2 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}())
     φ1, φ2 = t.φ
-    es1 = PartialCircularArea{T}(t.r_tube, (2π-t.θ[2], 2π-t.θ[1]), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(-π/2) )
-    es2 = PartialCircularArea{T}(t.r_tube, (2π-t.θ[2], 2π-t.θ[1]), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
+    es1 = flip(PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2)))
+    es2 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2))
     (tm, cm1, cm2, es1, es2)
 end
 function surfaces(t::Torus{T,OpenPrimitive,T,Tuple{T,T},Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
     tm = TorusMantle{T,Tuple{T,T},Tuple{T,T},:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
-    cm1 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}())
-    cm2 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}())
+    cm1 = flip(TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}()))
+    cm2 = flip(TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}()))
     φ1, φ2 = t.φ
-    es1 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2) )
-    es2 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
+    es1 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2))
+    es2 = flip(PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2)))
     (tm, cm1, cm2, es1, es2)
 end
 
