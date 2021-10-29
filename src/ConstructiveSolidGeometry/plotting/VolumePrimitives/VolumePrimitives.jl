@@ -7,9 +7,7 @@ function vertices(p::AbstractVolumePrimitive{T}, spacing::T)::Vector{CartesianPo
     vs
 end
 
-extremum(p::AbstractVolumePrimitive) = maximum([extremum(s) + norm(s.origin) for s in surfaces(p)])
-
-@recipe function f(p::AbstractVolumePrimitive; n_samples = 200)
+@recipe function f(p::AbstractVolumePrimitive; n_samples = 100)
     fs = surfaces(p)
     # In principle it would be better to directly get the edges of the primitive
     # Can be improved later...

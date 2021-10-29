@@ -5,7 +5,7 @@
 #include("Polygon.jl")
 #include("TorusMantle.jl")
 
-@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 200) where {T}
+@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 100) where {T}
     seriestype --> :csg
     l = get_label_name(s)
     if haskey(plotattributes, :seriestype) 
@@ -35,7 +35,7 @@
             mesh(s, n_arc, n_vert_lines)
         elseif plotattributes[:seriestype] == :samplesurface
             label --> l
-            seriesalpha --> 0.3
+            seriesalpha --> 0.4
             vertices(s, extremum(s)/n_samples)
         end
     end    

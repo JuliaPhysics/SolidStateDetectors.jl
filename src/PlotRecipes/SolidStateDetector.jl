@@ -1,7 +1,8 @@
 @recipe function f(p::Passive{T}) where {T}
     seriestype --> :csg
-    linecolor --> :grey
-    fillcolor --> :grey
+    linecolor --> :silver
+    #fillcolor --> :grey
+    seriescolor --> :silver
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
@@ -17,7 +18,8 @@ end
 
 @recipe function f(sc::Semiconductor{T}) where {T}
     seriestype --> :csg
-    linecolor --> :black
+    linecolor --> :grey
+    seriescolor --> :grey
     @series begin
         #add empty line so that label is shown with alpha = 1
         seriestype := :path
@@ -47,25 +49,32 @@ end
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true)
+@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 100)
 
     show_normal --> false
-
+    
+    plot_objects = []
+    append!(plot_objects, det.contacts)
     if show_semiconductor
-        @series begin
-            det.semiconductor
-        end
-    end
-    for c in det.contacts
-        @series begin
-            c
-        end
+        push!(plot_objects, det.semiconductor)
     end
     if show_passives && !ismissing(det.passives)
-        for p in det.passives
-            @series begin
-                p
+        append!(plot_objects, det.passives)
+    end
+    
+    scales = nothing
+    max_scale = nothing
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
+        scales = [ConstructiveSolidGeometry.get_scale(o.geometry) for o in plot_objects]
+        max_scale = maximum(scales)
+    end
+    
+    for (i,o) in enumerate(plot_objects)
+        @series begin
+            if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
+                n_samples --> Int(ceil(n_samples * scales[i]/max_scale))
             end
+            o
         end
     end
 end

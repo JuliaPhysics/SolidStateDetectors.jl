@@ -6,11 +6,10 @@ function primitives(csg::AbstractConstructiveGeometry)
     ps
 end
 
-extremum(csg::AbstractConstructiveGeometry{T}) where {T} = maximum([extremum(p) for p in primitives(csg)])
-
-@recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 200) where {T}
+@recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 100) where {T}
+    seriestype --> :csg
     ps = primitives(csg)
-    spacing = (haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface) ?  T(extremum(csg)/n_samples) : nothing
+    spacing = (haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface) ?  T(get_scale(csg)/n_samples) : nothing
     @series begin
         label --> "CSG"
         if !isClosedPrimitive(ps[1])

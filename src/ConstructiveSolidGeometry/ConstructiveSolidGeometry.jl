@@ -85,6 +85,8 @@ module ConstructiveSolidGeometry
             o - vX, o + vX, o - vY, o + vY, o - vZ, o + vZ,
         )
     end
+    
+    get_scale(es::AbstractPrimitive) = extremum(es)
 
     include("Transformations.jl")
     include("GeometryRounding.jl")
