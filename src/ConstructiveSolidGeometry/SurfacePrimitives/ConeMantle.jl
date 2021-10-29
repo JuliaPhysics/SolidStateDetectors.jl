@@ -30,6 +30,11 @@ Surface primitive describing the mantle of a [`Cone`](@ref).
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+flip(c::ConeMantle{T,TR,TP,:inwards}) where {T,TR,TP} = 
+    ConeMantle{T,TR,TP,:outwards}(c.r, c.φ, c.hZ, c.origin, c.rotation)
+flip(c::ConeMantle{T,TR,TP,:outwards}) where {T,TR,TP} = 
+    ConeMantle{T,TR,TP,:inwards}(c.r, c.φ, c.hZ, c.origin, c.rotation) 
+
 radius_at_z(hZ::T, rBot::T, rTop::T, z::T) where {T} = iszero(hZ) ? rBot : rBot + (hZ+z)*(rTop - rBot)/(2hZ) 
 radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
 radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, cm.r[1], cm.r[2], z)
@@ -37,7 +42,13 @@ radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, c
 get_φ_limits(cm::ConeMantle{T,<:Any,Tuple{T,T}}) where {T} = cm.φ[1], cm.φ[2]
 get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
-function normal(cm::ConeMantle{T,T}, pt::CartesianPoint{T}) where {T}
+function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T}) where {T}
+    pto = _transform_into_object_coordinate_system(pt, cm)
+    cyl = CylindricalPoint(pto)
+    return CartesianVector(_transform_into_global_coordinate_system(
+            CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, zero(T))), cm))
+end
+function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T}) where {T}
     pto = _transform_into_object_coordinate_system(pt, cm)
     cyl = CylindricalPoint(pto)
     return CartesianVector(_transform_into_global_coordinate_system(
