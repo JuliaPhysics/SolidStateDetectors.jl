@@ -71,7 +71,7 @@ function vertices(cm::ConeMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} wh
     append!(botcircle, topcircle)
 end
 
-function vertices(cm::ConeMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+function sample(cm::ConeMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(cm)
     Δφ = abs(φMax - φMin)
     full2π = mod(Δφ, T(2π)) == 0

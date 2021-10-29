@@ -51,7 +51,7 @@ function vertices(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector{Ca
     [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in (rMin,rMax) for φ in φ]
 end
 
-function vertices(es::EllipticalSurface{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+function sample(es::EllipticalSurface{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(es)
     Δφ = abs(φMax - φMin)
     full2π = mod(Δφ, T(2π)) == 0

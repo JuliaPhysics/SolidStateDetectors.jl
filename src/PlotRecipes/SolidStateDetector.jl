@@ -65,7 +65,7 @@ end
     scales = nothing
     max_scale = nothing
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-        scales = [ConstructiveSolidGeometry.get_scale(o.geometry) for o in plot_objects]
+        scales = [get_scale(o.geometry) for o in plot_objects]
         max_scale = maximum(scales)
     end
     

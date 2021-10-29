@@ -89,7 +89,7 @@ function vertices(em::EllipsoidMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T
     [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) for θ in θ for φ in φ]
 end
 
-function vertices(em::EllipsoidMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+function sample(em::EllipsoidMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     rx, ry, rz = get_radii(em) 
     r = (rx*ry*rz)^(1/3)
     φMin, φMax = get_φ_limits(em)

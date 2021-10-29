@@ -58,7 +58,7 @@ function vertices(tm::TorusMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} w
     [_transform_into_global_coordinate_system(CartesianPoint{T}((tm.r_torus + tm.r_tube*cos(θ))*cos(φ), (tm.r_torus + tm.r_tube*cos(θ))*sin(φ), tm.r_tube*sin(θ)), tm) for θ in θ for φ in φ]
 end
 
-function vertices(tm::TorusMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+function sample(tm::TorusMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(tm)
     θMin, θMax = get_θ_limits(tm)
     Δφ = abs(φMax - φMin)

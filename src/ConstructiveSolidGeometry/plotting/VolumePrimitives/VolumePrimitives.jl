@@ -1,8 +1,8 @@
-function vertices(p::AbstractVolumePrimitive{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+function sample(p::AbstractVolumePrimitive{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     fs = surfaces(p)
     vs = Vector{CartesianPoint{T}}()
     for s in fs
-        append!(vs, vertices(s, spacing))
+        append!(vs, sample(s, spacing))
     end
     vs
 end
@@ -18,7 +18,7 @@ end
     @series begin
         label --> "$(nameof(typeof(p)))"
         if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-            vertices(p, extremum(p)/n_samples)
+            sample(p, extremum(p)/n_samples)
         else
             [fs...]
         end

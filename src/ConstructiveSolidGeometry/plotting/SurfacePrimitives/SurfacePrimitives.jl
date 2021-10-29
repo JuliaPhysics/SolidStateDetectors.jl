@@ -36,7 +36,7 @@
         elseif plotattributes[:seriestype] == :samplesurface
             label --> l
             seriesalpha --> 0.4
-            vertices(s, extremum(s)/n_samples)
+            sample(s, extremum(s)/n_samples)
         end
     end    
 end

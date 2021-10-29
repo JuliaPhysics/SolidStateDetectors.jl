@@ -24,7 +24,7 @@ end
         if haskey(plotattributes, :seriestype) 
             if plotattributes[:seriestype] == :samplesurface
                 seriesalpha --> 0.2
-                filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), vertices(ps[1], spacing))
+                filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), sample(ps[1], spacing))
             else
                 ps[1]
             end
@@ -45,7 +45,7 @@ end
             if haskey(plotattributes, :seriestype) 
                 if plotattributes[:seriestype] == :samplesurface
                     seriesalpha --> 0.2
-                    filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), vertices(ps[i], spacing))
+                    filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), sample(ps[i], spacing))
                 else
                     ps[i]
                 end

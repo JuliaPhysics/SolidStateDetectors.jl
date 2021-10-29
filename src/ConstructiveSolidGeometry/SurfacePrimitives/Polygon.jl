@@ -21,7 +21,7 @@ normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.p
 vertices(p::Polygon) = p.points
 vertices(p::Polygon, n::Int64) = vertices(p)
 
-function _vertices(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     c = sum(t.points)/3
     pushfactor = 1.2
     d = minimum([norm(c-p) for p in t.points])
@@ -39,10 +39,10 @@ end
 triangles(p::Polygon{N,T}) where {N,T} = [Triangle{T}([p.points[1], p.points[i], p.points[i+1]]) for i in 2:N-1]
 triangles(p::Polygon, n_arc::Int64) = triangles(p)
 
-function vertices(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N,T}
+function sample(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N,T}
     v = [s for e in edges(p) for s in sample(e,n=max(2,Int(ceil(norm(e.b-e.a)/spacing))))]
     for t in triangles(p)
-        append!(v, _vertices(t, spacing))
+        append!(v, _sample_excluding_border(t, spacing))
     end
     v
 end
