@@ -29,6 +29,7 @@ const bulk_bit     = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is sur
 
 is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
 is_undepleted_point_type(p::PointType) = p & undepleted_bit > 0
+is_fixed_point_type(p::PointType) = p & update_bit == 0
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
         
