@@ -1,7 +1,6 @@
 @recipe function f(p::Passive{T}) where {T}
     seriestype --> :csg
     linecolor --> :silver
-    #fillcolor --> :grey
     seriescolor --> :silver
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
@@ -35,7 +34,6 @@ end
     seriestype --> :csg
     seriescolor --> contact.id
     linecolor --> contact.id
-    fillcolor --> contact.id
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     @series begin
