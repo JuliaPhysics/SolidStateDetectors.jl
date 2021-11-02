@@ -10,7 +10,7 @@ Surface primitive describing the mantle of a [`Cone`](@ref).
     * `TR == Tuple{T, T}`: VaryingCylinderMantle (bottom radius at `r[1]`, top radius at `r[2]`).
 * `TP`: Type of the angular range `φ`.
     * `TP == Nothing`: Full 2π Cone.
-    * `TP == Tuple{T, T}`: Partial Cone ranging from `φ[1]` to `φ[2]`.
+    * `TP == T`: Partial ConeMantle ranging from `0` to `φ`.
 * `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
     
 ## Fields
@@ -20,7 +20,7 @@ Surface primitive describing the mantle of a [`Cone`](@ref).
 * `origin::CartesianPoint{T}`: Origin of the `Cone` which has this `ConeMantle` as surface.
 * `rotation::SMatrix{3,3,T,9}`: Rotation matrix of the `Cone` which has this `ConeMantle` as surface.
 """
-@with_kw struct ConeMantle{T,TR,TP,D} <: AbstractCurvedSurfacePrimitive{T}
+@with_kw struct ConeMantle{T,TR,TP<:Union{Nothing,T},D} <: AbstractCurvedSurfacePrimitive{T}
     r::TR = 1
     φ::TP = nothing
     hZ::T = 1
@@ -39,7 +39,7 @@ radius_at_z(hZ::T, rBot::T, rTop::T, z::T) where {T} = iszero(hZ) ? rBot : rBot 
 radius_at_z(cm::ConeMantle{T,T}, z::T) where {T} = cm.r
 radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, cm.r[1], cm.r[2], z)
 
-get_φ_limits(cm::ConeMantle{T,<:Any,Tuple{T,T}}) where {T} = cm.φ[1], cm.φ[2]
+get_φ_limits(cm::ConeMantle{T,<:Any,T}) where {T} = T(0), cm.φ
 get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T}) where {T}
@@ -98,7 +98,7 @@ end
 get_label_name(::ConeMantle) = "Cone Mantle"
 
 const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but works for now, should just be `ConeMantle`...
-const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Tuple{T,T},D}
+const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},T,D}
 
 
 extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
@@ -120,7 +120,7 @@ function lines(sp::PartialConeMantle{T}; n = 2) where {T}
     bot_ellipse = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +sp.hZ), sp)
     top_ellipse = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
-    φs = range(sp.φ[1], stop = sp.φ[2], length = n)
+    φs = range(zero(T), stop = sp.φ, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, -sp.hZ)), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, +sp.hZ)), sp)) for φ in φs ]
     bot_ellipse, top_ellipse, edges
