@@ -1,8 +1,10 @@
 @inline _linear_endpoints(z::Real) = (-z, z)
 @inline _linear_endpoints(z::AbstractInterval) = endpoints(z)
+@inline _linear_endpoints(r::Tuple{T,T}) where {T} = r
 
 @inline _radial_endpoints(r::T) where {T <: Real} = (zero(T), r)
 @inline _radial_endpoints(r::AbstractInterval) = endpoints(r)
+@inline _radial_endpoints(r::Tuple{T,T}) where {T} = r
 
 @inline _in_angular_interval_closed(α::Real, α_int::Nothing, tol::Real = 0) = true
 @inline _in_angular_interval_closed(α::Real, α_int::AbstractInterval{T}, tol::Real = 0) where {T} = mod(α - (α_int.left-tol), T(2π)) ≤ (α_int.right+tol) - (α_int.left-tol)

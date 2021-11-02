@@ -26,6 +26,11 @@ Surface primitive describing circular bases, e.g. the top or bottom base of a [`
     rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
 end
 
+flip(es::EllipticalSurface{T,TR,Nothing}) where {T,TR} = 
+    EllipticalSurface{T,TR,Nothing}(es.r, es.φ, es.origin, es.rotation * SMatrix{3,3,T,9}(1,0,0,0,-1,0,0,0,-1))
+flip(es::EllipticalSurface{T,TR,Tuple{T,T}}) where {T,TR} = 
+    EllipticalSurface{T,TR,Tuple{T,T}}(es.r, (2π-es.φ[2], 2π-es.φ[1]), es.origin, es.rotation * SMatrix{3,3,T,9}(1,0,0,0,-1,0,0,0,-1))
+
 const CircularArea{T} = EllipticalSurface{T,T,Nothing}
 const PartialCircularArea{T} = EllipticalSurface{T,T,Tuple{T,T}}
 

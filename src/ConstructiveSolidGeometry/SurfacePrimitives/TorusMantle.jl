@@ -7,9 +7,12 @@ Surface primitive describing the mantle of a [`Torus`](@ref).
 * `T`: Precision type.
 * `TP`: Type of the azimuthial angle `φ`.
     * `TP == Nothing`: Full 2π in `φ`.
+    * `TP == Tuple{T,T}`: Partial Torus Mantle ranging from `φ[1]` to `φ[2]`.
 * `TT`: Type of the polar angle `θ`.
     * `TT == Nothing`: Full 2π in `θ`.
+    * `TP == Tuple{T,T}`: Partial Torus Mantle ranging from `θ[1]` to `θ[2]`.
 * `D`: Direction in which the normal vector points (`:inwards` or `:outwards`).
+
     
 ## Fields
 * `r_torus::T`: Distance of the center of the `TorusMantle` to the center of the tube (in m).
@@ -86,26 +89,35 @@ end
 get_label_name(::TorusMantle) = "Torus Mantle"
 
 const FullTorusMantle{T,D} = TorusMantle{T,Nothing,Nothing,D}
+const FullPhiTorusMantle{T,D} = TorusMantle{T,Nothing,Tuple{T,T},D}
+const FullThetaTorusMantle{T,D} = TorusMantle{T,Tuple{T,T},Nothing,D}
 
-function lines(tm::FullTorusMantle{T}) where {T} 
+function lines(tm::TorusMantle{T,TP,TT}) where {T,TP,TT}
     top_circ_origin = CartesianPoint{T}(zero(T), zero(T),  tm.r_tube)
     top_circ_origin = _transform_into_global_coordinate_system(top_circ_origin, tm)
-    top_circ = Circle{T}(r = tm.r_torus, origin = top_circ_origin, rotation = tm.rotation)
+    top_circ = Ellipse{T,T,TP}(r = tm.r_torus, φ = tm.φ, origin = top_circ_origin, rotation = tm.rotation)
     bot_circ_origin = CartesianPoint{T}(zero(T), zero(T), -tm.r_tube)
     bot_circ_origin = _transform_into_global_coordinate_system(bot_circ_origin, tm)
-    bot_circ = Circle{T}(r = tm.r_torus, origin = bot_circ_origin, rotation = tm.rotation)
-    inner_circ = Circle{T}(r = tm.r_torus - tm.r_tube, origin = tm.origin, rotation = tm.rotation)
-    outer_circ = Circle{T}(r = tm.r_torus + tm.r_tube, origin = tm.origin, rotation = tm.rotation)
-    tube_circ_1_origin = CartesianPoint{T}(tm.r_torus, zero(T), zero(T))
+    bot_circ = Ellipse{T,T,TP}(r = tm.r_torus, φ = tm.φ, origin = bot_circ_origin, rotation = tm.rotation)
+    inner_circ = Ellipse{T,T,TP}(r = tm.r_torus - tm.r_tube, φ = tm.φ, origin = tm.origin, rotation = tm.rotation)
+    outer_circ = Ellipse{T,T,TP}(r = tm.r_torus + tm.r_tube, φ = tm.φ, origin = tm.origin, rotation = tm.rotation)
+    φmin::T, φmax::T = isnothing(tm.φ) ? (0, π) : get_φ_limits(tm)
+    tube_circ_1_origin = CartesianPoint(CylindricalPoint{T}(tm.r_torus, φmin, zero(T)))
     tube_circ_1_origin = _transform_into_global_coordinate_system(tube_circ_1_origin, tm)
-    tube_circ_1 = Circle{T}(r = tm.r_tube, origin = tube_circ_1_origin, rotation = tm.rotation * RotX(T(π)/2))
-    tube_circ_2_origin = CartesianPoint{T}(-tm.r_torus, zero(T), zero(T))
+    tube_circ_1 = Ellipse{T,T,TT}(r = tm.r_tube, φ = tm.θ, origin = tube_circ_1_origin, rotation = tm.rotation * RotZ(φmin) *RotX(T(π)/2))
+    tube_circ_2_origin = CartesianPoint(CylindricalPoint{T}(tm.r_torus, φmax, zero(T)))
     tube_circ_2_origin = _transform_into_global_coordinate_system(tube_circ_2_origin, tm)
-    tube_circ_2 = Circle{T}(r = tm.r_tube, origin = tube_circ_2_origin, rotation = tm.rotation * RotX(T(π)/2))
+    tube_circ_2 = Ellipse{T,T,TT}(r = tm.r_tube, φ = tm.θ, origin = tube_circ_2_origin, rotation = tm.rotation * RotZ(φmax) * RotX(T(π)/2))
     (bot_circ, outer_circ, top_circ, inner_circ, tube_circ_1, tube_circ_2)
 end 
 
 extremum(tm::TorusMantle{T}) where {T} = tm.r_torus + tm.r_tube
+
+
+# function _in(pt::CartesianPoint{T}, t::TorusMantle{T}; csgtol::T = csg_default_tol(T)) where {T}
+#     return (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
+#            (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
+# end
 
 """
     intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
@@ -149,7 +161,17 @@ function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
 	# fallback to Polynomials.jl, which is slower... We should improve `roots_of_4th_order_polynomial`... 
     return broadcast(λ -> _transform_into_global_coordinate_system(obj_l.origin + λ * obj_l.direction, tm), 
         real.(Polynomials.roots(Polynomial((d, c, b, a, one(T))))))
+    # pts[.!in.(pts, Ref(tm))] .= Ref(CartesianPoint{T}(NaN,NaN,NaN)) # for Partial Tori: discard all intersection points that are not part of the Torus
+    # return pts
 end
+
+# These function compose cross sections of Tori at constant θ and ensure that the height is always positive
+TorusThetaSurface(r::T, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:flat}) where {T,TP} = EllipticalSurface{T,T,TP}(r,φ,origin,rotation)
+TorusThetaSurface(r::T, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:inwards}) where {T,TP} = ConeMantle{T,T,TP,:inwards}(r,φ,abs(hZ),origin,rotation)
+TorusThetaSurface(r::T, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:outwards}) where {T,TP} = ConeMantle{T,T,TP,:outwards}(r,φ,abs(hZ),origin,rotation)
+TorusThetaSurface(r::Tuple{T,T}, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:flat}) where {T,TP} = EllipticalSurface{T,Tuple{T,T},TP}(ordered(r),φ,origin,rotation)
+TorusThetaSurface(r::Tuple{T,T}, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:inwards}) where {T,TP} = ConeMantle{T,Tuple{T,T},TP,:inwards}(hZ < 0 ? reverse(r) : r, φ, abs(hZ), origin, rotation)
+TorusThetaSurface(r::Tuple{T,T}, φ::TP, hZ::T, origin::CartesianPoint{T}, rotation::SMatrix{3,3,T,9}, ::Val{:outwards}) where {T,TP} = ConeMantle{T,Tuple{T,T},TP,:outwards}(hZ < 0 ? reverse(r) : r, φ, abs(hZ), origin, rotation)
 
 
 # """
