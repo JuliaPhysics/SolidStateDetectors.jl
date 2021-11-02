@@ -22,17 +22,22 @@ vertices(p::Polygon) = p.points
 vertices(p::Polygon, n::Int64) = vertices(p)
 
 function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
-    c = sum(t.points)/3
-    pushfactor = 1.2
-    d = minimum([norm(c-p) for p in t.points])
-    if spacing/pushfactor > d 
-        []
+    push = spacing/2.6#best value for not showing triangle edges
+    u = t.points[2] - t.points[1]
+    v = t.points[3] - t.points[1]
+    w = t.points[3] - t.points[2]
+    nu = norm(u)
+    nv = norm(v)
+    nw = norm(w)
+    sθ = norm(u × v)/(nu*nv)
+    sφ = norm(u × w)/(nu*nw)
+    p1 = t.points[1] + (push/sθ)*(u/nu + v/nv)
+    p2 = t.points[2] + (push/sφ)*(-u/nu + w/nw)
+    if (p2-p1) ⋅ u > 0 
+        su = norm(p2-p1)/nu
+        [(su*a*u + su*b*v) + p1 for a in range(0, 1, length = max(2, 1 + Int(ceil(su*nu/spacing)))) for b in range(0, (1 - a), length = max(2, 1 + Int(ceil(su*sθ*nv*(1 - a)/spacing))))]
     else
-        points = [p + (spacing/pushfactor)*normalize(c-p) for p in t.points]
-        tv = t.points[3] - t.points[1]
-        u = points[2] - points[1]
-        v = points[3] - points[1]
-        [(a*u + b*v) + points[1] for a in range(0, 1, length = max(2, 1 + Int(ceil(norm(u)/spacing)))) for b in range(0, (1 - a), length = max(2, 1 + Int(ceil(norm(tv*(1 - a))/spacing))))]
+        []
     end
 end
 
@@ -49,7 +54,7 @@ end
 
 function extremum(p::Polygon{N,T})::T where {N,T}
     c = sum(p.points)/N
-    maximum([norm(point - c) for point in p.points])
+    m = maximum([norm(point - c) for point in p.points])
 end
 
 connections(p::Polygon{N}) where {N} = [collect(1:N)]
