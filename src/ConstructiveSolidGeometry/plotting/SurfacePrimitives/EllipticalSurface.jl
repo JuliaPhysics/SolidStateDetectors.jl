@@ -14,13 +14,13 @@
 end
 
 _plt_area(es::CircularArea{T}) where {T} = π*es.r^2
-_plt_area(es::PartialCircularArea{T}) where {T} = π*es.r^2 / ((es.φ[2]-es.φ[1])/2π)
+_plt_area(es::PartialCircularArea{T}) where {T} = π*es.r^2 / (es.φ/2π)
 _plt_area(es::Annulus{T}) where {T} = π*(es.r[2]^2 - es.r[1]^2)
-_plt_area(es::PartialAnnulus{T}) where {T} = π*(es.r[2]^2 - es.r[1]^2) / ((es.φ[2]-es.φ[1])/2π)
+_plt_area(es::PartialAnnulus{T}) where {T} = π*(es.r[2]^2 - es.r[1]^2) / (es.φ/2π)
 
 _plt_get_start_point_for_normal(es::CircularArea{T}) where {T} = es.origin
 function _plt_get_start_point_for_normal(es::PartialCircularArea{T}) where {T}
-    cyl = CylindricalPoint{T}(es.r/2, (es.φ[2]+es.φ[1])/2, zero(T))
+    cyl = CylindricalPoint{T}(es.r/2, es.φ/2, zero(T))
     _transform_into_global_coordinate_system(CartesianPoint(cyl), es)
 end
 function _plt_get_start_point_for_normal(es::Annulus{T}) where {T}
@@ -28,6 +28,6 @@ function _plt_get_start_point_for_normal(es::Annulus{T}) where {T}
     _transform_into_global_coordinate_system(CartesianPoint(cyl), es)
 end
 function _plt_get_start_point_for_normal(es::PartialAnnulus{T}) where {T}
-    cyl = CylindricalPoint{T}((es.r[2]+es.r[1])/2, (es.φ[2]+es.φ[1])/2, zero(T))
+    cyl = CylindricalPoint{T}((es.r[2]+es.r[1])/2, es.φ/2, zero(T))
     _transform_into_global_coordinate_system(CartesianPoint(cyl), es)
 end
