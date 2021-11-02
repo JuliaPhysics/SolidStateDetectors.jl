@@ -66,7 +66,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                     widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
                 ) 
-                if in(pt, geometry, csgtol = csgtol)
+                if in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
@@ -83,7 +83,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                     widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax3[i3], widths_ax3[i3+1]
                 )
-                if in(pt, geometry, csgtol = csgtol)
+                if in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
@@ -100,7 +100,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                     widths_ax2[i2], widths_ax2[i2+1],
                     widths_ax3[i3], widths_ax3[i3+1]
                 )
-                if in(pt, geometry, csgtol = csgtol)
+                if in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
@@ -140,7 +140,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 csgtol = Δw_max_factor * max(
                     widths_ax3[i3], widths_ax3[i3+1],
                 ) 
-                if in(pt, geometry, csgtol = csgtol)
+                if in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
@@ -155,7 +155,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     #         l = ConstructiveSolidGeometry.Line(CartesianPoint{T}(ticks[1][i1], zero(T), ticks[3][i3]), eY)
     #         pt = ConstructiveSolidGeometry.intersection(plane, l)
     #         i2 = searchsortednearest(ticks[2], pt[2])
-    #         if in(pt, geometry, csgtol = abs(ticks[2][i2] - pt[2]))
+    #         if in(pt, geometry, abs(ticks[2][i2] - pt[2]))
     #             point_types[i1, i2, i3] = zero(PointType)
     #             potential[i1, i2, i3] = pot_value
     #         end
@@ -178,7 +178,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                     widths_ax1[i1], widths_ax1[i1+1],
                     widths_ax2[i2], widths_ax2[i2+1],
                 ) 
-                if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && in(pt_car, geometry, csgtol = csgtol)
+                if abs(pt_cyl[2] - ticks[2][i2]) < 0.1 && in(pt_car, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
                 end
