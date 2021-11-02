@@ -22,7 +22,7 @@ vertices(p::Polygon) = p.points
 vertices(p::Polygon, n::Int64) = vertices(p)
 
 function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
-    push = spacing/2.6#best value for not showing triangle edges
+    push = spacing/2.5#best value for not showing triangle edges
     u = t.points[2] - t.points[1]
     v = t.points[3] - t.points[1]
     w = t.points[3] - t.points[2]
@@ -35,7 +35,8 @@ function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianP
     p2 = t.points[2] + (push/sφ)*(-u/nu + w/nw)
     if (p2-p1) ⋅ u > 0 
         su = norm(p2-p1)/nu
-        [(su*a*u + su*b*v) + p1 for a in range(0, 1, length = max(2, 1 + Int(ceil(su*nu/spacing)))) for b in range(0, (1 - a), length = max(2, 1 + Int(ceil(su*sθ*nv*(1 - a)/spacing))))]
+        av = (nu+nv)/2
+        [(su*a*u + su*b*v) + p1 for a in range(0, 1, length = max(2, 1 + Int(ceil(su*nu*sθ/spacing)))) for b in range(0, (1 - a), length = max(2, 1 + Int(ceil(su*nv*(1 - a)/spacing))))]
     else
         []
     end
