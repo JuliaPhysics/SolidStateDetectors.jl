@@ -269,7 +269,7 @@ end
 function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
     rmin::T, rmax::T = _radial_endpoints(t.r_tube)
-    return r_min + csgtol < _r < t.r_tube - csgtol &&
+    return rmin + csgtol < _r < rmax - csgtol &&
         (isnothing(t.φ) || _in_angular_interval_open(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
         (isnothing(t.θ) || _in_angular_interval_open(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
 end
