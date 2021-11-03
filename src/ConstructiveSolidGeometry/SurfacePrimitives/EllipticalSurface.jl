@@ -29,7 +29,7 @@ end
 flip(es::EllipticalSurface{T,TR,Nothing}) where {T,TR} = 
     EllipticalSurface{T,TR,Nothing}(es.r, es.φ, es.origin, es.rotation * SMatrix{3,3,T,9}(1,0,0,0,-1,0,0,0,-1))
 flip(es::EllipticalSurface{T,TR,T}) where {T,TR} = 
-    EllipticalSurface{T,TR,T}(es.r, es.φ, es.origin, es.rotation * RotZ{T}(T(2π)-es.φ)SMatrix{3,3,T,9}(1,0,0,0,-1,0,0,0,-1))
+    EllipticalSurface{T,TR,T}(es.r, es.φ, es.origin, es.rotation * SMatrix{3,3,T,9}(1,0,0,0,-1,0,0,0,-1) * RotZ{T}(T(2π)-es.φ))
 
 const CircularArea{T} = EllipticalSurface{T,T,Nothing}
 const PartialCircularArea{T} = EllipticalSurface{T,T,T}
