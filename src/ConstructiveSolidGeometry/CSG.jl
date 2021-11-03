@@ -218,7 +218,7 @@ sample(csg::AbstractConstructiveGeometry{T}, sampling...) where {T} = vcat(sampl
 
 function get_scale(csg::AbstractConstructiveGeometry{T}) where {T}
     points = [point for p in primitives(csg) for s in surfaces(p) for point in vertices(s, 4)]
-    filter!(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), points)
+    filter!(p -> in(p,csg), points)
     x, y, z = broadcast(i -> getindex.(points, i), (1,2,3))
     Δx = maximum(x) - minimum(x)
     Δy = maximum(y) - minimum(y)

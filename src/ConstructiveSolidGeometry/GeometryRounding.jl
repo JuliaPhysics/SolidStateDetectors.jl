@@ -3,6 +3,7 @@ csg_round_lin(x::Float32; sigdigits::Int = 5) = round(x, sigdigits = sigdigits) 
 csg_round_rad(φ::T; digits::Int = 4) where {T} = round(φ, digits = digits) # min. Δφ ≈ 0.011 °
 
 csg_default_tol(::Type{T}) where {T} = T(1e-12)
+csg_default_tol(::Type{Float32}) = 1f-8
 
 csg_isapprox(x::T, y::T; csgtol::T = T(1e-9)) where {T} = abs(x - y) < csgtol
 

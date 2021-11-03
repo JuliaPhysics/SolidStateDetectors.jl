@@ -18,7 +18,7 @@ end
                     aspect_ratio --> 1.0
                 end 
                 seriesalpha --> 0.2
-                filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), sample(ps[1], spacing))
+                filter(p -> in(p,csg), sample(ps[1], spacing))
             else
                 if !isClosedPrimitive(ps[1])
                     fillcolor := :white
@@ -39,7 +39,7 @@ end
             if haskey(plotattributes, :seriestype) 
                 if plotattributes[:seriestype] == :samplesurface
                     seriesalpha --> 0.2
-                    filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), sample(ps[i], spacing))
+                    filter(p -> in(p,csg), sample(ps[i], spacing))
                 else
                     if !isClosedPrimitive(ps[i])
                         fillcolor := :white
