@@ -291,19 +291,11 @@ function siggentodict(config::Dict;
                   "r"          => config["pc_radius"] - config["pc_length"],
                   "h"          => 0,
                   "origin"     => Dict("z" => config["pc_length"]))),
-            Dict( "difference" => [
             Dict( "torus"      => Dict(
                   "r_torus"    => config["pc_radius"] - config["pc_length"],
                   "r_tube"     => Dict("from" => config["pc_length"], 
-                                       "to"   => config["pc_length"]))),
-            Dict( "tube"       => Dict(
-                  "r"          => config["pc_radius"] - config["pc_length"],
-                  "h"          => 1.2*config["pc_length"],
-                  "origin"     => Dict("z" => 0.4*config["pc_length"]))),
-            Dict( "tube"       => Dict(
-                  "r"          => 1.2*config["pc_radius"],
-                  "h"          => 1.2*config["pc_radius"],
-                  "origin"     => Dict("z" => -0.6 * config["pc_radius"])))])])
+                                       "to"   => config["pc_length"]),
+                  "theta"      => Dict("from" => 0.0, "to" => 90.0)))])
         elseif config["pc_length"] > config["pc_radius"]
             Dict( "union"      => [
             Dict( "tube"       => Dict(
