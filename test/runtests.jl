@@ -17,6 +17,13 @@ end
     include("SOR_GPU_Backend.jl")
 end
 
+@testset "ConstructiveSolidGeometry" begin
+    include("ConstructiveSolidGeometry/CSG_IO.jl")
+    include("ConstructiveSolidGeometry/CSG_primitives.jl")
+end
+
+T = Float32
+
 @testset "Test real detectors" begin
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoax])
@@ -157,7 +164,7 @@ end
 end
 
 @testset "Diffusion and Self-Repulsion" begin
-    sim = Simulation(SSD_examples[:InvertedCoax])
+    sim = Simulation{T}(SSD_examples[:InvertedCoax])
     simulate!(sim, convergence_limit = 1e-5, refinement_limits = [0.2, 0.1], verbose = false)
 
     pos = CartesianPoint{T}(0.02,0,0.05); Edep = 1u"eV"
@@ -175,7 +182,7 @@ end
 end
 
 @testset "Table Simulation" begin 
-    sim = Simulation(SSD_examples[:InvertedCoax])
+    sim = Simulation{T}(SSD_examples[:InvertedCoax])
     simulate!(sim, convergence_limit = 1e-5, refinement_limits = [0.2, 0.1], verbose = false)
 
     evt_table = Table(
@@ -225,4 +232,4 @@ end
     @test sim == Simulation(nt)
 end 
 
-include("ConstructiveSolidGeometry/CSG_IO.jl")
+

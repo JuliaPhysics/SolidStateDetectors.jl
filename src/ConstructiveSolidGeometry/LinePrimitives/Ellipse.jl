@@ -12,7 +12,7 @@
 #     * TP = Nothing <-> Full in φ
 #     * ...
 # """
-@with_kw struct Ellipse{T,TR,TP} <: AbstractLinePrimitive{T}
+@with_kw struct Ellipse{T,TR,TP<:Union{Nothing,T}} <: AbstractLinePrimitive{T}
     r::TR = 1
     φ::TP = nothing
 
@@ -21,7 +21,7 @@
 end
 
 const Circle{T} = Ellipse{T,T,Nothing}
-const PartialCircle{T} = Ellipse{T,T,Tuple{T,T}}
+const PartialCircle{T} = Ellipse{T,T,T}
 
 extremum(e::Ellipse{T,T}) where {T} = e.r
 extremum(e::Ellipse{T,Tuple{T,T}}) where {T} = max(e.r...)
@@ -35,7 +35,7 @@ function sample(e::Circle{T}; n = 4)::Vector{CartesianPoint{T}} where {T}
     pts
 end
 function sample(e::PartialCircle{T}; n = 2)::Vector{CartesianPoint{T}} where {T}
-    φs = range(e.φ[1], stop = e.φ[1], length = n)
+    φs = range(T(0), stop = e.φ, length = n)
     pts = Vector{CartesianPoint{T}}(undef, n)
     for i in eachindex(pts)
         pts[i] = _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(e.r, φs[i], zero(T))), e)

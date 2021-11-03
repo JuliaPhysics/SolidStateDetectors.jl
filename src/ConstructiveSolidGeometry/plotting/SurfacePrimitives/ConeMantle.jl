@@ -12,7 +12,7 @@
         @series begin
             label := nothing
             seriestype := :vector
-            nφ = cm.φ == nothing ? 0 : (cm.φ[2] + cm.φ[1])/2 
+            nφ = isnothing(cm.φ) ? 0 : cm.φ/2 
             T = typeof(cm.hZ)
             npt_obj = CartesianPoint(CylindricalPoint{T}(radius_at_z(cm, zero(T)), nφ, zero(T)))
             npt = _transform_into_global_coordinate_system(npt_obj, cm)
