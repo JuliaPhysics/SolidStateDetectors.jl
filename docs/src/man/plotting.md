@@ -64,7 +64,7 @@ plot!(det.contacts[2], seriestype = :mesh3d, fillcolor = :green, fillalpha = 0.2
 ````
 
 !!! note
-    So far, when using mesh-base seriestypes (`:csg`, `:wireframe`, `:mesh3d`) plots are produced by plotting whole primitives. Thus, usually, nicer plots are produced if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thinner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
+    So far, when using mesh-base seriestypes (`:csg`, `:wireframe`, `:mesh3d`), plots are produced by plotting whole primitives. Thus, usually, nicer plots are produced if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thinner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
 
 
 ## Scalar Potential Plots
