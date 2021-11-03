@@ -14,7 +14,7 @@ radius around a given origin.
     * `TR == T`: Full tube without cutout (constant radius `r_tube`).
 * `TP`: Type of the azimuthial angle `φ`.
     * `TP == Nothing`: Full 2π in `φ`.
-    * `TP == Tuple{T,T}`: Partial Torus ranging from `φ[1]` to `φ[2]`.
+    * `TP == T`: Partial Torus ranging from `0` to `φ`.
 * `TT`: Type of the polar angle `θ`.
     * `TT == Nothing`: Full 2π in `θ`.
     * `TP == Tuple{T,T}`: Partial Torus ranging from `θ[1]` to `θ[2]`.
@@ -66,7 +66,7 @@ This is a `Torus` with `r_tube` having an inner radius of 1 and an outer radius 
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-@with_kw struct Torus{T,CO,TR,TP,TT,TT1,TT2} <: AbstractVolumePrimitive{T,CO}
+@with_kw struct Torus{T,CO,TR,TP<:Union{Nothing,T},TT,TT1,TT2} <: AbstractVolumePrimitive{T,CO}
     r_torus::T = 1
     r_tube::TR = 1  # (r_tube_in, r_tube_out)
     φ::TP = nothing
@@ -78,15 +78,15 @@ end
 
 Torus{T,CO,TR,TP,TT,TT1,TT2}( t::Torus{T,CO,TR,TP,TT}; COT = CO,
             origin::CartesianPoint{T} = t.origin,
-            rotation::SMatrix{3,3,T,9} = t.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},TR,TP,TT,TT1,TT2} =
+            rotation::SMatrix{3,3,T,9} = t.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},TR,TP<:Union{Nothing,T},TT,TT1,TT2} =
     Torus{T,COT,TR,TP,TT,TT1,TT2}(t.r_torus, t.r_tube, t.φ, t.θ, origin, rotation)
 
 const FullTorus{T,CO} = Torus{T,CO,T,Nothing,Nothing,Nothing,Nothing}
 const FullPhiTorus{T,CO,TT1,TT2} = Torus{T,CO,T,Nothing,Tuple{T,T},TT1,TT2}
-const FullThetaTorus{T,CO} = Torus{T,CO,T,Tuple{T,T},Nothing,Nothing,Nothing}
+const FullThetaTorus{T,CO} = Torus{T,CO,T,T,Nothing,Nothing,Nothing}
 const HollowTorus{T,CO} = Torus{T,CO,Tuple{T,T},Nothing,Nothing,Nothing,Nothing}
 const HollowPhiTorus{T,CO,TT1,TT2} = Torus{T,CO,Tuple{T,T},Nothing,Tuple{T,T},TT1,TT2}
-const HollowThetaTorus{T,CO} = Torus{T,CO,Tuple{T,T},Tuple{T,T},Nothing,Nothing,Nothing}
+const HollowThetaTorus{T,CO} = Torus{T,CO,Tuple{T,T},T,Nothing,Nothing,Nothing}
 
 
 function _get_conemantle_type(θ::Tuple{T,T})::Tuple{Symbol, Symbol} where {T}
@@ -107,7 +107,15 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
     r_torus = _parse_value(T, dict["r_torus"], length_unit)
     r_tube = _parse_radial_interval(T, dict["r_tube"], length_unit)
     r_tube isa Tuple{T,T} && iszero(r_tube[1]) ? r_tube = r_tube[2] : nothing
-    φ = parse_φ_of_primitive(T, dict, angle_unit)
+    φ_interval = parse_φ_of_primitive(T, dict, angle_unit)
+    φ = if φ_interval isa Tuple{T,T}
+        rotation = rotation * RotZ{T}(φ_interval[1])
+        φ_interval[2] - φ_interval[1]
+    elseif isnothing(φ_interval)
+        nothing
+    else
+        throw(ConfigFileError("Error when trying to parse φ from configuration file."))
+    end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
     TT1, TT2 = _get_conemantle_type(θ)
     if haskey(dict, "z")
@@ -129,7 +137,7 @@ function Dictionary(t::Torus{T,<:Any,TR})::OrderedDict{String, Any} where {T,TR}
     dict = OrderedDict{String, Any}()
     dict["r_torus"] = t.r_torus
     dict["r_tube"] = TR <: Real ? t.r_tube : OrderedDict{String, Any}("from" => t.r_tube[1], "to" => t.r_tube[2]) 
-    if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => string(t.φ[1])*"rad", "to" => string(t.φ[2])*"rad") end
+    if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => 0, "to" => string(t.φ)*"rad") end
     if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(t.θ[1])*"rad", "to" => string(t.θ[2])*"rad") end
     if t.origin != zero(CartesianVector{T}) dict["origin"] = t.origin end
     if t.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(t.rotation) end
@@ -160,36 +168,33 @@ function surfaces(t::FullPhiTorus{T,OpenPrimitive,TT1,TT2}) where {T,TT1,TT2}
 end
 function surfaces(t::FullThetaTorus{T,ClosedPrimitive}) where {T}
     tm = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
-    φ1, φ2 = t.φ
-    es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(-π/2) )
-    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
+    es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(-π/2) )
+    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2) )
     (tm, es1, es2)
 end
 function surfaces(t::FullThetaTorus{T,OpenPrimitive}) where {T}
     tm = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
-    φ1, φ2 = t.φ
-    es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2) )
-    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
+    φ1, φ2 = T(0), t.φ
+    es1 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2) )
+    es2 = CircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(-π/2) )
     (tm, es1, es2)
 end
-function surfaces(t::Torus{T,ClosedPrimitive,T,Tuple{T,T},Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
-    tm = TorusMantle{T,Tuple{T,T},Tuple{T,T},:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+function surfaces(t::Torus{T,ClosedPrimitive,T,T,Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
+    tm = TorusMantle{T,T,Tuple{T,T},:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
     cm1 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}())
     cm2 = TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}())
-    φ1, φ2 = t.φ
-    es1 = flip(PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2)))
-    es2 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2))
+    es1 = flip(PartialCircularArea{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2) * RotZ{T}(t.θ[1])))
+    es2 = PartialCircularArea{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2) * RotZ{T}(t.θ[1]))
     (tm, cm1, cm2, es1, es2)
 end
-function surfaces(t::Torus{T,OpenPrimitive,T,Tuple{T,T},Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
-    tm = TorusMantle{T,Tuple{T,T},Tuple{T,T},:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
+function surfaces(t::Torus{T,OpenPrimitive,T,T,Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
+    tm = TorusMantle{T,T,Tuple{T,T},:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
     cm1 = flip(TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ1)), t.φ, t.r_tube * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ1)/2), t.rotation, Val{TT1}()))
     cm2 = flip(TorusThetaSurface((t.r_torus, t.r_torus + t.r_tube * cos(θ2)), t.φ, t.r_tube * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,t.r_tube * sin(θ2)/2), t.rotation, Val{TT2}()))
-    φ1, φ2 = t.φ
-    es1 = PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2))
-    es2 = flip(PartialCircularArea{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2)))
+    es1 = PartialCircularArea{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2) * RotZ{T}(t.θ[1]))
+    es2 = flip(PartialCircularArea{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2) * RotZ{T}(t.θ[1])))
     (tm, cm1, cm2, es1, es2)
 end
 
@@ -215,46 +220,42 @@ function surfaces(t::HollowPhiTorus{T,OpenPrimitive,TT1,TT2}) where {T,TT1,TT2}
     tm_in = FullPhiTorusMantle{T,:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
     tm_out = FullPhiTorusMantle{T,:outwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
-    cm1 = flip(TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ1)), t.φ, abs(-(t.r_tube...)) * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ1)), t.rotation, Val{TT1}())
-    cm2 = flip(TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ2)), t.φ, abs(-(t.r_tube...)) * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ2)), t.rotation, Val{TT2}())
+    cm1 = flip(TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ1), t.φ, abs(-(t.r_tube...)) * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ1)), t.rotation, Val{TT1}()))
+    cm2 = flip(TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ2), t.φ, abs(-(t.r_tube...)) * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ2)), t.rotation, Val{TT2}()))
     (tm_in, tm_out, cm1, cm2)
 end
 function surfaces(t::HollowThetaTorus{T,ClosedPrimitive}) where {T}
     tm_in = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
     tm_out = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
-    φ1, φ2 = t.φ
-    es1 = Annulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(-π/2) )
-    es2 = Annulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2) )
+    es1 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(-π/2)  * RotZ{T}(t.θ[1]))
+    es2 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2)  * RotZ{T}(t.θ[1]))
     (tm_in, tm_out, es1, es2)
 end
 function surfaces(t::HollowThetaTorus{T,OpenPrimitive}) where {T}
     tm_in = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
     tm_out = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
-    φ1, φ2 = t.φ
-    es1 = Annulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2) )
-    es2 = Annulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(-π/2) )
+    es1 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2)  * RotZ{T}(t.θ[1]))
+    es2 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(-π/2)  * RotZ{T}(t.θ[1]))
     (tm_in, tm_out, es1, es2)
 end
-function surfaces(t::Torus{T,ClosedPrimitive,Tuple{T,T},Tuple{T,T},Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
-    tm_in = TorusMantle{T,Tuple{T,T},Tuple{T,T},:outwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
-    tm_out = TorusMantle{T,Tuple{T,T},Tuple{T,T},:inwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
+function surfaces(t::Torus{T,ClosedPrimitive,Tuple{T,T},T,Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
+    tm_in = TorusMantle{T,T,Tuple{T,T},:outwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
+    tm_out = TorusMantle{T,T,Tuple{T,T},:inwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
     cm1 = TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ1), t.φ, abs(-(t.r_tube...)) * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ1)), t.rotation, Val{TT1}())
     cm2 = TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ2), t.φ, abs(-(t.r_tube...)) * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ2)), t.rotation, Val{TT2}())
-    φ1, φ2 = t.φ
-    es1 = flip(PartialAnnulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2)))
-    es2 = PartialAnnulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2))
+    es1 = flip(PartialAnnulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2) * RotZ{T}(t.θ[1])))
+    es2 = PartialAnnulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2) * RotZ{T}(t.θ[1]))
     (tm_in, tm_out, cm1, cm2, es1, es2)
 end
-function surfaces(t::Torus{T,OpenPrimitive,Tuple{T,T},Tuple{T,T},Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
-    tm_in = TorusMantle{T,Tuple{T,T},Tuple{T,T},:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
-    tm_out = TorusMantle{T,Tuple{T,T},Tuple{T,T},:outwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
+function surfaces(t::Torus{T,OpenPrimitive,Tuple{T,T},T,Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
+    tm_in = TorusMantle{T,T,Tuple{T,T},:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
+    tm_out = TorusMantle{T,T,Tuple{T,T},:outwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
     θ1, θ2 = t.θ
     cm1 = flip(TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ1), t.φ, abs(-(t.r_tube...)) * sin(θ1)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ1)), t.rotation, Val{TT1}()))
     cm2 = flip(TorusThetaSurface(t.r_torus .+ t.r_tube .* cos(θ2), t.φ, abs(-(t.r_tube...)) * sin(θ2)/2, t.origin + t.rotation * CartesianVector{T}(0,0,mean(t.r_tube) * sin(θ2)), t.rotation, Val{TT2}()))
-    φ1, φ2 = t.φ
-    es1 = PartialAnnulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ1), t.r_torus * sin(φ1), 0), t.rotation * RotZ(φ1) * RotX(π/2))
-    es2 = flip(PartialAnnulus{T}(t.r_tube, t.θ, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(φ2), t.r_torus * sin(φ2), 0), t.rotation * RotZ(φ2) * RotX(π/2)))
+    es1 = PartialAnnulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2) * RotZ{T}(t.θ[1]))
+    es2 = flip(PartialAnnulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2) * RotZ{T}(t.θ[1])))
     (tm_in, tm_out, cm1, cm2, es1, es2)
 end
 
