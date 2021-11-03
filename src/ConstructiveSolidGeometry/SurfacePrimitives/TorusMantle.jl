@@ -63,8 +63,8 @@ function sample(tm::TorusMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where
     θMin, θMax = get_θ_limits(tm)
     Δφ = abs(φMax - φMin)
     Δθ = abs(θMax - θMin)
-    full2πφ = mod(Δφ, T(2π)) == 0
-	full2πθ = mod(Δθ, T(2π)) == 0
+    full2πφ = isnothing(tm.φ)
+	full2πθ = isnothing(tm.θ)
 	
 	[_transform_into_global_coordinate_system(CartesianPoint{T}((tm.r_torus + tm.r_tube*cos(θ))*cos(φ), (tm.r_torus + tm.r_tube*cos(θ))*sin(φ), tm.r_tube*sin(θ)), tm) for θ in range(θMin, θMax - full2πθ*spacing/tm.r_tube, length = max(2,1+Int(ceil(Δθ*tm.r_tube/spacing)))) for φ in range(φMin, φMax - full2πφ*spacing/(tm.r_torus + tm.r_tube*cos(θ)), length = max(2,1+Int(ceil(Δφ*(tm.r_torus + tm.r_tube*cos(θ))/spacing))))]
 end

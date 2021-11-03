@@ -96,7 +96,7 @@ function sample(em::EllipsoidMantle{T}, spacing::T)::Vector{CartesianPoint{T}} w
     θMin, θMax = get_θ_limits(em)
     Δφ = abs(φMax - φMin)
     Δθ = abs(θMax - θMin)
-    full2π = mod(Δφ, T(2π)) == 0
+    full2π = isnothing(em.φ)
     
     [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) for θ in range(θMin, θMax, length = max(2,1+Int(ceil(Δθ*r/spacing)))) for φ in (mod(θ, T(2π)) in T[π/2,3π/2] ? [φMin] : range(φMin, φMax - full2π*spacing/(r*cos(θ)), length = max(2,1+Int(ceil(Δφ*r*cos(θ)/spacing)))))]
 end

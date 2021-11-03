@@ -74,7 +74,7 @@ end
 function sample(cm::ConeMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(cm)
     Δφ = abs(φMax - φMin)
-    full2π = mod(Δφ, T(2π)) == 0
+    full2π = isnothing(cm.φ)
     rbot = radius_at_z(cm,-cm.hZ)
     rtop = radius_at_z(cm,cm.hZ)
     l = hypot(2cm.hZ, rtop - rbot)
@@ -101,8 +101,9 @@ const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but w
 const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Tuple{T,T},D}
 
 
-extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
-extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
+extremum(cm::FullConeMantle{T}) where {T} = hypot(cm.hZ, max(cm.r...))
+
+extremum(cm::PartialConeMantle{T}) where {T} = hypot(cm.hZ, max(cm.r...))
 
 
 function lines(sp::FullConeMantle{T}; n = 2) where {T} 

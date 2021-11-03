@@ -54,7 +54,7 @@ end
 function sample(es::EllipticalSurface{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(es)
     Δφ = abs(φMax - φMin)
-    full2π = mod(Δφ, T(2π)) == 0
+    full2π = isnothing(es.φ)
     rMin, rMax = length(es.r) == 1 ? (0, es.r) : es.r
     [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in range(rMin, rMax, length = max(2,1+Int(ceil((rMax-rMin)/spacing)))) for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/r, length = max(2,1+Int(ceil(Δφ*r/spacing)))))]
 end

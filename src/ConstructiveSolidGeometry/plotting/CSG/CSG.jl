@@ -12,20 +12,23 @@ end
     spacing = (haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface) ?  T(get_scale(csg)/n_samples) : nothing
     @series begin
         label --> "CSG"
-        if !isClosedPrimitive(ps[1])
-            fillcolor := :white
-            fillalpha --> 0.2
-            if haskey(plotattributes, :seriestype) 
-                if plotattributes[:seriestype] in [:csg, :wireframe] 
-                    linewidth := 0.5
-                end
-            end
-        end
         if haskey(plotattributes, :seriestype) 
             if plotattributes[:seriestype] == :samplesurface
+                if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+                    aspect_ratio --> 1.0
+                end 
                 seriesalpha --> 0.2
                 filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), sample(ps[1], spacing))
             else
+                if !isClosedPrimitive(ps[1])
+                    fillcolor := :white
+                    fillalpha --> 0.2
+                    if haskey(plotattributes, :seriestype) 
+                        if plotattributes[:seriestype] in [:csg, :wireframe] 
+                            linewidth := 0.5
+                        end
+                    end
+                end
                 ps[1]
             end
         end
@@ -33,20 +36,20 @@ end
     for i in 2:length(ps)
         @series begin
             label := ""
-            if !isClosedPrimitive(ps[i])
-                fillcolor := :white
-                fillalpha --> 0.2
-                if haskey(plotattributes, :seriestype) 
-                    if plotattributes[:seriestype] in [:csg, :wireframe] 
-                        linewidth := 0.5
-                    end
-                end
-            end
             if haskey(plotattributes, :seriestype) 
                 if plotattributes[:seriestype] == :samplesurface
                     seriesalpha --> 0.2
                     filter(p -> in(p,csg,csgtol = 10000*csg_default_tol(T)), sample(ps[i], spacing))
                 else
+                    if !isClosedPrimitive(ps[i])
+                        fillcolor := :white
+                        fillalpha --> 0.2
+                        if haskey(plotattributes, :seriestype) 
+                            if plotattributes[:seriestype] in [:csg, :wireframe] 
+                                linewidth := 0.5
+                            end
+                        end
+                    end
                     ps[i]
                 end
             end

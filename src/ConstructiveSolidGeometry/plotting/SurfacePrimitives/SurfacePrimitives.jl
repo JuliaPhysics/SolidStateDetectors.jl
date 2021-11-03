@@ -37,6 +37,8 @@
             label --> l
             seriesalpha --> 0.4
             sample(s, extremum(s)/n_samples)
+        else
+            @warn "The only seriestypes wich will return a plot are :csg, :wireframe, :mesh3d, and :samplesurface"
         end
     end    
 end

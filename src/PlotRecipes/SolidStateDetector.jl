@@ -60,8 +60,6 @@ end
         append!(plot_objects, det.passives)
     end
     
-    scales = nothing
-    max_scale = nothing
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
         scales = [get_scale(o.geometry) for o in plot_objects]
         max_scale = maximum(scales)

@@ -691,7 +691,7 @@ function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, T
     OrderedDict{String, Any}(name => dict)
 end
 
-extremum(c::Cone{T}) where {T} = sqrt(c.hZ^2 + max((c.r...)...)^2)
+extremum(c::Cone{T}) where {T} = hypot(c.hZ, max((c.r...)...))
 
 # Cylinder
 
