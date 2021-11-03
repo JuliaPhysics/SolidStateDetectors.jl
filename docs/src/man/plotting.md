@@ -37,17 +37,17 @@ plot(det, size = (500, 500))
 ### Optional keywords:
 * `show_semiconductor`: Whether also the primitives of the semiconductor should be plotted. Default is `false`.
 * `show_passives`: Whether also the primitives of the surrounding objects of the detector should be plotted. Default is `true`.
-* `seriestype`: Can be `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`. `:csg` plots a wireframe on top of a mesh (with no mesh gridlines). For fastest plotting use either `:wireframe` or `:mesh3d` and consider changing `n_arc` (see bellow). `:csg`, `:wireframe`, and `:mesh3d` are all mesh-based. For geometries containing differences or intersections the recommended (although slower) seriestype is `:samplesurface`. This seriestype is marker-based.  
+* `seriestype`: Can be `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`. `:csg` plots a wireframe on top of a mesh (with no mesh gridlines). For fastest plotting use either `:wireframe` or `:mesh3d` and consider changing `n_arc` (see bellow). `:csg`, `:wireframe`, and `:mesh3d` are all mesh-based. For geometries containing differences or intersections the recommended seriestype is `:samplesurface`. This seriestype is marker-based. Marker density is set low by default for speed. For increased plot fidelity use `n_samples = 100` and `markersize = 2`.
 * `linewidth`: Sets the line width of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linewidth` sets the line width of the wireframe.
 * `linecolor`: Sets the line color of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linecolor` sets the line color of the wireframe.
 * `fillcolor`: Sets the face color of all faces of the mesh.
 * `fillalpha`: Sets the alpha value of all faces of the mesh.
 * `markercolor`: Sets the marker color.
-* `markersize`: Sets the marker size. `markersize = 2` is the default value.
+* `markersize`: Sets the marker size. `markersize = 4` is the default value.
 * `markeralpha`: Sets the alpha value for markers.
 * `n_arc`: Controls the discretization of curved objects in a mesh. Each full ellipse is divided into `n_arc` segments. Partial ellipses are drawn with a proportional number (`n_arc*f` with `f<1`) of segments.`n_arc = 40` is the default value. Smaller `n_arc` values will result in faster plotting, specially if the geometry contains tori or ellipsoids.
 * `n_vert_lines`: Controls the number of wireframe "vertical" lines in a mesh. `n_vert_lines = 2` is the default value. A maximum of `n_arc*f` vertical lines can be drawn on each curved object. This keyword is ignored by polygons.
-* `n_samples`: Controls the marker density. `n_samples = 100` is the default value. For faster plotting reduce this value. To compensate for the visual impact of lower marker densities consider increasing `markersize` and or `markeralpha`. Note that marker density is intended to be even across all dimensions. Therefore, if the aspect ratio of the axes is very unequal, visual distortions will occur. 
+* `n_samples`: Controls the marker density. `n_samples = 40` is the default value. For faster plotting reduce this value. To compensate for the visual impact of lower marker densities consider increasing `markersize` and or `markeralpha`. Note that marker density is intended to be even across all dimensions. Therefore, if the aspect ratio of the axes is very unequal, visual distortions will occur. 
 
 #### How does the plot recipe work?
 

@@ -5,7 +5,7 @@
 #include("Polygon.jl")
 #include("TorusMantle.jl")
 
-@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 100) where {T}
+@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40) where {T}
     seriestype --> :csg
     l = get_label_name(s)
     if haskey(plotattributes, :seriestype) 
@@ -38,7 +38,7 @@
             seriesalpha --> 0.4
             sample(s, extremum(s)/n_samples)
         else
-            @warn "The only seriestypes wich will return a plot are :csg, :wireframe, :mesh3d, and :samplesurface"
+            @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, and :samplesurface"
         end
     end    
 end
@@ -47,7 +47,7 @@ end
     seriescolor --> 1
     seriesalpha --> 0.2
     markerstrokewidth --> 0
-    markersize --> 2
+    markersize --> 4
     seriestype := :scatter
     ()
 end

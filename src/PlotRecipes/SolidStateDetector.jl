@@ -47,7 +47,7 @@ end
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 100)
+@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 40)
 
     show_normal --> false
     

@@ -7,7 +7,7 @@ function sample(p::AbstractVolumePrimitive{T}, spacing::T)::Vector{CartesianPoin
     vs
 end
 
-@recipe function f(p::AbstractVolumePrimitive; n_samples = 100)
+@recipe function f(p::AbstractVolumePrimitive; n_samples = 40)
     linecolor --> :black
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         aspect_ratio --> 1.0
