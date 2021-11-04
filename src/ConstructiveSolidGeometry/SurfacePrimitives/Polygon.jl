@@ -20,6 +20,44 @@ normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.p
 
 vertices(p::Polygon) = p.points
 vertices(p::Polygon, n::Int64) = vertices(p)
+
+function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+    push = spacing/2.5#best value for not showing triangle edges
+    u = t.points[2] - t.points[1]
+    v = t.points[3] - t.points[1]
+    w = t.points[3] - t.points[2]
+    nu = norm(u)
+    nv = norm(v)
+    nw = norm(w)
+    sθ = norm(u × v)/(nu*nv)
+    sφ = norm(u × w)/(nu*nw)
+    p1 = t.points[1] + (push/sθ)*(u/nu + v/nv)
+    p2 = t.points[2] + (push/sφ)*(-u/nu + w/nw)
+    if (p2-p1) ⋅ u > 0 
+        su = norm(p2-p1)/nu
+        av = (nu+nv)/2
+        [(su*a*u + su*b*v) + p1 for a in range(0, 1, length = max(2, 1 + Int(ceil(su*nu*sθ/spacing)))) for b in range(0, (1 - a), length = max(2, 1 + Int(ceil(su*nv*(1 - a)/spacing))))]
+    else
+        []
+    end
+end
+
+triangles(p::Polygon{N,T}) where {N,T} = [Triangle{T}([p.points[1], p.points[i], p.points[i+1]]) for i in 2:N-1]
+triangles(p::Polygon, n_arc::Int64) = triangles(p)
+
+function sample(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N,T}
+    v = [s for e in edges(p) for s in sample(e,n=max(2,Int(ceil(norm(e.b-e.a)/spacing))))]
+    for t in triangles(p)
+        append!(v, _sample_excluding_border(t, spacing))
+    end
+    v
+end
+
+function extremum(p::Polygon{N,T})::T where {N,T}
+    c = sum(p.points)/N
+    m = maximum([norm(point - c) for point in p.points])
+end
+
 connections(p::Polygon{N}) where {N} = [collect(1:N)]
 connections(p::Polygon, ::Int64) = connections(p)
 connections(p::Polygon{N}, ::Int64, ::Int64) where {N} = [[i%N+1, (i+1)%N+1] for i in 0:N-1]
@@ -43,6 +81,11 @@ function edges(p::Quadrangle{T}) where {T}
         Edge(vs[3], vs[4]),
         Edge(vs[4], vs[1])
     )
+end
+
+function edges(p::Polygon{N,T})::SVector{N, Edge{T}} where {N,T}
+    vs = vertices(p)
+    SVector{N, Edge{T}}([Edge(vs[i],vs[i%N+1]) for i in 1:N])
 end
 
 flip(p::Polygon) = Polygon(reverse(p.points))

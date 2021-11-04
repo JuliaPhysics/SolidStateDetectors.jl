@@ -1,13 +1,13 @@
-function _get_potential_plot_information(::ElectricPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:viridis, (-Inf, Inf), "Electric Potential", internal_voltage_unit)
+function _get_potential_plot_information(p::ElectricPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:viridis, (minimum(p.data), maximum(p.data)), "Electric Potential", internal_voltage_unit)
 end
 
 function _get_potential_plot_information(::WeightingPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
     return (:viridis, (0, 1), "Weighting Potential", Unitful.NoUnits)
 end
 
-function _get_potential_plot_information(::EffectiveChargeDensity)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:inferno, (-Inf, Inf), "Effective Charge Density", u"V * m")
+function _get_potential_plot_information(ecd::EffectiveChargeDensity)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:inferno, (minimum(ecd.data), maximum(ecd.data)), "Effective Charge Density", u"V * m")
 end
 
 function _get_potential_plot_information(::PointTypes)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
