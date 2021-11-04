@@ -48,10 +48,10 @@ plot(
             ), 
       layout = (1,4), size = (800,200), legend = false, ticks = false, 
       guide = "", zlims = (-0.005,0.1)
-      )
+)
 ````
 
-The `seriestype` can be set to `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`. `:csg` plots a wireframe on top of a mesh (with no mesh gridlines). For fastest plotting use either `:wireframe` or `:mesh3d` and consider changing `n_arc` (see [Optional Keywords](#Optional-keywords)). `:csg`, `:wireframe`, and `:mesh3d` are all mesh-based. For geometries containing differences or intersections the recommended seriestype is `:samplesurface`. This can be seen by plotting the detector's semiconductor bellow. `:samplesurface` is marker-based. Marker density is set low by default for speed. For increased plot fidelity use `n_samples = 100` and `markersize = 2`.
+The `seriestype` can be set to `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`. `:csg` plots a wireframe on top of a mesh (with no mesh gridlines). For fastest plotting use either `:wireframe` or `:mesh3d` and consider changing `n_arc` (see [Optional Keywords](@ref)). `:csg`, `:wireframe`, and `:mesh3d` are all mesh-based. For geometries containing differences or intersections the recommended seriestype is `:samplesurface`. This can be seen by plotting the detector's semiconductor below. `:samplesurface` is marker-based. The marker density is set low by default for speed. For increased plot fidelity use `n_samples = 100` and `markersize = 2`.
 
 ````@example tutorial
 plot(
@@ -64,20 +64,20 @@ plot(
             ), 
       layout = (1,4), size = (800,200), legend = false, ticks = false, 
       guide = "", zlims = (-0.005,0.1)
-      )
+)
 ````
 
 !!! note
-    So far, when using mesh-base seriestypes (`:csg`, `:wireframe`, `:mesh3d`), plots are produced by plotting whole primitives. Thus, usually, nicer plots are produced if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thinner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
+    So far, when using mesh-based seriestypes (`:csg`, `:wireframe`, `:mesh3d`), plots are produced by plotting whole primitives. Thus, usually, nicer plots are produced if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thinner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
     
 ### How does the plot recipe work?
 
-The detector consists out of a semiconductor, `det.semiconductor`, its contacts, `det.contacts`,
+The detector consists of a semiconductor, `det.semiconductor`, its contacts, `det.contacts`,
 and its surrounding objects, `det.passives`.
-By default (see [Optional Keywords](#Optional-keywords)) only the contacts and the surrounding objects are plotted
+By default (see [Optional Keywords](@ref)), only the contacts and the surrounding objects are plotted
 and the color of the contact primitives is defined internally through their `id`.
 
-If one wants more control over the plot one can plot components individually. Additionally, the units of the axes are set by calling a `plot` command with units beforehand.
+Components can also be plotted individually for enhanced style handling. Additionally, the units of the axes are set by calling a `plot` command with units beforehand.
 ````@example tutorial
 plot(u"cm", u"cm", u"cm")
 plot!(det.semiconductor, st = :samplesurface, n_samples = 100, markersize = 2,
@@ -86,9 +86,9 @@ plot!(det.contacts[1], st = :mesh3d, linewidth = 0.5, fillcolor = :white)
 plot!(det.contacts[2], st = :wireframe, n_vert_lines = 5)
 ````
 
-### Optional keywords
-* `show_semiconductor`: Whether also the primitives of the semiconductor should be plotted. Default is `false`.
-* `show_passives`: Whether also the primitives of the surrounding objects of the detector should be plotted. Default is `true`.
+### Optional Keywords
+* `show_semiconductor`: Will display the semiconductor if set to `true`. Default is `false`.
+* `show_passives`: Will display the objects surrounding the detector if set to `true`. Default is `true`.
 * `seriestype`: Can be `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`.
 * `linewidth`: Sets the line width of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linewidth` sets the line width of the wireframe.
 * `linecolor`: Sets the line color of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linecolor` sets the line color of the wireframe.
@@ -99,7 +99,7 @@ plot!(det.contacts[2], st = :wireframe, n_vert_lines = 5)
 * `markeralpha`: Sets the alpha value for markers.
 * `n_arc`: Controls the discretization of curved objects in a mesh. Each full ellipse is divided into `n_arc` segments. Partial ellipses are drawn with a proportional number (`n_arc*f` with `f<1`) of segments.`n_arc = 40` is the default value. Smaller `n_arc` values will result in faster plotting, specially if the geometry contains tori or ellipsoids.
 * `n_vert_lines`: Controls the number of wireframe "vertical" lines in a mesh. `n_vert_lines = 2` is the default value. A maximum of `n_arc*f` vertical lines can be drawn on each curved object. This keyword is ignored by polygons.
-* `n_samples`: Controls the marker density. `n_samples = 40` is the default value. For faster plotting reduce this value. To compensate for the visual impact of lower marker densities consider increasing `markersize` and/or `markeralpha`. Note that marker density is intended to be even across all dimensions. Therefore, if the aspect ratio of the axes is very unequal, visual distortions will occur. 
+* `n_samples`: Controls the marker density. `n_samples = 40` is the default value. Reduce this value for faster plotting. Consider increasing `markersize` and/or `markeralpha` to compensate for the visual impact of lower marker densities. Note that the marker density is intended to be even across all dimensions. Therefore, visual distortions will occur if the aspect ratio of the axes is far from unity.
 
 ## Scalar Potential Plots
 
