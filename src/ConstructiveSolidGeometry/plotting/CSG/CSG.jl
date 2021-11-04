@@ -25,7 +25,7 @@ end
                     fillalpha --> 0.2
                     if haskey(plotattributes, :seriestype) 
                         if plotattributes[:seriestype] in [:csg, :wireframe] 
-                            linewidth := 0.5
+                            linewidth := 1
                         end
                     end
                 end
@@ -46,7 +46,7 @@ end
                         fillalpha --> 0.2
                         if haskey(plotattributes, :seriestype) 
                             if plotattributes[:seriestype] in [:csg, :wireframe] 
-                                linewidth := 0.5
+                                linewidth := 1
                             end
                         end
                     end

@@ -37,9 +37,9 @@ end
     unitformat --> :slash
     label --> ""
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
-        linewidth --> 0.75
+        linewidth --> 2
     else
-        linewidth --> 0.1
+        linewidth --> 0.2
     end
     linecolor --> :black
     seriescolor --> 1
