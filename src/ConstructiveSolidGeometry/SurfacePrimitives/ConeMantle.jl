@@ -71,6 +71,17 @@ function vertices(cm::ConeMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} wh
     append!(botcircle, topcircle)
 end
 
+function sample(cm::ConeMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
+    φMin, φMax = get_φ_limits(cm)
+    Δφ = abs(φMax - φMin)
+    full2π = isnothing(cm.φ)
+    rbot = radius_at_z(cm,-cm.hZ)
+    rtop = radius_at_z(cm,cm.hZ)
+    l = hypot(2cm.hZ, rtop - rbot)
+    z = range(-cm.hZ, cm.hZ, length = max(2,1+Int(ceil(l/spacing))))
+    [_transform_into_global_coordinate_system(CartesianPoint{T}((radius_at_z(cm,z) .* reverse(sincos(φ)))..., z), cm) for z in z for r in [radius_at_z(cm,z)] for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/radius_at_z(cm,z), length = max(2,1+Int(ceil(Δφ*radius_at_z(cm,z)/spacing)))))]
+end
+
 function connections(cm::ConeMantle, n_arc::Int64)::Vector{Vector{Int64}} 
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
     [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
@@ -90,8 +101,9 @@ const FullConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Nothing,D} # ugly name but w
 const PartialConeMantle{T,D} = ConeMantle{T,Tuple{T,T},Tuple{T,T},D}
 
 
-extremum(cm::FullConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
-extremum(cm::PartialConeMantle{T}) where {T} = sqrt(cm.hZ^2 + max(cm.r...)^2)
+extremum(cm::FullConeMantle{T}) where {T} = hypot(cm.hZ, max(cm.r...))
+
+extremum(cm::PartialConeMantle{T}) where {T} = hypot(cm.hZ, max(cm.r...))
 
 
 function lines(sp::FullConeMantle{T}; n = 2) where {T} 

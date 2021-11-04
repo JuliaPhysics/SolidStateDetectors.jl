@@ -215,3 +215,13 @@ end
 
 
 sample(csg::AbstractConstructiveGeometry{T}, sampling...) where {T} = vcat(sample(csg.a, sampling...), sample(csg.b, sampling...))
+
+function get_scale(csg::AbstractConstructiveGeometry{T}) where {T}
+    points = [point for p in primitives(csg) for s in surfaces(p) for point in vertices(s, 4)]
+    filter!(p -> in(p,csg), points)
+    x, y, z = broadcast(i -> getindex.(points, i), (1,2,3))
+    Δx = maximum(x) - minimum(x)
+    Δy = maximum(y) - minimum(y)
+    Δz = maximum(z) - minimum(z)
+    hypot(Δx/2,Δy/2,Δz/2)
+end

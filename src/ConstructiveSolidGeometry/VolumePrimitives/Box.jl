@@ -148,3 +148,4 @@ function surfaces(b::Box{T}) where {T}
     )
 end
 
+extremum(b::Box{T}) where {T} = hypot(b.hX, b.hY, b.hZ)

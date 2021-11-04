@@ -5,33 +5,51 @@
 #include("Polygon.jl")
 #include("TorusMantle.jl")
 
-@recipe function f(s::AbstractSurfacePrimitive; n_arc = 40, n_vert_lines = 2)
+@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40) where {T}
     seriestype --> :csg
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :csg 
-        @series begin 
-            label := ""
-            linewidth := 0
+    l = get_label_name(s)
+    if haskey(plotattributes, :seriestype) 
+        if plotattributes[:seriestype] == :csg 
+            @series begin 
+                label := ""
+                linewidth := 0
+                linecolor --> :white
+                mesh(s, n_arc)
+            end
+            @series begin 
+                label --> l
+                linecolor --> :black
+                fillalpha := 1
+                linewidth --> 1.5
+                mesh(s, n_arc, n_vert_lines)
+            end 
+        elseif plotattributes[:seriestype] == :mesh3d
+            label --> l   
             linecolor --> :white
             mesh(s, n_arc)
-        end
-        @series begin 
-            label --> get_label_name(s)
-            linecolor --> :black
+        elseif plotattributes[:seriestype] == :wireframe
+            label --> l
+            seriescolor --> :black
             fillalpha := 1
-            linewidth --> 1.5
+            linewidth --> 2
             mesh(s, n_arc, n_vert_lines)
-        end 
-    elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :mesh3d
-        label --> get_label_name(s)   
-        linecolor --> :white
-        mesh(s, n_arc)
-    elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :wireframe
-        label --> get_label_name(s)
-        seriescolor --> :black
-        fillalpha := 1
-        linewidth --> 2
-        mesh(s, n_arc, n_vert_lines)
+        elseif plotattributes[:seriestype] == :samplesurface
+            label --> l
+            seriesalpha --> 0.4
+            sample(s, extremum(s)/n_samples)
+        else
+            @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, and :samplesurface"
+        end
     end    
+end
+
+@recipe function f(::Type{Val{:samplesurface}}, x, y, z)
+    seriescolor --> 1
+    seriesalpha --> 0.2
+    markerstrokewidth --> 0
+    markersize --> 4
+    seriestype := :scatter
+    ()
 end
 
 @recipe function f(vp::AbstractVector{<:AbstractSurfacePrimitive})
