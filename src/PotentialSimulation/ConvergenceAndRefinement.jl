@@ -56,15 +56,15 @@ function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3},
             # @info "Slope is basically 0 -> Converged: $slope"
             cf = slope
         end
-        if max_n_iterations > 0 && n_iterations > max_n_iterations
+        if max_n_iterations > -1 && n_iterations > max_n_iterations 
             # @show n_iterations_between_checks
-            @info "Maximum number of iterations reached. (`n_iterations = $(n_iterations)`)"
+            verbose && @info "Maximum number of iterations reached. (`n_iterations = $(n_iterations)`)"
             break
         end
     end
     if depletion_handling_enabled
         tmp_point_types = pssrb.point_types .& undepleted_bit
-        @showprogress "Checking undepleted regions " for i in 1:10
+        for i in 1:10
             update!(pssrb, use_nthreads = use_nthreads, depletion_handling = depletion_handling, only2d = only2d, is_weighting_potential = is_weighting_potential)
             @inbounds for i in eachindex(pssrb.point_types)
                 if (pssrb.point_types[i] & undepleted_bit == 0) && (tmp_point_types[i] > 0)

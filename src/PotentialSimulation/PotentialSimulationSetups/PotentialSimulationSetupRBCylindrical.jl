@@ -222,7 +222,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
                         if (ir == 1 && axr[1] == 0) pos_r = axr[2] * 0.5 end
                         pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
                         ig = find_closest_gridpoint(pt, point_types.grid)
-                        if is_undepleted_point_type(point_types.data[ig...]) 
+                        if is_undepleted_point_type(point_types.data[ig...]) || is_fixed_point_type(point_types.data[ig...])
                             ϵ[ir, iφ, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor)
                         end
                     end

@@ -2,7 +2,7 @@
 abstract type AbstractContact{T} <: AbstractObject{T} end
 
 """
-    mutable struct Contact{T, G, MT} <: AbstractContact{T}
+    struct Contact{T, G, MT} <: AbstractContact{T}
         
 Contact of a [`SolidStateDetector`](@ref).
 

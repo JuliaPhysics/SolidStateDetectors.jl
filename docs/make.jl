@@ -1,6 +1,6 @@
 # Use
 #
-# DOCUMENTER_DEBUG=true julia --color=yes make.jl local [linkcheck] [fixdoctests]
+# DOCUMENTER_DEBUG=true GKSwstype=100 julia --color=yes make.jl local [linkcheck] [fixdoctests]
 #
 # for local builds.
 

@@ -150,10 +150,10 @@ end
 
 
 
-@recipe function f(ϵ::DielectricDistribution{T,3,Cylindrical}; φ = 0) where {T <: SSDFloat}
+@recipe function f(ϵ::DielectricDistribution{T,3,Cylindrical}; r = missing, φ = missing, z = missing) where {T <: SSDFloat}
 
     grid::CylindricalGrid{T} = ϵ.grid
-    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, missing, φ, missing)
+    cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
 
     seriestype --> :heatmap
     seriescolor --> :inferno
@@ -172,17 +172,17 @@ end
             aspect_ratio --> 1
             xguide --> "r"
             yguide --> "z"
-            xlims --> (grid.r[1],grid.r[end])
-            ylims --> (grid.z[1],grid.z[end])
+            xlims --> (grid.r[2],grid.r[end-1])
+            ylims --> (grid.z[2],grid.z[end-1])
             gr_ext*internal_length_unit, gz_ext*internal_length_unit, ϵ.data[:,idx,:]'
         elseif cross_section == :r
             xguide --> "φ"
             yguide --> "z"
-            ylims --> (grid.z[1],grid.z[end])
+            ylims --> (grid.z[2],grid.z[end-1])
             gφ_ext*internal_angle_unit, gz_ext*internal_length_unit, ϵ.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
-            gφ_ext*internal_angle_unit, gr_ext*internal_length_unit, ϵ.data[:,:,idx]
+            gφ_ext*internal_angle_unit, gr_ext[2:end-1]*internal_length_unit, ϵ.data[2:end-1,:,idx]
         end
     end
 end
