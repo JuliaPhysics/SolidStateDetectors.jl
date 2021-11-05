@@ -52,5 +52,5 @@ using SolidStateDetectors
 ssd_read("<name-of-simulation-file>.h5", Simulation)
 ```
 
-!!!note 
-  All HDF5 related packages must be loaded **before** loading SolidStateDetectors.jl
+!!! note
+    All HDF5 related packages must be loaded **before** loading SolidStateDetectors.jl

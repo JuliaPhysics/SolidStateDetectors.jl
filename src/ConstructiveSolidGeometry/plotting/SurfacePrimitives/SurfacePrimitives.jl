@@ -20,7 +20,7 @@
                 label --> l
                 linecolor --> :black
                 fillalpha := 1
-                linewidth --> 1.5
+                linewidth --> 2
                 mesh(s, n_arc, n_vert_lines)
             end 
         elseif plotattributes[:seriestype] == :mesh3d
