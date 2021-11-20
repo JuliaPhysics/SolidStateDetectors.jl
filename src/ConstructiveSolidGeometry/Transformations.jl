@@ -31,7 +31,7 @@ function Dictionary(m::SMatrix{3,3,T,9}) where {T}
     mat = RotXYZ(m)
     if mat.theta1 == 0 && mat.theta2 == 0
         if mat.theta3 != 0
-            dict["Z"] = string(mat.theta3)*"rad"
+            dict["Z"] = string(rad2deg(mat.theta3))*"°"
         end
     else
         dict["M"] = m[:]
