@@ -137,10 +137,18 @@ function Dictionary(t::Torus{T,<:Any,TR})::OrderedDict{String, Any} where {T,TR}
     dict = OrderedDict{String, Any}()
     dict["r_torus"] = t.r_torus
     dict["r_tube"] = TR <: Real ? t.r_tube : OrderedDict{String, Any}("from" => t.r_tube[1], "to" => t.r_tube[2]) 
-    if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => 0, "to" => string(t.φ)*"rad") end
-    if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(t.θ[1])*"rad", "to" => string(t.θ[2])*"rad") end
+    if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => "0°", "to" => string(rad2deg(t.φ))*"°") end
+    if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(rad2deg(t.θ[1]))*"°", "to" => string(rad2deg(t.θ[2]))*"°") end
     if t.origin != zero(CartesianVector{T}) dict["origin"] = t.origin end
-    if t.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(t.rotation) end
+    if t.rotation != one(SMatrix{3,3,T,9}) 
+        d = Dictionary(t.rotation)
+        if unique(keys(d)) == ["Z"]
+            φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
+            dict["phi"] = OrderedDict("from" => string(rad2deg(φ0))*"°", "to" => string(rad2deg(φ0 + t.φ))*"°")
+        else
+            dict["rotation"] = d
+        end
+    end
     OrderedDict{String, Any}("torus" => dict)
 end
 

@@ -692,10 +692,18 @@ function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, T
             OrderedDict{String, Any}("from" => c.r[2][1], "to" => c.r[2][2])
         end
     end
-    if !isnothing(c.φ) dict["phi"] = OrderedDict("from" => 0, "to" => string(c.φ)*"rad") end
+    if !isnothing(c.φ) dict["phi"] = OrderedDict("from" => "0°", "to" => string(rad2deg(c.φ))*"°") end
     dict["h"] = 2*c.hZ
     if c.origin != zero(CartesianVector{T}) dict["origin"] = c.origin end
-    if c.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(c.rotation) end
+    if c.rotation != one(SMatrix{3,3,T,9}) 
+        d = Dictionary(c.rotation)
+        if unique(keys(d)) == ["Z"]
+            φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
+            dict["phi"] = OrderedDict("from" => string(rad2deg(φ0))*"°", "to" => string(rad2deg(φ0 + c.φ))*"°")
+        else
+            dict["rotation"] = d
+        end
+    end
     OrderedDict{String, Any}(name => dict)
 end
 

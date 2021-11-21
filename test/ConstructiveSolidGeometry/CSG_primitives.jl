@@ -3,7 +3,7 @@ using SolidStateDetectors
 using StaticArrays
 
 import SolidStateDetectors.ConstructiveSolidGeometry as CSG
-import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
+import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
 
 T = Float64
 
@@ -14,17 +14,27 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
     @testset "Cone" begin
         for bot in (2.0, Dict("from" => 1.0, "to" => 2.0)),
             top in (2.0, 1.0, Dict("from" => 1.0, "to" => 2.0), Dict("from" => 2.0, "to" => 4.0)),
-            φmax in (180,360)
+            φ in ((30,180),(0,360))
             
             dict = Dict("difference" => [
                 Dict("cone"   => Dict(
                     "r"       => Dict("bottom" => bot, "top" => top),
-                    "phi"     => Dict("from" => "0°", "to" => "$(φmax)°"),
+                    "phi"     => Dict("from" => "$(φ[1])°", "to" => "$(φ[2])°"),
                     "h"       => 1.0))
                 for i in 1:2
             ])
             
             c = Geometry(T, dict, default_units, no_translations)
+            
+            # Conversion from Geometry -> Dict and Dict -> Geometry should result in the same geometry
+            output = Dictionary(c)
+            name = collect(keys(output["difference"][1]))[1] # "tube" or "cone"
+            if haskey(output["difference"][1][name], "phi")
+                @test CSG._parse_value(T, output["difference"][1][name]["phi"]["to"], default_units.angle) == CSG._parse_value(T, "$(φ[2])°", default_units.angle)
+            end
+            # Internally, the primitive stores the offset of phi in a rotation, but it should not be part of the config file
+            @test !haskey(output["difference"][1], "rotation")
+            @test c.a.rotation ≈ Geometry(T, output, default_units, no_translations).a.rotation
             
             # No warnings or errors when decomposing the Cones into surfaces
             @test_nowarn CSG.surfaces(c.a)
@@ -37,7 +47,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
     end
     @testset "Torus" begin
         for r_tube in (2.0, Dict("from" => 1.0, "to" => 2.0)), 
-            φmax in (180,360), 
+            φ in ((30,180),(0,360)), 
             θmin in 0:45:90, 
             θmax in 135:45:270
             
@@ -45,19 +55,25 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
                 Dict( "torus" => Dict(
                     "r_torus" => 10.0,
                     "r_tube"  => r_tube,
-                    "phi"     => Dict("from" => "0°", "to" => "$(φmax)°"),
+                    "phi"     => Dict("from" => "$(φ[1])°", "to" => "$(φ[2])°"),
                     "theta"   => Dict("from" => "$(θmin)°", "to" => "$(θmax)°")))
                 for i in 1:2
             ])
             t = Geometry(T, dict, default_units, no_translations)
             
+            # Conversion from Geometry -> Dict and Dict -> Geometry should result in the same geometry
+            output = Dictionary(t)
+            if haskey(output["difference"][1]["torus"], "phi")
+                @test CSG._parse_value(T, output["difference"][1]["torus"]["phi"]["to"], default_units.angle) == CSG._parse_value(T, "$(φ[2])°", default_units.angle)
+            end
+            # Internally, the primitive stores the offset of phi in a rotation, but it should not be part of the config file
+            @test !haskey(output["difference"][1], "rotation") 
+            @test t.a.rotation ≈ Geometry(T, output, default_units, no_translations).a.rotation
+            
             # No warnings or errors when decomposing the Torus into surfaces
             @test_nowarn CSG.surfaces(t.a)
             @test_nowarn CSG.surfaces(t.b)
-            
-            # Check that the r field for all ConeMantles is ordered
-            for surf in CSG.surfaces(t.a) surf isa CSG.ConeMantle && @test_skip surf.r[1] <= surf.r[2] end
-            
+
             # Check if all Torus are saved the right way
             @test t.a isa CSG.Torus
             @test t.b isa CSG.Torus
