@@ -116,9 +116,9 @@ struct OscillatingImpurityDensity{T} <: AbstractImpurityDensity{T}
 end
 
 # add get_charge_density for the newly defined charge density model
-function SolidStateDetectors.get_impurity_density(tcdm::TranslatedChargeDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T}
+function SolidStateDetectors.get_impurity_density(ocdm::OscillatingImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T}
     cyl_pt = CylindricalPoint(pt) # convert point to a CylindricalPoint
-    return offset + amplitude * sin(2π * cyl_pt.r / wavelength)
+    return ocdm.offset + ocdm.amplitude * sin(2π * cyl_pt.r / ocdm.wavelength)
 end
 ```
 
@@ -130,14 +130,14 @@ import SolidStateDetectors: get_impurity_density
 
 # new struct for translated impurity densities
 struct TranslatedImpurityDensity{T} <: AbstractImpurityDensity{T}
-    charge_density_model::AbstractImpurityDensity{T}
+    impurity_density_model::AbstractImpurityDensity{T}
     translate::CartesianVector{T}
 end
 
 # add get_impurity_density for the newly defined impurity density model
 function SolidStateDetectors.get_impurity_density(tcdm::TranslatedImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T}
     translated_pt::CartesianPoint{T} = CartesianPoint(pt) - tcdm.translate
-    return get_impurity_density(tcdm.charge_density_model, translated_pt)
+    return get_impurity_density(tcdm.impurity_density_model, translated_pt)
 end
 ```
 
