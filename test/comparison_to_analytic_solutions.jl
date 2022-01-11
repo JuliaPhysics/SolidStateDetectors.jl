@@ -25,7 +25,7 @@ e = SolidStateDetectors.elementary_charge * u"C"
     end
 end
 
-@testset "Two Spehres Capacitor" begin
+@testset "Two Spheres Capacitor" begin
     sim = Simulation{T}(SSD_examples[:TwoSpheresCapacitor])
     simulate!(sim, refinement_limits = [0.2, 0.1, 0.05, 0.02], convergence_limit = 1e-7)
     C_ssd = calculate_capacitance_matrix(sim)
