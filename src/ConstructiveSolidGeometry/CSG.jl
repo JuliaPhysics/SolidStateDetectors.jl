@@ -106,7 +106,7 @@ struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <:
 end
 
 in(pt::AbstractCoordinatePoint{T}, csg::CSGIntersection, csgtol::T = csg_default_tol(T)) where {T} = 
-    in(pt, csg.a; csgtol) && in(pt, csg.b; csgtol)
+    in(pt, csg.a, csgtol) && in(pt, csg.b, csgtol)
 (&)(a::A, b::B) where {T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} = CSGIntersection{T,A,B}(a, b)
 
 # read-in
