@@ -49,7 +49,7 @@ impurity_density:
   value: 1e10cm^-3 # => 10¹⁹ m⁻³
 ```
 If no units are given, `value` is interpreted in units of `units.length`$^{-3}$.
-They are converted is SI units (m$^(-3)$) internally.
+They are converted to SI units (m$^{-3}$) internally.
 
 
 ### Linear Impurity Density
