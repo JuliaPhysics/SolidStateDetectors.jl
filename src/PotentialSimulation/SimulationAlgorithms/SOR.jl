@@ -39,6 +39,56 @@ Eqs. 5.36 & 5.37 in https://mediatum.ub.tum.de/doc/1620954/1620954.pdf.
     return new_potential
 end
 
+"""
+    function handle_depletion(
+        new_potential::T, 
+        point_type::PointType, 
+        neighbor_potentials::NTuple{6,T}, 
+        q_eff_imp::T, 
+        volume_weight::T,
+        sor_const::T
+    )::Tuple{T, PointType} where {T}
+
+This function checks whether the current grid point is depleted or undepleted.
+The decision depends on the new calculated potential value, `new_potential`, 
+for the respective grid point in that iteration and 
+the potential values of the neighboring grid points, `neighbor_potentials`.
+
+If `minimum(neighbor_potentials) < new_potential < maximum(neighbor_potentials)` => depleted
+
+Else => undepleted
+
+This decision is based on the fact that the potential inside a solid-state 
+detector increases monotonically from a `p+`-contact towards an `n+`-contact.
+
+!!! note
+    If a fixed charge impurity is present, e.g. due to a charged passivated surface,
+    this handling is probably not valid anymore as the potential between a 
+    `p+`-contact towards an `n+`-contact is not required to change monotonically anymore.
+    
+"""
+@inline @fastmath function handle_depletion(
+    new_potential::T, 
+    point_type::PointType, 
+    neighbor_potentials::NTuple{6,T}, 
+    q_eff_imp::T, 
+    volume_weight::T,
+    sor_const::T
+)::Tuple{T, PointType} where {T}
+    vmin::T = min(neighbor_potentials...)
+    vmax::T = max(neighbor_potentials...)
+
+    if new_potential < vmin || new_potential > vmax
+        new_potential -= q_eff_imp * volume_weight * sor_const
+        if (point_type & undepleted_bit == 0 && point_type & pn_junction_bit > 0) 
+            point_type += undepleted_bit
+        end
+    elseif point_type & undepleted_bit > 0
+        point_type -= undepleted_bit
+    end
+    new_potential, point_type
+end
+
 function update!(   pssrb::PotentialSimulationSetupRB{T}; use_nthreads::Int = Base.Threads.nthreads(), 
         depletion_handling::Val{depletion_handling_enabled} = Val{false}(), only2d::Val{only_2d} = Val{false}(),
         is_weighting_potential::Val{_is_weighting_potential} = Val{false}())::Nothing where {T, depletion_handling_enabled, only_2d, _is_weighting_potential}

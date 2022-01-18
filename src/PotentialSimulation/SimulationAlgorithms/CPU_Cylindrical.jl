@@ -274,20 +274,14 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindric
         )
 
         if depletion_handling_enabled
-            if inr == 1 vrl = vrr end
-            vmin::T = min(vrr, vrl, vφr, vφl, vzr, vzl)
-            vmax::T = max(vrr, vrl, vφr, vφl, vzr, vzl)
-            new_point_type = pssrb.point_types[iz, iφ, ir, rb_tar_idx] 
-            if new_potential < vmin || new_potential > vmax
-                new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
-                if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0 && 
-                    pssrb.point_types[iz, iφ, ir, rb_tar_idx] & pn_junction_bit > 0)
-                    new_point_type += undepleted_bit
-                end # mark this point as undepleted
-            elseif pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0
-                new_point_type -= undepleted_bit
-            end
-            pssrb.point_types[iz, iφ, ir, rb_tar_idx] = new_point_type
+            new_potential, pssrb.point_types[iz, iφ, ir, rb_tar_idx] = handle_depletion(
+                new_potential,
+                pssrb.point_types[iz, iφ, ir, rb_tar_idx],
+                (vrr, ifelse(inr == 1, vrr, vrl), vφr, vφl, vzr, vzl),
+                pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx],
+                pssrb.volume_weights[iz, iφ, ir, rb_tar_idx],
+                pssrb.sor_const[inr]
+            )
         end
 
         pssrb.potential[iz, iφ, ir, rb_tar_idx]::T = ifelse(pssrb.point_types[iz, iφ, ir, rb_tar_idx] & update_bit > 0, new_potential, old_potential)

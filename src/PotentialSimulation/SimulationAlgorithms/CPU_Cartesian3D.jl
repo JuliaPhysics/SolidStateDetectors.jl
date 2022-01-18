@@ -184,7 +184,7 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian
         
         old_potential::T = pssrb.potential[ix, iy, iz, rb_tar_idx]
         q_eff::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
-        
+
         wxr = line_weights[ix-1, 1] 
         wxl = line_weights[ix-1, 2] 
         wyr = line_weights[ix-1, 3] 
@@ -209,22 +209,17 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian
         )
 
         if depletion_handling_enabled
-            vmin::T = min(vxr, vxl, vyr, vyl, vzr, vzl)
-            vmax::T = max(vxr, vxl, vyr, vyl, vzr, vzl)
-            
-            new_point_type = pssrb.point_types[ix, iy, iz, rb_tar_idx] 
-            if new_potential < vmin || new_potential > vmax
-                new_potential -= pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] * pssrb.volume_weights[ix, iy, iz, rb_tar_idx] * pssrb.sor_const[1]
-                if (pssrb.point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0 &&
-                    pssrb.point_types[ix, iy, iz, rb_tar_idx] & pn_junction_bit > 0) 
-                    new_point_type += undepleted_bit
-                end # mark this point as undepleted
-            elseif pssrb.point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0
-                new_point_type -= undepleted_bit
-            end
-            pssrb.point_types[ix, iy, iz, rb_tar_idx] = new_point_type
+            new_potential, pssrb.point_types[ix, iy, iz, rb_tar_idx] = handle_depletion(
+                new_potential,
+                pssrb.point_types[ix, iy, iz, rb_tar_idx],
+                (vxr, vxl, vyr, vyl, vzr, vzl),
+                pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx],
+                pssrb.volume_weights[ix, iy, iz, rb_tar_idx],
+                pssrb.sor_const[1]
+            )
         end 
 
         pssrb.potential[ix, iy, iz, rb_tar_idx]::T = ifelse(pssrb.point_types[ix, iy, iz, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
     end
 end
+

@@ -150,21 +150,14 @@
         )
 
         if depletion_handling_enabled
-            if inr == 1 vrl = vrr end
-            vmin::T = min(vrr, vrl, vφr, vφl, vzr, vzl)
-            vmax::T = max(vrr, vrl, vφr, vφl, vzr, vzl)
-            new_point_type = point_types[iz, iφ, ir, rb_tar_idx] 
-            if new_potential < vmin || new_potential > vmax
-                new_potential -= q_eff_imp[iz, iφ, ir, rb_tar_idx] * volume_weights[iz, iφ, ir, rb_tar_idx] * sor_const[inr]
-                if (point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0 && 
-                    point_types[iz, iφ, ir, rb_tar_idx] & pn_junction_bit > 0) # undepleted_bit
-                    # point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit 
-                    new_point_type += undepleted_bit
-                end # mark this point as undepleted
-            elseif point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0
-                new_point_type -= undepleted_bit
-            end
-            point_types[iz, iφ, ir, rb_tar_idx] = new_point_type
+            new_potential, point_types[iz, iφ, ir, rb_tar_idx] = handle_depletion(
+                new_potential,
+                point_types[iz, iφ, ir, rb_tar_idx],
+                (vrr, ifelse(inr == 1, vrr, vrl), vφr, vφl, vzr, vzl),
+                q_eff_imp[iz, iφ, ir, rb_tar_idx],
+                volume_weights[iz, iφ, ir, rb_tar_idx],
+                sor_const[inr]
+            )
         end
 
         potential[iz, iφ, ir, rb_tar_idx]::T = ifelse(point_types[iz, iφ, ir, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
