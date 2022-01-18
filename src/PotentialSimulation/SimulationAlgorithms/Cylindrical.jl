@@ -226,13 +226,6 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
         wzr *= Δz_ext_inv_r * pwΔmpφ_Δmpr_squared
         wzl *= Δz_ext_inv_l * pwΔmpφ_Δmpr_squared
 
-        # pssrb.weights_line[iz-1, 1, Base.Threads.threadid()] = wrr 
-        # pssrb.weights_line[iz-1, 2, Base.Threads.threadid()] = wrl 
-        # pssrb.weights_line[iz-1, 3, Base.Threads.threadid()] = wφr 
-        # pssrb.weights_line[iz-1, 4, Base.Threads.threadid()] = wφl 
-        # pssrb.weights_line[iz-1, 5, Base.Threads.threadid()] = wzr 
-        # pssrb.weights_line[iz-1, 6, Base.Threads.threadid()] = wzl 
-
         line_weights[iz-1, 1] = wrr 
         line_weights[iz-1, 2] = wrl 
         line_weights[iz-1, 3] = wφr 
@@ -254,12 +247,12 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindric
     # @fastmath @inbounds for iz in 2:(size(pssrb.potential, 1) - 1)
         izr::Int = get_rbidx_right_neighbour(iz, update_even_points, rφi_is_even_t)
         
-        wrr = line_weights[iz-1, 1] #pssrb.weights_line[iz-1, 1, Base.Threads.threadid()]
-        wrl = line_weights[iz-1, 2] #pssrb.weights_line[iz-1, 2, Base.Threads.threadid()]
-        wφr = line_weights[iz-1, 3] #pssrb.weights_line[iz-1, 3, Base.Threads.threadid()]
-        wφl = line_weights[iz-1, 4] #pssrb.weights_line[iz-1, 4, Base.Threads.threadid()]
-        wzr = line_weights[iz-1, 5] #pssrb.weights_line[iz-1, 5, Base.Threads.threadid()]
-        wzl = line_weights[iz-1, 6] #pssrb.weights_line[iz-1, 6, Base.Threads.threadid()]
+        wrr = line_weights[iz-1, 1] 
+        wrl = line_weights[iz-1, 2] 
+        wφr = line_weights[iz-1, 3] 
+        wφl = line_weights[iz-1, 4] 
+        wzr = line_weights[iz-1, 5] 
+        wzl = line_weights[iz-1, 6] 
 
         old_potential::T = pssrb.potential[iz, iφ, ir, rb_tar_idx]
 
