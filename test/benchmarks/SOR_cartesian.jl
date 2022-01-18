@@ -70,6 +70,7 @@ begin
 
     @btime SolidStateDetectors.middleloop!($idx3, $rb_tar_idx, $rb_src_idx, $pssrb, 
                          $update_even_points, $depletion_handling, $is_weighting_potential, $only2d, $idx3iseven)
+
 end
 
 
@@ -82,23 +83,23 @@ begin
     iz = idx3
     inz = iz - 1 
                 
-    pwwzr        = pssrb.geom_weights[3].weights[1, inz]
-    pwwzl        = pssrb.geom_weights[3].weights[2, inz]
-    pwΔmpz       = pssrb.geom_weights[3].weights[3, inz]
-    Δz_ext_inv_r = pssrb.geom_weights[3].weights[4, inz + 1]
-    Δz_ext_inv_l = pssrb.geom_weights[3].weights[4, inz]
+    pwwzr        = pssrb.geom_weights[3][1, inz]
+    pwwzl        = pssrb.geom_weights[3][2, inz]
+    pwΔmpz       = pssrb.geom_weights[3][3, inz]
+    Δz_ext_inv_r = pssrb.geom_weights[3][4, inz + 1]
+    Δz_ext_inv_l = pssrb.geom_weights[3][4, inz]
 
     line_weights = Array{T, 2}(undef, size(pssrb.potential, 1) - 2, 6)
 
     iy = 2
     iny = iy - 1
 
-    pwwyr  = pssrb.geom_weights[2].weights[1, iny]
-    pwwyl  = pssrb.geom_weights[2].weights[2, iny]
-    pwΔmpy = pssrb.geom_weights[2].weights[3, iny] 
+    pwwyr  = pssrb.geom_weights[2][1, iny]
+    pwwyl  = pssrb.geom_weights[2][2, iny]
+    pwΔmpy = pssrb.geom_weights[2][3, iny] 
     pwΔmpy_pwΔmpz = pwΔmpy * pwΔmpz
-    Δy_ext_inv_r_pwΔmpz  = pssrb.geom_weights[2].weights[4, iny + 1] * pwΔmpz
-    Δy_ext_inv_l_pwΔmpz  = pssrb.geom_weights[2].weights[4, iny]     * pwΔmpz
+    Δy_ext_inv_r_pwΔmpz  = pssrb.geom_weights[2][4, iny + 1] * pwΔmpz
+    Δy_ext_inv_l_pwΔmpz  = pssrb.geom_weights[2][4, iny]     * pwΔmpz
     Δz_ext_inv_r_pwΔmpy = Δz_ext_inv_r * pwΔmpy
     Δz_ext_inv_l_pwΔmpy = Δz_ext_inv_l * pwΔmpy
 
