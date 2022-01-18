@@ -181,7 +181,10 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian
     @fastmath @inbounds @simd ivdep for ix in 2:(size(pssrb.potential, 1) - 1)
     # for ix in 2:(size(pssrb.potential, 1) - 1)
         ixr::Int = get_rbidx_right_neighbour(ix, update_even_points, zyi_is_even_t)
-
+        
+        old_potential::T = pssrb.potential[ix, iy, iz, rb_tar_idx]
+        q_eff::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
+        
         wxr = line_weights[ix-1, 1] 
         wxl = line_weights[ix-1, 2] 
         wyr = line_weights[ix-1, 3] 
@@ -196,18 +199,13 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian
         vzr::T = pssrb.potential[     ix,     iy, iz + 1, rb_src_idx]
         vzl::T = pssrb.potential[     ix,     iy,    inz, rb_src_idx]
 
-        old_potential::T = pssrb.potential[ix, iy, iz, rb_tar_idx]
-        q_eff::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
-        volume_weight::T = pssrb.volume_weights[ix, iy, iz, rb_tar_idx]
-        sor_const::T = pssrb.sor_const[1]
-
         new_potential::T = calc_new_potential_SOR_3D(
             q_eff,
-            volume_weight,
+            pssrb.volume_weights[ix, iy, iz, rb_tar_idx],
             (wxr, wxl, wyr, wyl, wzr, wzl),
             (vxr, vxl, vyr, vyl, vzr, vzl),
             old_potential,
-            sor_const
+            pssrb.sor_const[1]
         )
 
         if depletion_handling_enabled

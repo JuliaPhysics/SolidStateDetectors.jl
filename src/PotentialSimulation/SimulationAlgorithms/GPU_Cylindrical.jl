@@ -123,14 +123,15 @@
         wzl    = muladd(ϵ_lrl, pwwrl_pwwφr, wzl)    
         wzl    = muladd(ϵ_lll, pwwrl_pwwφl, wzl)
 
+        old_potential::T = potential[iz, iφ, ir, rb_tar_idx]
+        q_eff::T = is_weighting_potential ? zero(T) : (q_eff_imp[iz, iφ, ir, rb_tar_idx] + q_eff_fix[iz, iφ, ir, rb_tar_idx])
+
         wrr *= Δr_ext_inv_r_pwmprr_pwΔmpφ * pwΔmpz
         wrl *= Δr_ext_inv_l_pwmprl_pwΔmpφ * pwΔmpz
         wφr *= r_inv_pwΔmpr_Δφ_ext_inv_r * pwΔmpz
         wφl *= r_inv_pwΔmpr_Δφ_ext_inv_l * pwΔmpz
         wzr *= Δz_ext_inv_r * pwΔmpφ_Δmpr_squared
         wzl *= Δz_ext_inv_l * pwΔmpφ_Δmpr_squared
-
-        old_potential::T = potential[iz, iφ, ir, rb_tar_idx]
 
         vrr::T = potential[     iz,     iφ, ir + 1, rb_src_idx]
         vrl::T = potential[     iz,     iφ,    inr, rb_src_idx]
@@ -139,19 +140,14 @@
         vzr::T = potential[    izr,     iφ,     ir, rb_src_idx] 
         vzl::T = potential[izr - 1,     iφ,     ir, rb_src_idx]
         
-        new_potential::T = is_weighting_potential ? zero(T) : (q_eff_imp[iz, iφ, ir, rb_tar_idx] + q_eff_fix[iz, iφ, ir, rb_tar_idx])
-
-        new_potential = muladd( wrr, vrr, new_potential)
-        new_potential = muladd( wrl, vrl, new_potential)
-        new_potential = muladd( wφr, vφr, new_potential)
-        new_potential = muladd( wφl, vφl, new_potential)
-        new_potential = muladd( wzr, vzr, new_potential)
-        new_potential = muladd( wzl, vzl, new_potential)
-
-        new_potential *= volume_weights[iz, iφ, ir, rb_tar_idx]
-
-        new_potential -= old_potential
-        new_potential = muladd(new_potential, sor_const[inr], old_potential)
+        new_potential::T = calc_new_potential_SOR_3D(
+            q_eff,
+            volume_weights[iz, iφ, ir, rb_tar_idx],
+            (wrr, wrl, wφr, wφl, wzr, wzl),
+            (vrr, vrl, vφr, vφl, vzr, vzl),
+            old_potential,
+            sor_const[inr]
+        )
 
         if depletion_handling_enabled
             if inr == 1 vrl = vrr end
