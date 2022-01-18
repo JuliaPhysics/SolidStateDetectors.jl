@@ -1,6 +1,6 @@
 abstract type AbstractVirtualVolume{T} end
 
-in(pt::AbstractCoordinatePoint{T, 3}, avv::AbstractVirtualVolume{T}) where {T <: SSDFloat} = in(pt, avv.geometry)
+in(pt::AbstractCoordinatePoint{T}, avv::AbstractVirtualVolume{T}) where {T <: SSDFloat} = in(pt, avv.geometry)
 
 
 function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Transformations)
