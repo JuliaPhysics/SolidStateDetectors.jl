@@ -253,9 +253,7 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindric
         wφl = line_weights[iz-1, 4] 
         wzr = line_weights[iz-1, 5] 
         wzl = line_weights[iz-1, 6] 
-
-        old_potential::T = pssrb.potential[iz, iφ, ir, rb_tar_idx]
-
+        
         vrr::T = pssrb.potential[     iz,     iφ, ir + 1, rb_src_idx]
         vrl::T = pssrb.potential[     iz,     iφ,    inr, rb_src_idx]
         vφr::T = only_2d ? old_potential : pssrb.potential[ iz, iφ + 1, ir, rb_src_idx]
@@ -263,19 +261,19 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindric
         vzr::T = pssrb.potential[    izr,     iφ,     ir, rb_src_idx] 
         vzl::T = pssrb.potential[izr - 1,     iφ,     ir, rb_src_idx]
         
-        new_potential::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] + pssrb.q_eff_fix[iz, iφ, ir, rb_tar_idx])
+        old_potential::T = pssrb.potential[iz, iφ, ir, rb_tar_idx]
+        q_eff::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] + pssrb.q_eff_fix[iz, iφ, ir, rb_tar_idx])
+        volume_weight::T = pssrb.volume_weights[iz, iφ, ir, rb_tar_idx]
+        sor_const::T = pssrb.sor_const[inr]
 
-        new_potential = muladd( wrr, vrr, new_potential)
-        new_potential = muladd( wrl, vrl, new_potential)
-        new_potential = muladd( wφr, vφr, new_potential)
-        new_potential = muladd( wφl, vφl, new_potential)
-        new_potential = muladd( wzr, vzr, new_potential)
-        new_potential = muladd( wzl, vzl, new_potential)
-
-        new_potential *= pssrb.volume_weights[iz, iφ, ir, rb_tar_idx]
-
-        new_potential -= old_potential
-        new_potential = muladd(new_potential, pssrb.sor_const[inr], old_potential)
+        new_potential::T = calc_new_potential_SOR_3D(
+            q_eff,
+            volume_weight,
+            (wrr, wrl, wφr, wφl, wzr, wzl),
+            (vrr, vrl, vφr, vφl, vzr, vzl),
+            old_potential,
+            sor_const
+        )
 
         if depletion_handling_enabled
             if inr == 1 vrl = vrr end
@@ -286,7 +284,6 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cylindric
                 new_potential -= pssrb.q_eff_imp[iz, iφ, ir, rb_tar_idx] * pssrb.volume_weights[iz, iφ, ir, rb_tar_idx] * pssrb.sor_const[inr]
                 if (pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit == 0 && 
                     pssrb.point_types[iz, iφ, ir, rb_tar_idx] & pn_junction_bit > 0)
-                    # pssrb.point_types[iz, iφ, ir, rb_tar_idx] += undepleted_bit 
                     new_point_type += undepleted_bit
                 end # mark this point as undepleted
             elseif pssrb.point_types[iz, iφ, ir, rb_tar_idx] & undepleted_bit > 0

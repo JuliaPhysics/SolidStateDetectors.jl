@@ -196,20 +196,19 @@ function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian
         vzr::T = pssrb.potential[     ix,     iy, iz + 1, rb_src_idx]
         vzl::T = pssrb.potential[     ix,     iy,    inz, rb_src_idx]
 
-        new_potential::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
-        new_potential = muladd( wxr, vxr, new_potential)
-        new_potential = muladd( wxl, vxl, new_potential)
-        new_potential = muladd( wyr, vyr, new_potential)
-        new_potential = muladd( wyl, vyl, new_potential)
-        new_potential = muladd( wzr, vzr, new_potential)
-        new_potential = muladd( wzl, vzl, new_potential)
-
-        new_potential *= pssrb.volume_weights[ix, iy, iz, rb_tar_idx]
-
         old_potential::T = pssrb.potential[ix, iy, iz, rb_tar_idx]
+        q_eff::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
+        volume_weight::T = pssrb.volume_weights[ix, iy, iz, rb_tar_idx]
+        sor_const::T = pssrb.sor_const[1]
 
-        new_potential -= old_potential
-        new_potential = muladd(new_potential, pssrb.sor_const[1], old_potential)
+        new_potential::T = calc_new_potential_SOR_3D(
+            q_eff,
+            volume_weight,
+            (wxr, wxl, wyr, wyl, wzr, wzl),
+            (vxr, vxl, vyr, vyl, vzr, vzl),
+            old_potential,
+            sor_const
+        )
 
         if depletion_handling_enabled
             vmin::T = min(vxr, vxl, vyr, vyl, vzr, vzl)
