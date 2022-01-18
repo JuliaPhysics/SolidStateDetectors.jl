@@ -1318,3 +1318,4 @@ end
 
 include("ElectricFieldEnergy.jl")
 include("Capacitance.jl")
+include("DepletionVoltage.jl")
