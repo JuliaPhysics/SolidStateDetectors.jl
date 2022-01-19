@@ -159,9 +159,8 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
     Δr_ext_inv_r_pwmprr_pwΔmpφ, Δr_ext_inv_l_pwmprl_pwΔmpφ, 
     r_inv_pwΔmpr_Δφ_ext_inv_r, r_inv_pwΔmpr_Δφ_ext_inv_l,
     ) where {T, rφi_is_even}
-# Prepare weightos for most inner loop of the SOR
+# Prepare weights for most inner loop of the SOR
 @fastmath @inbounds @simd ivdep for iz in 2:(size(pssrb.potential, 1) - 1)
-# @fastmath @inbounds for iz in 2:(size(pssrb.potential, 1) - 1)
 inz::Int = nidx(iz, update_even_points, rφi_is_even_t)
 
 pwwzr::T        = pssrb.geom_weights[3][1, inz]
