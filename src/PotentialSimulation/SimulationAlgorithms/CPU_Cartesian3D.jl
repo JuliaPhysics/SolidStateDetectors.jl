@@ -161,65 +161,11 @@ function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSet
         wzr *= Δz_ext_inv_r_pwΔmpy * pwΔmpx 
         wzl *= Δz_ext_inv_l_pwΔmpy * pwΔmpx 
 
-        line_weights[ix-1, 1] = wxr 
-        line_weights[ix-1, 2] = wxl 
-        line_weights[ix-1, 3] = wyr 
-        line_weights[ix-1, 4] = wyl 
-        line_weights[ix-1, 5] = wzr 
-        line_weights[ix-1, 6] = wzl 
+        line_weights[ix-1, 1] = wzl 
+        line_weights[ix-1, 2] = wzr 
+        line_weights[ix-1, 3] = wyl 
+        line_weights[ix-1, 4] = wyr 
+        line_weights[ix-1, 5] = wxl 
+        line_weights[ix-1, 6] = wxr 
     end
 end
-
-
-
-function innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian, 3, Array{T, 3}},
-        iy, iny, iz, inz, rb_tar_idx, rb_src_idx,
-        update_even_points, zyi_is_even_t::Val{zyi_is_even}, 
-        depletion_handling::Val{depletion_handling_enabled},
-        is_weighting_potential::Val{_is_weighting_potential}, 
-        only2d::Val{only_2d}) where {T, depletion_handling_enabled, _is_weighting_potential, only_2d, zyi_is_even}
-    @fastmath @inbounds @simd ivdep for ix in 2:(size(pssrb.potential, 1) - 1)
-    # for ix in 2:(size(pssrb.potential, 1) - 1)
-        ixr::Int = get_rbidx_right_neighbour(ix, update_even_points, zyi_is_even_t)
-        
-        old_potential::T = pssrb.potential[ix, iy, iz, rb_tar_idx]
-        q_eff::T = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx] + pssrb.q_eff_fix[ix, iy, iz, rb_tar_idx])
-
-        wxr = line_weights[ix-1, 1] 
-        wxl = line_weights[ix-1, 2] 
-        wyr = line_weights[ix-1, 3] 
-        wyl = line_weights[ix-1, 4] 
-        wzr = line_weights[ix-1, 5] 
-        wzl = line_weights[ix-1, 6] 
-
-        vxr::T = pssrb.potential[    ixr,     iy,     iz, rb_src_idx] 
-        vxl::T = pssrb.potential[ixr - 1,     iy,     iz, rb_src_idx]
-        vyr::T = pssrb.potential[     ix, iy + 1,     iz, rb_src_idx]
-        vyl::T = pssrb.potential[     ix,    iny,     iz, rb_src_idx]
-        vzr::T = pssrb.potential[     ix,     iy, iz + 1, rb_src_idx]
-        vzl::T = pssrb.potential[     ix,     iy,    inz, rb_src_idx]
-
-        new_potential::T = calc_new_potential_SOR_3D(
-            q_eff,
-            pssrb.volume_weights[ix, iy, iz, rb_tar_idx],
-            (wxr, wxl, wyr, wyl, wzr, wzl),
-            (vxr, vxl, vyr, vyl, vzr, vzl),
-            old_potential,
-            pssrb.sor_const[1]
-        )
-
-        if depletion_handling_enabled
-            new_potential, pssrb.point_types[ix, iy, iz, rb_tar_idx] = handle_depletion(
-                new_potential,
-                pssrb.point_types[ix, iy, iz, rb_tar_idx],
-                (vxr, vxl, vyr, vyl, vzr, vzl),
-                pssrb.q_eff_imp[ix, iy, iz, rb_tar_idx],
-                pssrb.volume_weights[ix, iy, iz, rb_tar_idx],
-                pssrb.sor_const[1]
-            )
-        end 
-
-        pssrb.potential[ix, iy, iz, rb_tar_idx]::T = ifelse(pssrb.point_types[ix, iy, iz, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
-    end
-end
-
