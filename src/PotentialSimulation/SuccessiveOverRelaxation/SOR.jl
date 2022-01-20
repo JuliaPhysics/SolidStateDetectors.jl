@@ -94,24 +94,6 @@ end
 function _guess_optimal_number_of_threads_for_SOR(gs::NTuple{3, Integer}, max_nthreads::Integer, S::Union{Type{Cylindrical}, Type{Cartesian}})::Int
     max_nthreads = min(Base.Threads.nthreads(), max_nthreads)
     n = S == Cylindrical ? gs[2] * gs[3] : gs[1] * gs[2] # Number of grid points to be updated in each iteration of the outer loop
-    #=
-        Due to threading overhead calculating small grids with too many threads results in a worse performance.
-        Thus, we limit them depending on the grid size.
-        These ranges may depend on the hardware and are set by educated guesses.
-        # nt = if n < 100
-        #     4
-        # elseif n < 200
-        #     8
-        # elseif n < 400
-        #     16
-        # elseif n < 800
-        #     32
-        # elseif n < 1600
-        #     64
-        # else
-        #     max_nthreads
-        # end
-    =#
     return min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
 end
 
