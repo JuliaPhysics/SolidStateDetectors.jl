@@ -56,10 +56,12 @@ the potential values of the neighboring grid points, `neighbor_potentials`.
 
 If `minimum(neighbor_potentials) < new_potential < maximum(neighbor_potentials)` => depleted
 
-Else => undepleted
+Else => undepleted => Subtract the contribution coming from the impurity density from the new potential value again
+since the charge density (coming from the impurity density) is zero in undepleted regions.
 
 This decision is based on the fact that the potential inside a solid-state 
 detector increases monotonically from a `p+`-contact towards an `n+`-contact.
+Thus, there cannot be local extrema. 
 
 !!! note
     If a fixed charge impurity is present, e.g. due to a charged passivated surface,
@@ -88,7 +90,6 @@ detector increases monotonically from a `p+`-contact towards an `n+`-contact.
     end
     new_potential, point_type
 end
-
 
 include("CPU_outerloop.jl")
 include("CPU_middleloop_Cylindrical.jl")
