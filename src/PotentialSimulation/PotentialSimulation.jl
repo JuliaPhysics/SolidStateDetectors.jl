@@ -14,4 +14,4 @@ include("WeightingPotential.jl")
 include("ScalarPotential.jl")
 
 include("SuccessiveOverRelaxation/SOR.jl")
-include("ConvergenceAndRefinement.jl")
+include("Refinement.jl")

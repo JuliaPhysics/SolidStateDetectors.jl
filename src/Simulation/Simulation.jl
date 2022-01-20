@@ -406,6 +406,13 @@ function Grid(  sim::Simulation{T, Cartesian};
 end
 
 
+function _guess_optimal_number_of_threads_for_SOR(gs::NTuple{3, Integer}, max_nthreads::Integer, S::Union{Type{Cylindrical}, Type{Cartesian}})::Int
+    max_nthreads = min(Base.Threads.nthreads(), max_nthreads)
+    n = S == Cylindrical ? gs[2] * gs[3] : gs[1] * gs[2] # Number of grid points to be updated in each iteration of the outer loop
+    return min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
+end
+
+
 """
     apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
             not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}

@@ -92,7 +92,6 @@ include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
 include("PotentialSimulation/PotentialSimulation.jl")
-include("PotentialSimulation/ConvergenceGPU.jl")
 
 include("ElectricField/ElectricField.jl")
 

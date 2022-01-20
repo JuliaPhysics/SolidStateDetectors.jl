@@ -16,7 +16,7 @@ the weight due to the volume of the grid point itself (the voxel around it)
 and the set SOR constant `sor_const`.
 
 For more detailed information see Chapter 5.2.2 "Calculation of the Electric Potential"
-Eqs. 5.36 & 5.37 in https://mediatum.ub.tum.de/doc/1620954/1620954.pdf.
+Eqs. 5.31 to 5.37 in https://mediatum.ub.tum.de/doc/1620954/1620954.pdf.
 """
 @inline function calc_new_potential_SOR_3D(
     q_eff::T,
@@ -90,27 +90,13 @@ detector increases monotonically from a `p+`-contact towards an `n+`-contact.
 end
 
 
-
-function _guess_optimal_number_of_threads_for_SOR(gs::NTuple{3, Integer}, max_nthreads::Integer, S::Union{Type{Cylindrical}, Type{Cartesian}})::Int
-    max_nthreads = min(Base.Threads.nthreads(), max_nthreads)
-    n = S == Cylindrical ? gs[2] * gs[3] : gs[1] * gs[2] # Number of grid points to be updated in each iteration of the outer loop
-    return min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
-end
-
 include("CPU_outerloop.jl")
 include("CPU_middleloop_Cylindrical.jl")
 include("CPU_middleloop_Cartesian3D.jl")
 include("CPU_innerloop.jl")
+include("CPU_convergence.jl")
 
-include("GPU_Cylindrical.jl")
-include("GPU_Cartesian3D.jl")
+include("GPU_kernel_Cylindrical.jl")
+include("GPU_kernel_Cartesian3D.jl")
+include("GPU_convergence.jl")
 
-function update!(   pssrb::PotentialSimulationSetupRB{T}; use_nthreads::Int = Base.Threads.nthreads(), 
-    depletion_handling::Val{depletion_handling_enabled} = Val{false}(), only2d::Val{only_2d} = Val{false}(),
-    is_weighting_potential::Val{_is_weighting_potential} = Val{false}())::Nothing where {T, depletion_handling_enabled, only_2d, _is_weighting_potential}
-outerloop!(pssrb, use_nthreads, Val{true}(), depletion_handling, is_weighting_potential, only2d)
-apply_boundary_conditions!(pssrb, Val{true}(), only2d)
-outerloop!(pssrb, use_nthreads, Val{false}(), depletion_handling, is_weighting_potential, only2d)
-apply_boundary_conditions!(pssrb, Val{false}(), only2d)
-nothing
-end
