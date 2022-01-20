@@ -1,3 +1,19 @@
+"""
+    function update!(   
+    pssrb::PotentialSimulationSetupRB{T}; 
+    use_nthreads::Int = Base.Threads.nthreads(), 
+    depletion_handling::Val{depletion_handling_enabled} = Val{false}(), 
+    only2d::Val{only_2d} = Val{false}(),
+    is_weighting_potential::Val{_is_weighting_potential} = Val{false}()
+)::Nothing where {T, depletion_handling_enabled, only_2d, _is_weighting_potential}
+
+This function performs one iteration of the SOR. One iteration consists out of 4 steps:
+
+    1) Iterate in parallel over all even points and update their potential. 
+    2) Apply the boundary conditions at the ends of the grid for all even points. 
+    3) Iterate in parallel over all odd points and update their potential. 
+    2) Apply the boundary conditions at the ends of the grid for all odd points. 
+"""
 function update!(   
     pssrb::PotentialSimulationSetupRB{T}; 
     use_nthreads::Int = Base.Threads.nthreads(), 
