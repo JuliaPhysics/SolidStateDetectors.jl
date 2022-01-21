@@ -161,7 +161,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
             grid_boundary_factor_z_right::T = abs((z_ext[end - 1] - z_ext_mid) / (z_ext[end] - z_ext_mid))
             grid_boundary_factor_z_left::T = abs((z_ext[2] - z_ext_mid) / (z_ext[1] - z_ext_mid))
 
-            geom_weights::NTuple{3, AbstractGeometricalAxisWeights{T}} = (gw_x, gw_y, gw_z) # Weights needed for Field Simulation loop
+            geom_weights::NTuple{3, AbstractGeometricalAxisWeights{T}} = (gw_z, gw_y, gw_x) # Weights needed for Field Simulation loop
             grid_boundary_factors::NTuple{3, NTuple{2, T}} = (  (grid_boundary_factor_x_left, grid_boundary_factor_x_right),
                                                                 (grid_boundary_factor_y_left, grid_boundary_factor_y_right),
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
@@ -367,7 +367,7 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartes
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = pssrb.geom_weights[3][3, iz]
+        Δmpz::T = pssrb.geom_weights[1][3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
@@ -376,7 +376,7 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartes
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * pssrb.geom_weights[1][3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[3][3, ix]
 
                 ρ[ix, iy, iz] = pssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
             end
@@ -388,7 +388,7 @@ function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, C
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = pssrb.geom_weights[3][3, iz]
+        Δmpz::T = pssrb.geom_weights[1][3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
@@ -397,7 +397,7 @@ function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, C
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * pssrb.geom_weights[1][3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[3][3, ix]
 
                 ρ[ix, iy, iz] = pssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
             end

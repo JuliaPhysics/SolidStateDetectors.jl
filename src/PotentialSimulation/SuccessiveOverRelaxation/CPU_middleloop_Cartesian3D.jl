@@ -8,11 +8,11 @@
     @inbounds begin 
         inz::Int = iz - 1 
                 
-        pwwzr::T        = pssrb.geom_weights[3][1, inz]
-        pwwzl::T        = pssrb.geom_weights[3][2, inz]
-        pwΔmpz::T       = pssrb.geom_weights[3][3, inz]
-        Δz_ext_inv_r::T = pssrb.geom_weights[3][4, inz + 1]
-        Δz_ext_inv_l::T = pssrb.geom_weights[3][4, inz]
+        pwwzr::T        = pssrb.geom_weights[1][1, inz]
+        pwwzl::T        = pssrb.geom_weights[1][2, inz]
+        pwΔmpz::T       = pssrb.geom_weights[1][3, inz]
+        Δz_ext_inv_r::T = pssrb.geom_weights[1][4, inz + 1]
+        Δz_ext_inv_l::T = pssrb.geom_weights[1][4, inz]
 
         line_weights::Array{T, 2} = Array{T, 2}(undef, size(pssrb.potential, 1) - 2, 6)
         # Even though this causes some allocations it is faster than using a predefined array, e.g. stored in pssrb
@@ -46,8 +46,8 @@
                 pwwzr, pwwzl, pwwyr, pwwyl,
                 pwwyr_pwwzr, pwwyr_pwwzl, pwwyl_pwwzr, pwwyl_pwwzl,
                 pwΔmpy_pwΔmpz,
-                Δy_ext_inv_r_pwΔmpz, Δy_ext_inv_l_pwΔmpz, 
                 Δz_ext_inv_r_pwΔmpy, Δz_ext_inv_l_pwΔmpy,
+                Δy_ext_inv_r_pwΔmpz, Δy_ext_inv_l_pwΔmpz, 
             )
 
             innerloop!(line_weights, pssrb, iy, iny, iz, inz, rb_tar_idx, rb_src_idx,
@@ -76,8 +76,8 @@
                 pwwzr, pwwzl, pwwyr, pwwyl,
                 pwwyr_pwwzr, pwwyr_pwwzl, pwwyl_pwwzr, pwwyl_pwwzl,
                 pwΔmpy_pwΔmpz,
-                Δy_ext_inv_r_pwΔmpz, Δy_ext_inv_l_pwΔmpz, 
                 Δz_ext_inv_r_pwΔmpy, Δz_ext_inv_l_pwΔmpy,
+                Δy_ext_inv_r_pwΔmpz, Δy_ext_inv_l_pwΔmpz, 
             )
 
             innerloop!(line_weights, pssrb, iy, iny, iz, inz, rb_tar_idx, rb_src_idx,
@@ -85,87 +85,4 @@
                 depletion_handling, is_weighting_potential, only2d)
         end 
     end 
-end
-
-function load_weights_for_innerloop!(line_weights, pssrb::PotentialSimulationSetupRB{T, Cartesian, 3, Array{T, 3}},
-        iy, iny, iz, inz, 
-        update_even_points, zyi_is_even_t::Val{zyi_is_even}, 
-        pwwzr, pwwzl, pwwyr, pwwyl,
-        pwwyr_pwwzr, pwwyr_pwwzl, pwwyl_pwwzr, pwwyl_pwwzl,
-        pwΔmpy_pwΔmpz,
-        Δy_ext_inv_r_pwΔmpz, Δy_ext_inv_l_pwΔmpz, 
-        Δz_ext_inv_r_pwΔmpy, Δz_ext_inv_l_pwΔmpy
-        ) where {T, zyi_is_even}
-    @fastmath @inbounds @simd ivdep for ix in 2:(size(pssrb.potential, 1) - 1)
-        inx::Int = nidx(ix, update_even_points, zyi_is_even_t)::Int
-
-        pwwxr::T        = pssrb.geom_weights[1][1, inx]
-        pwwxl::T        = pssrb.geom_weights[1][2, inx]
-        pwΔmpx::T       = pssrb.geom_weights[1][3, inx]
-        Δx_ext_inv_r::T = pssrb.geom_weights[1][4, inx + 1]
-        Δx_ext_inv_l::T = pssrb.geom_weights[1][4, inx]
-        
-        pwwxr_pwwzr::T = pwwxr * pwwzr
-        pwwxl_pwwzr::T = pwwxl * pwwzr
-        pwwxr_pwwzl::T = pwwxr * pwwzl
-        pwwxl_pwwzl::T = pwwxl * pwwzl
-        pwwxl_pwwyr::T = pwwxl * pwwyr
-        pwwxr_pwwyr::T = pwwxr * pwwyr
-        pwwxl_pwwyl::T = pwwxl * pwwyl
-        pwwxr_pwwyl::T = pwwxr * pwwyl
-
-        ϵ_rrr::T = pssrb.ϵ_r[ inx + 1,  iy, iz]
-        ϵ_rlr::T = pssrb.ϵ_r[ inx + 1, iny, iz]
-        ϵ_rrl::T = pssrb.ϵ_r[ inx + 1,  iy, inz ]
-        ϵ_rll::T = pssrb.ϵ_r[ inx + 1, iny, inz ]
-        ϵ_lrr::T = pssrb.ϵ_r[ inx,  iy,  iz ]
-        ϵ_llr::T = pssrb.ϵ_r[ inx, iny,  iz ]
-        ϵ_lrl::T = pssrb.ϵ_r[ inx,  iy, inz ] 
-        ϵ_lll::T = pssrb.ϵ_r[ inx, iny, inz ] 
-
-        # right weight in r: wrr
-        wxr::T = ϵ_rrr * pwwyr_pwwzr
-        wxr    = muladd(ϵ_rlr, pwwyl_pwwzr, wxr)   
-        wxr    = muladd(ϵ_rrl, pwwyr_pwwzl, wxr)    
-        wxr    = muladd(ϵ_rll, pwwyl_pwwzl, wxr)
-        # left weight in r: wrr
-        wxl::T = ϵ_lrr * pwwyr_pwwzr
-        wxl    = muladd(ϵ_llr, pwwyl_pwwzr, wxl)   
-        wxl    = muladd(ϵ_lrl, pwwyr_pwwzl, wxl)    
-        wxl    = muladd(ϵ_lll, pwwyl_pwwzl, wxl) 
-        # right weight in φ: wφr
-        wyr::T = ϵ_lrr * pwwxl_pwwzr 
-        wyr    = muladd(ϵ_rrr, pwwxr_pwwzr, wyr)  
-        wyr    = muladd(ϵ_lrl, pwwxl_pwwzl, wyr)    
-        wyr    = muladd(ϵ_rrl, pwwxr_pwwzl, wyr) 
-        # left weight in φ: wφl
-        wyl::T = ϵ_llr * pwwxl_pwwzr 
-        wyl    = muladd(ϵ_rlr, pwwxr_pwwzr, wyl)  
-        wyl    = muladd(ϵ_lll, pwwxl_pwwzl, wyl)    
-        wyl    = muladd(ϵ_rll, pwwxr_pwwzl, wyl) 
-        # right weight in z: wzr
-        wzr::T = ϵ_rrr * pwwxr_pwwyr  
-        wzr    = muladd(ϵ_rlr, pwwxr_pwwyl, wzr)     
-        wzr    = muladd(ϵ_lrr, pwwxl_pwwyr, wzr)     
-        wzr    = muladd(ϵ_llr, pwwxl_pwwyl, wzr)
-        # left weight in z: wzr
-        wzl::T = ϵ_rrl * pwwxr_pwwyr 
-        wzl    = muladd(ϵ_rll, pwwxr_pwwyl, wzl)    
-        wzl    = muladd(ϵ_lrl, pwwxl_pwwyr, wzl)    
-        wzl    = muladd(ϵ_lll, pwwxl_pwwyl, wzl)
-
-        wxr *= pwΔmpy_pwΔmpz * Δx_ext_inv_r 
-        wxl *= pwΔmpy_pwΔmpz * Δx_ext_inv_l
-        wyr *= Δy_ext_inv_r_pwΔmpz * pwΔmpx
-        wyl *= Δy_ext_inv_l_pwΔmpz * pwΔmpx
-        wzr *= Δz_ext_inv_r_pwΔmpy * pwΔmpx 
-        wzl *= Δz_ext_inv_l_pwΔmpy * pwΔmpx 
-
-        line_weights[ix-1, 1] = wzl 
-        line_weights[ix-1, 2] = wzr 
-        line_weights[ix-1, 3] = wyl 
-        line_weights[ix-1, 4] = wyr 
-        line_weights[ix-1, 5] = wxl 
-        line_weights[ix-1, 6] = wxr 
-    end
 end

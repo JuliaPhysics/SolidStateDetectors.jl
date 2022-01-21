@@ -36,11 +36,11 @@
         
         rb_tar_idx, rb_src_idx = update_even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 
-        pwwzr::T        = geom_weights[3][1, inz]
-        pwwzl::T        = geom_weights[3][2, inz]
-        pwΔmpz::T       = geom_weights[3][3, inz]
-        Δz_ext_inv_r::T = geom_weights[3][4, inz + 1]
-        Δz_ext_inv_l::T = geom_weights[3][4, inz]
+        pwwzr::T        = geom_weights[1][1, inz]
+        pwwzl::T        = geom_weights[1][2, inz]
+        pwΔmpz::T       = geom_weights[1][3, inz]
+        Δz_ext_inv_r::T = geom_weights[1][4, inz + 1]
+        Δz_ext_inv_l::T = geom_weights[1][4, inz]
 
         pwwyr::T  = geom_weights[2][1, iny]
         pwwyl::T  = geom_weights[2][2, iny]
@@ -56,11 +56,11 @@
         pwwyl_pwwzr::T = pwwyl * pwwzr
         pwwyl_pwwzl::T = pwwyl * pwwzl
 
-        pwwxr::T        = geom_weights[1][1, inx]
-        pwwxl::T        = geom_weights[1][2, inx]
-        pwΔmpx::T       = geom_weights[1][3, inx]
-        Δx_ext_inv_r::T = geom_weights[1][4, inx + 1]
-        Δx_ext_inv_l::T = geom_weights[1][4, inx]
+        pwwxr::T        = geom_weights[3][1, inx]
+        pwwxl::T        = geom_weights[3][2, inx]
+        pwΔmpx::T       = geom_weights[3][3, inx]
+        Δx_ext_inv_r::T = geom_weights[3][4, inx + 1]
+        Δx_ext_inv_l::T = geom_weights[3][4, inx]
         
         pwwxr_pwwzr::T = pwwxr * pwwzr
         pwwxl_pwwzr::T = pwwxl * pwwzr
