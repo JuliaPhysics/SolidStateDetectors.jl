@@ -92,8 +92,7 @@ Thus, there cannot be local extrema.
 end
 
 include("CPU_outerloop.jl")
-include("CPU_middleloop_Cylindrical.jl")
-include("CPU_middleloop_Cartesian3D.jl")
+include("CPU_middleloop.jl")
 include("CPU_innerloop.jl")
 include("CPU_convergence.jl")
 
