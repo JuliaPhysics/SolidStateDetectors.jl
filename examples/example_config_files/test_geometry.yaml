@@ -1,0 +1,166 @@
+name: Geometry for Tests
+units:
+  length: m
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cartesian
+  axes:
+    x:
+      from: -10
+      to: 10
+      boundaries: reflecting
+    y:
+      from: -10
+      to: 10
+      boundaries: reflecting
+    z:
+      from: -10
+      to: 10
+      boundaries: reflecting
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 78
+    impurity_density:
+      name: linear
+      x:
+        init: 0
+        gradient: 0
+      y:
+        init: 0
+        gradient: 0
+      z:
+        init: 0
+        gradient: 0
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      box:
+          widths: [1, 1, 1]
+          origin:
+            x: 5.5
+            y: 5
+            z: -5
+  contacts:
+    - name: Box
+      material: HPGe
+      potential: 10
+      id: 1
+      geometry:
+        union:
+        - intersection:
+            - box:
+                hX: 0.5
+                hY: 0.5
+                hZ: 0.5
+                origin:
+                  x: 5
+                  y: 5
+                  z: -5
+            - difference:
+              - box:
+                  widths: [1, 1, 1]
+                  origin:
+                    x: 5.5
+                    y: 5
+                    z: -5
+              - box:
+                  x:
+                    from: 5.25
+                    to: 5.75
+                  y:
+                    from: 4.5
+                    to: 5.5
+                  z:
+                    from: -5.5
+                    to: -4.5
+
+        - box:
+            halfwidths: [0.5, 0.5, 0.5]
+            origin:
+              x: 5
+              y: 6.5
+              z: -5
+            rotate:
+              Z: 20
+    - name: Cone
+      material: HPGe
+      potential: 0
+      id: 2
+      geometry:
+        union:
+        - cone:
+            r:
+              bottom:
+                from: 0
+                to: 1
+              top:
+                from: 0
+                to: 0
+            phi:
+              from: 0.0
+              to: 360
+            h: 1.0
+            origin: [2,2,2]
+        - tube:
+            r:
+              from: 0.5
+              to: 1
+            phi:
+              from: 0.0
+              to: 360
+            z: 1
+            origin: [3,3,3]
+            rotation:
+              M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
+
+    - name: Ellipsoid
+      material: HPGe
+      potential: 4
+      id: 3
+      geometry:
+        sphere:
+          r: 1
+          origin: [-3,-3,-3]
+          rotation:
+            M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
+
+    - name: Prism
+      material: HPGe
+      potential: 4
+      id: 4
+      geometry:
+        union:
+        - HexagonalPrism:
+            r: 1
+            h: 1
+            origin: [3,-3,3]
+            rotation:
+              M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
+        - PentagonalPrism:
+            r: 1
+            z: 1
+            origin: [3,-3,3]
+        - QuadranglePrism:
+            r: 1
+            z: 1
+            origin: [3,-3,3]
+        - TriangularPrism:
+            r: 1
+            z: 1
+            origin: [3,-3,3]
+
+    - name: Torus
+      material: HPGe
+      potential: 4
+      id: 5
+      geometry:
+        torus:
+          r_torus: 1
+          r_tube: 0.5
+          origin: [3,-3,-3]
+          rotation:
+            M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
