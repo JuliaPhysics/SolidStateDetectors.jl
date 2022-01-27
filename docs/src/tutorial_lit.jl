@@ -13,7 +13,7 @@ plot(sim.detector, size = (700, 700))
 #md savefig("tutorial_det.svg"); nothing # hide
 #md # [![tutorial_det](tutorial_det.svg)](tutorial_det.pdf)
 
-# One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
+# One can also have a look at how the initial conditions look like on the grid (it starts with a very coarse grid):
 
 apply_initial_state!(sim, ElectricPotential) # optional
 plot(
@@ -116,7 +116,7 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 charge_drift_model = ADLChargeDriftModel()
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 
-# Now, let's create an "random" multi-site event:
+# Now, let's create a "random" multi-site event:
 
 starting_positions = [ CylindricalPoint{T}( 0.020, deg2rad(10), 0.015 ),
                        CylindricalPoint{T}( 0.015, deg2rad(20), 0.045 ),
