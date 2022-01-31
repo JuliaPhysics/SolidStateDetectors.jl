@@ -1,6 +1,6 @@
 name: Geometry for Tests
 units:
-  length: m
+  length: mm
   angle: deg
   potential: V
   temperature: K
@@ -58,7 +58,7 @@ detectors:
             z: 9.5
     - name: Bottom Contact
       material: HPGe
-      potential: 3000
+      potential: 0
       id: 2
       geometry:
         box:

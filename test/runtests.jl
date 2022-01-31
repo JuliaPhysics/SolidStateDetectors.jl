@@ -28,7 +28,7 @@ T = Float32
     @testset "Simulate test detector" begin
         sim = Simulation{T}(SSD_examples[:TestDetector])
         simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
-        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
+        evt = Event(CartesianPoint.([CartesianPoint{T}(0,0,0)]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
