@@ -38,83 +38,53 @@ detectors:
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:
-      box:
-          widths: [20, 20, 18]
-          origin:
-            x: 0
-            y: 0
-            z: 0
-  contacts:
-    - name: Top Contact
-      material: HPGe
-      potential: 3000
-      id: 1
-      geometry:
-        box:
-          widths: [20, 20, 1]
-          origin:
-            x: 0
-            y: 0
-            z: 9.5
-    - name: Bottom Contact
-      material: HPGe
-      potential: 0
-      id: 2
-      geometry:
-        box:
-          widths: [20, 20, 1]
-          origin:
-            x: 0
-            y: 0
-            z: -9.5
-
-    - name: Box
-      material: HPGe
-      potential: 0
-      id: 3
-      geometry:
-        union:
-        - intersection:
-            - box:
-                hX: 0.5
-                hY: 0.5
-                hZ: 0.5
-                origin:
-                  x: 5
-                  y: 5
-                  z: -5
-            - difference:
+      union:
+      
+      - box:
+            widths: [20, 20, 18]
+            origin:
+              x: 0
+              y: 0
+              z: 0
+      
+      - union:
+          - intersection:
               - box:
-                  widths: [1, 1, 1]
+                  hX: 0.5
+                  hY: 0.5
+                  hZ: 0.5
                   origin:
-                    x: 5.5
+                    x: 5
                     y: 5
                     z: -5
-              - box:
-                  x:
-                    from: 5.25
-                    to: 5.75
-                  y:
-                    from: 4.5
-                    to: 5.5
-                  z:
-                    from: -5.5
-                    to: -4.5
+              - difference:
+                - box:
+                    widths: [1, 1, 1]
+                    origin:
+                      x: 5.5
+                      y: 5
+                      z: -5
+                - box:
+                    x:
+                      from: 5.25
+                      to: 5.75
+                    y:
+                      from: 4.5
+                      to: 5.5
+                    z:
+                      from: -5.5
+                      to: -4.5
 
-        - box:
-            halfwidths: [0.5, 0.5, 0.5]
-            origin:
-              x: 5
-              y: 6.5
-              z: -5
-            rotate:
-              Z: 20
-    - name: Cone
-      material: HPGe
-      potential: 0
-      id: 4
-      geometry:
-        union:
+          - box:
+              halfwidths: [0.5, 0.5, 0.5]
+              origin:
+                x: 5
+                y: 6.5
+                z: -5
+              rotate:
+                Z: 20
+      
+      - union:
         - cone:
             r:
               bottom:
@@ -140,23 +110,15 @@ detectors:
             rotation:
               M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
 
-    - name: Ellipsoid
-      material: HPGe
-      potential: 0
-      id: 5
-      geometry:
-        sphere:
+      
+      - sphere:
           r: 1
           origin: [-3,-3,-3]
           rotation:
             M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
-
-    - name: Prism
-      material: HPGe
-      potential: 0
-      id: 6
-      geometry:
-        union:
+      
+      
+      - union:
         - HexagonalPrism:
             r: 1
             h: 1
@@ -175,15 +137,36 @@ detectors:
             r: 1
             z: 1
             origin: [3,-3,3]
-
-    - name: Torus
-      material: HPGe
-      potential: 0
-      id: 7
-      geometry:
-        torus:
+  
+      - torus:
           r_torus: 1
           r_tube: 0.5
           origin: [3,-3,-3]
           rotation:
             M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
+
+  contacts:
+    - name: Top Contact
+      material: HPGe
+      potential: 3000
+      id: 1
+      geometry:
+        box:
+          widths: [20, 20, 1]
+          origin:
+            x: 0
+            y: 0
+            z: 9.5
+    - name: Bottom Contact
+      material: HPGe
+      potential: 0
+      id: 2
+      geometry:
+        box:
+          widths: [20, 20, 1]
+          origin:
+            x: 0
+            y: 0
+            z: -9.5
+
+    
