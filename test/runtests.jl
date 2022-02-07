@@ -164,19 +164,19 @@ T = Float32
     #     @info signalsum
     #     @test isapprox( signalsum, T(2), atol = 5e-3 )
     # end
-    # @testset "Simulate example detector: SigGen PPC" begin
-    #     sim = Simulation{T}(SSD_examples[:SigGen])
-    #     simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
-    #     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
-    #     simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
-    #     signalsum = T(0)
-    #     for i in 1:length(evt.waveforms)
-    #         signalsum += abs(ustrip(evt.waveforms[i].value[end]))
-    #     end
-    #     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
-    #     @info signalsum
-    #     @test isapprox( signalsum, T(2), atol = 5e-3 )
-    # end
+    @testset "Simulate example detector: SigGen PPC" begin
+        sim = Simulation{T}(SSD_examples[:SigGen])
+        simulate!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+        evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
+        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+        @info signalsum
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
+    end
 end
 
 @testset "Diffusion and Self-Repulsion" begin
