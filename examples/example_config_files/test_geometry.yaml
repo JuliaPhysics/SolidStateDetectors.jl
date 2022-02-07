@@ -39,14 +39,14 @@ detectors:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:
       union:
-      
+      #Semiconductor
       - box:
             widths: [20, 20, 18]
             origin:
               x: 0
               y: 0
-              z: 0
-      
+              z: 0        
+      #Box volume primitives
       - union:
           - intersection:
               - box:
@@ -83,7 +83,7 @@ detectors:
                 z: -5
               rotate:
                 Z: 20
-      
+      #Cone volume primitives
       - union:
         - cone:
             r:
@@ -103,21 +103,19 @@ detectors:
               from: 0.5
               to: 1
             phi:
-              from: 0.0
-              to: 360
+              from: 10
+              to: 20
             z: 1
             origin: [3,3,3]
             rotation:
               M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
-
-      
+      #Ellipsoid volume primitives
       - sphere:
           r: 1
           origin: [-3,-3,-3]
           rotation:
             M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
-      
-      
+      #Prism volume primitives
       - union:
         - HexagonalPrism:
             r: 1
@@ -137,13 +135,23 @@ detectors:
             r: 1
             z: 1
             origin: [3,-3,3]
-  
-      - torus:
-          r_torus: 1
-          r_tube: 0.5
-          origin: [3,-3,-3]
-          rotation:
-            M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
+      #Torus volume primitives 
+      - union:     
+        - torus:
+            r_torus: 1
+            r_tube: 0.5
+            theta: 
+                 from: 10
+                 to: 20
+            origin: [3,-3,-3]
+            
+        - torus:
+            r_torus: 1
+            r_tube: 0.5
+            origin: [3,-3,-3]
+            rotation:
+              M: [1, 0, 0, 0, 0, -1, 0, 1, 0]
+              
 
   contacts:
     - name: Top Contact
