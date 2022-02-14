@@ -1,0 +1,130 @@
+name: Infinite Coaxial Capacitor
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 10
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries: periodic
+    z:
+      from: -5
+      to: 5
+      boundaries: reflecting
+medium: HPGe
+detectors:
+  - semiconductor:
+      material: HPGe
+      temperature: 78
+      impurity_density:
+        name: cylindrical
+        r:
+          init: 0
+          gradient: 0
+        z:
+          init: 0
+          gradient: 0
+      geometry:
+        union:
+        - box:
+            widths: [1,10,10]
+            origin: [-7,0,0]
+        - tube:
+            r: 1
+            h: 2
+            origin: [-6,0,-4]
+            rotation:
+              Y: 90
+        - HexagonalPrism:
+            r: 2
+            h: 4
+            origin: [-3,0,-3]
+            rotation:
+              Z: 30
+        - cone:
+            r:
+              bottom:
+                from: 0
+                to: 2
+              top:
+                from: 0
+                to: 1.5
+            h: 2
+            origin: [-3,0,0]
+        - intersection:
+          - sphere:
+              r: 1.5
+              origin: [-3,0,1]
+          - tube:
+              r: 1.5
+              h: 2
+              origin: [-3,0,2]
+        - torus:
+            r_torus: 3
+            r_tube: 2    
+            phi: 
+              from: 0
+              to: 350 
+            theta: 
+              from: 0
+              to: 180
+            origin: [0,0,3.5] 
+            rotation: 
+              Z: 90
+        - PentagonalPrism:
+            r: 2
+            h: 4
+            origin: [3,0,1.5]
+            rotation:
+              Z: 30
+        - difference:
+          - box:
+              widths: [4,4,4]
+              origin: [3,0,-2.5]
+              rotation:
+                Y: 90
+          - box:
+              widths: [2,2,2]
+              origin: [3,0,-2.5]
+              rotation:
+                Y: 90
+        - cone:
+            r:
+              bottom:
+                from: 1
+                to: 2
+              top:
+                from: 0
+                to: 1
+            h: 2
+            origin: [6,0,-2.5]
+            rotation: 
+              Y: 90
+        - box:
+            widths: [1,10,10]
+            origin: [7,0,0]
+          
+    contacts:
+      - material: HPGe
+        name: n+ contact
+        potential: 3000
+        id: 1
+        geometry:
+          box:
+            widths: [1,10,10]
+            origin: [-8,0,0]
+      - material: HPGe
+        name: p+ contact
+        potential: 0
+        id: 2
+        geometry:
+          box:
+            widths: [1,10,10]
+            origin: [8,0,0]
