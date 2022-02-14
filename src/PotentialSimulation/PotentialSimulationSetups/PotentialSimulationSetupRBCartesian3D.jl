@@ -175,7 +175,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         minimum_applied_potential::T = minimum(contact_bias_voltages)
         maximum_applied_potential::T = maximum(contact_bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
-        depletion_handling_potential_limit::T = -bias_voltage
         sor_consts = [sor_consts]
 
         medium_ϵ_r::T = medium.ϵ_r
@@ -319,7 +318,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         bias_voltage,
         maximum_applied_potential,
         minimum_applied_potential,
-        depletion_handling_potential_limit,
         grid_boundary_factors
      )
     return pssrb

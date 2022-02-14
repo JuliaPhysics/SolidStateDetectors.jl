@@ -20,7 +20,6 @@ struct PotentialSimulationSetupRB{
     bias_voltage::T
     maximum_applied_potential::T
     minimum_applied_potential::T    
-    depletion_handling_potential_limit::T
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
@@ -38,7 +37,6 @@ function Adapt.adapt_structure(to, pssrb::PotentialSimulationSetupRB{T, S, 3}) w
         pssrb.bias_voltage,
         pssrb.maximum_applied_potential,
         pssrb.minimum_applied_potential,
-        pssrb.depletion_handling_potential_limit,
         pssrb.grid_boundary_factors
     )
 end

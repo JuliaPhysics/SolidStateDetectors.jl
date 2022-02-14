@@ -198,7 +198,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
         minimum_applied_potential::T = minimum(bias_voltages)
         maximum_applied_potential::T = maximum(bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
-        depletion_handling_potential_limit::T = -bias_voltage
         sor_slope = (sor_consts[2] .- sor_consts[1]) / (nr - 1 )
         sor_const::Vector{T} = T[ sor_consts[1] + (i - 1) * sor_slope for i in 1:nr]
 
@@ -404,7 +403,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
         bias_voltage,
         maximum_applied_potential,
         minimum_applied_potential,
-        depletion_handling_potential_limit,
         grid_boundary_factors
      )
 
