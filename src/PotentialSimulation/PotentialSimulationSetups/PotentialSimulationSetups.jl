@@ -1,5 +1,35 @@
 abstract type AbstractPotentialSimulationSetup{T, N} end
 
+"""
+    struct PotentialSimulationSetupRB
+
+`PotentialSimulationSetupRB` holds the grid, fields and certain precalculated fixed parameters for the field calculation.
+This struct will be calculated after each refinement as is depends on the grid. 
+
+`grid`: The 3-dimensional grid, either Cartesian or cylindrical, on which the field will be calculated. 
+
+The fields:
+* `potential`: This is the 4-dimensional array of the extended 3D potential array. 
+The fourth dimensions comes from the red-black (even-odd) division in order to parallelize the field calculation. 
+Extended means that the grid holds one additional tick at both sides of all axes necessary for boundary handling (reflecting, fixed, ...) at the ends of the grid.
+* `point_types`: Also a 4-dimensional array. Same structure as the `potential`-array.
+* `volume_weights`: Also a 4-dimensional array. Same structure as the `potential`-array.
+* `q_eff_imp`: Also a 4-dimensional array. Same structure as the `potential`-array.
+* `q_eff_fix`: Also a 4-dimensional array. Same structure as the `potential`-array.
+* `ϵ_r`: Normal 3-dimensional array! In order to calculate the final 6 weights for each grid point in the SOR, 
+the eight values of the dielectric permittivity (of each octant) around the grid point needs to be loaded. 
+Here not special division is possible for the red-black (even-odd) division. 
+
+Precalculated parameters:
+* `geom_weights`: The parts of the calculation of the six weights in the SOR can be precalculated. Those are stored here for each axis/dimension.
+* `sor_const`: Vector holding the SOR constants. In the cartesian case only the first entry is used. As the optimal value for the SOR constant
+depends on the grid, the constant is linear increased and the array holds the respective value for each radial axis tick. 
+* `bias_voltage`: `maximum_applied_potential - minimum_applied_potential`. Used for depletion handling, but might be obsolete by now. 
+* `maximum_applied_potential`: Used for depletion handling, but might be obsolete by now. 
+* `minimum_applied_potential`: Used for depletion handling, but might be obsolete by now. 
+* `grid_boundary_factors`: Used in the application of boundary conditions in the field calculation for decaying (infinite) boundary conditions 
+to approximate the decay of the potential (depending on the grid).
+"""
 struct PotentialSimulationSetupRB{
             T, S, N1, DATN1<:AbstractArray{T,N1}, 
             N2, AT, 
