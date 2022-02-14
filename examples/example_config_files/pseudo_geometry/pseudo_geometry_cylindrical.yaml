@@ -12,11 +12,11 @@ grid:
       boundaries: inf
     phi:
       from: 0
-      to: 0
+      to: 360
       boundaries: periodic
     z:
-      from: -5
-      to: 5
+      from: -10
+      to: 10
       boundaries: reflecting
 medium: HPGe
 detectors:
@@ -29,7 +29,7 @@ detectors:
           init: 0
           gradient: 0
         z:
-          init: 0
+          init: 1e9cm^-3
           gradient: 0
       geometry:
         union:
@@ -38,12 +38,12 @@ detectors:
             origin: [-7,0,0]
         - tube:
             r: 1
-            h: 2
-            origin: [-6,0,-4]
+            h: 1.5
+            origin: [-5.75,0,-4]
             rotation:
               Y: 90
         - HexagonalPrism:
-            r: 2
+            r: 2.3
             h: 4
             origin: [-3,0,-3]
             rotation:
@@ -55,15 +55,15 @@ detectors:
                 to: 2
               top:
                 from: 0
-                to: 1.5
+                to: 1.75
             h: 2
             origin: [-3,0,0]
         - intersection:
           - sphere:
-              r: 1.5
+              r: 1.75
               origin: [-3,0,1]
           - tube:
-              r: 1.5
+              r: 1.75
               h: 2
               origin: [-3,0,2]
         - torus:
@@ -75,13 +75,13 @@ detectors:
             theta: 
               from: 0
               to: 180
-            origin: [0,0,3.5] 
+            origin: [0,0,2.5] 
             rotation: 
               Z: 90
         - PentagonalPrism:
             r: 2
-            h: 4
-            origin: [3,0,1.5]
+            h: 3
+            origin: [3,0,1]
             rotation:
               Z: 30
         - difference:
@@ -103,8 +103,8 @@ detectors:
               top:
                 from: 0
                 to: 1
-            h: 2
-            origin: [6,0,-2.5]
+            h: 1.5
+            origin: [5.75,0,-2.5]
             rotation: 
               Y: 90
         - box:

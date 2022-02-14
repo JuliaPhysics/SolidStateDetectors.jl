@@ -38,4 +38,5 @@ const SSD_examples = Dict{Symbol,String}([
     :InfiniteCoaxialCapacitorCartesianCoords => joinpath(get_path_to_example_config_files(), "infinite_coaxial_capacitor_cartesian_coords.yaml"),
     :Hexagon                                 => joinpath(get_path_to_example_config_files(), "minimum_hexagon_config.yaml"),
     :CoaxialTorus                            => joinpath(get_path_to_example_config_files(), "public_coaxial_torus_config.yaml"),
+    :PseudoGeometry                          => joinpath(get_path_to_example_config_files(), "pseudo_geometry/pseudo_geometry_cylindrical.yaml"),
 ])
