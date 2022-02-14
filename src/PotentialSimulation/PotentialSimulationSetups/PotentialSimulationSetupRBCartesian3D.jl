@@ -87,16 +87,12 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
     
     @inbounds begin
         begin # Geometrical weights of the Axes
-            nx, ny, nz = size(grid)
-
             # X-axis
             ax_x::Vector{T} = collect(grid.axes[1]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δx::Vector{T} = diff(ax_x) # difference between real ticks
             x_ext::Vector{T} = get_extended_ticks(grid.axes[1])
             Δx_ext::Vector{T} = diff(x_ext)
             Δx_ext_inv::Vector{T} = inv.(Δx_ext)
             mpx::Vector{T} = midpoints(x_ext)
-            mpx_inv::Vector{T} = inv.(mpx)
             Δmpx::Vector{T} = diff(mpx)
             Δmpx_inv::Vector{T} = inv.(Δmpx)
             Δhmpxr::Vector{T} = mpx[2:end] - ax_x # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -115,12 +111,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
 
             # Y-axis
             ax_y::Vector{T} = collect(grid.axes[2]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δy::Vector{T} = diff(ax_y) # difference between real ticks
             y_ext::Vector{T} = get_extended_ticks(grid.axes[2])
             Δy_ext::Vector{T} = diff(y_ext)
             Δy_ext_inv::Vector{T} = inv.(Δy_ext)
             mpy::Vector{T} = midpoints(y_ext)
-            mpy_inv::Vector{T} = inv.(mpy)
             Δmpy::Vector{T} = diff(mpy)
             Δmpy_inv::Vector{T} = inv.(Δmpy)
             Δhmpyr::Vector{T} = mpy[2:end] - ax_y # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -139,12 +133,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
 
             # Z-axis
             ax_z::Vector{T} = collect(grid.axes[3]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δz::Vector{T} = diff(ax_z) # difference between real ticks
             z_ext::Vector{T} = get_extended_ticks(grid.axes[3])
             Δz_ext::Vector{T} = diff(z_ext)
             Δz_ext_inv::Vector{T} = inv.(Δz_ext)
             mpz::Vector{T} = midpoints(z_ext)
-            mpz_inv::Vector{T} = inv.(mpz)
             Δmpz::Vector{T} = diff(mpz)
             Δmpz_inv::Vector{T} = inv.(Δmpz)
             Δhmpzr::Vector{T} = mpz[2:end] - ax_z # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -210,14 +202,11 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         q_eff_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
-            pos_z::T = z_ext[iz]
             for iy in range(2, stop = length(y_ext) - 1)
                 iny::Int = iy - 1
-                pos_y::T = y_ext[iy]
                 for ix in range(2, stop = length(x_ext) - 1)
                     inx::Int = ix - 1;
                     irbx::Int = rbidx(inx)
-                    pos_x::T = x_ext[ix]
 
                     rbi::Int = iseven(inx + iny + inz) ? rb_even::Int : rb_odd::Int
 
