@@ -25,13 +25,6 @@ end
 @inline getindex(wpot::WeightingPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(wpot.grid, s)
 
 
-function WeightingPotential(pss::PotentialSimulationSetup{T, 3, Cylindrical}; kwargs...)::WeightingPotential{T, 3, Cylindrical} where {T <: SSDFloat}
-    return get_2π_potential(WeightingPotential{T, 3, Cylindrical}(pss.potential, pss.grid); kwargs...)
-end
-function WeightingPotential(pss::PotentialSimulationSetup{T, 3, Cartesian})::WeightingPotential{T, 3, Cartesian} where {T <: SSDFloat}
-    return WeightingPotential{T, 3, Cartesian}(pss.potential, pss.grid)
-end
-
 function WeightingPotential(nt::NamedTuple)
     grid = Grid(nt.grid)
     T = typeof(ustrip(nt.values[1]))

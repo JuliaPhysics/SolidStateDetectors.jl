@@ -454,21 +454,6 @@ function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Arr
     return point_types
 end
 
-# """
-#     PointTypes(pss::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical}
-# 
-# Extracts the point types from the `PotentialSimulationSetup`, `pss`, and extrapolates it to an 2π grid.
-# 
-# For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
-# """
-function PointTypes(pss::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical} where {T}
-    return get_2π_potential(PointTypes{T, 3, Cylindrical}(pss.point_types, pss.grid); kwargs...)
-end
-
-function PointTypes(pss::PotentialSimulationSetup{T, N, S})::PointTypes{T, N, S} where {T, N, S}
-    return PointTypes{T, N, S}( pss.point_types, pss.grid )
-end
-
 
 function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))

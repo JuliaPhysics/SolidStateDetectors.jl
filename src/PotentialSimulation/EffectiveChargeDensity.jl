@@ -27,10 +27,6 @@ end
 @inline getindex(ρ::EffectiveChargeDensity{T, N, S}, s::Symbol) where {T, N, S} = getindex(ρ.grid, s)
 
 
-function EffectiveChargeDensity(pss::PotentialSimulationSetup{T, N, S})::EffectiveChargeDensity{T, N, S} where {T, N, S}
-    return EffectiveChargeDensity{T, N, S}( pss.ρ, pss.grid )
-end
-
 
 function NamedTuple(ρ::EffectiveChargeDensity{T}) where {T <: SSDFloat}
     return (
