@@ -57,6 +57,31 @@ function GeometricalCartesianAxisWeights( ax::DiscreteAxis{T, BL, BR} )::Geometr
     return GeometricalCartesianAxisWeights{T}( w )
 end
 
+"""
+    struct GeometricalAzimutalAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
+
+`GeometricalAzimutalAxisWeights` stores certain precalculated (in its construction) fixed values
+of the azimulal (or polar) axis, `ax`, of an cylindrical grid on which the field calculation is performed. 
+These precalculated values are further used in the field calculation 
+to calculate the six weights for the neighboring grid points in the SOR. 
+
+`GeometricalAzimutalAxisWeights` has only one field: `weights::Array{T}, 2`, which is 
+of size `(4, length(ax.ticks))`. Each row holding the 4 precalculated values for one axis tick.
+
+Axis ticks, `t = ax.ticks`, and midpoints, `mp = midpoints(get_extended_ticks(ax))`,\\
+(the middle points between to axis ticks) inbetween:\\
+`... t[i-1] --- mp[i] --- t[i] --- mp[i+1] --- t[i+1] ...`\\
+are required for the understanding of the precalculated values.
+
+The columns store the following quantities:
+* `weights[1, i]`: `(mp[i+1] - t[i])` / `weights[3, i]`
+* `weights[2, i]`: `(t[i] - mp[i])` / `weights[3, i]`
+* `weights[3, i]`: `mp[i+1] - mp[i]`
+* `weights[4, i]`: `inv(t[i] - t[i-1])`
+
+Developer note: This actually seems to be the same as `GeometricalCartesianAxisWeights`.
+Thus, we actually could remove that. Or change this into an alias.
+"""
 struct GeometricalAzimutalAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
     weights::Array{T, 2}
 end
