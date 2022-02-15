@@ -372,8 +372,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
                 paint_contacts = Val(paint_contacts)  )
         rbpotential  = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
-        potential = clear(potential)
-        point_types = clear(point_types)
     end # @inbounds
 
     pssrb = PotentialSimulationSetupRB(

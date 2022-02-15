@@ -1,7 +1,3 @@
-function clear( a::Array{T, N} )::Array{T, N} where {T, N}
-    return Array{T, N}(undef, size(a) .- size(a))
-end
-
 include("RedBlack.jl")
 include("GeometricalWeights.jl")
 include("Painting.jl")
