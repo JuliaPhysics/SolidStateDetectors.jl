@@ -82,8 +82,6 @@ include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
 include("Grids/Grids.jl")
 
-include("Types/Types.jl")
-
 include("MaterialProperties/MaterialProperties.jl")
 include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
@@ -91,6 +89,7 @@ include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
+include("ScalarPotentials/ScalarPotential.jl")
 include("PotentialCalculation/PotentialCalculation.jl")
 
 include("ElectricField/ElectricField.jl")
