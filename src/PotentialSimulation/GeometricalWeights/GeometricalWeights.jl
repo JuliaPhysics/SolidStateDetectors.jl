@@ -9,7 +9,28 @@ end
 
 @inline getindex(gw::AbstractGeometricalAxisWeights{T}, I::Vararg{Int, N}) where {T, N} = getindex(gw.weights, I...)
 
+"""
+    struct GeometricalCartesianAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
 
+`GeometricalCartesianAxisWeights` stores certain precalculated (in its construction) fixed values
+of one of the cartesian (linear) axes, `ax`, of the grid on which the field calculation is performed. 
+These precalculated values are further used in the field calculation 
+to calculate the six weights for the neighboring grid points in the SOR. 
+
+`GeometricalCartesianAxisWeights` has only one field: `weights::Array{T}, 2`, which is 
+of size `(4, length(ax.ticks))`. Each row holding the 4 precalculated values for one axis tick.
+
+Axis ticks, `t = ax.ticks`, and midpoints, `mp = midpoints(get_extended_ticks(ax))`,\\
+(the middle points between to axis ticks) inbetween:\\
+`... t[i-1] --- mp[i] --- t[i] --- mp[i+1] --- t[i+1] ...`\\
+are required for the understanding of the precalculated values.
+
+The columns store the following quantities:
+* `weights[1, i]`: `(mp[i+1] - t[i])` / `weights[3, i]`
+* `weights[2, i]`: `(t[i] - mp[i])` / `weights[3, i]`
+* `weights[3, i]`: `mp[i+1] - mp[i]`
+* `weights[4, i]`: `inv(t[i] - t[i-1])`
+"""
 struct GeometricalCartesianAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
     weights::Array{T, 2}
 end
