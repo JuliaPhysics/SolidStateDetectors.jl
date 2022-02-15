@@ -2,9 +2,9 @@ function clear( a::Array{T, N} )::Array{T, N} where {T, N}
     return Array{T, N}(undef, size(a) .- size(a))
 end
 
-include("RedBlack/RedBlack.jl")
-include("GeometricalWeights/GeometricalWeights.jl")
-include("Painting/Painting.jl")
+include("RedBlack.jl")
+include("GeometricalWeights.jl")
+include("Painting.jl")
 include("PotentialSimulationSetups/PotentialSimulationSetups.jl")
 
 include("EffectiveChargeDensity.jl")

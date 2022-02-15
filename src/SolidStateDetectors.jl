@@ -91,7 +91,7 @@ include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
-include("PotentialSimulation/PotentialSimulation.jl")
+include("PotentialCalculation/PotentialCalculation.jl")
 
 include("ElectricField/ElectricField.jl")
 

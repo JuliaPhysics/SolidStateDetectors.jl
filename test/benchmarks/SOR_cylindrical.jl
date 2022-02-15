@@ -37,6 +37,11 @@ pssrb_cyl = SolidStateDetectors.PotentialSimulationSetupRB(sim_cyl.detector,
     SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
     sim_cyl.electric_potential.data);
 
+@time SolidStateDetectors.PotentialSimulationSetupRB(sim_cyl.detector,
+    sim_cyl.electric_potential.grid,
+    SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
+    sim_cyl.electric_potential.data);
+
 
 nthreads = 1 #Base.Threads.nthreads()
 is_weighting_potential = Val{false}()
