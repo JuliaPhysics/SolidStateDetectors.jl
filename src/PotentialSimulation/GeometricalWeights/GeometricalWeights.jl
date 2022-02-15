@@ -35,14 +35,6 @@ struct GeometricalCartesianAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
     weights::Array{T, 2}
 end
 
-struct GeometricalAzimutalAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
-    weights::Array{T, 2}
-end
-
-struct GeometricalRadialAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
-    weights::Array{T, 2}
-end
-
 function GeometricalCartesianAxisWeights( ax::DiscreteAxis{T, BL, BR} )::GeometricalCartesianAxisWeights{T} where {T, BL, BR}
     axticks::Vector{T} = collect(ax.ticks)
     ax_ext::Vector{T} = get_extended_ticks(ax)
@@ -64,4 +56,14 @@ function GeometricalCartesianAxisWeights( ax::DiscreteAxis{T, BL, BR} )::Geometr
 
     return GeometricalCartesianAxisWeights{T}( w )
 end
+
+struct GeometricalAzimutalAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
+    weights::Array{T, 2}
+end
+
+struct GeometricalRadialAxisWeights{T} <: AbstractGeometricalAxisWeights{T}
+    weights::Array{T, 2}
+end
+
+
 
