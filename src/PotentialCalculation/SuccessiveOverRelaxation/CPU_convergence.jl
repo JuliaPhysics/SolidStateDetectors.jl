@@ -1,6 +1,6 @@
 """
     function update!(   
-    pssrb::PotentialSimulationSetupRB{T}; 
+    pssrb::PotentialCalculationSetup{T}; 
     use_nthreads::Int = Base.Threads.nthreads(), 
     depletion_handling::Val{depletion_handling_enabled} = Val{false}(), 
     only2d::Val{only_2d} = Val{false}(),
@@ -15,7 +15,7 @@ This function performs one iteration of the SOR. One iteration consists out of 4
     2) Apply the boundary conditions at the ends of the grid for all odd points. 
 """
 function update!(   
-    pssrb::PotentialSimulationSetupRB{T}; 
+    pssrb::PotentialCalculationSetup{T}; 
     use_nthreads::Int = Base.Threads.nthreads(), 
     depletion_handling::Val{depletion_handling_enabled} = Val{false}(), 
     only2d::Val{only_2d} = Val{false}(),
@@ -28,7 +28,7 @@ function update!(
     nothing
 end
 
-function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, S, DAT, N1, N2},
+function update_and_get_max_abs_diff!(  pssrb::PotentialCalculationSetup{T, S, DAT, N1, N2},
                                         depletion_handling::Val{depletion_handling_enabled}, 
                                         only2d::Val{only_2d} = Val{false}(), 
                                         is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
@@ -54,7 +54,7 @@ function update_and_get_max_abs_diff!(  pssrb::PotentialSimulationSetupRB{T, S, 
     end
 end
 
-function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3}, 
+function _update_till_convergence!( pssrb::PotentialCalculationSetup{T, S, 3}, 
                                     convergence_limit::T, 
                                     ::Type{Array};
                                     n_iterations_between_checks = 500,

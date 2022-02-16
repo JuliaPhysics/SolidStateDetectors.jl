@@ -1,9 +1,9 @@
-abstract type AbstractPotentialSimulationSetup{T, N} end
+abstract type AbstractPotentialCalculationSetup{T, N} end
 
 """
-    struct PotentialSimulationSetupRB
+    struct PotentialCalculationSetup
 
-`PotentialSimulationSetupRB` holds the grid, fields and certain precalculated fixed parameters for the field calculation.
+`PotentialCalculationSetup` holds the grid, fields and certain precalculated fixed parameters for the field calculation.
 This struct will be calculated after each refinement as is depends on the grid. 
 
 `grid`: The 3-dimensional grid, either Cartesian or cylindrical, on which the field will be calculated. 
@@ -30,14 +30,14 @@ depends on the grid, the constant is linear increased and the array holds the re
 * `grid_boundary_factors`: Used in the application of boundary conditions in the field calculation for decaying (infinite) boundary conditions 
 to approximate the decay of the potential (depending on the grid).
 """
-struct PotentialSimulationSetupRB{
+struct PotentialCalculationSetup{
             T, S, N1, DATN1<:AbstractArray{T,N1}, 
             N2, AT, 
             DATN2<:AbstractArray{T,N2}, 
             DATPT<:AbstractArray{PointType,N2}, 
             DATGW<:AbstractArray{T,2},
             DATSOR<:AbstractArray{T,1}
-        } <: AbstractPotentialSimulationSetup{T, N1}
+        } <: AbstractPotentialCalculationSetup{T, N1}
     grid::Grid{T, N1, S, AT}
     potential::DATN2 # Array{T, N2} or e.g. CuArray{T, N2}
     point_types::DATPT # Array{PointType, N2} or ...
@@ -53,8 +53,8 @@ struct PotentialSimulationSetupRB{
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
-function Adapt.adapt_structure(to, pssrb::PotentialSimulationSetupRB{T, S, 3}) where {T, S}
-    PotentialSimulationSetupRB(
+function Adapt.adapt_structure(to, pssrb::PotentialCalculationSetup{T, S, 3}) where {T, S}
+    PotentialCalculationSetup(
         pssrb.grid,
         adapt(to, pssrb.potential),
         adapt(to, pssrb.point_types),
@@ -72,5 +72,5 @@ function Adapt.adapt_structure(to, pssrb::PotentialSimulationSetupRB{T, S, 3}) w
 end
 
 include("BoundaryConditions/BoundaryConditions.jl")
-include("PotentialSimulationSetupRBCylindrical.jl")
-include("PotentialSimulationSetupRBCartesian3D.jl")
+include("PotentialCalculationSetupCylindrical.jl")
+include("PotentialCalculationSetupCartesian3D.jl")

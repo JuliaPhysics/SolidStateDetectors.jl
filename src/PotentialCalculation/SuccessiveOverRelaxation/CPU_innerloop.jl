@@ -1,5 +1,5 @@
 function load_weights_for_innerloop!(
-    line_weights, pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}},
+    line_weights, pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
     i2, in2, i3, in3,
     update_even_points, i23_is_even_t,
     pww3r, pww3l, pww2r, pww2l, # pw: precalculated weight
@@ -80,7 +80,7 @@ function load_weights_for_innerloop!(
 end
 
 function innerloop!(
-    line_weights, pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}}, 
+    line_weights, pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}}, 
     i2, in2, i3, in3, rb_tar_idx, rb_src_idx, 
     update_even_points, i23_is_even_t,
     depletion_handling::Val{depletion_handling_enabled},
@@ -125,7 +125,7 @@ function innerloop!(
 end
 
 @inline function get_ϵ_of_oktant(
-    pssrb::PotentialSimulationSetupRB{T, Cylindrical},
+    pssrb::PotentialCalculationSetup{T, Cylindrical},
     i1, in1, i2, in2, i3, in3
 ) where {T}
     # ϵ_r is not transformed into an red-black-4D-array.
@@ -144,7 +144,7 @@ end
 end
 
 @inline function get_ϵ_of_oktant(
-    pssrb::PotentialSimulationSetupRB{T, Cartesian},
+    pssrb::PotentialCalculationSetup{T, Cartesian},
     i1, in1, i2, in2, i3, in3
 ) where {T}
     # The inner loop (over i1) is along the x-Dimension (Cartesian Case), 
@@ -173,7 +173,7 @@ end
 end
 
 @inline function get_neighbor_potentials(
-    pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}},
+    pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
     old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d::Val{only_2d}
 )::NTuple{6, T} where {T,S,only_2d}
     @inbounds return ( # p: potential; 1: RB-dimension; l/r: left/right
@@ -186,10 +186,10 @@ end
     ) 
 end
 
-@inline function get_sor_constant(pssrb::PotentialSimulationSetupRB{T, Cylindrical}, i::Int)::T where {T}
+@inline function get_sor_constant(pssrb::PotentialCalculationSetup{T, Cylindrical}, i::Int)::T where {T}
     @inbounds pssrb.sor_const[i]
 end
-@inline function get_sor_constant(pssrb::PotentialSimulationSetupRB{T, Cartesian}, i::Int)::T where {T}
+@inline function get_sor_constant(pssrb::PotentialCalculationSetup{T, Cartesian}, i::Int)::T where {T}
     @inbounds pssrb.sor_const[1]
 end
 

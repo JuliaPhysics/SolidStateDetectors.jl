@@ -32,12 +32,12 @@ plot(sim_cyl.electric_potential, φ = 30)
 #     plot(sim_cyl.electric_potential, φ = 30),
 # )
 
-pssrb_cyl = SolidStateDetectors.PotentialSimulationSetupRB(sim_cyl.detector,
+pssrb_cyl = SolidStateDetectors.PotentialCalculationSetup(sim_cyl.detector,
     sim_cyl.electric_potential.grid,
     SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
     sim_cyl.electric_potential.data);
 
-@time SolidStateDetectors.PotentialSimulationSetupRB(sim_cyl.detector,
+@time SolidStateDetectors.PotentialCalculationSetup(sim_cyl.detector,
     sim_cyl.electric_potential.grid,
     SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
     sim_cyl.electric_potential.data);

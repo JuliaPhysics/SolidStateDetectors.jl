@@ -1,5 +1,5 @@
 @inline function get_geom_weights_outerloop(
-    pssrb::PotentialSimulationSetupRB{T, Cylindrical}, i
+    pssrb::PotentialCalculationSetup{T, Cylindrical}, i
 ) where {T}
     pssrb.geom_weights[1][1, i],
     pssrb.geom_weights[1][2, i],
@@ -10,7 +10,7 @@
 end
 
 @inline function get_geom_weights_outerloop(
-    pssrb::PotentialSimulationSetupRB{T, Cartesian}, i
+    pssrb::PotentialCalculationSetup{T, Cartesian}, i
 ) where {T}
     pssrb.geom_weights[1][1, i],
     pssrb.geom_weights[1][2, i],
@@ -20,7 +20,7 @@ end
 end
 
 @inline function prepare_weights_in_middleloop(
-    pssrb::PotentialSimulationSetupRB{T, Cylindrical},
+    pssrb::PotentialCalculationSetup{T, Cylindrical},
     i2, in2,
     pwwrr, pwwrl, r_inv_pwΔmpr, Δr_ext_inv_r_pwmprr, Δr_ext_inv_l_pwmprl, Δmpr_squared, 
     is_r0_t::Val{is_r0}
@@ -58,7 +58,7 @@ end
 end
 
 @inline function prepare_weights_in_middleloop(
-    pssrb::PotentialSimulationSetupRB{T, Cartesian},
+    pssrb::PotentialCalculationSetup{T, Cartesian},
     i2, in2,
     pww3r, pww3l, pwΔmp3, Δ3_ext_inv_r, Δ3_ext_inv_l,
     is_r0_t::Val{is_r0}
@@ -87,7 +87,7 @@ end
 
 @fastmath function middleloop!( 
     i3::Int, rb_tar_idx::Int, rb_src_idx::Int, 
-    pssrb::PotentialSimulationSetupRB{T, S},
+    pssrb::PotentialCalculationSetup{T, S},
     update_even_points::Val{even_points},
     depletion_handling::Val{depletion_handling_enabled},
     is_weighting_potential::Val{_is_weighting_potential}, 

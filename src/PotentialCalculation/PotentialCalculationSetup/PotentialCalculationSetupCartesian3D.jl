@@ -74,7 +74,7 @@ function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}
     nothing
 end
 
-function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
+function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
@@ -292,7 +292,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         rbpoint_types = RBExtBy2Array( point_types, grid )
     end # @inbounds
 
-    pssrb = PotentialSimulationSetupRB(
+    pssrb = PotentialCalculationSetup(
         grid,
         rbpotential,
         rbpoint_types,
@@ -311,7 +311,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
 end
 
 
-function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{T, 3} where {T}
+function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T, 3} where {T}
     pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = iz + 1
@@ -329,7 +329,7 @@ function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cartesian, 
 end
 
 
-function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
+function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
     point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
     for iz in axes(point_types, 3)
         irbz::Int = iz + 1
@@ -348,7 +348,7 @@ end
 
 
 
-function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
+function EffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
@@ -369,7 +369,7 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartes
     end
     return ρ
 end
-function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
+function FixedEffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1

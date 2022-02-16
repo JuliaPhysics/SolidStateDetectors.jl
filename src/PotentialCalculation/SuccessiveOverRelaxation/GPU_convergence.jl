@@ -1,4 +1,4 @@
-function _update_till_convergence!( pssrb::PotentialSimulationSetupRB{T, S, 3}, 
+function _update_till_convergence!( pssrb::PotentialCalculationSetup{T, S, 3}, 
                                     convergence_limit::T,
                                     device_array_type::Type{DAT};
                                     n_iterations_between_checks = 500,

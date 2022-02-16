@@ -1,5 +1,5 @@
 @fastmath function outerloop!( 
-    pssrb::PotentialSimulationSetupRB{T}, 
+    pssrb::PotentialCalculationSetup{T}, 
     use_nthreads::Int,
     update_even_points::Val{even_points},
     depletion_handling::Val{depletion_handling_enabled},

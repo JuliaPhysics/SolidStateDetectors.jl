@@ -22,7 +22,7 @@ calculate_electric_potential!(
 #     plot(sim_car.electric_potential, y = 0),
 # )
 
-pssrb_car = SolidStateDetectors.PotentialSimulationSetupRB( 
+pssrb_car = SolidStateDetectors.PotentialCalculationSetup( 
     sim_car.detector, 
     sim_car.electric_potential.grid, 
     # Grid(sim_car, max_tick_distance = 1u"mm"), 
