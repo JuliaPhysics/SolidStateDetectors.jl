@@ -36,11 +36,11 @@
         
         rb_tar_idx, rb_src_idx = update_even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 
-        pwwzr::T        = geom_weights[3][1, inz]
-        pwwzl::T        = geom_weights[3][2, inz]
-        pwΔmpz::T       = geom_weights[3][3, inz]
-        Δz_ext_inv_r::T = geom_weights[3][4, inz + 1]
-        Δz_ext_inv_l::T = geom_weights[3][4, inz]
+        pwwzr::T        = geom_weights[1][1, inz]
+        pwwzl::T        = geom_weights[1][2, inz]
+        pwΔmpz::T       = geom_weights[1][3, inz]
+        Δz_ext_inv_r::T = geom_weights[1][4, inz + 1]
+        Δz_ext_inv_l::T = geom_weights[1][4, inz]
 
         pwwyr::T  = geom_weights[2][1, iny]
         pwwyl::T  = geom_weights[2][2, iny]
@@ -56,11 +56,11 @@
         pwwyl_pwwzr::T = pwwyl * pwwzr
         pwwyl_pwwzl::T = pwwyl * pwwzl
 
-        pwwxr::T        = geom_weights[1][1, inx]
-        pwwxl::T        = geom_weights[1][2, inx]
-        pwΔmpx::T       = geom_weights[1][3, inx]
-        Δx_ext_inv_r::T = geom_weights[1][4, inx + 1]
-        Δx_ext_inv_l::T = geom_weights[1][4, inx]
+        pwwxr::T        = geom_weights[3][1, inx]
+        pwwxl::T        = geom_weights[3][2, inx]
+        pwΔmpx::T       = geom_weights[3][3, inx]
+        Δx_ext_inv_r::T = geom_weights[3][4, inx + 1]
+        Δx_ext_inv_l::T = geom_weights[3][4, inx]
         
         pwwxr_pwwzr::T = pwwxr * pwwzr
         pwwxl_pwwzr::T = pwwxl * pwwzr
@@ -111,6 +111,9 @@
         wzl    = muladd(ϵ_lrl, pwwxl_pwwyr, wzl)    
         wzl    = muladd(ϵ_lll, pwwxl_pwwyl, wzl)
 
+        old_potential::T = potential[ix, iy, iz, rb_tar_idx]
+        q_eff::T = is_weighting_potential ? zero(T) : (q_eff_imp[ix, iy, iz, rb_tar_idx] + q_eff_fix[ix, iy, iz, rb_tar_idx])
+
         wxr *= pwΔmpy_pwΔmpz * Δx_ext_inv_r 
         wxl *= pwΔmpy_pwΔmpz * Δx_ext_inv_l
         wyr *= Δy_ext_inv_r_pwΔmpz * pwΔmpx
@@ -125,37 +128,24 @@
         vzr::T = potential[     ix,     iy, iz + 1, rb_src_idx]
         vzl::T = potential[     ix,     iy,    inz, rb_src_idx]
 
-        new_potential::T = is_weighting_potential ? zero(T) : (q_eff_imp[ix, iy, iz, rb_tar_idx] + q_eff_fix[ix, iy, iz, rb_tar_idx])
-        new_potential = muladd( wxr, vxr, new_potential)
-        new_potential = muladd( wxl, vxl, new_potential)
-        new_potential = muladd( wyr, vyr, new_potential)
-        new_potential = muladd( wyl, vyl, new_potential)
-        new_potential = muladd( wzr, vzr, new_potential)
-        new_potential = muladd( wzl, vzl, new_potential)
-
-        new_potential *= volume_weights[ix, iy, iz, rb_tar_idx]
-
-        old_potential::T = potential[ix, iy, iz, rb_tar_idx]
-
-        new_potential -= old_potential
-        new_potential = muladd(new_potential, sor_const[1], old_potential)
+        new_potential::T = calc_new_potential_SOR_3D(
+            q_eff,
+            volume_weights[ix, iy, iz, rb_tar_idx],
+            (wxr, wxl, wyr, wyl, wzr, wzl),
+            (vxr, vxl, vyr, vyl, vzr, vzl),
+            old_potential,
+            sor_const[1]
+        )
 
         if depletion_handling_enabled
-            vmin::T = min(vxr, vxl, vyr, vyl, vzr, vzl)
-            vmax::T = max(vxr, vxl, vyr, vyl, vzr, vzl)
-            
-            new_point_type = point_types[ix, iy, iz, rb_tar_idx] 
-            if new_potential < vmin || new_potential > vmax
-                new_potential -= q_eff_imp[ix, iy, iz, rb_tar_idx] * volume_weights[ix, iy, iz, rb_tar_idx] * sor_const[1]
-                if (point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit == 0 &&
-                    point_types[ix, iy, iz, rb_tar_idx] & pn_junction_bit > 0) 
-                    # point_types[ix, iy, iz, rb_tar_idx] += undepleted_bit 
-                    new_point_type += undepleted_bit
-                end # mark this point as undepleted
-            elseif point_types[ix, iy, iz, rb_tar_idx] & undepleted_bit > 0
-                new_point_type -= undepleted_bit
-            end
-            point_types[ix, iy, iz, rb_tar_idx] = new_point_type
+            new_potential, point_types[ix, iy, iz, rb_tar_idx] = handle_depletion(
+                new_potential,
+                point_types[ix, iy, iz, rb_tar_idx],
+                (vxr, vxl, vyr, vyl, vzr, vzl),
+                q_eff_imp[ix, iy, iz, rb_tar_idx],
+                volume_weights[ix, iy, iz, rb_tar_idx],
+                sor_const[1]
+            )
         end 
 
         potential[ix, iy, iz, rb_tar_idx]::T = ifelse(point_types[ix, iy, iz, rb_tar_idx] & update_bit > 0, new_potential, old_potential)

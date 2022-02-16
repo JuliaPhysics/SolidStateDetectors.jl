@@ -74,7 +74,7 @@ function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}
     nothing
 end
 
-function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
+function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
@@ -87,16 +87,12 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
     
     @inbounds begin
         begin # Geometrical weights of the Axes
-            nx, ny, nz = size(grid)
-
             # X-axis
             ax_x::Vector{T} = collect(grid.axes[1]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δx::Vector{T} = diff(ax_x) # difference between real ticks
             x_ext::Vector{T} = get_extended_ticks(grid.axes[1])
             Δx_ext::Vector{T} = diff(x_ext)
             Δx_ext_inv::Vector{T} = inv.(Δx_ext)
             mpx::Vector{T} = midpoints(x_ext)
-            mpx_inv::Vector{T} = inv.(mpx)
             Δmpx::Vector{T} = diff(mpx)
             Δmpx_inv::Vector{T} = inv.(Δmpx)
             Δhmpxr::Vector{T} = mpx[2:end] - ax_x # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -115,12 +111,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
 
             # Y-axis
             ax_y::Vector{T} = collect(grid.axes[2]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δy::Vector{T} = diff(ax_y) # difference between real ticks
             y_ext::Vector{T} = get_extended_ticks(grid.axes[2])
             Δy_ext::Vector{T} = diff(y_ext)
             Δy_ext_inv::Vector{T} = inv.(Δy_ext)
             mpy::Vector{T} = midpoints(y_ext)
-            mpy_inv::Vector{T} = inv.(mpy)
             Δmpy::Vector{T} = diff(mpy)
             Δmpy_inv::Vector{T} = inv.(Δmpy)
             Δhmpyr::Vector{T} = mpy[2:end] - ax_y # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -139,12 +133,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
 
             # Z-axis
             ax_z::Vector{T} = collect(grid.axes[3]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δz::Vector{T} = diff(ax_z) # difference between real ticks
             z_ext::Vector{T} = get_extended_ticks(grid.axes[3])
             Δz_ext::Vector{T} = diff(z_ext)
             Δz_ext_inv::Vector{T} = inv.(Δz_ext)
             mpz::Vector{T} = midpoints(z_ext)
-            mpz_inv::Vector{T} = inv.(mpz)
             Δmpz::Vector{T} = diff(mpz)
             Δmpz_inv::Vector{T} = inv.(Δmpz)
             Δhmpzr::Vector{T} = mpz[2:end] - ax_z # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -161,7 +153,7 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
             grid_boundary_factor_z_right::T = abs((z_ext[end - 1] - z_ext_mid) / (z_ext[end] - z_ext_mid))
             grid_boundary_factor_z_left::T = abs((z_ext[2] - z_ext_mid) / (z_ext[1] - z_ext_mid))
 
-            geom_weights::NTuple{3, AbstractGeometricalAxisWeights{T}} = (gw_x, gw_y, gw_z) # Weights needed for Field Simulation loop
+            geom_weights::NTuple{3, AbstractGeometricalAxisWeights{T}} = (gw_z, gw_y, gw_x) # Weights needed for Field Simulation loop
             grid_boundary_factors::NTuple{3, NTuple{2, T}} = (  (grid_boundary_factor_x_left, grid_boundary_factor_x_right),
                                                                 (grid_boundary_factor_y_left, grid_boundary_factor_y_right),
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
@@ -175,7 +167,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         minimum_applied_potential::T = minimum(contact_bias_voltages)
         maximum_applied_potential::T = maximum(contact_bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
-        depletion_handling_potential_limit::T = -bias_voltage
         sor_consts = [sor_consts]
 
         medium_ϵ_r::T = medium.ϵ_r
@@ -211,14 +202,11 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         q_eff_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
-            pos_z::T = z_ext[iz]
             for iy in range(2, stop = length(y_ext) - 1)
                 iny::Int = iy - 1
-                pos_y::T = y_ext[iy]
                 for ix in range(2, stop = length(x_ext) - 1)
                     inx::Int = ix - 1;
                     irbx::Int = rbidx(inx)
-                    pos_x::T = x_ext[ix]
 
                     rbi::Int = iseven(inx + iny + inz) ? rb_even::Int : rb_odd::Int
 
@@ -302,11 +290,9 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
                 paint_contacts = Val(paint_contacts)  )
         rbpotential = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
-        potential = clear(potential)
-        point_types = clear(point_types)
     end # @inbounds
 
-    pssrb = PotentialSimulationSetupRB(
+    pssrb = PotentialCalculationSetup(
         grid,
         rbpotential,
         rbpoint_types,
@@ -319,14 +305,13 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CartesianG
         bias_voltage,
         maximum_applied_potential,
         minimum_applied_potential,
-        depletion_handling_potential_limit,
         grid_boundary_factors
      )
     return pssrb
 end
 
 
-function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{T, 3} where {T}
+function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T, 3} where {T}
     pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = iz + 1
@@ -344,7 +329,7 @@ function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cartesian, 
 end
 
 
-function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
+function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
     point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
     for iz in axes(point_types, 3)
         irbz::Int = iz + 1
@@ -363,11 +348,11 @@ end
 
 
 
-function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
+function EffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = pssrb.geom_weights[3][3, iz]
+        Δmpz::T = pssrb.geom_weights[1][3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
@@ -376,7 +361,7 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartes
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * pssrb.geom_weights[1][3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[3][3, ix]
 
                 ρ[ix, iy, iz] = pssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
             end
@@ -384,11 +369,11 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartes
     end
     return ρ
 end
-function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
+function FixedEffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = pssrb.geom_weights[3][3, iz]
+        Δmpz::T = pssrb.geom_weights[1][3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
@@ -397,7 +382,7 @@ function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, C
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * pssrb.geom_weights[1][3, ix]
+                dV::T =  Δmpzy * pssrb.geom_weights[3][3, ix]
 
                 ρ[ix, iy, iz] = pssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
             end

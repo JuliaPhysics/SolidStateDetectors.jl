@@ -1,3 +1,9 @@
+include("EffectiveChargeDensity.jl")
+include("DielectricDistribution.jl")
+include("ElectricPotential.jl")
+include("WeightingPotential.jl")
+include("PointTypes.jl")
+
 const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, WeightingPotential{T, N, S, AT}, PointTypes{T, N, S, AT}, EffectiveChargeDensity{T, N, S, AT}, DielectricDistribution{T, N, S, AT}}
 
 ScalarPotential(::ElectricPotential, data, grid) = ElectricPotential(data, grid)

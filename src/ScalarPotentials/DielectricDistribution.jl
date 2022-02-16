@@ -32,10 +32,6 @@ end
 @inline getindex(ϵ::DielectricDistribution{T, N, S}, s::Symbol) where {T, N, S} = getindex(ϵ.grid, s)
 
 
-function DielectricDistribution(pss::PotentialSimulationSetup{T, N, S})::DielectricDistribution{T, N, S} where {T, N, S}
-    return DielectricDistribution{T, N, S}( pss.ϵ_r, pss.grid )
-end
-
 
 function NamedTuple(ϵ::DielectricDistribution{T}) where {T <: SSDFloat}
     return (

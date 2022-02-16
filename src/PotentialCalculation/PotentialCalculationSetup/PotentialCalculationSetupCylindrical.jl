@@ -79,14 +79,14 @@ function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}
 end
 
 
-function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::CylindricalGrid{T}, 
+function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CylindricalGrid{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
                 sor_consts = (1.0, 1.0),
-                not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialSimulationSetupRB{T} where {T}
+                not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialCalculationSetup{T} where {T}
     r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
@@ -96,18 +96,16 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
 
     @inbounds begin
         begin # Geometrical weights of the Axes
-            nr, nφ, nz = size(grid)
+            nr = size(grid)[1]
 
             # R-axis
             axr::Vector{T} = collect(grid.axes[1]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δr::Vector{T} = diff(axr) # difference between real ticks
             r_inv::Vector{T} = inv.(axr)
             if r0_handling r_inv[1] = inv(axr[2] * 0.5) end
             r_ext::Vector{T} = get_extended_ticks(grid.axes[1])
             Δr_ext::Vector{T} = diff(r_ext)
             Δr_ext_inv::Vector{T} = inv.(Δr_ext)
             mpr::Vector{T} = midpoints(r_ext)
-            mpr_inv::Vector{T} = inv.(mpr)
             Δmpr::Vector{T} = diff(mpr)
             Δmpr_inv::Vector{T} = inv.(Δmpr)
             Δmpr_squared::Vector{T} = T(0.5) .* ((mpr[2:end].^2) .- (mpr[1:end-1].^2))
@@ -134,18 +132,11 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
 
             # φ-axis
             axφ::Vector{T} = collect(grid.axes[2]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            cyclic::T = grid.axes[2].interval.right
-            Δφ::Vector{T} = diff(axφ)  # difference between real ticks
             φ_ext::Vector{T} = get_extended_ticks(grid.axes[2])
-            # φ_ext::Vector{T} = if cyclic > 0
-            #     get_extended_ticks(grid.axes[2])
-            # else
-            #     T[-2π, 0, 2π]
-            # end
+   
             Δφ_ext::Vector{T} = diff(φ_ext)
             Δφ_ext_inv::Vector{T} = inv.(Δφ_ext)
             mpφ::Vector{T} = midpoints(φ_ext)
-            mpφ_inv::Vector{T} = inv.(mpφ)
             Δmpφ::Vector{T} = diff(mpφ)
             Δmpφ_inv::Vector{T} = inv.(Δmpφ)
             Δhmpφr::Vector{T} = mpφ[2:end] - axφ # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -164,12 +155,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
 
             # Z-axis
             axz::Vector{T} = collect(grid.axes[3]) # real grid points/ticks -> the potential at these ticks are going to be calculated
-            Δz::Vector{T} = diff(axz) # difference between real ticks
             z_ext::Vector{T} = get_extended_ticks(grid.axes[3])
             Δz_ext::Vector{T} = diff(z_ext)
             Δz_ext_inv::Vector{T} = inv.(Δz_ext)
             mpz::Vector{T} = midpoints(z_ext)
-            mpz_inv::Vector{T} = inv.(mpz)
             Δmpz::Vector{T} = diff(mpz)
             Δmpz_inv::Vector{T} = inv.(Δmpz)
             Δhmpzr::Vector{T} = mpz[2:end] - axz # distances between midpoints and real grid points (half distances -> h), needed for weights wrr, wrl, ... & dV (volume element)
@@ -198,7 +187,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
         minimum_applied_potential::T = minimum(bias_voltages)
         maximum_applied_potential::T = maximum(bias_voltages)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
-        depletion_handling_potential_limit::T = -bias_voltage
         sor_slope = (sor_consts[2] .- sor_consts[1]) / (nr - 1 )
         sor_const::Vector{T} = T[ sor_consts[1] + (i - 1) * sor_slope for i in 1:nr]
 
@@ -241,13 +229,10 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
             irbz::Int = rbidx(inz)
-            pos_z::T = z_ext[iz]
             for iφ in range(2, stop = length(φ_ext) - 1)
                 inφ::Int = iφ - 1
-                pos_φ::T = φ_ext[iφ]
                 for ir in range(2, stop = length(r_ext) - 1)
                     inr::Int = ir - 1;
-                    pos_r::T = r_ext[ir]
 
                     rbi::Int = iseven(inr + inφ + inz) ? rb_even::Int : rb_odd::Int
                     # rbinds = irbz, iφ, ir, rbi
@@ -387,11 +372,9 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
                 paint_contacts = Val(paint_contacts)  )
         rbpotential  = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
-        potential = clear(potential)
-        point_types = clear(point_types)
     end # @inbounds
 
-    pssrb = PotentialSimulationSetupRB(
+    pssrb = PotentialCalculationSetup(
         grid,
         rbpotential,
         rbpoint_types,
@@ -404,7 +387,6 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
         bias_voltage,
         maximum_applied_potential,
         minimum_applied_potential,
-        depletion_handling_potential_limit,
         grid_boundary_factors
      )
 
@@ -413,9 +395,9 @@ function PotentialSimulationSetupRB(det::SolidStateDetector{T}, grid::Cylindrica
     return pssrb
 end
 
-Grid(pssrb::PotentialSimulationSetupRB) = pssrb.grid
+Grid(pssrb::PotentialCalculationSetup) = pssrb.grid
 
-function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
+function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
     pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
     for iz in axes(pot, 3)
         irbz::Int = rbidx(iz)
@@ -437,7 +419,7 @@ function ElectricPotentialArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical
 end
 
 
-function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{PointType, 3} where {T}
+function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{PointType, 3} where {T}
     point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
     for iz in axes(point_types, 3)
         irbz::Int = rbidx(iz)
@@ -454,23 +436,8 @@ function PointTypeArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Arr
     return point_types
 end
 
-# """
-#     PointTypes(pss::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical}
-# 
-# Extracts the point types from the `PotentialSimulationSetup`, `pss`, and extrapolates it to an 2π grid.
-# 
-# For 2D grids (r and z) the user has to set the keyword `n_points_in_φ::Int`, e.g.: `n_points_in_φ = 36`.
-# """
-function PointTypes(pss::PotentialSimulationSetup{T, 3, Cylindrical} ; kwargs...)::PointTypes{T, 3, Cylindrical} where {T}
-    return get_2π_potential(PointTypes{T, 3, Cylindrical}(pss.point_types, pss.grid); kwargs...)
-end
 
-function PointTypes(pss::PotentialSimulationSetup{T, N, S})::PointTypes{T, N, S} where {T, N, S}
-    return PointTypes{T, N, S}( pss.point_types, pss.grid )
-end
-
-
-function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
+function EffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
@@ -494,7 +461,7 @@ function EffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cylind
     return ρ
 end
 
-function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
+function FixedEffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
     ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
@@ -519,6 +486,6 @@ function FixedEffectiveChargeDensityArray(pssrb::PotentialSimulationSetupRB{T, C
 end
 
 
-function DielectricDistributionArray(pssrb::PotentialSimulationSetupRB{T, S, 3, Array{T, 3}})::Array{T, 3} where {T, S}
+function DielectricDistributionArray(pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}})::Array{T, 3} where {T, S}
     return pssrb.ϵ_r
 end
