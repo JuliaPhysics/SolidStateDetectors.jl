@@ -59,7 +59,7 @@ get_precision_type(::SolidStateDetector{T}) where {T} = T
 
 function get_world_limits_from_objects(::Type{Cylindrical}, det::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
-    t::Array{T, 2} = hcat(hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)))...)...)
+    t::Array{T, 2} = hcat(vcat(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)))...)...)
     (ax1l, ax1r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:2:3)
     for c in det.contacts
         t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(Vector{CylindricalPoint{T}}.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(c.geometry)))...)...)
@@ -76,7 +76,7 @@ end
 
 function get_world_limits_from_objects(::Type{Cartesian}, det::SolidStateDetector{T}) where {T <: SSDFloat}
     ax1l::T, ax1r::T, ax2l::T, ax2r::T, ax3l::T, ax3r::T = 0, 1, 0, 1, 0, 1
-    t::Array{T, 2} = hcat(hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry))...)...)
+    t::Array{T, 2} = hcat(vcat(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry))...)...)
     (ax1l, ax1r), (ax2l, ax2r), (ax3l, ax3r) = broadcast(i -> extrema(t[i,:]), 1:3)
     for c in det.contacts
         t = hcat([ax1l ax1r; ax2l ax2r; ax3l ax3r], hcat.(ConstructiveSolidGeometry.extreme_points.(ConstructiveSolidGeometry.surfaces(c.geometry))...)...)
