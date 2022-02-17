@@ -69,6 +69,7 @@ end
         @series begin
             if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
                 n_samples --> Int(ceil(n_samples * scales[i]/max_scale))
+                CSG_scale := scales[i]
             end
             o
         end
