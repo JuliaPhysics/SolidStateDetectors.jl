@@ -103,7 +103,7 @@ detectors:
               top:
                 from: 0
                 to: 1
-            h: 1.5
+            h: 1.525
             origin: [5.75,0,-2.5]
             rotation: 
               Y: 90
@@ -113,18 +113,48 @@ detectors:
           
     contacts:
       - material: HPGe
-        name: n+ contact
-        potential: 3000
+        name: Left Condensator Plate
+        potential: 0
         id: 1
         geometry:
           box:
             widths: [1,10,10]
             origin: [-8,0,0]
       - material: HPGe
-        name: p+ contact
+        name: Right Condensator Plate
         potential: 0
         id: 2
         geometry:
           box:
             widths: [1,10,10]
             origin: [8,0,0]
+      - material: HPGe
+        name: Torus Contact
+        potential: 3000
+        id: 3
+        geometry:
+          difference:
+          - torus:
+              r_torus: 3
+              r_tube: 2.5  
+              phi: 
+                from: 0
+                to: 350 
+              theta: 
+                from: 0
+                to: 180
+              origin: [0,0,2.5025] 
+              rotation: 
+                Z: 90
+          - torus:
+              r_torus: 3
+              r_tube: 2   
+              phi: 
+                from: 0
+                to: 350 
+              theta: 
+                from: 0
+                to: 180
+              origin: [0,0,2.5] 
+              rotation: 
+                Z: 90
