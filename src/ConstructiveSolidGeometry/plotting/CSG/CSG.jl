@@ -6,10 +6,12 @@ function primitives(csg::AbstractConstructiveGeometry)
     ps
 end
 
-@recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 40) where {T}
+@recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 40, CSG_scale = missing) where {T}
     seriestype --> :csg
     ps = primitives(csg)
-    spacing = (haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface) ?  T(get_scale(csg)/n_samples) : nothing
+    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
+        spacing::T = T((ismissing(CSG_scale) ? get_scale(csg) : CSG_scale)/n_samples)
+    end
     @series begin
         label --> "CSG"
         if haskey(plotattributes, :seriestype) 
