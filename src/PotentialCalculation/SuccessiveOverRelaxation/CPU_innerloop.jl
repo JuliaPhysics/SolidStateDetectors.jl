@@ -1,3 +1,76 @@
+@inline function calculate_sor_weights(
+    i1::Int, 
+    pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
+    i2, in2, i3, in3,
+    update_even_points, i23_is_even_t,
+    pww3r, pww3l, pww2r, pww2l, # pw: precalculated weight
+    pww3r_pww2r, pww3l_pww2r, pww3r_pww2l, pww3l_pww2l,
+    pwΔmp2_pwΔmp3, 
+    pwΔmp2r, pwΔmp2l, 
+    pwΔmp3r, pwΔmp3l,
+) where {T, S}
+    in1 = nidx(i1, update_even_points, i23_is_even_t)
+
+    pww1r        = pssrb.geom_weights[3][1, in1]
+    pww1l        = pssrb.geom_weights[3][2, in1]
+    pwΔmp1       = pssrb.geom_weights[3][3, in1]
+    Δ1_ext_inv_l = pssrb.geom_weights[3][4, in1]
+    Δ1_ext_inv_r = pssrb.geom_weights[3][4, in1 + 1]
+
+    # ϵ_ijk: i: 1.RB-Dim. | j: 2.RB-Dim. | k: 3.RB-Dim.
+    ϵ_lll, ϵ_llr, ϵ_lrl, ϵ_lrr, ϵ_rll, ϵ_rlr, ϵ_rrl, ϵ_rrr = get_ϵ_of_oktant(
+        pssrb, in1 + 1, in1, i2, in2, i3, in3
+    )
+
+    pww2r_pww1r = pww2r * pww1r
+    pww2l_pww1r = pww2l * pww1r
+    pww2r_pww1l = pww2r * pww1l
+    pww2l_pww1l = pww2l * pww1l
+    pww3l_pww1r = pww3l * pww1r
+    pww3r_pww1r = pww3r * pww1r
+    pww3l_pww1l = pww3l * pww1l
+    pww3r_pww1l = pww3r * pww1l
+
+    w1r =        ϵ_rrr * pww3r_pww2r  
+    w1r = muladd(ϵ_rlr,  pww3r_pww2l, w1r)     
+    w1r = muladd(ϵ_rrl,  pww3l_pww2r, w1r)     
+    w1r = muladd(ϵ_rll,  pww3l_pww2l, w1r)
+
+    w1l =        ϵ_lrr * pww3r_pww2r 
+    w1l = muladd(ϵ_llr,  pww3r_pww2l, w1l)    
+    w1l = muladd(ϵ_lrl,  pww3l_pww2r, w1l)    
+    w1l = muladd(ϵ_lll,  pww3l_pww2l, w1l)
+
+    w2r =        ϵ_rrl * pww3l_pww1r 
+    w2r = muladd(ϵ_rrr,  pww3r_pww1r, w2r)  
+    w2r = muladd(ϵ_lrl,  pww3l_pww1l, w2r)    
+    w2r = muladd(ϵ_lrr,  pww3r_pww1l, w2r) 
+
+    w2l =        ϵ_rll * pww3l_pww1r 
+    w2l = muladd(ϵ_rlr,  pww3r_pww1r, w2l)  
+    w2l = muladd(ϵ_lll,  pww3l_pww1l, w2l)    
+    w2l = muladd(ϵ_llr,  pww3r_pww1l, w2l) 
+
+    w3r =        ϵ_rrr * pww2r_pww1r
+    w3r = muladd(ϵ_rlr,  pww2l_pww1r, w3r)   
+    w3r = muladd(ϵ_lrr,  pww2r_pww1l, w3r)    
+    w3r = muladd(ϵ_llr,  pww2l_pww1l, w3r)
+
+    w3l =        ϵ_rrl * pww2r_pww1r
+    w3l = muladd(ϵ_rll,  pww2l_pww1r, w3l)   
+    w3l = muladd(ϵ_lrl,  pww2r_pww1l, w3l)    
+    w3l = muladd(ϵ_lll,  pww2l_pww1l, w3l) 
+
+    # wxy *= Surfaces areas of the voxel
+    w1l *= Δ1_ext_inv_l * pwΔmp2_pwΔmp3 
+    w1r *= Δ1_ext_inv_r * pwΔmp2_pwΔmp3 
+    w2l *= pwΔmp3l * pwΔmp1
+    w2r *= pwΔmp3r * pwΔmp1
+    w3l *= pwΔmp2l * pwΔmp1 
+    w3r *= pwΔmp2r * pwΔmp1 
+    return w1l, w1r, w2l, w2r, w3l, w3r
+end
+
 function load_weights_for_innerloop!(
     line_weights, pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
     i2, in2, i3, in3,
@@ -9,72 +82,24 @@ function load_weights_for_innerloop!(
     pwΔmp3r, pwΔmp3l,
 ) where {T, S}
     @fastmath @inbounds @simd ivdep for i1 in 2:(size(pssrb.potential, 1) - 1)
-        in1 = nidx(i1, update_even_points, i23_is_even_t)
-
-        pww1r        = pssrb.geom_weights[3][1, in1]
-        pww1l        = pssrb.geom_weights[3][2, in1]
-        pwΔmp1       = pssrb.geom_weights[3][3, in1]
-        Δ1_ext_inv_l = pssrb.geom_weights[3][4, in1]
-        Δ1_ext_inv_r = pssrb.geom_weights[3][4, in1 + 1]
-
-        # ϵ_ijk: i: 1.RB-Dim. | j: 2.RB-Dim. | k: 3.RB-Dim.
-        ϵ_lll, ϵ_llr, ϵ_lrl, ϵ_lrr, ϵ_rll, ϵ_rlr, ϵ_rrl, ϵ_rrr = get_ϵ_of_oktant(
-            pssrb, in1 + 1, in1, i2, in2, i3, in3
+        weights = calculate_sor_weights(
+            i1::Int, 
+            pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
+            i2, in2, i3, in3,
+            update_even_points, i23_is_even_t,
+            pww3r, pww3l, pww2r, pww2l, # pw: precalculated weight
+            pww3r_pww2r, pww3l_pww2r, pww3r_pww2l, pww3l_pww2l,
+            pwΔmp2_pwΔmp3, 
+            pwΔmp2r, pwΔmp2l, 
+            pwΔmp3r, pwΔmp3l,
         )
-        
-        pww2r_pww1r = pww2r * pww1r
-        pww2l_pww1r = pww2l * pww1r
-        pww2r_pww1l = pww2r * pww1l
-        pww2l_pww1l = pww2l * pww1l
-        pww3l_pww1r = pww3l * pww1r
-        pww3r_pww1r = pww3r * pww1r
-        pww3l_pww1l = pww3l * pww1l
-        pww3r_pww1l = pww3r * pww1l
 
-        w1r =        ϵ_rrr * pww3r_pww2r  
-        w1r = muladd(ϵ_rlr,  pww3r_pww2l, w1r)     
-        w1r = muladd(ϵ_rrl,  pww3l_pww2r, w1r)     
-        w1r = muladd(ϵ_rll,  pww3l_pww2l, w1r)
-        
-        w1l =        ϵ_lrr * pww3r_pww2r 
-        w1l = muladd(ϵ_llr,  pww3r_pww2l, w1l)    
-        w1l = muladd(ϵ_lrl,  pww3l_pww2r, w1l)    
-        w1l = muladd(ϵ_lll,  pww3l_pww2l, w1l)
-        
-        w2r =        ϵ_rrl * pww3l_pww1r 
-        w2r = muladd(ϵ_rrr,  pww3r_pww1r, w2r)  
-        w2r = muladd(ϵ_lrl,  pww3l_pww1l, w2r)    
-        w2r = muladd(ϵ_lrr,  pww3r_pww1l, w2r) 
-        
-        w2l =        ϵ_rll * pww3l_pww1r 
-        w2l = muladd(ϵ_rlr,  pww3r_pww1r, w2l)  
-        w2l = muladd(ϵ_lll,  pww3l_pww1l, w2l)    
-        w2l = muladd(ϵ_llr,  pww3r_pww1l, w2l) 
-
-        w3r =        ϵ_rrr * pww2r_pww1r
-        w3r = muladd(ϵ_rlr,  pww2l_pww1r, w3r)   
-        w3r = muladd(ϵ_lrr,  pww2r_pww1l, w3r)    
-        w3r = muladd(ϵ_llr,  pww2l_pww1l, w3r)
-
-        w3l =        ϵ_rrl * pww2r_pww1r
-        w3l = muladd(ϵ_rll,  pww2l_pww1r, w3l)   
-        w3l = muladd(ϵ_lrl,  pww2r_pww1l, w3l)    
-        w3l = muladd(ϵ_lll,  pww2l_pww1l, w3l) 
-
-        # wxy *= Surfaces areas of the voxel
-        w1l *= Δ1_ext_inv_l * pwΔmp2_pwΔmp3 
-        w1r *= Δ1_ext_inv_r * pwΔmp2_pwΔmp3 
-        w2l *= pwΔmp3l * pwΔmp1
-        w2r *= pwΔmp3r * pwΔmp1
-        w3l *= pwΔmp2l * pwΔmp1 
-        w3r *= pwΔmp2r * pwΔmp1 
-
-        line_weights[i1-1, 1] = w1l 
-        line_weights[i1-1, 2] = w1r 
-        line_weights[i1-1, 3] = w2l 
-        line_weights[i1-1, 4] = w2r 
-        line_weights[i1-1, 5] = w3l 
-        line_weights[i1-1, 6] = w3r 
+        line_weights[i1-1, 1] = weights[1]
+        line_weights[i1-1, 2] = weights[2]
+        line_weights[i1-1, 3] = weights[3]
+        line_weights[i1-1, 4] = weights[4]
+        line_weights[i1-1, 5] = weights[5]
+        line_weights[i1-1, 6] = weights[6]
     end
     nothing
 end
