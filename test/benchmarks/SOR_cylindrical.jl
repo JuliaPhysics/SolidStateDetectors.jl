@@ -129,7 +129,7 @@ SolidStateDetectors.middleloop!(idx3, rb_tar_idx, rb_src_idx, pssrb_cyl,
 
 
 
-SolidStateDetectors.load_weights_for_innerloop!(
+SolidStateDetectors.calculate_weights_for_innerloop!(
     line_weights,
     pssrb_cyl, iφ, inφ, ir, inr,
     update_even_points, idx3_is_even,
@@ -140,7 +140,7 @@ SolidStateDetectors.load_weights_for_innerloop!(
     r_inv_pwΔmpr_Δφ_ext_inv_r, r_inv_pwΔmpr_Δφ_ext_inv_l,
 )
 
-@code_warntype SolidStateDetectors.load_weights_for_innerloop!(
+@code_warntype SolidStateDetectors.calculate_weights_for_innerloop!(
     line_weights,
     pssrb_cyl, iφ, inφ, ir, inr,
     update_even_points, idx3_is_even,
@@ -151,7 +151,7 @@ SolidStateDetectors.load_weights_for_innerloop!(
     r_inv_pwΔmpr_Δφ_ext_inv_r, r_inv_pwΔmpr_Δφ_ext_inv_l,
 )
 
-@btime SolidStateDetectors.load_weights_for_innerloop!(
+@btime SolidStateDetectors.calculate_weights_for_innerloop!(
     $line_weights,
     $pssrb_cyl, $iφ, $inφ, $ir, $inr,
     $update_even_points, $idx3_is_even,

@@ -121,7 +121,7 @@ end
                 is_r0_t
             )
 
-            load_weights_for_innerloop!(line_weights, pssrb, i2, in2, i3, in3,
+            calculate_weights_for_innerloop!(line_weights, pssrb, i2, in2, i3, in3,
                 update_even_points, i23_is_even_t, 
                 pw2...
             )
@@ -140,7 +140,7 @@ end
                 is_r0_t
             )
             
-            load_weights_for_innerloop!(line_weights, pssrb, i2, in2, i3, in3,
+            calculate_weights_for_innerloop!(line_weights, pssrb, i2, in2, i3, in3,
                 update_even_points, i23_is_even_t, 
                 pw2...
             )

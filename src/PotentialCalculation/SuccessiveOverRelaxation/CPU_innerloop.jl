@@ -71,7 +71,7 @@
     return w1l, w1r, w2l, w2r, w3l, w3r
 end
 
-function load_weights_for_innerloop!(
+function calculate_weights_for_innerloop!(
     line_weights, pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
     i2, in2, i3, in3,
     update_even_points, i23_is_even_t,
