@@ -98,5 +98,6 @@ include("CPU_convergence.jl")
 
 include("GPU_kernel_Cylindrical.jl")
 include("GPU_kernel_Cartesian3D.jl")
+include("GPU_kernel.jl")
 include("GPU_convergence.jl")
 
