@@ -1,41 +1,3 @@
-function _update_till_convergence!( pssrb::PotentialCalculationSetup{T, S, 3}, 
-                                    convergence_limit,
-                                    device_array_type::Type{DAT};
-                                    n_iterations_between_checks = 500,
-                                    depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
-                                    only2d::Val{only_2d} = Val{false}(), 
-                                    is_weighting_potential::Val{_is_weighting_potential} = Val{false}(),
-                                    use_nthreads::Int = Base.Threads.nthreads(), 
-                                    max_n_iterations::Int = 10_000, # -1
-                                    verbose::Bool = true
-                                ) where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential, DAT <: GPUArrays.AbstractGPUArray}
-    device = get_device(DAT)
-    N_grid_points = prod(size(pssrb.potential)[1:3] .- 2)
-    kernel = get_sor_kernel(S, device)
-    @showprogress for i in 1:max_n_iterations
-        update_even_points = true
-        wait(kernel( 
-            pssrb.potential, pssrb.point_types, pssrb.volume_weights, pssrb.q_eff_imp, pssrb.q_eff_fix, pssrb.ϵ_r,
-            pssrb.geom_weights, pssrb.sor_const, update_even_points, depletion_handling_enabled, _is_weighting_potential, only_2d, 
-            ndrange = N_grid_points
-        ))
-        apply_boundary_conditions!(pssrb, Val(update_even_points), only2d)
-        update_even_points = false
-        wait(kernel( 
-            pssrb.potential, pssrb.point_types, pssrb.volume_weights, pssrb.q_eff_imp, pssrb.q_eff_fix, pssrb.ϵ_r,
-            pssrb.geom_weights, pssrb.sor_const, update_even_points, depletion_handling_enabled, _is_weighting_potential, only_2d,
-            ndrange = N_grid_points
-        ))
-        apply_boundary_conditions!(pssrb, Val(update_even_points), only2d)
-    end
-    return 0
-end                
-
-get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
-get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)
-
-function get_device end
-
 @inline function sor_kernel(
     potential::AbstractArray{T, 4},
     point_types::AbstractArray{PointType, 4},
@@ -62,7 +24,7 @@ function get_device end
         in3 = i3 - 1
         in2 = i2 - 1
         in1 = nidx(i1, update_even_points, iseven(i2 + i3))
-        ixr = get_rbidx_right_neighbour(i1, update_even_points, iseven(i2 + i3))
+        i1r = get_rbidx_right_neighbour(i1, update_even_points, iseven(i2 + i3))
         
         rb_tar_idx, rb_src_idx = update_even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 
@@ -85,7 +47,7 @@ function get_device end
         q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
 
         neighbor_potentials = get_neighbor_potentials(
-            potential, old_potential, i1, i2, i3, ixr, in2, in3, rb_src_idx, only2d
+            potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
         )      
         
         new_potential = calc_new_potential_SOR_3D(
@@ -164,3 +126,31 @@ end
         r_inv_pwΔmpr_Δφ_ext_inv_r, r_inv_pwΔmpr_Δφ_ext_inv_l
     )
 end
+
+"""
+    function get_sor_kernel(::Type{S}, args...) 
+
+where S is either Cartesian or Cylindrical. 
+
+Developer notes:
+Currently (February 2022), there are some limitation to the `@kernel` macro 
+of the package KernelAbstractions.jl. Especially, regarding usage of dispatch. 
+
+Thus, we have to write two kernel functions right now for the Cartesian & Cylindrical case:
+`sor_cyl_gpu!` and `sor_car_gpu!`.
+
+Inside kernel functions, everything is (and has to be) inlined and we can make use of multiple dispatch. 
+So in the end we only have to write one function for the kernel, `sor_kernel`, 
+which is than inlined inside the two kernel functions.
+
+We can also use most of the CPU functions with the restriction that all 
+types have to be independent on the GPU-indices of the kernel. 
+E.g., making use of `i23_is_even_t = Val(iseven(i2 + i3))` and other similar statements is not possible,
+which are used in the CPU implementation for optimization.
+One the GPU (currently) those statements have to be calculated and booleans have to be passed.
+Maybe this will change in the future.
+"""
+get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
+get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)
+
+function get_device end
