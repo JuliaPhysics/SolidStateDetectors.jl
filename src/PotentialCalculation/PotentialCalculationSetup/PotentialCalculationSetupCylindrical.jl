@@ -374,7 +374,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         rbpoint_types = RBExtBy2Array( point_types, grid )
     end # @inbounds
 
-    pssrb = PotentialCalculationSetup(
+    pcs = PotentialCalculationSetup(
         grid,
         rbpotential,
         rbpoint_types,
@@ -390,15 +390,15 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         grid_boundary_factors
      )
 
-    apply_boundary_conditions!(pssrb, Val{ true}(), only_2d ? Val{true}() : Val{false}()) # even points
-    apply_boundary_conditions!(pssrb, Val{false}(), only_2d ? Val{true}() : Val{false}()) # odd
-    return pssrb
+    apply_boundary_conditions!(pcs, Val{ true}(), only_2d ? Val{true}() : Val{false}()) # even points
+    apply_boundary_conditions!(pcs, Val{false}(), only_2d ? Val{true}() : Val{false}()) # odd
+    return pcs
 end
 
-Grid(pssrb::PotentialCalculationSetup) = pssrb.grid
+Grid(pcs::PotentialCalculationSetup) = pcs.grid
 
-function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
-    pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
+function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
+    pot::Array{T, 3} = Array{T, 3}(undef, size(pcs.grid))
     for iz in axes(pot, 3)
         irbz::Int = rbidx(iz)
         for iφ in axes(pot, 2)
@@ -407,7 +407,7 @@ function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cylindrical,
             for ir in axes(pot, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                pot[ir, iφ, iz] = pssrb.potential[ irbz, irbφ, irbr, rbi ]
+                pot[ir, iφ, iz] = pcs.potential[ irbz, irbφ, irbr, rbi ]
             end
         end
     end
@@ -419,8 +419,8 @@ function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cylindrical,
 end
 
 
-function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{PointType, 3} where {T}
-    point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
+function PointTypeArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{PointType, 3} where {T}
+    point_types::Array{PointType, 3} = zeros(PointType, size(pcs.grid))
     for iz in axes(point_types, 3)
         irbz::Int = rbidx(iz)
         for iφ in axes(point_types, 2)
@@ -429,7 +429,7 @@ function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Arra
             for ir in axes(point_types, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                point_types[ir, iφ, iz] = pssrb.point_types[irbz, irbφ, irbr, rbi ]
+                point_types[ir, iφ, iz] = pcs.point_types[irbz, irbφ, irbr, rbi ]
             end
         end
     end
@@ -437,48 +437,48 @@ function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Arra
 end
 
 
-function EffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
+function EffectiveChargeDensityArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pcs.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
-        Δmpz::T = pssrb.geom_weights[3][3, iz]
+        Δmpz::T = pcs.geom_weights[3][3, iz]
         for iφ in axes(ρ, 2)
             irbφ::Int = iφ + 1
             idxsum::Int = iz + iφ
-            Δmpφ::T = pssrb.geom_weights[2][3, iφ]
+            Δmpφ::T = pcs.geom_weights[2][3, iφ]
             Δmpzφ::T = Δmpz * Δmpφ
             for ir in axes(ρ, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                dV::T = pssrb.geom_weights[1][6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
+                dV::T = pcs.geom_weights[1][6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                 if ir == 1
                     dV = dV * 2π / Δmpφ
                 end
-                ρ[ir, iφ, iz] = pssrb.q_eff_imp[irbz, irbφ, irbr, rbi ] / dV
+                ρ[ir, iφ, iz] = pcs.q_eff_imp[irbz, irbφ, irbr, rbi ] / dV
             end
         end
     end
     return ρ
 end
 
-function FixedEffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
+function FixedEffectiveChargeDensityArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pcs.grid))
     for iz in axes(ρ, 3)
         irbz::Int = rbidx(iz)
-        Δmpz::T = pssrb.geom_weights[3][3, iz]
+        Δmpz::T = pcs.geom_weights[3][3, iz]
         for iφ in axes(ρ, 2)
             irbφ::Int = iφ + 1
             idxsum::Int = iz + iφ
-            Δmpφ::T = pssrb.geom_weights[2][3, iφ]
+            Δmpφ::T = pcs.geom_weights[2][3, iφ]
             Δmpzφ::T = Δmpz * Δmpφ
             for ir in axes(ρ, 1)
                 irbr::Int = ir + 1
                 rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                dV::T = pssrb.geom_weights[1][6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
+                dV::T = pcs.geom_weights[1][6, ir] * Δmpzφ  #Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                 if ir == 1
                     dV = dV * 2π / Δmpφ
                 end
-                ρ[ir, iφ, iz] = pssrb.q_eff_fix[irbz, irbφ, irbr, rbi ] / dV
+                ρ[ir, iφ, iz] = pcs.q_eff_fix[irbz, irbφ, irbr, rbi ] / dV
             end
         end
     end
@@ -486,6 +486,6 @@ function FixedEffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cy
 end
 
 
-function DielectricDistributionArray(pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}})::Array{T, 3} where {T, S}
-    return pssrb.ϵ_r
+function DielectricDistributionArray(pcs::PotentialCalculationSetup{T, S, 3, Array{T, 3}})::Array{T, 3} where {T, S}
+    return pcs.ϵ_r
 end

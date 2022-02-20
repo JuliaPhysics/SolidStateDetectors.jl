@@ -292,7 +292,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         rbpoint_types = RBExtBy2Array( point_types, grid )
     end # @inbounds
 
-    pssrb = PotentialCalculationSetup(
+    pcs = PotentialCalculationSetup(
         grid,
         rbpotential,
         rbpoint_types,
@@ -307,12 +307,12 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         minimum_applied_potential,
         grid_boundary_factors
      )
-    return pssrb
+    return pcs
 end
 
 
-function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T, 3} where {T}
-    pot::Array{T, 3} = Array{T, 3}(undef, size(pssrb.grid))
+function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T, 3} where {T}
+    pot::Array{T, 3} = Array{T, 3}(undef, size(pcs.grid))
     for iz in axes(pot, 3)
         irbz::Int = iz + 1
         for iy in axes(pot, 2)
@@ -321,7 +321,7 @@ function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cartesian,  
             for ix in axes(pot, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                pot[ix, iy, iz] = pssrb.potential[ irbx, irby, irbz, rbi ]
+                pot[ix, iy, iz] = pcs.potential[ irbx, irby, irbz, rbi ]
             end
         end
     end
@@ -329,8 +329,8 @@ function ElectricPotentialArray(pssrb::PotentialCalculationSetup{T, Cartesian,  
 end
 
 
-function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
-    point_types::Array{PointType, 3} = zeros(PointType, size(pssrb.grid))
+function PointTypeArray(pcs::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
+    point_types::Array{PointType, 3} = zeros(PointType, size(pcs.grid))
     for iz in axes(point_types, 3)
         irbz::Int = iz + 1
         for iy in axes(point_types, 2)
@@ -339,7 +339,7 @@ function PointTypeArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array
             for ix in axes(point_types, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                point_types[ix, iy, iz] = pssrb.point_types[irbx, irby, irbz, rbi ]
+                point_types[ix, iy, iz] = pcs.point_types[irbx, irby, irbz, rbi ]
             end
         end
     end
@@ -348,43 +348,43 @@ end
 
 
 
-function EffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
+function EffectiveChargeDensityArray(pcs::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pcs.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = pssrb.geom_weights[1][3, iz]
+        Δmpz::T = pcs.geom_weights[1][3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            Δmpy::T = pssrb.geom_weights[2][3, iy]
+            Δmpy::T = pcs.geom_weights[2][3, iy]
             Δmpzy::T = Δmpz * Δmpy
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * pssrb.geom_weights[3][3, ix]
+                dV::T =  Δmpzy * pcs.geom_weights[3][3, ix]
 
-                ρ[ix, iy, iz] = pssrb.q_eff_imp[irbx, irby, irbz, rbi ] / dV
+                ρ[ix, iy, iz] = pcs.q_eff_imp[irbx, irby, irbz, rbi ] / dV
             end
         end
     end
     return ρ
 end
-function FixedEffectiveChargeDensityArray(pssrb::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
-    ρ::Array{T, 3} = zeros(T, size(pssrb.grid))
+function FixedEffectiveChargeDensityArray(pcs::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{T} where {T}
+    ρ::Array{T, 3} = zeros(T, size(pcs.grid))
     for iz in axes(ρ, 3)
         irbz::Int = iz + 1
-        Δmpz::T = pssrb.geom_weights[1][3, iz]
+        Δmpz::T = pcs.geom_weights[1][3, iz]
         for iy in axes(ρ, 2)
             irby::Int = iy + 1
             idxsum::Int = iz + iy
-            Δmpy::T = pssrb.geom_weights[2][3, iy]
+            Δmpy::T = pcs.geom_weights[2][3, iy]
             Δmpzy::T = Δmpz * Δmpy
             for ix in axes(ρ, 1)
                 irbx::Int = rbidx(ix)
                 rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
-                dV::T =  Δmpzy * pssrb.geom_weights[3][3, ix]
+                dV::T =  Δmpzy * pcs.geom_weights[3][3, ix]
 
-                ρ[ix, iy, iz] = pssrb.q_eff_fix[irbx, irby, irbz, rbi ] / dV
+                ρ[ix, iy, iz] = pcs.q_eff_fix[irbx, irby, irbz, rbi ] / dV
             end
         end
     end

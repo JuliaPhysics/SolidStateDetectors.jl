@@ -1,5 +1,5 @@
 @fastmath function outerloop!( 
-    pssrb::PotentialCalculationSetup{T}, 
+    pcs::PotentialCalculationSetup{T}, 
     use_nthreads::Int,
     update_even_points::Val{even_points},
     depletion_handling::Val{depletion_handling_enabled},
@@ -9,8 +9,8 @@
     @inbounds begin 
         rb_tar_idx::Int, rb_src_idx::Int = even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 
-        @onthreads 1:use_nthreads for i3 in workpart(2:1:(size(pssrb.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
-            middleloop!( i3, rb_tar_idx, rb_src_idx, pssrb, 
+        @onthreads 1:use_nthreads for i3 in workpart(2:1:(size(pcs.potential, 3) - 1), 1:use_nthreads, Base.Threads.threadid())
+            middleloop!( i3, rb_tar_idx, rb_src_idx, pcs, 
                          update_even_points, depletion_handling, 
                          is_weighting_potential, only2d, 
                          Val(iseven(i3))::Union{Val{true}, Val{false}},

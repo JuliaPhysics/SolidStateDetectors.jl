@@ -439,17 +439,17 @@ apply_initial_state!(sim, ElectricPotential, paint_contacts = false)
 """
 function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat, CS}
-    pssrb = PotentialCalculationSetup(
+    pcs = PotentialCalculationSetup(
                 sim.detector, grid, sim.medium; 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
                 not_only_paint_contacts, paint_contacts
     );
 
-    sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
-    sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
-    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(grid))
-    sim.point_types = PointTypes(PointTypeArray(pssrb), grid)
-    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
+    sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
+    sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
+    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
+    sim.point_types = PointTypes(PointTypeArray(pcs), grid)
+    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
     nothing
 end
 
@@ -478,9 +478,9 @@ apply_initial_state!(sim, WeightingPotential, 1) # =>  applies initial state for
 """
 function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat}
-    pssrb = PotentialCalculationSetup(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
+    pcs = PotentialCalculationSetup(sim.detector, grid, sim.medium, weighting_potential_contact_id = contact_id; 
             not_only_paint_contacts, paint_contacts, point_types = depletion_handling ? sim.point_types : missing);
-    sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), grid)
+    sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pcs), grid)
     nothing
 end
 
@@ -545,13 +545,13 @@ function update_till_convergence!( sim::Simulation{T,CS},
     end
     only_2d = length(sim.electric_potential.grid.axes[2]) == 1
 
-    pssrb = adapt(device_array_type, PotentialCalculationSetup(
+    pcs = adapt(device_array_type, PotentialCalculationSetup(
         sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sor_consts = T.(sor_consts),
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
     ))
     
-    cf::T = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
+    cf::T = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{false}(),
@@ -560,27 +560,27 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
-    pssrb = adapt(Array, pssrb)
+    pcs = adapt(Array, pcs)
 
-    grid = Grid(pssrb)
-    sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), grid)
-    sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), grid)
-    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(grid))
-    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
-    sim.point_types = PointTypes(PointTypeArray(pssrb), grid)
+    grid = Grid(pcs)
+    sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
+    sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
+    sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
+    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
+    sim.point_types = PointTypes(PointTypeArray(pcs), grid)
 
     if depletion_handling
         update_again::Bool = false # With SOR-Constant = 1
         @inbounds for i in eachindex(sim.electric_potential.data)
-            if sim.electric_potential.data[i] < pssrb.minimum_applied_potential # p-type
-                sim.electric_potential.data[i] = pssrb.minimum_applied_potential
+            if sim.electric_potential.data[i] < pcs.minimum_applied_potential # p-type
+                sim.electric_potential.data[i] = pcs.minimum_applied_potential
                 if sim.point_types.data[i] & undepleted_bit == 0 && 
                    sim.point_types.data[i] & pn_junction_bit > 0
                         sim.point_types.data[i] += undepleted_bit
                 end
                 update_again = true
-            elseif sim.electric_potential.data[i] > pssrb.maximum_applied_potential # n-type
-                sim.electric_potential.data[i] = pssrb.maximum_applied_potential
+            elseif sim.electric_potential.data[i] > pcs.maximum_applied_potential # n-type
+                sim.electric_potential.data[i] = pcs.maximum_applied_potential
                 if sim.point_types.data[i] & undepleted_bit == 0 && 
                    sim.point_types.data[i] & pn_junction_bit > 0
                         sim.point_types.data[i] += undepleted_bit
@@ -589,9 +589,9 @@ function update_till_convergence!( sim::Simulation{T,CS},
             end
         end
         if update_again
-            pssrb.sor_const[:] .= T(1)
-            pssrb = adapt(device_array_type, pssrb)
-            cf = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
+            pcs.sor_const[:] .= T(1)
+            pcs = adapt(device_array_type, pcs)
+            cf = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
                                             only2d = Val{only_2d}(),
                                             depletion_handling = Val{depletion_handling}(),
                                             is_weighting_potential = Val{false}(),
@@ -599,18 +599,18 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                             n_iterations_between_checks = 1,
                                             max_n_iterations = 0,
                                             verbose = false )
-            pssrb = adapt(Array, pssrb)
-            sim.electric_potential = ElectricPotential(ElectricPotentialArray(pssrb), grid)
+            pcs = adapt(Array, pcs)
+            sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
         end
         @inbounds for i in eachindex(sim.electric_potential.data)
-            if sim.electric_potential.data[i] < pssrb.minimum_applied_potential # p-type
-                sim.electric_potential.data[i] = pssrb.minimum_applied_potential
+            if sim.electric_potential.data[i] < pcs.minimum_applied_potential # p-type
+                sim.electric_potential.data[i] = pcs.minimum_applied_potential
                 if sim.point_types.data[i] & undepleted_bit == 0 && 
                    sim.point_types.data[i] & pn_junction_bit > 0
                         sim.point_types.data[i] += undepleted_bit
                 end
-            elseif sim.electric_potential.data[i] > pssrb.maximum_applied_potential # n-type
-                sim.electric_potential.data[i] = pssrb.maximum_applied_potential
+            elseif sim.electric_potential.data[i] > pcs.maximum_applied_potential # n-type
+                sim.electric_potential.data[i] = pcs.maximum_applied_potential
                 if sim.point_types.data[i] & undepleted_bit == 0 && 
                    sim.point_types.data[i] & pn_junction_bit > 0
                         sim.point_types.data[i] += undepleted_bit
@@ -686,12 +686,12 @@ function update_till_convergence!( sim::Simulation{T, CS},
     end
 
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    pssrb = adapt(device_array_type, PotentialCalculationSetup(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
+    pcs = adapt(device_array_type, PotentialCalculationSetup(sim.detector, sim.weighting_potentials[contact_id].grid, sim.medium, sim.weighting_potentials[contact_id].data,
                 sor_consts = T.(sor_consts), weighting_potential_contact_id = contact_id, 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
                 not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts, point_types = depletion_handling ? sim.point_types : missing));
 
-    cf::T = _update_till_convergence!( pssrb, T(convergence_limit), device_array_type;
+    cf::T = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{true}(),
@@ -700,8 +700,8 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
-    pssrb = adapt(Array, pssrb)
-    sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pssrb), sim.weighting_potentials[contact_id].grid)
+    pcs = adapt(Array, pcs)
+    sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pcs), sim.weighting_potentials[contact_id].grid)
 
     cf
 end
@@ -738,13 +738,13 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
-        pssrb = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
+        pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
                                         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
-        sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pssrb), sim.electric_potential.grid)
-        sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pssrb), sim.electric_potential.grid)
-        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pssrb), get_extended_midpoints_grid(sim.electric_potential.grid))
-        sim.point_types = PointTypes(PointTypeArray(pssrb), sim.electric_potential.grid)
+        sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
+        sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
+        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(sim.electric_potential.grid))
+        sim.point_types = PointTypes(PointTypeArray(pcs), sim.electric_potential.grid)
     end
     nothing
 end

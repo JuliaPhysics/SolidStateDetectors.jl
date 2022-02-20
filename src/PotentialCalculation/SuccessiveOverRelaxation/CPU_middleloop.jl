@@ -87,7 +87,7 @@ end
 
 @fastmath function middleloop!( 
     i3::Int, rb_tar_idx::Int, rb_src_idx::Int, 
-    pssrb::PotentialCalculationSetup{T, S},
+    pcs::PotentialCalculationSetup{T, S},
     update_even_points::Val{even_points},
     depletion_handling::Val{depletion_handling_enabled},
     is_weighting_potential::Val{_is_weighting_potential}, 
@@ -98,11 +98,11 @@ end
     @inbounds begin 
         in3 = i3 - 1 
                 
-        geom_weights_3 = get_geom_weights_outerloop(pssrb.geom_weights, in3, S)
+        geom_weights_3 = get_geom_weights_outerloop(pcs.geom_weights, in3, S)
 
-        line_weights::Array{T, 2} = Array{T, 2}(undef, size(pssrb.potential, 1) - 2, 6)
+        line_weights::Array{T, 2} = Array{T, 2}(undef, size(pcs.potential, 1) - 2, 6)
         # Even though this causes some allocations it 
-        # is faster than using a predefined array, e.g. stored in pssrb
+        # is faster than using a predefined array, e.g. stored in pcs
         # Especially when using multiple threads
 
         #=
@@ -111,41 +111,41 @@ end
             instead of one loop using:
                 rφi_is_even_t::Union{Val{true}, Val{false}} = Val(iseven(i3 + i2) ? true : false)
         =#
-        for i2 in (only_2d ? (2,) : 2:2:(size(pssrb.potential, 2) - 1))
+        for i2 in (only_2d ? (2,) : 2:2:(size(pcs.potential, 2) - 1))
             in2 = i2 - 1
             i23_is_even_t = Val(idx3_is_even ? true : false)
 
             geom_weights_2 = prepare_weights_in_middleloop(
-                pssrb.geom_weights, S, i2, in2, 
+                pcs.geom_weights, S, i2, in2, 
                 geom_weights_3...,
                 is_r0_t
             )
 
-            calculate_weights_for_innerloop!(line_weights, pssrb, i2, in2, i3, in3,
+            calculate_weights_for_innerloop!(line_weights, pcs, i2, in2, i3, in3,
                 update_even_points, i23_is_even_t, 
                 geom_weights_2...
             )
 
-            innerloop!(line_weights, pssrb, i2, in2, i3, in3, rb_tar_idx, rb_src_idx, 
+            innerloop!(line_weights, pcs, i2, in2, i3, in3, rb_tar_idx, rb_src_idx, 
                 update_even_points, i23_is_even_t, 
                 depletion_handling, is_weighting_potential, only2d)
         end 
-        for i2 in 3:2:(size(pssrb.potential, 2) - 1)
+        for i2 in 3:2:(size(pcs.potential, 2) - 1)
             in2 = i2 - 1
             i23_is_even_t = Val(idx3_is_even ? false : true)
 
             geom_weights_2 = prepare_weights_in_middleloop(
-                pssrb.geom_weights, S, i2, in2, 
+                pcs.geom_weights, S, i2, in2, 
                 geom_weights_3...,
                 is_r0_t
             )
             
-            calculate_weights_for_innerloop!(line_weights, pssrb, i2, in2, i3, in3,
+            calculate_weights_for_innerloop!(line_weights, pcs, i2, in2, i3, in3,
                 update_even_points, i23_is_even_t, 
                 geom_weights_2...
             )
 
-            innerloop!(line_weights, pssrb, i2, in2, i3, in3, rb_tar_idx, rb_src_idx, 
+            innerloop!(line_weights, pcs, i2, in2, i3, in3, rb_tar_idx, rb_src_idx, 
                 update_even_points, i23_is_even_t, 
                 depletion_handling, is_weighting_potential, only2d)
         end
