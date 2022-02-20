@@ -133,7 +133,7 @@ end
 where S is either Cartesian or Cylindrical. 
 
 Developer notes:
-Currently (February 2022), there are some limitation to the `@kernel` macro 
+Currently (February 2022), there are some limitations to the `@kernel` macro 
 of the package KernelAbstractions.jl. Especially, regarding usage of dispatch. 
 
 Thus, we have to write two kernel functions right now for the Cartesian & Cylindrical case:
@@ -141,13 +141,13 @@ Thus, we have to write two kernel functions right now for the Cartesian & Cylind
 
 Inside kernel functions, everything is (and has to be) inlined and we can make use of multiple dispatch. 
 So in the end we only have to write one function for the kernel, `sor_kernel`, 
-which is than inlined inside the two kernel functions.
+which is then inlined inside the two kernel functions.
 
 We can also use most of the CPU functions with the restriction that all 
 types have to be independent on the GPU-indices of the kernel. 
 E.g., making use of `i23_is_even_t = Val(iseven(i2 + i3))` and other similar statements is not possible,
 which are used in the CPU implementation for optimization.
-One the GPU (currently) those statements have to be calculated and booleans have to be passed.
+On the GPU (currently) those statements have to be calculated and booleans have to be passed.
 Maybe this will change in the future.
 """
 get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)

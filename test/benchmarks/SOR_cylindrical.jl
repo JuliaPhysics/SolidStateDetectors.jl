@@ -159,17 +159,15 @@ begin
 end
 
 
-if false
-    begin
-        @info "Grid size: $(size(sim_cyl.electric_potential.data))"
-        # SolidStateDetectors.outerloop!(pssrb_cyl, nthreads, update_even_points, depletion_handling, is_weighting_potential, only2d)
-        for dp in (false, true)
-            depletion_handling = Val{dp}()
-            @info "Depletion handling: $dp"
-            for nt in (1, 2, 4, 8, 16, 32, 64)
-                @info "N Threads: $nt"
-                @btime SolidStateDetectors.outerloop!($pssrb_cyl, $nt, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
-            end
+begin
+    @info "Grid size: $(size(sim_cyl.electric_potential.data))"
+    # SolidStateDetectors.outerloop!(pssrb_cyl, nthreads, update_even_points, depletion_handling, is_weighting_potential, only2d)
+    for dp in (false, true)
+        depletion_handling = Val{dp}()
+        @info "Depletion handling: $dp"
+        for nt in (1, 2, 4, 8, 16, 32, 64)
+            @info "N Threads: $nt"
+            @btime SolidStateDetectors.outerloop!($pssrb_cyl, $nt, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
         end
     end
 end
