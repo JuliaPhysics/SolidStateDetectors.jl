@@ -12,7 +12,7 @@
 ) where {T, S}
     
 
-    # pww1r        = pssrb.geom_weights[3][1, in1]
+    # pww1r        = pcs.geom_weights[3][1, in1]
     pww1r        = geom_weights_3[1, in1]
     pww1l        = geom_weights_3[2, in1]
     pwΔmp1       = geom_weights_3[3, in1]
@@ -74,7 +74,7 @@
 end
 
 function calculate_weights_for_innerloop!(
-    line_weights, pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
+    line_weights, pcs::PotentialCalculationSetup{T, S, 3, Array{T, 3}},
     i2, in2, i3, in3,
     update_even_points, i23_is_even_t,
     pww3r, pww3l, pww2r, pww2l, # pw: precalculated weight
@@ -83,13 +83,13 @@ function calculate_weights_for_innerloop!(
     pwΔmp2r, pwΔmp2l, 
     pwΔmp3r, pwΔmp3l,
 ) where {T, S}
-    @fastmath @inbounds @simd ivdep for i1 in 2:(size(pssrb.potential, 1) - 1)
+    @fastmath @inbounds @simd ivdep for i1 in 2:(size(pcs.potential, 1) - 1)
         in1 = nidx(i1, update_even_points, i23_is_even_t)
         weights = calculate_sor_weights(
             in1, 
             S, 
-            pssrb.ϵ_r,
-            pssrb.geom_weights[3],
+            pcs.ϵ_r,
+            pcs.geom_weights[3],
             i2, in2, i3, in3,
             pww3r, pww3l, pww2r, pww2l, # pw: precalculated weight
             pww3r_pww2r, pww3l_pww2r, pww3r_pww2l, pww3l_pww2l,
@@ -109,46 +109,46 @@ function calculate_weights_for_innerloop!(
 end
 
 function innerloop!(
-    line_weights, pssrb::PotentialCalculationSetup{T, S, 3, Array{T, 3}}, 
+    line_weights, pcs::PotentialCalculationSetup{T, S, 3, Array{T, 3}}, 
     i2, in2, i3, in3, rb_tar_idx, rb_src_idx, 
     update_even_points, i23_is_even_t,
     depletion_handling::Val{depletion_handling_enabled},
     is_weighting_potential::Val{_is_weighting_potential}, 
     only2d::Val{only_2d}
 ) where {T, S, depletion_handling_enabled, _is_weighting_potential, only_2d}
-    @fastmath @inbounds @simd ivdep for i1 in 2:(size(pssrb.potential, 1) - 1)
+    @fastmath @inbounds @simd ivdep for i1 in 2:(size(pcs.potential, 1) - 1)
         i1r = get_rbidx_right_neighbour(i1, update_even_points, i23_is_even_t)
         
-        old_potential = pssrb.potential[i1, i2, i3, rb_tar_idx]
-        q_eff = _is_weighting_potential ? zero(T) : (pssrb.q_eff_imp[i1, i2, i3, rb_tar_idx] + pssrb.q_eff_fix[i1, i2, i3, rb_tar_idx])
+        old_potential = pcs.potential[i1, i2, i3, rb_tar_idx]
+        q_eff = _is_weighting_potential ? zero(T) : (pcs.q_eff_imp[i1, i2, i3, rb_tar_idx] + pcs.q_eff_fix[i1, i2, i3, rb_tar_idx])
 
         weights = get_sor_weights(line_weights, i1-1)
 
         neighbor_potentials = get_neighbor_potentials(
-            pssrb.potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
+            pcs.potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
         )
         
         new_potential = calc_new_potential_SOR_3D(
             q_eff,
-            pssrb.volume_weights[i1, i2, i3, rb_tar_idx],
+            pcs.volume_weights[i1, i2, i3, rb_tar_idx],
             weights,
             neighbor_potentials,
             old_potential,
-            get_sor_constant(pssrb.sor_const, S, in3)
+            get_sor_constant(pcs.sor_const, S, in3)
         )
 
         if depletion_handling_enabled
-            new_potential, pssrb.point_types[i1, i2, i3, rb_tar_idx] = handle_depletion(
+            new_potential, pcs.point_types[i1, i2, i3, rb_tar_idx] = handle_depletion(
                 new_potential,
-                pssrb.point_types[i1, i2, i3, rb_tar_idx],
+                pcs.point_types[i1, i2, i3, rb_tar_idx],
                 r0_handling_depletion_handling(neighbor_potentials, S, in3),
-                pssrb.q_eff_imp[i1, i2, i3, rb_tar_idx],
-                pssrb.volume_weights[i1, i2, i3, rb_tar_idx],
-                get_sor_constant(pssrb.sor_const, S, in3)
+                pcs.q_eff_imp[i1, i2, i3, rb_tar_idx],
+                pcs.volume_weights[i1, i2, i3, rb_tar_idx],
+                get_sor_constant(pcs.sor_const, S, in3)
             )
         end
 
-        pssrb.potential[i1, i2, i3, rb_tar_idx] = ifelse(pssrb.point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
+        pcs.potential[i1, i2, i3, rb_tar_idx] = ifelse(pcs.point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
     end
     nothing
 end
