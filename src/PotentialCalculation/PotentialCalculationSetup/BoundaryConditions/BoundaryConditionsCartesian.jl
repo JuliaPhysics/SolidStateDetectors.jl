@@ -155,11 +155,11 @@ function apply_boundary_conditions_on_y_axis!(  rbpot::AbstractArray{T, 4}, rbi:
 end
 
 
-function apply_boundary_conditions!(pssrb::PotentialCalculationSetup{T, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
+function apply_boundary_conditions!(pcs::PotentialCalculationSetup{T, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
-    apply_boundary_conditions_on_x_axis!( pssrb.potential, rbi, pssrb.grid.axes[1], pssrb.grid.axes[1].interval, pssrb.grid_boundary_factors[1])
-    apply_boundary_conditions_on_y_axis!( pssrb.potential, rbi, pssrb.grid.axes[2], pssrb.grid.axes[2].interval, pssrb.grid_boundary_factors[2])
-    apply_boundary_conditions_on_z_axis!( pssrb.potential, rbi, pssrb.grid.axes[3], pssrb.grid.axes[3].interval, pssrb.grid_boundary_factors[3])
+    apply_boundary_conditions_on_x_axis!( pcs.potential, rbi, pcs.grid.axes[1], pcs.grid.axes[1].interval, pcs.grid_boundary_factors[1])
+    apply_boundary_conditions_on_y_axis!( pcs.potential, rbi, pcs.grid.axes[2], pcs.grid.axes[2].interval, pcs.grid_boundary_factors[2])
+    apply_boundary_conditions_on_z_axis!( pcs.potential, rbi, pcs.grid.axes[3], pcs.grid.axes[3].interval, pcs.grid_boundary_factors[3])
     nothing
 end
 

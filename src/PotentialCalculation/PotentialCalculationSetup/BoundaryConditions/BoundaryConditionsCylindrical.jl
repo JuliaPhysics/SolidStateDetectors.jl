@@ -31,16 +31,16 @@ function apply_boundary_conditions_on_r_axis!(  rbpot::AbstractArray{T, 4}, rbi:
 end
 
 
-function apply_boundary_conditions!(pssrb::PotentialCalculationSetup{T, Cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
+function apply_boundary_conditions!(pcs::PotentialCalculationSetup{T, Cylindrical}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
     # Radial Axis
-    apply_boundary_conditions_on_r_axis!( pssrb.potential, rbi, pssrb.grid.axes[1], pssrb.grid.axes[1].interval, pssrb.grid_boundary_factors[1])
+    apply_boundary_conditions_on_r_axis!( pcs.potential, rbi, pcs.grid.axes[1], pcs.grid.axes[1].interval, pcs.grid_boundary_factors[1])
     # # Azimutal-Axis
     if !only_2d
-        apply_boundary_conditions_on_φ_axis!( pssrb.potential, rbi, pssrb.grid.axes[2], pssrb.grid.axes[2].interval)
+        apply_boundary_conditions_on_φ_axis!( pcs.potential, rbi, pcs.grid.axes[2], pcs.grid.axes[2].interval)
     end
     # Cylindrical Z-Axis -> same as Cartesian X-Axis
-    apply_boundary_conditions_on_x_axis!( pssrb.potential, rbi, pssrb.grid.axes[3], pssrb.grid.axes[3].interval, pssrb.grid_boundary_factors[3])
+    apply_boundary_conditions_on_x_axis!( pcs.potential, rbi, pcs.grid.axes[3], pcs.grid.axes[3].interval, pcs.grid_boundary_factors[3])
     nothing
 end
 

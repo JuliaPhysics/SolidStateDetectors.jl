@@ -4,9 +4,9 @@ e = SolidStateDetectors.elementary_charge * u"C"
 
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
-    calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
-    calculate_weighting_potential!(sim, 1, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
-    calculate_weighting_potential!(sim, 2, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+    calculate_electric_potential!(sim, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+    calculate_weighting_potential!(sim, 1, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+    calculate_weighting_potential!(sim, 2, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
     # calculate_electric_field!(sim)
     BV_true = (maximum(broadcast(c -> c.potential, sim.detector.contacts)) - minimum(broadcast(c -> c.potential, sim.detector.contacts)))* u"V"
     # Δd = (sim.detector.contacts[2].decomposed_surfaces[1].loc - sim.detector.contacts[1].decomposed_surfaces[1].loc) * u"m"
@@ -27,7 +27,7 @@ end
 
 @testset "Two Spheres Capacitor" begin
     sim = Simulation{T}(SSD_examples[:TwoSpheresCapacitor])
-    simulate!(sim, refinement_limits = [0.2, 0.1, 0.05, 0.02], convergence_limit = 1e-7)
+    simulate!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.02], convergence_limit = 1e-7)
     C_ssd = calculate_capacitance_matrix(sim)
 
     R_1 = sim.detector.contacts[1].geometry.r * u"m"
@@ -83,22 +83,22 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     V = π * R2^2 * L
     intV = (R2^2 - R1^2) * π * L
 
-    calculate_electric_potential!(sim_cyl, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+    calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+    calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_cyl, 1, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+    calculate_weighting_potential!(sim_cyl, 1, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_car, 1, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+    calculate_weighting_potential!(sim_car, 1, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
         convergence_limit = 1e-3, refinement_limits = [0.2], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_cyl, 2, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+    calculate_weighting_potential!(sim_cyl, 2, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_car, 2, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+    calculate_weighting_potential!(sim_car, 2, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
         convergence_limit = 1e-3, refinement_limits = [0.2], use_nthreads = 1, verbose = false
     )
 
@@ -144,10 +144,10 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     sim_cyl.detector = SolidStateDetector(sim_cyl.detector, DummyImpurityDensity{T}());
     sim_car.detector = SolidStateDetector(sim_car.detector, DummyImpurityDensity{T}());
 
-    calculate_electric_potential!(sim_cyl, grid = Grid(sim_cyl, max_tick_distance = (1u"cm", 15u"°", 1u"m")),
+    calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (1u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, grid = Grid(sim_car, max_tick_distance = (0.5u"cm", 0.5u"cm", 1u"m")),
+    calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.5u"cm", 0.5u"cm", 1u"m")),
         convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05, 0.02], use_nthreads = 1, verbose = false
     )
 

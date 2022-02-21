@@ -21,23 +21,9 @@ calculate_electric_potential!(sim_cyl, depletion_handling = false,
     max_tick_distance = (2u"mm", 1u"°", 2u"mm"),
     # refinement_limits = missing,
     refinement_limits = [0.2, 0.1, 0.05],#, 0.02, 0.01],
-); @info ep_true_cyl == sim_cyl.electric_potential.data
+); 
 
-ep_true_cyl = sim_cyl.electric_potential.data;
-
-plot(sim_cyl.electric_potential, φ = 30)
-
-# plot(
-#     plot(sim_cyl.point_types, φ = 30),
-#     plot(sim_cyl.electric_potential, φ = 30),
-# )
-
-pssrb_cyl = SolidStateDetectors.PotentialCalculationSetup(sim_cyl.detector,
-    sim_cyl.electric_potential.grid,
-    SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
-    sim_cyl.electric_potential.data);
-
-@time SolidStateDetectors.PotentialCalculationSetup(sim_cyl.detector,
+pcs_cyl = SolidStateDetectors.PotentialCalculationSetup(sim_cyl.detector,
     sim_cyl.electric_potential.grid,
     SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
     sim_cyl.electric_potential.data);
@@ -61,7 +47,7 @@ idx3iseven = Val(iseven(idx3))
 is_r0  = Val(idx3 == 2)
 
 # Innerloop:
-line_weights = Array{T,2}(undef, size(pssrb_cyl.potential, 1) - 2, 6)
+line_weights = Array{T,2}(undef, size(pcs_cyl.potential, 1) - 2, 6)
 
 depletion_handling = Val{false}()
 idx3_is_even = Val(iseven(idx3))
@@ -69,21 +55,21 @@ idx3_is_even = Val(iseven(idx3))
 ir = idx3
 inr = ir - 1
 
-pwwrr = pssrb_cyl.geom_weights[1][1, inr]
-pwwrl = pssrb_cyl.geom_weights[1][2, inr]
-r_inv_pwΔmpr = pssrb_cyl.geom_weights[1][3, inr]
-Δr_ext_inv_r_pwmprr = pssrb_cyl.geom_weights[1][4, inr]
-Δr_ext_inv_l_pwmprl = pssrb_cyl.geom_weights[1][5, inr]
-Δmpr_squared = pssrb_cyl.geom_weights[1][6, inr]
+pwwrr = pcs_cyl.geom_weights[1][1, inr]
+pwwrl = pcs_cyl.geom_weights[1][2, inr]
+r_inv_pwΔmpr = pcs_cyl.geom_weights[1][3, inr]
+Δr_ext_inv_r_pwmprr = pcs_cyl.geom_weights[1][4, inr]
+Δr_ext_inv_l_pwmprl = pcs_cyl.geom_weights[1][5, inr]
+Δmpr_squared = pcs_cyl.geom_weights[1][6, inr]
 
 iφ = 2
 inφ = iφ - 1
 
-pwwφr = pssrb_cyl.geom_weights[2][1, inφ]
-pwwφl = pssrb_cyl.geom_weights[2][2, inφ]
-pwΔmpφ = pssrb_cyl.geom_weights[2][3, inφ]
-Δφ_ext_inv_r = pssrb_cyl.geom_weights[2][4, iφ]
-Δφ_ext_inv_l = pssrb_cyl.geom_weights[2][4, inφ]
+pwwφr = pcs_cyl.geom_weights[2][1, inφ]
+pwwφl = pcs_cyl.geom_weights[2][2, inφ]
+pwΔmpφ = pcs_cyl.geom_weights[2][3, inφ]
+Δφ_ext_inv_r = pcs_cyl.geom_weights[2][4, iφ]
+Δφ_ext_inv_l = pcs_cyl.geom_weights[2][4, inφ]
 
 if inr == 1
     pwwφr = T(0.5)
@@ -104,34 +90,19 @@ r_inv_pwΔmpr_Δφ_ext_inv_r = r_inv_pwΔmpr * Δφ_ext_inv_r
 r_inv_pwΔmpr_Δφ_ext_inv_l = r_inv_pwΔmpr * Δφ_ext_inv_l
 
 
-begin
-    @info "Grid size: $(size(sim_cyl.electric_potential.data))"
-    # SolidStateDetectors.outerloop!(pssrb_cyl, nthreads, update_even_points, depletion_handling, is_weighting_potential, only2d)
-    for dp in (false, true)
-        depletion_handling = Val{dp}()
-        @info "Depletion handling: $dp"
-        for nt in (1, 2, 4, 8, 16, 32, 64)
-            @info "N Threads: $nt"
-            @btime SolidStateDetectors.outerloop!($pssrb_cyl, $nt, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
-        end
-    end
-end
-
-
-SolidStateDetectors.middleloop!(idx3, rb_tar_idx, rb_src_idx, pssrb_cyl,
+SolidStateDetectors.middleloop!(idx3, rb_tar_idx, rb_src_idx, pcs_cyl,
     update_even_points, depletion_handling, is_weighting_potential, only2d, idx3iseven, is_r0)
 
-@code_warntype SolidStateDetectors.middleloop!(idx3, rb_tar_idx, rb_src_idx, pssrb_cyl,
+@code_warntype SolidStateDetectors.middleloop!(idx3, rb_tar_idx, rb_src_idx, pcs_cyl,
     update_even_points, depletion_handling, is_weighting_potential, only2d, idx3iseven, is_r0)
 
-@btime SolidStateDetectors.middleloop!($idx3, $rb_tar_idx, $rb_src_idx, $pssrb_cyl,
+@btime SolidStateDetectors.middleloop!($idx3, $rb_tar_idx, $rb_src_idx, $pcs_cyl,
     $update_even_points, $depletion_handling, $is_weighting_potential, $only2d, $idx3iseven, $is_r0)
 
 
-
-SolidStateDetectors.load_weights_for_innerloop!(
+    SolidStateDetectors.calculate_weights_for_innerloop!(
     line_weights,
-    pssrb_cyl, iφ, inφ, ir, inr,
+    pcs_cyl, iφ, inφ, ir, inr,
     update_even_points, idx3_is_even,
     pwwrr, pwwrl, pwwφr, pwwφl,
     pwwrr_pwwφr, pwwrl_pwwφr, pwwrr_pwwφl, pwwrl_pwwφl,
@@ -140,9 +111,9 @@ SolidStateDetectors.load_weights_for_innerloop!(
     r_inv_pwΔmpr_Δφ_ext_inv_r, r_inv_pwΔmpr_Δφ_ext_inv_l,
 )
 
-@code_warntype SolidStateDetectors.load_weights_for_innerloop!(
+@code_warntype SolidStateDetectors.calculate_weights_for_innerloop!(
     line_weights,
-    pssrb_cyl, iφ, inφ, ir, inr,
+    pcs_cyl, iφ, inφ, ir, inr,
     update_even_points, idx3_is_even,
     pwwrr, pwwrl, pwwφr, pwwφl,
     pwwrr_pwwφr, pwwrl_pwwφr, pwwrr_pwwφl, pwwrl_pwwφl,
@@ -151,9 +122,9 @@ SolidStateDetectors.load_weights_for_innerloop!(
     r_inv_pwΔmpr_Δφ_ext_inv_r, r_inv_pwΔmpr_Δφ_ext_inv_l,
 )
 
-@btime SolidStateDetectors.load_weights_for_innerloop!(
+@btime SolidStateDetectors.calculate_weights_for_innerloop!(
     $line_weights,
-    $pssrb_cyl, $iφ, $inφ, $ir, $inr,
+    $pcs_cyl, $iφ, $inφ, $ir, $inr,
     $update_even_points, $idx3_is_even,
     $pwwrr, $pwwrl, $pwwφr, $pwwφl,
     $pwwrr_pwwφr, $pwwrl_pwwφr, $pwwrr_pwwφl, $pwwrl_pwwφl,
@@ -165,32 +136,38 @@ SolidStateDetectors.load_weights_for_innerloop!(
 depletion_handling = Val{true}()
 depletion_handling = Val{false}()
 
-SolidStateDetectors.innerloop!(line_weights, pssrb_cyl, iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx,
+SolidStateDetectors.innerloop!(line_weights, pcs_cyl, iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx,
     update_even_points, idx3_is_even,
     depletion_handling, is_weighting_potential, only2d)
 
-@code_warntype SolidStateDetectors.innerloop!(line_weights, pssrb_cyl, iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx,
+@code_warntype SolidStateDetectors.innerloop!(line_weights, pcs_cyl, iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx,
     update_even_points, idx3_is_even,
     depletion_handling, is_weighting_potential, only2d)
 
-@btime SolidStateDetectors.innerloop!($line_weights, $pssrb_cyl, $iφ, $inφ, $ir, $inr, $rb_tar_idx, $rb_src_idx,
+@btime SolidStateDetectors.innerloop!($line_weights, $pcs_cyl, $iφ, $inφ, $ir, $inr, $rb_tar_idx, $rb_src_idx,
     $update_even_points, $idx3_is_even,
     $depletion_handling, $is_weighting_potential, $only2d)
 
-# 210 ns
-# 120 ns
-
-@code_llvm SolidStateDetectors.innerloop!(line_weights, pssrb_cyl, iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx,
+@code_llvm SolidStateDetectors.innerloop!(line_weights, pcs_cyl, iφ, inφ, ir, inr, rb_tar_idx, rb_src_idx,
     update_even_points, idx3_is_even,
     depletion_handling, is_weighting_potential, only2d)
 
 
-
-# apply_boundary_conditions!
 begin
-    @btime SolidStateDetectors.apply_boundary_conditions!($pssrb_cyl, $update_even_points, $only2d)
-    @btime SolidStateDetectors.apply_boundary_conditions!($pssrb_cyl, $update_uneven_points, $only2d)
+    @btime SolidStateDetectors.apply_boundary_conditions!($pcs_cyl, $update_even_points, $only2d)
+    @btime SolidStateDetectors.apply_boundary_conditions!($pcs_cyl, $update_uneven_points, $only2d)
 end
 
 
-using CUDAKernels
+begin
+    @info "Grid size: $(size(sim_cyl.electric_potential.data))"
+    # SolidStateDetectors.outerloop!(pcs_cyl, nthreads, update_even_points, depletion_handling, is_weighting_potential, only2d)
+    for dp in (false, true)
+        depletion_handling = Val{dp}()
+        @info "Depletion handling: $dp"
+        for nt in (1, 2, 4, 8, 16, 32, 64)
+            @info "N Threads: $nt"
+            @btime SolidStateDetectors.outerloop!($pcs_cyl, $nt, $update_even_points, $depletion_handling, $is_weighting_potential, $only2d)
+        end
+    end
+end

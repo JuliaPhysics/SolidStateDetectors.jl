@@ -53,21 +53,21 @@ struct PotentialCalculationSetup{
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
-function Adapt.adapt_structure(to, pssrb::PotentialCalculationSetup{T, S, 3}) where {T, S}
+function Adapt.adapt_structure(to, pcs::PotentialCalculationSetup{T, S, 3}) where {T, S}
     PotentialCalculationSetup(
-        pssrb.grid,
-        adapt(to, pssrb.potential),
-        adapt(to, pssrb.point_types),
-        adapt(to, pssrb.volume_weights),
-        adapt(to, pssrb.q_eff_imp),
-        adapt(to, pssrb.q_eff_fix),
-        adapt(to, pssrb.ϵ_r),
-        adapt(to, pssrb.geom_weights),
-        adapt(to, pssrb.sor_const),
-        pssrb.bias_voltage,
-        pssrb.maximum_applied_potential,
-        pssrb.minimum_applied_potential,
-        pssrb.grid_boundary_factors
+        pcs.grid,
+        adapt(to, pcs.potential),
+        adapt(to, pcs.point_types),
+        adapt(to, pcs.volume_weights),
+        adapt(to, pcs.q_eff_imp),
+        adapt(to, pcs.q_eff_fix),
+        adapt(to, pcs.ϵ_r),
+        adapt(to, pcs.geom_weights),
+        adapt(to, pcs.sor_const),
+        pcs.bias_voltage,
+        pcs.maximum_applied_potential,
+        pcs.minimum_applied_potential,
+        pcs.grid_boundary_factors
     )
 end
 
