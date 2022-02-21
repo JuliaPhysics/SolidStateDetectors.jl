@@ -152,5 +152,7 @@ Maybe this will change in the future.
 """
 get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
 get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)
+get_sor_kernel(::Type{Cylindrical}, ::CPU) = nothing
+get_sor_kernel(::Type{Cartesian}, ::CPU) = nothing
 
-function get_device end
+get_device(::Type{Array}) = CPU() 
