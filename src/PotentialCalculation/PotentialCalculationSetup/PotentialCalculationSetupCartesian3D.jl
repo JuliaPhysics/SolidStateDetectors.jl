@@ -76,7 +76,8 @@ end
 
 function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
-                potential_array::Union{Missing, Array{T, 3}} = missing; 
+                potential_array::Union{Missing, Array{T, 3}} = missing,
+                imp_scale::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
@@ -198,7 +199,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         q_eff_fix_tmp *= ϵ0_inv
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
-        ρ::Array{T, 4} = RBExtBy2Array(T, grid)
+        q_eff_imp::Array{T, 4} = RBExtBy2Array(T, grid)
         q_eff_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
@@ -275,7 +276,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                     volume_weights[ irbx, iy, iz, rbi ] = inv(volume_weight)
 
                     dV::T = Δmpx[inx] * Δmpy[iny] * Δmpz[inz]
-                    ρ[ irbx, iy, iz, rbi ] = dV * ρ_cell
+                    q_eff_imp[ irbx, iy, iz, rbi ] = dV * ρ_cell
                     q_eff_fix[ irbx, iy, iz, rbi ] = dV * q_eff_fix_cell
                 end
             end
@@ -290,6 +291,11 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                 paint_contacts = Val(paint_contacts)  )
         rbpotential = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
+        
+        imp_scale = similar(q_eff_imp)
+        for i in eachindex(imp_scale)
+            imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i]) ? one(T) : zero(T)
+        end
     end # @inbounds
 
     pcs = PotentialCalculationSetup(
@@ -297,7 +303,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         rbpotential,
         rbpoint_types,
         volume_weights,
-        ρ,
+        q_eff_imp,
+        imp_scale,
         q_eff_fix,
         ϵ,
         broadcast(gw -> gw.weights, geom_weights),
@@ -328,6 +335,22 @@ function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cartesian,  3,
     return pot
 end
 
+function ImpurityScale(pcs::PotentialCalculationSetup{T, Cartesian, 3, Array{T, 3}})::Array{T, 3} where {T}
+    s::Array{T, 3} = Array{T, 3}(undef, size(pcs.grid))
+    for iz in axes(s, 3)
+        irbz::Int = iz + 1
+        for iy in axes(s, 2)
+            irby::Int = iy + 1
+            idxsum::Int = iz + iy
+            for ix in axes(s, 1)
+                irbx::Int = rbidx(ix)
+                rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
+                s[ix, iy, iz] = pcs.imp_scale[ irbx, irby, irbz, rbi ]
+            end
+        end
+    end
+    return s
+end
 
 function PointTypeArray(pcs::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
     point_types::Array{PointType, 3} = zeros(PointType, size(pcs.grid))

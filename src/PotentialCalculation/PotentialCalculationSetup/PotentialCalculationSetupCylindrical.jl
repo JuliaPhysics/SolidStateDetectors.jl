@@ -81,7 +81,8 @@ end
 
 function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CylindricalGrid{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
-                potential_array::Union{Missing, Array{T, 3}} = missing; 
+                potential_array::Union{Missing, Array{T, 3}} = missing,
+                imp_scale::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
@@ -222,9 +223,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         ρ_tmp *= ϵ0_inv
         q_eff_fix_tmp *= ϵ0_inv
 
-
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
-        ρ::Array{T, 4} = RBExtBy2Array(T, grid)
+        q_eff_imp::Array{T, 4} = RBExtBy2Array(T, grid)
         q_eff_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
@@ -313,7 +313,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                         volume_weights[ irbz, iφ, ir, rbi ] = inv(volume_weight)
 
                         dV::T = Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
-                        ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
+                        q_eff_imp[ irbz, iφ, ir, rbi ] = dV * ρ_cell
                         q_eff_fix[ irbz, iφ, ir, rbi ] = dV * q_eff_fix_cell
                     else
                         wrr_eps = ϵ[  ir,  iφ, inz + 1] * 0.5 * wzr[inz]
@@ -356,13 +356,12 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                         volume_weights[ irbz, iφ, ir, rbi ] = inv(volume_weight)
 
                         dV = Δmpz[inz] * 2π * Δmpr_squared[inr]
-                        ρ[ irbz, iφ, ir, rbi ] = dV * ρ_cell
+                        q_eff_imp[ irbz, iφ, ir, rbi ] = dV * ρ_cell
                         q_eff_fix[ irbz, iφ, ir, rbi ] = dV * q_eff_fix_cell
                     end
                 end
             end
         end
-
         potential = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
         point_types = ones(PointType, size(grid)...)
         set_point_types_and_fixed_potentials!( point_types, potential, grid, det, 
@@ -372,6 +371,11 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                 paint_contacts = Val(paint_contacts)  )
         rbpotential  = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
+
+        imp_scale = ismissing(imp_scale) ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale, grid)
+        for i in eachindex(imp_scale)
+            imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i]) ? one(T) : zero(T)
+        end
     end # @inbounds
 
     pcs = PotentialCalculationSetup(
@@ -379,7 +383,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         rbpotential,
         rbpoint_types,
         volume_weights,
-        ρ,
+        q_eff_imp,
+        imp_scale,
         q_eff_fix,
         ϵ,
         broadcast(gw -> gw.weights, geom_weights),
@@ -416,6 +421,23 @@ function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3
         pot[1,:,iz] .= p_r0
     end
     return pot
+end
+
+function ImpurityScale(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
+    s::Array{T, 3} = Array{T, 3}(undef, size(pcs.grid))
+    for iz in axes(s, 3)
+        irbz::Int = rbidx(iz)
+        for iφ in axes(s, 2)
+            irbφ::Int = iφ + 1
+            idxsum::Int = iz + iφ
+            for ir in axes(s, 1)
+                irbr::Int = ir + 1
+                rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
+                s[ir, iφ, iz] = pcs.imp_scale[ irbz, irbφ, irbr, rbi ]
+            end
+        end
+    end
+    return s
 end
 
 
@@ -484,6 +506,8 @@ function FixedEffectiveChargeDensityArray(pcs::PotentialCalculationSetup{T, Cyli
     end
     return ρ
 end
+
+
 
 
 function DielectricDistributionArray(pcs::PotentialCalculationSetup{T, S, 3, Array{T, 3}})::Array{T, 3} where {T, S}

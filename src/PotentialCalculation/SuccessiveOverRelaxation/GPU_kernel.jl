@@ -3,6 +3,7 @@
     point_types::AbstractArray{PointType, 4},
     volume_weights::AbstractArray{T, 4},
     q_eff_imp::AbstractArray{T, 4},
+    imp_scale::AbstractArray{T, 4},
     q_eff_fix::AbstractArray{T, 4},
     ϵ_r::AbstractArray{T, 3},
     geom_weights::NTuple{3, <:AbstractArray{T, 2}},
@@ -44,7 +45,7 @@
         )
 
         old_potential = potential[i1, i2, i3, rb_tar_idx]
-        q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
+        q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] * imp_scale[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
 
         neighbor_potentials = get_neighbor_potentials(
             potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
@@ -60,9 +61,9 @@
         )
 
         if depletion_handling_enabled
-            new_potential, point_types[i1, i2, i3, rb_tar_idx] = handle_depletion(
+            new_potential, imp_scale[i1, i2, i3, rb_tar_idx] = handle_depletion(
                 new_potential,
-                point_types[i1, i2, i3, rb_tar_idx],
+                imp_scale[i1, i2, i3, rb_tar_idx],
                 r0_handling_depletion_handling(neighbor_potentials, S, in3),
                 q_eff_imp[i1, i2, i3, rb_tar_idx],
                 volume_weights[i1, i2, i3, rb_tar_idx],

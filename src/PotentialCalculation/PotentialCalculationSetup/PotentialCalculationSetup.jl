@@ -15,6 +15,7 @@ Extended means that the grid holds one additional tick at both sides of all axes
 * `point_types`: Also a 4-dimensional array. Same structure as the `potential`-array.
 * `volume_weights`: Also a 4-dimensional array. Same structure as the `potential`-array.
 * `q_eff_imp`: Also a 4-dimensional array. Same structure as the `potential`-array.
+* `imp_scale`: Also a 4-dimensional array. Same structure as the `potential`-array.
 * `q_eff_fix`: Also a 4-dimensional array. Same structure as the `potential`-array.
 * `ϵ_r`: Normal 3-dimensional array! In order to calculate the final 6 weights for each grid point in the SOR, 
 the eight values of the dielectric permittivity (of each octant) around the grid point needs to be loaded. 
@@ -43,6 +44,7 @@ struct PotentialCalculationSetup{
     point_types::DATPT # Array{PointType, N2} or ...
     volume_weights::DATN2 # Array{T, N2}
     q_eff_imp::DATN2 # Array{T, N2}
+    imp_scale::DATN2 # Array{T, N2}
     q_eff_fix::DATN2 # Array{T, N2}
     ϵ_r::DATN1 # Array{T, N1}
     geom_weights::NTuple{3, DATGW} # NTuple{3, Array{T, 2}}
@@ -60,6 +62,7 @@ function Adapt.adapt_structure(to, pcs::PotentialCalculationSetup{T, S, 3}) wher
         adapt(to, pcs.point_types),
         adapt(to, pcs.volume_weights),
         adapt(to, pcs.q_eff_imp),
+        adapt(to, pcs.imp_scale),
         adapt(to, pcs.q_eff_fix),
         adapt(to, pcs.ϵ_r),
         adapt(to, pcs.geom_weights),

@@ -42,22 +42,23 @@ end
 """
     function handle_depletion(
         new_potential::T, 
-        point_type::PointType, 
+        imp_scale::T,
         neighbor_potentials::NTuple{6,T}, 
         q_eff_imp::T, 
         volume_weight::T,
         sor_const::T
     )::Tuple{T, PointType} where {T}
 
-This function checks whether the current grid point is depleted or undepleted.
+This function handles the grid points which volume is not fully depleted.
 The decision depends on the new calculated potential value, `new_potential`, 
 for the respective grid point in that iteration and 
 the potential values of the neighboring grid points, `neighbor_potentials`.
 
-If `minimum(neighbor_potentials) < new_potential < maximum(neighbor_potentials)` => depleted
+If `vmin = minimum(neighbor_potentials) < new_potential < vmax = maximum(neighbor_potentials)` => fully depleted
 
-Else => undepleted => Subtract the contribution coming from the impurity density from the new potential value again
-since the charge density (coming from the impurity density) is zero in undepleted regions.
+Else => (partially) undepleted => Set `new_potential` to the respective extremum `vext`, either `vmin` or `vmax`.
+Depending on how much the potential overshooted `abs(new_potential - vext)`,
+the impurity density in the grid point is scaled down via reducing `imp_scale ∈ [0, 1]` of this grid point.
 
 This decision is based on the fact that the potential inside a solid-state 
 detector increases monotonically from a `p+`-contact towards an `n+`-contact.
@@ -71,24 +72,38 @@ Thus, there cannot be local extrema.
 """
 @inline @fastmath function handle_depletion(
     new_potential::T, 
-    point_type::PointType, 
+    imp_scale::T,
     neighbor_potentials::NTuple{6,T}, 
     q_eff_imp::T, 
     volume_weight::T,
     sor_const::T
-)::Tuple{T, PointType} where {T}
+)::Tuple{T, T} where {T}
     vmin::T = min(neighbor_potentials...)
     vmax::T = max(neighbor_potentials...)
+    
+    isLess = new_potential < vmin
+    neighbor_relevant_extremum = isLess ? vmin : vmax
 
-    if new_potential < vmin || new_potential > vmax
-        new_potential -= q_eff_imp * volume_weight * sor_const
-        if (point_type & undepleted_bit == 0 && point_type & pn_junction_bit > 0) 
-            point_type += undepleted_bit
+    Δnp_ext = new_potential - neighbor_relevant_extremum
+    imp_contribution_fix = q_eff_imp * volume_weight * sor_const 
+    imp_contribution_current = imp_contribution_fix * imp_scale
+    
+    if isLess || new_potential > vmax
+        new_potential = neighbor_relevant_extremum 
+        if imp_contribution_current != 0 
+            x::T = imp_contribution_current - Δnp_ext
+            new_imp_scale::T = x / imp_contribution_fix
+            if new_imp_scale > 1
+                new_imp_scale = 1
+            end
+            imp_scale::T = new_imp_scale
         end
-    elseif point_type & undepleted_bit > 0
-        point_type -= undepleted_bit
+    else
+        imp_scale *= 1.1 # Just chosen. Seems to work. There might be a better solution.
     end
-    new_potential, point_type
+    if imp_scale < 0 imp_scale = 0 end
+    if imp_scale > 1 imp_scale = 1 end
+    new_potential, imp_scale
 end
 
 include("CPU_outerloop.jl")
@@ -103,3 +118,12 @@ include("GPU_update.jl")
 
 include("convergence.jl")
 
+
+function mark_undep_bits!(point_types::Array{PointType, 3}, imp_scale::Array{T, 3}) where {T}
+    @inbounds for i in eachindex(imp_scale)
+        if is_pn_junction_point_type(point_types[i]) && imp_scale[i] < 1
+            point_types[i] += undepleted_bit
+        end
+    end
+    nothing
+end
