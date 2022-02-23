@@ -1,9 +1,9 @@
 @inline function sor_kernel(
     potential::AbstractArray{T, 4},
+    imp_scale::AbstractArray{T, 4},
     point_types::AbstractArray{PointType, 4},
     volume_weights::AbstractArray{T, 4},
     q_eff_imp::AbstractArray{T, 4},
-    imp_scale::AbstractArray{T, 4},
     q_eff_fix::AbstractArray{T, 4},
     ϵ_r::AbstractArray{T, 3},
     geom_weights::NTuple{3, <:AbstractArray{T, 2}},
