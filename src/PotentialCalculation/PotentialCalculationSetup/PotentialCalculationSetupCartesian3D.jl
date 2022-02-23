@@ -77,7 +77,7 @@ end
 function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing,
-                imp_scale::Union{Missing, Array{T, 3}} = missing; 
+                imp_scale::Union{Missing, ElectricPotential{T, 3}} = missing;
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
@@ -187,7 +187,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                         pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
                         ig = find_closest_gridpoint(pt, point_types.grid)
                         if is_undepleted_point_type(point_types.data[ig...]) 
-                            ϵ[ix, iy, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor)
+                            ϵ[ix, iy, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor) * (1 - imp_scale.data[ig...])
                         end
                     end
                 end
@@ -292,7 +292,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         rbpotential = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
         
-        imp_scale = similar(q_eff_imp)
+        imp_scale = ismissing(imp_scale) || is_weighting_potential ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale.data, grid)
         for i in eachindex(imp_scale)
             imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i]) ? one(T) : zero(T)
         end
@@ -313,7 +313,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         maximum_applied_potential,
         minimum_applied_potential,
         grid_boundary_factors
-     )
+    )
     return pcs
 end
 
