@@ -668,7 +668,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
 
     cf::T = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
                                        only2d = Val{only_2d}(),
-                                       depletion_handling = Val{depletion_handling}(),
+                                       depletion_handling = Val{false}(),
                                        is_weighting_potential = Val{true}(),
                                        use_nthreads = use_nthreads,
                                        n_iterations_between_checks = n_iterations_between_checks,
