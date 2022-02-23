@@ -576,56 +576,6 @@ function update_till_convergence!( sim::Simulation{T,CS},
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
     sim.point_types = PointTypes(PointTypeArray(pcs), grid)
 
-    # if depletion_handling
-    #     update_again::Bool = false # With SOR-Constant = 1
-    #     @inbounds for i in eachindex(sim.electric_potential.data)
-    #         if sim.electric_potential.data[i] < pcs.minimum_applied_potential # p-type
-    #             sim.electric_potential.data[i] = pcs.minimum_applied_potential
-    #             if sim.point_types.data[i] & undepleted_bit == 0 && 
-    #                sim.point_types.data[i] & pn_junction_bit > 0
-    #                     sim.point_types.data[i] += undepleted_bit
-    #             end
-    #             update_again = true
-    #         elseif sim.electric_potential.data[i] > pcs.maximum_applied_potential # n-type
-    #             sim.electric_potential.data[i] = pcs.maximum_applied_potential
-    #             if sim.point_types.data[i] & undepleted_bit == 0 && 
-    #                sim.point_types.data[i] & pn_junction_bit > 0
-    #                     sim.point_types.data[i] += undepleted_bit
-    #             end
-    #             update_again = true
-    #         end
-    #     end
-    #     if update_again
-    #         pcs.sor_const[:] .= T(1)
-    #         pcs = adapt(device_array_type, pcs)
-    #         cf = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
-    #                                         only2d = Val{only_2d}(),
-    #                                         depletion_handling = Val{depletion_handling}(),
-    #                                         is_weighting_potential = Val{false}(),
-    #                                         use_nthreads = use_nthreads,
-    #                                         n_iterations_between_checks = 1,
-    #                                         max_n_iterations = 0,
-    #                                         verbose = false )
-    #         pcs = adapt(Array, pcs)
-    #         sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
-    #     end
-    #     @inbounds for i in eachindex(sim.electric_potential.data)
-    #         if sim.electric_potential.data[i] < pcs.minimum_applied_potential # p-type
-    #             sim.electric_potential.data[i] = pcs.minimum_applied_potential
-    #             if sim.point_types.data[i] & undepleted_bit == 0 && 
-    #                sim.point_types.data[i] & pn_junction_bit > 0
-    #                     sim.point_types.data[i] += undepleted_bit
-    #             end
-    #         elseif sim.electric_potential.data[i] > pcs.maximum_applied_potential # n-type
-    #             sim.electric_potential.data[i] = pcs.maximum_applied_potential
-    #             if sim.point_types.data[i] & undepleted_bit == 0 && 
-    #                sim.point_types.data[i] & pn_junction_bit > 0
-    #                     sim.point_types.data[i] += undepleted_bit
-    #             end
-    #         end
-    #     end
-    # end
-
     cf
 end
 
