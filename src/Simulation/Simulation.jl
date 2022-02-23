@@ -864,7 +864,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 onCPU && "Max. CPU Threads: $(maximum(max_nthreads))\n",
                 "Coordinate system: $(CS)\n",
                 "N Refinements: -> $(n_refinement_steps)\n",
-                onCPU ? "Convergence limit: $convergence_limit => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V\n" : "No convergence check (not yet supported by GPU backend)\n",
+                "Convergence limit: $convergence_limit $(isEP ? " => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V" : "")\n",
                 "Initial grid size: $(size(grid))\n",
             )
         end
