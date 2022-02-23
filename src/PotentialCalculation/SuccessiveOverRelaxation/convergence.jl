@@ -10,13 +10,12 @@ function _update_till_convergence!( pssrb::PotentialCalculationSetup{T, S, 3},
                                     verbose::Bool = true
                                 ) where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential, DAT} #  <: GPUArrays.AbstractGPUArray
     device = get_device(DAT)
-    rb_half_inner_size = size(pssrb.potential)[1:3] .- 2
-    ndrange = prod(rb_half_inner_size)
+    ndrange = size(pssrb.potential)[1:3] .- 2
     kernel = get_sor_kernel(S, device)
     c_limit = _is_weighting_potential ? convergence_limit : abs(convergence_limit * pssrb.bias_voltage)
     c = (one(c_limit) + c_limit) * 10 # Has to be larger than c_limit at the beginning
     n_performed_iterations = 0
-    tmp_potential = similar(pssrb.potential, rb_half_inner_size)
+    tmp_potential = similar(pssrb.potential, ndrange)
     inner_ranges = broadcast(i -> 2:size(tmp_potential, i) + 1, (1, 2, 3))
     is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
     cs = fill(c, 4) # 4 is chosen by testing

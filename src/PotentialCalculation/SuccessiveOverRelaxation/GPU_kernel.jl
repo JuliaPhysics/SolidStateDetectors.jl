@@ -6,73 +6,71 @@
     q_eff_imp::AbstractArray{T, 4},
     q_eff_fix::AbstractArray{T, 4},
     ϵ_r::AbstractArray{T, 3},
-    geom_weights::NTuple{3, <:AbstractArray{T, 2}},
+    geom_weights::NTuple{3, AbstractArray{T, 2}},
     sor_const::AbstractArray{T, 1},
     update_even_points::Bool,
     depletion_handling_enabled::Bool,
     is_weighting_potential::Bool,
     only2d::Bool,
     ::Type{S},
-    linear_idx
+    gpu_inds::NTuple{3, Int}
 ) where {T, S}
-    eff_size = broadcast(idim -> 2:size(potential, idim)-1, (1, 2, 3))
-    if linear_idx <= prod(length.(eff_size))
-        i1, i2, i3 = Tuple(CartesianIndices(eff_size)[linear_idx])
-        # Comparison to CPU indices: (Cyl / Car)
-        # i3 <-> idx3 / ir / iz
-        # i2 <-> idx2 / iφ / iy
-        # i1 <-> idx1 / iz / ix
-        in3 = i3 - 1
-        in2 = i2 - 1
-        in1 = nidx(i1, update_even_points, iseven(i2 + i3))
-        i1r = get_rbidx_right_neighbour(i1, update_even_points, iseven(i2 + i3))
-        
-        rb_tar_idx, rb_src_idx = update_even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
+    # Comparison to CPU indices: (Cyl / Car)
+    # i3 <-> idx3 / ir / iz
+    # i2 <-> idx2 / iφ / iy
+    # i1 <-> idx1 / iz / ix
+    i1, in2, in3 = gpu_inds
+    i1 += 1
+    i2 = in2 + 1
+    i3 = in3 + 1
+    in1 = nidx(i1, update_even_points, iseven(i2 + i3))
+    i1r = get_rbidx_right_neighbour(i1, update_even_points, iseven(i2 + i3))
+    
+    rb_tar_idx, rb_src_idx = update_even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 
-        geom_weights_3 = get_geom_weights_outerloop(geom_weights, in3, S)
-        geom_weights_2 = prepare_weights_in_middleloop(
-            geom_weights, S, i2, in2, 
-            geom_weights_3...,
-            in3 == 1
-        )
-        weights = calculate_sor_weights(
-            in1, 
-            S, 
-            ϵ_r,
-            geom_weights[3],
-            i2, in2, i3, in3,
-            geom_weights_2...
-        )
+    geom_weights_3 = get_geom_weights_outerloop(geom_weights, in3, S)
+    geom_weights_2 = prepare_weights_in_middleloop(
+        geom_weights, S, i2, in2, 
+        geom_weights_3...,
+        in3 == 1
+    )
+    weights = calculate_sor_weights(
+        in1, 
+        S, 
+        ϵ_r,
+        geom_weights[3],
+        i2, in2, i3, in3,
+        geom_weights_2...
+    )
 
-        old_potential = potential[i1, i2, i3, rb_tar_idx]
-        q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] * imp_scale[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
+    old_potential = potential[i1, i2, i3, rb_tar_idx]
+    q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] * imp_scale[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
 
-        neighbor_potentials = get_neighbor_potentials(
-            potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
-        )      
-        
-        new_potential = calc_new_potential_SOR_3D(
-            q_eff,
+    neighbor_potentials = get_neighbor_potentials(
+        potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
+    )      
+    
+    new_potential = calc_new_potential_SOR_3D(
+        q_eff,
+        volume_weights[i1, i2, i3, rb_tar_idx],
+        weights,
+        neighbor_potentials,
+        old_potential,
+        get_sor_constant(sor_const, S, in3)
+    )
+
+    if depletion_handling_enabled
+        new_potential, imp_scale[i1, i2, i3, rb_tar_idx] = handle_depletion(
+            new_potential,
+            imp_scale[i1, i2, i3, rb_tar_idx],
+            r0_handling_depletion_handling(neighbor_potentials, S, in3),
+            q_eff_imp[i1, i2, i3, rb_tar_idx],
             volume_weights[i1, i2, i3, rb_tar_idx],
-            weights,
-            neighbor_potentials,
-            old_potential,
             get_sor_constant(sor_const, S, in3)
         )
-
-        if depletion_handling_enabled
-            new_potential, imp_scale[i1, i2, i3, rb_tar_idx] = handle_depletion(
-                new_potential,
-                imp_scale[i1, i2, i3, rb_tar_idx],
-                r0_handling_depletion_handling(neighbor_potentials, S, in3),
-                q_eff_imp[i1, i2, i3, rb_tar_idx],
-                volume_weights[i1, i2, i3, rb_tar_idx],
-                get_sor_constant(sor_const, S, in3)
-            )
-        end
-
-        potential[i1, i2, i3, rb_tar_idx] = ifelse(point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
     end
+
+    potential[i1, i2, i3, rb_tar_idx] = ifelse(point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
     nothing
 end
 

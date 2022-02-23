@@ -13,7 +13,7 @@
     @Const(is_weighting_potential::Bool),
     @Const(only2d::Bool)
 ) where {T}
-    linear_idx = @index(Global)     
+    gpu_inds = @index(Global, NTuple)
     sor_kernel(
         potential,
         imp_scale,
@@ -29,6 +29,6 @@
         is_weighting_potential,
         only2d, 
         Cartesian,
-        linear_idx
+        gpu_inds
     )
 end
