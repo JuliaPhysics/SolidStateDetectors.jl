@@ -892,6 +892,10 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     # refinement_counter::Int = 1
     if refine
         for iref in 1:n_refinement_steps
+            is_last_ref = iref >= 3 || iref == n_refinement_steps 
+            # SOR is good in order to converge quickly against the final state. 
+            # However, when already close to the final state, its better to 
+            # to switch it off (sor_const = 1)
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
                 max_diffs = abs.(ref_limits .* bias_voltage)
@@ -906,7 +910,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 device_array_type = device_array_type,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
-                                                sor_consts = sor_consts )
+                                                sor_consts = is_last_ref ? T(1) : sor_consts )
             else
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
@@ -920,7 +924,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 device_array_type = device_array_type,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
-                                                sor_consts = sor_consts )
+                                                sor_consts = is_last_ref ? T(1) : sor_consts )
             end
         end
     end
