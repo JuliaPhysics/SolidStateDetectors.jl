@@ -82,7 +82,7 @@ end
 function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CylindricalGrid{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
                 potential_array::Union{Missing, Array{T, 3}} = missing,
-                imp_scale::Union{Missing, ElectricPotential{T, 3}} = missing; 
+                imp_scale::Union{Missing, Array{T, 3}} = missing; 
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
@@ -212,7 +212,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                         pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
                         ig = find_closest_gridpoint(pt, point_types.grid)
                         if is_undepleted_point_type(point_types.data[ig...]) || is_fixed_point_type(point_types.data[ig...])
-                            ϵ[ir, iφ, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor) * (1 - imp_scale.data[ig...])
+                            ϵ[ir, iφ, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor) * (1 - imp_scale[ig...])
                         end
                     end
                 end
@@ -372,9 +372,9 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         rbpotential  = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
 
-        imp_scale = ismissing(imp_scale) || is_weighting_potential ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale.data, grid)
-        for i in eachindex(imp_scale)
-            imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i])
+        new_imp_scale = ismissing(imp_scale) || is_weighting_potential ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale, grid)
+        for i in eachindex(new_imp_scale)
+            new_imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i])
         end
     end # @inbounds
 
@@ -384,7 +384,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         rbpoint_types,
         volume_weights,
         q_eff_imp,
-        imp_scale,
+        new_imp_scale,
         q_eff_fix,
         ϵ,
         broadcast(gw -> gw.weights, geom_weights),

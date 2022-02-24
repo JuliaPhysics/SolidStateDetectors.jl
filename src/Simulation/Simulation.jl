@@ -489,7 +489,7 @@ function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, co
         grid, 
         sim.medium, 
         missing, 
-        depletion_handling ? sim.imp_scale : missing,
+        depletion_handling ? sim.imp_scale.data : missing,
         weighting_potential_contact_id = contact_id; 
         not_only_paint_contacts, 
         paint_contacts, 
@@ -561,7 +561,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
     only_2d = length(sim.electric_potential.grid.axes[2]) == 1
 
     pcs = adapt(device_array_type, PotentialCalculationSetup(
-        sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale, sor_consts = T.(sor_consts),
+        sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, sor_consts = T.(sor_consts),
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
     ))
@@ -657,7 +657,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
         sim.weighting_potentials[contact_id].grid, 
         sim.medium, 
         sim.weighting_potentials[contact_id].data,
-        sim.imp_scale,
+        sim.imp_scale.data,
         sor_consts = T.(sor_consts), 
         weighting_potential_contact_id = contact_id, 
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), Base.Threads.nthreads(), CS),    
