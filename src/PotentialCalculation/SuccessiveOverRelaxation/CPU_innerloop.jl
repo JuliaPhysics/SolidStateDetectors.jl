@@ -120,7 +120,7 @@ function innerloop!(
         i1r = get_rbidx_right_neighbour(i1, update_even_points, i23_is_even_t)
         
         old_potential = pcs.potential[i1, i2, i3, rb_tar_idx]
-        q_eff = _is_weighting_potential ? zero(T) : (pcs.q_eff_imp[i1, i2, i3, rb_tar_idx] * pcs.imp_scale[i1, i2, i3, rb_tar_idx] + pcs.q_eff_fix[i1, i2, i3, rb_tar_idx])
+        q_eff = _is_weighting_potential ? zero(T) : (pcs.q_eff_imp[i1, i2, i3, rb_tar_idx] + pcs.q_eff_fix[i1, i2, i3, rb_tar_idx])
 
         weights = get_sor_weights(line_weights, i1-1)
 

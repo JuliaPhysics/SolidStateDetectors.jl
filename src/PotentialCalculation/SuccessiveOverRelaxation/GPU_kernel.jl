@@ -44,7 +44,7 @@
     )
 
     old_potential = potential[i1, i2, i3, rb_tar_idx]
-    q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] * imp_scale[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
+    q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
 
     neighbor_potentials = get_neighbor_potentials(
         potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
