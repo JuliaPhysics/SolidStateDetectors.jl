@@ -1,7 +1,7 @@
 """
     function update!(   
         pcs::PotentialCalculationSetup{T}; 
-        ::Nothing, # these to unused arguments are used such that the method
+        ::Nothing, # these two unused arguments are used such that the method
         ::Any;     # is similar to the GPU method for it.
         use_nthreads::Int = Base.Threads.nthreads(), 
         depletion_handling::Val{depletion_handling_enabled} = Val{false}(), 

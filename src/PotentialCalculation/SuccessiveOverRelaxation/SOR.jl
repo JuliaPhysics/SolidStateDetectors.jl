@@ -49,7 +49,7 @@ end
         sor_const::T
     )::Tuple{T, PointType} where {T}
 
-This function handles the grid points which volume is not fully depleted.
+This function handles the grid points with volumes which are not fully depleted.
 The decision depends on the new calculated potential value, `new_potential`, 
 for the respective grid point in that iteration and 
 the potential values of the neighboring grid points, `neighbor_potentials`.
