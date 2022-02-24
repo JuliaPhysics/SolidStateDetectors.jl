@@ -294,7 +294,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         
         imp_scale = ismissing(imp_scale) || is_weighting_potential ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale.data, grid)
         for i in eachindex(imp_scale)
-            imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i]) ? one(T) : zero(T)
+            imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i])
         end
     end # @inbounds
 
