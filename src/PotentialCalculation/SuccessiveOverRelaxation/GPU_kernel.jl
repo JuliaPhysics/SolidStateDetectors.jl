@@ -44,7 +44,8 @@
     )
 
     old_potential = potential[i1, i2, i3, rb_tar_idx]
-    q_eff = is_weighting_potential ? zero(T) : (q_eff_imp[i1, i2, i3, rb_tar_idx] + q_eff_fix[i1, i2, i3, rb_tar_idx])
+    q_eff = is_weighting_potential ? zero(T) : q_eff_imp[i1, i2, i3, rb_tar_idx]
+    sor_const = get_sor_constant(pcs.sor_const, S, in3)
 
     neighbor_potentials = get_neighbor_potentials(
         potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
@@ -56,7 +57,7 @@
         weights,
         neighbor_potentials,
         old_potential,
-        get_sor_constant(sor_const, S, in3)
+        sor_const
     )
 
     if depletion_handling_enabled
@@ -66,8 +67,12 @@
             r0_handling_depletion_handling(neighbor_potentials, S, in3),
             q_eff_imp[i1, i2, i3, rb_tar_idx],
             volume_weights[i1, i2, i3, rb_tar_idx],
-            get_sor_constant(sor_const, S, in3)
+            sor_const
         )
+    end
+    
+    if !is_weighting_potential
+        new_potential += q_eff_fix[i1, i2, i3, rb_tar_idx] * volume_weights[i1, i2, i3, rb_tar_idx] * sor_const
     end
 
     potential[i1, i2, i3, rb_tar_idx] = ifelse(point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)

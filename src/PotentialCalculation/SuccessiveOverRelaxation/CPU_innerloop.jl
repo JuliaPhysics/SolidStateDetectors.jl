@@ -120,7 +120,8 @@ function innerloop!(
         i1r = get_rbidx_right_neighbour(i1, update_even_points, i23_is_even_t)
         
         old_potential = pcs.potential[i1, i2, i3, rb_tar_idx]
-        q_eff = _is_weighting_potential ? zero(T) : (pcs.q_eff_imp[i1, i2, i3, rb_tar_idx] + pcs.q_eff_fix[i1, i2, i3, rb_tar_idx])
+        q_eff = _is_weighting_potential ? zero(T) : pcs.q_eff_imp[i1, i2, i3, rb_tar_idx]
+        sor_const = get_sor_constant(pcs.sor_const, S, in3)
 
         weights = get_sor_weights(line_weights, i1-1)
 
@@ -134,7 +135,7 @@ function innerloop!(
             weights,
             neighbor_potentials,
             old_potential,
-            get_sor_constant(pcs.sor_const, S, in3)
+            sor_const
         )
 
         if depletion_handling_enabled
@@ -144,10 +145,14 @@ function innerloop!(
                 r0_handling_depletion_handling(neighbor_potentials, S, in3),
                 pcs.q_eff_imp[i1, i2, i3, rb_tar_idx],
                 pcs.volume_weights[i1, i2, i3, rb_tar_idx],
-                get_sor_constant(pcs.sor_const, S, in3)
+                sor_const
             )
         end
 
+        if !_is_weighting_potential
+            new_potential += pcs.q_eff_fix[i1, i2, i3, rb_tar_idx] * pcs.volume_weights[i1, i2, i3, rb_tar_idx] * sor_const
+        end
+        
         pcs.potential[i1, i2, i3, rb_tar_idx] = ifelse(pcs.point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
     end
     nothing
