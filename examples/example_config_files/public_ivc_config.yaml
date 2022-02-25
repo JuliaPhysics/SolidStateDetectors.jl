@@ -136,3 +136,19 @@ detectors:
                 h: 0
                 origin:
                   z: 25
+surroundings:
+  - material: HPGe
+    name: Passivation Layer
+    geometry:
+      tube:
+        r: 
+          from: 4
+          to: 14
+        h: 0.1
+        origin:
+          - 0
+          - 0
+          - -0.05
+    charge_density:
+      name: constant
+      value: 0 # Reasonable density: +2e-11 # => 2*10⁻¹1 C/m⁻³
