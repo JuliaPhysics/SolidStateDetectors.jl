@@ -29,11 +29,13 @@
     rb_tar_idx, rb_src_idx = update_even_points ? (rb_even::Int, rb_odd::Int) : (rb_odd::Int, rb_even::Int) 
 
     geom_weights_3 = get_geom_weights_outerloop(geom_weights, in3, S)
+
     geom_weights_2 = prepare_weights_in_middleloop(
         geom_weights, S, i2, in2, 
         geom_weights_3...,
         in3 == 1
     )
+
     weights = calculate_sor_weights(
         in1, 
         S, 
@@ -45,7 +47,7 @@
 
     old_potential = potential[i1, i2, i3, rb_tar_idx]
     q_eff = is_weighting_potential ? zero(T) : q_eff_imp[i1, i2, i3, rb_tar_idx]
-    sor_const = get_sor_constant(pcs.sor_const, S, in3)
+    sor_const = get_sor_constant(sor_const, S, in3)
 
     neighbor_potentials = get_neighbor_potentials(
         potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
