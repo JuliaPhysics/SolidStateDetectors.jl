@@ -27,7 +27,7 @@ end
 
 @testset "Two Spheres Capacitor" begin
     sim = Simulation{T}(SSD_examples[:TwoSpheresCapacitor])
-    simulate!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.02], convergence_limit = 1e-7)
+    simulate!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], convergence_limit = 1e-7)
     C_ssd = calculate_capacitance_matrix(sim)
 
     R_1 = sim.detector.contacts[1].geometry.r * u"m"
