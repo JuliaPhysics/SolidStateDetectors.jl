@@ -57,7 +57,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_imp_tmp::Array{T}, q_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ϵ::Array{T}, ρ_imp_tmp::Array{T}, ρ_eff_fix_tmp::Array{T}, 
     ::Type{Cartesian}, mpz::Vector{T}, mpy::Vector{T}, mpx::Vector{T}, use_nthreads::Int, obj) where {T}
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
@@ -65,7 +65,7 @@ function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_imp_tmp::Array{T}, q_eff_fix_tmp::Arra
                 for ix in axes(ϵ, 1)
                     pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
                     if pt in obj
-                        ρ_imp_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
+                        ρ_imp_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, ρ_eff_fix_tmp[ix, iy, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
             end
@@ -173,11 +173,11 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         medium_ϵ_r::T = medium.ϵ_r
         ϵ = fill(medium_ϵ_r, length(mpx), length(mpy), length(mpz))
         ρ_imp_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
-        q_eff_fix_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
-        fill_ρ_and_ϵ!(ϵ, ρ_imp_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
+        ρ_eff_fix_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
+        fill_ρimp_ϵ_ρfix(ϵ, ρ_imp_tmp, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
         if !ismissing(det.passives)
             for passive in det.passives
-                fill_ρ_and_ϵ!(ϵ, ρ_imp_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
+                fill_ρimp_ϵ_ρfix(ϵ, ρ_imp_tmp, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
             end
         end
         if depletion_handling
@@ -196,7 +196,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
 
         ϵ0_inv::T = inv(ϵ0)
         ρ_imp_tmp *= ϵ0_inv
-        q_eff_fix_tmp *= ϵ0_inv
+        ρ_eff_fix_tmp *= ϵ0_inv
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
         q_eff_imp::Array{T, 4} = RBExtBy2Array(T, grid)
@@ -212,7 +212,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                     rbi::Int = iseven(inx + iny + inz) ? rb_even::Int : rb_odd::Int
 
                     ρ_imp_cell::T = 0
-                    q_eff_fix_cell::T = 0
+                    ρ_eff_fix_cell::T = 0
                     if !is_weighting_potential
                         ρ_imp_cell += ρ_imp_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
                         ρ_imp_cell += ρ_imp_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
@@ -224,15 +224,15 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                         ρ_imp_cell += ρ_imp_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
                         ρ_imp_cell += ρ_imp_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
 
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
 
-                        q_eff_fix_cell += q_eff_fix_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
                     end
 
                     # right weight in x: wxr
@@ -277,7 +277,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
 
                     dV::T = Δmpx[inx] * Δmpy[iny] * Δmpz[inz]
                     q_eff_imp[ irbx, iy, iz, rbi ] = dV * ρ_imp_cell
-                    q_eff_fix[ irbx, iy, iz, rbi ] = dV * q_eff_fix_cell
+                    q_eff_fix[ irbx, iy, iz, rbi ] = dV * ρ_eff_fix_cell
                 end
             end
         end
@@ -292,9 +292,16 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         rbpotential = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
         
-        new_imp_scale = ismissing(imp_scale) || is_weighting_potential ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale, grid)
-        for i in eachindex(new_imp_scale)
-            new_imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i])
+        new_imp_scale::Array{T, 4} = if ismissing(imp_scale) || is_weighting_potential 
+            broadcast(is_pn_junction_point_type, rbpoint_types)
+        else
+            new_imp_scale = RBExtBy2Array(imp_scale, grid)
+            for i in eachindex(new_imp_scale)
+                if !is_pn_junction_point_type(rbpoint_types[i]) 
+                    new_imp_scale[i] = 0
+                end
+            end
+            new_imp_scale
         end
     end # @inbounds
 

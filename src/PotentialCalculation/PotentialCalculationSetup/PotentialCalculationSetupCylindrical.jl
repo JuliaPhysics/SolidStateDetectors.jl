@@ -57,7 +57,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_imp_tmp::Array{T}, q_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ϵ::Array{T}, ρ_imp_tmp::Array{T}, ρ_eff_fix_tmp::Array{T}, 
     ::Type{Cylindrical}, mpz::Vector{T}, mpφ::Vector{T}, mpr::Vector{T}, axr::Vector{T}, use_nthreads::Int, obj) where {T}
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
@@ -69,7 +69,7 @@ function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_imp_tmp::Array{T}, q_eff_fix_tmp::Arra
                     if (ir == 1 && axr[1] == 0) pos_r = axr[2] * 0.5 end
                     pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
                     if pt in obj
-                        ρ_imp_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, q_eff_fix_tmp[ir, iφ, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
+                        ρ_imp_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_eff_fix_tmp[ir, iφ, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
             end
@@ -194,11 +194,11 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         medium_ϵ_r::T = medium.ϵ_r
         ϵ = fill(medium_ϵ_r, length(mpr), length(mpφ), length(mpz))
         ρ_imp_tmp = zeros(T, length(mpr), length(mpφ), length(mpz))
-        q_eff_fix_tmp = zeros(T, length(mpr), length(mpφ), length(mpz))
-        fill_ρ_and_ϵ!(ϵ, ρ_imp_tmp, q_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, det.semiconductor)
+        ρ_eff_fix_tmp = zeros(T, length(mpr), length(mpφ), length(mpz))
+        fill_ρimp_ϵ_ρfix(ϵ, ρ_imp_tmp, ρ_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, det.semiconductor)
         if !ismissing(det.passives)
             for passive in det.passives
-                fill_ρ_and_ϵ!(ϵ, ρ_imp_tmp, q_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, passive)
+                fill_ρimp_ϵ_ρfix(ϵ, ρ_imp_tmp, ρ_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, passive)
             end
         end
         if depletion_handling
@@ -221,7 +221,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         
         ϵ0_inv::T = inv(ϵ0)
         ρ_imp_tmp *= ϵ0_inv
-        q_eff_fix_tmp *= ϵ0_inv
+        ρ_eff_fix_tmp *= ϵ0_inv
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
         q_eff_imp::Array{T, 4} = RBExtBy2Array(T, grid)
@@ -238,7 +238,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                     # rbinds = irbz, iφ, ir, rbi
 
                     ρ_imp_cell::T = 0
-                    q_eff_fix_cell::T = 0
+                    ρ_eff_fix_cell::T = 0
                     if !is_weighting_potential
                         if inr > 1
                             ρ_imp_cell += ρ_imp_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
@@ -251,25 +251,25 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                             ρ_imp_cell += ρ_imp_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
                             ρ_imp_cell += ρ_imp_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
 
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ,  iz] * wzr[inz] * wrr[inr] * wφl[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ, inz] * wzl[inz] * wrr[inr] * wφl[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir, inφ,  iz] * wzr[inz] * wrr[inr] * wφl[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir, inφ, inz] * wzl[inz] * wrr[inr] * wφl[inφ]
 
-                            q_eff_fix_cell += q_eff_fix_tmp[inr,  iφ,  iz] * wzr[inz] * wrl[inr] * wφr[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[inr,  iφ, inz] * wzl[inz] * wrl[inr] * wφr[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[inr,  iφ,  iz] * wzr[inz] * wrl[inr] * wφr[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[inr,  iφ, inz] * wzl[inz] * wrl[inr] * wφr[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
                         else
                             ρ_imp_cell += ρ_imp_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
                             ρ_imp_cell += ρ_imp_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
                             ρ_imp_cell += ρ_imp_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
                             ρ_imp_cell += ρ_imp_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
 
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
-                            q_eff_fix_cell += q_eff_fix_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
+                            ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
                         end
                     end
                     if inr > 1
@@ -314,7 +314,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
 
                         dV::T = Δmpz[inz] * Δmpφ[inφ] * Δmpr_squared[inr]
                         q_eff_imp[ irbz, iφ, ir, rbi ] = dV * ρ_imp_cell
-                        q_eff_fix[ irbz, iφ, ir, rbi ] = dV * q_eff_fix_cell
+                        q_eff_fix[ irbz, iφ, ir, rbi ] = dV * ρ_eff_fix_cell
                     else
                         wrr_eps = ϵ[  ir,  iφ, inz + 1] * 0.5 * wzr[inz]
                         wrr_eps   += ϵ[  ir, inφ, inz + 1] * 0.5 * wzr[inz]
@@ -357,7 +357,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
 
                         dV = Δmpz[inz] * 2π * Δmpr_squared[inr]
                         q_eff_imp[ irbz, iφ, ir, rbi ] = dV * ρ_imp_cell
-                        q_eff_fix[ irbz, iφ, ir, rbi ] = dV * q_eff_fix_cell
+                        q_eff_fix[ irbz, iφ, ir, rbi ] = dV * ρ_eff_fix_cell
                     end
                 end
             end
@@ -372,9 +372,16 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         rbpotential  = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
 
-        new_imp_scale = ismissing(imp_scale) || is_weighting_potential ? zeros(T, size(q_eff_imp)) : RBExtBy2Array(imp_scale, grid)
-        for i in eachindex(new_imp_scale)
-            new_imp_scale[i] = is_pn_junction_point_type(rbpoint_types[i])
+        new_imp_scale::Array{T, 4} = if ismissing(imp_scale) || is_weighting_potential 
+            broadcast(is_pn_junction_point_type, rbpoint_types)
+        else
+            new_imp_scale = RBExtBy2Array(imp_scale, grid)
+            for i in eachindex(new_imp_scale)
+                if !is_pn_junction_point_type(rbpoint_types[i]) 
+                    new_imp_scale[i] = 0
+                end
+            end
+            new_imp_scale
         end
     end # @inbounds
 
