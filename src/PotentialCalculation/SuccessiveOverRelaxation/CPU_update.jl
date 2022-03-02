@@ -14,7 +14,7 @@ This function performs one iteration of the SOR. One iteration consists out of 4
     1) Iterate in parallel over all even points and update their potential. 
     2) Apply the boundary conditions at the ends of the grid for all even points. 
     3) Iterate in parallel over all odd points and update their potential. 
-    2) Apply the boundary conditions at the ends of the grid for all odd points. 
+    4) Apply the boundary conditions at the ends of the grid for all odd points. 
 """
 @inline function update!(   
     pcs::PotentialCalculationSetup{T},
