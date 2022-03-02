@@ -86,15 +86,10 @@ Thus, there cannot be local extrema.
     imp_contribution = q_eff_imp * volume_weight * sor_const 
     
     if !iszero(imp_contribution) 
-        new_potential_proposal = new_potential - (T(1)- imp_scale) * imp_contribution
-        if (new_potential_proposal > vmax || new_potential_proposal < vmin)
-            imp_scale::T = (imp_contribution - (new_potential - neighbor_relevant_extremum)) / (imp_contribution * sor_const)
-            if imp_scale < 0 imp_scale = T(0) end
-            if imp_scale > 1 imp_scale = T(1) end
-            new_potential -= (T(1) - imp_scale) * imp_contribution 
-        else
-            new_potential = new_potential_proposal
-        end
+        new_potential_proposal = new_potential - (T(1) - imp_scale) * imp_contribution
+        imp_scale -= (new_potential_proposal - neighbor_relevant_extremum) / imp_contribution
+        imp_scale = min(max(imp_scale, T(0)), T(1))
+        new_potential -= (T(1) - imp_scale) * imp_contribution 
     end
 
     new_potential, imp_scale
