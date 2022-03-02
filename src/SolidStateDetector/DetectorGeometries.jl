@@ -40,13 +40,9 @@ get_charge_density(sc::Semiconductor{T}, pt::AbstractCoordinatePoint{T}) where {
 get_charge_density(p::Passive{T}, pt::AbstractCoordinatePoint{T}) where {T <: SSDFloat} =
     get_charge_density(p.charge_density_model, pt)
 
-@inline function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, obj::Semiconductor)::Tuple{T, T, T} where {T <: SSDFloat}
-    q_eff_imp = get_charge_density(obj, pt) 
-    ϵ = obj.material.ϵ_r
-    return q_eff_imp, ϵ, zero(T)
+@inline function get_ρimp_ϵ_ρfix(pt::AbstractCoordinatePoint{T}, obj::Semiconductor)::Tuple{T, T, T} where {T <: SSDFloat}
+    return get_charge_density(obj, pt), obj.material.ϵ_r, zero(T)
 end
-@inline function get_ρ_and_ϵ(pt::AbstractCoordinatePoint{T}, obj::Passive)::Tuple{T, T, T} where {T <: SSDFloat}
-    q_eff_fix = get_charge_density(obj, pt) 
-    ϵ = obj.material.ϵ_r
-    return zero(T), ϵ, q_eff_fix
+@inline function get_ρimp_ϵ_ρfix(pt::AbstractCoordinatePoint{T}, obj::Passive)::Tuple{T, T, T} where {T <: SSDFloat}
+    return zero(T), obj.material.ϵ_r, get_charge_density(obj, pt) 
 end
