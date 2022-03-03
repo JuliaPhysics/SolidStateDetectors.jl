@@ -57,7 +57,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρimp_ϵ_ρfix(ρ_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T}, 
     ::Type{Cylindrical}, mpz::Vector{T}, mpφ::Vector{T}, mpr::Vector{T}, axr::Vector{T}, use_nthreads::Int, obj) where {T}
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
@@ -69,7 +69,7 @@ function fill_ρimp_ϵ_ρfix(ρ_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp:
                     if (ir == 1 && axr[1] == 0) pos_r = axr[2] * 0.5 end
                     pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
                     if pt in obj
-                        ρ_imp_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_eff_fix_tmp[ir, iφ, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
+                        ρ_eff_imp_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_eff_fix_tmp[ir, iφ, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
             end
@@ -193,12 +193,12 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
 
         medium_ϵ_r::T = medium.ϵ_r
         ϵ = fill(medium_ϵ_r, length(mpr), length(mpφ), length(mpz))
-        ρ_imp_tmp = zeros(T, length(mpr), length(mpφ), length(mpz))
+        ρ_eff_imp_tmp = zeros(T, length(mpr), length(mpφ), length(mpz))
         ρ_eff_fix_tmp = zeros(T, length(mpr), length(mpφ), length(mpz))
-        fill_ρimp_ϵ_ρfix(ρ_imp_tmp, ϵ, ρ_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, det.semiconductor)
+        fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp, ϵ, ρ_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, det.semiconductor)
         if !ismissing(det.passives)
             for passive in det.passives
-                fill_ρimp_ϵ_ρfix(ρ_imp_tmp, ϵ, ρ_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, passive)
+                fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp, ϵ, ρ_eff_fix_tmp, Cylindrical, mpz, mpφ, mpr, axr, use_nthreads, passive)
             end
         end
         if depletion_handling
@@ -220,7 +220,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         end  
         
         ϵ0_inv::T = inv(ϵ0)
-        ρ_imp_tmp *= ϵ0_inv
+        ρ_eff_imp_tmp *= ϵ0_inv
         ρ_eff_fix_tmp *= ϵ0_inv
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
@@ -241,15 +241,15 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                     ρ_eff_fix_cell::T = 0
                     if !is_weighting_potential
                         if inr > 1
-                            ρ_imp_cell += ρ_imp_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[ ir, inφ,  iz] * wzr[inz] * wrr[inr] * wφl[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[ ir, inφ, inz] * wzl[inz] * wrr[inr] * wφl[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir, inφ,  iz] * wzr[inz] * wrr[inr] * wφl[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir, inφ, inz] * wzl[inz] * wrr[inr] * wφl[inφ]
 
-                            ρ_imp_cell += ρ_imp_tmp[inr,  iφ,  iz] * wzr[inz] * wrl[inr] * wφr[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[inr,  iφ, inz] * wzl[inz] * wrl[inr] * wφr[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[inr,  iφ,  iz] * wzr[inz] * wrl[inr] * wφr[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[inr,  iφ, inz] * wzl[inz] * wrl[inr] * wφr[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
 
                             ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * wrr[inr] * wφr[inφ]
                             ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * wrr[inr] * wφr[inφ]
@@ -261,10 +261,10 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                             ρ_eff_fix_cell += ρ_eff_fix_tmp[inr, inφ,  iz] * wzr[inz] * wrl[inr] * wφl[inφ]
                             ρ_eff_fix_cell += ρ_eff_fix_tmp[inr, inφ, inz] * wzl[inz] * wrl[inr] * wφl[inφ]
                         else
-                            ρ_imp_cell += ρ_imp_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
-                            ρ_imp_cell += ρ_imp_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir, inφ,  iz] * wzr[inz] * 0.5 #wφl[inφ]
+                            ρ_imp_cell += ρ_eff_imp_tmp[ ir, inφ, inz] * wzl[inz] * 0.5 #wφl[inφ]
 
                             ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ,  iz] * wzr[inz] * 0.5 #wφr[inφ]
                             ρ_eff_fix_cell += ρ_eff_fix_tmp[ ir,  iφ, inz] * wzl[inz] * 0.5 #wφr[inφ]
