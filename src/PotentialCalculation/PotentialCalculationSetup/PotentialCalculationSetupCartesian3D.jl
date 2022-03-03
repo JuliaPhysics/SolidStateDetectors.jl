@@ -57,7 +57,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρimp_ϵ_ρfix(ϵ::Array{T}, ρ_imp_tmp::Array{T}, ρ_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ρ_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T}, 
     ::Type{Cartesian}, mpz::Vector{T}, mpy::Vector{T}, mpx::Vector{T}, use_nthreads::Int, obj) where {T}
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
@@ -174,10 +174,10 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         ϵ = fill(medium_ϵ_r, length(mpx), length(mpy), length(mpz))
         ρ_imp_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
         ρ_eff_fix_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
-        fill_ρimp_ϵ_ρfix(ϵ, ρ_imp_tmp, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
+        fill_ρimp_ϵ_ρfix(ρ_imp_tmp, ϵ, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
         if !ismissing(det.passives)
             for passive in det.passives
-                fill_ρimp_ϵ_ρfix(ϵ, ρ_imp_tmp, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
+                fill_ρimp_ϵ_ρfix(ρ_imp_tmp, ϵ, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
             end
         end
         if depletion_handling
