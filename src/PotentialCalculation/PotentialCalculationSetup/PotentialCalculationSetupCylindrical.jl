@@ -371,18 +371,6 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                 paint_contacts = Val(paint_contacts)  )
         rbpotential  = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
-
-        new_imp_scale::Array{T, 4} = if ismissing(imp_scale) || is_weighting_potential 
-            broadcast(is_pn_junction_point_type, rbpoint_types)
-        else
-            new_imp_scale = RBExtBy2Array(imp_scale, grid)
-            for i in eachindex(new_imp_scale)
-                if !is_pn_junction_point_type(rbpoint_types[i]) 
-                    new_imp_scale[i] = 0
-                end
-            end
-            new_imp_scale
-        end
     end # @inbounds
 
     pcs = PotentialCalculationSetup(
@@ -391,7 +379,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         rbpoint_types,
         volume_weights,
         q_eff_imp,
-        new_imp_scale,
+        ones(T, size(rbpoint_types)),
         q_eff_fix,
         ϵ,
         broadcast(gw -> gw.weights, geom_weights),

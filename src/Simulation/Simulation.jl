@@ -711,12 +711,12 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     paint_contacts::Bool = true,
                     update_other_fields::Bool = false) where {T <: SSDFloat}
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
-    sim.imp_scale = getindex(sim.imp_scale, sim.electric_potential.grid)
 
     if update_other_fields
         pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
                                         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
+        sim.imp_scale = ElectricPotential(ImpurityScale(pcs), sim.electric_potential.grid)
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(sim.electric_potential.grid))
