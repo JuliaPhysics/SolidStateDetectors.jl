@@ -14,12 +14,14 @@ using CUDAKernels, CUDA
 using SolidStateDetectors
 using DataFrames, JLD2
 using BenchmarkTools
+using KernelAbstractions
+using KernelAbstractions: get_device
 
 using SolidStateDetectors: 
     ConstructiveSolidGeometry.AbstractCoordinateSystem,
     Cartesian, Cylindrical, PotentialCalculationSetup,
     _guess_optimal_number_of_threads_for_SOR, adapt,
-    get_device, get_sor_kernel, update!
+    get_sor_kernel, update!
 
 fn_pot_calc_benchmark_df = joinpath(ENV["HOME"], "SSD_potential_calculation_benchmark.jld2")
 fn_SOR_update_benchmark_df = joinpath(ENV["HOME"], "SSD_SOR_update_benchmark.jld2")
@@ -35,7 +37,7 @@ hw_backends = (
     # (label = "CPU_1",  use_nthreads =   1, DAT = Array),
     # (label = "CPU_2",  use_nthreads =   2, DAT = Array),
     # (label = "CPU_4",  use_nthreads =   4, DAT = Array),
-    # (label = "CPU_8",  use_nthreads =   8, DAT = Array),
+    (label = "CPU_8",  use_nthreads =   8, DAT = Array),
     # (label = "CPU_16", use_nthreads =  16, DAT = Array),
     # (label = "CPU_32", use_nthreads =  32, DAT = Array),
     # (label = "CPU_64", use_nthreads =  64, DAT = Array),
@@ -106,8 +108,9 @@ df_SOR_update = if !isfile(fn_SOR_update_benchmark_df) || recalculate
                 sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, 
             ));
             ndrange = size(pcs.potential)[1:3] .- 2
-            device = get_device(device_array_type)
-            kernel = get_sor_kernel(S, device)
+            dev = get_device(pcs.potential)
+            via_KernelAbstractions = false
+            kernel = get_sor_kernel(S, dev, Val(via_KernelAbstractions))
             use_nthreads = backend.use_nthreads
             update!(pcs, kernel, ndrange; use_nthreads, depletion_handling, is_weighting_potential, only2d)
             bm = @benchmark update!($pcs, $kernel, $ndrange; 

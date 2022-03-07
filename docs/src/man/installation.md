@@ -42,16 +42,16 @@ print("Plots: v$(Plots_version) - GR: v$(GR_version)") # hide
 
 The [Electric Potential](@ref) and individual [Weighting Potentials](@ref) can also be calculated on GPUs.
 
-In order to use your GPU, the Julia Packages [CUDAKernels](https://github.com/JuliaGPU/KernelAbstractions.jl/tree/master/lib/CUDAKernels) or [ROCKernels](https://github.com/JuliaGPU/KernelAbstractions.jl/tree/master/lib/ROCKernels) have to be installed and be loaded before `SolidStateDetectors.jl` is loaded.
+In order to use your GPU, the Julia Packages [CUDAKernels](https://github.com/JuliaGPU/KernelAbstractions.jl/tree/master/lib/CUDAKernels) or [ROCKernels](https://github.com/JuliaGPU/KernelAbstractions.jl/tree/master/lib/ROCKernels) have to be installed and loaded.
 
 In case of an NVIDIA GPU:
 ```julia
-using CUDAKernels, SolidStateDetectors # CUDAKernels has to be loaded before SSD
+using CUDAKernels, SolidStateDetectors
 ```
 
 In case of an AMD GPU:
 ```julia
-using ROCKernels, SolidStateDetectors # ROCKernels has to be loaded before SSD
+using ROCKernels, SolidStateDetectors
 ```
 
 Then, in any field calculation ([`calculate_electric_potential!`](@ref), [`calculate_weighting_potential!`](@ref), [`simulate!(::Simulation)`](@ref)) the keyword `device_array_type` can be set to choose the device on which the calculations should be performed.
@@ -70,7 +70,7 @@ using ROCKernels.AMDGPU: ROCArray
 ### Example (NVIDIA)
 
 ```julia
-using CUDAKernels, SolidStateDetectors # CUDAKernels has to be loaded before SSD
+using CUDAKernels, SolidStateDetectors
 using CUDAKernels.CUDA: CuArray
 
 sim = Simulation(SSD_examples[:CGD])

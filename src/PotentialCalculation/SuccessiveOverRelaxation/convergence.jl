@@ -1,6 +1,6 @@
 function _update_till_convergence!( pcs::PotentialCalculationSetup{T, S, 3}, 
                                     convergence_limit,
-                                    device_array_type::Type{DAT};
+                                    via_KernelAbstractions::Bool;
                                     n_iterations_between_checks = 500,
                                     depletion_handling::Val{depletion_handling_enabled} = Val{false}(),
                                     only2d::Val{only_2d} = Val{false}(), 
@@ -9,9 +9,9 @@ function _update_till_convergence!( pcs::PotentialCalculationSetup{T, S, 3},
                                     max_n_iterations::Int = 10_000, # -1
                                     verbose::Bool = true
                                 ) where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential, DAT} #  <: GPUArrays.AbstractGPUArray
-    device = get_device(DAT)
+    device = KernelAbstractions.get_device(pcs.potential)
     ndrange = size(pcs.potential)[1:3] .- 2
-    kernel = get_sor_kernel(S, device)
+    kernel = get_sor_kernel(S, device, Val(via_KernelAbstractions))
     c_limit = _is_weighting_potential ? convergence_limit : abs(convergence_limit * pcs.bias_voltage)
     c = (one(c_limit) + c_limit) * 10 # Has to be larger than c_limit at the beginning
     n_performed_iterations = 0
