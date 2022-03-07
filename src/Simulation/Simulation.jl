@@ -84,7 +84,11 @@ function Simulation(nt::NamedTuple)
     sim = Simulation{T}( Dict(nt.detector_json_string) )
     sim.electric_potential = epot
     sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp)
-    sim.imp_scale = ElectricPotential(nt.imp_scale)
+    sim.imp_scale = haskey(nt, :imp_scale) && nt.imp_scale !== missing_tuple ? ElectricPotential(nt.imp_scale) : missing
+    !haskey(nt, :imp_scale) && @warn """Stored simulation does not have a field for imp_scale as this was 
+    first introduced in SolidStateDetectors.jl v0.8 for improved depletion handling.
+    It is advised to recalculate the simulation with the latest version.
+    """
     sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix)
     sim.ϵ_r = DielectricDistribution(nt.ϵ_r)
     sim.point_types = PointTypes(nt.point_types)
