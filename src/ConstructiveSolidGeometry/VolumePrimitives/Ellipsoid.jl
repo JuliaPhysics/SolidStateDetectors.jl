@@ -47,19 +47,48 @@ This is a sphere with inner radius 1 and outer radius 2.
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-@with_kw struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
-    r::TR = 1
-    φ::TP = nothing
-    θ::TT = nothing
+struct Ellipsoid{T,CO,TR,TP,TT} <: AbstractVolumePrimitive{T, CO}
+    r::TR 
+    φ::TP 
+    θ::TT 
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9}    
+end
+
+#Type conversion happens here
+function Ellipsoid{T,CO}(r, origin, rotation) where {T,CO}
+    _r = _csg_convert_args(T, r)
+    Ellipsoid{T,CO,typeof(_r),Nothing,Nothing}(_r, nothing, nothing, origin, rotation)
+end
+
+#Type promotion happens here
+function Ellipsoid(CO, r::TR, origin::PT, rotation::ROT) where {TR, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, PT, ROT))
+    T = promote_type(eltypes...)
+    Ellipsoid{T,CO}(r, origin, rotation)
+end
+
+function Ellipsoid(::Type{CO}=ClosedPrimitive;
+    r = 1.0, 
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {CO}
+    Ellipsoid(CO, r, origin, rotation)
+end
+
+function Ellipsoid{T}(::Type{CO}=ClosedPrimitive;
+    r = 1.0, 
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T, CO}
+    Ellipsoid{T,CO}( r, origin, rotation)
 end
 
 Ellipsoid{T,CO,TR,TP,TT}( e::Ellipsoid{T,CO,TR,TP,TT}; COT = CO,
             origin::CartesianPoint{T} = e.origin,
             rotation::SMatrix{3,3,T,9} = e.rotation) where {T,CO<:Union{ClosedPrimitive, OpenPrimitive},TR,TP,TT} =
-    Ellipsoid{T,COT,TR,TP,TT}(e.r, e.φ, e.θ, origin, rotation)
+    Ellipsoid{T,COT,TR,TP,TT}(e.r,e.φ,e.θ,origin,rotation)
 
 const Sphere{T,CO,TP,TT} = Ellipsoid{T,CO,T,TP,TT}
 const FullSphere{T,CO} = Ellipsoid{T,CO,T,Nothing,Nothing}
@@ -81,26 +110,20 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
         error("Partial Ellipsoid (`θ = θ`) is not yet supported.")
     end
     e = if r isa Tuple{T,T}
-        Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
+        Ellipsoid{T}(ClosedPrimitive,
             r = r[2], 
-            φ = φ, 
-            θ = θ,
             origin = origin,
-            rotation = rotation
-        ) - Ellipsoid{T,OpenPrimitive,T,typeof(φ),typeof(θ)}(
+            rotation = rotation,
+        ) - Ellipsoid{T}(OpenPrimitive,
             r = r[1], 
-            φ = φ, 
-            θ = θ,
             origin = origin,
-            rotation = rotation
+            rotation = rotation,
         )
     else
-        Ellipsoid{T,ClosedPrimitive,T,typeof(φ),typeof(θ)}(
+        Ellipsoid{T}(ClosedPrimitive,
             r = r, 
-            φ = φ, 
-            θ = θ,
             origin = origin,
-            rotation = rotation
+            rotation = rotation,
         )
     end
     transform(e, transformations)
