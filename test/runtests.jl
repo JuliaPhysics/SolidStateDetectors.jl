@@ -167,7 +167,7 @@ end
 
 @testset "Diffusion and Self-Repulsion" begin
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
-    simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
+    simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
 
     pos = CartesianPoint{T}(0.02,0,0.05); Edep = 1u"eV"
     nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)

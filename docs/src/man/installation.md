@@ -77,16 +77,10 @@ sim = Simulation(SSD_examples[:CGD])
 calculate_electric_potential!( 
     sim, 
     device_array_type = CuArray, 
-    max_n_iterations = 5000, # Performs `max_n_iterations` iterations after each refinement
     refinement_limits = [0.2, 0.1, 0.05],
     depletion_handling = true
 )    
 ```
-
-!!! note
-    There is no convergence check implemented yet on the GPU backend.
-    Take care that `max_n_iterations` is large enough.
-    The keyword `convergence_limit` is ignored with the GPU backend for now.
 
 !!! note
     The AMD backend was not yet tested due to lack of an AMD GPU (we are working on that).

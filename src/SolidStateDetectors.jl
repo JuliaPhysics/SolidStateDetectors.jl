@@ -123,7 +123,7 @@ function __init__()
         get_device(::Type{CUDAKernels.CUDA.CuArray}) = CUDAKernels.CUDADevice()
     end
     @require ROCKernels="7eb9e9f0-4bd3-4c4c-8bef-26bd9629d9b9" begin
-        get_device(::Type{ROCKernels.AMDGPU.ROCArray}) = CUDAKernels.ROCDevice()
+        get_device(::Type{ROCKernels.AMDGPU.ROCArray}) = AMDGPU.ROCDevice()
     end
 end
 

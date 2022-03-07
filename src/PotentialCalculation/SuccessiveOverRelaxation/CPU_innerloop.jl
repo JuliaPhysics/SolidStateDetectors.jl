@@ -120,7 +120,6 @@ function innerloop!(
         i1r = get_rbidx_right_neighbour(i1, update_even_points, i23_is_even_t)
         
         old_potential = pcs.potential[i1, i2, i3, rb_tar_idx]
-        q_eff = _is_weighting_potential ? zero(T) : (pcs.q_eff_imp[i1, i2, i3, rb_tar_idx] + pcs.q_eff_fix[i1, i2, i3, rb_tar_idx])
 
         weights = get_sor_weights(line_weights, i1-1)
 
@@ -128,24 +127,33 @@ function innerloop!(
             pcs.potential, old_potential, i1, i2, i3, i1r, in2, in3, rb_src_idx, only2d
         )
         
-        new_potential = calc_new_potential_SOR_3D(
-            q_eff,
+        new_potential = calc_new_potential_by_neighbors_3D(
             pcs.volume_weights[i1, i2, i3, rb_tar_idx],
             weights,
-            neighbor_potentials,
-            old_potential,
-            get_sor_constant(pcs.sor_const, S, in3)
+            neighbor_potentials
         )
 
         if depletion_handling_enabled
-            new_potential, pcs.point_types[i1, i2, i3, rb_tar_idx] = handle_depletion(
+            new_potential, pcs.imp_scale[i1, i2, i3, rb_tar_idx] = handle_depletion(
                 new_potential,
-                pcs.point_types[i1, i2, i3, rb_tar_idx],
+                pcs.imp_scale[i1, i2, i3, rb_tar_idx],
                 r0_handling_depletion_handling(neighbor_potentials, S, in3),
                 pcs.q_eff_imp[i1, i2, i3, rb_tar_idx],
-                pcs.volume_weights[i1, i2, i3, rb_tar_idx],
-                get_sor_constant(pcs.sor_const, S, in3)
+                pcs.volume_weights[i1, i2, i3, rb_tar_idx]
             )
+        end
+
+        if !_is_weighting_potential
+            q_eff = if depletion_handling_enabled
+                pcs.q_eff_fix[i1, i2, i3, rb_tar_idx]
+            else
+                pcs.q_eff_imp[i1, i2, i3, rb_tar_idx] + pcs.q_eff_fix[i1, i2, i3, rb_tar_idx]
+            end
+            new_potential += q_eff * pcs.volume_weights[i1, i2, i3, rb_tar_idx]
+        end
+
+        if _is_weighting_potential || !depletion_handling_enabled
+            new_potential = apply_over_relaxation(new_potential, old_potential, get_sor_constant(pcs.sor_const, S, in3))
         end
 
         pcs.potential[i1, i2, i3, rb_tar_idx] = ifelse(pcs.point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)

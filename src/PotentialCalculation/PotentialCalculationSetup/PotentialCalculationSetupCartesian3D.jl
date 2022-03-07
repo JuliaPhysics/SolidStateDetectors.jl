@@ -57,7 +57,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T}, 
     ::Type{Cartesian}, mpz::Vector{T}, mpy::Vector{T}, mpx::Vector{T}, use_nthreads::Int, obj) where {T}
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
@@ -65,7 +65,7 @@ function fill_ρ_and_ϵ!(ϵ::Array{T}, ρ_tmp::Array{T}, q_eff_fix_tmp::Array{T}
                 for ix in axes(ϵ, 1)
                     pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
                     if pt in obj
-                        ρ_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, q_eff_fix_tmp[ix, iy, iz]::T = get_ρ_and_ϵ(pt, obj)
+                        ρ_eff_imp_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, ρ_eff_fix_tmp[ix, iy, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
             end
@@ -76,7 +76,8 @@ end
 
 function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
                 medium::NamedTuple = material_properties[materials["vacuum"]],
-                potential_array::Union{Missing, Array{T, 3}} = missing; 
+                potential_array::Union{Missing, Array{T, 3}} = missing,
+                imp_scale::Union{Missing, Array{T, 3}} = missing;
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
@@ -171,12 +172,12 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
 
         medium_ϵ_r::T = medium.ϵ_r
         ϵ = fill(medium_ϵ_r, length(mpx), length(mpy), length(mpz))
-        ρ_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
-        q_eff_fix_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
-        fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
+        ρ_eff_imp_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
+        ρ_eff_fix_tmp = zeros(T, length(mpx), length(mpy), length(mpz))
+        fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp, ϵ, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, det.semiconductor)
         if !ismissing(det.passives)
             for passive in det.passives
-                fill_ρ_and_ϵ!(ϵ, ρ_tmp, q_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
+                fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp, ϵ, ρ_eff_fix_tmp, Cartesian, mpz, mpy, mpx, use_nthreads, passive)
             end
         end
         if depletion_handling
@@ -186,7 +187,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                         pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
                         ig = find_closest_gridpoint(pt, point_types.grid)
                         if is_undepleted_point_type(point_types.data[ig...]) 
-                            ϵ[ix, iy, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor)
+                            ϵ[ix, iy, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor) * (1 - imp_scale[ig...])
                         end
                     end
                 end
@@ -194,11 +195,11 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         end  
 
         ϵ0_inv::T = inv(ϵ0)
-        ρ_tmp *= ϵ0_inv
-        q_eff_fix_tmp *= ϵ0_inv
+        ρ_eff_imp_tmp *= ϵ0_inv
+        ρ_eff_fix_tmp *= ϵ0_inv
 
         volume_weights::Array{T, 4} = RBExtBy2Array(T, grid)
-        ρ::Array{T, 4} = RBExtBy2Array(T, grid)
+        q_eff_imp::Array{T, 4} = RBExtBy2Array(T, grid)
         q_eff_fix::Array{T, 4} = RBExtBy2Array(T, grid)
         for iz in range(2, stop = length(z_ext) - 1)
             inz::Int = iz - 1
@@ -210,28 +211,28 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
 
                     rbi::Int = iseven(inx + iny + inz) ? rb_even::Int : rb_odd::Int
 
-                    ρ_cell::T = 0
-                    q_eff_fix_cell::T = 0
+                    ρ_imp_cell::T = 0
+                    ρ_eff_fix_cell::T = 0
                     if !is_weighting_potential
-                        ρ_cell += ρ_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
-                        ρ_cell += ρ_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
-                        ρ_cell += ρ_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
-                        ρ_cell += ρ_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
 
-                        ρ_cell += ρ_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
-                        ρ_cell += ρ_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
-                        ρ_cell += ρ_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
-                        ρ_cell += ρ_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
+                        ρ_imp_cell += ρ_eff_imp_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
 
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix,  iy,  iz] * wxr[inx] * wyr[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix,  iy, inz] * wxr[inx] * wyr[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix, iny,  iz] * wxr[inx] * wyl[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[ ix, iny, inz] * wxr[inx] * wyl[iny] * wzl[inz]
 
-                        q_eff_fix_cell += q_eff_fix_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
-                        q_eff_fix_cell += q_eff_fix_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx,  iy,  iz] * wxl[inx] * wyr[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx,  iy, inz] * wxl[inx] * wyr[iny] * wzl[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx, iny,  iz] * wxl[inx] * wyl[iny] * wzr[inz]
+                        ρ_eff_fix_cell += ρ_eff_fix_tmp[inx, iny, inz] * wxl[inx] * wyl[iny] * wzl[inz]
                     end
 
                     # right weight in x: wxr
@@ -275,8 +276,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                     volume_weights[ irbx, iy, iz, rbi ] = inv(volume_weight)
 
                     dV::T = Δmpx[inx] * Δmpy[iny] * Δmpz[inz]
-                    ρ[ irbx, iy, iz, rbi ] = dV * ρ_cell
-                    q_eff_fix[ irbx, iy, iz, rbi ] = dV * q_eff_fix_cell
+                    q_eff_imp[ irbx, iy, iz, rbi ] = dV * ρ_imp_cell
+                    q_eff_fix[ irbx, iy, iz, rbi ] = dV * ρ_eff_fix_cell
                 end
             end
         end
@@ -297,7 +298,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         rbpotential,
         rbpoint_types,
         volume_weights,
-        ρ,
+        q_eff_imp,
+        ones(T, size(rbpoint_types)),
         q_eff_fix,
         ϵ,
         broadcast(gw -> gw.weights, geom_weights),
@@ -306,7 +308,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         maximum_applied_potential,
         minimum_applied_potential,
         grid_boundary_factors
-     )
+    )
     return pcs
 end
 
@@ -328,6 +330,22 @@ function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cartesian,  3,
     return pot
 end
 
+function ImpurityScale(pcs::PotentialCalculationSetup{T, Cartesian, 3, Array{T, 3}})::Array{T, 3} where {T}
+    s::Array{T, 3} = Array{T, 3}(undef, size(pcs.grid))
+    for iz in axes(s, 3)
+        irbz::Int = iz + 1
+        for iy in axes(s, 2)
+            irby::Int = iy + 1
+            idxsum::Int = iz + iy
+            for ix in axes(s, 1)
+                irbx::Int = rbidx(ix)
+                rbi::Int = iseven(idxsum + ix) ? rb_even::Int : rb_odd::Int
+                s[ix, iy, iz] = pcs.imp_scale[ irbx, irby, irbz, rbi ]
+            end
+        end
+    end
+    return s
+end
 
 function PointTypeArray(pcs::PotentialCalculationSetup{T, Cartesian,  3, Array{T, 3}})::Array{PointType, 3} where {T}
     point_types::Array{PointType, 3} = zeros(PointType, size(pcs.grid))
