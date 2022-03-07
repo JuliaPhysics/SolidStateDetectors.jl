@@ -159,9 +159,9 @@ which are used in the CPU implementation for optimization.
 On the GPU (currently) those statements have to be calculated and booleans have to be passed.
 Maybe this will change in the future.
 """
-get_sor_kernel(::Type{Cylindrical}, args...) = sor_cyl_gpu!(args...)
-get_sor_kernel(::Type{Cartesian},   args...) = sor_car_gpu!(args...)
-get_sor_kernel(::Type{Cylindrical}, ::CPU) = nothing
-get_sor_kernel(::Type{Cartesian}, ::CPU) = nothing
-
-get_device(::Type{Array}) = CPU() 
+get_sor_kernel(::Type{Cylindrical}, dev, CPU_via_KernelAbstractions, args...) = sor_cyl_gpu!(dev, args...)
+get_sor_kernel(::Type{Cartesian},   dev, CPU_via_KernelAbstractions, args...) = sor_car_gpu!(dev, args...)
+get_sor_kernel(::Type{Cylindrical}, ::CPU, CPU_via_KernelAbstractions::Val{false}) = nothing
+get_sor_kernel(::Type{Cartesian},   ::CPU, CPU_via_KernelAbstractions::Val{false}) = nothing
+get_sor_kernel(::Type{Cylindrical}, dev::CPU, CPU_via_KernelAbstractions::Val{true}, args...) = sor_cyl_gpu!(dev, args...)
+get_sor_kernel(::Type{Cartesian},   dev::CPU, CPU_via_KernelAbstractions::Val{true}, args...) = sor_car_gpu!(dev, args...)

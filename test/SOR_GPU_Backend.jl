@@ -1,5 +1,4 @@
-abstract type pseudoGPUArray <: SolidStateDetectors.GPUArrays.AbstractGPUArray{T, N where N} end
-SolidStateDetectors.get_device(::Type{pseudoGPUArray}) = SolidStateDetectors.KernelAbstractions.CPU()
+abstract type pseudoGPUArray <: SolidStateDetectors.GPUArrays.AbstractGPUArray{T where T, N where N} end
 
 @testset "Simulate example detector: Inverted Coax" begin
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
@@ -7,8 +6,7 @@ SolidStateDetectors.get_device(::Type{pseudoGPUArray}) = SolidStateDetectors.Ker
     calculate_electric_potential!( 
         sim, 
         device_array_type = pseudoGPUArray, 
-        convergence_limit = 0, # For this we have to probably add an addition kernel function 
-        max_n_iterations = 2000, # For now just perform always `max_n_iterations` iterations
+        convergence_limit = 1e-5,
         refinement_limits = [0.2, 0.1],
         depletion_handling = true
     )    
@@ -23,8 +21,7 @@ end
     calculate_electric_potential!( 
         sim, 
         device_array_type = pseudoGPUArray, 
-        convergence_limit = 0, # For this we have to probably add an addition kernel function 
-        max_n_iterations = 2000, # For now just perform always `max_n_iterations` iterations
+        convergence_limit = 1e-5,
         refinement_limits = [0.2],
         depletion_handling = true
     )    

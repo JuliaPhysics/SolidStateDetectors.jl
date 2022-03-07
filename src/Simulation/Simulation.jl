@@ -84,7 +84,11 @@ function Simulation(nt::NamedTuple)
     sim = Simulation{T}( Dict(nt.detector_json_string) )
     sim.electric_potential = epot
     sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp)
-    sim.imp_scale = ElectricPotential(nt.imp_scale)
+    sim.imp_scale = haskey(nt, :imp_scale) && nt.imp_scale !== missing_tuple ? ElectricPotential(nt.imp_scale) : missing
+    !haskey(nt, :imp_scale) && @warn """Stored simulation does not have a field for imp_scale as this was 
+    first introduced in SolidStateDetectors.jl v0.8 for improved depletion handling.
+    It is advised to recalculate the simulation with the latest version.
+    """
     sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix)
     sim.ϵ_r = DielectricDistribution(nt.ϵ_r)
     sim.point_types = PointTypes(nt.point_types)
@@ -565,8 +569,12 @@ function update_till_convergence!( sim::Simulation{T,CS},
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
     ))
+
+    via_KernelAbstractions = device_array_type <: GPUArrays.AnyGPUArray
+    # This is just to be able to test the KernelAbstractions.jl backend on the CPU
+    # as we cannot test it on GPU on GitHub. See also "SOR GPU Backend" test set.
     
-    cf::T = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
+    cf::T = _update_till_convergence!( pcs, T(convergence_limit), via_KernelAbstractions;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{depletion_handling}(),
                                        is_weighting_potential = Val{false}(),
@@ -666,7 +674,12 @@ function update_till_convergence!( sim::Simulation{T, CS},
         point_types = depletion_handling ? sim.point_types : missing)
     );
 
-    cf::T = _update_till_convergence!( pcs, T(convergence_limit), device_array_type;
+    via_KernelAbstractions = device_array_type <: GPUArrays.AnyGPUArray 
+    # This is just to be able to test the KernelAbstractions.jl backend on the CPU
+    # as we cannot test it on GPU on GitHub. See also "SOR GPU Backend" test set.
+
+
+    cf::T = _update_till_convergence!( pcs, T(convergence_limit), via_KernelAbstractions;
                                        only2d = Val{only_2d}(),
                                        depletion_handling = Val{false}(),
                                        is_weighting_potential = Val{true}(),
