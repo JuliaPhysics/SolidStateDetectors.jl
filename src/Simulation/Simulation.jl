@@ -964,7 +964,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     
     if isEP mark_bulk_bits!(sim.point_types.data) end
     if depletion_handling && isEP
-        if isEP mark_undep_bits_and_contact_imp_scale!(sim.point_types.data, sim.imp_scale.data) end
+        mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
     end
     
     nothing
