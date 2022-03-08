@@ -53,8 +53,8 @@ makedocs(
 
 deploydocs(
     repo = "github.com/JuliaPhysics/SolidStateDetectors.jl.git",
-    devbranch = "master",
-    devurl = "master",
+    devbranch = "main",
+    devurl = "main",
     forcepush = true,
     push_preview = true,
 )
