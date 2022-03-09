@@ -100,9 +100,8 @@ include("GPU_update.jl")
 include("convergence.jl")
 
 
-function mark_undep_bits_and_contact_imp_scale!(point_types::Array{PointType, 3}, imp_scale::Array{T, 3}) where {T}
+function mark_undep_bits!(point_types::Array{PointType, 3}, imp_scale::Array{T, 3}) where {T}
     @inbounds for i in eachindex(imp_scale)
-        imp_scale[i] *= !is_fixed_point_type(point_types[i])
         point_types[i] += undepleted_bit * (is_pn_junction_point_type(point_types[i]) && imp_scale[i] < 1)
     end
     nothing
