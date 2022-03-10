@@ -3,13 +3,22 @@ include("DielectricDistribution.jl")
 include("ElectricPotential.jl")
 include("WeightingPotential.jl")
 include("PointTypes.jl")
+include("ImpurityScale.jl")
 
-const ScalarPotential{T, N, S, AT} = Union{ElectricPotential{T, N, S, AT}, WeightingPotential{T, N, S, AT}, PointTypes{T, N, S, AT}, EffectiveChargeDensity{T, N, S, AT}, DielectricDistribution{T, N, S, AT}}
+const ScalarPotential{T, N, S, AT} = Union{
+    ElectricPotential{T, N, S, AT},
+    WeightingPotential{T, N, S, AT},
+    PointTypes{T, N, S, AT},
+    EffectiveChargeDensity{T, N, S, AT},
+    DielectricDistribution{T, N, S, AT},
+    ImpurityScale{T, N, S, AT}
+}
 
 ScalarPotential(::ElectricPotential, data, grid) = ElectricPotential(data, grid)
 ScalarPotential(::WeightingPotential, data, grid) = WeightingPotential(data, grid)
 ScalarPotential(::PointTypes, data, grid) = PointTypes(data, grid)
 ScalarPotential(::EffectiveChargeDensity, data, grid) = EffectiveChargeDensity(data, grid)
+ScalarPotential(::ImpurityScale, data, grid) = ImpurityScale(data, grid)
 
 get_axes_type(::Type{Tuple{AT1, AT2, AT3}}) where {AT1, AT2, AT3} = (AT1, AT2, AT3)
 
