@@ -73,7 +73,8 @@ calculate_electric_potential!( sim_undep,
 plot(
     plot(sim_undep.electric_potential),
     plot(sim_undep.point_types),
-    layout = (1, 2), size = (800, 700)
+    plot(sim_undep.imp_scale),
+    layout = (1, 3), size = (1200, 600)
 )
 #jl savefig("tutorial_calculated_potential_undep.pdf") # hide
 #md savefig("tutorial_calculated_potential_undep.pdf") # hide
