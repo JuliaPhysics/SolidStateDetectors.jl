@@ -463,7 +463,7 @@ function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential},
     );
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
-    sim.imp_scale = ImpurityScale(ElectricPotentialArray(pcs), grid)
+    sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
     sim.point_types = PointTypes(PointTypeArray(pcs), grid)
@@ -595,7 +595,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
 
     grid = Grid(pcs)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
-    sim.imp_scale = ImpurityScale(ElectricPotentialArray(pcs), grid)
+    sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
@@ -737,7 +737,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
         pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
                                         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
-        sim.imp_scale = ImpurityScale(ElectricPotentialArray(pcs), sim.electric_potential.grid)
+        sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(sim.electric_potential.grid))

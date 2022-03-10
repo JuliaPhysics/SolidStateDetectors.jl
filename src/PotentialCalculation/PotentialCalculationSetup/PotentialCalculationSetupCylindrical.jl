@@ -419,7 +419,7 @@ function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3
     return pot
 end
 
-function ImpurityScale(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
+function ImpurityScaleArray(pcs::PotentialCalculationSetup{T, Cylindrical, 3, Array{T, 3}})::Array{T, 3} where {T}
     s::Array{T, 3} = Array{T, 3}(undef, size(pcs.grid))
     for iz in axes(s, 3)
         irbz::Int = rbidx(iz)
