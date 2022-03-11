@@ -1,6 +1,7 @@
 ϵ0 = SolidStateDetectors.ϵ0 * u"F / m"
 e = SolidStateDetectors.elementary_charge * u"C"
 
+struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
 
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
@@ -22,6 +23,48 @@ e = SolidStateDetectors.elementary_charge * u"C"
     C_ssd = calculate_capacitance_matrix(sim)
     @testset "Capacity" begin
         @test all(isapprox.(C_ssd, C_Analytical, rtol = 0.001))
+    end   
+
+    @testset "Depletion Handling: PN Junction" begin
+        function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T}
+            x = pt[1]
+            ρ0 = -3e16
+            return x == 0 ? 0 : (x < 0 ? -ρ0 : ρ0/2)
+        end
+        
+        sim.detector = SolidStateDetector(sim.detector, DummyImpurityDensity{T}());
+
+        calculate_electric_potential!(sim, 
+            device_array_type = device_array_type, 
+            depletion_handling = true,
+            convergence_limit = 1e-7, 
+            max_tick_distance = (0.02, 1, 1) .* u"cm",
+            min_tick_distance = 1e-12u"m",
+            refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01, 0.005], 
+            verbose = false
+        )
+
+        x_ext = SolidStateDetectors.get_extended_ticks(sim.electric_potential.grid.axes[1]);
+        Δx_ext = diff(x_ext);
+        mpx = midpoints(x_ext);
+        Δmpx = diff(mpx);
+
+        Q_integrated = sum((
+            sim.q_eff_imp.data .* 
+            sim.imp_scale.data .* 
+            .!SolidStateDetectors.is_undepleted_point_type.(sim.point_types.data) .* 
+            .!SolidStateDetectors.is_fixed_point_type.(sim.point_types.data)
+        )[:,1,1] .* Δmpx);
+        Q_scale = sum(abs.(
+            sim.q_eff_imp.data .* 
+            .!SolidStateDetectors.is_undepleted_point_type.(sim.point_types.data) .* 
+            .!SolidStateDetectors.is_fixed_point_type.(sim.point_types.data)
+        )[:,1,1] .* Δmpx)
+        @test isapprox(Q_integrated / Q_scale, 0, atol = 1e-3)
+
+        x_depl_left  = findfirst(cd -> isone(cd), sim.imp_scale.data[2:end-1, 1, 1]) 
+        x_depl_right = findlast( cd -> isone(cd), sim.imp_scale.data[2:end-1, 1, 1]) + 2
+        @test isapprox(-sim.q_eff_imp.grid[1][x_depl_right] / sim.q_eff_imp.grid[1][x_depl_left], 2, atol = 1e-3)
     end
 end
 
@@ -66,16 +109,12 @@ end
     @test all(isapprox.(C_Analytical, C_ssd, rtol = 0.03))
 end
 
-
-struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
-
-
 @testset "InfiniteCoaxialCapacitor" begin
     sim_cyl = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
     sim_car = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords])
     BV_true = (maximum(broadcast(c -> c.potential, sim_cyl.detector.contacts)) - minimum(broadcast(c -> c.potential, sim_cyl.detector.contacts)))* u"V"
     ϵr = sim_cyl.detector.semiconductor.material.ϵ_r
-    R1 = sim_cyl.detector.contacts[1].geometry.r[1][1] * u"m"
+    R1 = sim_cyl.detector.contacts[1].geometry.r[1][2] * u"m"
     R2 = sim_cyl.detector.contacts[2].geometry.r[1][1] * u"m"
     V1 = sim_cyl.detector.contacts[1].potential * u"V"
     V2 = sim_cyl.detector.contacts[2].potential * u"V"
@@ -162,5 +201,50 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     @testset "Potential RMS" begin
         @test potential_rms_cyl < 1e-3
         @test potential_rms_car < 1e-3
+    end
+
+
+    @testset "Depletion Handling: PN Junction" begin
+        sim = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
+        sim.detector = SolidStateDetector(sim.detector, DummyImpurityDensity{T}());
+        r_pn_junction = sim.detector.contacts[2].geometry.r[1][1] - 0.015
+        function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CylindricalPoint{T})::T where {T}
+            r = pt[1]
+            ρ0 = 2e14
+            if ustrip(R1) < r < ustrip(R2)
+                # return r == r_pn_junction ? 0 : (r < r_pn_junction ? ρ0 : -ρ0)
+                ρ0 * erf(2000*(r - r_pn_junction)) 
+            else 
+                return 0
+            end
+        end
+        function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T}
+            SolidStateDetectors.get_impurity_density(cdm, CylindricalPoint(pt))
+        end
+        calculate_electric_potential!(sim, 
+            device_array_type = device_array_type, 
+            depletion_handling = true,
+            convergence_limit = 1e-7, 
+            max_tick_distance = (0.05 * u"cm"),
+            refinement_limits = [0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001], 
+            verbose = false
+        )
+     
+        r_ext = SolidStateDetectors.get_extended_ticks(sim.electric_potential.grid.axes[1])
+        mpr = midpoints(r_ext)
+        Δmpr_squared = T(0.5) .* ((mpr[2:end].^2) .- (mpr[1:end-1].^2))
+
+        Q_integrated = sum((
+            sim.q_eff_imp.data .* 
+            sim.imp_scale.data .* 
+            .!SolidStateDetectors.is_undepleted_point_type.(sim.point_types.data) .* 
+            .!SolidStateDetectors.is_fixed_point_type.(sim.point_types.data)
+        )[:,1,1] .* Δmpr_squared);
+        Q_scale = sum(abs.(
+            sim.q_eff_imp.data .* 
+            .!SolidStateDetectors.is_undepleted_point_type.(sim.point_types.data) .* 
+            .!SolidStateDetectors.is_fixed_point_type.(sim.point_types.data)
+        )[:,1,1] .* Δmpr_squared)
+        @test isapprox(Q_integrated / Q_scale, 0, atol = 1e-3)
     end
 end

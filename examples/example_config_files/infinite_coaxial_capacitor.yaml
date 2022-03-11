@@ -47,7 +47,7 @@ detectors:
           tube:
             r:
               from: 5
-              to: 5
+              to: 5.1
             h: 2
       - material: HPGe
         id: 2
@@ -55,6 +55,6 @@ detectors:
         geometry:
           tube:
             r:
-              from: 35
+              from: 34.9
               to: 35
             h: 2
