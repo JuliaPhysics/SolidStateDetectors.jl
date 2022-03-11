@@ -14,6 +14,10 @@ function _get_potential_plot_information(::PointTypes)::Tuple{Symbol, Tuple{Real
     return (:viridis, (0, 7), "Point Type Map", Unitful.NoUnits)
 end
 
+function _get_potential_plot_information(::ImpurityScale)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
+    return (:viridis, (0, 1), "Impurity Scale", Unitful.NoUnits)
+end
+
 function get_crosssection_idx_and_value(grid::Grid, ::Any, ::Any, ::Any)
     error(ArgumentError, ": The cross section your are trying to plot is not given in the right format.\nPlease pass a number with matching or no units.")
 end

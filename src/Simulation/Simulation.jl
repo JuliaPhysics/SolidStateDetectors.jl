@@ -16,6 +16,7 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `detector::Union{SolidStateDetector{T}, Missing}`: The [`SolidStateDetector`](@ref) of the simulation.
 * `world::World{T, 3, CS}`: The [`World`](@ref) of the simulation.
 * `q_eff_imp::Union{EffectiveChargeDensity{T}, Missing}`: Effective charge resulting from the impurites in the [`Semiconductor`](@ref) of the `detector`.
+* `imp_scale::Union{ImpurityScale{T}, Missing}`: Scale (alpha channel) of the impurity density (for depletion handling).  
 * `q_eff_fix::Union{EffectiveChargeDensity{T}, Missing}`: Fixed charge resulting from fixed space charges in [`Passive`](@ref) of the `detector`.
 * `ϵ_r::Union{DielectricDistribution{T}, Missing}`: The [`DielectricDistribution`](@ref) of the simulation.
 * `point_types::Union{PointTypes{T}, Missing}`: The [`PointTypes`](@ref) of the simulation.
@@ -30,7 +31,7 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     detector::Union{SolidStateDetector{T}, Missing}
     world::World{T, 3, CS}
     q_eff_imp::Union{EffectiveChargeDensity{T}, Missing} # Effective charge coming from the impurites of the semiconductors
-    imp_scale::Union{ElectricPotential{T}, Missing} 
+    imp_scale::Union{ImpurityScale{T}, Missing} 
     q_eff_fix::Union{EffectiveChargeDensity{T}, Missing} # Fixed charge coming from fixed space charges, e.g. charged up surface layers
     ϵ_r::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
@@ -95,9 +96,9 @@ function Simulation(nt::NamedTuple)
             * undepleted point -> imp_scale = 0;  
             * depleted point -> imp_scale = 1;  
         """
-        ElectricPotential(T.(.!is_undepleted_point_type.(sim.point_types.data)), sim.point_types.grid)
+        ImpurityScale(T.(.!is_undepleted_point_type.(sim.point_types.data)), sim.point_types.grid)
     else
-        ElectricPotential(nt.imp_scale)
+        ImpurityScale(nt.imp_scale)
     end
     sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
     sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
@@ -462,7 +463,7 @@ function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential},
     );
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
-    sim.imp_scale = ElectricPotential(ImpurityScale(pcs), grid)
+    sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
     sim.point_types = PointTypes(PointTypeArray(pcs), grid)
@@ -594,7 +595,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
 
     grid = Grid(pcs)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
-    sim.imp_scale = ElectricPotential(ImpurityScale(pcs), grid)
+    sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
@@ -736,7 +737,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
         pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
                                         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
-        sim.imp_scale = ElectricPotential(ImpurityScale(pcs), sim.electric_potential.grid)
+        sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(sim.electric_potential.grid))

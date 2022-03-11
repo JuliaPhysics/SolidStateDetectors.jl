@@ -133,14 +133,17 @@ function innerloop!(
             neighbor_potentials
         )
 
+        update_point = pcs.point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0
+
         if depletion_handling_enabled
-            new_potential, pcs.imp_scale[i1, i2, i3, rb_tar_idx] = handle_depletion(
+            new_potential, new_imp_scale = handle_depletion(
                 new_potential,
                 pcs.imp_scale[i1, i2, i3, rb_tar_idx],
                 r0_handling_depletion_handling(neighbor_potentials, S, in3),
                 pcs.q_eff_imp[i1, i2, i3, rb_tar_idx],
                 pcs.volume_weights[i1, i2, i3, rb_tar_idx]
             )
+            pcs.imp_scale[i1, i2, i3, rb_tar_idx] = ifelse(update_point, new_imp_scale, pcs.imp_scale[i1, i2, i3, rb_tar_idx])
         end
 
         if !_is_weighting_potential
@@ -156,7 +159,7 @@ function innerloop!(
             new_potential = apply_over_relaxation(new_potential, old_potential, get_sor_constant(pcs.sor_const, S, in3))
         end
 
-        pcs.potential[i1, i2, i3, rb_tar_idx] = ifelse(pcs.point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
+        pcs.potential[i1, i2, i3, rb_tar_idx] = ifelse(update_point, new_potential, old_potential)
     end
     nothing
 end

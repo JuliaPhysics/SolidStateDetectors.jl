@@ -57,14 +57,17 @@
         neighbor_potentials
     )
 
+    update_point = point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0
+
     if depletion_handling_enabled
-        new_potential, imp_scale[i1, i2, i3, rb_tar_idx] = handle_depletion(
+        new_potential, new_imp_scale = handle_depletion(
             new_potential,
             imp_scale[i1, i2, i3, rb_tar_idx],
             r0_handling_depletion_handling(neighbor_potentials, S, in3),
             q_eff_imp[i1, i2, i3, rb_tar_idx],
             volume_weights[i1, i2, i3, rb_tar_idx]
         )
+        imp_scale[i1, i2, i3, rb_tar_idx] = ifelse(update_point, new_imp_scale, imp_scale[i1, i2, i3, rb_tar_idx])
     end
 
     if !is_weighting_potential
@@ -80,7 +83,7 @@
         new_potential = apply_over_relaxation(new_potential, old_potential, get_sor_constant(sor_const, S, in3))
     end
 
-    potential[i1, i2, i3, rb_tar_idx] = ifelse(point_types[i1, i2, i3, rb_tar_idx] & update_bit > 0, new_potential, old_potential)
+    potential[i1, i2, i3, rb_tar_idx] = ifelse(update_point, new_potential, old_potential)
     nothing
 end
 
