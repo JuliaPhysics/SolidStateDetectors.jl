@@ -4,9 +4,11 @@ using Test
 # using CUDAKernels # Uncomment this line in order to run all tests on (CUDA) GPU
 using SolidStateDetectors
 
-using Unitful
+using SpecialFunctions
 using StaticArrays
+using StatsBase
 using Tables, TypedTables
+using Unitful
 
 T = Float32
 device_array_type = (@isdefined CUDAKernels) ? CUDAKernels.CUDA.CuArray : Array

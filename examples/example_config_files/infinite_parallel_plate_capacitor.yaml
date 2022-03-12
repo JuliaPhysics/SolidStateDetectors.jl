@@ -1,6 +1,6 @@
 name: Infinite Parallel Plate Capacitor
 units:
-  length: mm
+  length: cm
   angle: deg
   potential: V
   temperature: K
@@ -12,12 +12,12 @@ grid:
       to: 0.5
       boundaries: reflecting
     y:
-      from: -5
-      to: 5
+      from: -0.5
+      to: 0.5
       boundaries: reflecting
     z:
-      from: -5
-      to: 5
+      from: -0.5
+      to: 0.5
       boundaries: reflecting
 medium: HPGe
 detectors:
@@ -43,7 +43,7 @@ detectors:
     contacts:
       - material: HPGe
         name: n+ contact
-        potential: 10
+        potential: 100
         id: 1
         geometry:
           box:
