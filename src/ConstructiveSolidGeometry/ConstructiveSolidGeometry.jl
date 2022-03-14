@@ -44,7 +44,7 @@ module ConstructiveSolidGeometry
     abstract type ClosedPrimitive end
     abstract type OpenPrimitive end
 
-    abstract type AbstractVolumePrimitive{T, CO} <: AbstractPrimitive{T} end
+    abstract type AbstractVolumePrimitive{T, CO <: Union{ClosedPrimitive, OpenPrimitive}} <: AbstractPrimitive{T} end
     abstract type AbstractSurfacePrimitive{T} <: AbstractPrimitive{T} end
     abstract type AbstractLinePrimitive{T} <: AbstractPrimitive{T} end
 
