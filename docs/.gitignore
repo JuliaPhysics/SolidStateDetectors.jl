@@ -1,6 +1,6 @@
 build/
 site/
-src/ssd_tutorial.ipynb
-src/ssd_tutorial.jl
-src/tutorial.md
-src/man/primitives.jl
+src/tutorials/*.ipynb
+src/tutorials/*.md
+src/tutorials/*.jl
+!src/tutorials/*_lit.jl

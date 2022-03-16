@@ -16,12 +16,15 @@ function fix_literate_output(content)
     return content
 end
 
-gen_content_dir = joinpath(@__DIR__, "src")
-tutorial_src = joinpath(@__DIR__, "src", "tutorial_lit.jl")
-Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", documenter = true, credit = true, postprocess = fix_literate_output)
-#Literate.markdown(tutorial_src, gen_content_dir, name = "tutorial", codefence = "```@repl tutorial" => "```", documenter = true, credit = true)
-Literate.notebook(tutorial_src, gen_content_dir, execute = false, name = "ssd_tutorial", documenter = true, credit = true)
-Literate.script(tutorial_src, gen_content_dir, keep_comments = false, name = "ssd_tutorial", documenter = true, credit = false)
+gen_content_dir = joinpath(@__DIR__, "src", "tutorials")
+for tut_lit_fn in filter(fn -> endswith(fn, "_lit.jl"), readdir(gen_content_dir))
+    lit_src_fn = joinpath(gen_content_dir, tut_lit_fn)
+    tut_basename = tut_lit_fn[1:end-7] # remove "_lit.jl"
+    Literate.markdown(lit_src_fn, gen_content_dir, name = tut_basename, documenter = true, credit = true, postprocess = fix_literate_output)
+    Literate.notebook(lit_src_fn, gen_content_dir, execute = false, name = tut_basename, documenter = true, credit = true)
+    Literate.script(lit_src_fn, gen_content_dir, keep_comments = false, name = tut_basename, documenter = true, credit = false)
+end
+
 
 makedocs(
     sitename = "SolidStateDetectors.jl",
@@ -41,7 +44,10 @@ makedocs(
             "IO" => "man/IO.md",
             "Plotting" => "man/plotting.md",
         ],
-        "Tutorial" => "tutorial.md",
+        "Tutorials" => [
+            "tutorials/complete_simulation_chain_IVC.md",
+            "tutorials/custom_impurity_density_pn_junction.md",
+        ],
         "API" => "api.md",
         "LICENSE" => "LICENSE.md",
     ],

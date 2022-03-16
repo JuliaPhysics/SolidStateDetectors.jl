@@ -39,6 +39,16 @@ plot(
 One contribution to the charge density $\rho(\vec{r})$ is the impurity density of the semiconductor of a detector.
 Some simple impurity density profiles are already implemented in SolidStateDetectors.jl and can be easily accessed in the configuration files. Note that all impurity densities are given in units of **atoms / particles** per volume.
 
+!!! note "Sign of the impurity density"
+    The sign of the impurity density determines whether it is p-type or n-type.
+
+    p-type region <-> negative sign: Holes are the majority carriers and are free to move and diffuse into the n-type region. 
+        Electrons are fixed in the lattice. Thus, a negative fixed space charge density is left behind in the depleted p-type region.
+
+    n-type region <-> positive sign: Electrons are the majority carriers and are free to move and diffuse into the p-type region. 
+        Holes are fixed in the lattice. Thus, a positive fixed space charge density is left behind in the depleted n-type region.
+
+
 ### Constant Impurity Density
 
 A constant impurity density throughout the detector volume can be modeled with `ConstantImpurityDensity`.
@@ -102,6 +112,7 @@ The source code for the previously introduced impurity densities can be found [h
 Each custom impurity density is a new `struct` and subtype of `SolidStateDetectors.AbstractImpurityDensity`
 and needs a method `SolidStateDetectors.get_impurity_density` that returns the impurity density at a given point `pt`.
 
+
 #### Example 1: Radially Oscillating Impurity Density
 
 ```julia
@@ -141,6 +152,9 @@ function SolidStateDetectors.get_impurity_density(tcdm::TranslatedImpurityDensit
 end
 ```
 
+#### Example 3: P-N Junction
+
+Have a look at [Advanced Example: Custom Impurity Profile](@ref).
 
 ## Charge Densities
 
