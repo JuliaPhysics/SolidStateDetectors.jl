@@ -1,4 +1,4 @@
-# # Example 1: Inverted Coax Detector
+# # Simulation Chain: Inverted Coax Detector
 
 using Plots
 using SolidStateDetectors
@@ -165,8 +165,6 @@ calculate_capacitance_matrix(sim)
 
 # ## Detector waveform generation
 
-# ### Single-event simulation
-
 # Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the resulting detector charge signals (e.g. at the point contact):
 
 simulate!(evt, sim) # drift_charges + signal generation of all channels
@@ -187,6 +185,3 @@ plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xla
 #md savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.svg"); nothing # hide
 #md # [![tutorial_waveform_contributions](tutorial_waveform_contributions.svg)](tutorial_waveform_contributions.pdf)
-
-
-
