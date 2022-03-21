@@ -22,18 +22,19 @@ using SolidStateDetectors
 using Unitful
 
 sim = Simulation{Float32}(SSD_examples[:InfiniteParallelPlateCapacitor])
-plot(sim.detector)
+plot( sim.detector.semiconductor, fillalpha = 0.4)
+plot!(sim.detector, xlims = (-0.006, 0.006), aspect_ratio = :none)
 
 # ## Define the Impurity Density
 
-# Now, we define the model for impurity density of the p-n junction.
+# Now, we define the model for the impurity density of the p-n junction.
 # In order to do so, we need two define two things.
 
 # 1. We have to define a `struct` which has to be 
 # subtype of `SolidStateDetectors.AbstractImpurityDensity{T}`.
 # We define the model with two parameters in order to be able to vary the density level 
-# on the p-type and n-type regions independently. 
-# More parameters could be added. E.g., the position of the p-n junction.
+# in the p-type and n-type regions independently. 
+# More parameters could be added, e.g., the position of the p-n junction.
 
 struct PNJunctionImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} 
     p_type_density::T
@@ -43,14 +44,12 @@ end
 # 2. We have to define a method for `SolidStateDetectors.get_impurity_density` for our 
 # just defined impurity density. 
 # It has to take two arguments. An instance of our model and a point.
-# Since the infinite parallel plate capacitor is configured to be calculated on a cartesian grid,
-# the point has to be a `CartesianPoint`.
 # The function returns the impurity density at the respective position.
 # The returned value has to be in units of 1/m``^{3}``.
 
 #=
 !!! note "Sign of the impurity density"
-    The sign of the impurity density determines whether it is p-type or n-type.
+    The sign of the impurity density determines whether the semiconductor is p-type or n-type.
 
     p-type region <-> negative sign: Holes are the majority carriers and are free to move and diffuse into the n-type region. 
         Electrons are fixed in the lattice. Thus, a negative fixed space charge density is left behind in the depleted p-type region.
@@ -61,9 +60,10 @@ end
 
 function SolidStateDetectors.get_impurity_density(
     cdm::PNJunctionImpurityDensity{T}, 
-    pt::CartesianPoint{T}
+    pt::SolidStateDetectors.AbstractCoordinatePoint{T}
 )::T where {T}
-    x = pt[1] # In this example, we only need the `x` coordinate of the point.
+    cpt = CartesianPoint(pt)
+    x = cpt[1] # In this example, we only need the `x` coordinate of the point.
     if x > 0
         -cdm.p_type_density # p-type region -> electrons are fixed -> negative charge 
     else 
@@ -78,7 +78,6 @@ end
 # and assign it to the detector.
 
 pn_junction_impurity_density = PNJunctionImpurityDensity{Float32}(3e16, 1.5e16)
-
 sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density);
 
 # We are now ready to calculate the electric potential. 
@@ -88,7 +87,7 @@ sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density);
 # to be calculated in 3D.
 # Afterwards, we also calculate the electric field and plot the 
 # electric potential, impurity scale map and the point type map. 
-# The two latter ons show us where the detector is depleted (`impurity scale == 1`).
+# The two latter ones show us where the detector is depleted (`imp_scale == 1`).
 
 calculate_electric_potential!(
     sim, 
@@ -96,8 +95,7 @@ calculate_electric_potential!(
     max_tick_distance = (0.002, 1, 1) .* u"cm",
     min_tick_distance = (1e-7, 1, 1) .* u"m",
     refinement_limits = [0.005, 0.001],
-    depletion_handling = true,
-    verbose = true
+    depletion_handling = true
 )
 calculate_electric_field!(sim)
 
@@ -112,25 +110,31 @@ plot(
 
 # ## 1D Plots of the P-N Junction
 
-# As this is in principle a 1D simulation, lets better plot the 
-# charge density from the impurities, the electric potential and the electric field only over `x`.
+# As this is in principle a 1D simulation, it is most reasonable to plot the
+# charge density from the impurities, the electric potential and 
+# the electric field strength (here equals the `x` component of the electric field) 
+# only over `x`.
 
-xs = sim.electric_potential.grid[1] * 1000;
+xs = uconvert.(u"mm", sim.electric_potential.grid[1] * u"m");
 plot(
     begin
-        plot(xs, sim.q_eff_imp.data[:, 1, 1] .* sim.imp_scale[:, 1, 1], lw = 4, label ="", yguide = "\$\\rho\$ [e/m\$^3\$]")
+        ρ_x = map(x -> SolidStateDetectors.get_impurity_density(
+            sim.detector.semiconductor.impurity_density_model, CartesianPoint{Float32}(x, 0, 0)),
+            sim.electric_potential.grid[1]
+        )
+        plot(xs, ρ_x .* sim.imp_scale[:, 1, 1], lw = 4, label ="", xguide = "x", unitformat = :square, yguide = "\$\\rho\$ [e/m\$^3\$]")
         vline!([sim.detector.contacts[1].geometry.origin.x] * 1000, lw = 4, color = "green", label = "N+ Contact")
         vline!([sim.detector.contacts[2].geometry.origin.x] * 1000, lw = 4, color = "red", label = "P+ Contact")
         vline!([0], lw = 4, color = "black", label = "p-n junction")
     end,
     begin
-        plot(xs, sim.electric_potential.data[:,1,1], lw = 4, label ="", yguide = "\$\\Phi\$ [V]")
+        plot(xs, sim.electric_potential.data[:,1,1], lw = 4, label ="", xguide = "x", unitformat = :square, yguide = "\$\\Phi\$ [V]")
         vline!([sim.detector.contacts[1].geometry.origin.x] * 1000, lw = 4, color = "green", label = "N+ Contact")
         vline!([sim.detector.contacts[2].geometry.origin.x] * 1000, lw = 4, color = "red", label = "P+ Contact")
         vline!([0], lw = 4, color = "black", label = "p-n junction")
     end,
     begin
-        plot(xs, map(E -> E[1]/1000, sim.electric_field.data[:,1,1]), lw = 4, label ="", yguide = "\$\\mathcal{E}_z\$ [V/mm]")
+        plot(xs, map(E -> E[1]/1000, sim.electric_field.data[:,1,1]), lw = 4, label ="", xguide = "x", unitformat = :square, yguide = "\$\\mathcal{E}_x\$ [V/mm]")
         vline!([sim.detector.contacts[1].geometry.origin.x] * 1000, lw = 4, color = "green", label = "N+ Contact")
         vline!([sim.detector.contacts[2].geometry.origin.x] * 1000, lw = 4, color = "red", label = "P+ Contact")
         vline!([0], lw = 4, color = "black", label = "p-n junction")
@@ -139,5 +143,4 @@ plot(
     xlims = (-5.1, 5.1),
     size = (800, 800),
     lw = 2,
-    xguide = "x [mm]"
 )

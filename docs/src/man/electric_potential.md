@@ -40,7 +40,7 @@ One contribution to the charge density $\rho(\vec{r})$ is the impurity density o
 Some simple impurity density profiles are already implemented in SolidStateDetectors.jl and can be easily accessed in the configuration files. Note that all impurity densities are given in units of **atoms / particles** per volume.
 
 !!! note "Sign of the impurity density"
-    The sign of the impurity density determines whether it is p-type or n-type.
+    The sign of the impurity density determines whether the semiconductor is p-type or n-type.
 
     p-type region <-> negative sign: Holes are the majority carriers and are free to move and diffuse into the n-type region. 
         Electrons are fixed in the lattice. Thus, a negative fixed space charge density is left behind in the depleted p-type region.
