@@ -188,6 +188,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                         ig = find_closest_gridpoint(pt, point_types.grid)
                         if is_undepleted_point_type(point_types.data[ig...]) 
                             ϵ[ix, iy, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor) * (1 - imp_scale[ig...])
+                        elseif is_fixed_point_type(point_types.data[ig...])
+                            ϵ[ix, iz, iz] *= scaling_factor_for_permittivity_in_undepleted_region(det.semiconductor)
                         end
                     end
                 end
