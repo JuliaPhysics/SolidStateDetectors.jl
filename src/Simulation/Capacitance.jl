@@ -49,8 +49,10 @@ function _calculate_mutual_capacitance(
 end
 
 function _calculate_mutual_capacitance(grid::Grid{T, 3, CS}, grid_mps, int_ϵ_r, int_p1, int_p2) where {T, CS}
-    c_ij::T = zero(T)
-    for i3 in 1:size(grid, 3)-1
+    c_ij_vector = zeros(Float64, size(grid, 3)-1) 
+    # In some cases, the sum of many Float32's (of different order of magnitudes) 
+    # can lead to large errors on the sum => Use Float64 as the datatype for the sum.
+    @inbounds Base.Threads.@threads for i3 in 1:size(grid, 3)-1
         for i2 in 1:size(grid, 2)-1
             for i1 in 1:size(grid, 1)-1
                 w1, w2, w3 = voxel_widths(grid, i1, i2, i3)
@@ -62,11 +64,11 @@ function _calculate_mutual_capacitance(grid::Grid{T, 3, CS}, grid_mps, int_ϵ_r,
                 efs_1 = _approximate_potential_gradient(int_p1, grid, i1, i2, i3, w1, w2, w3) 
                 efs_2 = _approximate_potential_gradient(int_p2, grid, i1, i2, i3, w1, w2, w3) 
 
-                c_ij += sum(efs_1 .* efs_2) * dV * ϵ_r_voxel
+                c_ij_vector[i3] += Float64(sum(efs_1 .* efs_2) * dV * ϵ_r_voxel)
             end
         end
     end
-    return c_ij
+    return T(sum(c_ij_vector))
 end
 
 function _approximate_potential_gradient(int_p, grid::Grid{T, 3, CS}, i1, i2, i3, w1, w2, w3) where {T, CS}
