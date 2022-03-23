@@ -27,7 +27,7 @@ end
         aspect_ratio --> 1.0
     end 
     @series begin
-        seriestype --> :scatter
+        if !isempty(v) seriestype --> :scatter end
         [v[i].x for i in eachindex(v)]*internal_length_unit, [v[i].y for i in eachindex(v)]*internal_length_unit, [v[i].z for i in eachindex(v)]*internal_length_unit
     end
 end
