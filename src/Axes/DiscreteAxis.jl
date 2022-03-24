@@ -280,6 +280,7 @@ end
 Base.convert(T::Type{NamedTuple}, x::DiscreteAxis; unit = u"m/m") = T(x)
 
 function merge_closest_ticks!(v::AbstractVector{T}, n::Int = length(v); min_diff::T = T(1e-6)) where {T}
+    n == 1 && return n
     Δv = diff(v[1:n])
     Δ_min, Δv_min_indx = findmin(Δv)
     vFirst = v[1]
