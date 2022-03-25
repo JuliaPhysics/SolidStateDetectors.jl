@@ -47,3 +47,19 @@ function ImpurityScale(nt::NamedTuple)
     ImpurityScale{T, N, S, typeof(grid.axes)}(nt.values, grid)
 end
 Base.convert(T::Type{ImpurityScale}, x::NamedTuple) = T(x)
+
+
+"""
+    get_ticks_at_positions_of_edge_of_depleted_volumes(field::ImpurityScale{T, 3})
+
+The impurity scale field is analyzed in order to find and return ticks where the gradient is strong,
+which is the case at the surface of the depleted volume of a semiconductor.
+"""
+function get_ticks_at_positions_of_edge_of_depleted_volumes(field::ImpurityScale{T, 3}) where T
+    dims = (1, 2, 3)
+    mps::NTuple{3, Vector{T}} = broadcast(idim -> StatsBase.midpoints(field.grid[idim]), dims)
+    extended = length.(mps) .> 0
+    max_diffs = broadcast(idim -> extended[idim] ? map(i->maximum(abs.(selectdim(field.data, idim, i+1) .- selectdim(field.data, idim, i))), eachindex(mps[idim]))::Vector{T} : T[], dims);
+    inds = broadcast(idim -> extended[idim] ? findall(Δ -> 0.5 < Δ < 1, max_diffs[idim]) : Int[], dims) # 0.5 seems to be a good limit as we don't want to add too many ticks. 
+    return broadcast(idim -> extended[idim] ? mps[idim][inds[idim]] : T[], dims)
+end

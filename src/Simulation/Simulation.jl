@@ -231,15 +231,36 @@ function Grid(sim::Simulation{T, Cylindrical};
                 add_points_between_important_point::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
     world = sim.world 
+    world_Δs = width.(world.intervals)
+    world_Δr, world_Δφ, world_Δz = world_Δs
                 
     samples::Vector{CylindricalPoint{T}} = sample(det, Cylindrical)
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
+    important_points = (important_r_points, important_φ_points, important_z_points)
 
-    world_Δr, world_Δφ, world_Δz = width.(world.intervals)
+    if for_weighting_potential 
+        if !ismissing(sim.electric_potential)
+            strong_electric_field_ticks = get_ticks_at_positions_of_large_gradient(sim.electric_potential)
+            for idim in (1, 2, 3)
+                if !isempty(strong_electric_field_ticks[idim]) 
+                    append!(important_points[idim], merge_close_ticks(strong_electric_field_ticks[idim], min_diff = world_Δs[idim] / 20))
+                end
+            end
+        end
+        if !ismissing(sim.imp_scale) 
+            surface_of_depleted_volume_ticks = get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale)
+            for idim in (1, 2, 3)
+                if !isempty(surface_of_depleted_volume_ticks[idim]) 
+                    append!(important_points[idim], merge_close_ticks(surface_of_depleted_volume_ticks[idim], min_diff = world_Δs[idim] / 20))
+                end
+            end
+        end
+    end
+
     world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
-    if for_weighting_potential && world_Δφ > 0 
+    if for_weighting_potential && world_Δφ > 0
         world_φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(0, 2π)
         world_Δφ = width(world_φ_int)
     else
@@ -344,14 +365,34 @@ function Grid(  sim::Simulation{T, Cartesian};
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
     det = sim.detector
     world = sim.world 
+    world_Δs = width.(world.intervals)
+    world_Δx, world_Δy, world_Δz = world_Δs
                 
     samples::Vector{CartesianPoint{T}} = sample(det, Cartesian)
     important_x_points::Vector{T} = map(p -> p.x, samples)
     important_y_points::Vector{T} = map(p -> p.y, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
+    important_points = (important_x_points, important_y_points, important_z_points)
 
-    world_Δx, world_Δy, world_Δz = width.(world.intervals)
-    
+    if for_weighting_potential 
+        if !ismissing(sim.electric_potential)
+            strong_electric_field_ticks = get_ticks_at_positions_of_large_gradient(sim.electric_potential)
+            for idim in (1, 2, 3)
+                if !isempty(strong_electric_field_ticks[idim]) 
+                    append!(important_points[idim], merge_close_ticks(strong_electric_field_ticks[idim], min_diff = world_Δs[idim] / 20))
+                end
+            end
+        end
+        if !ismissing(sim.imp_scale) 
+            surface_of_depleted_volume_ticks = get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale)
+            for idim in (1, 2, 3)
+                if !isempty(surface_of_depleted_volume_ticks[idim]) 
+                    append!(important_points[idim], merge_close_ticks(surface_of_depleted_volume_ticks[idim], min_diff = world_Δs[idim] / 20))
+                end
+            end
+        end
+    end
+
     max_distance_x = T(world_Δx / 4)
     max_distance_y = T(world_Δy / 4)
     max_distance_z = T(world_Δz / 4)
