@@ -245,6 +245,7 @@ function Grid(sim::Simulation{T, Cylindrical};
             strong_electric_field_ticks = get_ticks_at_positions_of_large_gradient(sim.electric_potential)
             for idim in (1, 2, 3)
                 if !isempty(strong_electric_field_ticks[idim]) 
+                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
                     append!(important_points[idim], merge_close_ticks(strong_electric_field_ticks[idim], min_diff = world_Δs[idim] / 20))
                 end
             end
@@ -253,6 +254,7 @@ function Grid(sim::Simulation{T, Cylindrical};
             surface_of_depleted_volume_ticks = get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale)
             for idim in (1, 2, 3)
                 if !isempty(surface_of_depleted_volume_ticks[idim]) 
+                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
                     append!(important_points[idim], merge_close_ticks(surface_of_depleted_volume_ticks[idim], min_diff = world_Δs[idim] / 20))
                 end
             end
@@ -379,6 +381,7 @@ function Grid(  sim::Simulation{T, Cartesian};
             strong_electric_field_ticks = get_ticks_at_positions_of_large_gradient(sim.electric_potential)
             for idim in (1, 2, 3)
                 if !isempty(strong_electric_field_ticks[idim]) 
+                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
                     append!(important_points[idim], merge_close_ticks(strong_electric_field_ticks[idim], min_diff = world_Δs[idim] / 20))
                 end
             end
@@ -387,6 +390,7 @@ function Grid(  sim::Simulation{T, Cartesian};
             surface_of_depleted_volume_ticks = get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale)
             for idim in (1, 2, 3)
                 if !isempty(surface_of_depleted_volume_ticks[idim]) 
+                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
                     append!(important_points[idim], merge_close_ticks(surface_of_depleted_volume_ticks[idim], min_diff = world_Δs[idim] / 20))
                 end
             end
