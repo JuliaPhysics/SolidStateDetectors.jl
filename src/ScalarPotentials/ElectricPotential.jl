@@ -43,15 +43,17 @@ end
 Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
 
 """
-    get_ticks_at_positions_of_large_gradient(field::ElectricPotential)
+    get_ticks_at_positions_of_large_gradient(epot::ElectricPotential)
 
 The electric potential is analyzed in order to find and return ticks where the gradient (electric field) is strong.
+The electric field strength is the strongest at the position of the pn-junction at least for the 1D linear case.
+Thus, this function is likely to return ticks which are located close to the pn-junction of a semiconductor.
 """
-function get_ticks_at_positions_of_large_gradient(field::ElectricPotential{T, 3}) where T
+function get_ticks_at_positions_of_large_gradient(epot::ElectricPotential{T, 3}) where T
     dims = (1, 2, 3)
-    mps::NTuple{3, Vector{T}} = broadcast(idim -> StatsBase.midpoints(field.grid[idim]), dims)
+    mps::NTuple{3, Vector{T}} = broadcast(idim -> StatsBase.midpoints(epot.grid[idim]), dims)
     extended = length.(mps) .> 0
-    max_diffs = broadcast(idim -> extended[idim] ? map(i->maximum(abs.(selectdim(field.data, idim, i+1) .- selectdim(field.data, idim, i))), eachindex(mps[idim]))::Vector{T} : T[], dims);
+    max_diffs = broadcast(idim -> extended[idim] ? map(i->maximum(abs.(selectdim(epot.data, idim, i+1) .- selectdim(epot.data, idim, i))), eachindex(mps[idim]))::Vector{T} : T[], dims);
     max_diff = broadcast(idim -> extended[idim] ? maximum(max_diffs[idim]) : T(0), dims)
     normalized_max_diffs = broadcast(idim -> extended[idim] ? max_diffs[idim] ./ max_diff[idim] : T[], dims)
     inds = broadcast(idim -> extended[idim] ? findall(Δ -> Δ > 0.5, normalized_max_diffs[idim]) : Int[], dims) # 0.5 seems to be a good limit as we don't want to add too many ticks. 
