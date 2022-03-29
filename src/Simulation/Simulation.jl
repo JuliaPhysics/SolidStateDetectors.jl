@@ -238,27 +238,13 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_r_points::Vector{T} = map(p -> p.r, samples)
     important_φ_points::Vector{T} = map(p -> p.φ, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
-    important_points = (important_r_points, important_φ_points, important_z_points)
 
-    if for_weighting_potential 
-        if !ismissing(sim.electric_potential)
-            strong_electric_field_ticks = get_ticks_at_positions_of_large_gradient(sim.electric_potential)
-            for idim in (1, 2, 3)
-                if !isempty(strong_electric_field_ticks[idim]) 
-                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
-                    append!(important_points[idim], merge_close_ticks(strong_electric_field_ticks[idim], min_diff = world_Δs[idim] / 20))
-                end
-            end
-        end
-        if !ismissing(sim.imp_scale) 
-            surface_of_depleted_volume_ticks = get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale)
-            for idim in (1, 2, 3)
-                if !isempty(surface_of_depleted_volume_ticks[idim]) 
-                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
-                    append!(important_points[idim], merge_close_ticks(surface_of_depleted_volume_ticks[idim], min_diff = world_Δs[idim] / 20))
-                end
-            end
-        end
+    second_order_imp_ticks = if for_weighting_potential 
+        strong_electric_field_ticks = !ismissing(sim.electric_potential) ? get_ticks_at_positions_of_large_gradient(sim.electric_potential) : (T[], T[], T[])
+        surface_of_depleted_volume_ticks = !ismissing(sim.imp_scale) ? get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale) : (T[], T[], T[])
+        vcat.(strong_electric_field_ticks, surface_of_depleted_volume_ticks)
+    else
+        (T[], T[], T[])
     end
 
     world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
@@ -292,6 +278,8 @@ function Grid(sim::Simulation{T, Cylindrical};
     iR = searchsortedfirst(important_r_points, world.intervals[1].right)
     important_r_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_points[iL:iR]))
     important_r_points = merge_close_ticks(important_r_points)
+    imp2order_r_points = merge_close_ticks(second_order_imp_ticks[1], min_diff = world_Δs[1] / 20)
+    important_r_points = merge_second_order_important_points(important_r_points, imp2order_r_points)   
     important_r_points = initialize_axis_ticks(important_r_points; max_ratio = T(max_distance_ratio))
     important_r_points = fill_up_ticks(important_r_points, max_distance_r)
 
@@ -304,6 +292,8 @@ function Grid(sim::Simulation{T, Cylindrical};
     iR = searchsortedfirst(important_z_points, world.intervals[3].right)
     important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
     important_z_points = merge_close_ticks(important_z_points)
+    imp2order_z_points = merge_close_ticks(second_order_imp_ticks[3], min_diff = world_Δs[3] / 20)
+    important_z_points = merge_second_order_important_points(important_z_points, imp2order_z_points)
     important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
     important_z_points = fill_up_ticks(important_z_points, max_distance_z)
 
@@ -316,6 +306,8 @@ function Grid(sim::Simulation{T, Cylindrical};
     iR = searchsortedfirst(important_φ_points, world_φ_int.right)
     important_φ_points = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_points[iL:iR]))
     important_φ_points = merge_close_ticks(important_φ_points, min_diff = T(1e-3))
+    imp2order_φ_points = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
+    important_φ_points = merge_second_order_important_points(important_φ_points, imp2order_φ_points)
     important_φ_points = initialize_axis_ticks(important_φ_points; max_ratio = T(max_distance_ratio))
     important_φ_points = fill_up_ticks(important_φ_points, max_distance_φ)
     
@@ -374,27 +366,13 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_x_points::Vector{T} = map(p -> p.x, samples)
     important_y_points::Vector{T} = map(p -> p.y, samples)
     important_z_points::Vector{T} = map(p -> p.z, samples)
-    important_points = (important_x_points, important_y_points, important_z_points)
-
-    if for_weighting_potential 
-        if !ismissing(sim.electric_potential)
-            strong_electric_field_ticks = get_ticks_at_positions_of_large_gradient(sim.electric_potential)
-            for idim in (1, 2, 3)
-                if !isempty(strong_electric_field_ticks[idim]) 
-                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
-                    append!(important_points[idim], merge_close_ticks(strong_electric_field_ticks[idim], min_diff = world_Δs[idim] / 20))
-                end
-            end
-        end
-        if !ismissing(sim.imp_scale) 
-            surface_of_depleted_volume_ticks = get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale)
-            for idim in (1, 2, 3)
-                if !isempty(surface_of_depleted_volume_ticks[idim]) 
-                    # `world_Δs[idim] / 20`: Seems to be a good settings. We don't want to add to many ticks to the initial grid.
-                    append!(important_points[idim], merge_close_ticks(surface_of_depleted_volume_ticks[idim], min_diff = world_Δs[idim] / 20))
-                end
-            end
-        end
+    
+    second_order_imp_ticks = if for_weighting_potential 
+        strong_electric_field_ticks = !ismissing(sim.electric_potential) ? get_ticks_at_positions_of_large_gradient(sim.electric_potential) : (T[], T[], T[])
+        surface_of_depleted_volume_ticks = !ismissing(sim.imp_scale) ? get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale) : (T[], T[], T[])
+        vcat.(strong_electric_field_ticks, surface_of_depleted_volume_ticks)
+    else
+        (T[], T[], T[])
     end
 
     max_distance_x = T(world_Δx / 4)
@@ -422,6 +400,8 @@ function Grid(  sim::Simulation{T, Cartesian};
     iR = searchsortedfirst(important_x_points, world.intervals[1].right)
     important_x_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_points[iL:iR]))
     important_x_points = merge_close_ticks(important_x_points)
+    imp2order_x_points = merge_close_ticks(second_order_imp_ticks[1], min_diff = world_Δs[1] / 20)
+    important_x_points = merge_second_order_important_points(important_x_points, imp2order_x_points)
     important_x_points = initialize_axis_ticks(important_x_points; max_ratio = T(max_distance_ratio))
     important_x_points = fill_up_ticks(important_x_points, max_distance_x)
 
@@ -434,6 +414,8 @@ function Grid(  sim::Simulation{T, Cartesian};
     iR = searchsortedfirst(important_y_points, world.intervals[2].right)
     important_y_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_points[iL:iR]))
     important_y_points = merge_close_ticks(important_y_points)
+    imp2order_y_points = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
+    important_y_points = merge_second_order_important_points(important_y_points, imp2order_y_points)
     important_y_points = initialize_axis_ticks(important_y_points; max_ratio = T(max_distance_ratio))
     important_y_points = fill_up_ticks(important_y_points, max_distance_y)
 
@@ -446,6 +428,8 @@ function Grid(  sim::Simulation{T, Cartesian};
     iR = searchsortedfirst(important_z_points, world.intervals[3].right)
     important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
     important_z_points = merge_close_ticks(important_z_points)
+    imp2order_z_points = merge_close_ticks(second_order_imp_ticks[3], min_diff = world_Δs[3] / 20)
+    important_z_points = merge_second_order_important_points(important_z_points, imp2order_z_points)
     important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
     important_z_points = fill_up_ticks(important_z_points, max_distance_z)
 
@@ -927,7 +911,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
                 "Device: $(onCPU ? "CPU" : "GPU")\n",
-                onCPU && "Max. CPU Threads: $(maximum(max_nthreads))\n",
+                onCPU ? "Max. CPU Threads: $(maximum(max_nthreads))\n" : "",
                 "Coordinate system: $(CS)\n",
                 "N Refinements: -> $(n_refinement_steps)\n",
                 "Convergence limit: $convergence_limit $(isEP ? " => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V" : "")\n",
