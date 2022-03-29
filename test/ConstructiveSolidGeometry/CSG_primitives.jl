@@ -79,4 +79,24 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             @test t.b isa CSG.Torus
         end
     end
+    @testset "Ellipsoid" begin
+        ellip1 = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1f0,origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
+        ellip2 = @inferred CSG.Ellipsoid{Float32}(r=1.0)
+        @test ellip1 === ellip2
+        
+        dict = Dict("sphere"   => Dict(
+                "r"       => 1.0))
+        ellip3 = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(ellip3)
+        @test dict == output
+        
+        ellip_open = @inferred CSG.Ellipsoid(CSG.OpenPrimitive,r=1f0,origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
+        @test in(CartesianPoint{Float32}(1,0,0),ellip1)
+        @test !in(CartesianPoint{Float32}(1,0,0),ellip_open)
+        
+        ellip_closed_trafo = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1.0, origin=1/sqrt(3)*CartesianPoint{Float32}(1,1,1),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
+        ellip_open_trafo = @inferred CSG.Ellipsoid(CSG.OpenPrimitive,r=1.0, origin=1/sqrt(3)*CartesianPoint{Float32}(1,1,1),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
+        @test !in(CartesianPoint{Float64}(-1e-8,0,0),ellip_closed_trafo)
+        @test in(CartesianPoint{Float64}(1e-8,0,0),ellip_open_trafo)
+    end
 end
