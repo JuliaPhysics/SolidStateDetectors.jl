@@ -1,7 +1,7 @@
 """
     struct ImpurityScale{T, N, S, AT} <: AbstractArray{T, N}
         
-Impurity scalar impscale of the simulation.
+Impurity scalar field of the simulation.
 It is kinda an alpha map for the impurity density of semiconductors.
 It can takes values between `0` and `1`:
  * `1`: The impurity density has its full value. For grid points in depleted region of the semiconductor. 
@@ -15,7 +15,7 @@ It can takes values between `0` and `1`:
 * `S`: Coordinate system (`Cartesian` or `Cylindrical`).
 * `AT`: Axes type.  
         
-## impscales
+## Fields
 * `data::Array{T, N}`: Array containing the values of the impurity scale at the discrete points of the `grid`.
 * `grid::Grid{T, N, S, AT}`: [`Grid`](@ref) defining the discrete points for which the impurity scale is determined.
 """
