@@ -45,7 +45,7 @@ Base.convert(T::Type{ElectricPotential}, x::NamedTuple) = T(x)
 """
     get_ticks_at_positions_of_large_gradient(epot::ElectricPotential)
 
-The electric potential is analyzed in order to find and return ticks where the gradient (electric field) is strong.
+The electric potential is analyzed in order to find and return ticks where the gradient (electric field) is strong (relativ to its maximum).
 The electric field strength is the strongest at the position of the pn-junction at least for the 1D linear case.
 Thus, this function is likely to return ticks which are located close to the pn-junction of a semiconductor.
 """
