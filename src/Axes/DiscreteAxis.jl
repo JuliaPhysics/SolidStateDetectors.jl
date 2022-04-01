@@ -313,26 +313,15 @@ end
 """
     merge_second_order_important_points(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
 
-Merges two vectors, removes the entries from the second vector if they are too close 
-to entries of the first vector (via `min_diff`) and returns one sorted vector.
+Merge all elements of the second vector, `imp_second_order`, into the first vector, `imp`, if they are not 
+to close (via `min_diff`) to elements of the first vector.
+Returns the sorted and uniqued vector.
 """
 function merge_second_order_important_points(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
     sorted_imp = sort(imp)
-    all_merged = unique!(sort!(vcat(sorted_imp, imp_second_order)))
-    Δall_merged = diff(all_merged)
-    inds_diff_too_small = findall(Δ -> Δ < min_diff, Δall_merged)
-    delete_inds = Int[]
-    for i in inds_diff_too_small
-        if insorted(all_merged[i], sorted_imp)
-            push!(delete_inds, i+1)
-        elseif insorted(all_merged[i+1], sorted_imp)
-            push!(delete_inds, i)
-        else
-            error("This should never happen.") # I will leave this for now just to be sure.
-        end
-    end
-    deleteat!(all_merged, delete_inds)
-    all_merged
+    nearest_inds = map(x -> searchsortednearest(sorted_imp, x), imp_second_order)
+    merge_inds = filter(i -> abs(sorted_imp[nearest_inds[i]] - imp_second_order[i]) >= min_diff, eachindex(imp_second_order))
+    return unique!(sort!(vcat(imp, imp_second_order[merge_inds])))
 end
 
 function get_new_ticks_to_equalize_ratios_on_side(t::AbstractVector{T}; max_ratio = T(2)) where {T}
