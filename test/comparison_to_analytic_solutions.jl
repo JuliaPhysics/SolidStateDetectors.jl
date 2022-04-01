@@ -43,6 +43,22 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
             refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01, 0.005], 
             verbose = false
         )
+        for i in (1, 2)
+            calculate_weighting_potential!(sim, i,
+                device_array_type = device_array_type, 
+                depletion_handling = true,
+                convergence_limit = 1e-7, 
+                max_tick_distance = (0.02, 1, 1) .* u"cm",
+                min_tick_distance = 1e-12u"m",
+                refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01, 0.005], 
+                verbose = false
+            )
+        end
+        c_12 = calculate_mutual_capacitance(sim, (1, 2))
+        @test isapprox(c_12, -3.496u"pF", atol = 0.01u"pF") #= 
+            Not calculated analytically but tested visually.
+            Just to test if code changes influences the weighting potentials.
+        =#
 
         x_ext = SolidStateDetectors.get_extended_ticks(sim.electric_potential.grid.axes[1]);
         Δx_ext = diff(x_ext);
