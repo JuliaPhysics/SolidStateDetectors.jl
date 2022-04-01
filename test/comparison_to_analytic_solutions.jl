@@ -245,7 +245,22 @@ end
             refinement_limits = [0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001], 
             verbose = false
         )
-     
+        for i in (1, 2)
+            calculate_weighting_potential!(sim, i,
+                device_array_type = device_array_type, 
+                depletion_handling = true,
+                convergence_limit = 1e-7, 
+                max_tick_distance = (0.05 * u"cm"),
+                refinement_limits = [0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001], 
+                verbose = false
+            )
+        end
+        c_12 = calculate_mutual_capacitance(sim, (1, 2))
+        @test isapprox(c_12, -2.378u"pF", atol = 0.01u"pF") #= 
+            Not calculated analytically but tested visually.
+            Just to test if code changes influences the weighting potentials.
+        =#
+
         r_ext = SolidStateDetectors.get_extended_ticks(sim.electric_potential.grid.axes[1])
         mpr = midpoints(r_ext)
         Δmpr_squared = T(0.5) .* ((mpr[2:end].^2) .- (mpr[1:end-1].^2))
