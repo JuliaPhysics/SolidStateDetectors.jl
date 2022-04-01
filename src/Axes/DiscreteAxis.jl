@@ -311,13 +311,13 @@ function merge_close_ticks(v::AbstractVector{T}; min_diff::T = T(1e-6)) where {T
 end
 
 """
-    merge_second_order_important_points(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
+    merge_second_order_important_ticks(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
 
-Merge all elements of the second vector, `imp_second_order`, into the first vector, `imp`, if they are not 
-to close (via `min_diff`) to elements of the first vector.
-Returns the sorted and uniqued vector.
+Merge all elements of the second vector, `imp_second_order`, into the first vector, `imp`, 
+if they are not too close (via `min_diff`) to elements of the first vector.
+Returns the merged vector sorted and uniqued.
 """
-function merge_second_order_important_points(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
+function merge_second_order_important_ticks(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
     sorted_imp = sort(imp)
     nearest_inds = map(x -> searchsortednearest(sorted_imp, x), imp_second_order)
     merge_inds = filter(i -> abs(sorted_imp[nearest_inds[i]] - imp_second_order[i]) >= min_diff, eachindex(imp_second_order))
