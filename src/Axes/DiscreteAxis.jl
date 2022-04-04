@@ -315,13 +315,13 @@ end
 
 Merge all elements of the second vector, `imp_second_order`, into the first vector, `imp`, 
 if they are not too close (via `min_diff`) to elements of the first vector.
-Returns the merged vector sorted and uniqued.
+Returns the merged vector sorted.
 """
 function merge_second_order_important_ticks(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
     sorted_imp = sort(imp)
     nearest_inds = map(x -> searchsortednearest(sorted_imp, x), imp_second_order)
     merge_inds = filter(i -> abs(sorted_imp[nearest_inds[i]] - imp_second_order[i]) >= min_diff, eachindex(imp_second_order))
-    return unique!(sort!(vcat(imp, imp_second_order[merge_inds])))
+    return sort!(vcat(imp, imp_second_order[merge_inds]))
 end
 
 function get_new_ticks_to_equalize_ratios_on_side(t::AbstractVector{T}; max_ratio = T(2)) where {T}
