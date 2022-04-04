@@ -15,7 +15,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         for bot in (2.0, Dict("from" => 1.0, "to" => 2.0)),
             top in (2.0, 1.0, Dict("from" => 1.0, "to" => 2.0), Dict("from" => 2.0, "to" => 4.0)),
             φ in ((30,180),(0,360))
-            
+        
             dict = Dict("difference" => [
                 Dict("cone"   => Dict(
                     "r"       => Dict("bottom" => bot, "top" => top),
@@ -23,9 +23,9 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
                     "h"       => 1.0))
                 for i in 1:2
             ])
-            
+        
             c = Geometry(T, dict, default_units, no_translations)
-            
+        
             # Conversion from Geometry -> Dict and Dict -> Geometry should result in the same geometry
             output = Dictionary(c)
             name = collect(keys(output["difference"][1]))[1] # "tube" or "cone"
@@ -35,15 +35,56 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             # Internally, the primitive stores the offset of phi in a rotation, but it should not be part of the config file
             @test !haskey(output["difference"][1], "rotation")
             @test c.a.rotation ≈ Geometry(T, output, default_units, no_translations).a.rotation
-            
+        
             # No warnings or errors when decomposing the Cones into surfaces
             @test_nowarn CSG.surfaces(c.a)
             @test_nowarn CSG.surfaces(c.b)
-
+        
             # Check if all Cones are saved the right way
             @test c.a isa CSG.Cone
             @test c.b isa CSG.Cone
         end
+        
+        # Test different constructor versions and dictionary construction
+        cone1 = @inferred CSG.Cone(CSG.ClosedPrimitive,r=1f0, φ = π, hZ = 1f0, origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
+        cone2 = @inferred CSG.Cone{Float32}(r=1.0, φ = π)
+        @test cone1 === cone2
+        dict = Dict("tube"   => Dict(
+                "r"       => 1.0,
+                "h"       => 1.0))
+        cone4 = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(cone4)
+        @test dict == output
+        
+        ## Test in method for several cones
+        # Non transformed geometries
+        @test !in(CartesianPoint{Float32}(0,-1,0),cone1)
+        @test in(CartesianPoint{Float64}(0,-1,0),cone4)
+        cone_open = @inferred CSG.Cone(CSG.OpenPrimitive, r=1f0,hZ=1f0, origin = zero(CartesianPoint{Float32}),rotation = one(SMatrix{3, 3, Float32, 9}))
+        @test !in(CartesianPoint{Float32}(1,0,0),cone_open)
+        # Boundary behaviour of closed and open primitives for transformed 
+        # geometries (origin, rotation)
+        cone_closed_trafo = @inferred CSG.Cone(CSG.ClosedPrimitive,r=1.0, hZ=3.0, origin=CartesianPoint{Float32}(0,0,1),rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))#90 degree rotation arond y-axis
+        cone_open_trafo = @inferred CSG.Cone(CSG.OpenPrimitive,r=1.0, hZ=3.0, origin=CartesianPoint{Float32}(0,0,1),rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        @test in(CartesianPoint{Float64}(3,0,1),cone_closed_trafo)
+        @test !in(CartesianPoint{Float64}(3,0,1),cone_open_trafo)
+        tol=1e-8
+        @test !in(CartesianPoint{Float64}(3+tol,0,1),cone_closed_trafo)
+        @test in(CartesianPoint{Float64}(3-tol,0,1),cone_open_trafo)
+        #Cones with r being any valid combination
+        cone_empty = @inferred CSG.Cone{Float64}(r=((1,2),(3,5)), hZ=2, rotation = SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        @test in(CartesianPoint{Float64}(1,0,2.5+tol), cone_empty)
+        @test !in(CartesianPoint{Float64}(1,0,2.5-tol), cone_empty)
+        @inferred CSG.Cone{Float64}(r=(nothing,(3,5)))
+        @inferred CSG.Cone{Float64}(r=((3,5),nothing))
+        @inferred CSG.Cone{Float64}(r=(1,2))
+        @inferred CSG.Cone{Float64}(r=(nothing,(3,5)))
+        @inferred CSG.Cone{Float64}(r=((1,),(2,)))
+        @inferred CSG.Cone(r=(nothing,(3,5)))
+        @inferred CSG.Cone(r=((3,5),nothing))
+        @inferred CSG.Cone(r=(1,2))
+        @inferred CSG.Cone(r=(nothing,(3,5)))
+        @inferred CSG.Cone(r=((1,),(2,)))
     end
     @testset "Torus" begin
         for r_tube in (2.0, Dict("from" => 1.0, "to" => 2.0)), 
