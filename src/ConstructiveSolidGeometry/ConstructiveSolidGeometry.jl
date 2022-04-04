@@ -51,11 +51,16 @@ module ConstructiveSolidGeometry
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
     
     _csg_convert_args(eltype::Type{T}, r::Real) where T = convert(T, r) 
-    _csg_convert_args(eltype::Type{T}, r::Tuple) where T = (convert(T, r[1]), convert(T, r[2])) 
+    _csg_convert_args(eltype::Type{T}, r::Tuple) where T = broadcast(x -> _csg_convert_args(T, x), r)
+    _csg_convert_args(eltype::Type{T}, r::Nothing) where T = nothing
 
     _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = eltype(T)
     _csg_get_promoted_eltype(::Type{T}) where {T <: Real} = T
-    _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1, T2} = promote_type(T1, T2)
+    _csg_get_promoted_eltype(::Type{Tuple{T}}) where {T<:Real} = T
+    _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Real, T2<:Real} = promote_type(T1, T2)
+    _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Union{Real, Tuple}, T2<:Union{Real, Tuple}} = promote_type(_csg_get_promoted_eltype(T1), _csg_get_promoted_eltype(T2))
+    _csg_get_promoted_eltype(::Type{Tuple{Nothing,T2}}) where {T2<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T2)
+    _csg_get_promoted_eltype(::Type{Tuple{T1,Nothing}}) where {T1<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T1)
 
     include("Units.jl")
     include("PointsAndVectors/PointsAndVectors.jl")
