@@ -216,7 +216,7 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
 * `max_distance_ratio::Real = 5`: If the ratio between a tick and its left and right neighbour
    is greater than `max_distance_ratio`, additional ticks are added between the ticks that are
    further apart. This prevents the ticks from being too unevenly spaced.
-* `add_points_between_important_point::Bool = true`: If set to `true`, additional points
+* `add_ticks_between_important_ticks::Bool = true`: If set to `true`, additional points
     will be added in between the important points obtained from sampling the objects of the
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
@@ -228,7 +228,7 @@ function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_points_between_important_point::Bool = true)::CylindricalGrid{T} where {T}
+                add_ticks_between_important_ticks::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
     world = sim.world 
     world_Δs = width.(world.intervals)
@@ -271,7 +271,7 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     append!(important_r_ticks, endpoints(world.intervals[1])...)
     important_r_ticks = unique!(sort!(important_r_ticks))
-    if add_points_between_important_point
+    if add_ticks_between_important_ticks
         important_r_ticks = sort!(vcat(important_r_ticks, StatsBase.midpoints(important_r_ticks)))
     end
     iL = searchsortedfirst(important_r_ticks, world.intervals[1].left)
@@ -285,7 +285,7 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     append!(important_z_ticks, endpoints(world.intervals[3])...)
     important_z_ticks = unique!(sort!(important_z_ticks))
-    if add_points_between_important_point
+    if add_ticks_between_important_ticks
         important_z_ticks = sort!(vcat(important_z_ticks, StatsBase.midpoints(important_z_ticks)))
     end
     iL = searchsortedfirst(important_z_ticks, world.intervals[3].left)
@@ -299,7 +299,7 @@ function Grid(sim::Simulation{T, Cylindrical};
 
     append!(important_φ_ticks, endpoints(world_φ_int)...)
     important_φ_ticks = unique!(sort!(important_φ_ticks))
-    if add_points_between_important_point
+    if add_ticks_between_important_ticks
         important_φ_ticks = sort!(vcat(important_φ_ticks, StatsBase.midpoints(important_φ_ticks)))
     end
     iL = searchsortedfirst(important_φ_ticks, world_φ_int.left)
@@ -355,7 +355,7 @@ end
 function Grid(  sim::Simulation{T, Cartesian};
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_points_between_important_point::Bool = true,
+                add_ticks_between_important_ticks::Bool = true,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
     det = sim.detector
     world = sim.world 
@@ -393,7 +393,7 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     append!(important_x_ticks, endpoints(world.intervals[1]))
     important_x_ticks = unique!(sort!(important_x_ticks))
-    if add_points_between_important_point
+    if add_ticks_between_important_ticks
         important_x_ticks = sort!(vcat(important_x_ticks, StatsBase.midpoints(important_x_ticks)))
     end
     iL = searchsortedfirst(important_x_ticks, world.intervals[1].left)
@@ -407,7 +407,7 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     append!(important_y_ticks, endpoints(world.intervals[2]))
     important_y_ticks = unique!(sort!(important_y_ticks))
-    if add_points_between_important_point
+    if add_ticks_between_important_ticks
         important_y_ticks = sort!(vcat(important_y_ticks, StatsBase.midpoints(important_y_ticks)))
     end
     iL = searchsortedfirst(important_y_ticks, world.intervals[2].left)
@@ -421,7 +421,7 @@ function Grid(  sim::Simulation{T, Cartesian};
 
     append!(important_z_ticks, endpoints(world.intervals[3]))
     important_z_ticks = unique!(sort!(important_z_ticks))
-    if add_points_between_important_point
+    if add_ticks_between_important_ticks
         important_z_ticks = sort!(vcat(important_z_ticks, StatsBase.midpoints(important_z_ticks)))
     end
     iL = searchsortedfirst(important_z_ticks, world.intervals[3].left)
