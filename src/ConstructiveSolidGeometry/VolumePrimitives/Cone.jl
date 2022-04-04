@@ -73,13 +73,54 @@ from 2 at the bottom to 4 at the top circular base.
     
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-@with_kw struct Cone{T,CO,TR,TP<:Union{Nothing,T}} <: AbstractVolumePrimitive{T, CO}
-    r::TR = 1
-    φ::TP = nothing
-    hZ::T = 1
+struct Cone{T,CO,TR,TP<:Union{Nothing,T}} <: AbstractVolumePrimitive{T, CO}
+    r::TR 
+    φ::TP
+    hZ::T 
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T} 
+    rotation::SMatrix{3,3,T,9}
+end
+
+#Type conversion happens here
+function Cone{T,CO}(r, φ, hZ, origin, rotation) where {T,CO}
+    _r = _csg_convert_args(T, r)
+    _φ = _csg_convert_args(T, φ)
+    _hZ = _csg_convert_args(T, hZ)
+    Cone{T,CO,typeof(_r),typeof(_φ)}(_r, _φ, _hZ, origin, rotation)
+end
+
+#Type promotion happens here
+function Cone(CO, r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, TP<:Real, TZ, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, TZ, TP, PT, ROT))
+    T = promote_type(eltypes...)
+    Cone{T,CO}(r, φ, hZ, origin, rotation)
+end
+
+function Cone(CO, r::TR, φ::Nothing, hZ::TZ, origin::PT, rotation::ROT) where {TR, TZ, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, TZ, PT, ROT))
+    T = promote_type(eltypes...)
+    Cone{T,CO}(r, φ, hZ, origin, rotation)
+end
+
+function Cone(::Type{CO}=ClosedPrimitive;
+    r = 1.0, 
+    φ = nothing,
+    hZ = 1.0,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {CO}
+    Cone(CO, r, φ, hZ, origin, rotation)
+end
+
+function Cone{T}(::Type{CO}=ClosedPrimitive;
+    r = 1.0, 
+    φ = nothing,
+    hZ = 1.0,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T, CO}
+    Cone{T,CO}(r, φ, hZ, origin, rotation)
 end
 
 Cone{T,CO,TR,TP}( c::Cone{T,CO,TR,TP}; COT = CO,
@@ -656,7 +697,7 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
        hZ
     end
 
-    cone = Cone{T, ClosedPrimitive, typeof(r), typeof(φ)}(
+    cone = Cone{T}(ClosedPrimitive; 
         r = r, 
         φ = φ, 
         hZ = hZ, 
