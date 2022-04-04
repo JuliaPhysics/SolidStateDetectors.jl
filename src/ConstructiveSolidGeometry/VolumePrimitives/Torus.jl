@@ -66,14 +66,75 @@ This is a `Torus` with `r_tube` having an inner radius of 1 and an outer radius 
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-@with_kw struct Torus{T,CO,TR,TP<:Union{Nothing,T},TT,TT1,TT2} <: AbstractVolumePrimitive{T,CO}
-    r_torus::T = 1
-    r_tube::TR = 1  # (r_tube_in, r_tube_out)
-    φ::TP = nothing
-    θ::TT = nothing
+struct Torus{T,CO,TR,TP<:Union{Nothing,T},TT,TT1,TT2} <: AbstractVolumePrimitive{T,CO}
+    r_torus::T
+    r_tube::TR  # (r_tube_in, r_tube_out)
+    φ::TP 
+    θ::TT
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9}
+end
+
+#Type conversion happens here
+function Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation) where {T,CO}
+    r_torus = _csg_convert_args(T, r_torus)
+    r_tube = _csg_convert_args(T, r_tube)
+    φ = _csg_convert_args(T, φ)
+    θ = _csg_convert_args(T, θ)
+    TT1, TT2 = _get_conemantle_type(θ)
+    Torus{T,CO,typeof(r_tube),typeof(φ),typeof(θ),TT1,TT2}(r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+#Type promotion happens here
+function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::TP, θ::TT, 
+    origin::PT, rotation::ROT) where {TRTo, TRTu, TP, TT, PT, ROT}
+        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TP, TT, PT, ROT))
+        T = promote_type(eltypes...)
+        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::TT, 
+    origin::PT, rotation::ROT) where {TRTo, TRTu, TT, PT, ROT}
+        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TT, PT, ROT))
+        T = promote_type(eltypes...)
+        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::TP, θ::Nothing,
+    origin::PT, rotation::ROT) where {TRTo, TRTu, TP, PT, ROT}
+        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TP, PT, ROT))
+        T = promote_type(eltypes...)
+        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::Nothing, 
+    origin::PT, rotation::ROT) where {TRTo, TRTu, PT, ROT}
+        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, PT, ROT))
+        T = promote_type(eltypes...)
+        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function Torus(::Type{CO} = ClosedPrimitive;
+    r_torus = 1., 
+    r_tube = 1.,
+    φ = nothing,
+    θ = nothing,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {CO}
+    Torus(CO, r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function Torus{T}(::Type{CO}=ClosedPrimitive;
+    r_torus = 1., 
+    r_tube = 1.,
+    φ = nothing,
+    θ = nothing,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T, CO}
+    Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
 end
 
 Torus{T,CO,TR,TP,TT,TT1,TT2}( t::Torus{T,CO,TR,TP,TT}; COT = CO,
@@ -117,7 +178,7 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
         throw(ConfigFileError("Error when trying to parse φ from configuration file."))
     end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    TT1, TT2 = _get_conemantle_type(θ)
+    #TT1, TT2 = _get_conemantle_type(θ)
     if haskey(dict, "z")
         @warn "Deprecation warning: Field `z` for `Torus` is deprecated. 
                 Use instead (only) `origin` to specify the origin of the primitive.
@@ -127,7 +188,7 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
         origin = CartesianPoint{T}(origin[1], origin[2], z)
     end
 
-    t = Torus{T,ClosedPrimitive,typeof(r_tube),typeof(φ),typeof(θ),TT1,TT2}(
+    t = Torus{T}(ClosedPrimitive;
             r_torus = r_torus, r_tube = r_tube, φ = φ, θ = θ, 
             origin = origin, rotation = rotation)   
     transform(t, transformations)
