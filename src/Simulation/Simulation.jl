@@ -216,7 +216,7 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
 * `max_distance_ratio::Real = 5`: If the ratio between a tick and its left and right neighbour
    is greater than `max_distance_ratio`, additional ticks are added between the ticks that are
    further apart. This prevents the ticks from being too unevenly spaced.
-* `add_points_between_important_point::Bool = true`: If set to `true`, additional points
+* `add_ticks_between_important_ticks::Bool = true`: If set to `true`, additional points
     will be added in between the important points obtained from sampling the objects of the
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
@@ -228,18 +228,27 @@ function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_points_between_important_point::Bool = true)::CylindricalGrid{T} where {T}
+                add_ticks_between_important_ticks::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
     world = sim.world 
+    world_Δs = width.(world.intervals)
+    world_Δr, world_Δφ, world_Δz = world_Δs
                 
     samples::Vector{CylindricalPoint{T}} = sample(det, Cylindrical)
-    important_r_points::Vector{T} = map(p -> p.r, samples)
-    important_φ_points::Vector{T} = map(p -> p.φ, samples)
-    important_z_points::Vector{T} = map(p -> p.z, samples)
+    important_r_ticks::Vector{T} = map(p -> p.r, samples)
+    important_φ_ticks::Vector{T} = map(p -> p.φ, samples)
+    important_z_ticks::Vector{T} = map(p -> p.z, samples)
 
-    world_Δr, world_Δφ, world_Δz = width.(world.intervals)
+    second_order_imp_ticks = if for_weighting_potential 
+        strong_electric_field_ticks = !ismissing(sim.electric_potential) ? get_ticks_at_positions_of_large_gradient(sim.electric_potential) : (T[], T[], T[])
+        surface_of_depleted_volume_ticks = !ismissing(sim.imp_scale) ? get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale) : (T[], T[], T[])
+        vcat.(strong_electric_field_ticks, surface_of_depleted_volume_ticks)
+    else
+        (T[], T[], T[])
+    end
+
     world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
-    if for_weighting_potential && world_Δφ > 0 
+    if for_weighting_potential && world_Δφ > 0
         world_φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(0, 2π)
         world_Δφ = width(world_φ_int)
     else
@@ -260,46 +269,52 @@ function Grid(sim::Simulation{T, Cylindrical};
         end 
     end
 
-    append!(important_r_points, endpoints(world.intervals[1])...)
-    important_r_points = unique!(sort!(important_r_points))
-    if add_points_between_important_point
-        important_r_points = sort!(vcat(important_r_points, StatsBase.midpoints(important_r_points)))
+    append!(important_r_ticks, endpoints(world.intervals[1])...)
+    important_r_ticks = unique!(sort!(important_r_ticks))
+    if add_ticks_between_important_ticks
+        important_r_ticks = sort!(vcat(important_r_ticks, StatsBase.midpoints(important_r_ticks)))
     end
-    iL = searchsortedfirst(important_r_points, world.intervals[1].left)
-    iR = searchsortedfirst(important_r_points, world.intervals[1].right)
-    important_r_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_points[iL:iR]))
-    important_r_points = merge_close_ticks(important_r_points)
-    important_r_points = initialize_axis_ticks(important_r_points; max_ratio = T(max_distance_ratio))
-    important_r_points = fill_up_ticks(important_r_points, max_distance_r)
+    iL = searchsortedfirst(important_r_ticks, world.intervals[1].left)
+    iR = searchsortedfirst(important_r_ticks, world.intervals[1].right)
+    important_r_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_ticks[iL:iR]))
+    important_r_ticks = merge_close_ticks(important_r_ticks)
+    imp2order_r_ticks = merge_close_ticks(second_order_imp_ticks[1], min_diff = world_Δs[1] / 20)
+    important_r_ticks = merge_second_order_important_ticks(important_r_ticks, imp2order_r_ticks)   
+    important_r_ticks = initialize_axis_ticks(important_r_ticks; max_ratio = T(max_distance_ratio))
+    important_r_ticks = fill_up_ticks(important_r_ticks, max_distance_r)
 
-    append!(important_z_points, endpoints(world.intervals[3])...)
-    important_z_points = unique!(sort!(important_z_points))
-    if add_points_between_important_point
-        important_z_points = sort!(vcat(important_z_points, StatsBase.midpoints(important_z_points)))
+    append!(important_z_ticks, endpoints(world.intervals[3])...)
+    important_z_ticks = unique!(sort!(important_z_ticks))
+    if add_ticks_between_important_ticks
+        important_z_ticks = sort!(vcat(important_z_ticks, StatsBase.midpoints(important_z_ticks)))
     end
-    iL = searchsortedfirst(important_z_points, world.intervals[3].left)
-    iR = searchsortedfirst(important_z_points, world.intervals[3].right)
-    important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
-    important_z_points = merge_close_ticks(important_z_points)
-    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
-    important_z_points = fill_up_ticks(important_z_points, max_distance_z)
+    iL = searchsortedfirst(important_z_ticks, world.intervals[3].left)
+    iR = searchsortedfirst(important_z_ticks, world.intervals[3].right)
+    important_z_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_ticks[iL:iR]))
+    important_z_ticks = merge_close_ticks(important_z_ticks)
+    imp2order_z_ticks = merge_close_ticks(second_order_imp_ticks[3], min_diff = world_Δs[3] / 20)
+    important_z_ticks = merge_second_order_important_ticks(important_z_ticks, imp2order_z_ticks)
+    important_z_ticks = initialize_axis_ticks(important_z_ticks; max_ratio = T(max_distance_ratio))
+    important_z_ticks = fill_up_ticks(important_z_ticks, max_distance_z)
 
-    append!(important_φ_points, endpoints(world_φ_int)...)
-    important_φ_points = unique!(sort!(important_φ_points))
-    if add_points_between_important_point
-        important_φ_points = sort!(vcat(important_φ_points, StatsBase.midpoints(important_φ_points)))
+    append!(important_φ_ticks, endpoints(world_φ_int)...)
+    important_φ_ticks = unique!(sort!(important_φ_ticks))
+    if add_ticks_between_important_ticks
+        important_φ_ticks = sort!(vcat(important_φ_ticks, StatsBase.midpoints(important_φ_ticks)))
     end
-    iL = searchsortedfirst(important_φ_points, world_φ_int.left)
-    iR = searchsortedfirst(important_φ_points, world_φ_int.right)
-    important_φ_points = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_points[iL:iR]))
-    important_φ_points = merge_close_ticks(important_φ_points, min_diff = T(1e-3))
-    important_φ_points = initialize_axis_ticks(important_φ_points; max_ratio = T(max_distance_ratio))
-    important_φ_points = fill_up_ticks(important_φ_points, max_distance_φ)
+    iL = searchsortedfirst(important_φ_ticks, world_φ_int.left)
+    iR = searchsortedfirst(important_φ_ticks, world_φ_int.right)
+    important_φ_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_ticks[iL:iR]))
+    important_φ_ticks = merge_close_ticks(important_φ_ticks, min_diff = T(1e-3))
+    imp2order_φ_ticks = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
+    important_φ_ticks = merge_second_order_important_ticks(important_φ_ticks, imp2order_φ_ticks)
+    important_φ_ticks = initialize_axis_ticks(important_φ_ticks; max_ratio = T(max_distance_ratio))
+    important_φ_ticks = fill_up_ticks(important_φ_ticks, max_distance_φ)
     
     # r
     L, R, BL, BR = get_boundary_types(world.intervals[1])
     int_r = Interval{L, R, T}(endpoints(world.intervals[1])...)
-    ax_r = even_tick_axis(DiscreteAxis{T, BL, BR}(int_r, important_r_points))
+    ax_r = even_tick_axis(DiscreteAxis{T, BL, BR}(int_r, important_r_ticks))
 
     # φ
     L, R, BL, BR = get_boundary_types(world_φ_int)
@@ -307,13 +322,13 @@ function Grid(sim::Simulation{T, Cylindrical};
     ax_φ = if int_φ.left == int_φ.right
         DiscreteAxis{T, BL, BR}(int_φ, T[int_φ.left])
     else
-        DiscreteAxis{T, BL, BR}(int_φ, important_φ_points)
+        DiscreteAxis{T, BL, BR}(int_φ, important_φ_ticks)
     end
     if length(ax_φ) > 1
         φticks = if R == :open 
-            important_φ_points[1:end-1]
+            important_φ_ticks[1:end-1]
         else
-            important_φ_points
+            important_φ_ticks
         end
         ax_φ = typeof(ax_φ)(int_φ, φticks)
     end
@@ -331,7 +346,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     #z
     L, R, BL, BR = get_boundary_types(world.intervals[3])
     int_z = Interval{L, R, T}(endpoints(world.intervals[3])...)
-    ax_z = even_tick_axis(DiscreteAxis{T, BL, BR}(int_z, important_z_points))
+    ax_z = even_tick_axis(DiscreteAxis{T, BL, BR}(int_z, important_z_ticks))
 
     return CylindricalGrid{T}( (ax_r, ax_φ, ax_z) )
 end
@@ -340,18 +355,26 @@ end
 function Grid(  sim::Simulation{T, Cartesian};
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, LengthQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_points_between_important_point::Bool = true,
+                add_ticks_between_important_ticks::Bool = true,
                 for_weighting_potential::Bool = false)::CartesianGrid3D{T} where {T}
     det = sim.detector
     world = sim.world 
+    world_Δs = width.(world.intervals)
+    world_Δx, world_Δy, world_Δz = world_Δs
                 
     samples::Vector{CartesianPoint{T}} = sample(det, Cartesian)
-    important_x_points::Vector{T} = map(p -> p.x, samples)
-    important_y_points::Vector{T} = map(p -> p.y, samples)
-    important_z_points::Vector{T} = map(p -> p.z, samples)
-
-    world_Δx, world_Δy, world_Δz = width.(world.intervals)
+    important_x_ticks::Vector{T} = map(p -> p.x, samples)
+    important_y_ticks::Vector{T} = map(p -> p.y, samples)
+    important_z_ticks::Vector{T} = map(p -> p.z, samples)
     
+    second_order_imp_ticks = if for_weighting_potential 
+        strong_electric_field_ticks = !ismissing(sim.electric_potential) ? get_ticks_at_positions_of_large_gradient(sim.electric_potential) : (T[], T[], T[])
+        surface_of_depleted_volume_ticks = !ismissing(sim.imp_scale) ? get_ticks_at_positions_of_edge_of_depleted_volumes(sim.imp_scale) : (T[], T[], T[])
+        vcat.(strong_electric_field_ticks, surface_of_depleted_volume_ticks)
+    else
+        (T[], T[], T[])
+    end
+
     max_distance_x = T(world_Δx / 4)
     max_distance_y = T(world_Δy / 4)
     max_distance_z = T(world_Δz / 4)
@@ -368,56 +391,62 @@ function Grid(  sim::Simulation{T, Cartesian};
         end
     end
 
-    append!(important_x_points, endpoints(world.intervals[1]))
-    important_x_points = unique!(sort!(important_x_points))
-    if add_points_between_important_point
-        important_x_points = sort!(vcat(important_x_points, StatsBase.midpoints(important_x_points)))
+    append!(important_x_ticks, endpoints(world.intervals[1]))
+    important_x_ticks = unique!(sort!(important_x_ticks))
+    if add_ticks_between_important_ticks
+        important_x_ticks = sort!(vcat(important_x_ticks, StatsBase.midpoints(important_x_ticks)))
     end
-    iL = searchsortedfirst(important_x_points, world.intervals[1].left)
-    iR = searchsortedfirst(important_x_points, world.intervals[1].right)
-    important_x_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_points[iL:iR]))
-    important_x_points = merge_close_ticks(important_x_points)
-    important_x_points = initialize_axis_ticks(important_x_points; max_ratio = T(max_distance_ratio))
-    important_x_points = fill_up_ticks(important_x_points, max_distance_x)
+    iL = searchsortedfirst(important_x_ticks, world.intervals[1].left)
+    iR = searchsortedfirst(important_x_ticks, world.intervals[1].right)
+    important_x_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_ticks[iL:iR]))
+    important_x_ticks = merge_close_ticks(important_x_ticks)
+    imp2order_x_ticks = merge_close_ticks(second_order_imp_ticks[1], min_diff = world_Δs[1] / 20)
+    important_x_ticks = merge_second_order_important_ticks(important_x_ticks, imp2order_x_ticks)
+    important_x_ticks = initialize_axis_ticks(important_x_ticks; max_ratio = T(max_distance_ratio))
+    important_x_ticks = fill_up_ticks(important_x_ticks, max_distance_x)
 
-    append!(important_y_points, endpoints(world.intervals[2]))
-    important_y_points = unique!(sort!(important_y_points))
-    if add_points_between_important_point
-        important_y_points = sort!(vcat(important_y_points, StatsBase.midpoints(important_y_points)))
+    append!(important_y_ticks, endpoints(world.intervals[2]))
+    important_y_ticks = unique!(sort!(important_y_ticks))
+    if add_ticks_between_important_ticks
+        important_y_ticks = sort!(vcat(important_y_ticks, StatsBase.midpoints(important_y_ticks)))
     end
-    iL = searchsortedfirst(important_y_points, world.intervals[2].left)
-    iR = searchsortedfirst(important_y_points, world.intervals[2].right)
-    important_y_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_points[iL:iR]))
-    important_y_points = merge_close_ticks(important_y_points)
-    important_y_points = initialize_axis_ticks(important_y_points; max_ratio = T(max_distance_ratio))
-    important_y_points = fill_up_ticks(important_y_points, max_distance_y)
+    iL = searchsortedfirst(important_y_ticks, world.intervals[2].left)
+    iR = searchsortedfirst(important_y_ticks, world.intervals[2].right)
+    important_y_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_ticks[iL:iR]))
+    important_y_ticks = merge_close_ticks(important_y_ticks)
+    imp2order_y_ticks = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
+    important_y_ticks = merge_second_order_important_ticks(important_y_ticks, imp2order_y_ticks)
+    important_y_ticks = initialize_axis_ticks(important_y_ticks; max_ratio = T(max_distance_ratio))
+    important_y_ticks = fill_up_ticks(important_y_ticks, max_distance_y)
 
-    append!(important_z_points, endpoints(world.intervals[3]))
-    important_z_points = unique!(sort!(important_z_points))
-    if add_points_between_important_point
-        important_z_points = sort!(vcat(important_z_points, StatsBase.midpoints(important_z_points)))
+    append!(important_z_ticks, endpoints(world.intervals[3]))
+    important_z_ticks = unique!(sort!(important_z_ticks))
+    if add_ticks_between_important_ticks
+        important_z_ticks = sort!(vcat(important_z_ticks, StatsBase.midpoints(important_z_ticks)))
     end
-    iL = searchsortedfirst(important_z_points, world.intervals[3].left)
-    iR = searchsortedfirst(important_z_points, world.intervals[3].right)
-    important_z_points = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_points[iL:iR]))
-    important_z_points = merge_close_ticks(important_z_points)
-    important_z_points = initialize_axis_ticks(important_z_points; max_ratio = T(max_distance_ratio))
-    important_z_points = fill_up_ticks(important_z_points, max_distance_z)
+    iL = searchsortedfirst(important_z_ticks, world.intervals[3].left)
+    iR = searchsortedfirst(important_z_ticks, world.intervals[3].right)
+    important_z_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_ticks[iL:iR]))
+    important_z_ticks = merge_close_ticks(important_z_ticks)
+    imp2order_z_ticks = merge_close_ticks(second_order_imp_ticks[3], min_diff = world_Δs[3] / 20)
+    important_z_ticks = merge_second_order_important_ticks(important_z_ticks, imp2order_z_ticks)
+    important_z_ticks = initialize_axis_ticks(important_z_ticks; max_ratio = T(max_distance_ratio))
+    important_z_ticks = fill_up_ticks(important_z_ticks, max_distance_z)
 
     # x
     L, R, BL, BR = get_boundary_types(world.intervals[1])
     int_x = Interval{L, R, T}(endpoints(world.intervals[1])...)
-    ax_x = even_tick_axis(DiscreteAxis{T, BL, BR}(int_x, important_x_points))
+    ax_x = even_tick_axis(DiscreteAxis{T, BL, BR}(int_x, important_x_ticks))
    
     # y
     L, R, BL, BR = get_boundary_types(world.intervals[2])
     int_y = Interval{L, R, T}(endpoints(world.intervals[2])...)
-    ax_y = even_tick_axis(DiscreteAxis{T, BL, BR}(int_y, important_y_points))
+    ax_y = even_tick_axis(DiscreteAxis{T, BL, BR}(int_y, important_y_ticks))
 
     # z
     L, R, BL, BR = get_boundary_types(world.intervals[3])
     int_z = Interval{L, R, T}(endpoints(world.intervals[3])...)
-    ax_z = even_tick_axis(DiscreteAxis{T, BL, BR}(int_z, important_z_points))
+    ax_z = even_tick_axis(DiscreteAxis{T, BL, BR}(int_z, important_z_ticks))
 
     return CartesianGrid3D{T}( (ax_x, ax_y, ax_z) )
 end
@@ -882,7 +911,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 if CS == Cylindrical "$n_φ_sym_info_txt\n" else "" end,
                 "Precision: $T\n",
                 "Device: $(onCPU ? "CPU" : "GPU")\n",
-                onCPU && "Max. CPU Threads: $(maximum(max_nthreads))\n",
+                onCPU ? "Max. CPU Threads: $(maximum(max_nthreads))\n" : "",
                 "Coordinate system: $(CS)\n",
                 "N Refinements: -> $(n_refinement_steps)\n",
                 "Convergence limit: $convergence_limit $(isEP ? " => $(round(abs(bias_voltage * convergence_limit), sigdigits=2)) V" : "")\n",

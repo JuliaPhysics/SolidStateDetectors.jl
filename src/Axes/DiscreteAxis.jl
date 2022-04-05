@@ -280,6 +280,7 @@ end
 Base.convert(T::Type{NamedTuple}, x::DiscreteAxis; unit = u"m/m") = T(x)
 
 function merge_closest_ticks!(v::AbstractVector{T}, n::Int = length(v); min_diff::T = T(1e-6)) where {T}
+    n == 1 && return n
     Δv = diff(v[1:n])
     Δ_min, Δv_min_indx = findmin(Δv)
     vFirst = v[1]
@@ -297,7 +298,7 @@ function merge_closest_ticks!(v::AbstractVector{T}, n::Int = length(v); min_diff
 end
 function merge_close_ticks(v::AbstractVector{T}; min_diff::T = T(1e-6)) where {T}
     l = length(v)
-    if l == 1 return v end
+    l <= 1 && return v
     n = merge_closest_ticks!(v, min_diff = min_diff)
     reduced = n < l
     l = n
@@ -309,6 +310,19 @@ function merge_close_ticks(v::AbstractVector{T}; min_diff::T = T(1e-6)) where {T
     v[1:n]
 end
 
+"""
+    merge_second_order_important_ticks(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
+
+Merge all elements of the second vector, `imp_second_order`, into the first vector, `imp`, 
+if they are not too close (via `min_diff`) to elements of the first vector.
+Returns the merged vector sorted.
+"""
+function merge_second_order_important_ticks(imp::Vector{T}, imp_second_order::Vector{T}; min_diff::T = T(1e-6)) where {T}
+    sorted_imp = sort(imp)
+    nearest_inds = map(x -> searchsortednearest(sorted_imp, x), imp_second_order)
+    merge_inds = filter(i -> abs(sorted_imp[nearest_inds[i]] - imp_second_order[i]) >= min_diff, eachindex(imp_second_order))
+    return sort!(vcat(imp, imp_second_order[merge_inds]))
+end
 
 function get_new_ticks_to_equalize_ratios_on_side(t::AbstractVector{T}; max_ratio = T(2)) where {T}
     @assert length(t) == 3 

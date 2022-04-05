@@ -24,17 +24,17 @@ struct ImpurityScale{T, N, S, AT} <: AbstractArray{T, N}
     grid::Grid{T, N, S, AT}
 end
 
-@inline size(epot::ImpurityScale{T, N, S}) where {T, N, S} = size(epot.data)
-@inline length(epot::ImpurityScale{T, N, S}) where {T, N, S} = length(epot.data)
-@inline getindex(epot::ImpurityScale{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(epot.data, I...)
-@inline getindex(epot::ImpurityScale{T, N, S}, i::Int) where {T, N, S} = getindex(epot.data, i)
-@inline getindex(epot::ImpurityScale{T, N, S}, s::Symbol) where {T, N, S} = getindex(epot.grid, s)
+@inline size(impscale::ImpurityScale{T, N, S}) where {T, N, S} = size(impscale.data)
+@inline length(impscale::ImpurityScale{T, N, S}) where {T, N, S} = length(impscale.data)
+@inline getindex(impscale::ImpurityScale{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = getindex(impscale.data, I...)
+@inline getindex(impscale::ImpurityScale{T, N, S}, i::Int) where {T, N, S} = getindex(impscale.data, i)
+@inline getindex(impscale::ImpurityScale{T, N, S}, s::Symbol) where {T, N, S} = getindex(impscale.grid, s)
 
 
-function NamedTuple(epot::ImpurityScale{T, 3}) where {T}
+function NamedTuple(impscale::ImpurityScale{T, 3}) where {T}
     return (
-        grid = NamedTuple(epot.grid),
-        values = epot.data,
+        grid = NamedTuple(impscale.grid),
+        values = impscale.data,
     )
 end
 Base.convert(T::Type{NamedTuple}, x::ImpurityScale) = T(x)
@@ -47,3 +47,22 @@ function ImpurityScale(nt::NamedTuple)
     ImpurityScale{T, N, S, typeof(grid.axes)}(nt.values, grid)
 end
 Base.convert(T::Type{ImpurityScale}, x::NamedTuple) = T(x)
+
+
+"""
+    get_ticks_at_positions_of_edge_of_depleted_volumes(impscale::ImpurityScale{T, 3})
+
+The impurity scale field is analyzed in order to find and return ticks where the gradient is strong,
+which is the case at the surface of the depleted volume of a semiconductor.
+"""
+function get_ticks_at_positions_of_edge_of_depleted_volumes(impscale::ImpurityScale{T, 3}) where T
+    dims = (1, 2, 3)
+    mps::NTuple{3, Vector{T}} = broadcast(idim -> StatsBase.midpoints(impscale.grid[idim]), dims)
+    extended = length.(mps) .> 0
+    max_diffs = broadcast(idim -> extended[idim] ? map(i->maximum(abs.(selectdim(impscale.data, idim, i+1) .- selectdim(impscale.data, idim, i))), eachindex(mps[idim]))::Vector{T} : T[], dims);
+    inds = broadcast(idim -> extended[idim] ? findall(Δ -> 0.5 < Δ < 1, max_diffs[idim]) : Int[], dims) # 0.5 seems to be a good limit as we don't want to add too many ticks. 
+    # As the impurity scale only has values between `0` and `1` the change (`max_diffs`) can also only between `0` and `1`.
+    # We want to exclude a change of `1` as this happens at the surface of a semiconductor where the detector is undepleted
+    # and we only want to generate ticks in the semiconductor at the position between undepleted and depleted regions.
+    return broadcast(idim -> extended[idim] ? mps[idim][inds[idim]] : T[], dims)
+end
