@@ -120,9 +120,9 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                 if point_types[ir, iφ, iz] & update_bit == 0 # boundary points
                     if (1 < ir < size(point_types, 1))
                         if (point_types[ir - 1, iφ, iz] & update_bit > 0) && (point_types[ir + 1, iφ, iz] & update_bit > 0)
-                            if (point_types[ir-1, iφ, iz] & pn_junction_bit > 0) && (point_types[ir+1, iφ, iz] & pn_junction_bit == 0)
+                            if (point_types[ir - 1, iφ, iz] & pn_junction_bit > 0) && (point_types[ir + 1, iφ, iz] & pn_junction_bit == 0)
                                 er = Δp_r_2 / d_r_2
-                            elseif (point_types[ir+1, iφ, iz] & pn_junction_bit > 0) && (point_types[ir-1, iφ, iz] & pn_junction_bit == 0)
+                            elseif (point_types[ir + 1, iφ, iz] & pn_junction_bit > 0) && (point_types[ir - 1, iφ, iz] & pn_junction_bit == 0)
                                 er = Δp_r_1 / d_r_1
                             end
                         elseif (point_types[ir - 1, iφ, iz] & update_bit > 0) || (point_types[ir + 1, iφ, iz] & update_bit > 0)
@@ -131,9 +131,9 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     end
                     if (1 < iφ < size(point_types, 2))
                         if (point_types[ir, iφ - 1, iz] & update_bit > 0) && (point_types[ir, iφ + 1, iz] & update_bit > 0)
-                            if (point_types[ir, iφ-1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ+1, iz] & pn_junction_bit == 0)
+                            if (point_types[ir, iφ - 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ + 1, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_2 / d_φ_2
-                            elseif (point_types[ir, iφ+1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ-1, iz] & pn_junction_bit == 0)
+                            elseif (point_types[ir, iφ + 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ - 1, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_1 / d_φ_1
                             end
                         elseif (point_types[ir, iφ - 1, iz] & update_bit > 0) || (point_types[ir, iφ + 1, iz] & update_bit > 0)
@@ -142,9 +142,9 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     end
                     if (1 < iz < size(point_types, 3))
                         if (point_types[ir, iφ, iz - 1] & update_bit > 0) && (point_types[ir, iφ, iz + 1] & update_bit > 0)
-                            if (point_types[ir, iφ, iz-1] & pn_junction_bit > 0) && (point_types[ir, iφ, iz+1] & pn_junction_bit == 0)
+                            if (point_types[ir, iφ, iz - 1] & pn_junction_bit > 0) && (point_types[ir, iφ, iz + 1] & pn_junction_bit == 0)
                                 ez = Δp_z_2 / d_z_2
-                            elseif (point_types[ir, iφ, iz+1] & pn_junction_bit > 0) && (point_types[ir, iφ, iz-1] & pn_junction_bit == 0)
+                            elseif (point_types[ir, iφ, iz + 1] & pn_junction_bit > 0) && (point_types[ir, iφ, iz - 1] & pn_junction_bit == 0)
                                 ez = Δp_z_1 / d_z_1
                             end
                         elseif (point_types[ir, iφ, iz - 1] & update_bit > 0) || (point_types[ir, iφ, iz + 1] & update_bit > 0)
@@ -276,21 +276,33 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesi
                 if point_types[ix, iy, iz] & update_bit == 0 # boundary points
                     if (1 < ix < size(point_types, 1))
                         if (point_types[ix - 1, iy, iz] & update_bit > 0) && (point_types[ix + 1, iy, iz] & update_bit > 0)
-                            ex = 0
+                            if (point_types[ix - 1, iy, iz] & pn_junction_bit > 0) && (point_types[ix + 1, iy, iz] & pn_junction_bit == 0)
+                                ex = Δp_x_2 / d_x_2
+                            elseif (point_types[ix + 1, iy, iz] & pn_junction_bit > 0) && (point_types[ix - 1, iy, iz] & pn_junction_bit == 0)
+                                ex = Δp_x_1 / d_x_1
+                            end
                         elseif (point_types[ix - 1, iy, iz] & update_bit > 0) || (point_types[ix + 1, iy, iz] & update_bit > 0)
                             ex *= 2
                         end
                     end
                     if (1 < iy < size(point_types, 2))
                         if (point_types[ix, iy - 1, iz] & update_bit > 0) && (point_types[ix, iy + 1, iz] & update_bit > 0)
-                            ey = 0
+                            if (point_types[ix, iy - 1, iz] & pn_junction_bit > 0) && (point_types[ix, iy + 1, iz] & pn_junction_bit == 0)
+                                ey = Δp_y_2 / d_y_2
+                            elseif (point_types[ix, iy + 1, iz] & pn_junction_bit > 0) && (point_types[ix, iy - 1, iz] & pn_junction_bit == 0)
+                                ey = Δp_y_1 / d_y_1
+                            end
                         elseif (point_types[ix, iy - 1, iz] & update_bit > 0) || (point_types[ix, iy + 1, iz] & update_bit > 0)
                             ey *= 2
                         end
                     end
                     if (1 < iz < size(point_types, 3))
                         if (point_types[ix, iy, iz - 1] & update_bit > 0) && (point_types[ix, iy, iz + 1] & update_bit > 0)
-                            ez = 0
+                            if (point_types[ix, iy, iz - 1] & pn_junction_bit > 0) && (point_types[ix, iy, iz + 1] & pn_junction_bit == 0)
+                                ez = Δp_z_2 / d_z_2
+                            elseif (point_types[ix, iy, iz + 1] & pn_junction_bit > 0) && (point_types[ix, iy, iz - 1] & pn_junction_bit == 0)
+                                ez = Δp_z_1 / d_z_1
+                            end
                         elseif (point_types[ix, iy, iz - 1] & update_bit > 0) || (point_types[ix, iy, iz + 1] & update_bit > 0)
                             ez *= 2
                         end
