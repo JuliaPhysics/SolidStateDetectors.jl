@@ -149,7 +149,10 @@ end
 
 function Dictionary(b::Box{T})::OrderedDict{String, Any} where {T}
     dict = OrderedDict{String,Any}()
-    dict["widths"] = [2*b.hX, 2*b.hY, 2*b.hZ]
+    # dict["widths"] = [2*b.hX, 2*b.hY, 2*b.hZ]
+    dict["hX"] = b.hX
+    dict["hY"] = b.hY
+    dict["hZ"] = b.hZ
     if b.origin != zero(CartesianVector{T}) dict["origin"] = b.origin end
     if b.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(b.rotation) end
     OrderedDict{String,Any}("box" => dict)
