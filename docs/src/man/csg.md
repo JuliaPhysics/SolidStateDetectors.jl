@@ -225,7 +225,7 @@ will transform the primitive using the rotation matrix
 ```math
 \left[ \begin{array}{ccc}1&0&0\\0&0&-1\\0&1&0\end{array}\right]
 ```
-which corresponds to `X: 45°`.
+which corresponds to `X: 90°`.
 
 Alternative naming for the `rotation` field can be `rotate`.
 
