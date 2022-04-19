@@ -28,24 +28,22 @@ plot!(sim.detector, xlims = (-0.006, 0.006), aspect_ratio = :none)
 # ## Define the Impurity Density
 
 # Now, we define the model for the impurity density of the p-n junction.
-# In order to do so, we need two define two things.
+# In order to do so, we need to define two things.
 
-# 1. We have to define a `struct` which has to be 
-# subtype of `SolidStateDetectors.AbstractImpurityDensity{T}`.
-# We define the model with two parameters in order to be able to vary the density level 
-# in the p-type and n-type regions independently. 
-# More parameters could be added, e.g., the position of the p-n junction.
-
+# 1\. We have to define a `struct` which has to be 
+#    subtype of `SolidStateDetectors.AbstractImpurityDensity{T}`.
+#    We define the model with two parameters in order to be able to vary the density level 
+#    in the p-type and n-type regions independently. 
+#    More parameters could be added, e.g., the position of the p-n junction.
 struct PNJunctionImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} 
     p_type_density::T
     n_type_density::T
 end
-
-# 2. We have to define a method for `SolidStateDetectors.get_impurity_density` for our 
-# just defined impurity density. 
-# It has to take two arguments. An instance of our model and a point.
-# The function returns the impurity density at the respective position.
-# The returned value has to be in units of 1/m``^{3}``.
+# 2\. We have to define a method for `SolidStateDetectors.get_impurity_density` for our 
+#    just defined impurity density. 
+#    It has to take two arguments. An instance of our model and a point.
+#    The function returns the impurity density at the respective position.
+#    The returned value has to be in units of 1/m``^{3}``.
 
 #=
 !!! note "Sign of the impurity density"

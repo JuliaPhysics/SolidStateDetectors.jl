@@ -117,7 +117,7 @@ detectors:
 The `charge_drift_model` needs:
 - `model`: the name of the charge drift model, which in this case is `ADLChargeDriftModel`
 - `phi110` or `crystal_orientation`: the description of the orientation of the crystal with respect to the global coordinate system.
-  When using `phi110`, the `\langle001\rangle` axis is aligned with the global `z` axis and `phi110` describes the angle between the $\langle$110$\rangle$ axis and the `x` axis in radians (counterclockwise, looking from the top). If the $\langle$001$\rangle$ axis is not aligned with the `z` axis, a rotation matrix to transform the global coordinate system to the crystal axes system can be given.
+  When using `phi110`, the $\langle$001$\rangle$ axis is aligned with the global `z` axis and `phi110` describes the angle between the $\langle$110$\rangle$ axis and the `x` axis in radians (counterclockwise, looking from the top). If the $\langle$001$\rangle$ axis is not aligned with the `z` axis, a rotation matrix to transform the global coordinate system to the crystal axes system can be given.
 - `material` (optional): the semiconductor material. If no material is given, the `material` of the semiconductor is taken by default.
 - `drift`: the parameters needed to describe the longitudinal drift velocity along the $\langle$100$\rangle$ and $\langle$111$\rangle$ axes, see above.
 

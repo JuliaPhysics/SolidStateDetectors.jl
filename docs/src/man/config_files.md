@@ -150,7 +150,7 @@ Symmetries of the world can be used to reduce the calculation only to a fraction
 
 For linear axes (`x`, `y`, `z`), the `boundaries` can be chosen `infinite`, `periodic`, `reflecting`, or `fixed`.
 
-For radial axes (`r`), the boundaries can be chosen `r0`.
+For radial axes (`r`), the boundaries can be chosen `r0` for the left boundary and `infinite`, `reflecting` or `fixed` on the right boundary.
 If no boundaries are given, the default is `r0` for the left boundary and `infinite` for the right boundary.
 
 For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. If no boundaries are given, the default is `periodic` for both edges.
@@ -236,8 +236,8 @@ semiconductor:
 The different fields of the semiconductor are:
 - `material`: the material of the semiconductor. This is important to know the electric properties of the semiconductor for the electric potential calculation. Possible choices are `HPGe` (high-purity germanium) and `Si` (silicon).
 - `temperature` (optional): the temperature of the semiconductor. If no `temperature` is given, the default is 78K for germanium and 293K for all other materials.
-- `impurity_density` (optional): the distribution of impurities in the semiconductor material. This has a strong impact on the electric potential calculation. If no `impurity_density` is given, the default is an impurity-free material ($\rho(\vec{r}) = 0$).
-- `charge_drift_model` (optional): a model to describe the drift of charge carriers in the semiconductor material. If no `charge_drift_model` is given, the default is `ElectricFieldChargeDriftModel`. Find a detailed description  on how to define an own model under [Custom Charge Drift Model](@ref).
+- `impurity_density` (optional): the distribution of impurities in the semiconductor material. This has a strong impact on the electric potential calculation. If no `impurity_density` is given, the default is an impurity-free material ($\rho(\vec{r}) = 0$). Find a selection of implemented impurity density models and how to define an own model under [Impurity Densities](@ref).
+- `charge_drift_model` (optional): a model to describe the drift of charge carriers in the semiconductor material. If no `charge_drift_model` is given, the default is `ElectricFieldChargeDriftModel`. Find a detailed description on how to define an own model under [Custom Charge Drift Model](@ref).
 - `geometry`: the geometry of the semiconductor object. Find a detailed description on how to define geometries under [Constructive Solid Geometry (CSG)](@ref).
 
 
@@ -262,7 +262,7 @@ where each entry of the `contacts` array defines one contact.
 
 The different fields of a contact are:
 - `name` (optional): the custom name for the contacts, relevant for plotting. 
-- `id`: a unique id of the contact that will unambiguously identify the contact, for example in the signal generation. All contacts should be given an integer id, ideally from 1 to N where N is the number of contacts.
+- `id`: a unique id of the contact that will unambiguously identify the contact, for example in the signal generation. All contacts should be given an integer id from 1 to N where N is the number of contacts.
 - `potential`: the electric potential applied to the contact that is fixed throughout the whole contact geometry. This value can be parsed with units (`5000V`) or without (`0` with the units defined in the `units` section).
 - `material` (optional): the material of the contact. This is important to know the electric properties of the contact for the electric potential calculation. If no `material` is given, the default is `HPGe` (high-purity germanium).
 - `geometry`: the geometry of the contact. Find a detailed description on how to define geometries under [Constructive Solid Geometry (CSG)](@ref).
@@ -292,8 +292,8 @@ The different fields of a passive are:
 - `id` (optional): a unique id of the contact that will unambiguously identify the passive object. If no `id` is given, the default is `-1`.
 - `potential` (optional): the electric potential to which the passive object is fixed. This value can be parsed with units (`5000V`) or without (`0` with the units defined in the `units` section). If no `potential` is given, the passive object will be treated as floating. 
 - `temperature` (optional): the temperature of the passive object. This value can be parsed with units (`293K`) or without (`78` with the units defined in the `units` section). If no `temperature` is given, the default is `293K`.
-- `material`: the material of the passive object. This is important to know the electric properties of the contact for the electric potential calculation.
-- `charge_density` (optional): model to describe charge density distributions within the passive object, e.g. charged surfaces. Find a detailed description on how to define charge densities under Charge Density.
+- `material`: the material of the passive object. This is important to know the electric properties of the passive object for the electric potential calculation.
+- `charge_density` (optional): model to describe charge density distributions within the passive object, e.g. charged surfaces. Find a detailed description on how to define charge densities under [Charge Densities](@ref).
 - `geometry`: the geometry of the contact. Find a detailed description on how to define geometries in the section under [Constructive Solid Geometry (CSG)](@ref).
 
 
@@ -308,7 +308,7 @@ grid: #...
 medium: vacuum
 detectors: # ...
 ```
-If no `medium` is given, the default is vacuum. Implemented media are `vacuum` and `LAr` (liquid argon), but other media can be easily added to the `material_properties` dictionary in  MaterialProperties.jl.
+If no `medium` is given, the default is vacuum. Implemented media are `vacuum` and `LAr` (liquid argon), but other media can be easily added to the `material_properties` dictionary in MaterialProperties.jl.
 
 Passive objects, especially cryostats or holding structures can be defined in an array `surroundings` without being assigned to a specific detector. 
 ```yaml
@@ -337,7 +337,7 @@ The definition of passive objects in the `surroundings` array is equal to that i
 Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration
 files into smaller ones and loading them using the `include` keyword. This feature supports [YAML](https://github.com/JuliaData/YAML.jl) and [JSON](https://github.com/JuliaIO/JSON.jl) files.
 
-When including a separate file, the user has to add its file path in the main configuration file at the place it supposed to be added. To identify the file, set the key of this entry to `include`. Here, the user can also give an array of file paths. The file paths can be relative to the path of the configuration file or absolute. When including nested files and using relative paths, please always refer to the last parent file.
+When including a separate file, the user has to add its file path in the main configuration file at the place it is supposed to be added. To identify the file, set the key of this entry to `include`. Here, the user can also give an array of file paths. The file paths can be relative to the path of the configuration file or absolute. When including nested files and using relative paths, please always refer to the last parent file.
 
 Including one file:
 ```yaml
