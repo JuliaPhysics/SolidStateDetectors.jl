@@ -56,7 +56,7 @@ In the configuration files, `constant` impurity densities are defined with the `
 ```yaml
 impurity_density:
   name: constant
-  value: 1e10cm^-3 # => 10¹⁹ m⁻³
+  value: 1e10cm^-3 # => 10¹⁶ m⁻³
 ```
 If no units are given, `value` is interpreted in units of `units.length`$^{-3}$.
 They are converted to SI units (m$^{-3}$) internally.
