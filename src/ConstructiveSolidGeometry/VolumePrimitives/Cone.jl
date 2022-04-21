@@ -93,22 +93,23 @@ end
 #Type promotion happens here
 function Cone(CO, r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, TP<:Real, TZ, PT, ROT}
     eltypes = _csg_get_promoted_eltype.((TR, TZ, TP, PT, ROT))
-    T = promote_type(eltypes...)
+    T = float(promote_type(eltypes...))
     Cone{T,CO}(r, φ, hZ, origin, rotation)
 end
 
 function Cone(CO, r::TR, φ::Nothing, hZ::TZ, origin::PT, rotation::ROT) where {TR, TZ, PT, ROT}
     eltypes = _csg_get_promoted_eltype.((TR, TZ, PT, ROT))
-    T = promote_type(eltypes...)
+    T = float(promote_type(eltypes...))
     Cone{T,CO}(r, φ, hZ, origin, rotation)
 end
 
 function Cone(::Type{CO}=ClosedPrimitive;
-    r = 1.0, 
+    # define default parameters as Int64 to not influence type promotion
+    r = 1, 
     φ = nothing,
-    hZ = 1.0,
-    origin = zero(CartesianPoint{Float64}), 
-    rotation = one(SMatrix{3, 3, Float64, 9})
+    hZ = 1,
+    origin = zero(CartesianPoint{Int64}), 
+    rotation = one(SMatrix{3, 3, Int64, 9})
 ) where {CO}
     Cone(CO, r, φ, hZ, origin, rotation)
 end
