@@ -90,38 +90,38 @@ end
 function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::TP, θ::TT, 
     origin::PT, rotation::ROT) where {TRTo, TRTu, TP, TT, PT, ROT}
         eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TP, TT, PT, ROT))
-        T = promote_type(eltypes...)
+        T = float(promote_type(eltypes...))
         Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
 end
 
 function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::TT, 
     origin::PT, rotation::ROT) where {TRTo, TRTu, TT, PT, ROT}
         eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TT, PT, ROT))
-        T = promote_type(eltypes...)
+        T = float(promote_type(eltypes...))
         Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
 end
 
 function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::TP, θ::Nothing,
     origin::PT, rotation::ROT) where {TRTo, TRTu, TP, PT, ROT}
         eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TP, PT, ROT))
-        T = promote_type(eltypes...)
+        T = float(promote_type(eltypes...))
         Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
 end
 
 function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::Nothing, 
     origin::PT, rotation::ROT) where {TRTo, TRTu, PT, ROT}
         eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, PT, ROT))
-        T = promote_type(eltypes...)
+        T = float(promote_type(eltypes...))
         Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
 end
 
 function Torus(::Type{CO} = ClosedPrimitive;
-    r_torus = 1., 
-    r_tube = 1.,
+    r_torus = 1, 
+    r_tube = 1,
     φ = nothing,
     θ = nothing,
-    origin = zero(CartesianPoint{Float64}), 
-    rotation = one(SMatrix{3, 3, Float64, 9})
+    origin = zero(CartesianPoint{Int64}), 
+    rotation = one(SMatrix{3, 3, Int64, 9})
 ) where {CO}
     Torus(CO, r_torus, r_tube, φ, θ, origin, rotation)
 end
