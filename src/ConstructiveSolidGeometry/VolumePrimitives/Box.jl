@@ -66,16 +66,16 @@ end
 #Type promotion happens here
 function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX, TY, TZ, PT, ROT}
     eltypes = _csg_get_promoted_eltype.((TX, TY, TZ, PT, ROT))
-    T = promote_type(eltypes...)
+    T = float(promote_type(eltypes...))
     Box{T}(CO,T(hX), T(hY), T(hZ), origin, rotation)
 end
 
 function Box(::Type{CO}=ClosedPrimitive;
-    hX = 1.0,
-    hY = 1.0,
-    hZ = 1.0,
-    origin = zero(CartesianPoint{Float64}), 
-    rotation = one(SMatrix{3, 3, Float64, 9})
+    hX = 1,
+    hY = 1,
+    hZ = 1,
+    origin = zero(CartesianPoint{Int64}), 
+    rotation = one(SMatrix{3, 3, Int64, 9})
 ) where {CO}
     Box(CO, hX, hY, hZ, origin, rotation)
 end
