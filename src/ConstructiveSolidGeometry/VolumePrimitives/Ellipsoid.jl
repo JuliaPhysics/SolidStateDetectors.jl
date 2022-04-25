@@ -65,14 +65,14 @@ end
 #Type promotion happens here
 function Ellipsoid(CO, r::TR, origin::PT, rotation::ROT) where {TR, PT, ROT}
     eltypes = _csg_get_promoted_eltype.((TR, PT, ROT))
-    T = promote_type(eltypes...)
+    T = float(promote_type(eltypes...))
     Ellipsoid{T,CO}(r, origin, rotation)
 end
 
 function Ellipsoid(::Type{CO}=ClosedPrimitive;
-    r = 1.0, 
-    origin = zero(CartesianPoint{Float64}), 
-    rotation = one(SMatrix{3, 3, Float64, 9})
+    r = 1, 
+    origin = zero(CartesianPoint{Int64}), 
+    rotation = one(SMatrix{3, 3, Int64, 9})
 ) where {CO}
     Ellipsoid(CO, r, origin, rotation)
 end
