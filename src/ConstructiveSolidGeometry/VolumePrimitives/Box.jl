@@ -46,12 +46,48 @@ box:
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-@with_kw struct Box{T, CO} <: AbstractVolumePrimitive{T, CO}
-    hX::T = 1
-    hY::T = 1
-    hZ::T = 1
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+struct Box{T,CO} <: AbstractVolumePrimitive{T,CO}
+    hX::T
+    hY::T
+    hZ::T
+    
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9}
+end
+
+#Type conversion happens here
+function Box{T}(CO,hX, hY, hZ, origin, rotation) where {T}
+    _hX = _csg_convert_args(T, hX)
+    _hY = _csg_convert_args(T, hY)
+    _hZ = _csg_convert_args(T, hZ)
+    Box{T,CO}(_hX, _hY, _hZ, origin, rotation)
+end
+
+#Type promotion happens here
+function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX, TY, TZ, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TX, TY, TZ, PT, ROT))
+    T = float(promote_type(eltypes...))
+    Box{T}(CO,T(hX), T(hY), T(hZ), origin, rotation)
+end
+
+function Box(::Type{CO}=ClosedPrimitive;
+    hX = 1,
+    hY = 1,
+    hZ = 1,
+    origin = zero(CartesianPoint{Int64}), 
+    rotation = one(SMatrix{3, 3, Int64, 9})
+) where {CO}
+    Box(CO, hX, hY, hZ, origin, rotation)
+end
+
+function Box{T}(::Type{CO}=ClosedPrimitive;
+    hX = 1.0,
+    hY = 1.0,
+    hZ = 1.0,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T, CO}
+    Box{T}(CO, hX, hY, hZ, origin, rotation)
 end
 
 Box{T, CO}( b::Box{T, CO}; COT = CO,
@@ -101,7 +137,7 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
         hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
         hX, hY, hZ
     end
-    box = Box{T, ClosedPrimitive}(
+    box = Box{T}(ClosedPrimitive,
         hX = hX, 
         hY = hY, 
         hZ = hZ, 
@@ -113,7 +149,10 @@ end
 
 function Dictionary(b::Box{T})::OrderedDict{String, Any} where {T}
     dict = OrderedDict{String,Any}()
-    dict["widths"] = [2*b.hX, 2*b.hY, 2*b.hZ]
+    # dict["widths"] = [2*b.hX, 2*b.hY, 2*b.hZ]
+    dict["hX"] = b.hX
+    dict["hY"] = b.hY
+    dict["hZ"] = b.hZ
     if b.origin != zero(CartesianVector{T}) dict["origin"] = b.origin end
     if b.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(b.rotation) end
     OrderedDict{String,Any}("box" => dict)

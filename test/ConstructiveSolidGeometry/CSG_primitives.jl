@@ -140,4 +140,25 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !in(CartesianPoint{Float64}(-1e-8,0,0),ellip_closed_trafo)
         @test in(CartesianPoint{Float64}(1e-8,0,0),ellip_open_trafo)
     end
+    @testset "Box" begin
+        box1 = @inferred CSG.Box(CSG.ClosedPrimitive,hX=1f0, hY=2f0, hZ=1f0, origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
+        box2 = @inferred CSG.Box{Float32}(hX=1.0, hY=2f0, hZ=1f0)
+        @test box1 === box2
+        
+        dict = Dict("box"   => Dict(
+                "hX"       => 1.0,
+                "hY"       => 42.0,
+                "hZ"       => 3.14))
+        box3 = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(box3)
+        @test dict == output
+        
+        box_closed_trafo = @inferred CSG.Box(CSG.ClosedPrimitive, hX=2., origin=CartesianPoint{Float32}(1,1,1),rotation=SMatrix{3}(0,0,1,0,1,0,-1,0,0))
+        box_open_trafo = @inferred CSG.Box(CSG.OpenPrimitive, hX=2., origin=CartesianPoint{Float32}(1,1,1),rotation=SMatrix{3}(0,0,1,0,1,0,-1,0,0))
+        tol=1e-8
+        @test in(CartesianPoint{Float64}(1,1,3),box_closed_trafo)
+        @test !in(CartesianPoint{Float64}(1,1,3),box_open_trafo)
+        @test !in(CartesianPoint{Float64}(1,1,3+tol),box_closed_trafo)
+        @test in(CartesianPoint{Float64}(1,1,3-tol),box_open_trafo)
+    end
 end
