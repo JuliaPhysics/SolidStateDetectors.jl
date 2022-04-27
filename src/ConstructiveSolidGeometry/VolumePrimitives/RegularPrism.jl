@@ -36,24 +36,71 @@ HexagonalPrism:
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-@with_kw struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
-    r::TR = 1
-    hZ::T = 1
+struct RegularPrism{N,T,CO,TR} <: AbstractVolumePrimitive{T, CO}
+    r::TR
+    hZ::T
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9}
 end
 
-RegularPrism{T, CO, N, TR}( rp::RegularPrism{T, CO, N, TR}; COT = CO,
+#Type conversion happens here
+function RegularPrism{N,T,CO}(r, hZ, origin, rotation) where {T,CO,N}
+    _r = _csg_convert_args(T, r)
+    _hZ = _csg_convert_args(T, hZ)
+    RegularPrism{N,T,CO,typeof(_r)}(_r, _hZ, origin, rotation)
+end
+
+#Type promotion happens here
+function RegularPrism{N}(CO, r::TR, hZ::TZ, origin::PT, rotation::ROT) where {N,TR, TZ, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, TZ, PT, ROT))
+    T = float(promote_type(eltypes...))
+    RegularPrism{N,T,CO}(r, hZ, origin, rotation)
+end
+
+function RegularPrism{N}(::Type{CO}=ClosedPrimitive;
+    r = 1, 
+    hZ = 1,
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
+) where {N, CO<:Union{ClosedPrimitive,OpenPrimitive}}
+    RegularPrism{N}(CO, r, hZ, origin, rotation)
+end
+
+function RegularPrism{N,T}(::Type{CO}=ClosedPrimitive;
+    r = 1.0, 
+    hZ = 1.0,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {N,T <:Real, CO}
+    RegularPrism{N,T,CO}(r, hZ, origin, rotation)
+end
+
+function RegularPrism{T}(::Type{CO}=ClosedPrimitive;
+    r = 1.0, 
+    hZ = 1.0,
+    N = 3,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T, CO}
+    RegularPrism{T,CO,N}(r, hZ, origin, rotation)
+end
+
+RegularPrism{N,T, CO, TR}( rp::RegularPrism{N,T, CO, TR}; COT = CO,
             origin::CartesianPoint{T} = rp.origin,
             rotation::SMatrix{3,3,T,9} = rp.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}, N, TR} =
-    RegularPrism{T, COT, N, TR}(rp.r, rp.hZ, origin, rotation)
+    RegularPrism{N,T, COT, TR}(rp.r, rp.hZ, origin, rotation)
 
-const TriangularPrism{T,CO,TR} = RegularPrism{T,CO,3,TR}
-const QuadranglePrism{T,CO,TR} = RegularPrism{T,CO,4,TR}
-const PentagonalPrism{T,CO,TR} = RegularPrism{T,CO,5,TR}
-const HexagonalPrism{T,CO,TR}  = RegularPrism{T,CO,6,TR}
+const TriangularPrism{T,CO,TR} = RegularPrism{3,T,CO,TR}
+const QuadranglePrism{T,CO,TR} = RegularPrism{4,T,CO,TR}
+const PentagonalPrism{T,CO,TR} = RegularPrism{5,T,CO,TR}
+const HexagonalPrism{T,CO,TR}  = RegularPrism{6,T,CO,TR}
 
+_get_N_prism(::Type{T},::Type{TriangularPrism},CO,r,hZ,origin,rotation) where {T} = RegularPrism{3,T}(CO, r = r, hZ = hZ, origin = origin, rotation = rotation)
+_get_N_prism(::Type{T},::Type{QuadranglePrism},CO,r,hZ,origin,rotation) where {T} = RegularPrism{4,T}(CO, r = r, hZ = hZ, origin = origin, rotation = rotation)
+_get_N_prism(::Type{T},::Type{PentagonalPrism},CO,r,hZ,origin,rotation) where {T} = RegularPrism{5,T}(CO, r = r, hZ = hZ, origin = origin, rotation = rotation)
+_get_N_prism(::Type{T},::Type{HexagonalPrism},CO,r,hZ,origin,rotation) where {T} = RegularPrism{6,T}(CO, r = r, hZ = hZ, origin = origin, rotation = rotation)
+            
 function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}
             ) where {T, P <: Union{TriangularPrism, QuadranglePrism, PentagonalPrism, HexagonalPrism}}
     length_unit = input_units.length
@@ -62,6 +109,7 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     rotation = get_rotation(T, dict, angle_unit)
 
     r = parse_r_of_primitive(T, dict, length_unit)
+    @assert haskey(dict,"h") || haskey(dict,"z") "Please specify 'h' or 'z'."
     hZ = if haskey(dict, "h")
         _parse_value(T, dict["h"], length_unit) / 2
     elseif haskey(dict, "z")
@@ -77,14 +125,17 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
                 The `z` component of the origin of the primitive is overwritten by the `z`."
             origin = CartesianPoint{T}(origin[1], origin[2], mean(z))
             (z[2] - z[1])/2
-       end
+        end 
     end
     
     g = if r isa Tuple # lazy workaround for now
-        P{T,ClosedPrimitive,T}(r = r[2], hZ = hZ, origin = origin, rotation = rotation) -
-        P{T,ClosedPrimitive,T}(r = r[1], hZ = T(1.1)*hZ, origin = origin, rotation = rotation)
+#~         RegularPrism{T}(ClosedPrimitive, N = N, r = r[2], hZ = hZ, origin = origin, rotation = rotation) -
+#~         RegularPrism{T}(ClosedPrimitive, N = N, r = r[1], hZ = T(1.1)*hZ, origin = origin, rotation = rotation)
+        _get_N_prism(T,P,ClosedPrimitive, r[2], hZ, origin, rotation) -
+        _get_N_prism(T,P,ClosedPrimitive, r[1], hZ, origin, rotation)
     else
-        P{T,ClosedPrimitive,T}(r = r, hZ = hZ, origin = origin, rotation = rotation)
+#~         RegularPrism{T}(ClosedPrimitive, N = N, r = r, hZ = hZ, origin = origin, rotation = rotation)
+        _get_N_prism(T,P,ClosedPrimitive, r, hZ, origin, rotation)
     end
     transform(g, transformations)
 end
@@ -96,7 +147,7 @@ const PrismAliases = Dict{Int, String}(
     6 => "HexagonalPrism"
 )
 
-function Dictionary(rp::RegularPrism{T, <:Any, N})::OrderedDict{String, Any} where {T, N}
+function Dictionary(rp::RegularPrism{N,T, <:Any})::OrderedDict{String, Any} where {T, N}
     dict = OrderedDict{String, Any}()
     dict["r"] = rp.r # always a Real 
     dict["h"] = rp.hZ*2
@@ -105,18 +156,18 @@ function Dictionary(rp::RegularPrism{T, <:Any, N})::OrderedDict{String, Any} whe
     OrderedDict{String, Any}(PrismAliases[N] => dict)
 end
 
-function vertices(rp::RegularPrism{T,ClosedPrimitive,N,T}) where {T,N}
+function vertices(rp::RegularPrism{N,T,ClosedPrimitive,T}) where {T,N}
     xys = [rp.r .* sincos(T(2π)*(n-1)/N) for n in 1:N]
     pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
     _transform_into_global_coordinate_system(pts, rp)
 end
-function vertices(rp::RegularPrism{T,OpenPrimitive,N,T}) where {T,N}
+function vertices(rp::RegularPrism{N,T,OpenPrimitive,T}) where {T,N}
     xys = [rp.r .* sincos(T(2π)*(n-1)/N) for n in N:-1:1]
     pts = [CartesianPoint{T}(xy[2], xy[1], z) for z in (-rp.hZ, rp.hZ) for xy in xys]
     _transform_into_global_coordinate_system(pts, rp)
 end
 
-function surfaces(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
+function surfaces(rp::RegularPrism{N,T,<:Any,T}) where {T,N}
     vs = (vertices(rp))
     p_bot = Polygon{N,T}(vs[1:N])
     p_top = Polygon{N,T}(reverse(vs[N+1:end]))
@@ -129,11 +180,11 @@ function surfaces(rp::RegularPrism{T,<:Any,N,T}) where {T,N}
 end
 
 
-function sample(rp::RegularPrism{T,<:Any,N,T})::Vector{CartesianPoint{T}} where {T,N}
+function sample(rp::RegularPrism{N,T,<:Any,T})::Vector{CartesianPoint{T}} where {T,N}
     [vertices(rp)...]
 end
 
-function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,ClosedPrimitive,N,T}; csgtol::T = csg_default_tol(T)) where {T,N} 
+function _in(pt::CartesianPoint{T}, rp::RegularPrism{N,T,ClosedPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T,N} 
     abs(pt.z) <= rp.hZ + csgtol && begin
         r, φ = hypot(pt.x, pt.y), atan(pt.y, pt.x)
         α = T(π/N)
@@ -141,7 +192,7 @@ function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,ClosedPrimitive,N,T}; csg
         _r <= rp.r + csgtol
     end
 end
-function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}; csgtol::T = csg_default_tol(T)) where {T,N} 
+function _in(pt::CartesianPoint{T}, rp::RegularPrism{N,T,OpenPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T,N} 
     abs(pt.z) < rp.hZ - csgtol && begin
         r, φ = hypot(pt.x, pt.y), atan(pt.y, pt.x)
         α = T(π/N)
@@ -150,7 +201,7 @@ function _in(pt::CartesianPoint{T}, rp::RegularPrism{T,OpenPrimitive,N,T}; csgto
     end
 end
 
-extremum(rp::RegularPrism{T}) where {T} = hypot(rp.hZ, max((rp.r...)...))
+extremum(rp::RegularPrism{N,T}) where {N,T} = hypot(rp.hZ, max((rp.r...)...))
 
 # # Convenience functions
 # const TriangularPrism{T,TR,TZ} = RegularPrism{3,T,TR,TZ}
