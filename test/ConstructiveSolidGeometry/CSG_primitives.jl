@@ -85,6 +85,10 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @inferred CSG.Cone(r=(1,2))
         @inferred CSG.Cone(r=(nothing,(3,5)))
         @inferred CSG.Cone(r=((1,),(2,)))
+        #Test where phi is a Tuple
+        tuple_cone = @inferred CSG.Cone{Float64}(φ=(π/4,3*π/4), rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        rot_cone = @inferred CSG.Cone{Float64}(φ=π/2, rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0) * SMatrix{3}(cos(π/4),sin(π/4),0,-sin(π/4),cos(π/4),0,0,0,1))
+        @test tuple_cone ==rot_cone
     end
     @testset "Torus" begin
         for r_tube in (2.0, Dict("from" => 1.0, "to" => 2.0)), 
