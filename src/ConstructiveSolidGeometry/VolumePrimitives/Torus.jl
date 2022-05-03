@@ -77,6 +77,17 @@ struct Torus{T,CO,TR,TP<:Union{Nothing,T},TT,TT1,TT2} <: AbstractVolumePrimitive
 end
 
 #Type conversion happens here
+function Torus{T,CO}(r_torus, r_tube, φ::Tuple{T,T}, θ, origin, rotation) where {T,CO}
+    r_torus = _csg_convert_args(T, r_torus)
+    r_tube = _csg_convert_args(T, r_tube)
+    φ = _csg_convert_args(T, φ)
+    _φ = abs(φ[2]-φ[1])
+    rotation=rotation*SMatrix{3}(cos(φ[1]),sin(φ[1]),0,-sin(φ[1]),cos(φ[1]),0,0,0,1)
+    θ = _csg_convert_args(T, θ)
+    TT1, TT2 = _get_conemantle_type(θ)
+    Torus{T,CO,typeof(r_tube),typeof(_φ),typeof(θ),TT1,TT2}(r_torus, r_tube, _φ, θ, origin, rotation)
+end
+
 function Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation) where {T,CO}
     r_torus = _csg_convert_args(T, r_torus)
     r_tube = _csg_convert_args(T, r_tube)
