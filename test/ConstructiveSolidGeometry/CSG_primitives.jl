@@ -161,4 +161,58 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !in(CartesianPoint{Float64}(1,1,3+tol),box_closed_trafo)
         @test in(CartesianPoint{Float64}(1,1,3-tol),box_open_trafo)
     end
+    @testset "RegularPrism" begin
+        prism1 = @inferred CSG.RegularPrism{3}(CSG.ClosedPrimitive,r=1f0, hZ = 2f0)
+        prism2 = @inferred CSG.RegularPrism{3,Float32}(r=1.0, hZ = 2f0)
+        @test prism1 === prism2
+        
+        dict = Dict("TriangularPrism"   => Dict(
+                "r"       => 1.0,
+                "h"        => 1.0))
+        prism = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(prism)
+        @test dict == output
+        
+        dict = Dict("QuadranglePrism"   => Dict(
+                "r"       => 1.0,
+                "z"      =>1.0))
+        prism = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(prism)
+        output["QuadranglePrism"]["z"]=output["QuadranglePrism"]["h"]#Workaround for tests, since dictionary uses the key "h", since "z" is outdated
+        delete!(output["QuadranglePrism"], "h")
+        @test dict == output
+        
+        dict = Dict("PentagonalPrism"   => Dict(
+                "r"       => 1.0,
+                "z"      =>1.0))
+        prism = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(prism)
+        output["PentagonalPrism"]["z"]=output["PentagonalPrism"]["h"]
+        delete!(output["PentagonalPrism"], "h")
+        @test dict == output
+        
+        dict = Dict("HexagonalPrism"   => Dict(
+                "r"       => 1.0,
+                "h"      =>1.0))
+        prism = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(prism)
+        @test dict == output
+        
+        # Test in() method
+        @test in(CartesianPoint{Float32}(0,0,0),prism1)
+        @test !in(CartesianPoint{Float32}(1.5,0,0),prism1)
+        tol = 1e-8
+        prism_closed = @inferred CSG.RegularPrism{4}(CSG.ClosedPrimitive; r =1.,hZ =1., origin=CartesianPoint{Float32}(0,0,5),rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        prism_open = @inferred CSG.RegularPrism{5}(CSG.OpenPrimitive; r =1.,hZ =1., origin=CartesianPoint{Float32}(0,0,5),rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        @test in(CartesianPoint{Float64}(0,0,4),prism_closed)
+        @test !in(CartesianPoint{Float64}(0,0,4),prism_open)
+        @test !in(CartesianPoint{Float64}(0,0,4-tol),prism_closed)
+        @test in(CartesianPoint{Float64}(0,0,4+tol),prism_open)
+        
+        #Test different prism
+        @inferred CSG.RegularPrism{3,Float32}()
+        @inferred CSG.RegularPrism{4,Float32}()
+        @inferred CSG.RegularPrism{5,Float32}()
+        @inferred CSG.RegularPrism{6,Float32}()
+    end
 end
