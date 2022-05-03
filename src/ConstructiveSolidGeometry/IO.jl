@@ -86,6 +86,9 @@ function _parse_linear_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Uni
     To == -From == zero(T) ? To : (From, To) # if != 0 is influences the origin 
 end
 
+function _parse_linear_interval(::Type{T}, tuple::Tuple{Real,Real}, unit::Unitful.Units) where {T}
+    tuple[2] == -tuple[1] == zero(T) ? tuple[2] : (tuple[1], tuple[2]) # if != 0 is influences the origin 
+end
 
 # parses dictionary entry for φ-interval that has {"from" ..., "to": ...} to the respective Nothing/Interval
 function _parse_angular_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
