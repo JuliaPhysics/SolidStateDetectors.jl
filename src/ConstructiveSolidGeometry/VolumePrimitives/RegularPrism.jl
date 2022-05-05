@@ -129,12 +129,9 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     end
     
     g = if r isa Tuple # lazy workaround for now
-#~         RegularPrism{T}(ClosedPrimitive, N = N, r = r[2], hZ = hZ, origin = origin, rotation = rotation) -
-#~         RegularPrism{T}(ClosedPrimitive, N = N, r = r[1], hZ = T(1.1)*hZ, origin = origin, rotation = rotation)
         _get_N_prism(T,P,ClosedPrimitive, r[2], hZ, origin, rotation) -
         _get_N_prism(T,P,ClosedPrimitive, r[1], hZ, origin, rotation)
     else
-#~         RegularPrism{T}(ClosedPrimitive, N = N, r = r, hZ = hZ, origin = origin, rotation = rotation)
         _get_N_prism(T,P,ClosedPrimitive, r, hZ, origin, rotation)
     end
     transform(g, transformations)
