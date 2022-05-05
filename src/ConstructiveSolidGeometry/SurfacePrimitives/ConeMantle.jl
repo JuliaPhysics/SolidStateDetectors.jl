@@ -20,14 +20,49 @@ Surface primitive describing the mantle of a [`Cone`](@ref).
 * `origin::CartesianPoint{T}`: Origin of the `Cone` which has this `ConeMantle` as surface.
 * `rotation::SMatrix{3,3,T,9}`: Rotation matrix of the `Cone` which has this `ConeMantle` as surface.
 """
-@with_kw struct ConeMantle{T,TR,TP<:Union{Nothing,T},D} <: AbstractCurvedSurfacePrimitive{T}
-    r::TR = 1
-    φ::TP = nothing
-    hZ::T = 1
+struct ConeMantle{T,TR,TP<:Union{Nothing,T},D} <: AbstractCurvedSurfacePrimitive{T}
+    r::TR
+    φ::TP
+    hZ::T
 
     # axis::Line{T} = Line{T}(CartesianPoint{T}(zero(T), zero(T), -hZ), CartesianVector{T}(zero(T), zero(T), 2hZ))
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9}
+end
+
+#Type conversion happens here
+function ConeMantle{T}(D, r, φ, hZ, origin, rotation) where {T}
+    _r = _csg_convert_args(T, r)
+    (_φ, _rotation) = _handle_phi(_csg_convert_args(T, φ), rotation)
+    _hZ = _csg_convert_args(T, hZ)
+    ConeMantle{T,typeof(_r),typeof(_φ),D}(_r, _φ, _hZ, origin, _rotation)
+end
+
+#Type promotion happens here
+function ConeMantle(D,r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, TP, TZ, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, TP, TZ, PT, ROT))
+    T = float(promote_type(eltypes...))
+    ConeMantle{T}(D, r, φ, hZ, origin, rotation)
+end
+
+function ConeMantle(D::Symbol=:outwards;
+    # define default parameters as Int to not influence type promotion
+    r = 1, 
+    φ = nothing,
+    hZ = 1,
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9}))
+    ConeMantle(D, r, φ, hZ, origin, rotation)
+end
+
+function ConeMantle{T}(D::Symbol=:outwards;
+    r = 1.0, 
+    φ = nothing,
+    hZ= 1.0,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T}
+    ConeMantle{T}(D, r, φ, hZ, origin, rotation)
 end
 
 flip(c::ConeMantle{T,TR,TP,:inwards}) where {T,TR,TP} = 
