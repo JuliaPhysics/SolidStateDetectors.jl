@@ -110,8 +110,8 @@ function Torus(::Type{CO} = ClosedPrimitive;
     r_tube = 1,
     φ = nothing,
     θ = nothing,
-    origin = zero(CartesianPoint{Int64}), 
-    rotation = one(SMatrix{3, 3, Int64, 9})
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
 ) where {CO}
     Torus(CO, r_torus, r_tube, φ, θ, origin, rotation)
 end

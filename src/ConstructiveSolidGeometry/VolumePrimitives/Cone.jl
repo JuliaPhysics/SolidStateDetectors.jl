@@ -113,12 +113,12 @@ function Cone(CO, r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, T
 end
 
 function Cone(::Type{CO}=ClosedPrimitive;
-    # define default parameters as Int64 to not influence type promotion
+    # define default parameters as Int to not influence type promotion
     r = 1, 
     φ = nothing,
     hZ = 1,
-    origin = zero(CartesianPoint{Int64}), 
-    rotation = one(SMatrix{3, 3, Int64, 9})
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
 ) where {CO}
     Cone(CO, r, φ, hZ, origin, rotation)
 end
