@@ -56,12 +56,16 @@ module ConstructiveSolidGeometry
 
     _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = eltype(T)
     _csg_get_promoted_eltype(::Type{T}) where {T <: Real} = T
+    _csg_get_promoted_eltype(::Type{Nothing}) = Int
     _csg_get_promoted_eltype(::Type{Tuple{T}}) where {T<:Real} = T
     _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Real, T2<:Real} = promote_type(T1, T2)
     _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Union{Real, Tuple}, T2<:Union{Real, Tuple}} = promote_type(_csg_get_promoted_eltype(T1), _csg_get_promoted_eltype(T2))
     _csg_get_promoted_eltype(::Type{Tuple{Nothing,T2}}) where {T2<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T2)
     _csg_get_promoted_eltype(::Type{Tuple{T1,Nothing}}) where {T1<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T1)
 
+    _handle_phi(φ, rotation) = (φ, rotation)
+    _handle_phi(φ::Tuple, rotation) = (abs(φ[2]-φ[1]), rotation*SMatrix{3}(cos(φ[1]),sin(φ[1]),0,-sin(φ[1]),cos(φ[1]),0,0,0,1))
+    
     include("Units.jl")
     include("PointsAndVectors/PointsAndVectors.jl")
 
