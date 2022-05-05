@@ -56,6 +56,7 @@ module ConstructiveSolidGeometry
 
     _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = eltype(T)
     _csg_get_promoted_eltype(::Type{T}) where {T <: Real} = T
+    _csg_get_promoted_eltype(::Type{Nothing}) = Int
     _csg_get_promoted_eltype(::Type{Tuple{T}}) where {T<:Real} = T
     _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Real, T2<:Real} = promote_type(T1, T2)
     _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Union{Real, Tuple}, T2<:Union{Real, Tuple}} = promote_type(_csg_get_promoted_eltype(T1), _csg_get_promoted_eltype(T2))
