@@ -32,7 +32,6 @@ struct TorusMantle{T,TP<:Union{Nothing,T},TT,D} <: AbstractCurvedSurfacePrimitiv
     rotation::SMatrix{3,3,T,9} 
 end
 
-
 #Type conversion happens here
 function TorusMantle{T}(D,r_torus, r_tube, φ::TP, θ, origin, rotation) where {T,TP}
     _r_torus = _csg_convert_args(T, r_torus)
@@ -86,6 +85,7 @@ get_φ_limits(tm::TorusMantle{T,Nothing}) where {T} = T(0), T(2π)
 
 get_θ_limits(tm::TorusMantle{T,<:Any,Tuple{T,T}}) where {T} = tm.θ[1], tm.θ[2]
 get_θ_limits(tm::TorusMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+get_θ_limits(tm::TorusMantle{T,<:Any,T}) where {T} = T(0), tm.θ
 
 function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where {T,TP,TT}
     pto = _transform_into_object_coordinate_system(pt, tm)
