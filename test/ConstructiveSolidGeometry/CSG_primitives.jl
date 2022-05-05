@@ -161,4 +161,14 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !in(CartesianPoint{Float64}(1,1,3+tol),box_closed_trafo)
         @test in(CartesianPoint{Float64}(1,1,3-tol),box_open_trafo)
     end
+    @testset "TorusMantle" begin
+        # torusmantle1 = @inferred CSG.TorusMantle(r_torus=1f0)
+        # torusmantle2 = @inferred CSG.TorusMantle{Float32}(r_torus=1.0)
+        # @test torusmantle1 == torusmantle2
+        # 
+        # torus_trafo = @inferred CSG.TorusMantle(origin = CartesianPoint{Float64}(1,1,1), rotation = SMatrix{3}(0,0,1,0,1,0,-1,0,0))
+        CSG.TorusMantle{Float32}(r_tube = 1f0)
+        CSG.TorusMantle()
+        CSG.TorusMantle(φ=(1.,2.))    
+    end
 end
