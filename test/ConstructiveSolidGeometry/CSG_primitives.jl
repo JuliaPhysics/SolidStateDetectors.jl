@@ -171,4 +171,9 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         CSG.TorusMantle()
         CSG.TorusMantle(φ=(1.,2.))    
     end
+    @testset "ConeMantle" begin
+        CSG.ConeMantle{Float32}(r = 1f0)
+        CSG.ConeMantle()
+        CSG.ConeMantle(φ=(1.,2.))    
+    end
 end
