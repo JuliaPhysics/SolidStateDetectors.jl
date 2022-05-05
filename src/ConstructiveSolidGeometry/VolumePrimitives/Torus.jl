@@ -105,27 +105,6 @@ function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::TP, θ::TT,
         Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
 end
 
-function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::TT, 
-    origin::PT, rotation::ROT) where {TRTo, TRTu, TT, PT, ROT}
-        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TT, PT, ROT))
-        T = float(promote_type(eltypes...))
-        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
-end
-
-function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::TP, θ::Nothing,
-    origin::PT, rotation::ROT) where {TRTo, TRTu, TP, PT, ROT}
-        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TP, PT, ROT))
-        T = float(promote_type(eltypes...))
-        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
-end
-
-function Torus(CO, r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::Nothing, 
-    origin::PT, rotation::ROT) where {TRTo, TRTu, PT, ROT}
-        eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, PT, ROT))
-        T = float(promote_type(eltypes...))
-        Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation)
-end
-
 function Torus(::Type{CO} = ClosedPrimitive;
     r_torus = 1, 
     r_tube = 1,
@@ -189,7 +168,6 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
         throw(ConfigFileError("Error when trying to parse φ from configuration file."))
     end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    #TT1, TT2 = _get_conemantle_type(θ)
     if haskey(dict, "z")
         @warn "Deprecation warning: Field `z` for `Torus` is deprecated. 
                 Use instead (only) `origin` to specify the origin of the primitive.

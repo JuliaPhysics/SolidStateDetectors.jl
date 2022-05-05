@@ -83,7 +83,7 @@ struct Cone{T,CO,TR,TP<:Union{Nothing,T}} <: AbstractVolumePrimitive{T, CO}
 end
 
 #Type conversion happens here
-function Cone{T,CO}(r, φ::Tuple{T,T}, hZ, origin, rotation) where {T,CO}
+function Cone{T,CO}(r, φ::Tuple, hZ, origin, rotation) where {T,CO}
     r = _csg_convert_args(T, r)
     φ = _csg_convert_args(T, φ)
     _φ = abs(φ[2]-φ[1])
