@@ -83,29 +83,15 @@ struct Cone{T,CO,TR,TP<:Union{Nothing,T}} <: AbstractVolumePrimitive{T, CO}
 end
 
 #Type conversion happens here
-function Cone{T,CO}(r, φ::Tuple, hZ, origin, rotation) where {T,CO}
+function Cone{T,CO}(r, φ, hZ, origin, rotation) where {T,CO}
     r = _csg_convert_args(T, r)
     φ = _csg_convert_args(T, φ)
-    _φ = abs(φ[2]-φ[1])
-    rotation=rotation*SMatrix{3}(cos(φ[1]),sin(φ[1]),0,-sin(φ[1]),cos(φ[1]),0,0,0,1)
+    (_φ, rotation) = _handle_phi(φ, rotation)
     hZ = _csg_convert_args(T, hZ)
     Cone{T,CO,typeof(r),typeof(_φ)}(r, _φ, hZ, origin, rotation)
 end
 
-function Cone{T,CO}(r, φ, hZ, origin, rotation) where {T,CO}
-    r = _csg_convert_args(T, r)
-    φ = _csg_convert_args(T, φ)
-    hZ = _csg_convert_args(T, hZ)
-    Cone{T,CO,typeof(r),typeof(φ)}(r, φ, hZ, origin, rotation)
-end
-
 #Type promotion happens here
-function Cone(CO, r::TR, φ::Nothing, hZ::TZ, origin::PT, rotation::ROT) where {TR, TZ, PT, ROT}
-    eltypes = _csg_get_promoted_eltype.((TR, TZ, PT, ROT))
-    T = float(promote_type(eltypes...))
-    Cone{T,CO}(r, φ, hZ, origin, rotation)
-end
-
 function Cone(CO, r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, TP, TZ, PT, ROT}
     eltypes = _csg_get_promoted_eltype.((TR, TZ, TP, PT, ROT))
     T = float(promote_type(eltypes...))
