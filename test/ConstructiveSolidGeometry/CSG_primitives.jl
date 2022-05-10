@@ -180,4 +180,9 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         CSG.EllipsoidMantle{Float32}(r = 1f0)
         CSG.EllipsoidMantle() 
     end
+    @testset "EllipticalSurface" begin
+        @inferred CSG.EllipticalSurface{Float32}(r = 1f0)
+        @inferred CSG.EllipticalSurface()
+        @inferred CSG.EllipticalSurface(φ=(1.,2.))    
+    end
 end
