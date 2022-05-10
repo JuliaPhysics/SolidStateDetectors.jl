@@ -18,12 +18,44 @@ Surface primitive describing circular bases, e.g. the top or bottom base of a [`
 * `origin::CartesianPoint{T}`: The position of the center of the `EllipticalSurface`.
 * `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `EllipticalSurface` around its `origin`.
 """
-@with_kw struct EllipticalSurface{T,TR,TP<:Union{Nothing,T}} <: AbstractPlanarSurfacePrimitive{T}
-    r::TR = 1
-    φ::TP = nothing
+struct EllipticalSurface{T<:AbstractFloat,TR<:Union{T,Tuple{T,T}},TP<:Union{Nothing,T}} <: AbstractPlanarSurfacePrimitive{T}
+    r::TR
+    φ::TP 
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9} 
+end
+
+#Type conversion happens here
+function EllipticalSurface{T}(r, φ, origin, rotation) where {T}
+    _r = _csg_convert_args(T, r)
+    (_φ, _rotation) = _handle_phi(_csg_convert_args(T, φ), rotation)
+    EllipticalSurface{T,typeof(_r),typeof(_φ)}(_r, _φ, origin, _rotation)
+end
+
+#Type promotion happens here
+function EllipticalSurface(r::TR, φ::TP, origin::PT, rotation::ROT) where {TR<:Union{Tuple,Real}, TP, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, TP, PT, ROT))
+    T = float(promote_type(eltypes...))
+    EllipticalSurface{T}(r, φ, origin, rotation)
+end
+
+function EllipticalSurface(;
+    # define default parameters as Int to not influence type promotion
+    r = 1, 
+    φ = nothing,
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9}))
+    EllipticalSurface(r, φ, origin, rotation)
+end
+
+function EllipticalSurface{T}(;
+    r = 1.0, 
+    φ = nothing,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T}
+    EllipticalSurface{T}(r, φ, origin, rotation)
 end
 
 flip(es::EllipticalSurface{T,TR,Nothing}) where {T,TR} = 
