@@ -258,5 +258,10 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @inferred CSG.RegularPrism{4,Float32}()
         @inferred CSG.RegularPrism{5,Float32}()
         @inferred CSG.RegularPrism{6,Float32}()
+	end
+    @testset "EllipticalSurface" begin
+        @inferred CSG.EllipticalSurface{Float32}(r = 1f0)
+        @inferred CSG.EllipticalSurface()
+        @inferred CSG.EllipticalSurface(φ=(1.,2.))    
     end
 end
