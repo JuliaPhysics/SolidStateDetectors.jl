@@ -185,4 +185,9 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @inferred CSG.EllipticalSurface()
         @inferred CSG.EllipticalSurface(φ=(1.,2.))    
     end
+    @testset "Plane" begin
+        plane1 = @inferred CSG.Plane{Float32}(normal = CartesianPoint(1,0,0))
+        plane2 = @inferred CSG.Plane(normal = CartesianPoint(1f0,0f0,0f0))
+        @test plane1 == plane2 
+    end
 end
