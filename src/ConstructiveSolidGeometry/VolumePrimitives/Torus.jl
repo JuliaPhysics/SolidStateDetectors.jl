@@ -78,13 +78,12 @@ end
 
 #Type conversion happens here
 function Torus{T,CO}(r_torus, r_tube, φ, θ, origin, rotation) where {T,CO}
-    r_torus = _csg_convert_args(T, r_torus)
-    r_tube = _csg_convert_args(T, r_tube)
-    φ = _csg_convert_args(T, φ)
-    (_φ, rotation) = _handle_phi(φ, rotation)
-    θ = _csg_convert_args(T, θ)
-    TT1, TT2 = _get_conemantle_type(θ)
-    Torus{T,CO,typeof(r_tube),typeof(_φ),typeof(θ),TT1,TT2}(r_torus, r_tube, _φ, θ, origin, rotation)
+    _r_torus = _csg_convert_args(T, r_torus)
+    _r_tube = _csg_convert_args(T, r_tube)
+    (_φ, _rotation) = _handle_phi(_csg_convert_args(T, φ), rotation)
+    _θ = _csg_convert_args(T, θ)
+    TT1, TT2 = _get_conemantle_type(_θ)
+    Torus{T,CO,typeof(_r_tube),typeof(_φ),typeof(_θ),TT1,TT2}(_r_torus, _r_tube, _φ, _θ, origin, _rotation)
 end
 
 #Type promotion happens here

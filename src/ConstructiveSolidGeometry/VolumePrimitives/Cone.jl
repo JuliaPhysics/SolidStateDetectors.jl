@@ -84,11 +84,10 @@ end
 
 #Type conversion happens here
 function Cone{T,CO}(r, φ, hZ, origin, rotation) where {T,CO}
-    r = _csg_convert_args(T, r)
-    φ = _csg_convert_args(T, φ)
-    (_φ, rotation) = _handle_phi(φ, rotation)
-    hZ = _csg_convert_args(T, hZ)
-    Cone{T,CO,typeof(r),typeof(_φ)}(r, _φ, hZ, origin, rotation)
+    _r = _csg_convert_args(T, r)
+    (_φ, _rotation) = _handle_phi(_csg_convert_args(T, φ), rotation)
+    _hZ = _csg_convert_args(T, hZ)
+    Cone{T,CO,typeof(_r),typeof(_φ)}(_r, _φ, _hZ, origin, _rotation)
 end
 
 #Type promotion happens here
