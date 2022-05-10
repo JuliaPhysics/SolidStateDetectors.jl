@@ -12,7 +12,27 @@ struct Plane{T} <: AbstractPlanarSurfacePrimitive{T}
     normal::CartesianVector{T}
     Plane{T}(o, n) where {T} = new{T}(o, normalize(n))
 end
-Plane(origin::CartesianPoint{T}, normal::CartesianVector{T}) where {T} = Plane{T}(origin, normal)
+
+#Type promotion happens here
+function Plane(origin::PT, normal::NO) where {PT,NO}
+    eltypes = _csg_get_promoted_eltype.((PT,NO))
+    T = float(promote_type(eltypes...))
+    Plane{T}(origin, normal)
+end
+
+function Plane(;
+    origin = zero(CartesianPoint{Int}), 
+    normal = CartesianVector{Int}(0,0,1)
+)
+    Plane(origin, normal)
+end
+
+function Plane{T}(;
+    origin = zero(CartesianPoint{Float64}), 
+    normal = CartesianVector{Float64}(0,0,1)
+) where {T}
+    Plane{T}(origin, normal)
+end
 
 normal(p::Plane) = p.normal
 origin(p::Plane) = p.origin
