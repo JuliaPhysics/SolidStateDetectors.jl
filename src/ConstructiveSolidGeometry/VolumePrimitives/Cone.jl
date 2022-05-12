@@ -85,31 +85,25 @@ end
 #Type conversion happens here
 function Cone{T,CO}(r, φ, hZ, origin, rotation) where {T,CO}
     _r = _csg_convert_args(T, r)
-    _φ = _csg_convert_args(T, φ)
+    (_φ, _rotation) = _handle_phi(_csg_convert_args(T, φ), rotation)
     _hZ = _csg_convert_args(T, hZ)
-    Cone{T,CO,typeof(_r),typeof(_φ)}(_r, _φ, _hZ, origin, rotation)
+    Cone{T,CO,typeof(_r),typeof(_φ)}(_r, _φ, _hZ, origin, _rotation)
 end
 
 #Type promotion happens here
-function Cone(CO, r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, TP<:Real, TZ, PT, ROT}
+function Cone(CO, r::TR, φ::TP, hZ::TZ, origin::PT, rotation::ROT) where {TR, TP, TZ, PT, ROT}
     eltypes = _csg_get_promoted_eltype.((TR, TZ, TP, PT, ROT))
     T = float(promote_type(eltypes...))
     Cone{T,CO}(r, φ, hZ, origin, rotation)
 end
 
-function Cone(CO, r::TR, φ::Nothing, hZ::TZ, origin::PT, rotation::ROT) where {TR, TZ, PT, ROT}
-    eltypes = _csg_get_promoted_eltype.((TR, TZ, PT, ROT))
-    T = float(promote_type(eltypes...))
-    Cone{T,CO}(r, φ, hZ, origin, rotation)
-end
-
 function Cone(::Type{CO}=ClosedPrimitive;
-    # define default parameters as Int64 to not influence type promotion
+    # define default parameters as Int to not influence type promotion
     r = 1, 
     φ = nothing,
     hZ = 1,
-    origin = zero(CartesianPoint{Int64}), 
-    rotation = one(SMatrix{3, 3, Int64, 9})
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
 ) where {CO}
     Cone(CO, r, φ, hZ, origin, rotation)
 end

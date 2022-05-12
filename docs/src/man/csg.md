@@ -229,6 +229,11 @@ which corresponds to `X: 90°`.
 
 Alternative naming for the `rotation` field can be `rotate`.
 
+!!! note
+    If $\varphi$ is specified for a certain interval, the interval is internally converted into a rotation, $R_{\varphi}$, of the primitive.
+    This rotation is applied prior to the rotation specified in the rotation field, $R$. 
+    Thus, internally, both rotations are calculated into the final rotation matrix of the primitive, $R_f$, via $R_f = R \cdot R_{\varphi}$. 
+
 
 ### Translations
 
@@ -268,7 +273,7 @@ tube:
     z: 1cm
 ```
 would first rotate the `tube` by 45° around the `x` axis before translating it 1cm along the `z` axis.
-
+  
 
 ### Transforming Sets
 

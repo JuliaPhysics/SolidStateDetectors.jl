@@ -85,13 +85,17 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @inferred CSG.Cone(r=(1,2))
         @inferred CSG.Cone(r=(nothing,(3,5)))
         @inferred CSG.Cone(r=((1,),(2,)))
+        #Test where phi is a Tuple
+        tuple_cone = @inferred CSG.Cone{Float64}(φ=(π/4,3*π/4), rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        rot_cone = @inferred CSG.Cone{Float64}(φ=π/2, rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0) * SMatrix{3}(cos(π/4),sin(π/4),0,-sin(π/4),cos(π/4),0,0,0,1))
+        @test tuple_cone ==rot_cone
     end
     @testset "Torus" begin
         for r_tube in (2.0, Dict("from" => 1.0, "to" => 2.0)), 
             φ in ((30,180),(0,360)), 
             θmin in 0:45:90, 
             θmax in 135:45:270
-            
+        
             dict = Dict("difference" => [
                 Dict( "torus" => Dict(
                     "r_torus" => 10.0,
@@ -101,7 +105,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
                 for i in 1:2
             ])
             t = Geometry(T, dict, default_units, no_translations)
-            
+        
             # Conversion from Geometry -> Dict and Dict -> Geometry should result in the same geometry
             output = Dictionary(t)
             if haskey(output["difference"][1]["torus"], "phi")
@@ -110,16 +114,56 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             # Internally, the primitive stores the offset of phi in a rotation, but it should not be part of the config file
             @test !haskey(output["difference"][1], "rotation") 
             @test t.a.rotation ≈ Geometry(T, output, default_units, no_translations).a.rotation
-            
+        
             # No warnings or errors when decomposing the Torus into surfaces
             @test_nowarn CSG.surfaces(t.a)
             @test_nowarn CSG.surfaces(t.b)
-
+        
             # Check if all Torus are saved the right way
             @test t.a isa CSG.Torus
             @test t.b isa CSG.Torus
         end
-    end
+    
+        # Test different constructor versions and dictionary construction
+        torus1 = @inferred CSG.Torus(CSG.ClosedPrimitive, r_torus = 1f0, r_tube = 1f0)
+        torus2 = @inferred CSG.Torus{Float32}(r_torus = 1.0, r_tube = 1.0)
+        @test torus1 == torus2
+        dict = Dict("torus"   => Dict(
+                "r_torus"       => 1.0,
+                "r_tube"        => 1.0))
+                # "phi"           => π,
+                # "theta"         => (π,2π)))
+        torus4 = Geometry(T,dict,default_units,no_translations)
+        output = Dictionary(torus4)
+        @test dict == output
+
+        ## Test in method for several tori
+        # Non transformed geometries
+        @test !in(CartesianPoint{Float32}(0,0,0.5),torus1)
+        @test in(CartesianPoint{Float32}(0,0,0),torus1)
+        torus1_open = @inferred CSG.Torus(CSG.OpenPrimitive, r_torus = 1f0, r_tube = 1f0)
+        @test in(CartesianPoint{Float32}(0,2,0),torus1)
+        @test !in(CartesianPoint{Float32}(0,2,0),torus1_open)
+        # Boundary behaviour of closed and open primitives for transformed 
+        # geometries (origin, rotation)
+        torus_closed_trafo = @inferred CSG.Torus(CSG.ClosedPrimitive,r_torus=2.0, r_tube=3.0, φ = π, origin=CartesianPoint{Float32}(0,0,1),rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        torus_open_trafo = @inferred CSG.Torus(CSG.OpenPrimitive,r_torus=2.0, r_tube=3.0, φ = π, origin=CartesianPoint{Float32}(0,0,1),rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+
+        @test in(CartesianPoint{Float64}(1,0,-1),torus_closed_trafo)
+        @test !in(CartesianPoint{Float64}(1,0,-1),torus_open_trafo)
+        @test in(CartesianPoint{Float64}(0,0,0),torus_closed_trafo)
+        @test !in(CartesianPoint{Float64}(0,0,0),torus_open_trafo)
+        tol = 1e-8
+        @test !in(CartesianPoint{Float64}(0,-tol,0),torus_closed_trafo)
+        @test in(CartesianPoint{Float64}(0,+tol,0),torus_open_trafo)
+        #Test all valid keyword argument types
+        @inferred CSG.Torus{Float64}(φ=nothing,θ=nothing)
+        CSG.Torus{Float64}(φ=π,θ=(π,2π)) #inferred does not work here, due to evaluation of _get_conemantle_type(θ) during runtime
+        #Test where phi is a Tuple
+        tuple_torus = @inferred CSG.Torus{Float64}(φ=(π/4,3*π/4),θ=nothing,rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
+        rot_torus = @inferred CSG.Torus{Float64}(φ=π/2,θ=nothing,rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0) * SMatrix{3}(cos(π/4),sin(π/4),0,-sin(π/4),cos(π/4),0,0,0,1))
+        @test tuple_torus ==rot_torus
+    end    
     @testset "Ellipsoid" begin
         ellip1 = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1f0,origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
         ellip2 = @inferred CSG.Ellipsoid{Float32}(r=1.0)
