@@ -36,7 +36,7 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     ϵ_r::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
     electric_potential::Union{ElectricPotential{T}, Missing}
-    weighting_potentials::Vector{Any}
+    weighting_potentials::DataStructures.OrderedDict{Int, Union{Missing, WeightingPotential}}
     electric_field::Union{ElectricField{T}, Missing}
 end
 
@@ -53,7 +53,7 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         missing,
         missing,
         missing,
-        [missing],
+        DataStructures.OrderedDict(),
         missing
     )
 end
@@ -72,7 +72,7 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         ϵ_r = NamedTuple(sim.ϵ_r),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
-        weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(sim.weighting_potentials))
+        weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(values(sim.weighting_potentials)))
     )
     return nt
 end
@@ -102,11 +102,11 @@ function Simulation(nt::NamedTuple)
     end
     sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
     sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
-        [let wp = Symbol("WeightingPotential_$(contact.id)")
-            haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials, wp)) : missing 
-        end for contact in sim.detector.contacts]
+        DataStructures.OrderedDict(let wp = Symbol("WeightingPotential_$(contact.id)")
+            contact.id =>haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials,wp)) : missing 
+        end for contact in sim.detector.contacts)
     else
-        [missing for contact in sim.detector.contacts]
+        DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
     end
     return sim
 end
@@ -179,7 +179,7 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
             World(CS, world_limits)
         end
     end
-    sim.weighting_potentials = Missing[ missing for i in 1:length(sim.detector.contacts)]
+    sim.weighting_potentials = DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
     return sim
 end
 

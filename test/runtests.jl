@@ -231,7 +231,7 @@ end
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 
-    for i in findall(ismissing.(sim.weighting_potentials)) calculate_weighting_potential!(sim, i, verbose = false, device_array_type = device_array_type) end
+    for i in findall(ismissing.(values(sim.weighting_potentials))) calculate_weighting_potential!(sim, i, verbose = false, device_array_type = device_array_type) end
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 end 
