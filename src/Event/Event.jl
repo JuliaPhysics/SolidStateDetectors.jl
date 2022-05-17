@@ -15,7 +15,7 @@ mutable struct Event{T <: SSDFloat}
     locations::VectorOfArrays{CartesianPoint{T}}
     energies::VectorOfArrays{T}
     drift_paths::Union{Vector{EHDriftPath{T}}, Missing}
-    waveforms::Union{Vector{<:Any}, Missing}
+    waveforms::Union{DataStructures.OrderedDict{Int, Union{Missing, RadiationDetectorSignals.RDWaveform}},Missing}
     Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
 end
 
@@ -157,7 +157,7 @@ function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::Re
     @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
     @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
     if ismissing(evt.waveforms)
-        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
+        evt.waveforms = DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
     end
     evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact_id, Δt = Δt)
     nothing
@@ -190,7 +190,7 @@ get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in tim
 function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
     @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges!(evt::Event, sim::Simulation)` first."
     if ismissing(evt.waveforms)
-        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
+        evt.waveforms = DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
     end
     for contact in sim.detector.contacts
         if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
