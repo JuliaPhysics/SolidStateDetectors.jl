@@ -4,3 +4,9 @@
         RadiationDetectorSignals.RDWaveform[wv for wv in skipmissing(wvs)]
     end
 end
+
+@recipe function f(wvs::DataStructures.OrderedDict)
+    @series begin
+        RadiationDetectorSignals.RDWaveform[wv for wv in skipmissing(values(wvs))]
+    end
+end

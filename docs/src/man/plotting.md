@@ -190,7 +190,7 @@ The waveforms can be extended by calling [`add_baseline_and_extend_tail`](@ref) 
 Again, the units of the axes can be set by calling a `plot` command with units before plotting the waveforms.
 ````@example tutorial
 plot(u"µs", u"fC")
-plot!(add_baseline_and_extend_tail.(evt.waveforms,0,400), 
+plot!(add_baseline_and_extend_tail.(values(evt.waveforms),0,400), 
       linewidth = 4, linestyle = :dash, 
       label = "", unitformat = :slash)
 ````
