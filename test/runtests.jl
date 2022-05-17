@@ -29,14 +29,27 @@ end
 T = Float32
 
 @testset "Test real detectors" begin
+    @testset "Simulate example detector: ContactID Test" begin
+        sim = Simulation{T}(SSD_examples[:ContactIDTest])
+        simulate!(sim, convergence_limit = 1e-4, device_array_type = device_array_type, refinement_limits = [0.2], verbose = false)
+        evt = Event([CartesianPoint{T}(0.0075,0,0)])
+        simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+        signalsum = T(0)
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
+        end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+        @info signalsum
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
+    end
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoax])
         simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -50,8 +63,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -69,8 +82,8 @@ T = Float32
     #     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(30), 12e-3 )]))
     #     simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
     #     signalsum = T(0)
-    #     for i in 1:length(evt.waveforms)
-    #         signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+    #     for key in keys(evt.waveforms)
+    #         signalsum += abs(ustrip(evt.waveforms[key].value[end]))
     #     end
     #     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     #     @info signalsum
@@ -87,8 +100,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -102,8 +115,8 @@ T = Float32
         evt = Event([CartesianPoint{T}(0, 5e-4, 1e-3)])
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -115,8 +128,8 @@ T = Float32
         evt = Event([CartesianPoint{T}(0,2e-3,0)])
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -130,8 +143,8 @@ T = Float32
         evt = Event([CartesianPoint{T}(0,0,0)])
         simulate!(evt, sim)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -145,8 +158,8 @@ T = Float32
         evt = Event([CartesianPoint{T}(0.0075,0,0)])
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -158,8 +171,8 @@ T = Float32
         evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
-        for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        for key in keys(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[key].value[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -177,8 +190,8 @@ end
     evt = Event(nbcc)
     simulate!(evt, sim, self_repulsion = true, diffusion = true)
     signalsum = T(0)
-    for i in 1:length(evt.waveforms)
-        signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+    for key in keys(evt.waveforms)
+        signalsum += abs(ustrip(evt.waveforms[key].value[end]))
     end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
@@ -205,8 +218,8 @@ end
         number_of_shells = 2,
         verbose = false);
     signalsum = T(0)
-    for i in 1:length(contact_charge_signals.waveform)
-        signalsum += abs(ustrip(contact_charge_signals.waveform[i].value[end]))
+    for key in keys(contact_charge_signals.waveform)
+        signalsum += abs(ustrip(contact_charge_signals.waveform[key].value[end]))
     end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @test isapprox( signalsum, T(2), atol = 5e-3 )

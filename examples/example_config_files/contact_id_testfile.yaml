@@ -1,0 +1,54 @@
+name: Contact ID test file
+units:
+  length: cm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cartesian
+  axes:
+    x:
+      from: -5
+      to: 5
+      boundaries: reflecting
+    y:
+      from: -5
+      to: 5
+      boundaries: reflecting
+    z:
+      from: -5
+      to: 5
+      boundaries: reflecting
+medium: HPGe
+detectors:
+- semiconductor:
+    material: HPGe
+    geometry:
+      box:
+        hX: 1
+        hY: 1
+        hZ: 1
+  contacts:
+    - material: HPGe
+      name: top contact
+      potential: 100
+      id: 100
+      geometry:
+        box:
+          hX: 0
+          hY: 1
+          hZ: 1
+          origin: 
+            x: 1
+    - material: HPGe
+      name: bottom contact
+      potential: 0
+      id: 0
+      geometry:
+        box:
+          hX: 0
+          hY: 1
+          hZ: 1
+          origin: 
+            x: -1
+    
