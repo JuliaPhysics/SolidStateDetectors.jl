@@ -22,14 +22,59 @@ Surface primitive describing the mantle of a [`Torus`](@ref).
 * `origin::CartesianPoint{T}`: The position of the center of the `TorusMantle`.
 * `rotation::SMatrix{3,3,T,9}`: Matrix that describes a rotation of the `TorusMantle` around its `origin`.
 """
-@with_kw struct TorusMantle{T,TP<:Union{Nothing,T},TT,D} <: AbstractCurvedSurfacePrimitive{T}
-    r_torus::T = 1
-    r_tube::T = 1
-    φ::TP = nothing
-    θ::TT = nothing
+struct TorusMantle{T,TP<:Union{Nothing,T},TT,D} <: AbstractCurvedSurfacePrimitive{T}
+    r_torus::T 
+    r_tube::T 
+    φ::TP 
+    θ::TT 
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T} 
+    rotation::SMatrix{3,3,T,9} 
+end
+
+#Type conversion happens here
+function TorusMantle{T}(D,r_torus, r_tube, φ::TP, θ, origin, rotation) where {T,TP}
+    _r_torus = _csg_convert_args(T, r_torus)
+    _r_tube = _csg_convert_args(T, r_tube)
+    (_φ, _rotation) = _handle_phi(_csg_convert_args(T, φ), rotation)
+    _θ = _csg_convert_args(T, θ)
+    TorusMantle{T,typeof(_φ),typeof(_θ),D}(_r_torus, _r_tube, _φ, _θ, origin, _rotation)
+end
+
+#Type promotion happens here
+function TorusMantle(D,r_torus::TRTo, r_tube::TRTu, φ::Nothing, θ::TT, origin::PT, rotation::ROT) where {TRTo, TRTu, TT, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TT, PT, ROT))
+    T = float(promote_type(eltypes...))
+    TorusMantle{T}(D,r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function TorusMantle(D,r_torus::TRTo, r_tube::TRTu, φ::TP, θ::TT, origin::PT, rotation::ROT) where {TRTo, TRTu, TP, TT, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TRTo, TRTu, TP, TT, PT, ROT))
+    T = float(promote_type(eltypes...))
+    TorusMantle{T}(D,r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function TorusMantle(D::Symbol=:outwards;
+    # define default parameters as Int to not influence type promotion
+    r_torus = 1, 
+    r_tube = 1,
+    φ = nothing,
+    θ = nothing,
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
+) 
+    TorusMantle(D,r_torus, r_tube, φ, θ, origin, rotation)
+end
+
+function TorusMantle{T}(D::Symbol=:outwards;
+    r_torus = 1.0, 
+    r_tube = 1.0,
+    φ = nothing,
+    θ= nothing,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T}
+    TorusMantle{T}(D,r_torus, r_tube, φ, θ, origin, rotation)
 end
 
 flip(t::TorusMantle{T,TP,TT,:inwards}) where {T,TP,TT} = 
@@ -40,6 +85,7 @@ get_φ_limits(tm::TorusMantle{T,Nothing}) where {T} = T(0), T(2π)
 
 get_θ_limits(tm::TorusMantle{T,<:Any,Tuple{T,T}}) where {T} = tm.θ[1], tm.θ[2]
 get_θ_limits(tm::TorusMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
+get_θ_limits(tm::TorusMantle{T,<:Any,T}) where {T} = T(0), tm.θ
 
 function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where {T,TP,TT}
     pto = _transform_into_object_coordinate_system(pt, tm)
