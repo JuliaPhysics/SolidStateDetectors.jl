@@ -25,7 +25,6 @@ struct ConeMantle{T,TR,TP<:Union{Nothing,T},D} <: AbstractCurvedSurfacePrimitive
     φ::TP
     hZ::T
 
-    # axis::Line{T} = Line{T}(CartesianPoint{T}(zero(T), zero(T), -hZ), CartesianVector{T}(zero(T), zero(T), 2hZ))
     origin::CartesianPoint{T}
     rotation::SMatrix{3,3,T,9}
 end
