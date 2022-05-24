@@ -55,13 +55,13 @@ function TorusMantle(D,r_torus::TRTo, r_tube::TRTu, φ::TP, θ::TT, origin::PT, 
 end
 
 function TorusMantle(D::Symbol=:outwards;
-    # define default parameters as Int64 to not influence type promotion
+    # define default parameters as Int to not influence type promotion
     r_torus = 1, 
     r_tube = 1,
     φ = nothing,
     θ = nothing,
-    origin = zero(CartesianPoint{Int64}), 
-    rotation = one(SMatrix{3, 3, Int64, 9})
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
 ) 
     TorusMantle(D,r_torus, r_tube, φ, θ, origin, rotation)
 end
