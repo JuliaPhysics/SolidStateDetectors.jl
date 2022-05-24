@@ -30,32 +30,36 @@ struct EllipsoidMantle{T,TR,TP,TT,D} <: AbstractCurvedSurfacePrimitive{T}
 end
 
 #Type conversion happens here
-function EllipsoidMantle{T}(D, r, origin, rotation) where {T}
+function EllipsoidMantle{T}(D, r, φ::Nothing, θ::Nothing, origin, rotation) where {T}
     _r = _csg_convert_args(T, r)
-    EllipsoidMantle{T,typeof(_r),Nothing,Nothing,D}(_r, nothing, nothing, origin, rotation)
+    EllipsoidMantle{T,typeof(_r),Nothing,Nothing,D}(_r, φ, θ, origin, rotation)
 end
 
 #Type promotion happens here
-function EllipsoidMantle(D,r::TR, origin::PT, rotation::ROT) where {TR, PT, ROT}
-    eltypes = _csg_get_promoted_eltype.((TR, PT, ROT))
+function EllipsoidMantle(D,r::TR, φ::TP, θ::TT, origin::PT, rotation::ROT) where {TR, TP, TT, PT, ROT}
+    eltypes = _csg_get_promoted_eltype.((TR, TP, TT, PT, ROT))
     T = float(promote_type(eltypes...))
-    EllipsoidMantle{T}(D, r, origin, rotation)
+    EllipsoidMantle{T}(D, r, φ, θ, origin, rotation)
 end
 
 function EllipsoidMantle(D::Symbol=:outwards;
     # define default parameters as Int to not influence type promotion
     r = 1, 
+    φ = nothing,
+    θ = nothing,
     origin = zero(CartesianPoint{Int}), 
     rotation = one(SMatrix{3, 3, Int, 9}))
-    EllipsoidMantle(D, r, origin, rotation)
+    EllipsoidMantle(D, r, φ, θ, origin, rotation)
 end
 
 function EllipsoidMantle{T}(D::Symbol=:outwards;
     r = 1.0, 
+    φ = nothing,
+    θ = nothing,
     origin = zero(CartesianPoint{Float64}), 
     rotation = one(SMatrix{3, 3, Float64, 9})
 ) where {T}
-    EllipsoidMantle{T}(D, r, origin, rotation)
+    EllipsoidMantle{T}(D, r, φ, θ, origin, rotation)
 end
 
 flip(em::EllipsoidMantle{T,TR,TP,TT,:inwards}) where {T,TR,TP,TT} = 
