@@ -219,21 +219,10 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         dict = Dict("QuadranglePrism"   => Dict(
                 "r"       => 1.0,
-                "z"      =>1.0))
+                "h"      =>1.0))
         prism = Geometry(T,dict,default_units,no_translations)
         output = Dictionary(prism)
-        output["QuadranglePrism"]["z"]=output["QuadranglePrism"]["h"]#Workaround for tests, since dictionary uses the key "h", since "z" is outdated
-        delete!(output["QuadranglePrism"], "h")
         @test dict == output
-        
-        dict = Dict("PentagonalPrism"   => Dict(
-                "r"       => 1.0,
-                "z"      =>(1.0,2.0)))
-        prism = Geometry(T,dict,default_units,no_translations)
-        output = Dictionary(prism)
-        output["PentagonalPrism"]["z"]=output["PentagonalPrism"]["h"]
-        delete!(output["PentagonalPrism"], "h")
-        #@test dict == output
         
         dict = Dict("HexagonalPrism"   => Dict(
                 "r"       => 1.0,
