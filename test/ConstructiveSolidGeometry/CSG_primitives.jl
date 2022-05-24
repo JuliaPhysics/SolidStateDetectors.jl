@@ -258,6 +258,11 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @inferred CSG.RegularPrism{4,Float32}()
         @inferred CSG.RegularPrism{5,Float32}()
         @inferred CSG.RegularPrism{6,Float32}()
+	end
+    @testset "Plane" begin
+        plane1 = @inferred CSG.Plane{Float32}(normal = CartesianVector(1,0,0))
+        plane2 = @inferred CSG.Plane(normal = CartesianVector(1f0,0f0,0f0))
+        @test plane1 == plane2 
     end
     @testset "ConeMantle" begin
         CSG.ConeMantle{Float32}(r = 1f0)
