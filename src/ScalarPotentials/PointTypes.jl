@@ -74,7 +74,7 @@ function mark_bulk_bits!(point_types::Array{PointType, 3})
         point_types[i1,i2,i3] += bulk_bit * begin
             in_bulk = true
             for j1 in max(i1-1,1):min(i1+1,i1max), j2 in max(i2-1,1):min(i2+1,i2max), j3 in max(i3-1,1):min(i3+1,i3max)
-                in_bulk &= point_types[j1,j2,j3] & pn_junction_bit > 0
+                in_bulk &= (point_types[j1,j2,j3] & pn_junction_bit > 0) &&  (point_types[j1,j2,j3] & update_bit > 0)
                 !in_bulk && break
             end
             in_bulk

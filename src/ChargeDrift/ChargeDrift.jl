@@ -82,10 +82,10 @@ modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing
 
 @inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
     pt_cyl::CylindricalPoint{T} = CylindricalPoint(pt)
-    pt_cyl in point_types || pt_cyl in det.semiconductor
+    pt_cyl in point_types 
 end
 @inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
-    pt in point_types || pt in det.semiconductor
+    pt in point_types 
 end
 
 function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
@@ -305,8 +305,6 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
     
     # check if the points are already in contacts                    
     if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
-    if pt_out in det.contacts return (pt_out, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
-    
     
     direction::CartesianVector{T} = normalize(pt_out - pt_in)
     crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, CartesianVector{T}(0,0,0)) # need undef version for this
