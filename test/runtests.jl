@@ -41,6 +41,16 @@ T = Float32
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
+        #Check detector with identical contact ids
+        dict = SolidStateDetectors.parse_config_file(SSD_examples[:ContactIDTest])
+        dict["detectors"][1]["contacts"][1]["id"]=0
+        check = false
+        try
+            Simulation{Float32}(dict)
+        catch
+            check=true
+        end
+        @assert check "Detector IDs are not unique, but code runs nontheless"
     end
     @testset "Simulate example detector: Inverted Coax" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoax])

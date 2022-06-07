@@ -78,6 +78,14 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
+function _viable_contact_types(contacts)
+    for contact_i in contacts
+        for contact_j in contacts
+            
+        end
+    end
+end
+
 function Simulation(nt::NamedTuple)
     missing_tuple = NamedTuple(missing)
     epot = ElectricPotential(nt.electric_potential)
@@ -101,13 +109,17 @@ function Simulation(nt::NamedTuple)
         ImpurityScale(nt.imp_scale)
     end
     sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
+    contact_ids = []
     sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
         DataStructures.OrderedDict(let wp = Symbol("WeightingPotential_$(contact.id)")
             contact.id =>haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials,wp)) : missing 
+            append!(contact_ids,contact.id)
         end for contact in sim.detector.contacts)
     else
         DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
+        append!(contact_ids,contact.id)
     end
+    @assert size(unique(contact_ids))==size(contact_ids) "Contact IDs must be unique"
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -179,6 +191,8 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
             World(CS, world_limits)
         end
     end
+    contact_ids = [contact.id for contact in sim.detector.contacts]
+    @assert size(unique(contact_ids))==size(contact_ids) "Contact IDs must be unique"
     sim.weighting_potentials = DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
     return sim
 end
