@@ -78,14 +78,6 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
-function _viable_contact_types(contacts)
-    for contact_i in contacts
-        for contact_j in contacts
-            
-        end
-    end
-end
-
 function Simulation(nt::NamedTuple)
     missing_tuple = NamedTuple(missing)
     epot = ElectricPotential(nt.electric_potential)
