@@ -109,17 +109,15 @@ function Simulation(nt::NamedTuple)
         ImpurityScale(nt.imp_scale)
     end
     sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
-    contact_ids = []
+    contact_ids = [contact.id for contact in sim.detector.contacts]
+    @assert size(unique(contact_ids))==size(contact_ids) "Contact IDs must be unique"
     sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
         DataStructures.OrderedDict(let wp = Symbol("WeightingPotential_$(contact.id)")
             contact.id =>haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials,wp)) : missing 
-            append!(contact_ids,contact.id)
         end for contact in sim.detector.contacts)
     else
         DataStructures.OrderedDict(contact.id=>missing for contact in sim.detector.contacts)
-        append!(contact_ids,contact.id)
     end
-    @assert size(unique(contact_ids))==size(contact_ids) "Contact IDs must be unique"
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -839,7 +837,10 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         verbose::Bool = true,
         device_array_type::Type{<:AbstractArray} = Array,
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
-
+    if !ismissing(contact_id)
+        contact_ids = [contact.id for contact in sim.detector.contacts]
+        !(contact_id in contact_ids) && @error "No contact with `ID = $(contact_id)`. Possible contact IDs are $(contact_ids)"
+    end
     begin # preperations
         onCPU = !(device_array_type <: GPUArrays.AnyGPUArray)
         convergence_limit::T = T(convergence_limit)
