@@ -125,10 +125,10 @@ function calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity:
     @assert !ismissing(sim.weighting_potentials) "The weighting_potentials needs to be calculated first."
     n = length(sim.weighting_potentials)
     C = zeros(typeof(one(T) * u"pF"), (n, n))
-    for i in 1:n
-        for j in 1:n
-            C[j, i] = if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j]) 
-                calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
+    for (i,contact_i) in enumerate(sim.detector.contacts)
+        for (j,contact_j) in enumerate(sim.detector.contacts)
+            C[j, i] = if !ismissing(sim.weighting_potentials[contact_i.id]) && !ismissing(sim.weighting_potentials[contact_j.id]) 
+                calculate_mutual_capacitance(sim, (contact_i.id, contact_j.id); consider_multiplicity)
             else
                 missing
             end
