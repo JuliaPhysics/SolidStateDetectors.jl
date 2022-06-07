@@ -22,7 +22,7 @@ end
         markersize := markersize
         label --> "NBodyChargeCloud"
         seriescolor --> seriescolor
-        PointCharge{T}(points[1])
+        PointCharge(points[1])
     end
     
     vertex_no = 1
@@ -51,7 +51,7 @@ end
         markersize := markersize
         label --> "NBodyChargeCloud"
         seriescolor --> seriescolor
-        PointCharge{T}(points[1])
+        PointCharge(points[1])
     end
     
     vertex_no = 1
