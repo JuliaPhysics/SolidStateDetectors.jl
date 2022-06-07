@@ -11,9 +11,9 @@ geometry:
       phi:
         from: 0
         to: 360
-      z:
-        from: -5
-        to: 104
+      h: 109
+      origin:
+        z: 49.5
   - tube:
       r:
         from: 0
@@ -21,9 +21,9 @@ geometry:
       phi:
         from: 0
         to: 360
-      z:
-        from: 100
-        to: 104
+      h: 4
+      origin:
+        z: 102
   - tube:
       r:
         from: 0
@@ -31,6 +31,6 @@ geometry:
       phi:
         from: 0
         to: 360
-      z:
-        from: -10
-        to: -5
+      h: 5
+      origin:
+        z: -7.5
