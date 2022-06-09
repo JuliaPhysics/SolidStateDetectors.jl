@@ -1,0 +1,133 @@
+{
+    "name": "Isochrone Bug",
+    "units": {
+        "length": "mm",
+        "angle": "deg",
+        "potential": "V",
+        "temperature": "K"
+    },
+    "grid": {
+        "coordinates": "cylindrical",
+        "axes": {
+            "r": {
+                "to": 40.0,
+                "boundaries": "inf"
+            },
+            "phi": {
+                "from": 0,
+                "to": 0,
+                "boundaries": "periodic"
+            },
+            "z": {
+                "from": -10,
+                "to": 50.0,
+                "boundaries": {
+                    "left": "inf",
+                    "right": "inf"
+                }
+            }
+        }
+    },
+    "medium": "vacuum",
+    "detectors": [
+        {
+            "semiconductor": {
+                "material": "HPGe",
+                "bulk_type": "p",
+                "temperature": 77.0,
+                "geometry": {
+                    "tube": {
+                        "r": 35.0,
+                        "h": 40.0,
+                        "origin": [
+                            0.0,
+                            0.0,
+                            20.0
+                            ]
+                    }
+                }
+
+            },
+            "contacts": [
+                {
+                    "name": "p contact",
+                    "material": "HPGe",
+                    "potential": 0.0,
+                    "geometry": {
+                        "tube": {
+                            "r": 1.5,
+                            "h": 0.1,
+                            "origin": [
+                                0.0,
+                                0.0,
+                                0.05
+                            ]
+                        }
+                    },
+                    "id": 1
+                },
+                {
+                    "name": "n contact",
+                    "material": "HPGe",
+                    "potential": 4000.0,
+                    "geometry": {
+                        "union": [
+                            {
+                                "cone": {
+                                    "r": {
+                                        "bottom": {
+                                            "from": 35.0,
+                                            "to": 35.0
+                                        },
+                                        "top": {
+                                            "from": 35.0,
+                                            "to": 35.0
+                                        }
+                                    },
+                                    "h": 35.0,
+                                    "origin": [
+                                        0.0,
+                                        0.0,
+                                        22.5
+                                    ]
+                                }
+                            },
+                            {
+                                "tube": {
+                                    "r": 35.0,
+                                    "h": 0.0,
+                                    "origin": [
+                                        0.0,
+                                        0.0,
+                                        40.0
+                                    ]
+                                }
+                            },
+                            {
+                                "cone": {
+                                    "r": {
+                                        "bottom": {
+                                            "from": 30.0,
+                                            "to": 30.0
+                                        },
+                                        "top": {
+                                            "from": 35.0,
+                                            "to": 35.0
+                                        }
+                                    },
+                                    "h": 5.0,
+                                    "origin": [
+                                        0.0,
+                                        0.0,
+                                        2.5
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "id": 2
+                }
+            ]
+        }
+    ]  
+}
