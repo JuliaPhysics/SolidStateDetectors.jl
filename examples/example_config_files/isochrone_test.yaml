@@ -1,0 +1,72 @@
+name: "Isochrone Test"
+units:
+  length: "mm"
+  angle: "deg"
+  potential: "V"
+  temperature: "K"
+grid:
+  coordinates: "cylindrical"
+  axes:
+    r:
+      to: 35.0
+      boundaries: "inf"
+    phi:
+      from: 0
+      to: 0
+      boundaries: "periodic"
+    z:
+      from: -5.0
+      to: 35.0
+      boundaries:
+        left: "inf"
+        right: "inf"
+medium: "vacuum"
+detectors:
+  - semiconductor:
+      material: "HPGe"
+      bulk_type: "p"
+      temperature: 77.0
+      impurity_density:
+        name: "constant"
+        value: 1e7cm^-3
+      geometry:
+        tube:
+          r: 30.0
+          h: 30.0
+          translate:
+            z: 15.0
+    contacts:
+      - name: "p contact"
+        id: 1
+        material: "HPGe"
+        potential: 0.0
+        geometry:
+          tube:
+            r: 1.5
+            h: 0.1
+            translate:
+              z: 0.05
+      - name: "n contact"
+        id: 2
+        material: "HPGe"
+        potential: 4000.0
+        geometry:
+          union:
+            - tube:
+                r:
+                  from: 30.0
+                  to: 30.0
+                h: 30.0
+                origin:
+                  z: 15.0
+            - tube:
+                r: 30.0
+                h: 0.0
+                origin:
+                  z: 30.0
+            - tube:
+                r:
+                  from: 15.0
+                  to: 30.0
+                h: 0.0
+        
