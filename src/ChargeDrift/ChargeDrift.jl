@@ -81,7 +81,7 @@ end
 modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
 @inline function _is_next_point_in_det(pt::AbstractCoordinatePoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
-    pt in point_types || (pt in det.semiconductor && !(pt in det.contacts))
+    _convert_point(pt, S) in point_types || (pt in det.semiconductor && !(pt in det.contacts))
 end
 
 function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
@@ -198,6 +198,7 @@ function _check_and_update_position!(
             if cd_point_type == CD_ELECTRODE
                 done[n] = true
                 drift_path[n,istep] = crossing_pos
+                current_pos[n] = crossing_pos
             elseif cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
