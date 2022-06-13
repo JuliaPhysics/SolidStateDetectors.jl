@@ -215,16 +215,14 @@ end
 @testset "Isochrone" begin
     sim = Simulation{T}(SSD_examples[:IsochroneTest])
     simulate!(sim, device_array_type = device_array_type)
-    
-    calculate_electric_potential!( sim, refinement_limits = [0.2, 0.1, 0.05, 0.01])
+    calculate_electric_potential!(sim, refinement_limits = [0.2, 0.1, 0.05, 0.01])
     calculate_electric_field!(sim, n_points_in_φ = 72)
-    charge_drift_model = ADLChargeDriftModel()
-    sim.detector = SolidStateDetector(sim.detector, charge_drift_model);
+    sim.detector = SolidStateDetector(sim.detector, ADLChargeDriftModel());
 
     spawn_positions = CartesianPoint{T}[]
-    idx_spawn_positions = []
-    x_axis = sim.electric_field.grid.axes[1][1:2:end]
-    z_axis = sim.electric_field.grid.axes[3][1:2:end]
+    idx_spawn_positions = CartesianIndex[]
+    x_axis = T.(0:0.0005:0.03)
+    z_axis = T.(0:0.0005:0.03)
     for (i,x) in enumerate(x_axis)
         for (k,z) in enumerate(z_axis)
             push!(spawn_positions, CartesianPoint([x,0,z]))
@@ -234,15 +232,26 @@ end
     length(spawn_positions)
     in_idx = findall(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions);
     ev = Event(spawn_positions[in_idx]);
-    time_step = 0.8u"ns"
-    drift_charges!(ev, sim, Δt = time_step, verbose = false)
+    time_step = T(1)u"ns"
+    max_nsteps = 10000
+    drift_charges!(ev, sim, Δt = time_step, max_nsteps = max_nsteps, verbose = false)
 
-    DT = fill(NaN,length(x_axis),length(z_axis))
+    DT_h = Array{typeof(time_step),2}(fill(typeof(time_step)(NaN),length(x_axis),length(z_axis)))
+    DT_e = Array{typeof(time_step),2}(fill(typeof(time_step)(NaN),length(x_axis),length(z_axis)))
     for (i, idx) in enumerate(idx_spawn_positions[in_idx])
-        DT[idx] = length(ev.drift_paths[i].h_path)*ustrip(time_step)
+        DT_h[idx] = length(ev.drift_paths[i].h_path)*time_step
+        DT_e[idx] = length(ev.drift_paths[i].e_path)*time_step
     end
-    @test maximum(DT[35:50,60:80])<100
 
+    # All charge drifts should end at some point
+    @test maximum(filter(x -> !isnan(x), DT_h)) <  max_nsteps * time_step
+    @test maximum(filter(x -> !isnan(x), DT_e)) <  max_nsteps * time_step
+    
+    # The points around the core contact should have small hole drift times
+    @test maximum(filter(x -> !isnan(x), DT_h[1:20,1:20])) < 200u"ns"
+    
+    # The points in the upper and outer corners should have larger hole drift times
+    @test minimum(filter(x -> !isnan(x), DT_h[end-15:end-2, end-15:end-2])) > 1000u"ns"
 end
 
 @testset "ADLChargeDriftModel" begin
