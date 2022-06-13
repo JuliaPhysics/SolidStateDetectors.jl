@@ -215,17 +215,17 @@ end
 @testset "Isochrone" begin
     sim = Simulation{T}(SSD_examples[:IsochroneTest])
     simulate!(sim, device_array_type = device_array_type)
-    calculate_electric_potential!(sim, refinement_limits = [0.2, 0.1, 0.05, 0.01])
+    calculate_electric_potential!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.01])
     calculate_electric_field!(sim, n_points_in_φ = 72)
     sim.detector = SolidStateDetector(sim.detector, ADLChargeDriftModel());
 
     spawn_positions = CartesianPoint{T}[]
     idx_spawn_positions = CartesianIndex[]
-    x_axis = T.(0:0.0005:0.03)
-    z_axis = T.(0:0.0005:0.03)
+    x_axis = T.(0:0.0005:0.029)
+    z_axis = T.(0.0005:0.0005:0.029)
     for (i,x) in enumerate(x_axis)
         for (k,z) in enumerate(z_axis)
-            push!(spawn_positions, CartesianPoint([x,0,z]))
+            push!(spawn_positions, CartesianPoint{T}(x,0,z))
             push!(idx_spawn_positions, CartesianIndex(i,k))
         end
     end
@@ -251,7 +251,11 @@ end
     @test maximum(filter(x -> !isnan(x), DT_h[1:20,1:20])) < 200u"ns"
     
     # The points in the upper and outer corners should have larger hole drift times
-    @test minimum(filter(x -> !isnan(x), DT_h[end-15:end-2, end-15:end-2])) > 1000u"ns"
+    @test minimum(filter(x -> !isnan(x), DT_h[end-14:end, end-14:end])) > 1000u"ns"
+    
+    # Test if all holes made it to the point contact and all electrons made it to the mantle contact
+    @test all(broadcast(dp -> dp.h_path[end] in sim.detector.contacts[1], ev.drift_paths))
+    @test all(broadcast(dp -> dp.e_path[end] in sim.detector.contacts[2], ev.drift_paths))
 end
 
 @testset "ADLChargeDriftModel" begin
