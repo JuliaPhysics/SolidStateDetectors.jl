@@ -45,7 +45,9 @@ function _calculate_mutual_capacitance(
 
     phi_2D && (c_ij *= 2)
     consider_multiplicity && (c_ij *= multiplicity(grid))
-    return uconvert(u"pF", c_ij*u"m" * ϵ0*u"F/m" )
+    
+    # ϵ0 is stored as Float64, so convert to T here
+    return T(uconvert(u"pF", c_ij*u"m" * ϵ0*u"F/m"))
 end
 
 function _calculate_mutual_capacitance(grid::Grid{T, 3, CS}, grid_mps, int_ϵ_r, int_p1, int_p2) where {T, CS}
@@ -123,11 +125,13 @@ to numerical precision in the integration due to the different grids of the two 
 function calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
     @assert !ismissing(sim.ϵ_r) "The electric potential needs to be calculated first."
     @assert !ismissing(sim.weighting_potentials) "The weighting_potentials needs to be calculated first."
-    n = length(sim.weighting_potentials)
-    C = zeros(typeof(one(T) * u"pF"), (n, n))
-    for i in 1:n
-        for j in 1:n
-            C[j, i] = if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j]) 
+    n::Int = length(sim.detector.contacts)
+    contact_ids::Vector{Int} = map(c -> c.id, sim.detector.contacts)
+    TT = all(in.(contact_ids, Ref(sim.weighting_potentials.idx))) ? typeof(one(T) * u"pF") : Union{Missing,typeof(one(T) * u"pF")}
+    C = CustomIDMatrix{TT}(zeros(typeof(one(T) * u"pF"), (n, n)), contact_ids)
+    for i in contact_ids
+        for j in contact_ids
+            C[j, i] = if (i in sim.weighting_potentials.idx) && (j in sim.weighting_potentials.idx)
                 calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
             else
                 missing

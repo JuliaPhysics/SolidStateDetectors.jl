@@ -36,7 +36,7 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     ϵ_r::Union{DielectricDistribution{T}, Missing}
     point_types::Union{PointTypes{T}, Missing}
     electric_potential::Union{ElectricPotential{T}, Missing}
-    weighting_potentials::Vector{Any}
+    weighting_potentials::CustomIDVector{<:WeightingPotential}
     electric_field::Union{ElectricField{T}, Missing}
 end
 
@@ -53,7 +53,7 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         missing,
         missing,
         missing,
-        [missing],
+        CustomIDVector(WeightingPotential{T,3,CS}[], Int[]),
         missing
     )
 end
@@ -72,7 +72,9 @@ function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
         ϵ_r = NamedTuple(sim.ϵ_r),
         point_types = NamedTuple(sim.point_types),
         electric_field = NamedTuple(sim.electric_field),
-        weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(sim.weighting_potentials))
+        weighting_potentials = let wp = sim.weighting_potentials
+            NamedTuple{Tuple(Symbol.("WeightingPotential_".*string.(wp.idx)))}(NamedTuple.(wp.data))
+        end
     )
     return nt
 end
@@ -101,12 +103,16 @@ function Simulation(nt::NamedTuple)
         ImpurityScale(nt.imp_scale)
     end
     sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
-    sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
-        [let wp = Symbol("WeightingPotential_$(contact.id)")
-            haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials, wp)) : missing 
-        end for contact in sim.detector.contacts]
-    else
-        [missing for contact in sim.detector.contacts]
+    grid = Grid(sim, for_weighting_potential = true)
+    sim.weighting_potentials = CustomIDVector(WeightingPotential{T,3,get_coordinate_system(grid),typeof(grid.axes)}[], Int[])
+    if haskey(nt, :weighting_potentials) 
+        for contact in sim.detector.contacts
+            let wp = Symbol("WeightingPotential_$(contact.id)")
+                if haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple 
+                    sim.weighting_potentials[contact.id] = WeightingPotential(getfield(nt.weighting_potentials, wp))
+                end
+            end
+        end
     end
     return sim
 end
@@ -131,7 +137,7 @@ function println(io::IO, sim::Simulation{T}) where {T <: SSDFloat}
     println("  Weighting potentials: ")
     for contact in sim.detector.contacts
         print("    Contact $(contact.id): ")
-        println(!ismissing(sim.weighting_potentials[contact.id]) ? size(sim.weighting_potentials[contact.id]) : missing)
+        println(contact.id in sim.weighting_potentials.idx ? size(sim.weighting_potentials[contact.id]) : missing)
     end
 end
 
@@ -179,7 +185,8 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
             World(CS, world_limits)
         end
     end
-    sim.weighting_potentials = Missing[ missing for i in 1:length(sim.detector.contacts)]
+    grid = Grid(sim, for_weighting_potential = true)
+    sim.weighting_potentials = CustomIDVector(WeightingPotential{T,3,CS,typeof(grid.axes)}[], Int[])
     return sim
 end
 
