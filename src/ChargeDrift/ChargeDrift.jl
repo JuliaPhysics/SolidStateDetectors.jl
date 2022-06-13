@@ -301,7 +301,7 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} where {T <: SSDFloat, S}
     
     # check if the points are already in contacts                    
-    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
+    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end  
     
     direction::CartesianVector{T} = normalize(pt_out - pt_in)
     crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, CartesianVector{T}(0,0,0)) # need undef version for this
@@ -338,6 +338,11 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
                 end
             end 
         end
+    end
+    
+    # if there is no intersection, check if the next point is in (within the tolerance)
+    if (crossing_pos[2] & CD_OUTSIDE > 0) && pt_out in det.contacts 
+        return (pt_out, CD_ELECTRODE, CartesianVector{T}(0,0,0)) 
     end
 
     crossing_pos
