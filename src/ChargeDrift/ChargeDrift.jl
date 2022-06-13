@@ -80,12 +80,8 @@ function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv
 end
 modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, vdv::Missing) where {T} = sv
 
-@inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cylindrical})::Bool where {T <: SSDFloat}
-    pt_cyl::CylindricalPoint{T} = CylindricalPoint(pt)
-    pt_cyl in point_types || pt_cyl in det.semiconductor
-end
-@inline function _is_next_point_in_det(pt::CartesianPoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, Cartesian})::Bool where {T <: SSDFloat}
-    pt in point_types || pt in det.semiconductor
+@inline function _is_next_point_in_det(pt::AbstractCoordinatePoint{T}, det::SolidStateDetector{T}, point_types::PointTypes{T, 3, S})::Bool where {T <: SSDFloat, S}
+    _convert_point(pt, S) in point_types || (pt in det.semiconductor && !(pt in det.contacts))
 end
 
 function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to be projected, #normal vector of plane
@@ -202,6 +198,7 @@ function _check_and_update_position!(
             if cd_point_type == CD_ELECTRODE
                 done[n] = true
                 drift_path[n,istep] = crossing_pos
+                current_pos[n] = crossing_pos
             elseif cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
@@ -304,9 +301,7 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} where {T <: SSDFloat, S}
     
     # check if the points are already in contacts                    
-    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
-    if pt_out in det.contacts return (pt_out, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end 
-    
+    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end  
     
     direction::CartesianVector{T} = normalize(pt_out - pt_in)
     crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, CartesianVector{T}(0,0,0)) # need undef version for this
@@ -343,6 +338,11 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
                 end
             end 
         end
+    end
+    
+    # if there is no intersection, check if the next point is in (within the tolerance)
+    if (crossing_pos[2] & CD_OUTSIDE > 0) && pt_out in det.contacts 
+        return (pt_out, CD_ELECTRODE, CartesianVector{T}(0,0,0)) 
     end
 
     crossing_pos

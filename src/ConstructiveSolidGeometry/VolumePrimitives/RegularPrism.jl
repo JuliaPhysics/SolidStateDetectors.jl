@@ -76,16 +76,6 @@ function RegularPrism{N,T}(::Type{CO}=ClosedPrimitive;
     RegularPrism{N,T,CO}(r, hZ, origin, rotation)
 end
 
-function RegularPrism{T}(::Type{CO}=ClosedPrimitive;
-    r = 1.0, 
-    hZ = 1.0,
-    N = 3,
-    origin = zero(CartesianPoint{Float64}), 
-    rotation = one(SMatrix{3, 3, Float64, 9})
-) where {T, CO}
-    RegularPrism{T,CO,N}(r, hZ, origin, rotation)
-end
-
 RegularPrism{N,T, CO, TR}( rp::RegularPrism{N,T, CO, TR}; COT = CO,
             origin::CartesianPoint{T} = rp.origin,
             rotation::SMatrix{3,3,T,9} = rp.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}, N, TR} =
