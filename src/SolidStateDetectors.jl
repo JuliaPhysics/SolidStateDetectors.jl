@@ -53,7 +53,7 @@ import IntervalSets
 import Tables
 import TypedTables
 
-import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
+import Base: size, sizeof, length, getindex, setindex!, push!, axes, getproperty, broadcast, isequal,
              range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in, convert,
              show, print, println, display, +, -, &
 
@@ -78,6 +78,7 @@ const SSDFloat = Union{Float16, Float32, Float64}
 
 
 include("Units.jl")
+include("CustomIDVector.jl")
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
 include("Grids/Grids.jl")
