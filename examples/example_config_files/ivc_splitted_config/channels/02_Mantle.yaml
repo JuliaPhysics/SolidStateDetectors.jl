@@ -1,5 +1,5 @@
 material: HPGe
-id: 2
+id: 200
 potential: 3500
 geometry:
   union:
