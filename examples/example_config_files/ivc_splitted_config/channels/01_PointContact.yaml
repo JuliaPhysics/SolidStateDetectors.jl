@@ -1,5 +1,5 @@
 material: HPGe
-id: 1
+id: 100
 potential: 0
 geometry:
   translate:

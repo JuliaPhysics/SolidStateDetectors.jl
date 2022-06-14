@@ -20,7 +20,7 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     W_true = uconvert(u"J", (ϵr * ϵ0 * E_true^2 / 2) * A * Δd)
     C_true = uconvert(u"pF", 2 * W_true / (BV_true^2))
     C_Analytical = [C_true -C_true; -C_true C_true]
-    C_ssd = calculate_capacitance_matrix(sim)
+    C_ssd = calculate_capacitance_matrix(sim).data
     @testset "Capacity" begin
         @test all(isapprox.(C_ssd, C_Analytical, rtol = 0.001))
     end   
