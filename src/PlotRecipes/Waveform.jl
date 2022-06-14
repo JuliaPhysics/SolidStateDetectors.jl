@@ -1,6 +1,5 @@
-# This should be in RadiationDetectorSignals.jl
-@recipe function f(wvs::Vector{Union{Missing, RadiationDetectorSignals.RDWaveform}})
+@recipe function f(wvs::CustomIDArray{RadiationDetectorSignals.RDWaveform})
     @series begin
-        RadiationDetectorSignals.RDWaveform[wv for wv in skipmissing(wvs)]
+        wvs.data
     end
 end

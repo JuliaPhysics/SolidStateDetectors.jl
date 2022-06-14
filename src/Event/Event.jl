@@ -264,6 +264,10 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
     return RDWaveform( new_times, new_signal )
 end
 
+function add_baseline_and_extend_tail(wvs::CustomIDVector{RadiationDetectorSignals.RDWaveform}, args...)
+    CustomIDVector(add_baseline_and_extend_tail.(wvs.data, args...), wvs.idx)
+end
+
 
 """
     get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T}, contact_id::Int)
