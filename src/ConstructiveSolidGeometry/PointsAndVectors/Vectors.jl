@@ -21,19 +21,17 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     z::T
 end
 
-#Type conversion happens here
-function CartesianVector{T}(x,y,z) where {T}
-    _x = _csg_convert_args(T, x)
-    _y = _csg_convert_args(T, y)
-    _z = _csg_convert_args(T, z)
-    CartesianVector{T}(_x, _y, _z)
-end
-
 #Type promotion happens here
 function CartesianVector(x::TX, y::TY, z::TZ) where {TX,TY,TZ}
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
-    CartesianVector{T}(x,y,z)
+    CartesianVector{T}(T(x),T(y),T(z))
+end
+
+function CartesianVector(x::TX, y::TY, z::TZ) where {TX<:Int,TY<:Int,TZ<:Int}
+    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
+    T = float(promote_type(eltypes...))
+    CartesianVector{T}(T(x),T(y),T(z))
 end
 
 function CartesianVector(;
@@ -49,7 +47,7 @@ function CartesianVector{T}(;
     y = 0,
     z = 0
 ) where {T}
-    CartesianVector{T}(x,y,z)
+    CartesianVector{T}(T(x),T(y),T(z))
 end
 
 zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zero(T))
@@ -91,19 +89,17 @@ struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
     z::T
 end
 
-#Type conversion happens here
-function CylindricalVector{T}(r,φ,z) where {T}
-    _r = _csg_convert_args(T, r)
-    _φ = _csg_convert_args(T, φ)
-    _z = _csg_convert_args(T, z)
-    CylindricalVector{T}(_r, _φ, _z)
-end
-
 #Type promotion happens here
 function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR,TP,TZ}
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
     T = float(promote_type(eltypes...))
-    CylindricalVector{T}(r,φ,z)
+    CylindricalVector{T}(T(r),T(φ),T(z))
+end
+
+function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR<:Int,TP<:Int,TZ<:Int}
+    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
+    T = float(promote_type(eltypes...))
+    CylindricalVector{T}(T(r),T(φ),T(z))
 end
 
 function CylindricalVector(;
@@ -119,5 +115,5 @@ function CylindricalVector{T}(;
     φ = 0,
     z = 0
 ) where {T}
-    CylindricalVector{T}(r,φ,z)
+    CylindricalVector{T}(T(r),T(φ),T(z))
 end
