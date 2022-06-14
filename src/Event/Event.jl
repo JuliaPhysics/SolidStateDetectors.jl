@@ -15,8 +15,8 @@ mutable struct Event{T <: SSDFloat}
     locations::VectorOfArrays{CartesianPoint{T}}
     energies::VectorOfArrays{T}
     drift_paths::Union{Vector{EHDriftPath{T}}, Missing}
-    waveforms::Union{Vector{<:Any}, Missing}
-    Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
+    waveforms::CustomIDVector{RadiationDetectorSignals.RDWaveform}
+    Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, CustomIDVector(RadiationDetectorSignals.RDWaveform[], Int[]))
 end
 
 function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(T))::Event{T} where {T <: SSDFloat}
@@ -35,7 +35,7 @@ end
 
 function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, energies::Vector{<:Vector{<:RealQuantity}} = [[one(T) for i in j] for j in locations])::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
-    evt.locations = VectorOfArrays(broadcast(pts -> CartesianPoint{T}.(pts), locations))
+    evt.locations = VectorOfArrays(broadcast(pts -> CartesianPoint.(pts), locations))
     evt.energies = VectorOfArrays(Vector{T}.(to_internal_units.(energies)))
     return evt
 end
@@ -155,10 +155,7 @@ function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 100
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
     @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
-    @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
-    if ismissing(evt.waveforms)
-        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
-    end
+    @assert contact_id in sim.weighting_potentials.idx "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
     evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact_id, Δt = Δt)
     nothing
 end
@@ -189,12 +186,8 @@ get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in tim
 """
 function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
     @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges!(evt::Event, sim::Simulation)` first."
-    if ismissing(evt.waveforms)
-        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
-    end
     for contact in sim.detector.contacts
-        if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
-        if !ismissing(sim.weighting_potentials[contact.id])
+        if contact.id in sim.weighting_potentials.idx
             evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact.id, Δt = Δt)
         end
     end
@@ -269,6 +262,10 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
         error("Not yet definted for timestamps of type `$(TV)`")
     end
     return RDWaveform( new_times, new_signal )
+end
+
+function add_baseline_and_extend_tail(wvs::CustomIDVector{RadiationDetectorSignals.RDWaveform}, args...)
+    CustomIDVector(add_baseline_and_extend_tail.(wvs.data, args...), wvs.idx)
 end
 
 
