@@ -18,25 +18,23 @@ Describes a three-dimensional point in Cartesian coordinates.
 
 See also [`CylindricalPoint`](@ref).
 """
-struct CartesianPoint{T<:AbstractFloat} <: AbstractCoordinatePoint{T, Cartesian}
+struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     x::T
     y::T
     z::T
-end
-
-#Type conversion happens here
-function CartesianPoint{T}(x,y,z) where {T}
-    _x = _csg_convert_args(T, x)
-    _y = _csg_convert_args(T, y)
-    _z = _csg_convert_args(T, z)
-    CartesianPoint{T}(_x, _y, _z)
 end
 
 #Type promotion happens here
 function CartesianPoint(x::TX, y::TY, z::TZ) where {TX,TY,TZ}
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
-    CartesianPoint{T}(x,y,z)
+    CartesianPoint{T}(T(x),T(y),T(z))
+end
+
+function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Int,TY<:Int,TZ<:Int}
+    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
+    T = float(promote_type(eltypes...))
+    CartesianPoint{T}(T(x),T(y),T(z))
 end
 
 function CartesianPoint(;
@@ -52,7 +50,7 @@ function CartesianPoint{T}(;
     y = 0,
     z = 0
 ) where {T}
-    CartesianPoint{T}(x,y,z)
+    CartesianPoint{T}(T(x),T(y),T(z))
 end
 
 zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
@@ -72,7 +70,7 @@ Describes a three-dimensional point in cylindrical coordinates.
     
 See also [`CartesianPoint`](@ref).
 """
-struct CylindricalPoint{T<:AbstractFloat} <: AbstractCoordinatePoint{T, Cylindrical}
+struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
     r::T
     φ::T
     z::T
@@ -84,7 +82,13 @@ end
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR,TP,TZ}
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
     T = float(promote_type(eltypes...))
-    CylindricalPoint{T}(r,φ,z)
+    CylindricalPoint{T}(T(r),T(φ),T(z))
+end
+
+function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Int,TP<:Int,TZ<:Int}
+    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
+    T = float(promote_type(eltypes...))
+    CylindricalPoint{T}(T(r),T(φ),T(z))
 end
 
 function CylindricalPoint(;
@@ -100,7 +104,7 @@ function CylindricalPoint{T}(;
     φ = 0,
     z = 0
 ) where {T}
-    CylindricalPoint{T}(r,φ,z)
+    CylindricalPoint{T}(T(r),T(φ),T(z))
 end
 
 function CylindricalPoint(pt::CartesianPoint{T})::CylindricalPoint{T} where {T}
