@@ -91,4 +91,33 @@ struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
     z::T
 end
 
+#Type conversion happens here
+function CylindricalVector{T}(r,φ,z) where {T}
+    _r = _csg_convert_args(T, r)
+    _φ = _csg_convert_args(T, φ)
+    _z = _csg_convert_args(T, z)
+    CylindricalVector{T}(_r, _φ, _z)
+end
 
+#Type promotion happens here
+function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR,TP,TZ}
+    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
+    T = float(promote_type(eltypes...))
+    CylindricalVector{T}(r,φ,z)
+end
+
+function CylindricalVector(;
+    r = 0,
+    φ = 0,
+    z = 0
+)
+    CylindricalVector(r,φ,z)
+end
+
+function CylindricalVector{T}(;
+    r = 0,
+    φ = 0,
+    z = 0
+) where {T}
+    CylindricalVector{T}(r,φ,z)
+end
