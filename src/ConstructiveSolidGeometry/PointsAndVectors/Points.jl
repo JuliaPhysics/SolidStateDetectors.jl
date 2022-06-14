@@ -72,12 +72,35 @@ Describes a three-dimensional point in cylindrical coordinates.
     
 See also [`CartesianPoint`](@ref).
 """
-struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
+struct CylindricalPoint{T<:AbstractFloat} <: AbstractCoordinatePoint{T, Cylindrical}
     r::T
     φ::T
     z::T
-    CylindricalPoint{T}(r::T, φ::T, z::T) where {T} = new(r, mod(φ,T(2π)), z)
+    CylindricalPoint{T}(r::T, φ::T, z::T) where {T<:AbstractFloat} = new(r, mod(φ,T(2π)), z)
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
+end
+
+#Type promotion happens here
+function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR,TP,TZ}
+    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
+    T = float(promote_type(eltypes...))
+    CylindricalPoint{T}(r,φ,z)
+end
+
+function CylindricalPoint(;
+    r = 0,
+    φ = 0,
+    z = 0
+)
+    CylindricalPoint(r,φ,z)
+end
+
+function CylindricalPoint{T}(;
+    r = 0,
+    φ = 0,
+    z = 0
+) where {T}
+    CylindricalPoint{T}(r,φ,z)
 end
 
 function CylindricalPoint(pt::CartesianPoint{T})::CylindricalPoint{T} where {T}
