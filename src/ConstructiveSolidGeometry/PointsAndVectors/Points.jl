@@ -18,10 +18,41 @@ Describes a three-dimensional point in Cartesian coordinates.
 
 See also [`CylindricalPoint`](@ref).
 """
-struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
+struct CartesianPoint{T<:AbstractFloat} <: AbstractCoordinatePoint{T, Cartesian}
     x::T
     y::T
     z::T
+end
+
+#Type conversion happens here
+function CartesianPoint{T}(x,y,z) where {T}
+    _x = _csg_convert_args(T, x)
+    _y = _csg_convert_args(T, y)
+    _z = _csg_convert_args(T, z)
+    CartesianPoint{T}(_x, _y, _z)
+end
+
+#Type promotion happens here
+function CartesianPoint(x::TX, y::TY, z::TZ) where {TX,TY,TZ}
+    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
+    T = float(promote_type(eltypes...))
+    CartesianPoint{T}(x,y,z)
+end
+
+function CartesianPoint(;
+    x = 0,
+    y = 0,
+    z = 0
+)
+    CartesianPoint(x,y,z)
+end
+
+function CartesianPoint{T}(;
+    x = 0,
+    y = 0,
+    z = 0
+) where {T}
+    CartesianPoint{T}(x,y,z)
 end
 
 zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
