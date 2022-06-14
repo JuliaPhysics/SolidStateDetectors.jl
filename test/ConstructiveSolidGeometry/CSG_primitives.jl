@@ -278,4 +278,12 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         CSG.ConeMantle()
         CSG.ConeMantle(φ=(1.,2.))    
     end
+    @testset "Vector" begin
+        cart = @inferred CSG.CartesianVector(x=2f0,z=1f0)
+        @inferred CSG.CartesianVector{Float32}(x=2)
+        cyl = @inferred CSG.CylindricalVector{Float32}(r=2.,z=1.)
+        cyl2 = @inferred CSG.CylindricalVector(φ=3π)
+        @test CartesianVector(cyl) == cart
+        @test cyl2.φ == T(π)
+    end
 end
