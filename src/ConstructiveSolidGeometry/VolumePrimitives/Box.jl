@@ -70,10 +70,18 @@ function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX, T
     Box{T}(CO,T(hX), T(hY), T(hZ), origin, rotation)
 end
 
+#Unit convesion
+function Box(CO, hX::Quantity, hY::Quantity, hZ::Quantity, origin, rotation) 
+    _hX = to_internal_units(hX)
+    _hY = to_internal_units(hY)
+    _hZ = to_internal_units(hZ)
+    Box(CO, _hX, _hY, _hZ, origin, rotation)
+end
+
 function Box(::Type{CO}=ClosedPrimitive;
-    hX = 1,
-    hY = 1,
-    hZ = 1,
+    hX = 1u"m",
+    hY = 1u"m",
+    hZ = 1u"m",
     origin = zero(CartesianPoint{Int}), 
     rotation = one(SMatrix{3, 3, Int, 9})
 ) where {CO}
