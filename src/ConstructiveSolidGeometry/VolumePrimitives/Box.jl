@@ -71,12 +71,13 @@ function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX, T
 end
 
 #Unit convesion
-function Box(CO, hX::Quantity, hY::Quantity, hZ::Quantity, origin, rotation) 
-    _hX = to_internal_units(hX)
-    _hY = to_internal_units(hY)
-    _hZ = to_internal_units(hZ)
-    Box(CO, _hX, _hY, _hZ, origin, rotation)
-end
+Box(CO, hX::Quantity, hY, hZ, origin, rotation) = Box(CO, to_internal_units(hX), hY, hZ, origin, rotation)
+Box(CO, hX, hY::Quantity, hZ, origin, rotation) = Box(CO, hX, to_internal_units(hY), hZ, origin, rotation)
+Box(CO, hX, hY, hZ::Quantity, origin, rotation) = Box(CO, hX, hY, to_internal_units(hZ), origin, rotation)
+Box(CO, hX::Quantity, hY::Quantity, hZ, origin, rotation) = Box(CO, to_internal_units(hX), to_internal_units(hY), hZ, origin, rotation)
+Box(CO, hX, hY::Quantity, hZ::Quantity, origin, rotation) = Box(CO, hX, to_internal_units(hY), to_internal_units(hZ), origin, rotation)
+Box(CO, hX::Quantity, hY, hZ::Quantity, origin, rotation) = Box(CO, to_internal_units(hX), hY, to_internal_units(hZ), origin, rotation)
+Box(CO, hX::Quantity, hY::Quantity, hZ::Quantity, origin, rotation) = Box(CO, to_internal_units(hX), to_internal_units(hY), to_internal_units(hZ), origin, rotation)
 
 function Box(::Type{CO}=ClosedPrimitive;
     hX = 1,
