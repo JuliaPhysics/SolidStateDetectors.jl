@@ -278,4 +278,10 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         CSG.ConeMantle()
         CSG.ConeMantle(φ=(1.,2.))    
     end
+    @testset "Ellipse" begin
+        ell1 = @inferred CSG.Ellipse{Float32}(r = 1f0, φ=10f0)
+        @inferred CSG.Ellipse{T}(r = (1,2))
+        ell2 = @inferred CSG.Ellipse(r = 1f0, φ=10f0) 
+        @test ell1 == ell2
+    end
 end

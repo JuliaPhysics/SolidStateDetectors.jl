@@ -153,9 +153,9 @@ extremum(cm::PartialConeMantle{T}) where {T} = hypot(cm.hZ, max(cm.r...))
 
 function lines(sp::FullConeMantle{T}; n = 2) where {T} 
     bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), -sp.hZ), sp)
-    bot_ellipse = Circle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
+    bot_ellipse = Circle{T}(sp.r[1], sp.φ, bot_origin, sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T),zero(T), +sp.hZ), sp)
-    top_ellipse = Circle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
+    top_ellipse = Circle{T}(sp.r[2], sp.φ, top_origin, sp.rotation)
     φs = range(T(0), step = T(2π) / n, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, -sp.hZ)), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, +sp.hZ)), sp)) for φ in φs ]
@@ -163,9 +163,9 @@ function lines(sp::FullConeMantle{T}; n = 2) where {T}
 end
 function lines(sp::PartialConeMantle{T}; n = 2) where {T} 
     bot_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -sp.hZ), sp)
-    bot_ellipse = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = bot_origin, rotation = sp.rotation)
+    bot_ellipse = PartialCircle{T}(sp.r[1], sp.φ, bot_origin, sp.rotation)
     top_origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +sp.hZ), sp)
-    top_ellipse = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = top_origin, rotation = sp.rotation)
+    top_ellipse = PartialCircle{T}(sp.r[2], sp.φ, top_origin, sp.rotation)
     φs = range(zero(T), stop = sp.φ, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, -sp.hZ)), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, +sp.hZ)), sp)) for φ in φs ]
