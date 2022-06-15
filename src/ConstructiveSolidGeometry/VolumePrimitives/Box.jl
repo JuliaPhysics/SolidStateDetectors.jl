@@ -79,9 +79,9 @@ function Box(CO, hX::Quantity, hY::Quantity, hZ::Quantity, origin, rotation)
 end
 
 function Box(::Type{CO}=ClosedPrimitive;
-    hX = 1u"m",
-    hY = 1u"m",
-    hZ = 1u"m",
+    hX = 1,
+    hY = 1,
+    hZ = 1,
     origin = zero(CartesianPoint{Int}), 
     rotation = one(SMatrix{3, 3, Int, 9})
 ) where {CO}
