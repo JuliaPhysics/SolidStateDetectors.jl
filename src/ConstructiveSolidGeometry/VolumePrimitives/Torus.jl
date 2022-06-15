@@ -157,14 +157,6 @@ function Geometry(::Type{T}, ::Type{Torus}, dict::AbstractDict, input_units::Nam
         throw(ConfigFileError("Error when trying to parse φ from configuration file."))
     end
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    if haskey(dict, "z")
-        @warn "Deprecation warning: Field `z` for `Torus` is deprecated. 
-                Use instead (only) `origin` to specify the origin of the primitive.
-                There might be a conflict with the possible field `origin`:
-                The `z` component of the origin of the primitive is overwritten by the `z`."
-        z = _parse_value(T, dict["z"], length_unit)
-        origin = CartesianPoint{T}(origin[1], origin[2], z)
-    end
 
     t = Torus{T}(ClosedPrimitive;
             r_torus = r_torus, r_tube = r_tube, φ = φ, θ = θ, 

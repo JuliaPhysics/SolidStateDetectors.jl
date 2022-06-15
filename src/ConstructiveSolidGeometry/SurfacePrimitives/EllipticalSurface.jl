@@ -130,14 +130,14 @@ get_φ_limits(es::EllipticalSurface{T,<:Any,T}) where {T} = T(0), es.φ
 get_φ_limits(cm::EllipticalSurface{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function lines(sp::CircularArea{T}; n = 2) where {T} 
-    circ = Circle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    circ = Circle{T}(sp.r, sp.φ, sp.origin, sp.rotation)
     φs = range(T(0), step = T(2π) / n, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(zero(T), φ, zero(T))), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, φ, zero(T))), sp)) for φ in φs ]
     return (circ, edges)
 end
 function lines(sp::PartialCircularArea{T}; n = 2) where {T} 
-    circ = PartialCircle{T}(r = sp.r, φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    circ = PartialCircle{T}(sp.r, sp.φ, sp.origin, sp.rotation)
     φs = range(T(0), stop = sp.φ, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(zero(T), φ, zero(T))), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r, φ, zero(T))), sp)) for φ in φs ]
@@ -145,16 +145,16 @@ function lines(sp::PartialCircularArea{T}; n = 2) where {T}
 end
 
 function lines(sp::Annulus{T}; n = 2) where {T} 
-    circ_in  = Circle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    circ_out = Circle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    circ_in  = Circle{T}(sp.r[1], sp.φ, sp.origin, sp.rotation)
+    circ_out = Circle{T}(sp.r[2], sp.φ, sp.origin, sp.rotation)
     φs = range(T(0), step = T(2π) / n, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, zero(T))), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, zero(T))), sp)) for φ in φs ]
     return (circ_in, circ_out, edges)
 end
 function lines(sp::PartialAnnulus{T}; n = 2) where {T} 
-    circ_in  = PartialCircle{T}(r = sp.r[1], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
-    circ_out = PartialCircle{T}(r = sp.r[2], φ = sp.φ, origin = sp.origin, rotation = sp.rotation)
+    circ_in  = PartialCircle{T}(sp.r[1], sp.φ, sp.origin, sp.rotation)
+    circ_out = PartialCircle{T}(sp.r[2], sp.φ, sp.origin, sp.rotation)
     φs = range(T(0), stop = sp.φ, length = n)
     edges = [ Edge{T}(_transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[1], φ, zero(T))), sp),
                       _transform_into_global_coordinate_system(CartesianPoint(CylindricalPoint{T}(sp.r[2], φ, zero(T))), sp)) for φ in φs ]

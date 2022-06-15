@@ -78,15 +78,15 @@ get_radii(em::EllipsoidMantle{T,T}) where {T} = (em.r, em.r, em.r)
 get_radii(em::EllipsoidMantle{T,NTuple{3,T}}) where {T} = em.r
 
 function lines(em::FullSphereMantle{T}) where {T} 
-    ellipse_xy = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation)
-    ellipse_xz = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation * RotX(T(π)/2))
-    ellipse_yz = Ellipse{T,T,Nothing}(r = em.r[1], φ = em.φ, origin = em.origin, rotation = em.rotation * RotX(T(π)/2) * RotY(T(π)/2))
+    ellipse_xy = Ellipse{T,T,Nothing}(em.r[1], em.φ, em.origin, em.rotation)
+    ellipse_xz = Ellipse{T,T,Nothing}(em.r[1], em.φ, em.origin, em.rotation * RotX(T(π)/2))
+    ellipse_yz = Ellipse{T,T,Nothing}(em.r[1], em.φ, em.origin, em.rotation * RotX(T(π)/2) * RotY(T(π)/2))
     (ellipse_xy, ellipse_xz, ellipse_yz)
 end
 function lines(em::FullEllipsoidMantle{T}) where {T} 
-    ellipse_xy = Ellipse{T,NTuple{2, Tuple{T}},Nothing}(r = ((em.r[1],), (em.r[2],)), φ = em.φ, origin = em.origin, rotation = em.rotation)
-    ellipse_xz = Ellipse{T,NTuple{2, Tuple{T}},Nothing}(r = ((em.r[1],), (em.r[3],)), φ = em.φ, origin = em.origin, rotation = em.rotation * RotX(T(π)/2))
-    ellipse_yz = Ellipse{T,NTuple{2, Tuple{T}},Nothing}(r = ((em.r[2],), (em.r[3],)), φ = em.φ, origin = em.origin, rotation = em.rotation * RotX(T(π)/2) * RotY(T(π)/2))
+    ellipse_xy = Ellipse{T,NTuple{2, Tuple{T}},Nothing}(((em.r[1],), (em.r[2],)), em.φ, em.origin, em.rotation)
+    ellipse_xz = Ellipse{T,NTuple{2, Tuple{T}},Nothing}(((em.r[1],), (em.r[3],)), em.φ, em.origin, em.rotation * RotX(T(π)/2))
+    ellipse_yz = Ellipse{T,NTuple{2, Tuple{T}},Nothing}(((em.r[2],), (em.r[3],)), em.φ, em.origin, em.rotation * RotX(T(π)/2) * RotY(T(π)/2))
     (ellipse_xy, ellipse_xz, ellipse_yz)
 end
 
