@@ -25,13 +25,7 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
 end
 
 #Type promotion happens here
-function CartesianPoint(x::TX, y::TY, z::TZ) where {TX,TY,TZ}
-    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
-    T = float(promote_type(eltypes...))
-    CartesianPoint{T}(T(x),T(y),T(z))
-end
-
-function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Int,TY<:Int,TZ<:Int}
+function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
     CartesianPoint{T}(T(x),T(y),T(z))
