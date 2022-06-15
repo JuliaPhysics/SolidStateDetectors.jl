@@ -84,13 +84,7 @@ struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
 end
 
 #Type promotion happens here
-function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR,TP,TZ}
-    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
-    T = float(promote_type(eltypes...))
-    CylindricalVector{T}(T(r),T(φ),T(z))
-end
-
-function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR<:Int,TP<:Int,TZ<:Int}
+function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
     T = float(promote_type(eltypes...))
     CylindricalVector{T}(T(r),T(φ),T(z))
