@@ -284,6 +284,6 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         cyl = @inferred CSG.CylindricalVector{Float32}(r=2.,z=1.)
         cyl2 = @inferred CSG.CylindricalVector(φ=3π)
         @test CartesianVector(cyl) == cart
-        @test cyl2.φ == T(π)
+        @test cart.x == Float32(2)
     end
 end
