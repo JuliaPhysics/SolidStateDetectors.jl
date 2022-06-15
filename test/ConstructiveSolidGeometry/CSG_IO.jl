@@ -13,16 +13,13 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         box_widths = Geometry(T, joinpath(example_primitive_dir, "Box.yaml"))
         box_halfwidths = Geometry(T, joinpath(example_primitive_dir, "Box_halfwidths.yaml"))
         box_hXhYhZ = Geometry(T, joinpath(example_primitive_dir, "Box_hXhYhZ.yaml"))
-        box_old = Geometry(T, joinpath(example_primitive_dir, "Box_old.yaml"))
         @test box_widths isa CSG.Box
-        @test box_widths == box_halfwidths == box_hXhYhZ == box_old
+        @test box_widths == box_halfwidths == box_hXhYhZ
     end
 
     @testset "Cone" begin
         cone = Geometry(T, joinpath(example_primitive_dir, "Cone.yaml"))
-        cone_old = Geometry(T, joinpath(example_primitive_dir, "Cone_old.yaml"))
         @test cone isa CSG.Cone{T, <:Any, <:Tuple}
-        @test cone == cone_old
 
         cone_tube = Geometry(T, joinpath(example_primitive_dir, "Cone_tube.yaml"))
         @test cone_tube isa CSG.VaryingTube{T}
