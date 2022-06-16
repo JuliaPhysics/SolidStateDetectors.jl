@@ -21,6 +21,29 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     z::T
 end
 
+#Type promotion happens here
+function CartesianVector(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
+    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
+    T = float(promote_type(eltypes...))
+    CartesianVector{T}(T(x),T(y),T(z))
+end
+
+function CartesianVector(;
+    x = 0,
+    y = 0,
+    z = 0
+)
+    CartesianVector(x,y,z)
+end
+
+function CartesianVector{T}(;
+    x = 0,
+    y = 0,
+    z = 0
+) where {T}
+    CartesianVector{T}(T(x),T(y),T(z))
+end
+
 zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zero(T))
 
 # @inline rotate(pt::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * pt
@@ -60,4 +83,25 @@ struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
     z::T
 end
 
+#Type promotion happens here
+function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
+    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
+    T = float(promote_type(eltypes...))
+    CylindricalVector{T}(T(r),T(φ),T(z))
+end
 
+function CylindricalVector(;
+    r = 0,
+    φ = 0,
+    z = 0
+)
+    CylindricalVector(r,φ,z)
+end
+
+function CylindricalVector{T}(;
+    r = 0,
+    φ = 0,
+    z = 0
+) where {T}
+    CylindricalVector{T}(T(r),T(φ),T(z))
+end
