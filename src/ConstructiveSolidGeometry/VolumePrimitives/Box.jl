@@ -119,23 +119,6 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
         _parse_value(T, dict["hX"], length_unit), 
         _parse_value(T, dict["hY"], length_unit), 
         _parse_value(T, dict["hZ"], length_unit)
-    elseif haskey(dict, "x") && haskey(dict, "y") && haskey(dict, "z")
-        @warn "Deprecation warning: Detected old primitive definition for `Box`. 
-            Please update your configuration file to the new format 
-            via `widths`, `halfwidths` or `hX`, `hY` and `hZ`
-            in combination with possible fields `origin` and `rotate`.
-            The old definition overwrites the optional field `origin`."        
-        x = parse_interval_of_primitive(T, "x", dict, length_unit)
-        y = parse_interval_of_primitive(T, "y", dict, length_unit)
-        z = parse_interval_of_primitive(T, "z", dict, length_unit)
-        μx = typeof(x) <: Real ? zero(T) : mean(x)
-        μy = typeof(y) <: Real ? zero(T) : mean(y)
-        μz = typeof(z) <: Real ? zero(T) : mean(z)
-        origin = CartesianPoint{T}(μx, μy, μz)
-        hX = typeof(x) <: Real ? x : (x[2] - x[1])/2
-        hY = typeof(y) <: Real ? y : (y[2] - y[1])/2
-        hZ = typeof(z) <: Real ? z : (z[2] - z[1])/2
-        hX, hY, hZ
     end
     box = Box{T}(ClosedPrimitive,
         hX = hX, 

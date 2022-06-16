@@ -12,12 +12,44 @@
 #     * TP = Nothing <-> Full in φ
 #     * ...
 # """
-@with_kw struct Ellipse{T,TR,TP<:Union{Nothing,T}} <: AbstractLinePrimitive{T}
-    r::TR = 1
-    φ::TP = nothing
+struct Ellipse{T,TR,TP<:Union{Nothing,T}} <: AbstractLinePrimitive{T}
+    r::TR 
+    φ::TP 
 
-    origin::CartesianPoint{T} = zero(CartesianPoint{T})
-    rotation::SMatrix{3,3,T,9} = one(SMatrix{3, 3, T, 9})
+    origin::CartesianPoint{T}
+    rotation::SMatrix{3,3,T,9}
+end
+
+#Type conversion happens here
+function Ellipse{T}(r::TR, φ, origin, rotation) where {T,TR<:Union{Real,Tuple}}
+    _r = _csg_convert_args(T, r)
+    _φ = _csg_convert_args(T, φ)
+    Ellipse{T,typeof(_r),typeof(_φ)}(_r, _φ, origin, rotation)
+end
+
+#Type promotion happens here
+function Ellipse(r::TR, φ::TP, origin::PT, rotation::ROT) where {TR<:Union{Real,Tuple}, TP<:Union{Nothing,Real}, PT<:(CartesianPoint), ROT<:(StaticArrays.SMatrix{3, 3, T, 9} where T)}
+    eltypes = _csg_get_promoted_eltype.((TR, TP, PT, ROT))
+    T = float(promote_type(eltypes...))
+    Ellipse{T}(r, φ, origin, rotation)
+end
+
+function Ellipse(;
+    r = 1,
+    φ = nothing,
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
+) 
+    Ellipse(r, φ, origin, rotation)
+end
+
+function Ellipse{T}(;
+    r = 1.0,
+    φ = nothing,
+    origin = zero(CartesianPoint{Float64}), 
+    rotation = one(SMatrix{3, 3, Float64, 9})
+) where {T}
+    Ellipse{T}(r, φ, origin, rotation)
 end
 
 const Circle{T} = Ellipse{T,T,Nothing}

@@ -24,6 +24,29 @@ struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
     z::T
 end
 
+#Type promotion happens here
+function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
+    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
+    T = float(promote_type(eltypes...))
+    CartesianPoint{T}(T(x),T(y),T(z))
+end
+
+function CartesianPoint(;
+    x = 0,
+    y = 0,
+    z = 0
+)
+    CartesianPoint(x,y,z)
+end
+
+function CartesianPoint{T}(;
+    x = 0,
+    y = 0,
+    z = 0
+) where {T}
+    CartesianPoint{T}(T(x),T(y),T(z))
+end
+
 zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
 
 """
@@ -45,8 +68,30 @@ struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
     r::T
     φ::T
     z::T
-    CylindricalPoint{T}(r::T, φ::T, z::T) where {T} = new(r, mod(φ,T(2π)), z)
+    CylindricalPoint{T}(r::T, φ::T, z::T) where {T<:AbstractFloat} = new(r, mod(φ,T(2π)), z)
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
+end
+
+function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
+    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
+    T = float(promote_type(eltypes...))
+    CylindricalPoint{T}(T(r),T(φ),T(z))
+end
+
+function CylindricalPoint(;
+    r = 0,
+    φ = 0,
+    z = 0
+)
+    CylindricalPoint(r,φ,z)
+end
+
+function CylindricalPoint{T}(;
+    r = 0,
+    φ = 0,
+    z = 0
+) where {T}
+    CylindricalPoint{T}(T(r),T(φ),T(z))
 end
 
 function CylindricalPoint(pt::CartesianPoint{T})::CylindricalPoint{T} where {T}

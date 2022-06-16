@@ -219,21 +219,10 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         dict = Dict("QuadranglePrism"   => Dict(
                 "r"       => 1.0,
-                "z"      =>1.0))
+                "h"      =>1.0))
         prism = Geometry(T,dict,default_units,no_translations)
         output = Dictionary(prism)
-        output["QuadranglePrism"]["z"]=output["QuadranglePrism"]["h"]#Workaround for tests, since dictionary uses the key "h", since "z" is outdated
-        delete!(output["QuadranglePrism"], "h")
         @test dict == output
-        
-        dict = Dict("PentagonalPrism"   => Dict(
-                "r"       => 1.0,
-                "z"      =>(1.0,2.0)))
-        prism = Geometry(T,dict,default_units,no_translations)
-        output = Dictionary(prism)
-        output["PentagonalPrism"]["z"]=output["PentagonalPrism"]["h"]
-        delete!(output["PentagonalPrism"], "h")
-        #@test dict == output
         
         dict = Dict("HexagonalPrism"   => Dict(
                 "r"       => 1.0,
@@ -278,6 +267,12 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         CSG.ConeMantle()
         CSG.ConeMantle(φ=(1.,2.))    
     end
+    @testset "Ellipse" begin
+        ell1 = @inferred CSG.Ellipse{Float32}(r = 1f0, φ=10f0)
+        @inferred CSG.Ellipse{T}(r = (1,2))
+        ell2 = @inferred CSG.Ellipse(r = 1f0, φ=10f0) 
+        @test ell1 == ell2
+    end
     @testset "Vector" begin
         cart = @inferred CSG.CartesianVector(x=2f0,z=1f0)
         @inferred CSG.CartesianVector{Float32}(x=2)
@@ -285,5 +280,13 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         cyl2 = @inferred CSG.CylindricalVector(φ=3π)
         @test CartesianVector(cyl) == cart
         @test cart.x == Float32(2)
+    end
+    @testset "Point" begin
+        cart = @inferred CSG.CartesianPoint(x=2f0,z=1f0)
+        @inferred CSG.CartesianPoint{Float32}(x=2)
+        cyl = @inferred CSG.CylindricalPoint{Float32}(r=2.,z=1.)
+        cyl2 = @inferred CSG.CylindricalPoint(φ=3π)
+        @test CartesianPoint(cyl) == cart
+        @test cyl2.φ == T(π)
     end
 end
