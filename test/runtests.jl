@@ -36,7 +36,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -51,7 +51,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -70,7 +70,7 @@ T = Float32
     #     simulate!(evt, sim, Δt = 5e-10, max_nsteps = 10000)
     #     signalsum = T(0)
     #     for i in 1:length(evt.waveforms)
-    #         signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+    #         signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
     #     end
     #     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     #     @info signalsum
@@ -88,7 +88,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -103,7 +103,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -116,7 +116,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -131,7 +131,7 @@ T = Float32
         simulate!(evt, sim)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -146,7 +146,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -159,7 +159,7 @@ T = Float32
         simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
         signalsum = T(0)
         for i in 1:length(evt.waveforms)
-            signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
         end
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
@@ -178,7 +178,7 @@ end
     simulate!(evt, sim, self_repulsion = true, diffusion = true)
     signalsum = T(0)
     for i in 1:length(evt.waveforms)
-        signalsum += abs(ustrip(evt.waveforms[i].value[end]))
+        signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
     end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
@@ -206,7 +206,7 @@ end
         verbose = false);
     signalsum = T(0)
     for i in 1:length(contact_charge_signals.waveform)
-        signalsum += abs(ustrip(contact_charge_signals.waveform[i].value[end]))
+        signalsum += abs(ustrip(contact_charge_signals.waveform[i].signal[end]))
     end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @test isapprox( signalsum, T(2), atol = 5e-3 )
