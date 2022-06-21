@@ -89,14 +89,16 @@ function Box(::Type{CO}=ClosedPrimitive;
     Box(CO, hX, hY, hZ, origin, rotation)
 end
 
-function Box{T}(::Type{CO}=ClosedPrimitive;
+function Box{T}(unt::UN = u"m",
+    ::Type{CO}=ClosedPrimitive;
     hX = 1.0,
     hY = 1.0,
     hZ = 1.0,
     origin = zero(CartesianPoint{Float64}), 
     rotation = one(SMatrix{3, 3, Float64, 9})
-) where {T, CO}
-    Box{T}(CO, hX, hY, hZ, origin, rotation)
+) where {T, CO, UN<:Unitful.Units}
+    unit_factor = ustrip(uconvert(unt,1u"m"))
+    Box{T}(CO, hX/unit_factor, hY/unit_factor, hZ/unit_factor, scale(CartesianPoint{T}(origin),1/unit_factor), rotation)
 end
 
 Box{T, CO}( b::Box{T, CO}; COT = CO,
