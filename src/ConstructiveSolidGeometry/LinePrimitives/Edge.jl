@@ -1,6 +1,27 @@
-struct Edge{T} <: AbstractLinePrimitive{T}
+struct Edge{T<:AbstractFloat} <: AbstractLinePrimitive{T}
     a::CartesianPoint{T}
     b::CartesianPoint{T}
+end
+
+#Type promotion happens here
+function Edge(a::A, b::B) where {A<:(CartesianPoint), B<:(CartesianPoint)}
+    eltypes = _csg_get_promoted_eltype.((A,B))
+    T = float(promote_type(eltypes...))
+    Edge{T}(a,b)
+end
+
+function Edge(;
+    a = CartesianPoint{Int}(0,0,0), 
+    b = CartesianPoint{Int}(0,0,1)
+) 
+    Edge(a, b)
+end
+
+function Edge{T}(;
+    a = CartesianPoint{Int}(0,0,0), 
+    b = CartesianPoint{Int}(0,0,1)
+) where {T}
+    Edge{T}(a, b)
 end
 
 direction(e::Edge) = e.b - e.a
