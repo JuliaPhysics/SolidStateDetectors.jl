@@ -273,6 +273,11 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         ell2 = @inferred CSG.Ellipse(r = 1f0, φ=10f0) 
         @test ell1 == ell2
     end
+    @testset "Line" begin
+        line1 = @inferred CSG.Line{Float32}()
+        line2 = @inferred CSG.Line(direction = CartesianVector{Float32}(0,0,1)) 
+        @test line1 == line2
+    end
     @testset "Vector" begin
         cart = @inferred CSG.CartesianVector(x=2f0,z=1f0)
         @inferred CSG.CartesianVector{Float32}(x=2)
