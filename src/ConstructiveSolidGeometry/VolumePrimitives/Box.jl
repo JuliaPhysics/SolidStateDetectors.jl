@@ -131,7 +131,7 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
         _parse_value(T, dict["hY"], length_unit), 
         _parse_value(T, dict["hZ"], length_unit)
     end
-    box = Box{T}(ClosedPrimitive,
+    box = Box{T}(u"m",ClosedPrimitive,
         hX = hX, 
         hY = hY, 
         hZ = hZ, 
