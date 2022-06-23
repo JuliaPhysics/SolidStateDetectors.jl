@@ -48,7 +48,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     for idx_n in 1:n
         for il in 1:l
             idx::Int = il + (idx_n - 1) * l
-            new_ticks[idx] = (idx_n - 1) * Δφ + axφ.ticks[il]
+            new_ticks[idx] = mod((idx_n - 1) * Δφ + axφ.ticks[il], T(2π))
             new_pot[:, idx, :] = sp[:, il, :]
         end
     end
@@ -70,7 +70,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), l, size(sp, 3))
     new_pot[:, 1:length( axφ ), :] = sp.data[:, :, :]
     for i in 1:(length(axφ) - 2)
-        new_ticks[length(axφ) + i] = 2 * int.right - axφ.ticks[length(axφ) - i]
+        new_ticks[length(axφ) + i] = mod(2 * int.right - axφ.ticks[length(axφ) - i], T(2π))
         new_pot[:, length(axφ) + i, :] = sp[:, length(axφ) - i, :]
     end
     new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
