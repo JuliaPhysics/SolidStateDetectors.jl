@@ -84,15 +84,41 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     ϕmin, ϕmax = extrema((ϕρ .+ potential_range[1] * sim.weighting_potentials[contact_id].data)[inside])
     initial_depletion::Bool = ϕmax - ϕmin < abs(potential_range[1])
     depletion_voltage::T = NaN
-
-    @showprogress for U in potential_range
-        ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
-        depleted = ϕmax - ϕmin < abs(U)
-        if (initial_depletion && !depleted) || (!initial_depletion && depleted)
-            depletion_voltage = T(U)
-            break
+    
+    I1 = oneunit(CartesianIndex(0,0,0))
+    Ifirst, Ilast = first(inside), last(inside)
+    scale = zeros(size(sim.electric_potential.data))
+    for idx in inside
+        for scale_loc in potential_range
+            center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
+            min_pot = sim.weighting_potentials[contact_id].data[idx+CartesianIndex(1,0,0)] + ϕρ[idx+CartesianIndex(1,0,0)]
+            max_pot = min_pot
+            for n_idx in (max(Ifirst,(idx-I1)):min(Ilast,(idx-I1)))
+                if n_idx == idx continue end
+                local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
+                if local_pot <=min_pot
+                    min_pot = local_pot
+                elseif local_pot>=max_pot
+                    max_pot = local_pot
+                end
+            end
+            if min_pot<=center_pot<=max_pot  
+                scale[idx] = T(scale_loc)
+                println(scale_loc)
+                break
+            end         
         end
     end
+    print(scale[inside])
+    depletion_voltage = maximum(scale[inside])
+    # @showprogress for U in potential_range
+    #     ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
+    #     depleted = ϕmax - ϕmin < abs(U)
+    #     if (initial_depletion && !depleted) || (!initial_depletion && depleted)
+    #         depletion_voltage = T(U)
+    #         break
+    #     end
+    # end
     
     if verbose
         if !isnan(depletion_voltage)
