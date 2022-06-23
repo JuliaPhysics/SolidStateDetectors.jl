@@ -4,7 +4,7 @@ struct Line{T<:AbstractFloat} <: AbstractLinePrimitive{T}
 end
 
 #Type promotion happens here
-function Line(origin::PT, direction::DIR) where {PT<:(CartesianPoint), DIR<:(CartesianVector)}
+function Line(origin::PT, direction::DIR) where {PT<:CartesianPoint, DIR<:CartesianVector}
     eltypes = _csg_get_promoted_eltype.((PT, DIR))
     T = float(promote_type(eltypes...))
     Line{T}(origin, direction)
