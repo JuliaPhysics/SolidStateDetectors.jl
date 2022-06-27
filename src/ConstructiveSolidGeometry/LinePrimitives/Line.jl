@@ -1,13 +1,14 @@
-struct Line{T<:AbstractFloat} <: AbstractLinePrimitive{T}
+struct Line{T} <: AbstractLinePrimitive{T}
     origin::CartesianPoint{T}
     direction::CartesianVector{T}
-end
-
-#Type promotion happens here
-function Line(origin::PT, direction::DIR) where {PT<:CartesianPoint, DIR<:CartesianVector}
-    eltypes = _csg_get_promoted_eltype.((PT, DIR))
-    T = float(promote_type(eltypes...))
-    Line{T}(origin, direction)
+    
+    Line{T}(origin, direction) where T = new{T}(origin,direction)
+    function Line(origin::PT, direction::DIR) where {PT<:CartesianPoint, DIR<:CartesianVector}
+        #Type promotion happens here
+        eltypes = _csg_get_promoted_eltype.((PT, DIR))
+        T = float(promote_type(eltypes...))
+        Line{T}(origin, direction)
+    end
 end
 
 function Line(;
