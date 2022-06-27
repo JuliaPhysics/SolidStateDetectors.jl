@@ -273,6 +273,11 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         ell2 = @inferred CSG.Ellipse(r = 1f0, φ=10f0) 
         @test ell1 == ell2
     end
+    @testset "Line" begin
+        line1 = @inferred CSG.Line{Float32}()
+        line2 = @inferred CSG.Line(direction = CartesianVector{Float32}(0,0,1)) 
+        @test line1 == line2
+    end
     @testset "Edge" begin
         edge1 = @inferred CSG.Edge{Float32}()
         edge2 = @inferred CSG.Edge(a = CartesianPoint{Float32}(0,0,0), b = CartesianPoint{Float16}(0,0,1)) 
