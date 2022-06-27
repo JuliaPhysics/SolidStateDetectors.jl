@@ -41,7 +41,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = length( axφ )
     Δφ::AT = width(int)
-    new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(0, 2π)
+    #new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(0, 1)
     n::Int = Int(round(T(2π) / Δφ, sigdigits = 6))
     new_ticks::Vector{AT} = Vector{AT}(undef, l * n)
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), l * n, size(sp, 3))
@@ -52,10 +52,12 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
             new_pot[:, idx, :] = sp[:, il, :]
         end
     end
-    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
+    P = sortperm(new_ticks)
+    new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(new_ticks[P][1], new_ticks[P][end])
+    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks[P] )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
     new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    ScalarPotential(sp, new_pot, new_grid)
+    ScalarPotential(sp, new_pot[:,P,:], new_grid)
 end
 
 
@@ -73,10 +75,11 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
         new_ticks[length(axφ) + i] = mod(2 * int.right - axφ.ticks[length(axφ) - i], T(2π))
         new_pot[:, length(axφ) + i, :] = sp[:, length(axφ) - i, :]
     end
-    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
+    P = sortperm(new_ticks)
+    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks[P] )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
     new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    ScalarPotential(sp, new_pot, new_grid)
+    ScalarPotential(sp, new_pot[:,P,:], new_grid)
 end
 
 function extend_2D_to_3D_by_n_points(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT},
