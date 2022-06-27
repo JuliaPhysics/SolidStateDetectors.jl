@@ -278,6 +278,11 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         line2 = @inferred CSG.Line(direction = CartesianVector{Float32}(0,0,1)) 
         @test line1 == line2
     end
+    @testset "Edge" begin
+        edge1 = @inferred CSG.Edge{Float32}()
+        edge2 = @inferred CSG.Edge(a = CartesianPoint{Float32}(0,0,0), b = CartesianPoint{Float16}(0,0,1)) 
+        @test edge1 == edge2
+    end
     @testset "Vector" begin
         cart = @inferred CSG.CartesianVector(x=2f0,z=1f0)
         @inferred CSG.CartesianVector{Float32}(x=2)
