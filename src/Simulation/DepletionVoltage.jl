@@ -79,38 +79,65 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
         ϕρ .-= c.potential * sim.weighting_potentials[c.id].data
     end
     
-    inside = findall(p -> p & pn_junction_bit > 0 && p & update_bit > 0, sim.point_types.data)
+    inside = findall(p -> p & bulk_bit > 0 && p & update_bit > 0, sim.point_types.data)
     
     ϕmin, ϕmax = extrema((ϕρ .+ potential_range[1] * sim.weighting_potentials[contact_id].data)[inside])
     initial_depletion::Bool = ϕmax - ϕmin < abs(potential_range[1])
     depletion_voltage::T = NaN
+    local_range::AbstractRange = potential_range
     
-    I1 = oneunit(CartesianIndex(0,0,0))
-    Ifirst, Ilast = first(inside), last(inside)
-    scale = zeros(size(sim.electric_potential.data))
-    for idx in inside
-        for scale_loc in potential_range
-            center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
-            min_pot = sim.weighting_potentials[contact_id].data[idx+CartesianIndex(1,0,0)] + ϕρ[idx+CartesianIndex(1,0,0)]
-            max_pot = min_pot
-            for n_idx in (max(Ifirst,(idx-I1)):min(Ilast,(idx-I1)))
-                if n_idx == idx continue end
-                local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
-                if local_pot <=min_pot
-                    min_pot = local_pot
-                elseif local_pot>=max_pot
-                    max_pot = local_pot
-                end
+    @showprogress for U in potential_range
+        ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
+        depleted = ϕmax - ϕmin < abs(U)
+        if (initial_depletion && !depleted) || (!initial_depletion && depleted)
+            if T(U)>=0
+                local_range = T(U):potential_range.:step:potential_range[end]
+            else
+                local_range = T(U):-1*potential_range.:step:potential_range[1]
             end
-            if min_pot<=center_pot<=max_pot  
-                scale[idx] = T(scale_loc)
-                println(scale_loc)
-                break
-            end         
+            break
         end
     end
-    print(scale[inside])
-    depletion_voltage = maximum(scale[inside])
+    println(local_range)
+    
+    Ix = CartesianIndex(1,0,0)
+    Iy = CartesianIndex(0,1,0)
+    Iz = CartesianIndex(0,0,1)
+    neighbours = [Ix,-Ix,Iy,-Iy,Iz,-Iz]
+    size_data = size(sim.point_types.data)
+    scale = zeros(size_data)
+    undepleted = 0
+    for (i,idx) in enumerate(inside)
+        if idx[1]!=1 && idx[1]!=size_data[1] && idx[2]!=1 && idx[2]!=size_data[2] && idx[3]!=1 && idx[3]!=size_data[3]
+            for scale_loc in local_range
+                center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
+                min_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx-Ix] + ϕρ[idx-Ix]
+                max_pot = min_pot
+                for neighbour in neighbours
+                    n_idx = idx + neighbour
+                    if n_idx == idx continue end
+                    local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
+                    if local_pot < min_pot
+                        min_pot = local_pot
+                    elseif local_pot > max_pot
+                        max_pot = local_pot
+                    end
+                end
+                if min_pot<center_pot<max_pot  
+                    scale[idx] = T(scale_loc)           
+                    break
+                end         
+            end
+            if scale[idx]==0
+                undepleted += 1
+            end
+        else
+            deleteat!(inside,i) #Delete indices which are in bulk bit, but still have non defined neighbour (diagonal)
+        end
+    end
+    if undepleted ==0 || initial_depletion
+        depletion_voltage = maximum(scale[inside])
+    end
     # @showprogress for U in potential_range
     #     ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
     #     depleted = ϕmax - ϕmin < abs(U)
