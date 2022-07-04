@@ -72,14 +72,13 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), l, size(sp, 3))
     new_pot[:, 1:length( axφ ), :] = sp.data[:, :, :]
     for i in 1:(length(axφ) - 2)
-        new_ticks[length(axφ) + i] = mod(2 * int.right - axφ.ticks[length(axφ) - i], T(2π))
+        new_ticks[length(axφ) + i] = 2 * int.right - axφ.ticks[length(axφ) - i]
         new_pot[:, length(axφ) + i, :] = sp[:, length(axφ) - i, :]
     end
-    P = sortperm(new_ticks)
-    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks[P] )
+    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
     new_axes = (sp.grid[1], new_axφ, sp.grid[3])
     new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    ScalarPotential(sp, new_pot[:,P,:], new_grid)
+    ScalarPotential(sp, new_pot, new_grid)
 end
 
 function extend_2D_to_3D_by_n_points(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT},
@@ -101,7 +100,7 @@ end
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}; n_points_in_φ::Union{Missing, Int} = missing) where {T}
     axφ::DiscreteAxis{T} = sp.grid[2]
     int::Interval = axφ.interval
-    if int.right == 0 && length(axφ) == 1 # 2D
+    if length(axφ) == 1 # 2D
         if ismissing(n_points_in_φ)
             error(ArgumentError, ": First Argument is a 2D potential (only 1 point in φ). User has to set the keyword `n_points_in_φ::Int` (e.g. `n_points_in_φ = 18`) in order to get a 3D potential.")
         else
