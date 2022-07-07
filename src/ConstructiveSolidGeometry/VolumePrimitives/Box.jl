@@ -60,24 +60,16 @@ function Box{T}(CO,hX, hY, hZ, origin, rotation) where {T}
     _hX = _csg_convert_args(T, hX)
     _hY = _csg_convert_args(T, hY)
     _hZ = _csg_convert_args(T, hZ)
-    Box{T,CO}(_hX, _hY, _hZ, origin, rotation)
+    _origin = _csg_convert_args(T, origin)
+    Box{T,CO}(_hX, _hY, _hZ, _origin, rotation)
 end
 
 #Type promotion happens here
-function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX, TY, TZ, PT, ROT}
-    eltypes = _csg_get_promoted_eltype.((TX, TY, TZ, PT, ROT))
+function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX,TY,TZ,PT,ROT}
+    eltypes = _csg_get_promoted_eltype.((TX,TY,TZ,PT,ROT))
     T = float(promote_type(eltypes...))
     Box{T}(CO,T(hX), T(hY), T(hZ), origin, rotation)
 end
-
-#Unit convesion
-Box(CO, hX::Quantity, hY, hZ, origin, rotation) = Box(CO, to_internal_units(hX), hY, hZ, origin, rotation)
-Box(CO, hX, hY::Quantity, hZ, origin, rotation) = Box(CO, hX, to_internal_units(hY), hZ, origin, rotation)
-Box(CO, hX, hY, hZ::Quantity, origin, rotation) = Box(CO, hX, hY, to_internal_units(hZ), origin, rotation)
-Box(CO, hX::Quantity, hY::Quantity, hZ, origin, rotation) = Box(CO, to_internal_units(hX), to_internal_units(hY), hZ, origin, rotation)
-Box(CO, hX, hY::Quantity, hZ::Quantity, origin, rotation) = Box(CO, hX, to_internal_units(hY), to_internal_units(hZ), origin, rotation)
-Box(CO, hX::Quantity, hY, hZ::Quantity, origin, rotation) = Box(CO, to_internal_units(hX), hY, to_internal_units(hZ), origin, rotation)
-Box(CO, hX::Quantity, hY::Quantity, hZ::Quantity, origin, rotation) = Box(CO, to_internal_units(hX), to_internal_units(hY), to_internal_units(hZ), origin, rotation)
 
 function Box(::Type{CO}=ClosedPrimitive;
     hX = 1,
@@ -89,16 +81,14 @@ function Box(::Type{CO}=ClosedPrimitive;
     Box(CO, hX, hY, hZ, origin, rotation)
 end
 
-function Box{T}(unt::UN = u"m",
-    ::Type{CO}=ClosedPrimitive;
+function Box{T}(::Type{CO}=ClosedPrimitive;
     hX = 1.0,
     hY = 1.0,
     hZ = 1.0,
     origin = zero(CartesianPoint{Float64}), 
     rotation = one(SMatrix{3, 3, Float64, 9})
-) where {T, CO, UN<:Unitful.Units}
-    unit_factor = ustrip(uconvert(unt,1u"m"))
-    Box{T}(CO, hX/unit_factor, hY/unit_factor, hZ/unit_factor, scale(CartesianPoint{T}(origin),1/unit_factor), rotation)
+) where {T, CO}
+    Box{T}(CO, hX, hY, hZ, origin, rotation)
 end
 
 Box{T, CO}( b::Box{T, CO}; COT = CO,
@@ -131,7 +121,7 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
         _parse_value(T, dict["hY"], length_unit), 
         _parse_value(T, dict["hZ"], length_unit)
     end
-    box = Box{T}(u"m",ClosedPrimitive,
+    box = Box{T}(ClosedPrimitive,
         hX = hX, 
         hY = hY, 
         hZ = hZ, 
