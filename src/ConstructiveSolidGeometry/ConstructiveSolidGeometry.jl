@@ -50,11 +50,13 @@ module ConstructiveSolidGeometry
 
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
     
-    _csg_convert_args(eltype::Type{T}, r::Real) where T = convert(T, r) 
+    _csg_convert_args(eltype::Type{T}, r::Real) where T = convert(T, r)
     _csg_convert_args(eltype::Type{T}, r::Tuple) where T = broadcast(x -> _csg_convert_args(T, x), r)
     _csg_convert_args(eltype::Type{T}, r::Nothing) where T = nothing
+    _csg_convert_args(eltype::Type{T}, r::Quantity) where T = convert(T,ustrip(uconvert(u"m",r)))
+    _csg_convert_args(eltype::Type{T}, r::PtOrVec) where {T, PtOrVec<:StaticArrays.FieldVector} = broadcast(x -> _csg_convert_args(T, x), r)
 
-    _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = eltype(T)
+    _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = _csg_get_promoted_eltype.(eltype(T))
     _csg_get_promoted_eltype(::Type{T}) where {T <: Real} = T
     _csg_get_promoted_eltype(::Type{Nothing}) = Int
     _csg_get_promoted_eltype(::Type{Tuple{T}}) where {T<:Real} = T
@@ -62,6 +64,7 @@ module ConstructiveSolidGeometry
     _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Union{Real, Tuple}, T2<:Union{Real, Tuple}} = promote_type(_csg_get_promoted_eltype(T1), _csg_get_promoted_eltype(T2))
     _csg_get_promoted_eltype(::Type{Tuple{Nothing,T2}}) where {T2<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T2)
     _csg_get_promoted_eltype(::Type{Tuple{T1,Nothing}}) where {T1<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T1)
+    _csg_get_promoted_eltype(::Type{Quan}) where {Quan<:Quantity}= Quan.parameters[1]
     
     _handle_phi(φ, rotation) = (φ, rotation)
     _handle_phi(φ::Tuple, rotation) = (abs(φ[2]-φ[1]), rotation*RotZ(φ[1]))
