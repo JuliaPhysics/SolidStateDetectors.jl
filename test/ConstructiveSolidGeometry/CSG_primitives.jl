@@ -185,8 +185,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test in(CartesianPoint{Float64}(1e-8,0,0),ellip_open_trafo)
     end
     @testset "Box" begin
-        box1 = @inferred CSG.Box(CSG.ClosedPrimitive,hX=1f0, hY=2f0, hZ=1f0, origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
-        box2 = @inferred CSG.Box{Float32}(hX=1.0, hY=2f0, hZ=1f0)
+        box1 = @inferred CSG.Box(CSG.ClosedPrimitive,hX=1f0u"mm", hY=2f0, hZ=1f0, origin = CartesianPoint(1u"mm",1u"nm",1u"m"),rotation = one(SMatrix{3, 3, Float16, 9}))
+        box2 = @inferred CSG.Box{Float32}(hX=1.0u"mm", hY=2f0, hZ=1f0, origin = CartesianPoint(1u"mm",1u"nm",1u"m"))
         @test box1 === box2
     
         dict = Dict("box"   => Dict(
