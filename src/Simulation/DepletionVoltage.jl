@@ -84,22 +84,22 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     ϕmin, ϕmax = extrema((ϕρ .+ potential_range[1] * sim.weighting_potentials[contact_id].data)[inside])
     initial_depletion::Bool = ϕmax - ϕmin < abs(potential_range[1])
     depletion_voltage::T = NaN
-    local_range::AbstractRange = potential_range
+    start_local_search::T = 0
     
     @showprogress for U in potential_range
         ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
         depleted = ϕmax - ϕmin < abs(U)
         if (initial_depletion && !depleted) || (!initial_depletion && depleted)
             if T(U)>=0
-                local_range = T(U):potential_range.:step:potential_range[end]
+                start_local_search = T(U)
             else
-                local_range = T(U):-1*potential_range.:step:potential_range[1]
+                start_local_search = T(U)
             end
             break
         end
     end
-    println(local_range)
-    
+    local_range::AbstractRange = range(start_local_search, maximum(potential_range), step = step(potential_range))
+
     Ix = CartesianIndex(1,0,0)
     Iy = CartesianIndex(0,1,0)
     Iz = CartesianIndex(0,0,1)
@@ -115,7 +115,6 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                 max_pot = min_pot
                 for neighbour in neighbours
                     n_idx = idx + neighbour
-                    if n_idx == idx continue end
                     local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
                     if local_pot < min_pot
                         min_pot = local_pot
@@ -123,19 +122,21 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                         max_pot = local_pot
                     end
                 end
-                if min_pot<center_pot<max_pot  
+                if !(min_pot>center_pot || max_pot<center_pot)
                     scale[idx] = T(scale_loc)           
                     break
+                end
+                if scale_loc == local_range[end]
+                    undepleted+=1
                 end         
-            end
-            if scale[idx]==0
-                undepleted += 1
             end
         else
             deleteat!(inside,i) #Delete indices which are in bulk bit, but still have non defined neighbour (diagonal)
         end
     end
-    if undepleted ==0 || initial_depletion
+    if initial_depletion
+        depletion_voltage = potential_range[1]
+    elseif undepleted == 0
         depletion_voltage = maximum(scale[inside])
     end
     # @showprogress for U in potential_range
@@ -146,7 +147,6 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     #         break
     #     end
     # end
-    
     if verbose
         if !isnan(depletion_voltage)
             @info "The depletion voltage of the detector is ($(depletion_voltage) ± $(T(step(potential_range)))) V applied to contact $(contact_id)."
