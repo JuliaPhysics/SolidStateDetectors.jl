@@ -1,30 +1,6 @@
-name: "Cut Cone"
-units:
-  length: "mm"
-  angle: "deg"
-  potential: "V"
-  temperature: "K"
-grid:
-  coordinates: "cylindrical"
-  axes:
-    r:
-      to: 12.0
-      boundaries: "inf"
-    phi:
-      from: 13
-      to: 13
-      boundaries: "periodic"
-    z:
-      from: -5
-      to: 15
-      boundaries:
-        left: "inf"
-        right: "inf"
-medium: "vacuum"
 detectors:
   - semiconductor:
       material: "HPGe"
-      bulk_type: "p"
       temperature: 77.0
       impurity_density:
         name: "constant"
@@ -42,7 +18,7 @@ detectors:
           origin:
             z: 5
     contacts:
-      - name: "p contact"
+      - name: "Inner Contact"
         id: 1
         material: "HPGe"
         potential: 4000.
@@ -52,7 +28,7 @@ detectors:
             h: 10.
             origin:
               z: 5
-      - name: "Outer Contact 1"
+      - name: "Outer Contact"
         id: 2
         material: "HPGe"
         potential: 0
@@ -68,4 +44,3 @@ detectors:
             h: 10.
             origin:
               z: 5
-      
