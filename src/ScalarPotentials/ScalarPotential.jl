@@ -100,7 +100,7 @@ end
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}; n_points_in_φ::Union{Missing, Int} = missing) where {T}
     axφ::DiscreteAxis{T} = sp.grid[2]
     int::Interval = axφ.interval
-    if int.right == 0 && length(axφ) == 1 # 2D
+    if length(axφ) == 1 # 2D
         if ismissing(n_points_in_φ)
             error(ArgumentError, ": First Argument is a 2D potential (only 1 point in φ). User has to set the keyword `n_points_in_φ::Int` (e.g. `n_points_in_φ = 18`) in order to get a 3D potential.")
         else
