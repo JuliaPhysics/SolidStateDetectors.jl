@@ -39,7 +39,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 Adapt = "3"
-ArraysOfArrays = "0.4, 0.5"
+ArraysOfArrays = "0.4, 0.5, 0.6"
 Clustering = "0.13, 0.14"
 DataStructures = "0.18"
 Distributions = "0.21, 0.22, 0.23, 0.24, 0.25"
