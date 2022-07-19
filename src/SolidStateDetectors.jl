@@ -35,7 +35,7 @@ include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
-            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            CartesianVector, CylindricalVector, Plane, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
@@ -80,6 +80,7 @@ const SSDFloat = Union{Float16, Float32, Float64}
 include("Units.jl")
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
+include("Symmetry/Symmetry.jl")
 include("Grids/Grids.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
