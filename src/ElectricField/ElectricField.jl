@@ -186,7 +186,7 @@ function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) wher
 end
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cartesian}) where {T}
     @inbounds knots = spot.grid.axes[1].ticks, spot.grid.axes[2].ticks, spot.grid.axes[3].ticks
-    i = interpolate(knots, spot.data, Gridded(Linear()))
+    i = interpolate!(knots, spot.data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return vector_field_itp
 end
@@ -195,13 +195,13 @@ end
 function interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
     extended_vectorfield = cat(vectorfield, vectorfield[:,1:1,:], dims=2)
     @inbounds knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
-    i = interpolate(knots, extended_vectorfield, Gridded(Linear()))
+    i = interpolate!(knots, extended_vectorfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
 end
 function interpolated_vectorfield(vectorfield, grid::CartesianGrid3D{T}) where {T}
     @inbounds knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
-    i = interpolate(knots, vectorfield, Gridded(Linear()))
+    i = interpolate!(knots, vectorfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
     return velocity_field_itp
 end
