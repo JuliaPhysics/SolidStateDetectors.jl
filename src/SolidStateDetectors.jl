@@ -62,6 +62,7 @@ export SSD_examples
 
 export Grid, GridPoint
 
+export MirrorSymmetry
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
