@@ -41,10 +41,10 @@ function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T},
 end             
 
 function interpolate_closed_potential(p::ScalarPotential, ::Val{true}) where {T}
-    interpolate((p.grid.axes[1], p.grid.axes[3]), p.data[:,1,:], Gridded(Linear()))
+    interpolate!((p.grid.axes[1], p.grid.axes[3]), p.data[:,1,:], Gridded(Linear()))
 end
 function interpolate_closed_potential(p::ScalarPotential, ::Val{false}) where {T}
-    interpolate(p.grid.axes, p.data, Gridded(Linear()))
+    interpolate!(p.grid.axes, p.data, Gridded(Linear()))
 end
 
 _get_closed_ticks(ticks::Vector{T}, int::ClosedInterval{T}) where {T} = ticks

@@ -20,7 +20,7 @@ function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, p
     @inbounds for i in eachindex(tmp_signal)
         tmp_signal[i] = get_interpolation(wpot, path[i], S)::T * charge
     end
-    itp = interpolate( (pathtimestamps,), tmp_signal, Gridded(Linear()))
+    itp = interpolate!( (pathtimestamps,), tmp_signal, Gridded(Linear()))
     t_max::T = last(pathtimestamps)
     i_max::Int = searchsortedlast(timestamps, t_max)
     signal[1:i_max] += itp(timestamps[1:i_max])
