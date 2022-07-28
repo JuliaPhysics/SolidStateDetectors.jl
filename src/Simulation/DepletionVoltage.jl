@@ -131,7 +131,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                 end         
             end
         else
-            deleteat!(inside,i) #Delete indices which are in bulk bit, but still have non defined neighbour (diagonal)
+            deleteat!(inside,i) #Delete indices which are in bulk bit, but still have non defined neighbour (Maybe we can get rid of this, I just kept it for safety)
         end
     end
     if initial_depletion
@@ -139,14 +139,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     elseif undepleted == 0
         depletion_voltage = maximum(scale[inside])
     end
-    # @showprogress for U in potential_range
-    #     ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
-    #     depleted = ϕmax - ϕmin < abs(U)
-    #     if (initial_depletion && !depleted) || (!initial_depletion && depleted)
-    #         depletion_voltage = T(U)
-    #         break
-    #     end
-    # end
+    
     if verbose
         if !isnan(depletion_voltage)
             @info "The depletion voltage of the detector is ($(depletion_voltage) ± $(T(step(potential_range)))) V applied to contact $(contact_id)."
