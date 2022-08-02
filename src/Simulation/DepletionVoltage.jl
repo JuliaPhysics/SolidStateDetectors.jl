@@ -53,10 +53,11 @@ get_depletion_voltage(sim, 2, 1600:1:2500)
 See also [`is_depleted`](@ref).
 """
 function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
-            potential_range::AbstractRange = range(extrema(broadcast(c -> c.potential, sim.detector.contacts))..., length = 1001);
+            potential_range::AbstractRange = range(extrema(broadcast(c -> abs(c.potential), sim.detector.contacts))..., length = 1001);
             verbose = true)::T where {T <: AbstractFloat}
     
     @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
+    @assert sum(potential_range.>=0)==length(potential_range) "Please use a strictly positive potential range"
     
     if verbose
         @info "Looking for the depletion voltage applied to contact $(contact_id) "*

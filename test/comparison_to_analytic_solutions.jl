@@ -24,6 +24,13 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     @testset "Capacity" begin
         @test all(isapprox.(C_ssd, C_Analytical, rtol = 0.001))
     end   
+    
+    @testset "Depletion Voltage" begin
+        dep_volt_1 = get_depletion_voltage(sim, 1, verbose = false)
+        dep_volt_2 = get_depletion_voltage(sim, 1, verbose = false)
+        @test isapprox(dep_volt_1, 0, atol = 0.2)
+        @test isapprox(dep_volt_2, 0, atol = 0.2)
+    end
 
     @testset "Depletion Handling: PN Junction" begin
         function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T}
@@ -218,7 +225,13 @@ end
         @test potential_rms_cyl < 1e-3
         @test potential_rms_car < 1e-3
     end
-
+    
+    @testset "Depletion Voltage" begin
+        dep_volt_cyl = get_depletion_voltage(sim_cyl, 1, 0:20, verbose = false)
+        dep_volt_car = get_depletion_voltage(sim_car, 1, 0:20, verbose = false)
+        #@test isapprox(dep_volt_cyl, dep_volt_car, atol = 0.2) First we have to adapt depletion_voltage to 2D computations (e.g. cylindrical with phi symmetry)
+        @test isapprox(dep_volt_car, 3., atol = 0.2)
+    end
 
     @testset "Depletion Handling: PN Junction" begin
         sim = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])

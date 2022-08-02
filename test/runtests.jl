@@ -95,6 +95,7 @@ T = Float32
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
+        @test isapprox(get_depletion_voltage(sim, 1, verbose = false), T(99), atol = 0.2) #13.5V depletion voltage was simulated before. This makes sure code changes do not affect the computation.
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
@@ -108,6 +109,7 @@ T = Float32
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
+        @test isapprox(get_depletion_voltage(sim, 1, verbose = false), T(13.95), atol = 0.2) 
     end
     @testset "Simulate example detector: CGD" begin
         sim = Simulation{T}(SSD_examples[:CGD])
