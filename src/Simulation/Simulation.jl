@@ -456,7 +456,7 @@ function _guess_optimal_number_of_threads_for_SOR(gs::NTuple{3, Integer}, max_nt
     return min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
 end
 
-function _get_grid_for_WP(sim::Simulation{T}, contact_id::Int) where T
+function Grid(sim::Simulation{T}, contact_id::Int) where T
     symmetry = sim.symmetry[Symbol(string(contact_id))]
     intervals = _get_grid_intervals(sim.world, symmetry)
     Grid(sim, world = World{world_types(sim.world)...}(intervals...))
@@ -556,7 +556,7 @@ It overwrites `sim.weighting_potentials[contact_id]` with the fixed values on th
 apply_initial_state!(sim, WeightingPotential, 1) # =>  applies initial state for weighting potential of contact with id 1
 ```
 """
-function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = _get_grid_for_WP(sim, contact_id);
+function apply_initial_state!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int, grid::Grid{T} = Grid(sim, contact_id);
         not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat}
     pcs = PotentialCalculationSetup(
         sim.detector, 
