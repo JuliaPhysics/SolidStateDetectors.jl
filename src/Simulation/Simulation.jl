@@ -459,7 +459,7 @@ end
 function Grid(sim::Simulation{T}, contact_id::Int) where T
     symmetry = sim.symmetry[Symbol(string(contact_id))]
     intervals = _get_grid_intervals(sim.world, symmetry)
-    Grid(sim, world = World{world_types(sim.world)...}(intervals...))
+    Grid(sim, world = World{SolidStateDetectors.world_types(sim.world)...}(intervals...))
 end
 
 function _get_grid_intervals(world::World{T, 3, Cartesian}, symmetry::MirrorSymmetry{T}) where {T}
@@ -489,8 +489,6 @@ function _get_grid_intervals(world::World{T, 3, Cylindrical}, symmetry::MirrorSy
         symmetry.symmetry_plane.origin[3])
     intervals = (r_interval, φ_interval, z_interval)
 end
-
-world_types(world::World{T,N,S}) where {T,N,S} = (T,N,S)   
 
 """
     apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
