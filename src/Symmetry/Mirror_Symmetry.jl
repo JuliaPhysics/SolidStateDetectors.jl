@@ -1,10 +1,11 @@
 struct MirrorSymmetry{T}
-    symmetry_plane::Plane{T}
+    symmetry_plane::Plane{T} #Plane{T}(origin, normal)
 end
 
 function MirrorSymmetry{T}(origin::CylindricalPoint{T}, normal::CylindricalVector{T}) where {T}
     _origin = CartesianPoint(origin)
-    _normal = CartesianVector(CartesianPoint(origin + normal)-CartesianPoint(origin))
+    _normal = CartesianVector{T}(cos(origin[2]) * normal[1] - sin(origin[2]) * normal[2], 
+        sin(origin[2]) * normal[1] + cos(origin[2]) * normal[2], normal[3])
     MirrorSymmetry{T}(Plane{T}(_origin, _normal))
 end
 
@@ -12,13 +13,12 @@ function MirrorSymmetry{T}(origin::CartesianPoint{T}, normal::CartesianVector{T}
     MirrorSymmetry{T}(Plane{T}(origin, normal))
 end
 
-function MirrorSymmetry(axis, value::T, units::NamedTuple = default_unit_tuple()) where {T<: SSDFloat}
+function MirrorSymmetry(axis, value::T, units::NamedTuple = default_unit_tuple()) where {T<:SSDFloat}
     length_unit = units.length
     angle_unit = units.angle
     if axis == "phi" || axis == "φ"
-        eps = 1e-7
-        MirrorSymmetry{T}(CylindricalPoint{T}(r=1, φ = to_internal_units(value * angle_unit)),
-            CylindricalVector{T}(0, to_internal_units(eps * length_unit), 0))
+        MirrorSymmetry{T}(CylindricalPoint{T}(r=to_internal_units(1 * length_unit), φ = to_internal_units(value * angle_unit)),
+            CylindricalVector{T}(0, to_internal_units(1 * length_unit), 0))
     elseif axis == "x"
         MirrorSymmetry{T}(CartesianPoint{T}(x = to_internal_units(value * length_unit)), CartesianVector{T}(1,0,0))
     elseif axis == "y"
