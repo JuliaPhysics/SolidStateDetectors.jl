@@ -102,16 +102,23 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
         end
     end
     local_range::AbstractRange = range(start_local_search, last(potential_range), step = step(potential_range))
-
-    Ix = CartesianIndex(1,0,0)
-    Iy = CartesianIndex(0,1,0)
-    Iz = CartesianIndex(0,0,1)
-    neighbours = [Ix,-Ix,Iy,-Iy,Iz,-Iz]
     size_data = size(sim.point_types.data)
+    
+    if size_data[2] == 1
+        Ix = CartesianIndex(1,0,0)
+        Iz = CartesianIndex(0,0,1)
+        neighbours = [Ix,-Ix,Iz,-Iz]
+    else
+        Ix = CartesianIndex(1,0,0)
+        Iy = CartesianIndex(0,1,0)
+        Iz = CartesianIndex(0,0,1)
+        neighbours = [Ix,-Ix,Iy,-Iy,Iz,-Iz]
+    end
+
     scale = start_local_search
     undepleted = 0
     for (i,idx) in enumerate(inside)
-        if idx[1]!=1 && idx[1]!=size_data[1] && idx[2]!=1 && idx[2]!=size_data[2] && idx[3]!=1 && idx[3]!=size_data[3]
+        if !(0 in [size_data[j] == 1 || idx[j] != 1 && idx[j] != size_data[j] for j in 1:length(idx)])#idx[1]!=1 && idx[1]!=size_data[1] && idx[2]!=1 && idx[2]!=size_data[2] && idx[3]!=1 && idx[3]!=size_data[3]
             for scale_loc in local_range
                 center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
                 min_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx-Ix] + ϕρ[idx-Ix]
@@ -127,7 +134,8 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                 end
                 if !(min_pot>center_pot || max_pot<center_pot)
                     if abs(scale_loc)> abs(scale)
-                        scale = T(scale_loc)  
+                        scale = T(scale_loc)
+                        local_range = range(scale, last(potential_range), step = step(potential_range))
                     end         
                     break
                 end
@@ -142,7 +150,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     if initial_depletion
         depletion_voltage = potential_range[1]
     elseif undepleted == 0
-        depletion_voltage = maximum(scale)
+        depletion_voltage = scale
     end
     
     if verbose
