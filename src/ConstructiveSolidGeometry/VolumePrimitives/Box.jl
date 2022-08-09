@@ -46,29 +46,30 @@ box:
 
 See also [Constructive Solid Geometry (CSG)](@ref).
 """
-struct Box{T,CO} <: AbstractVolumePrimitive{T,CO}
+struct Box{T,RT,CO} <: AbstractVolumePrimitive{T,CO}
     hX::T
     hY::T
     hZ::T
     
     origin::CartesianPoint{T}
-    rotation::SMatrix{3,3,T,9}
+    rotation::SMatrix{3,3,RT,9}
 end
 
 #Type conversion happens here
-function Box{T}(CO,hX, hY, hZ, origin, rotation) where {T}
+function Box{T,RT}(CO, hX, hY, hZ, origin, rotation) where {T,RT<:Real}
     _hX = _csg_convert_args(T, hX)
     _hY = _csg_convert_args(T, hY)
     _hZ = _csg_convert_args(T, hZ)
     _origin = _csg_convert_args(T, origin)
-    Box{T,CO}(_hX, _hY, _hZ, _origin, rotation)
+    Box{T,RT,CO}(_hX, _hY, _hZ, _origin, rotation)
 end
 
 #Type promotion happens here
 function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX,TY,TZ,PT,ROT}
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ,PT,ROT))
-    T = float(promote_type(eltypes...))
-    Box{T}(CO,T(hX), T(hY), T(hZ), origin, rotation)
+    RT = float(promote_type(eltypes...))
+    T = _csg_convert_args(RT,typeof(promote_type(eltypes...)))
+    Box{T,RT}(CO, RT(hX), RT(hY), RT(hZ), origin, rotation)
 end
 
 function Box(::Type{CO}=ClosedPrimitive;
@@ -88,7 +89,8 @@ function Box{T}(::Type{CO}=ClosedPrimitive;
     origin = zero(CartesianPoint{Float64}), 
     rotation = one(SMatrix{3, 3, Float64, 9})
 ) where {T, CO}
-    Box{T}(CO, hX, hY, hZ, origin, rotation)
+    RT = _precision_type(T)
+    Box{T,RT}(CO, hX, hY, hZ, origin, rotation)
 end
 
 Box{T, CO}( b::Box{T, CO}; COT = CO,
