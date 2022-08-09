@@ -108,7 +108,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     Iz = CartesianIndex(0,0,1)
     neighbours = [Ix,-Ix,Iy,-Iy,Iz,-Iz]
     size_data = size(sim.point_types.data)
-    scale = zeros(size_data)
+    scale = start_local_search
     undepleted = 0
     for (i,idx) in enumerate(inside)
         if idx[1]!=1 && idx[1]!=size_data[1] && idx[2]!=1 && idx[2]!=size_data[2] && idx[3]!=1 && idx[3]!=size_data[3]
@@ -126,7 +126,9 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                     end
                 end
                 if !(min_pot>center_pot || max_pot<center_pot)
-                    scale[idx] = T(scale_loc)           
+                    if abs(scale_loc)> abs(scale)
+                        scale = T(scale_loc)  
+                    end         
                     break
                 end
                 if scale_loc == local_range[end]
@@ -140,7 +142,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     if initial_depletion
         depletion_voltage = potential_range[1]
     elseif undepleted == 0
-        depletion_voltage = maximum(scale[inside])
+        depletion_voltage = maximum(scale)
     end
     
     if verbose
