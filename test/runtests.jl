@@ -43,7 +43,18 @@ T = Float32
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
-        #@test isapprox(get_depletion_voltage(sim, 1, 1:5000, verbose = false), T(3053), atol = 2.0) 
+        id = 2
+        deplV = get_depletion_voltage(sim, id, verbose = false)
+        @info deplV
+        @test isapprox(deplV, T(1904), atol = 2.0) 
+        # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
+        sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = deplV - 40)
+        calculate_electric_potential!(sim, depletion_handling = true)
+        @test !is_depleted(sim.point_types)
+        # Check wether detector is depleted, 10V above the previously calculated depletion voltage
+        sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = deplV + 40)
+        calculate_electric_potential!(sim, depletion_handling = true)
+        @test is_depleted(sim.point_types)
     end
     @testset "Simulate example detector: Inverted Coax (in cryostat)" begin
         sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
@@ -96,7 +107,7 @@ T = Float32
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
-        @test isapprox(get_depletion_voltage(sim, 1, verbose = false), T(99), atol = 0.2) #13.5V depletion voltage was simulated before. This makes sure code changes do not affect the computation.
+        @test isapprox(get_depletion_voltage(sim, 1, verbose = false), T(99), atol = 0.2) #99V depletion voltage was simulated before. This makes sure code changes do not affect the computation.
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
