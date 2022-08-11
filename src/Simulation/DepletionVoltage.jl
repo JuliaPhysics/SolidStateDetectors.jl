@@ -93,11 +93,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
         ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
         depleted = ϕmax - ϕmin < abs(U)
         if (initial_depletion && !depleted) || (!initial_depletion && depleted)
-            if T(U)>=0
-                start_local_search = T(U)
-            else
-                start_local_search = T(U)
-            end
+            start_local_search = T(U)
             break
         end
     end
