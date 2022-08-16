@@ -114,12 +114,13 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
 
     scale = start_local_search
     undepleted = 0
+    eps = 1e-1
     length_idx = length(inside[1])
     for (i,idx) in enumerate(inside)
         for scale_loc in local_range
             center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
-            min_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx-Ix] + ϕρ[idx-Ix]
-            max_pot = min_pot
+            min_pot = center_pot + eps
+            max_pot = center_pot - eps
             for neighbour in neighbours
                 n_idx = idx + neighbour
                 if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx])

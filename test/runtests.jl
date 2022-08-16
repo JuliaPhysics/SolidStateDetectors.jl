@@ -121,7 +121,7 @@ T = Float32
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
-        @test isapprox(get_depletion_voltage(sim, 1, verbose = false), T(-10.8), atol = 1.0) 
+        @test isapprox(get_depletion_voltage(sim, 1, verbose = false), T(-14.25), atol = 1.0) 
     end
     @testset "Simulate example detector: CGD" begin
         sim = Simulation{T}(SSD_examples[:CGD])
