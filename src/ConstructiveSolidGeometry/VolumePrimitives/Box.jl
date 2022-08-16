@@ -67,8 +67,8 @@ end
 #Type promotion happens here
 function Box(CO, hX::TX, hY::TY, hZ::TZ, origin::PT, rotation::ROT) where {TX,TY,TZ,PT,ROT}
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ,PT,ROT))
-    RT = float(promote_type(eltypes...))
-    T = _csg_convert_args(RT,typeof(promote_type(eltypes...)))
+    RT = _float_precision(promote_type(eltypes...))
+    T = _csg_convert_args(RT,promote_type(eltypes...))
     Box{T,RT}(CO, RT(hX), RT(hY), RT(hZ), origin, rotation)
 end
 
@@ -93,18 +93,18 @@ function Box{T}(::Type{CO}=ClosedPrimitive;
     Box{T,RT}(CO, hX, hY, hZ, origin, rotation)
 end
 
-Box{T, CO}( b::Box{T, CO}; COT = CO,
+Box{T, RT, CO}( b::Box{T, RT, CO}; COT = CO,
             origin::CartesianPoint{T} = b.origin,
-            rotation::SMatrix{3,3,T,9} = b.rotation) where {T, CO<:Union{ClosedPrimitive, OpenPrimitive}} =
-    Box{T, COT}(b.hX, b.hY, b.hZ, origin, rotation)
+            rotation::SMatrix{3,3,T,9} = b.rotation) where {T, RT, CO<:Union{ClosedPrimitive, OpenPrimitive}} =
+    Box{T, RT, COT}(b.hX, b.hY, b.hZ, origin, rotation)
 
-function _in(pt::CartesianPoint{T}, b::Box{<:Any, ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+function _in(pt::CartesianPoint{T}, b::Box{<:Any, <:Any, ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
     abs(pt.x) <= b.hX + csgtol && 
     abs(pt.y) <= b.hY + csgtol && 
     abs(pt.z) <= b.hZ + csgtol 
 end
 
-_in(pt::CartesianPoint{T}, b::Box{<:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} = 
+_in(pt::CartesianPoint{T}, b::Box{<:Any, <:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} = 
     abs(pt.x) < b.hX - csgtol && abs(pt.y) < b.hY - csgtol && abs(pt.z) < b.hZ - csgtol
  
 
