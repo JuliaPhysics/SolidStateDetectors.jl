@@ -113,14 +113,15 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
 
     scale = start_local_search
     undepleted = 0
+    length_idx = length(inside[1])
     for (i,idx) in enumerate(inside)
-        if !(0 in [size_data[j] == 1 || idx[j] != 1 && idx[j] != size_data[j] for j in 1:length(idx)])#idx[1]!=1 && idx[1]!=size_data[1] && idx[2]!=1 && idx[2]!=size_data[2] && idx[3]!=1 && idx[3]!=size_data[3]
-            for scale_loc in local_range
-                center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
-                min_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx-Ix] + ϕρ[idx-Ix]
-                max_pot = min_pot
-                for neighbour in neighbours
-                    n_idx = idx + neighbour
+        for scale_loc in local_range
+            center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
+            min_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx-Ix] + ϕρ[idx-Ix]
+            max_pot = min_pot
+            for neighbour in neighbours
+                n_idx = idx + neighbour
+                if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx])
                     local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
                     if local_pot < min_pot
                         min_pot = local_pot
@@ -128,19 +129,17 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                         max_pot = local_pot
                     end
                 end
-                if !(min_pot>center_pot || max_pot<center_pot)
-                    if abs(scale_loc)> abs(scale)
-                        scale = T(scale_loc)
-                        local_range = range(scale, last(potential_range), step = step(potential_range))
-                    end         
-                    break
-                end
-                if scale_loc == local_range[end]
-                    undepleted+=1
-                end         
             end
-        else
-            deleteat!(inside,i) #Delete indices which are in bulk bit, but still have non defined neighbour (Maybe we can get rid of this, I just kept it for safety)
+            if !(min_pot>center_pot || max_pot<center_pot)
+                if abs(scale_loc)> abs(scale)
+                    scale = T(scale_loc)
+                    local_range = range(scale, last(potential_range), step = step(potential_range))
+                end         
+                break
+            end
+            if scale_loc == local_range[end]
+                undepleted+=1
+            end         
         end
     end
     if initial_depletion
