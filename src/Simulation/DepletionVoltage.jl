@@ -144,7 +144,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
         end
     end
     if initial_depletion
-        depletion_voltage = potential_range[1]
+        @info "Detector is already depleted at the start of the specified voltage range ($(start(potential_range)))! Please find a starting voltage where the detector is not yet depleted."
     elseif undepleted == 0
         depletion_voltage = scale
     end
