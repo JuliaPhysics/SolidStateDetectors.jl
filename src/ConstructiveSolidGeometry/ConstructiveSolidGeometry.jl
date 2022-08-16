@@ -75,7 +75,8 @@ module ConstructiveSolidGeometry
     _precision_type(::Type{T}) where {T <: Real} = T
     _precision_type(::Type{Quantity{T}}) where {T <: Real} = T
     
-    float(::Type{Quantity{T}}) where T = T
+    _float_precision(::Type{Quantity{T}}) where T = float(T)
+    _float_precision(::Type{T}) where T = float(T)
 
     include("Units.jl")
     include("PointsAndVectors/PointsAndVectors.jl")
