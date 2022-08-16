@@ -85,7 +85,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     inside = findall(p -> p & bulk_bit > 0 && p & update_bit > 0, sim.point_types.data)
     
     ϕmin, ϕmax = extrema((ϕρ .+ potential_range[1] * sim.weighting_potentials[contact_id].data)[inside])
-    eps = 1e-3
+    eps = 1e-3 * sign( potential_range[length(potential_range)÷2] )
     initial_depletion::Bool = ϕmax - ϕmin < maximum((abs(potential_range[1]), eps))
     depletion_voltage::T = NaN
     start_local_search::T = 0
