@@ -13,13 +13,13 @@ using Unitful
 T = Float32
 device_array_type = (@isdefined CUDAKernels) ? CUDAKernels.CUDA.CuArray : Array
 
-# @testset "Comparison to analytic solutions" begin
-#     include("comparison_to_analytic_solutions.jl")
-# end
-# 
-# @testset "SOR GPU Backend" begin
-#     include("SOR_GPU_Backend.jl")
-# end
+@testset "Comparison to analytic solutions" begin
+    include("comparison_to_analytic_solutions.jl")
+end
+
+@testset "SOR GPU Backend" begin
+    include("SOR_GPU_Backend.jl")
+end
 
 @testset "ConstructiveSolidGeometry" begin
     include("ConstructiveSolidGeometry/CSG_IO.jl")

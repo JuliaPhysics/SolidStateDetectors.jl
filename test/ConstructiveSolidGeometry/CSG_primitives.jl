@@ -185,8 +185,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test in(CartesianPoint{Float64}(1e-8,0,0),ellip_open_trafo)
     end
     @testset "Box" begin
-        box1 = @inferred CSG.Box(CSG.ClosedPrimitive,hX=1f0, hY=2f0, hZ=1f0, origin = CartesianPoint(1,1,1),rotation = one(SMatrix{3, 3, Float16, 9}))
-        box2 = @inferred CSG.Box{Float32}(hX=1.0u"mm", hY=2f0, hZ=1f0, origin = CartesianPoint(1u"mm",1u"nm",1u"m"))
+        box1 = @inferred CSG.Box(CSG.ClosedPrimitive,hX=1f0, hY=2f0, hZ=1f0, origin = CartesianPoint{Float32}(1,1,1),rotation = one(SMatrix{3, 3, Float16, 9}))
+        box2 = @inferred CSG.Box{Float32}(hX=1.0, hY=2f0, hZ=1f0, origin = CartesianPoint(1,1,1))
         @test box1 === box2
     
         dict = Dict("box"   => Dict(
@@ -204,6 +204,9 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !in(CartesianPoint{Float64}(1,1,3),box_open_trafo)
         @test !in(CartesianPoint{Float64}(1,1,3+tol),box_closed_trafo)
         @test in(CartesianPoint{Float64}(1,1,3-tol),box_open_trafo)
+        # Test box with units
+        @inferred CSG.Box(CSG.ClosedPrimitive, hX=1u"m", hY=2f0, hZ=1f0)
+        @inferred CSG.Box{Quantity{Float32}}(CSG.ClosedPrimitive, hX=1u"mm", hY=2f0, hZ=1f0)
     end
     @testset "RegularPrism" begin
         prism1 = @inferred CSG.RegularPrism{3}(CSG.ClosedPrimitive,r=1f0, hZ = 2f0)
