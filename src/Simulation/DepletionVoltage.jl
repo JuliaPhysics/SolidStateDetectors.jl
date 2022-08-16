@@ -85,7 +85,8 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     inside = findall(p -> p & bulk_bit > 0 && p & update_bit > 0, sim.point_types.data)
     
     ϕmin, ϕmax = extrema((ϕρ .+ potential_range[1] * sim.weighting_potentials[contact_id].data)[inside])
-    initial_depletion::Bool = ϕmax - ϕmin < abs(potential_range[1])
+    eps = 1e-3
+    initial_depletion::Bool = ϕmax - ϕmin < maximum((abs(potential_range[1]), eps))
     depletion_voltage::T = NaN
     start_local_search::T = 0
     
@@ -143,7 +144,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
         end
     end
     if initial_depletion
-        @info "Detector is already depleted at the start of the specified voltage range ($(start(potential_range)))! Please find a starting voltage where the detector is not yet depleted."
+        @info "Detector is already depleted at the start of the specified voltage range ($(potential_range))! Please find a starting voltage where the detector is not yet depleted."
     elseif undepleted == 0
         depletion_voltage = scale
     end
