@@ -25,13 +25,12 @@ Returns the potential (in V) needed at the [`Contact`](@ref) with id `contact_id
 to fully deplete the detector in a given [`Simulation`](@ref). For this, all other
 contact potentials are set to `0` and the potential at the specified contact is
 increased or decreased according to the `potential_range`. The depletion voltage
-is set to the potential for which a previously undepleted detector becomes depleted,
-or for which a previously depleted detector becomes undepleted.
+is set to the potential for which a previously undepleted detector becomes depleted.
 
 ## Arguments 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which the depletion voltage should be determined.
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) at which the potential is applied.
-* `potential_range::AbstractRange`: Range of potentials to be tested.
+* `potential_range::AbstractRange`: Range of potentials to be tested. Must be strictly positive or negative.
     
 ## Keywords
 * `verbose::Bool = true`: Activate or deactivate additional info output. Default is `true`.
