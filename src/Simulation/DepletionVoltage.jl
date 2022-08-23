@@ -100,7 +100,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
     local_range::AbstractRange = range(start_local_search, last(potential_range), step = step(potential_range))
     size_data = size(sim.point_types.data)
     
-    if size_data[2] == 1
+    if size_data[2] == 1 # Fully phi symmetric detectors
         Ix = CartesianIndex(1,0,0)
         Iz = CartesianIndex(0,0,1)
         neighbours = [Ix,-Ix,Iz,-Iz]
@@ -122,7 +122,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
             max_pot = center_pot - eps
             for neighbour in neighbours
                 n_idx = idx + neighbour
-                if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx])
+                if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx]) #Check whether one of the indices is outside of the grid
                     local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
                     if local_pot < min_pot
                         min_pot = local_pot
@@ -131,7 +131,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                     end
                 end
             end
-            if !(min_pot>center_pot || max_pot<center_pot)
+            if !(min_pot>center_pot || max_pot<center_pot) # Check whether depletion condition is met for this specific index (corresponding to center pot) and jump to next index if that is the case.
                 if abs(scale_loc)> abs(scale)
                     scale = T(scale_loc)
                     local_range = range(scale, last(potential_range), step = step(potential_range))
@@ -141,6 +141,9 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
             if scale_loc == local_range[end]
                 undepleted+=1
             end         
+        end
+        if (undepleted > 0) # Break loop as soon as one grid point is undepleted
+            break
         end
     end
     if initial_depletion
