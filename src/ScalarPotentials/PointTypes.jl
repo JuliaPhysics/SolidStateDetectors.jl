@@ -159,7 +159,7 @@ function get_active_volume(point_types::PointTypes{T, 3, Cylindrical}) where {T}
                     point_type::PointType = point_types[ir, iφ, iz]
                     if (point_type & pn_junction_bit > 0) && (point_type & undepleted_bit == 0) && (point_type & update_bit > 0)
                         dV = Δmpz[iz] * Δmpφ[iφ] * Δmpr_squared[ir]
-                        active_volume += if iφ == length(point_types.φ) || iφ == 1
+                        active_volume += if iφ == length(point_types.grid.φ) || iφ == 1
                             dV / 2
                         else
                             dV
