@@ -456,12 +456,30 @@ function _guess_optimal_number_of_threads_for_SOR(gs::NTuple{3, Integer}, max_nt
     return min(nextpow(2, max(cld(n+1, 25), 4)), max_nthreads)
 end
 
+"""
+    Grid(sim::Simulation{T}, contact_id::Int) where T
+
+Determines the grid for a certain contact, constrained by its symmetry.
+    
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which the grid should be determined.
+* `contact_id::Int` : Contact for which the symmetry (specific for this contact) constrained grid should be determined
+"""
 function Grid(sim::Simulation{T}, contact_id::Int) where T
     symmetry = sim.symmetry[Symbol(string(contact_id))]
     intervals = _get_grid_intervals(sim.world, symmetry)
     Grid(sim, world = World{SolidStateDetectors.world_types(sim.world)...}(intervals...))
 end
 
+"""
+    _get_grid_intervals(world::World{T, 3, Cartesian}, symmetry::MirrorSymmetry{T}) where {T}
+
+Determines the grid intervals for a world with certain symmetry constraint.  
+      
+## Arguments
+* `world::World{T, 3, Cartesian}` : Symmetry unconstrained [`World`](@ref)
+* `symmetry::MirrorSymmetry{T}` : Mirror plane which defines a reflective symmetry
+"""
 function _get_grid_intervals(world::World{T, 3, Cartesian}, symmetry::MirrorSymmetry{T}) where {T}
     x_interval = symmetry.symmetry_plane.normal[1] == 0 ? world.intervals[1] : 
         SSDInterval{T, SolidStateDetectors.get_boundary_types(world.intervals[1])[1], :closed,
