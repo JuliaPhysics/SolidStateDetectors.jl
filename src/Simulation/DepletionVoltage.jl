@@ -122,7 +122,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
             max_pot = center_pot - eps
             for neighbour in neighbours
                 n_idx = idx + neighbour
-                if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx]) #Check whether one of the indices is outside of the grid
+                if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx]) # Check whether one of the indices is outside of the grid
                     local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
                     if local_pot < min_pot
                         min_pot = local_pot
@@ -138,7 +138,7 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                 end         
                 break
             end
-            if scale_loc == local_range[end]
+            if scale_loc == local_range[end] # If local scale is iterated all the way throughout the local range, this grid point is undepleted.
                 undepleted+=1
             end         
         end
