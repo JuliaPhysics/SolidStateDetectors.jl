@@ -53,12 +53,13 @@ See also [`is_depleted`](@ref).
 """
 function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
             potential_range::AbstractRange = range(extrema(broadcast(c -> c.potential, sim.detector.contacts))..., length = 1001);
+            tol = T(1e-2),
             verbose = true)::T where {T <: AbstractFloat}
     
     @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
     @assert first(potential_range) * last(potential_range) >= 0 "Please search for depletion voltage either in a fully positive or a fully negative range. Currently you were looking in the range
         from $(first(potential_range)) to $(last(potential_range))"
-    potential_range = (last(potential_range) > 0 && first(potential_range) >= 0) || (step(potential_range) < 0) ? potential_range : reverse(potential_range)
+    #potential_range = (last(potential_range) > 0 && first(potential_range) >= 0) || (step(potential_range) < 0) ? potential_range : reverse(potential_range)
     
     if verbose
         @info "Looking for the depletion voltage applied to contact $(contact_id) "*
@@ -97,8 +98,9 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
             break
         end
     end
-    local_range::AbstractRange = range(start_local_search, last(potential_range), step = step(potential_range))
+    local_range::AbstractRange = initial_depletion ? range(first(potential_range), start_local_search, step = step(potential_range)) : range(start_local_search, last(potential_range), step = step(potential_range))
     size_data = size(sim.point_types.data)
+    @info local_range
     
     if size_data[2] == 1 # Fully phi symmetric detectors
         Ix = CartesianIndex(1,0,0)
@@ -110,19 +112,19 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
         Iz = CartesianIndex(0,0,1)
         neighbours = [Ix,-Ix,Iy,-Iy,Iz,-Iz]
     end
-
-    scale = start_local_search
+    
+    scale = 0
     undepleted = 0
     eps = 1e-1
     length_idx = length(inside[1])
-    for (i,idx) in enumerate(inside)
+    @showprogress for (i,idx) in enumerate(inside)
         for scale_loc in local_range
             center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
             min_pot = center_pot + eps
             max_pot = center_pot - eps
             for neighbour in neighbours
                 n_idx = idx + neighbour
-                if 0 == sum([ (n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx]) # Check whether one of the indices is outside of the grid
+                if all([!(n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx]) # Check whether one of the indices is outside of the grid
                     local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
                     if local_pot < min_pot
                         min_pot = local_pot
@@ -131,10 +133,19 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                     end
                 end
             end
-            if !(min_pot>center_pot || max_pot<center_pot) # Check whether depletion condition is met for this specific index (corresponding to center pot) and jump to next index if that is the case.
+            min_pot -= tol
+            max_pot += tol
+            if (!initial_depletion && !(min_pot>center_pot || max_pot<center_pot)) # Check whether depletion condition is met if initially undepleted for this specific index (corresponding to center pot). Jump to next index if that is the case.
+                #@info scale_loc, idx, min_pot, center_pot, max_pot
                 if abs(scale_loc)> abs(scale)
                     scale = T(scale_loc)
                     local_range = range(scale, last(potential_range), step = step(potential_range))
+                end         
+                break
+            elseif (initial_depletion  && (min_pot>center_pot || max_pot<center_pot))
+                @info scale_loc, idx, min_pot, center_pot, max_pot
+                if abs(scale_loc) > abs(scale)
+                    scale = T(scale_loc)
                 end         
                 break
             end
@@ -142,19 +153,20 @@ function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
                 undepleted+=1
             end         
         end
-        if (undepleted > 0) # Break loop as soon as one grid point is undepleted
+        if (!initial_depletion && undepleted > 0) # Break loop as soon as one grid point is undepleted
             break
         end
     end
-    if initial_depletion
-        @info "Detector is already depleted at the start of the specified voltage range ($(potential_range))! Please find a starting voltage where the detector is not yet depleted."
-    elseif undepleted == 0
+    if (initial_depletion && undepleted > 0)
+        depletion_voltage = scale
+        @warn "Detector is already depleted at the start of the specified voltage range ($(first(potential_range)))! Calculation will be faster when going from undepleted to depleted."
+    elseif (!initial_depletion && undepleted == 0)
         depletion_voltage = scale
     end
     
     if verbose
         if !isnan(depletion_voltage)
-            @info "The depletion voltage of the detector is ($(depletion_voltage) ± $(T(step(potential_range)))) V applied to contact $(contact_id)."
+            @info "The depletion voltage of the detector is ($(depletion_voltage) ± $(abs(T(step(potential_range))))) V applied to contact $(contact_id)."
         else
             @warn "The depletion voltage is not in the specified range $(extrema(potential_range).*u"V")."
         end
