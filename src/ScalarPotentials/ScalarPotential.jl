@@ -54,10 +54,30 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     end
     P = sortperm(new_ticks)
     #new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(new_ticks[P][1], new_ticks[P][end])
-    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks[P] )
-    new_axes = (sp.grid[1], new_axφ, sp.grid[3])
-    new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    ScalarPotential(sp, new_pot[:,P,:], new_grid)
+    if new_ticks[P][1] == 0
+        new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks[P] )
+        new_axes = (sp.grid[1], new_axφ, sp.grid[3])
+        new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+        ScalarPotential(sp, new_pot[:,P,:], new_grid)
+    else
+        new_ticks_new_zero::Vector{AT} = Vector{AT}(undef, l * n + 1)
+        new_ticks_new_zero[1] = T(0)
+        new_ticks_new_zero[2:end] = new_ticks[P]
+        new_pot_new_zero = Array{eltype(sp.data), 3}(undef, size(sp, 1), l * n + 1, size(sp, 3))
+        new_pot_new_zero[:,1,:] = (eltype(sp.data) <: AbstractFloat) ? sp[:,1,:] + 
+                        (sp[:,end,:] - sp[:,1,:]) * (T(0) - new_ticks_new_zero[2]) / (T(new_ticks_new_zero[end]) - T(new_ticks_new_zero[2])) :
+                        sp[:,1,:]
+        for idx_n in 1:n
+            for il in 1:l
+                idx::Int = il + (idx_n - 1) * l
+                new_pot_new_zero[:, idx + 1, :] = sp[:, il, :]
+            end
+        end
+        new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks_new_zero )
+        new_axes = (sp.grid[1], new_axφ, sp.grid[3])
+        new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+        ScalarPotential(sp, new_pot_new_zero, new_grid)
+    end    
 end
 
 
