@@ -87,11 +87,11 @@ get_θ_limits(tm::TorusMantle{T,<:Any,Tuple{T,T}}) where {T} = tm.θ[1], tm.θ[2
 get_θ_limits(tm::TorusMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 get_θ_limits(tm::TorusMantle{T,<:Any,T}) where {T} = T(0), tm.θ
 
-function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T}) where {T,TP,TT}
+function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T,TP,TT}
     pto = _transform_into_object_coordinate_system(pt, tm)
     cyl = CylindricalPoint(pto)
     ptt = CartesianPoint(CylindricalPoint{T}(tm.r_torus, cyl.φ, zero(T)))
-    return pt - _transform_into_global_coordinate_system(ptt, tm)
+    return CartesianVector(pt - _transform_into_global_coordinate_system(ptt, tm))
 end
 normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT} = -normal(flip(tm), pt)
 

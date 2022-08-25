@@ -69,9 +69,10 @@ const PartialCircularArea{T} = EllipticalSurface{T,T,T}
 const Annulus{T} = EllipticalSurface{T,Tuple{T,T},Nothing}
 const PartialAnnulus{T} = EllipticalSurface{T,Tuple{T,T},T}
 
-Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, es.rotation * CartesianVector{T}(zero(T),zero(T),one(T)))
+Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, normal(es))
 
-normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) where {T} = es.rotation * CartesianVector{T}(zero(T), zero(T), one(T))
+normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) where {T} = 
+    _transform_into_global_coordinate_system(CartesianVector{T}(zero(T), zero(T), one(T)), es)
 
 function vertices(es::EllipticalSurface{T, T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(es)
