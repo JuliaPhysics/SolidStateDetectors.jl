@@ -468,7 +468,7 @@ Determines the grid for a certain contact, constrained by its symmetry.
 function Grid(sim::Simulation{T}, contact_id::Int) where T
     symmetry = sim.symmetry[Symbol(string(contact_id))]
     intervals = _get_grid_intervals(sim.world, symmetry)
-    Grid(sim, world = World{SolidStateDetectors.world_types(sim.world)...}(intervals...))
+    Grid(sim, world = World{world_types(sim.world)...}(intervals...))
 end
 
 """
@@ -480,31 +480,31 @@ Determines the grid intervals for a world with certain symmetry constraint.
 * `world::World{T, 3, Cartesian}` : Symmetry unconstrained [`World`](@ref)
 * `symmetry::MirrorSymmetry{T}` : Mirror plane which defines a reflective symmetry
 """
-function _get_grid_intervals(world::World{T, 3, Cartesian}, symmetry::MirrorSymmetry{T}) where {T}
+function _get_grid_intervals(world::World{T, 3, Cartesian}, symmetry::CartesianMirrorSymmetry{T}) where {T}
     x_interval = symmetry.symmetry_plane.normal[1] == 0 ? world.intervals[1] : 
-        SSDInterval{T, SolidStateDetectors.get_boundary_types(world.intervals[1])[1], :closed,
-        SolidStateDetectors.get_boundary_types(world.intervals[1])[3], :reflecting}(world.intervals[1].left, 
+        SSDInterval{T, get_boundary_types(world.intervals[1])[1], :closed,
+        get_boundary_types(world.intervals[1])[3], :reflecting}(world.intervals[1].left, 
         symmetry.symmetry_plane.origin[1])
     y_interval = symmetry.symmetry_plane.normal[2] == 0 ? world.intervals[2] : 
-        SSDInterval{T, SolidStateDetectors.get_boundary_types(world.intervals[2])[1], :closed,
-        SolidStateDetectors.get_boundary_types(world.intervals[2])[3], :reflecting}(world.intervals[2].left, 
+        SSDInterval{T, get_boundary_types(world.intervals[2])[1], :closed,
+        get_boundary_types(world.intervals[2])[3], :reflecting}(world.intervals[2].left, 
         symmetry.symmetry_plane.origin[2])
     z_interval = symmetry.symmetry_plane.normal[3] == 0 ? world.intervals[3] : 
-        SSDInterval{T, SolidStateDetectors.get_boundary_types(sim.world.intervals[3])[1], :closed,
-        SolidStateDetectors.get_boundary_types(world.intervals[3])[3], :reflecting}(world.intervals[3].left, 
+        SSDInterval{T, get_boundary_types(sim.world.intervals[3])[1], :closed,
+        get_boundary_types(world.intervals[3])[3], :reflecting}(world.intervals[3].left, 
         symmetry.symmetry_plane.origin[3])
     intervals = (x_interval, y_interval, z_interval)
 end
 
-function _get_grid_intervals(world::World{T, 3, Cylindrical}, symmetry::MirrorSymmetry{T}) where {T}
+function _get_grid_intervals(world::World{T, 3, Cylindrical}, symmetry::CylindricalMirrorSymmetry{T}) where {T}
     r_interval = world.intervals[1]
-    φ_interval = symmetry.symmetry_plane.normal[2] == 0 ? world.intervals[2] : 
+    φ_interval = symmetry.normal[2] == 0 ? world.intervals[2] : 
         SSDInterval{T, :closed, :closed, :reflecting, :reflecting}(world.intervals[2].left,
-        CylindricalPoint(symmetry.symmetry_plane.origin)[2])
-    z_interval = symmetry.symmetry_plane.normal[3] == 0 ? world.intervals[3] : 
-        SSDInterval{T, SolidStateDetectors.get_boundary_types(world.intervals[3])[1], :closed,
-        SolidStateDetectors.get_boundary_types(world.intervals[3])[3], :reflecting}(world.intervals[3].left, 
-        symmetry.symmetry_plane.origin[3])
+        symmetry.origin[2])
+    z_interval = symmetry.normal[3] == 0 ? world.intervals[3] : 
+        SSDInterval{T, get_boundary_types(world.intervals[3])[1], :closed,
+        get_boundary_types(world.intervals[3])[3], :reflecting}(world.intervals[3].left, 
+        symmetry.origin[3])
     intervals = (r_interval, φ_interval, z_interval)
 end
 
