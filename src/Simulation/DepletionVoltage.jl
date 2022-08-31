@@ -19,7 +19,7 @@ function _adapt_weighting_potential_to_electric_potential_grid!(sim::Simulation,
 end
 
 """
-    get_depletion_voltage( sim::Simulation{T}, contact_id::Int, potential_range::AbstractRange; kwargs... )::T
+    estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, potential_range::AbstractRange; kwargs... )::T
 
 Returns the potential (in V) needed at the [`Contact`](@ref) with id `contact_id`
 to fully deplete the detector in a given [`Simulation`](@ref). For this, all other
@@ -40,7 +40,7 @@ is set to the potential for which a previously undepleted detector becomes deple
 using SolidStateDetectors
 sim = Simulation(SSD_examples[:InvertedCoax])
 calculate_electric_potential!(sim)
-get_depletion_voltage(sim, 2, 1600:1:2500)
+estimate_depletion_voltage(sim, 2, 1600:1:2500)
 ```
 
 !!! warn
@@ -51,7 +51,7 @@ get_depletion_voltage(sim, 2, 1600:1:2500)
     
 See also [`is_depleted`](@ref).
 """
-function get_depletion_voltage(sim::Simulation{T}, contact_id::Int,
+function estimate_depletion_voltage(sim::Simulation{T}, contact_id::Int,
             potential_range::AbstractRange = range(extrema(broadcast(c -> c.potential, sim.detector.contacts))..., length = 1001);
             tol = T(1e-2),
             verbose = true)::T where {T <: AbstractFloat}

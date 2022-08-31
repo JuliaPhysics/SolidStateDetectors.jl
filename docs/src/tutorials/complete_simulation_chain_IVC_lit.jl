@@ -93,7 +93,7 @@ println("Undepleted: ", get_active_volume(sim_undep.point_types));
 # The depletion voltage can also be estimated from the simulation with the depleted detector.
 # For this, the user has to choose a contact to which to apply the voltage, as well as a range to probe:
 
-get_depletion_voltage(sim, 2, 1700:0.5:2000)
+estimate_depletion_voltage(sim, 2, 1700:0.5:2000)
 
 
 # ## Electric field calculation
