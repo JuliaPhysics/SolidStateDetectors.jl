@@ -21,155 +21,138 @@ end
 """
     estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, potential_range::AbstractRange; kwargs... )::T
 
-Returns the potential (in V) needed at the [`Contact`](@ref) with id `contact_id`
-to fully deplete the detector in a given [`Simulation`](@ref). For this, all other
-contact potentials are set to `0` and the potential at the specified contact is
-increased or decreased according to the `potential_range`. The depletion voltage
-is set to the potential for which a previously undepleted detector becomes depleted.
+Estimates the potential (in V) needed at the [`Contact`](@ref) with id `contact_id`
+to fully deplete the detector in a given [`Simulation`](@ref). 
 
 ## Arguments 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which the depletion voltage should be determined.
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) at which the potential is applied.
-* `potential_range::AbstractRange`: Range of potentials to be tested. Must be strictly positive or negative.
+
     
 ## Keywords
-* `verbose::Bool = true`: Activate or deactivate additional info output. Default is `true`.
+* `field_sim_settings::NamedTuple = (verbose = false,)`: NamedTuple of simulation passed further to the field calculation functions.
 
 ## Example 
 ```julia
 using SolidStateDetectors
 sim = Simulation(SSD_examples[:InvertedCoax])
-calculate_electric_potential!(sim)
-estimate_depletion_voltage(sim, 2, 1600:1:2500)
-```
+SolidStateDetectors.estimate_depletion_voltage(sim, 2, field_sim_settings = (verbose = true,))
 
-!!! warn
-    This method only works if the initial `sim` was calculated for a case in which the detector is fully depleted.
+```
 
 !!! note
     The accuracy of the result depends on the precision of the initial simulation.
     
 See also [`is_depleted`](@ref).
 """
-function estimate_depletion_voltage(sim::Simulation{T}, contact_id::Int,
-            potential_range::AbstractRange = range(extrema(broadcast(c -> c.potential, sim.detector.contacts))..., length = 1001);
-            tol = T(1e-2),
-            verbose = true)::T where {T <: AbstractFloat}
+function estimate_depletion_voltage(
+        sim::Simulation{T}, 
+        contact_id::Int;
+        field_sim_settings::NamedTuple = (verbose = false,)
+    ) where {T <: AbstractFloat}
     
-    @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
-    @assert first(potential_range) * last(potential_range) >= 0 "Please search for depletion voltage either in a fully positive or a fully negative range. Currently you were looking in the range
-        from $(first(potential_range)) to $(last(potential_range))"
-    #potential_range = (last(potential_range) > 0 && first(potential_range) >= 0) || (step(potential_range) < 0) ? potential_range : reverse(potential_range)
+    simDV = Simulation{T}(sim.config_dict)
+
+    simDV.detector = SolidStateDetector(simDV.detector, contact_id = contact_id, contact_potential = 0)
+
+    max_threads = Base.Threads.nthreads()
+
+    fss = merge((
+        convergence_limit = 1e-7,
+        max_tick_distance = 2.0u"mm", # this should be like world size / 100 or so
+        refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], 
+        sor_consts = 1.0,
+        use_nthreads = max_threads > 16 ? 16 : max_threads,
+        n_iterations_between_checks = 20, 
+        depletion_handling = false
+    ), field_sim_settings)
+
+    calculate_electric_potential!(simDV; fss...)
+    calculate_weighting_potential!(simDV, contact_id; fss...)
+    SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(simDV, contact_id)
     
-    if verbose
-        @info "Looking for the depletion voltage applied to contact $(contact_id) "*
-              "in the range $(extrema(potential_range).*u"V") in steps of $(step(potential_range)*u"V")."
+    grid_size = size(simDV.point_types.grid)
+    depletion_voltage_field = zeros(T, grid_size)
+
+    _estimate_depletion_voltage_factor!(
+        depletion_voltage_field, 
+        grid_size, 
+        simDV.point_types, 
+        simDV.electric_potential.data, 
+        simDV.weighting_potentials[contact_id].data 
+    )
+
+    depletion_voltage = maximum(depletion_voltage_field) * u"V"
+
+    # estimated_uncertainty = fss.refinement_limits[end] * depletion_voltage
+    return depletion_voltage
+end
+
+
+function _estimate_depletion_voltage_factor(
+        center_imp_value::T, 
+        center_zero_imp_value::T, 
+        neighbor_imp_values::AbstractVector{T}, 
+        neighbor_zero_imp_values::AbstractVector{T}
+    ) where {T}
+    estimation = abs(center_imp_value) / center_zero_imp_value 
+    neighbor_values = neighbor_zero_imp_values .* estimation .+ neighbor_imp_values
+    vmin, vmax = extrema(neighbor_values)
+    center_value = center_zero_imp_value * estimation + center_imp_value
+    if center_value < vmin
+        estimation += (vmin - center_value) / center_zero_imp_value 
+    elseif center_value > vmax
+        estimation -= (vmax - center_value) / center_zero_imp_value
     end
-    
-    for c in sim.detector.contacts
-        if c.potential == 0 && c.id != contact_id continue end
-        if ismissing(sim.weighting_potentials[c.id]) || sim.weighting_potentials[c.id].grid != sim.electric_potential.grid
-            @info "The weighting potential $(c.id) need to be defined on the same grid as the electric potential. Adjusting weighting potential $(c.id) now."
-            _adapt_weighting_potential_to_electric_potential_grid!(sim, c.id)
-        end
-    end
-    
-    # ϕρ is the electric potential resulting only from the impurity density
-    # and setting all potentials on the contacts to zero
-    ϕρ = deepcopy(sim.electric_potential.data)
-    for c in sim.detector.contacts
-        if c.potential == 0 continue end
-        ϕρ .-= c.potential * sim.weighting_potentials[c.id].data
-    end
-    
-    inside = findall(p -> p & bulk_bit > 0 && p & update_bit > 0, sim.point_types.data)
-    
-    ϕmin, ϕmax = extrema((ϕρ .+ potential_range[1] * sim.weighting_potentials[contact_id].data)[inside])
-    eps = 1e-3 * sign( potential_range[length(potential_range)÷2] )
-    initial_depletion::Bool = ϕmax - ϕmin < maximum((abs(potential_range[1]), eps))
-    depletion_voltage::T = NaN
-    start_local_search::T = 0
-    
-    @showprogress for U in potential_range
-        ϕmin, ϕmax = extrema((ϕρ .+ T(U) * sim.weighting_potentials[contact_id].data)[inside])
-        depleted = ϕmax - ϕmin < abs(U)
-        if (initial_depletion && !depleted) || (!initial_depletion && depleted)
-            start_local_search = T(U)
-            break
-        end
-    end
-    local_range::AbstractRange = initial_depletion ? range(first(potential_range), start_local_search, step = step(potential_range)) : range(start_local_search, last(potential_range), step = step(potential_range))
-    size_data = size(sim.point_types.data)
-    @info local_range
-    
-    if size_data[2] == 1 # Fully phi symmetric detectors
-        Ix = CartesianIndex(1,0,0)
-        Iz = CartesianIndex(0,0,1)
-        neighbours = [Ix,-Ix,Iz,-Iz]
-    else
-        Ix = CartesianIndex(1,0,0)
-        Iy = CartesianIndex(0,1,0)
-        Iz = CartesianIndex(0,0,1)
-        neighbours = [Ix,-Ix,Iy,-Iy,Iz,-Iz]
-    end
-    
-    scale = 0
-    undepleted = 0
-    eps = 1e-1
-    length_idx = length(inside[1])
-    @showprogress for (i,idx) in enumerate(inside)
-        for scale_loc in local_range
-            center_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[idx] + ϕρ[idx]
-            min_pot = center_pot + eps
-            max_pot = center_pot - eps
-            for neighbour in neighbours
-                n_idx = idx + neighbour
-                if all([!(n_idx[j] == 0 || n_idx[j] > size_data[j]) for j in 1:length_idx]) # Check whether one of the indices is outside of the grid
-                    local_pot = T(scale_loc) * sim.weighting_potentials[contact_id].data[n_idx] + ϕρ[n_idx]
-                    if local_pot < min_pot
-                        min_pot = local_pot
-                    elseif local_pot > max_pot
-                        max_pot = local_pot
+    # neighbor_values = neighbor_zero_imp_values .* estimation .+ neighbor_imp_values
+    # center_value = center_zero_imp_value * estimation + center_imp_value
+    # vmin, vmax = extrema(neighbor_values)
+    # @assert (center_value < vmin || center_value > vmax) 
+    return estimation
+end
+
+function _replace_NaN_with_minimum(v::AbstractVector)
+    min = minimum(filter(x -> !isnan(x), v))
+    map(x -> isnan(x) ? min : x, v)
+end
+
+function _estimate_depletion_voltage_factor!(
+        depletion_voltage_field::AbstractArray{T}, 
+        grid_size, 
+        pts, 
+        imp_field, 
+        zero_imp_field
+    ) where {T}
+    @inbounds begin
+        for i3 in 1:grid_size[3]
+            for i2 in 1:grid_size[2]
+                for i1 in 1:grid_size[1]
+                    if SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3])
+                        center_imp_value = imp_field[i1, i2, i3]
+                        center_zero_imp_value = zero_imp_field[i1, i2, i3]
+                        neighbor_imp_values::SVector{6, T} = _replace_NaN_with_minimum(@SVector T[
+                            i1 < grid_size[1] && SolidStateDetectors.is_pn_junction_point_type(pts[i1+1, i2, i3]) ? imp_field[i1+1, i2, i3] : T(NaN),
+                            i1 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1-1, i2, i3]) ? imp_field[i1-1, i2, i3] : T(NaN),
+                            i2 < grid_size[2] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2+1, i3]) ? imp_field[i1, i2+1, i3] : T(NaN),
+                            i2 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2-1, i3]) ? imp_field[i1, i2-1, i3] : T(NaN),
+                            i3 < grid_size[3] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3+1]) ? imp_field[i1, i2, i3+1] : T(NaN),
+                            i3 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3-1]) ? imp_field[i1, i2, i3-1] : T(NaN)
+                        ])
+                        neighbor_zero_imp_values::SVector{6, T} = _replace_NaN_with_minimum(@SVector T[
+                            i1 < grid_size[1] && SolidStateDetectors.is_pn_junction_point_type(pts[i1+1, i2, i3]) ? zero_imp_field[i1+1, i2, i3] : T(NaN),
+                            i1 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1-1, i2, i3]) ? zero_imp_field[i1-1, i2, i3] : T(NaN),
+                            i2 < grid_size[2] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2+1, i3]) ? zero_imp_field[i1, i2+1, i3] : T(NaN),
+                            i2 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2-1, i3]) ? zero_imp_field[i1, i2-1, i3] : T(NaN),
+                            i3 < grid_size[3] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3+1]) ? zero_imp_field[i1, i2, i3+1] : T(NaN),
+                            i3 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3-1]) ? zero_imp_field[i1, i2, i3-1] : T(NaN)
+                        ])
+
+                        depletion_voltage_field[i1, i2, i3] = _estimate_depletion_voltage_factor(
+                            center_imp_value, center_zero_imp_value, neighbor_imp_values, neighbor_zero_imp_values
+                        )
                     end
                 end
             end
-            min_pot -= tol
-            max_pot += tol
-            if (!initial_depletion && !(min_pot>center_pot || max_pot<center_pot)) # Check whether depletion condition is met if initially undepleted for this specific index (corresponding to center pot). Jump to next index if that is the case.
-                #@info scale_loc, idx, min_pot, center_pot, max_pot
-                if abs(scale_loc)> abs(scale)
-                    scale = T(scale_loc)
-                    local_range = range(scale, last(potential_range), step = step(potential_range))
-                end         
-                break
-            elseif (initial_depletion  && (min_pot>center_pot || max_pot<center_pot))
-                @info scale_loc, idx, min_pot, center_pot, max_pot
-                if abs(scale_loc) > abs(scale)
-                    scale = T(scale_loc)
-                end         
-                break
-            end
-            if scale_loc == local_range[end] # If local scale is iterated all the way throughout the local range, this grid point is undepleted.
-                undepleted+=1
-            end         
-        end
-        if (!initial_depletion && undepleted > 0) # Break loop as soon as one grid point is undepleted
-            break
         end
     end
-    if (initial_depletion && undepleted > 0)
-        depletion_voltage = scale
-        @warn "Detector is already depleted at the start of the specified voltage range ($(first(potential_range)))! Calculation will be faster when going from undepleted to depleted."
-    elseif (!initial_depletion && undepleted == 0)
-        depletion_voltage = scale
-    end
-    
-    if verbose
-        if !isnan(depletion_voltage)
-            @info "The depletion voltage of the detector is ($(depletion_voltage) ± $(abs(T(step(potential_range))))) V applied to contact $(contact_id)."
-        else
-            @warn "The depletion voltage is not in the specified range $(extrema(potential_range).*u"V")."
-        end
-    end
-    return depletion_voltage
 end
