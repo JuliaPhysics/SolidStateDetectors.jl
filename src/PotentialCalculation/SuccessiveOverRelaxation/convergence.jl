@@ -12,7 +12,7 @@ function _update_till_convergence!( pcs::PotentialCalculationSetup{T, S, 3},
     device = KernelAbstractions.get_device(pcs.potential)
     ndrange = size(pcs.potential)[1:3] .- 2
     kernel = get_sor_kernel(S, device, Val(via_KernelAbstractions))
-    c_limit = _is_weighting_potential ? convergence_limit : abs(convergence_limit * pcs.bias_voltage)
+    c_limit = _is_weighting_potential ? convergence_limit : abs(convergence_limit * (iszero(pcs.bias_voltage) ? maximum(abs.(pcs.potential)) : pcs.bias_voltage))
     c = (one(c_limit) + c_limit) * 10 # Has to be larger than c_limit at the beginning
     n_performed_iterations = 0
     tmp_potential = similar(pcs.potential, ndrange)

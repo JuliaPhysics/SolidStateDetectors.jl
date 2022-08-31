@@ -953,7 +953,11 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             # to switch it off (sor_const = 1)
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
-                max_diffs = abs.(ref_limits .* bias_voltage)
+                max_diffs = if iszero(bias_voltage)
+                    abs.(ref_limits .* (extrema(sim.electric_potential.data) |> e -> e[2] - e[1]))
+                else
+                    abs.(ref_limits .* bias_voltage)
+                end
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
