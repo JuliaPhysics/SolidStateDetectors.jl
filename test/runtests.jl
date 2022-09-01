@@ -44,7 +44,7 @@ T = Float32
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
         id = 2
-        deplV = SolidStateDetectors.estimate_depletion_voltage(sim, id, (verbose = false,))
+        deplV = estimate_depletion_voltage(sim, id, (verbose = false,))
         @test isapprox(deplV, 1870*u"V", atol = 5.0*u"V") 
         # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
         sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.02))
@@ -106,7 +106,7 @@ T = Float32
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
-        @test isapprox(SolidStateDetectors.estimate_depletion_voltage(sim, 1, (verbose = false,)), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
+        @test isapprox(estimate_depletion_voltage(sim, 1, (verbose = false,)), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
     end
     @testset "Simulate example detector: HexagonalPrism" begin
         sim = Simulation{T}(SSD_examples[:Hexagon])
@@ -120,7 +120,7 @@ T = Float32
         signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
-        # @test isapprox(SolidStateDetectors.estimate_depletion_voltage(sim, 1, (verbose = false,)), T(-14.25), atol = 1.0) 
+        # @test isapprox(estimate_depletion_voltage(sim, 1, (verbose = false,)), T(-14.25), atol = 1.0) 
     end
     @testset "Simulate example detector: CGD" begin
         sim = Simulation{T}(SSD_examples[:CGD])
@@ -245,7 +245,7 @@ end
     length(spawn_positions)
     in_idx = findall(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions);
     ev = Event(spawn_positions[in_idx]);
-    time_step = T(1)u"ns"
+    time_step = T(2)u"ns"
     max_nsteps = 10000
     drift_charges!(ev, sim, Δt = time_step, max_nsteps = max_nsteps, verbose = false)
 
