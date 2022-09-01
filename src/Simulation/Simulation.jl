@@ -845,6 +845,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             sor_consts = (T(sor_consts), T(sor_consts))
         elseif length(sor_consts) > 1 && CS == Cartesian
             sor_consts = T(sor_consts[1])
+        else
+            sor_consts = T.(sor_consts)
         end
         min_tick_distance::NTuple{3, T} = if CS == Cylindrical
             if !ismissing(min_tick_distance)
