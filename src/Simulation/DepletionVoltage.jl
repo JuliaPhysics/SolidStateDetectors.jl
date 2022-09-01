@@ -19,29 +19,52 @@ function _adapt_weighting_potential_to_electric_potential_grid!(sim::Simulation,
 end
 
 """
-    estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, potential_range::AbstractRange; kwargs... )::T
+    estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, field_sim_settings = (verbose = true,))::T
 
-Estimates the potential (in V) needed at the [`Contact`](@ref) with id `contact_id`
-to fully deplete the detector in a given [`Simulation`](@ref). 
+Estimates the full depletion voltage, U_D, of a detector in a given [`Simulation`](@ref).\\
+The `contact_id` at which the bias voltage is applied has to be specified.\\
+to fully deplete the detector.\\
+This is done by calculating two electric potentials with different boundary conditions:\\
+    1) Only the electric potential coming from the impurity density alone: `EP_i`\\
+    2) The electric potential without an impurity density: `EP_0`\\
+Then, the superpostion `EP_i + U_D * EP_0` is iteratively solved over all grid points\\
+to determine `U_D` which is the voltage where the gradient of the suposition field, the electric field,\\
+becomes nowhere 0 anywhere inside the semiconductor. 
 
 ## Arguments 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which the depletion voltage should be determined.
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) at which the potential is applied.
-
     
 ## Keywords
-* `field_sim_settings::NamedTuple = (verbose = false,)`: NamedTuple of simulation passed further to the field calculation functions.
+* `field_sim_settings::NamedTuple = (verbose = false,)`: NamedTuple of simulation settings merged with the\\
+    default settings (listed underneath) and passed further to the field calculation functions.
+
+The following default settings are used for the field simulations performed in this function:
+```julia
+(
+    convergence_limit = 1e-7,
+    max_tick_distance = 2.0u"mm",
+    refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], 
+    sor_consts = (1.0, 1.0),
+    use_nthreads = max_threads > 16 ? 16 : max_threads,
+    n_iterations_between_checks = 20, 
+    depletion_handling = false
+)
+```
 
 ## Example 
-```julia
+```julia  
 using SolidStateDetectors
 sim = Simulation(SSD_examples[:InvertedCoax])
-SolidStateDetectors.estimate_depletion_voltage(sim, 2, field_sim_settings = (verbose = true,))
-
+estimate_depletion_voltage(sim, 2, field_sim_settings = (verbose = true,))
 ```
 
 !!! note
     The accuracy of the result depends on the precision of the initial simulation.
+
+!!! note
+    This function performs two 2D or 3D, depending on `sim`, field calculations.\\
+    Thus, keep in mind that is might consume some memory. 
     
 See also [`is_depleted`](@ref).
 """
