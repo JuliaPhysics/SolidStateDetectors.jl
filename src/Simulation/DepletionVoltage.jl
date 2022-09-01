@@ -61,7 +61,7 @@ function estimate_depletion_voltage(
         convergence_limit = 1e-7,
         max_tick_distance = 2.0u"mm", # this should be like world size / 100 or so
         refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], 
-        sor_consts = 1.0,
+        sor_consts = (1.0, 1.0),
         use_nthreads = max_threads > 16 ? 16 : max_threads,
         n_iterations_between_checks = 20, 
         depletion_handling = false
