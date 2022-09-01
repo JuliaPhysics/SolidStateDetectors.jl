@@ -69,7 +69,7 @@ function estimate_depletion_voltage(
 
     calculate_electric_potential!(simDV; fss...)
     calculate_weighting_potential!(simDV, contact_id; fss...)
-    SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(simDV, contact_id)
+    _adapt_weighting_potential_to_electric_potential_grid!(simDV, contact_id)
     
     grid_size = size(simDV.point_types.grid)
     depletion_voltage_field = zeros(T, grid_size)
@@ -127,24 +127,24 @@ function _estimate_depletion_voltage_factor!(
         for i3 in 1:grid_size[3]
             for i2 in 1:grid_size[2]
                 for i1 in 1:grid_size[1]
-                    if SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3])
+                    if is_pn_junction_point_type(pts[i1, i2, i3])
                         center_imp_value = imp_field[i1, i2, i3]
                         center_zero_imp_value = zero_imp_field[i1, i2, i3]
                         neighbor_imp_values::SVector{6, T} = _replace_NaN_with_minimum(@SVector T[
-                            i1 < grid_size[1] && SolidStateDetectors.is_pn_junction_point_type(pts[i1+1, i2, i3]) ? imp_field[i1+1, i2, i3] : T(NaN),
-                            i1 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1-1, i2, i3]) ? imp_field[i1-1, i2, i3] : T(NaN),
-                            i2 < grid_size[2] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2+1, i3]) ? imp_field[i1, i2+1, i3] : T(NaN),
-                            i2 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2-1, i3]) ? imp_field[i1, i2-1, i3] : T(NaN),
-                            i3 < grid_size[3] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3+1]) ? imp_field[i1, i2, i3+1] : T(NaN),
-                            i3 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3-1]) ? imp_field[i1, i2, i3-1] : T(NaN)
+                            i1 < grid_size[1] && is_pn_junction_point_type(pts[i1+1, i2, i3]) ? imp_field[i1+1, i2, i3] : T(NaN),
+                            i1 > 1 && is_pn_junction_point_type(pts[i1-1, i2, i3]) ? imp_field[i1-1, i2, i3] : T(NaN),
+                            i2 < grid_size[2] && is_pn_junction_point_type(pts[i1, i2+1, i3]) ? imp_field[i1, i2+1, i3] : T(NaN),
+                            i2 > 1 && is_pn_junction_point_type(pts[i1, i2-1, i3]) ? imp_field[i1, i2-1, i3] : T(NaN),
+                            i3 < grid_size[3] && is_pn_junction_point_type(pts[i1, i2, i3+1]) ? imp_field[i1, i2, i3+1] : T(NaN),
+                            i3 > 1 && is_pn_junction_point_type(pts[i1, i2, i3-1]) ? imp_field[i1, i2, i3-1] : T(NaN)
                         ])
                         neighbor_zero_imp_values::SVector{6, T} = _replace_NaN_with_minimum(@SVector T[
-                            i1 < grid_size[1] && SolidStateDetectors.is_pn_junction_point_type(pts[i1+1, i2, i3]) ? zero_imp_field[i1+1, i2, i3] : T(NaN),
-                            i1 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1-1, i2, i3]) ? zero_imp_field[i1-1, i2, i3] : T(NaN),
-                            i2 < grid_size[2] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2+1, i3]) ? zero_imp_field[i1, i2+1, i3] : T(NaN),
-                            i2 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2-1, i3]) ? zero_imp_field[i1, i2-1, i3] : T(NaN),
-                            i3 < grid_size[3] && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3+1]) ? zero_imp_field[i1, i2, i3+1] : T(NaN),
-                            i3 > 1 && SolidStateDetectors.is_pn_junction_point_type(pts[i1, i2, i3-1]) ? zero_imp_field[i1, i2, i3-1] : T(NaN)
+                            i1 < grid_size[1] && is_pn_junction_point_type(pts[i1+1, i2, i3]) ? zero_imp_field[i1+1, i2, i3] : T(NaN),
+                            i1 > 1 && is_pn_junction_point_type(pts[i1-1, i2, i3]) ? zero_imp_field[i1-1, i2, i3] : T(NaN),
+                            i2 < grid_size[2] && is_pn_junction_point_type(pts[i1, i2+1, i3]) ? zero_imp_field[i1, i2+1, i3] : T(NaN),
+                            i2 > 1 && is_pn_junction_point_type(pts[i1, i2-1, i3]) ? zero_imp_field[i1, i2-1, i3] : T(NaN),
+                            i3 < grid_size[3] && is_pn_junction_point_type(pts[i1, i2, i3+1]) ? zero_imp_field[i1, i2, i3+1] : T(NaN),
+                            i3 > 1 && is_pn_junction_point_type(pts[i1, i2, i3-1]) ? zero_imp_field[i1, i2, i3-1] : T(NaN)
                         ])
 
                         depletion_voltage_field[i1, i2, i3] = _estimate_depletion_voltage_factor(
