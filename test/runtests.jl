@@ -44,15 +44,14 @@ T = Float32
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
         id = 2
-        deplV = estimate_depletion_voltage(sim, id, verbose = false)
-        @info deplV
-        @test isapprox(deplV, T(1904), atol = 2.0) 
+        deplV = SolidStateDetectors.estimate_depletion_voltage(sim, id, (verbose = false,))
+        @test isapprox(deplV, 1870*u"V", atol = 5.0*u"V") 
         # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
-        sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = deplV - 40)
+        sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.02))
         calculate_electric_potential!(sim, depletion_handling = true)
         @test !is_depleted(sim.point_types)
         # Check wether detector is depleted, 10V above the previously calculated depletion voltage
-        sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = deplV + 40)
+        sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV + deplV*0.02))
         calculate_electric_potential!(sim, depletion_handling = true)
         @test is_depleted(sim.point_types)
     end
