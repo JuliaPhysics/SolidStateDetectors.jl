@@ -47,7 +47,7 @@ See also [`is_depleted`](@ref).
 """
 function estimate_depletion_voltage(
         sim::Simulation{T}, 
-        contact_id::Int;
+        contact_id::Int,
         field_sim_settings::NamedTuple = (verbose = false,)
     ) where {T <: AbstractFloat}
     
