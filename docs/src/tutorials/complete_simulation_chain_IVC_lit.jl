@@ -90,6 +90,10 @@ is_depleted(sim_undep.point_types)
 println("Depleted:   ", get_active_volume(sim.point_types))
 println("Undepleted: ", get_active_volume(sim_undep.point_types));
 
+# The depletion voltage can also be estimated from the simulation.
+
+estimate_depletion_voltage(sim)
+
 
 # ## Electric field calculation
 

@@ -219,7 +219,6 @@ end
         @test potential_rms_car < 1e-3
     end
 
-
     @testset "Depletion Handling: PN Junction" begin
         sim = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitor])
         sim.detector = SolidStateDetector(sim.detector, DummyImpurityDensity{T}());

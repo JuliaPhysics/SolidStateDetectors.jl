@@ -80,27 +80,32 @@ Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
 function Simulation(nt::NamedTuple)
     missing_tuple = NamedTuple(missing)
-    epot = ElectricPotential(nt.electric_potential)
-    T = eltype(epot.data)
-    sim = Simulation{T}( Dict(nt.detector_json_string) )
-    sim.electric_potential = epot
-    sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp)
-    sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix)
-    sim.ϵ_r = DielectricDistribution(nt.ϵ_r)
-    sim.point_types = PointTypes(nt.point_types)
-    sim.imp_scale = if !haskey(nt, :imp_scale) 
-        @warn """Stored simulation does not have a field for `imp_scale` (impurity scale) as this was 
-        first introduced in SolidStateDetectors.jl v0.8 for improved depletion handling.
-        It is advised to recalculate the simulation with the latest version.
-        The field `imp_scale` is determined from `point_types`: 
-            * undepleted point -> imp_scale = 0;  
-            * depleted point -> imp_scale = 1;  
-        """
-        ImpurityScale(T.(.!is_undepleted_point_type.(sim.point_types.data)), sim.point_types.grid)
+    if nt.electric_potential !== missing_tuple
+        epot = ElectricPotential(nt.electric_potential)
+        T = eltype(epot.data)
+        sim = Simulation{T}( Dict(nt.detector_json_string) )
+        sim.electric_potential = epot
+        sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp)
+        sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix)
+        sim.ϵ_r = DielectricDistribution(nt.ϵ_r)
+        sim.point_types = PointTypes(nt.point_types)
+        sim.imp_scale = if !haskey(nt, :imp_scale) 
+            @warn """Stored simulation does not have a field for `imp_scale` (impurity scale) as this was 
+            first introduced in SolidStateDetectors.jl v0.8 for improved depletion handling.
+            It is advised to recalculate the simulation with the latest version.
+            The field `imp_scale` is determined from `point_types`: 
+                * undepleted point -> imp_scale = 0;  
+                * depleted point -> imp_scale = 1;  
+            """
+            ImpurityScale(T.(.!is_undepleted_point_type.(sim.point_types.data)), sim.point_types.grid)
+        else
+            ImpurityScale(nt.imp_scale)
+        end
+        sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
     else
-        ImpurityScale(nt.imp_scale)
+        T = Float32
+        sim = Simulation{T}( Dict(nt.detector_json_string) )
     end
-    sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
     sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
         [let wp = Symbol("WeightingPotential_$(contact.id)")
             haskey(nt.weighting_potentials, wp) && getfield(nt.weighting_potentials, wp) !== missing_tuple ? WeightingPotential(getfield(nt.weighting_potentials, wp)) : missing 
@@ -840,6 +845,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             sor_consts = (T(sor_consts), T(sor_consts))
         elseif length(sor_consts) > 1 && CS == Cartesian
             sor_consts = T(sor_consts[1])
+        else
+            sor_consts = T.(sor_consts)
         end
         min_tick_distance::NTuple{3, T} = if CS == Cylindrical
             if !ismissing(min_tick_distance)
@@ -948,7 +955,11 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             # to switch it off (sor_const = 1)
             ref_limits = T.(_extend_refinement_limits(refinement_limits[iref]))
             if isEP
-                max_diffs = abs.(ref_limits .* bias_voltage)
+                max_diffs = if iszero(bias_voltage)
+                    abs.(ref_limits .* (extrema(sim.electric_potential.data) |> e -> e[2] - e[1]))
+                else
+                    abs.(ref_limits .* bias_voltage)
+                end
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
@@ -1318,3 +1329,4 @@ end
 
 include("ElectricFieldEnergy.jl")
 include("Capacitance.jl")
+include("DepletionVoltage.jl")
