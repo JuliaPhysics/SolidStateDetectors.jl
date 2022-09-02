@@ -107,13 +107,17 @@ function estimate_depletion_voltage(
     point_types::PointTypes
     ) where {T}
     depletion_voltage_field = zeros(T, size(point_types.grid))
+    
     _estimate_depletion_voltage_factor!(
         depletion_voltage_field, 
         point_types,
         only_imp_ep.data,
         zero_imp_ep.data
     )
-    maximum(depletion_voltage_field) * u"V" # full depletion voltage
+    min, max = extrema(depletion_voltage_field)
+    abs_depl_volt = (max - min) * u"V" # full depletion voltage
+    sign_depl_volt = abs(min) > abs(max) ? -1 : 1
+    sign_depl_volt * abs_depl_volt
 end
 
 
@@ -123,7 +127,7 @@ function _estimate_depletion_voltage_factor(
         neighbor_only_imp_values::AbstractVector{T}, 
         neighbor_zero_imp_values::AbstractVector{T}
     ) where {T}
-    estimation = abs(center_only_imp_value) / center_zero_imp_value 
+    estimation = -center_only_imp_value / center_zero_imp_value 
     neighbor_values = neighbor_zero_imp_values .* estimation .+ neighbor_only_imp_values
     vmin, vmax = extrema(neighbor_values)
     center_value = center_zero_imp_value * estimation + center_only_imp_value
