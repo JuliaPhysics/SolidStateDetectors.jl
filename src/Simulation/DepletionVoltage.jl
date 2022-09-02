@@ -69,12 +69,26 @@ estimate_depletion_voltage(sim, field_sim_settings = (verbose = true,))
 See also [`is_depleted`](@ref).
 """
 function estimate_depletion_voltage(
-        sim::Simulation{T}, 
+        sim::Simulation{T,CS}, 
         field_sim_settings::NamedTuple = (verbose = false,);
         bias_voltage_contact_id::Int = determine_bias_voltage_contact_id(sim.detector)
-    ) where {T <: AbstractFloat}
+    ) where {T <: AbstractFloat, CS}
     
-    simDV = Simulation{T}(sim.config_dict)
+    simDV = Simulation{T,CS}(
+        deepcopy(sim.config_dict),
+        deepcopy(sim.input_units),
+        deepcopy(sim.medium),
+        deepcopy(sim.detector),
+        deepcopy(sim.world),
+        missing,
+        missing,
+        missing,
+        missing,
+        missing,
+        missing,
+        [missing for c in sim.weighting_potentials],
+        missing
+    )
 
     simDV.detector = SolidStateDetector(simDV.detector, contact_id = bias_voltage_contact_id, contact_potential = 0)
 
