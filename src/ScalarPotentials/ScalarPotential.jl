@@ -34,7 +34,7 @@ function getindex(ep::P, grid::Grid{T, N, S}) where {T, N, S, P <: ScalarPotenti
             end
         end
     end
-    return P(data, grid)
+    return ScalarPotential(ep, data, grid)
 end
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :periodic, :periodic}, int::Interval{:closed, :open, AT}) where {T, AT}
