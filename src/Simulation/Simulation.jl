@@ -910,7 +910,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         bias_voltage::T = (length(contact_potentials) > 0) ? (maximum(contact_potentials) - minimum(contact_potentials)) : T(0)
         if isWP bias_voltage = T(1) end
         if verbose
-            sim_name = sim.config_dict["name"]
+            sim_name = haskey(sim.config_dict, "name") ? sim.config_dict["name"] : "Unnamed"
             println(
                 "Simulation: $(sim_name)\n",
                 "$(isEP ? "Electric" : "Weighting") Potential Calculation$(isEP ? "" : " - ID: $contact_id")\n",
