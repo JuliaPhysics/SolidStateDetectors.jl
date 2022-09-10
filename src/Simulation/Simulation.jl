@@ -284,7 +284,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_r_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_r_ticks[iL:iR]))
     important_r_ticks = merge_close_ticks(important_r_ticks)
     imp2order_r_ticks = merge_close_ticks(second_order_imp_ticks[1], min_diff = world_Δs[1] / 20)
-    important_r_ticks = merge_second_order_important_ticks(important_r_ticks, imp2order_r_ticks)   
+    important_r_ticks = merge_second_order_important_ticks(important_r_ticks, imp2order_r_ticks, min_diff = world_Δs[1] / 20)   
     important_r_ticks = initialize_axis_ticks(important_r_ticks; max_ratio = T(max_distance_ratio))
     important_r_ticks = fill_up_ticks(important_r_ticks, max_distance_r)
 
@@ -298,7 +298,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_z_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_ticks[iL:iR]))
     important_z_ticks = merge_close_ticks(important_z_ticks)
     imp2order_z_ticks = merge_close_ticks(second_order_imp_ticks[3], min_diff = world_Δs[3] / 20)
-    important_z_ticks = merge_second_order_important_ticks(important_z_ticks, imp2order_z_ticks)
+    important_z_ticks = merge_second_order_important_ticks(important_z_ticks, imp2order_z_ticks, min_diff = world_Δs[3] / 20)
     important_z_ticks = initialize_axis_ticks(important_z_ticks; max_ratio = T(max_distance_ratio))
     important_z_ticks = fill_up_ticks(important_z_ticks, max_distance_z)
 
@@ -312,7 +312,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_φ_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_ticks[iL:iR]))
     important_φ_ticks = merge_close_ticks(important_φ_ticks, min_diff = T(1e-3))
     imp2order_φ_ticks = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
-    important_φ_ticks = merge_second_order_important_ticks(important_φ_ticks, imp2order_φ_ticks)
+    important_φ_ticks = merge_second_order_important_ticks(important_φ_ticks, imp2order_φ_ticks, min_diff = world_Δs[2] / 20)
     important_φ_ticks = initialize_axis_ticks(important_φ_ticks; max_ratio = T(max_distance_ratio))
     important_φ_ticks = fill_up_ticks(important_φ_ticks, max_distance_φ)
     
@@ -406,7 +406,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_x_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_x_ticks[iL:iR]))
     important_x_ticks = merge_close_ticks(important_x_ticks)
     imp2order_x_ticks = merge_close_ticks(second_order_imp_ticks[1], min_diff = world_Δs[1] / 20)
-    important_x_ticks = merge_second_order_important_ticks(important_x_ticks, imp2order_x_ticks)
+    important_x_ticks = merge_second_order_important_ticks(important_x_ticks, imp2order_x_ticks, min_diff = world_Δs[1] / 20)
     important_x_ticks = initialize_axis_ticks(important_x_ticks; max_ratio = T(max_distance_ratio))
     important_x_ticks = fill_up_ticks(important_x_ticks, max_distance_x)
 
@@ -420,7 +420,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_y_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_y_ticks[iL:iR]))
     important_y_ticks = merge_close_ticks(important_y_ticks)
     imp2order_y_ticks = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
-    important_y_ticks = merge_second_order_important_ticks(important_y_ticks, imp2order_y_ticks)
+    important_y_ticks = merge_second_order_important_ticks(important_y_ticks, imp2order_y_ticks, min_diff = world_Δs[2] / 20)
     important_y_ticks = initialize_axis_ticks(important_y_ticks; max_ratio = T(max_distance_ratio))
     important_y_ticks = fill_up_ticks(important_y_ticks, max_distance_y)
 
@@ -434,7 +434,7 @@ function Grid(  sim::Simulation{T, Cartesian};
     important_z_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-12) ? zero(T) : t, important_z_ticks[iL:iR]))
     important_z_ticks = merge_close_ticks(important_z_ticks)
     imp2order_z_ticks = merge_close_ticks(second_order_imp_ticks[3], min_diff = world_Δs[3] / 20)
-    important_z_ticks = merge_second_order_important_ticks(important_z_ticks, imp2order_z_ticks)
+    important_z_ticks = merge_second_order_important_ticks(important_z_ticks, imp2order_z_ticks, min_diff = world_Δs[3] / 20)
     important_z_ticks = initialize_axis_ticks(important_z_ticks; max_ratio = T(max_distance_ratio))
     important_z_ticks = fill_up_ticks(important_z_ticks, max_distance_z)
 
