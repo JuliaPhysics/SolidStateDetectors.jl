@@ -96,11 +96,11 @@ function estimate_depletion_voltage(
 
     fss = merge((
         convergence_limit = 1e-7,
-        max_tick_distance = 2.0u"mm", # this should be like world size / 100 or so
+        max_tick_distance = max_tick_distance_default(simDV.world),
         refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], 
-        sor_consts = (1.0, 1.0),
+        sor_consts = (1.2, 1.6),
         use_nthreads = max_threads > 16 ? 16 : max_threads,
-        n_iterations_between_checks = 20, 
+        n_iterations_between_checks = 100, 
         depletion_handling = false
     ), field_sim_settings)
 
