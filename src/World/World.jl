@@ -197,3 +197,12 @@ end
 function World(::Type{Cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
     return CartesianWorld(limits...)
 end
+
+function max_tick_distance_default(w::World{T, 3, Cylindrical}; n = 50) where {T}
+    Δw = width.(w.intervals)
+    return max(Δw[1], Δw[3]) * internal_length_unit / n
+end
+function max_tick_distance_default(w::World{T, 3, Cartesian}; n = 50) where {T}
+    Δw = width.(w.intervals)
+    return max(Δw...) * internal_length_unit / n
+end
