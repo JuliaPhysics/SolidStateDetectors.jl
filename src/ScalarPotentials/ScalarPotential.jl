@@ -66,12 +66,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
         new_pot_new_zero[:,1,:] = (eltype(sp.data) <: AbstractFloat) ? sp[:,1,:] + 
                         (sp[:,end,:] - sp[:,1,:]) * (T(0) - new_ticks_new_zero[2]) / (T(2π) - T(new_ticks_new_zero[end]) * n + T(new_ticks_new_zero[2])) :
                         sp[:,1,:]
-        for idx_n in 1:n
-            for il in 1:l
-                idx::Int = il + (idx_n - 1) * l
-                new_pot_new_zero[:, idx + 1, :] = sp[:, il, :]
-            end
-        end
+        new_pot_new_zero[:,2:end,:] = new_pot[:,P,:]
         new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks_new_zero )
         new_axes = (sp.grid[1], new_axφ, sp.grid[3])
         new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
