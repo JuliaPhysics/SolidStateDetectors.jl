@@ -10,13 +10,13 @@ detectors:
           r:
             bottom:
               from: 1.0
-              to: 2.0
+              to: 10.0
             top:
               from: 1.0
               to: 10.0    
-          h: 10.
+          h: 8
           origin:
-            z: 5
+            z: 4
     contacts:
       - name: "Inner Contact"
         id: 1
@@ -24,10 +24,12 @@ detectors:
         potential: 4000.
         geometry:
           tube:
-            r: 1.
-            h: 10.
+            r:
+              from: 0.5
+              to: 1
+            h: 8
             origin:
-              z: 5
+              z: 4
       - name: "Outer Contact"
         id: 2
         material: "HPGe"
@@ -36,11 +38,11 @@ detectors:
           tube:
             r:
               bottom:
-                from: 2.0
-                to: 2.5
+                from: 10.0
+                to: 10.5
               top:
                 from: 10.
                 to: 10.5
-            h: 10.
+            h: 8.
             origin:
-              z: 5
+              z: 4
