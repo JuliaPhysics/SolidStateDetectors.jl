@@ -1,0 +1,24 @@
+name: "Cut Cone"
+units:
+  length: "mm"
+  angle: "deg"
+  potential: "V"
+  temperature: "K"
+grid:
+  coordinates: "cylindrical"
+  axes:
+    r:
+      to: 12.0
+      boundaries: "inf"
+    phi:
+      from: 13
+      to: 19
+      boundaries: "periodic"
+    z:
+      from: -2
+      to: 10
+      boundaries:
+        left: "inf"
+        right: "inf"
+medium: "vacuum"
+include: "cone_detector.yaml"

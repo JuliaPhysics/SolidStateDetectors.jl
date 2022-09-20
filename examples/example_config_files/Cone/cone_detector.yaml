@@ -1,0 +1,48 @@
+detectors:
+  - semiconductor:
+      material: "HPGe"
+      temperature: 77.0
+      impurity_density:
+        name: "constant"
+        value: 1e7cm^-3
+      geometry:
+        cone:
+          r:
+            bottom:
+              from: 1.0
+              to: 10.0
+            top:
+              from: 1.0
+              to: 10.0    
+          h: 8
+          origin:
+            z: 4
+    contacts:
+      - name: "Inner Contact"
+        id: 1
+        material: "HPGe"
+        potential: 4000.
+        geometry:
+          tube:
+            r:
+              from: 0.5
+              to: 1
+            h: 8
+            origin:
+              z: 4
+      - name: "Outer Contact"
+        id: 2
+        material: "HPGe"
+        potential: 0
+        geometry:
+          tube:
+            r:
+              bottom:
+                from: 10.0
+                to: 10.5
+              top:
+                from: 10.
+                to: 10.5
+            h: 8.
+            origin:
+              z: 4

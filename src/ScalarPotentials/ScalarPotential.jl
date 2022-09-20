@@ -48,14 +48,30 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
     for idx_n in 1:n
         for il in 1:l
             idx::Int = il + (idx_n - 1) * l
-            new_ticks[idx] = (idx_n - 1) * Δφ + axφ.ticks[il]
+            new_ticks[idx] = mod((idx_n - 1) * Δφ + axφ.ticks[il], T(2π))
             new_pot[:, idx, :] = sp[:, il, :]
         end
     end
-    new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks )
-    new_axes = (sp.grid[1], new_axφ, sp.grid[3])
-    new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
-    ScalarPotential(sp, new_pot, new_grid)
+    P = sortperm(new_ticks)
+    if new_ticks[P][1] == 0
+        new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks[P] )
+        new_axes = (sp.grid[1], new_axφ, sp.grid[3])
+        new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+        ScalarPotential(sp, new_pot[:,P,:], new_grid)
+    else
+        new_ticks_new_zero::Vector{AT} = Vector{AT}(undef, l * n + 1)
+        new_ticks_new_zero[1] = T(0)
+        new_ticks_new_zero[2:end] = new_ticks[P]
+        new_pot_new_zero = new_pot[:,P[vcat(1,1:end)],:]
+        if (eltype(sp.data) <: AbstractFloat) # do not interpolate for PointTypes
+            gradient = (new_pot_new_zero[:,2,:] .- new_pot_new_zero[:,end,:]) ./ (T(2π) - T(new_ticks_new_zero[end]) + T(new_ticks_new_zero[2]))
+            new_pot_new_zero[:,1,:] .+= gradient .* (T(0) - new_ticks_new_zero[2])
+        end
+        new_axφ = DiscreteAxis{AT, :periodic, :periodic}( new_int, new_ticks_new_zero )
+        new_axes = (sp.grid[1], new_axφ, sp.grid[3])
+        new_grid = Grid{AT, 3, Cylindrical, typeof(new_axes)}( new_axes )
+        ScalarPotential(sp, new_pot_new_zero, new_grid)
+    end    
 end
 
 
@@ -98,7 +114,7 @@ end
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}; n_points_in_φ::Union{Missing, Int} = missing) where {T}
     axφ::DiscreteAxis{T} = sp.grid[2]
     int::Interval = axφ.interval
-    if int.right == 0 && length(axφ) == 1 # 2D
+    if length(axφ) == 1 # 2D
         if ismissing(n_points_in_φ)
             error(ArgumentError, ": First Argument is a 2D potential (only 1 point in φ). User has to set the keyword `n_points_in_φ::Int` (e.g. `n_points_in_φ = 18`) in order to get a 3D potential.")
         else

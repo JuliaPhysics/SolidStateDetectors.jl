@@ -39,4 +39,6 @@ const SSD_examples = Dict{Symbol,String}([
     :Hexagon                                 => joinpath(get_path_to_example_config_files(), "minimum_hexagon_config.yaml"),
     :CoaxialTorus                            => joinpath(get_path_to_example_config_files(), "public_coaxial_torus_config.yaml"),
     :IsochroneTest                           => joinpath(get_path_to_example_config_files(), "isochrone_test.yaml"),
+    :ConeSym                                 => joinpath(get_path_to_example_config_files(), "Cone/cone_config_sym.yaml"),
+    :Cone2D                                  => joinpath(get_path_to_example_config_files(), "Cone/cone_config_2D.yaml"),
 ])

@@ -86,7 +86,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     Δp_φ_1 = p[ir ,iφ+1, iz]-p[ir ,iφ, iz]
                     Δp_φ_2 = p[ir ,iφ, iz]-p[ir ,end, iz]
                     d_φ_1 = (axφ[iφ+1]-axφ[iφ]) * axr[ir]# to get the proper value in length units
-                    d_φ_2 = (cyclic - axφ[end]) * axr[ir]
+                    d_φ_2 = (cyclic + axφ[iφ] - axφ[end]) * axr[ir]
                     eφ = ( Δp_φ_1/d_φ_1 + Δp_φ_2/d_φ_2) / 2
                 elseif iφ == size(ef,2)
                     Δp_φ_1 = p[ir ,1, iz]-p[ir ,iφ, iz]

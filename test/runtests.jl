@@ -165,6 +165,20 @@ T = Float32
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
+    @testset "Simulate example detector: Coaxial for partial phi range" begin
+        sim = Simulation{T}(SSD_examples[:Cone2D])
+        calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
+        
+        sim_alt = Simulation{T}(SSD_examples[:Cone2D])
+        calculate_electric_potential!(sim_alt, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
+        
+        # Test equal initial grid spacing in r and z, no matter the phi range
+        @test sim.electric_potential.grid.r == sim_alt.electric_potential.grid.r 
+        @test sim.electric_potential.grid.z == sim_alt.electric_potential.grid.z
+        
+        idx = findall(pt -> SolidStateDetectors.is_pn_junction_point_type(pt), sim.point_types.data)
+        @test maximum(abs.(sim_alt.electric_potential.data[idx] .- sim.electric_potential.data[idx])) .< T(0.2)
+    end
     @testset "Simulate example detector: SigGen PPC" begin
         sim = Simulation{T}(SSD_examples[:SigGen])
         simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
