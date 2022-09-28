@@ -145,11 +145,13 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
             Δhmpφl::Vector{T} = axφ - mpφ[1:end - 1]
             wφr::Vector{T} = Δmpφ_inv .* Δhmpφr # weights for epislon_r adding
             wφl::Vector{T} = Δmpφ_inv .* Δhmpφl
-            wφ::Array{T, 2} = zeros(T, 4, length(wφr) + 1)
+            wφ::Array{T, 2} = zeros(T, 6, length(wφr) + 1)
             wφ[1, 1:length(wφr)] = wφr
             wφ[2, 1:length(wφr)] = wφl
             wφ[3, 1:length(wφr)] = Δmpφ
             wφ[4, :] = Δφ_ext_inv
+            wφ[5, 1:length(wφ[3, 1:2:end])] = normalize(wφ[3, 1:2:end], 1)
+            wφ[6, 1:length(wφ[3, 2:2:end])] = normalize(wφ[3, 2:2:end], 1)
             gw_φ::GeometricalAzimutalAxisWeights{T} = GeometricalAzimutalAxisWeights{T}( wφ ) # Weights needed for Field Simulation loop
             φ_ext_mid::T = (φ_ext[end - 1] - φ_ext[2]) / 2
             grid_boundary_factor_φ_right::T = abs((φ_ext[end - 1] - φ_ext_mid) / (φ_ext[end] - φ_ext_mid))
