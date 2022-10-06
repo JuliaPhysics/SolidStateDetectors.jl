@@ -39,23 +39,23 @@ function apply_boundary_conditions_at_r0!(
     ) where {T, even_points}
     if even_points
         inz_range = 1:2:nnz # inz odd
-        rbz_range = rbidx.(inz_range)
+        rbz_range = 2:rbidx(inz_range.stop)
         inφ_range = 2:2:size(rbpot, 2)-1 # must be even 
         inφ_range_pot = inφ_range .+ 1
         @inbounds rbpot[rbz_range, inφ_range_pot, 2, rbi] .= rbpot[rbz_range, inφ_range_pot, 2, rbi] * gw[6, 1:length(inφ_range)]
         inz_range = 2:2:nnz # inz even
-        rbz_range = rbidx.(inz_range)
+        rbz_range = 2:rbidx(inz_range.stop)
         inφ_range = 1:2:size(rbpot, 2)-1 # must be odd 
         inφ_range_pot = inφ_range .+ 1
         @inbounds rbpot[rbz_range, inφ_range_pot, 2, rbi] .= rbpot[rbz_range, inφ_range_pot, 2, rbi] * gw[5, 1:length(inφ_range)]
     else
         inz_range = 1:2:nnz # inz odd
-        rbz_range = rbidx.(inz_range)
+        rbz_range = 2:rbidx(inz_range.stop)
         inφ_range = 1:2:size(rbpot, 2)-1 # must be odd 
         inφ_range_pot = inφ_range .+ 1
         @inbounds rbpot[rbz_range, inφ_range_pot, 2, rbi] .= rbpot[rbz_range, inφ_range_pot, 2, rbi] * gw[5, 1:length(inφ_range)]
         inz_range = 2:2:nnz # inz even
-        rbz_range = rbidx.(inz_range)
+        rbz_range = 2:rbidx(inz_range.stop)
         inφ_range = 2:2:size(rbpot, 2)-1 # must be even 
         inφ_range_pot = inφ_range .+ 1
         @inbounds rbpot[rbz_range, inφ_range_pot, 2, rbi] .= rbpot[rbz_range, inφ_range_pot, 2, rbi] * gw[6, 1:length(inφ_range)]
