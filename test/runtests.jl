@@ -106,6 +106,17 @@ T = Float32
         @test isapprox( signalsum, T(2), atol = 5e-3 )
         nt = NamedTuple(sim)
         @test sim == Simulation(nt)
+        # test handling at r = 0 (see PR #322)
+        calculate_weighting_potential!(sim, 4, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
+        let wp = sim.weighting_potentials[4]
+            φidx1 = SolidStateDetectors.searchsortednearest(wp.grid.φ, T(deg2rad(30)))
+            φidx2 = SolidStateDetectors.searchsortednearest(wp.grid.φ, T(deg2rad(210)))
+            rmin = SolidStateDetectors.searchsortednearest(wp.grid.r, T(0.01))
+            rmax = SolidStateDetectors.searchsortednearest(wp.grid.r, T(0.035))
+            zidx = SolidStateDetectors.searchsortednearest(wp.grid.z, T(0.02))
+            l = vcat(wp.data[rmin:-1:2,φidx2,zidx], wp.data[1:rmax,φidx1,zidx])
+            @test all(diff(l) .< 0) # the weighting potential should monotonously decrease from rmin to rmax
+        end
         @test isapprox(estimate_depletion_voltage(sim, (verbose = false,)), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
     end
     @testset "Simulate example detector: HexagonalPrism" begin

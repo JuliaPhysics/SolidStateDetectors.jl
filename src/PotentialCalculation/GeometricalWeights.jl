@@ -57,6 +57,8 @@ The columns store the following quantities:
 * `weights[2, i]`: `(t[i] - mp[i])` / `weights[3, i]`
 * `weights[3, i]`: `mp[i+1] - mp[i]`
 * `weights[4, i]`: `inv(t[i] - t[i-1])`
+* `weights[5, i]`: `normalize(wφ[3, 1:2:end], 1)`
+* `weights[6, i]`: `normalize(wφ[3, 2:2:end], 1)`
 
 Developer note: This actually seems to be the same as `GeometricalCartesianAxisWeights`.
 Thus, we actually could remove that. Or change this into an alias.
