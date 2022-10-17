@@ -34,7 +34,6 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 UnitfulAtomic = "a7773ee8-282e-5fa2-be4e-bd808c38a91a"
-UnitfulRecipes = "42071c24-d89e-48dd-8a24-8a12d9b8861f"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
@@ -66,7 +65,6 @@ Tables = "0.2, 1"
 TypedTables = "1.2"
 Unitful = "0.18, 1"
 UnitfulAtomic = "1"
-UnitfulRecipes = "1.5"
 YAML = "0.3, 0.4"
 julia = "1.7"
 

@@ -28,7 +28,6 @@ using StaticArrays
 using StatsBase
 using Unitful
 using UnitfulAtomic
-using UnitfulRecipes
 using YAML
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
