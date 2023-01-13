@@ -120,7 +120,7 @@ IntersectionDictionary(g::CSGIntersection{T}) where {T} = vcat(IntersectionDicti
 IntersectionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
 
 """
-    struct CSGUnion{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
+    struct CSGDifference{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
         
 A `CSGDifference` of two geometries `a` and `b` is defined as the set of points that are 
 in `a` but not in `b` (`a && !b`).
