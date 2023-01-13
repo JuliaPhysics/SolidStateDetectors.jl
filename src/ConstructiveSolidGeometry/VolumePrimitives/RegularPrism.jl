@@ -106,7 +106,7 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     
     g = if r isa Tuple # lazy workaround for now
         _get_N_prism(T,P,ClosedPrimitive, r[2], hZ, origin, rotation) -
-        _get_N_prism(T,P,ClosedPrimitive, r[1], hZ, origin, rotation)
+        _get_N_prism(T,P,ClosedPrimitive, r[1], T(1.1) * hZ, origin, rotation) # increase volume to subtract
     else
         _get_N_prism(T,P,ClosedPrimitive, r, hZ, origin, rotation)
     end
