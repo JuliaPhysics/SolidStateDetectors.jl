@@ -176,7 +176,7 @@ end
 
 function show(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(io, det) end
 function print(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(io, det) end
-function show(io::IO,::MIME"text/plain", det::SolidStateDetector) where {T <: SSDFloat} show(io, det) end
+function show(io::IO,::MIME"text/plain", det::SolidStateDetector{T}) where {T <: SSDFloat} show(io, det) end
 
 function determine_bias_voltage_contact_id(det::SolidStateDetector)
     contact_potentials = Int[c.potential for c in det.contacts]

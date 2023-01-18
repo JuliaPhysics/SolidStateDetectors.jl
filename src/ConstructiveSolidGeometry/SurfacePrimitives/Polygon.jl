@@ -110,18 +110,17 @@ function _rotate_on_xy_plane(p::Polygon{<:Any, T}) where {T}
     map(pt -> rot * pt, p.points)
 end
 
-function in(pt::CartesianPoint{T}, p::Polygon{N,T}) where {N,T}
+function in(pt::CartesianPoint{T}, p::Polygon{N,T}, csgtol::T = csg_default_tol(T)) where {N,T}
     plane = Plane(p)
-    if (pt - origin(plane)) ⋅ normal(plane) == 0
+    return isapprox((pt - origin(plane)) ⋅ normal(plane), 0, atol = csgtol) && begin
         rot = _get_rot_for_rotation_on_xy_plane(p)
         vs = vertices(p)
         pts2d = SVector{N+1, SVector{2, T}}(
             view(rot * vs[i%N + 1], 1:2) for i in 0:N  
         )
         # PolygonOps.inpolygon -> in = 1, on = -1, out = 0)
-        b = PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0 
+        return PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0 
     end
-    return b
 end
 
 function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Quadrangle{T}) where {T}

@@ -8,7 +8,7 @@ function _update_till_convergence!( pcs::PotentialCalculationSetup{T, S, 3},
                                     use_nthreads::Int = Base.Threads.nthreads(), 
                                     max_n_iterations::Int = 10_000, # -1
                                     verbose::Bool = true
-                                ) where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential, DAT} #  <: GPUArrays.AbstractGPUArray
+                                ) where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential} #  <: GPUArrays.AbstractGPUArray
     device = KernelAbstractions.get_device(pcs.potential)
     ndrange = size(pcs.potential)[1:3] .- 2
     kernel = get_sor_kernel(S, device, Val(via_KernelAbstractions))
