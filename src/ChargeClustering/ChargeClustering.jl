@@ -3,10 +3,10 @@
 
 function cluster_detector_hits(
     detno::AbstractVector{<:Integer},
-    edep::AbstractVector{<:RealQuantity},
+    edep::AbstractVector{TT},
     pos::AbstractVector{<:StaticVector{3,PT}},
     cluster_radius::RealQuantity
-) where {TT<:RealQuantity,PT <: RealQuantity}
+) where {TT<:RealQuantity, PT <: RealQuantity}
     Table = TypedTables.Table
     unsorted = Table(detno = detno, edep = edep, pos = pos)
     sorting_idxs = sortperm(unsorted.detno)

@@ -40,10 +40,10 @@ function refine_scalar_potential(p::ScalarPotential{T}, max_diffs::NTuple{3, T},
     return _convert_to_original_potential(p, new_data, new_grid)
 end             
 
-function interpolate_closed_potential(p::ScalarPotential, ::Val{true}) where {T}
+function interpolate_closed_potential(p::ScalarPotential{T}, ::Val{true}) where {T}
     interpolate!((p.grid.axes[1], p.grid.axes[3]), p.data[:,1,:], Gridded(Linear()))
 end
-function interpolate_closed_potential(p::ScalarPotential, ::Val{false}) where {T}
+function interpolate_closed_potential(p::ScalarPotential{T}, ::Val{false}) where {T}
     interpolate!(p.grid.axes, p.data, Gridded(Linear()))
 end
 
@@ -155,7 +155,7 @@ function _create_refined_grid(p::ScalarPotential{T,3}, max_diffs::NTuple{3, T}, 
     return typeof(p.grid)(new_axes)
 end
 
-function _refine_axis(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, ns::Vector{Int}, sub_widths::Vector{T}) where {T, I}
+function _refine_axis(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, ns::Vector{Int}, sub_widths::Vector{T}) where {T}
     @assert length(ns) == length(ax.ticks)-1 # for ClosedInterval axis
     ticks = Vector{T}(undef, length(ax.ticks) + sum(ns))
     i = 1 

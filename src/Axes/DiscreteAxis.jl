@@ -201,7 +201,7 @@ function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:ope
     nothing
 end
 
-function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T, ispolaraxis}
+function set_periodic_boundary_ticks!( ticks::Vector{T}, interval::Interval{:closed, :closed, T})::Nothing where {T}
     if length(ticks) == 3 
         ticks[1] = ticks[2] - 2π
         ticks[end] = ticks[2] + 2π # -> Δmidpoint_φ = 2π -> area of circle is 2π * 0.5*r^2   
