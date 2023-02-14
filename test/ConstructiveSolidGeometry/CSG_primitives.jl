@@ -300,3 +300,9 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test cyl2.φ == T(π)
     end
 end
+
+@testset "Test geometry parsing" begin
+    sim = Simulation{T}(SSD_examples[:InvertedCoax])
+    c = sim.detector.contacts[2].geometry
+    @test Geometry(T, Dictionary(c), default_units, no_translations) == c
+end
