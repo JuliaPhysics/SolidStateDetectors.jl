@@ -58,8 +58,9 @@ end
 
 # parses dictionary entries of type Real or String to their value in internal units
 @inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = T(to_internal_units(float(x) * unit))
+@inline _parse_value(::Type{T}, x::Quantity, unit::Unitful.Units) where {T} = T(ustrip(uconvert(unit, x)))
 @inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = T(to_internal_units(uparse(s)))
-@inline _parse_value(::Type{T}, a::Vector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
+@inline _parse_value(::Type{T}, a::AbstractVector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries
 function _parse_interval_from_to(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::Tuple{T,T} where {T}
@@ -231,7 +232,7 @@ function get_origin(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T
     haskeyssum = sum(haskeys)
     if haskeyssum == 1
         o = dict[origin_names[i]]
-        if o isa Vector
+        if o isa AbstractVector
             CartesianPoint{T}(_parse_value(T, o, unit))
         else
             x, y, z = zero(T), zero(T), zero(T)
