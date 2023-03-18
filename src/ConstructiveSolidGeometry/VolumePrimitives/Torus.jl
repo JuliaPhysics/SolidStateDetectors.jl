@@ -12,6 +12,7 @@ radius around a given origin.
     or `OpenPrimitive`, i.e. the surface points do not belong to the primitive.
 * `TR`: Type of `r_tube`.
     * `TR == T`: Full tube without cutout (constant radius `r_tube`).
+    * `TR == Tuple{T,T}`: Hollow tube with cutout (inner radius `r_tube[1]`, outer radius `r_tube[2]`).
 * `TP`: Type of the azimuthial angle `φ`.
     * `TP == Nothing`: Full 2π in `φ`.
     * `TP == T`: Partial Torus ranging from `0` to `φ`.
@@ -298,18 +299,34 @@ function surfaces(t::Torus{T,OpenPrimitive,Tuple{T,T},T,Tuple{T,T},TT1,TT2}) whe
     (tm_in, tm_out, cm1, cm2, es1, es2)
 end
 
-
-function _in(pt::CartesianPoint{T}, t::Torus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+# HollowTorus
+function _in(pt::CartesianPoint{T}, t::Torus{T,ClosedPrimitive,Tuple{T,T}}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
     rmin::T, rmax::T = _radial_endpoints(t.r_tube)
     return rmin - csgtol <= _r <= rmax + csgtol &&
         (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
         (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
 end
-function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive,Tuple{T,T}}; csgtol::T = csg_default_tol(T)) where {T}
     _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
     rmin::T, rmax::T = _radial_endpoints(t.r_tube)
     return rmin + csgtol < _r < rmax - csgtol &&
+        (isnothing(t.φ) || _in_angular_interval_open(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
+        (isnothing(t.θ) || _in_angular_interval_open(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
+end
+
+# FullTorus
+function _in(pt::CartesianPoint{T}, t::Torus{T,ClosedPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T}
+    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    rmax::T = t.r_tube
+    return _r <= rmax + csgtol &&
+        (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
+        (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
+end
+function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T}
+    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    rmax::T = t.r_tube
+    return _r < rmax - csgtol &&
         (isnothing(t.φ) || _in_angular_interval_open(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
         (isnothing(t.θ) || _in_angular_interval_open(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
 end
