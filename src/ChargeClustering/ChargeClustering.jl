@@ -1,5 +1,8 @@
 # # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
+# breaking changes in Clustering v0.14 -> v0.15
+@inline _get_clusters(clusters::Clustering.DbscanResult) = clusters.clusters
+@inline _get_clusters(clusters::Vector{Clustering.DbscanCluster}) = clusters
 
 function cluster_detector_hits(
     detno::AbstractVector{<:Integer},
@@ -26,7 +29,7 @@ function cluster_detector_hits(
         @assert all(isequal(d_detno), d_hits.detno)
         if length(d_hits) > 3
             clusters = Clustering.dbscan(ustrip.(flatview(d_hits.pos)), ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1)
-            for c in clusters
+            for c in _get_clusters(clusters)
                 idxs = vcat(c.boundary_indices, c.core_indices)
                 @assert length(idxs) == c.size
                 c_hits = view(d_hits, idxs)
