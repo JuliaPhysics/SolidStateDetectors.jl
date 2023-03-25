@@ -30,6 +30,8 @@ using Unitful
 using UnitfulAtomic
 using YAML
 
+include("ka_compat.jl")
+
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry:

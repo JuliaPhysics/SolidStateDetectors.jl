@@ -162,9 +162,9 @@ which are used in the CPU implementation for optimization.
 On the GPU (currently) those statements have to be calculated and booleans have to be passed.
 Maybe this will change in the future.
 """
-get_sor_kernel(::Type{Cylindrical}, dev, CPU_via_KernelAbstractions, args...) = sor_cyl_gpu!(dev, args...)
-get_sor_kernel(::Type{Cartesian},   dev, CPU_via_KernelAbstractions, args...) = sor_car_gpu!(dev, args...)
+get_sor_kernel(::Type{Cylindrical}, backend, CPU_via_KernelAbstractions, args...) = sor_cyl_gpu!(backend, args...)
+get_sor_kernel(::Type{Cartesian},   backend, CPU_via_KernelAbstractions, args...) = sor_car_gpu!(backend, args...)
 get_sor_kernel(::Type{Cylindrical}, ::CPU, CPU_via_KernelAbstractions::Val{false}) = nothing
 get_sor_kernel(::Type{Cartesian},   ::CPU, CPU_via_KernelAbstractions::Val{false}) = nothing
-get_sor_kernel(::Type{Cylindrical}, dev::CPU, CPU_via_KernelAbstractions::Val{true}, args...) = sor_cyl_gpu!(dev, args...)
-get_sor_kernel(::Type{Cartesian},   dev::CPU, CPU_via_KernelAbstractions::Val{true}, args...) = sor_car_gpu!(dev, args...)
+get_sor_kernel(::Type{Cylindrical}, backend::CPU, CPU_via_KernelAbstractions::Val{true}, args...) = sor_cyl_gpu!(backend, args...)
+get_sor_kernel(::Type{Cartesian},   backend::CPU, CPU_via_KernelAbstractions::Val{true}, args...) = sor_car_gpu!(backend, args...)

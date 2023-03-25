@@ -11,13 +11,12 @@ using SolidStateDetectors
 using DataFrames, JLD2
 using BenchmarkTools
 using KernelAbstractions
-using KernelAbstractions: get_device
 
 using SolidStateDetectors: 
     ConstructiveSolidGeometry.AbstractCoordinateSystem,
     Cartesian, Cylindrical, PotentialCalculationSetup,
     _guess_optimal_number_of_threads_for_SOR, adapt,
-    get_sor_kernel, update!
+    get_sor_kernel, update!, _ka_get_backend
 
 fn_pot_calc_benchmark_df = joinpath(ENV["HOME"], "SSD_potential_calculation_benchmark.jld2")
 fn_SOR_update_benchmark_df = joinpath(ENV["HOME"], "SSD_SOR_update_benchmark.jld2")
@@ -63,9 +62,9 @@ df_SOR_update = if !isfile(fn_SOR_update_benchmark_df) || recalculate
                 sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, 
             ));
             ndrange = size(pcs.potential)[1:3] .- 2
-            dev = get_device(pcs.potential)
+            backend = _ka_get_backend(pcs.potential)
             via_KernelAbstractions = false
-            kernel = get_sor_kernel(S, dev, Val(via_KernelAbstractions))
+            kernel = get_sor_kernel(S, backend, Val(via_KernelAbstractions))
             use_nthreads = backend.use_nthreads
             update!(pcs, kernel, ndrange; use_nthreads, depletion_handling, is_weighting_potential, only2d)
             bm = @benchmark update!($pcs, $kernel, $ndrange; 

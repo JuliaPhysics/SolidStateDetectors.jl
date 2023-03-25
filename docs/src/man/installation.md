@@ -40,18 +40,24 @@ print("Plots: v$(Plots_version) - GR: v$(GR_version)") # hide
 
 ## GPU Support in Field Calculations
 
-The [Electric Potential](@ref) and individual [Weighting Potentials](@ref) can also be calculated on GPUs.
+The [Electric Potential](@ref) and individual [Weighting Potentials](@ref) can also be calculated on GPUs. SolidStateDetectors.jl uses [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for GPU support.
 
-In order to use your GPU, the Julia Packages [CUDAKernels](https://github.com/JuliaGPU/KernelAbstractions.jl/tree/master/lib/CUDAKernels) or [ROCKernels](https://github.com/JuliaGPU/KernelAbstractions.jl/tree/master/lib/ROCKernels) have to be installed and loaded.
+In order to use your GPU, the Julia Packages [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) or [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) have to be installed and loaded. SolidStateDetectors.jl may run on other GPU types supported by KernelAbstractions.jl, but has not been tested with [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) or [Metal.jl](https://github.com/JuliaGPU/Metal.jl) yet.
 
-In case of an NVIDIA GPU:
+For NVIDIA GPUs use:
+
 ```julia
-using CUDAKernels, SolidStateDetectors
+using CUDA, SolidStateDetectors
+# *Only* for KernelAbstractions < v0.9:
+# using CUDAKernels
 ```
 
-In case of an AMD GPU:
+For AMD GPUs use:
+
 ```julia
-using ROCKernels, SolidStateDetectors
+using AMDGPU, SolidStateDetectors
+# *Only* for KernelAbstractions < v0.9:
+# using ROCKernels
 ```
 
 Then, in any field calculation ([`calculate_electric_potential!`](@ref), [`calculate_weighting_potential!`](@ref), [`simulate!(::Simulation)`](@ref)) the keyword `device_array_type` can be set to choose the device on which the calculations should be performed.
@@ -61,17 +67,13 @@ device_array_type = Array # -> CPU (default)
 device_array_type = CuArray # -> NVIDIA GPU
 device_array_type = ROCArray # -> AMD GPU
 ```
-The GPU Array types are available through `CUDAKernels` and `ROCKernels`:
-```julia
-using CUDAKernels.CUDA: CuArray
-using ROCKernels.AMDGPU: ROCArray
-```
 
 ### Example (NVIDIA)
 
 ```julia
-using CUDAKernels, SolidStateDetectors
-using CUDAKernels.CUDA: CuArray
+using CUDA, SolidStateDetectors
+# *Only* for KernelAbstractions < v0.9:
+# using CUDAKernels
 
 sim = Simulation(SSD_examples[:CGD])
 calculate_electric_potential!( 
@@ -79,7 +81,7 @@ calculate_electric_potential!(
     device_array_type = CuArray, 
     refinement_limits = [0.2, 0.1, 0.05],
     depletion_handling = true
-)    
+)
 ```
 
 !!! note
