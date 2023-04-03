@@ -112,8 +112,8 @@ end
 function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if done[n] continue end
-        sinθ::T, cosθ::T = sincos(T(rand())*T(2π))
-        sinφ::T, cosφ::T = sincos(T(rand())*T(π))
+        sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
+        sinφ::T, cosφ::T = sincos(T(rand()*2π))
         step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
     end
     nothing 
