@@ -1,20 +1,20 @@
 struct DriftPath{T <: SSDFloat}
-    path::Vector{<:AbstractCoordinatePoint{RealQuantity}}
-    timestamps::Vector{RealQuantity}
+    path::Vector{CartesianPoint{T}}
+    timestamps::Vector{T}
 end
 
-struct EHDriftPath{T <: SSDFloat, TT <: RealQuantity}
-    e_path::Vector{<:AbstractCoordinatePoint{T}}
-    h_path::Vector{<:AbstractCoordinatePoint{T}}
-    timestamps_e::Vector{TT}
-    timestamps_h::Vector{TT}
+struct EHDriftPath{T <: SSDFloat}
+    e_path::Vector{CartesianPoint{T}}
+    h_path::Vector{CartesianPoint{T}}
+    timestamps_e::Vector{T}
+    timestamps_h::Vector{T}
 end
 
 abstract type ChargeCarrier end
 abstract type Electron <: ChargeCarrier end 
 abstract type Hole <: ChargeCarrier end
 
-function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}
+function _common_time(dp::EHDriftPath{T})::T where {T <: SSDFloat}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
 _common_time(dps::Vector{<:EHDriftPath}) =
@@ -57,7 +57,7 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
         n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
     
         for i in eachindex(start_points)
-            drift_paths[drift_path_counter + i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
+            drift_paths[drift_path_counter + i] = EHDriftPath{T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
         end
         
         drift_path_counter += n_hits

@@ -31,7 +31,7 @@ function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, p
 end
 
 
-function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{TT}, path::EHDriftPath{T, TT}, charge::T, wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat, TT}
+function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, path::EHDriftPath{T}, charge::T, wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
     add_signal!(signal, timestamps, path.e_path, path.timestamps_e, -charge, wpot, S) # electrons induce negative charge
     add_signal!(signal, timestamps, path.h_path, path.timestamps_h,  charge, wpot, S)
     nothing
