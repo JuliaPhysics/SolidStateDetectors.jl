@@ -259,9 +259,9 @@ function _drift_charge!(
     
     diffusion_length::T = if diffusion
         if CC == Electron
-            det.semiconductor.material.diffusion_fieldvector_electrons
+            sqrt(6*_parse_value(T, det.semiconductor.material.diffusion_fieldvector_electrons, u"m^2/s")/Δt)# / det.semiconductor.charge_drift_model.electrons.axis100.mu0
         else # CC == Hole
-            det.semiconductor.material.diffusion_fieldvector_holes
+            sqrt(6*_parse_value(T, det.semiconductor.material.diffusion_fieldvector_holes, u"m^2/s")/Δt)# / det.semiconductor.charge_drift_model.holes.axis100.mu0
         end
     else
         zero(T)
@@ -272,8 +272,6 @@ function _drift_charge!(
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
-    
-    null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
     
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
