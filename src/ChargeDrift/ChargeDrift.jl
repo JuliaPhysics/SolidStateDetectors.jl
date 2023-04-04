@@ -259,9 +259,9 @@ function _drift_charge!(
     
     diffusion_length::T = if diffusion
         if CC == Electron
-            sqrt(6*_parse_value(T, det.semiconductor.material.diffusion_fieldvector_electrons, u"m^2/s")/Δt)# / det.semiconductor.charge_drift_model.electrons.axis100.mu0
+            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s")/Δt)
         else # CC == Hole
-            sqrt(6*_parse_value(T, det.semiconductor.material.diffusion_fieldvector_holes, u"m^2/s")/Δt)# / det.semiconductor.charge_drift_model.holes.axis100.mu0
+            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s")/Δt)
         end
     else
         zero(T)
