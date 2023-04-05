@@ -213,7 +213,7 @@ plot(nbcc, color = :red, size = (500,500), xlims = (-0.0012, 0.0012), ylims = (-
 
 ### Diffusion
 
-Diffusion describes the random thermal motion of charge carriers. In SolidStateDetectors.jl, diffusion is simulated using a random walk algorithm. To account for possible anisotropies in the charge drift model, diffusion is simulated via an effective electric field vector (with a fixed magnitude and random orientation) which is added to the external electric field. In this way, the anisotropy in the charge drift model is also applied to the diffusion field vector.
+Diffusion describes the random thermal motion of charge carriers. In SolidStateDetectors.jl, diffusion is simulated using a random walk algorithm. Diffusion is simulated using fixed-step vectors where the magnitude of the step vectors depends on the diffusion constant $D$ and the time steps $\Delta t$.
 
 ```julia
 center = CartesianPoint{T}([0,0,0])
@@ -224,24 +224,23 @@ simulate!(evt, sim, diffusion = true)
 ```
 ![Diffusion](../assets/diffusion.gif)
 
-The magnitude of the diffusion field vector influences the diffusion constant, $D$, with which the charge carriers diffuse.
-In the abscence of an external electric field, the size (standard deviation $\sigma$) of the charge cloud is expected to evolve with $\sigma = \sqrt{2 D t}$, where $t$ is the time. Thus, the diffusion constant can be estimated from the time evolution of the charge cloud size.
+In the abscence of an external electric field, the size (standard deviation $\sigma$) of the charge cloud is expected to evolve with $\sigma = \sqrt{6 D t}$ (in three dimensions), where $t$ is the time. Thus, the diffusion constant determines the time evolution of the charge cloud size.
 
-For an initial charge cloud of `100` point charges, all located at the origin of the coordinate system, and an effective diffusion field vector of $1000\,\text{V/m}$, the random walk algorithm results in the expected $\sqrt{t}$ dependence. From a fit of $\sigma = \sqrt{2Dt}$ to the simulation results, the effective diffusion constant was estimated to be around $315\,\text{cm}^2\text{/s}$.
+For an initial charge cloud of `1000` point charges, all located at the origin of the coordinate system, and a diffusion constant of $101\,\text{cm}^2\text{/s}$, the random walk algorithm results in the expected $\sqrt{t}$ dependence. A fit of $\sigma = \sqrt{6Dt}$ shows that the diffusion constant with which the charge cloud evolves matches the input value for $D$.
 
-![Electron_diffusion](../assets/electron_diffusion_1000.png)
+![Electron_diffusion](../assets/electron_diffusion_D101.png) 
 
 
-The diffusion field vectors are stored in `SolidStateDetectors.material_properties`.
-For high-purity germanium, the diffusion constants for electrons and holes are [reported](https://www.ecse.rpi.edu/~schubert/Educational-resources/Materials-Semiconductors-Si-and-Ge.pdf) to be $D_e = 101\,\text{cm}^2\text{/s}$ and $D_h = 49\,\text{cm}^2\text{/s}$. Using the [ADL Charge Drift Model](@ref) with standard parameters, the diffusion field vectors (in units of $\text{V/m}$) are
+The diffusion constants for electrons and holes are stored in `SolidStateDetectors.material_properties` as `De` and `Dh`, respectively.
+For high-purity germanium, the diffusion constants for electrons and holes are [reported](https://www.ecse.rpi.edu/~schubert/Educational-resources/Materials-Semiconductors-Si-and-Ge.pdf) to be $D_e = 101\,\text{cm}^2\text{/s}$ and $D_h = 49\,\text{cm}^2\text{/s}$. These values are the default values in `SolidStateDetectors.material_properties`:
 ````@example NBodyChargeCloud
 SolidStateDetectors.material_properties[:HPGe]
-println("Electrons: $(SolidStateDetectors.material_properties[:HPGe].diffusion_fieldvector_electrons)") #hide 
-println("Holes:     $(SolidStateDetectors.material_properties[:HPGe].diffusion_fieldvector_holes)") #hide
+println("Electrons: $(SolidStateDetectors.material_properties[:HPGe].De)") #hide
+println("Holes:     $(SolidStateDetectors.material_properties[:HPGe].Dh)") #hide
 nothing #hide
 ````
 
-If other [Charge Drift Models](@ref) or other materials are to be used, the diffusion field vectors should be determined accordingly and saved to `SolidStateDetectors.material_properties`.
+Values for `De` and `Dh` in `SolidStateDetectors.material_properties` can be given with or without units. If no units are passed, the values are interpreted as having the unit m$^2$/s.
  
 
 ### Self-Repulsion
