@@ -149,18 +149,18 @@ _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::V
 
 function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Electron})::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
-       if !done[n]
-           step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm) * Δt
-       end
+        if !done[n]
+            step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm) * Δt
+        end
     end
     nothing
 end
 
 function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Hole})::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
-       if !done[n]
-           step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm) * Δt
-       end
+        if !done[n]
+            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm) * Δt
+        end
     end
     nothing
 end
@@ -256,17 +256,17 @@ function _drift_charge!(
     drift_path[:,1] = startpos
     timestamps[1] = zero(T)
     ϵ_r::T = T(det.semiconductor.material.ϵ_r)
-    
+
     diffusion_length::T = if diffusion
         if CC == Electron
-            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s")/Δt)
+            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s") * Δt)
         else # CC == Hole
-            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s")/Δt)
+            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s") * Δt)
         end
     else
         zero(T)
     end
-    
+
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
@@ -277,9 +277,9 @@ function _drift_charge!(
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
+        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
