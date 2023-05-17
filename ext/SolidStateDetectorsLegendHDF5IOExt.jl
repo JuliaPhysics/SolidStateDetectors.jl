@@ -1,4 +1,33 @@
-function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
+# This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
+
+module SolidStateDetectorsLegendHDF5IOExt
+
+@static if isdefined(Base, :get_extension)
+    import LegendHDF5IO
+else
+    import ..LegendHDF5IO
+end
+
+using SolidStateDetectors
+using SolidStateDetectors: RealQuantity, SSDFloat
+using TypedTables, Unitful
+
+function ssd_write(filename::AbstractString, sim::Simulation)
+    if isfile(filename) @warn "Destination `$filename` already exists. Overwriting..." end
+    lh5open(filename, "w") do h5f
+        LegendHDF5IO.writedata( h5f, "SSD_Simulation", NamedTuple(sim)  )
+    end       
+end  
+
+function ssd_read(filename::AbstractString, ::Type{Simulation})
+    lh5open(filename, "r") do h5f
+        Simulation(LegendHDF5IO.readdata(h5f, "SSD_Simulation"));
+    end     
+end  
+
+
+
+function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
                              output_dir::AbstractString, 
                              output_base_name::AbstractString = "generated_waveforms";
                              chunk_n_physics_events::Int = 1000, 
@@ -24,8 +53,10 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
         mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose)
       
-        HDF5.h5open(ofn, "w") do output
+        lh5open(ofn, "w") do output
             LegendHDF5IO.writedata(output, "generated_waveforms", mcevents_sub)
         end        
     end    
 end
+
+end # module LegendHDF5IO
