@@ -251,11 +251,12 @@ end
 end
 
 @testset "Isochrone" begin
+    T = Float64 # to prevent rounding errors that might cause the final test to fail
     sim = Simulation{T}(SSD_examples[:IsochroneTest])
     simulate!(sim, device_array_type = device_array_type)
     calculate_electric_potential!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.01])
     calculate_electric_field!(sim, n_points_in_φ = 72)
-    sim.detector = SolidStateDetector(sim.detector, ADLChargeDriftModel());
+    sim.detector = SolidStateDetector(sim.detector, ADLChargeDriftModel{T}());
 
     spawn_positions = CartesianPoint{T}[]
     idx_spawn_positions = CartesianIndex[]
@@ -267,7 +268,6 @@ end
             push!(idx_spawn_positions, CartesianIndex(i,k))
         end
     end
-    length(spawn_positions)
     in_idx = findall(x -> x in sim.detector && !in(x, sim.detector.contacts), spawn_positions);
     ev = Event(spawn_positions[in_idx]);
     time_step = T(2)u"ns"
