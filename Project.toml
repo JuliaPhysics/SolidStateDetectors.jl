@@ -66,7 +66,7 @@ TypedTables = "1.2"
 Unitful = "0.18, 1"
 UnitfulAtomic = "1"
 YAML = "0.3, 0.4"
-julia = "1.7"
+julia = "1.6"
 
 [extras]
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
