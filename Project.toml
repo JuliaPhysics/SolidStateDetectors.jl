@@ -71,7 +71,8 @@ julia = "1.6"
 [extras]
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["Test", "Unitful", "SpecialFunctions"]
+test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs"]
