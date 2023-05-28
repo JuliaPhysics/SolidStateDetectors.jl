@@ -12,6 +12,7 @@
     
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=2))"
     colorbar_title --> "Electric Field Strength"
+    letter --> :z  # Workaround for Plots.jl issue #4758
     seriescolor --> :inferno
     unitformat --> :slash
 
@@ -30,6 +31,7 @@ end
     
     title --> "Electric Field (Magn.) @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=2))"
     colorbar_title --> "Electric Field Strength"
+    letter --> :z  # Workaround for Plots.jl issue #4758
     seriescolor --> :inferno
     unitformat --> :slash
 
