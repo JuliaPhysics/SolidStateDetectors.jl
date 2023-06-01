@@ -69,7 +69,6 @@ end
     
     title --> name * " @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=3))"
     colorbar_title --> name
-    letter --> :z  # Workaround for Plots.jl issue #4758
     seriescolor --> gradient
     clims --> clims
     unitformat --> :slash
@@ -166,7 +165,6 @@ end
     tick_direction --> :out
     title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=3))"
     colorbar_title --> "Dielectric Distribution"
-    letter --> :z  # Workaround for Plots.jl issue #4758
     unitformat --> :slash
 
     gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
@@ -223,7 +221,6 @@ end
     
     title --> name * " @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=3))"
     colorbar_title --> name
-    letter --> :z  # Workaround for Plots.jl issue #4758
     seriescolor --> gradient
     clims --> clims
 
@@ -318,7 +315,6 @@ end
     tick_direction --> :out
     title --> "Dielectric Distribution @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=3))"
     colorbar_title --> "Dielectric Distribution"
-    letter --> :z  # Workaround for Plots.jl issue #4758
 
     gx_ext::Array{T,1} = midpoints(get_extended_ticks(grid.x))
     gy_ext::Array{T,1} = midpoints(get_extended_ticks(grid.y))
