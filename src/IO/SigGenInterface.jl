@@ -59,22 +59,19 @@ function readsiggen(file_path::String; T::Type=Float64)
 
     file = open(file_path) do f
         temp          = readlines(f)
-        config_file   = Dict()
+        config_file   = Dict{String, String}()
         for line in temp
-            if line  != "" && string(line[1]) != "#"
+            # parse lines that are neither empty, nor consist of spaces or comments only
+            if isnothing(match(r"^\s*(#.*){0,1}$", line))
                 line  = strip(split(line, "#")[1])
-                name  = ""
-                value = ""
-                if length(split(line, "\t")) > 1
-                    name  = split(line, "\t")[1]
-                    value = strip(split(line, "\t")[2])
-                else
-                    name  = split(line, " ")[1]
-                    value = strip(split(line, " ")[end])
+                let s = split(line, r"\s+")
+                    if length(s) == 2
+                        name, value = s
+                        config_file[name] = value
+                    else
+                        @warn "Could not parse line '$line'"
+                    end
                 end
-
-                config_file[name] = value
-
             end
         end
         return config_file
