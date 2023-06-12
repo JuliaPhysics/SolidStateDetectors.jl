@@ -20,21 +20,21 @@ end
 
 """
     estimate_depletion_voltage(sim::Simulation{T},
-    Umin::T = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
-    Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
-    contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
-    tolerance::AbstractFloat = 1e-1,
-    verbose::Bool = true)::T where {T <: AbstractFloat}
+        Umin::T = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
+        Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
+        contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
+        tolerance::AbstractFloat = 1e-1,
+        verbose::Bool = true) where {T <: AbstractFloat}
 
-Estimates the potential (in V) needed to fully deplete the detector in a given [`Simulation`](@ref)
+Estimates the potential needed to fully deplete the detector in a given [`Simulation`](@ref)
 at the [`Contact`](@ref) with id `contact_id` by bisection method.
 The default `contact_id` is determined automatically via `determine_bias_voltage_contact_id(sim.detector)`.
 The default searching range of potentials is set by the extrema of contact potentials.
 
 ## Arguments 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which the depletion voltage should be determined.
-* `Umin::Int`: The minimum value of the searching range.
-* `Umax::Int`: The maximum value of the searching range.
+* `Umin::T`: The minimum value of the searching range.
+* `Umax::T`: The maximum value of the searching range.
     
 ## Keywords
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) at which the potential is applied.
@@ -53,7 +53,7 @@ estimate_depletion_voltage(sim)
     The accuracy of the result depends on the precision of the initial simulation.
 
 !!! note
-    This function performs two 2D or 3D, depending on `sim`, field calculations.\\
+    This function performs two 2D or 3D field calculations, depending on `sim`.\\
     Thus, keep in mind that is might consume some memory. 
     
 See also [`is_depleted`](@ref).
@@ -64,21 +64,20 @@ function estimate_depletion_voltage(sim::Simulation{T},
     Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
     contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
     tolerance::AbstractFloat = 1e-1,
-    verbose::Bool = true)::T where {T <: AbstractFloat}
+    verbose::Bool = true) where {T <: AbstractFloat}
 
-    potential_range::Tuple{T, T} = (Umin,Umax)
-
+    @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim)`"
     @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
+    @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
+    @assert abs(Umax - Umin) > tolerance "Umax - Umin < tolerance. Please change Umin, Umax or tolerance." 
 
-    @assert Umax-Umin>tolerance "Umax - Umin < tolerance. Please change Umin, Umax or tolerance."
-
-    simDV = deepcopy(sim)
-
+    potential_range::Tuple{T, T} = (Umin, Umax)
     if verbose
         @info "Looking for the depletion voltage applied to contact $(contact_id) "*
         "in the range $(potential_range.*u"V")."
     end  
 
+    simDV = deepcopy(sim)
     if ismissing(simDV.weighting_potentials[contact_id]) || simDV.weighting_potentials[contact_id].grid != simDV.electric_potential.grid
         _adapt_weighting_potential_to_electric_potential_grid!(simDV, contact_id)
     end
@@ -107,7 +106,7 @@ function estimate_depletion_voltage(sim::Simulation{T},
             @warn "The depletion voltage is probably not in the specified range $(potential_range.*u"V")."
         end
     end
-    return U
+    return U * u"V"
 end
 
 """
