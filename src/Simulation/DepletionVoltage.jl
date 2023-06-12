@@ -71,6 +71,11 @@ function estimate_depletion_voltage(sim::Simulation{T},
     @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
     @assert abs(Umax - Umin) > tolerance "Umax - Umin < tolerance. Please change Umin, Umax or tolerance." 
 
+    if all(sim.q_eff_imp.data .== 0) && all(sim.q_eff_fix.data .== 0)
+        @warn "The detector seems to have no impurities. Therefore, the depletion voltage is 0 V"
+        return zero(T) * u"V"
+    end
+
     potential_range::Tuple{T, T} = (Umin, Umax)
     if verbose
         @info "Looking for the depletion voltage applied to contact $(contact_id) "*
