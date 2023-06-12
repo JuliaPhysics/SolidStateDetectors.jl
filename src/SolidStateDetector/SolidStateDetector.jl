@@ -178,8 +178,8 @@ function show(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(
 function print(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(io, det) end
 function show(io::IO,::MIME"text/plain", det::SolidStateDetector{T}) where {T <: SSDFloat} show(io, det) end
 
-function determine_bias_voltage_contact_id(det::SolidStateDetector)
-    contact_potentials = Int[c.potential for c in det.contacts]
+function determine_bias_voltage_contact_id(det::SolidStateDetector{T}) where {T <: SSDFloat}
+    contact_potentials = T[c.potential for c in det.contacts]
     inds = findall(!iszero, contact_potentials)
     @assert length(inds) == 1 "Could not determine contact at which the bias voltage is applied as multiple contacts have non-zero contact potentials."
     inds[1]
