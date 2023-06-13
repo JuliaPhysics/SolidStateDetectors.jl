@@ -120,7 +120,14 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
     
-    passives = []
+    # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
+    # They need to be in order (1, 2, ... , N), so throw an error if this is not the case.
+    if !all(getfield.(contacts, :id) .== eachindex(contacts))
+        ArgumentError("SolidStateDetectors.jl only supports contact IDs that are in order.\n
+            Please set the ID of the first contact to 1, the ID of the second contact to 2, etc.")
+    end
+    
+    passives = Passive{T}[]
     if haskey(config_detector, "passives") # "passives" as entry of "detectors"
         append!(passives, broadcast(p -> Passive{T}(p, input_units, transformations), config_detector["passives"]))
     end
