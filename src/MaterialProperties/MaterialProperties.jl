@@ -53,16 +53,29 @@ material_properties[:Al] = (
 
 material_properties[:LAr] = (
     name = "liquid Argon",
-    E_ionisation = 0u"eV",
-    f_fano = 0.107,
+    E_ionisation = 26.0u"eV", # https://doi.org/10.1088/0370-1328/85/6/328
+    f_fano = 0.107, # https://doi.org/10.1016/0029-554X(76)90292-5
     ϵ_r = 1.505,
     ρ = 1.396u"g*cm^-3"
 )
 
-material_properties[:Co] = (
+material_properties[:Cu] = (
     name = "Copper",
     ϵ_r = 20,
     ρ = 8.96u"g*cm^-3"
+)
+
+SolidStateDetectors.material_properties[:PEN] = (
+    name = "Polyethylene Naphthalate",
+    ϵ_r = 3.0, # https://topas.com/low-dielectric-constant-plastic-materials-low-permittivity-plastics-topas
+    ρ = 1.36u"g*cm^-3",
+)
+
+SolidStateDetectors.material_properties[:PTFE] = (
+    name = "Polytetrafluorethylen",
+    ϵ_r = 2.02, # https://topas.com/low-dielectric-constant-plastic-materials-low-permittivity-plastics-topas
+    ρ = 2.2u"g*cm^-3",
+    
 )
 
 material_properties[:CdZnTe] = (
@@ -79,12 +92,16 @@ materials = Dict{String, Symbol}(
     "HPGe" => :HPGe,
     "vacuum" => :Vacuum,
     "Vacuum" => :Vacuum,
-    "Copper" => :Co,
-    "copper" => :Co,
+    "Copper" => :Cu,
+    "copper" => :Cu,
     "Al"  => :Al,
     "LAr" => :LAr,
     "CZT" => :CdZnTe,
-    "Si" => :Si
+    "Si" => :Si,
+    "Co" => begin
+        @warn "In v0.9.0, the material 'Co' does not denote copper anymore. Please use 'Cu' for copper."
+        :Co
+    end
 )
 
 
