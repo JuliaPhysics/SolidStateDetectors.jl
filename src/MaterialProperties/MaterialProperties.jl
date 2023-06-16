@@ -66,6 +66,19 @@ material_properties[:Cu] = (
     ρ = 8.96u"g*cm^-3"
 )
 
+SolidStateDetectors.material_properties[:PEN] = (
+    name = "Polyethylene Naphthalate",
+    ϵ_r = 3.0, # https://topas.com/low-dielectric-constant-plastic-materials-low-permittivity-plastics-topas
+    ρ = 1.36u"g*cm^-3",
+)
+
+SolidStateDetectors.material_properties[:PTFE] = (
+    name = "Polytetrafluorethylen",
+    ϵ_r = 2.02, # https://topas.com/low-dielectric-constant-plastic-materials-low-permittivity-plastics-topas
+    ρ = 2.2u"g*cm^-3",
+    
+)
+
 material_properties[:CdZnTe] = (
     name = "Cadmium zinc telluride",
     E_ionisation = 4.64u"eV",
