@@ -75,7 +75,7 @@ function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_
 end
 
 function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGrid3D{T}, 
-                medium::NamedTuple = material_properties[materials["vacuum"]],
+                medium::NamedTuple = get_material_properties("vacuum"),
                 potential_array::Union{Missing, Array{T, 3}} = missing,
                 imp_scale::Union{Missing, Array{T, 3}} = missing;
                 weighting_potential_contact_id::Union{Missing, Int} = missing,

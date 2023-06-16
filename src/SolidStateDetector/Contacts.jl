@@ -51,7 +51,7 @@ end
 
 function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, input_units::NamedTuple, outer_transformations)::Contact{T} where {T <: SSDFloat}
     id::Int = haskey(dict, "id") ? dict["id"] : -1
-    material = haskey(dict, "material") ? material_properties[materials[dict["material"]]] : material_properties[materials["HPGe"]]
+    material = get_material_properties(haskey(dict, "material") ? dict["material"] : "HPGe")
     name = haskey(dict,"name") ? dict["name"] : ""
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)

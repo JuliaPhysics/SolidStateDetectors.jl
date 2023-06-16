@@ -17,8 +17,8 @@ const CSG_dict = Dict{String, Any}(
     "union" => CSGUnion,
     "difference" => CSGDifference,
     "intersection" => CSGIntersection,
-    "translate" => CartesianVector, # we just ne some type to dispatch on
-    "rotate" => Rotations.Rotation  # we just ne some type to dispatch on
+    "translate" => CartesianVector, # we just need some type to dispatch on
+    "rotate" => Rotations.Rotation  # we just need some type to dispatch on
 )
 
 function get_geometry_key(::Type{T}, dict::AbstractDict, input_units::NamedTuple) where {T}

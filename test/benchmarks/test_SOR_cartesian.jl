@@ -26,7 +26,7 @@ pcs_car = SolidStateDetectors.PotentialCalculationSetup(
     sim_car.detector, 
     sim_car.electric_potential.grid, 
     # Grid(sim_car, max_tick_distance = 1u"mm"), 
-    SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
+    SolidStateDetectors.get_material_properties("vacuum"),
     sim_car.electric_potential.data
 );
 

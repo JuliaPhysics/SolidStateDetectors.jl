@@ -44,7 +44,7 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
     Simulation{T, CS}(
         Dict(),
         default_unit_tuple(),
-        material_properties[materials["vacuum"]],
+        get_material_properties("vacuum"),
         missing,
         World(CS,(T(0),T(1),T(0),T(1),T(0),T(1))),
         missing,
@@ -175,7 +175,7 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim::Simulation{T,CS} = Simulation{T,CS}()
     sim.config_dict = dict
     sim.input_units = construct_units(dict)
-    sim.medium = material_properties[materials[haskey(dict, "medium") ? dict["medium"] : "vacuum"]]
+    sim.medium = get_material_properties(haskey(dict, "medium") ? dict["medium"] : "vacuum")
     sim.detector = SolidStateDetector{T}(dict, sim.input_units) 
     sim.world = if haskey(dict, "grid") && isa(dict["grid"], Dict) && haskey(dict["grid"], "axes")
             World(T, dict["grid"], sim.input_units)

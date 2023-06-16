@@ -25,7 +25,7 @@ calculate_electric_potential!(sim_cyl, depletion_handling = false,
 
 pcs_cyl = SolidStateDetectors.PotentialCalculationSetup(sim_cyl.detector,
     sim_cyl.electric_potential.grid,
-    SolidStateDetectors.material_properties[SolidStateDetectors.materials["vacuum"]],
+    SolidStateDetectors.get_material_properties("vacuum"),
     sim_cyl.electric_potential.data);
 
 

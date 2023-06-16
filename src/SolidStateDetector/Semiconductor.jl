@@ -61,7 +61,7 @@ function Semiconductor{T}(dict::Dict, input_units::NamedTuple, outer_transformat
     else
         ElectricFieldChargeDriftModel{T}()
     end
-    material = material_properties[materials[dict["material"]]]
+    material = get_material_properties(dict["material"])
     temperature = if haskey(dict, "temperature") 
         T(dict["temperature"])
     elseif material.name == "High Purity Germanium"

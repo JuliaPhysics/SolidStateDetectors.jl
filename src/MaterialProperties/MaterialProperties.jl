@@ -97,11 +97,7 @@ materials = Dict{String, Symbol}(
     "Al"  => :Al,
     "LAr" => :LAr,
     "CZT" => :CdZnTe,
-    "Si" => :Si,
-    "Co" => begin
-        @warn "In v0.9.0, the material 'Co' does not denote copper anymore. Please use 'Cu' for copper."
-        :Co
-    end
+    "Si" => :Si
 )
 
 
@@ -109,4 +105,11 @@ for key in keys(material_properties)
     if !haskey(materials, string(key))
         push!(materials, string(key) => key)
     end
+end
+
+function get_material_properties(s::String, material_properties = material_properties, materials = materials)::NamedTuple
+    !haskey(materials, "Co") && s == "Co" && # users might have added 'Co' themselves
+        throw(ConfigFileError("In v0.9.0, the material 'Co' does not denote copper anymore.\n"*
+            "Please use 'Cu', 'Copper' or 'copper' to define copper in the configuration file."))
+    material_properties[materials[s]]
 end
