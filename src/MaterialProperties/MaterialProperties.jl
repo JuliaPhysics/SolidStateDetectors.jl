@@ -54,8 +54,8 @@ material_properties[:Al] = (
 
 material_properties[:LAr] = (
     name = "liquid Argon",
-    E_ionisation = 0u"eV",
-    f_fano = 0.107,
+    E_ionisation = 26.0u"eV", # https://doi.org/10.1088/0370-1328/85/6/328
+    f_fano = 0.107, # https://doi.org/10.1016/0029-554X(76)90292-5
     ϵ_r = 1.505,
     ρ = 1.396u"g*cm^-3"
 )
