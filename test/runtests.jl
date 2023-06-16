@@ -123,6 +123,11 @@ T = Float32
         @info signalsum
         @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
+    @timed_testset "Deprecated symbol for Copper" begin # test until introducing cobalt to the SSD materials
+        config_file = SolidStateDetectors.parse_config_file(SSD_examples[:InvertedCoaxInCryostat])
+        config_file["detectors"][1]["passives"][1]["material"] = "Co"
+        @test_throws SolidStateDetectors.ConfigFileError sim = Simulation{T}(config_file)
+    end
     # @timed_testset "Simulate example detector: Coax" begin
     #     sim = Simulation{T}(SSD_examples[:Coax])
     #     timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
