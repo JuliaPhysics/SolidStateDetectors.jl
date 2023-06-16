@@ -60,7 +60,7 @@ material_properties[:LAr] = (
     ρ = 1.396u"g*cm^-3"
 )
 
-material_properties[:Co] = (
+material_properties[:Cu] = (
     name = "Copper",
     ϵ_r = 20,
     ρ = 8.96u"g*cm^-3"
@@ -80,12 +80,16 @@ materials = Dict{String, Symbol}(
     "HPGe" => :HPGe,
     "vacuum" => :Vacuum,
     "Vacuum" => :Vacuum,
-    "Copper" => :Co,
-    "copper" => :Co,
+    "Copper" => :Cu,
+    "copper" => :Cu,
     "Al"  => :Al,
     "LAr" => :LAr,
     "CZT" => :CdZnTe,
-    "Si" => :Si
+    "Si" => :Si,
+    "Co" => begin
+        @warn "In v0.9.0, the material 'Co' does not denote copper anymore. Please use 'Cu' for copper."
+        :Co
+    end
 )
 
 
