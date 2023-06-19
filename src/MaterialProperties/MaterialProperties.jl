@@ -97,11 +97,7 @@ materials = Dict{String, Symbol}(
     "Al"  => :Al,
     "LAr" => :LAr,
     "CZT" => :CdZnTe,
-    "Si" => :Si,
-    "Co" => begin
-        @warn "In v0.9.0, the material 'Co' does not denote copper anymore. Please use 'Cu' for copper."
-        :Co
-    end
+    "Si" => :Si
 )
 
 
