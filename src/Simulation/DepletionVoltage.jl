@@ -19,7 +19,103 @@ function _adapt_weighting_potential_to_electric_potential_grid!(sim::Simulation,
 end
 
 """
-    estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, field_sim_settings = (verbose = true,))::T
+    estimate_depletion_voltage(sim::Simulation{T},
+        Umin::T = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
+        Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
+        contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
+        tolerance::AbstractFloat = 1e-1,
+        verbose::Bool = true) where {T <: AbstractFloat}
+
+Estimates the potential needed to fully deplete the detector in a given [`Simulation`](@ref)
+at the [`Contact`](@ref) with id `contact_id` by bisection method.
+The default `contact_id` is determined automatically via `determine_bias_voltage_contact_id(sim.detector)`.
+The default searching range of potentials is set by the extrema of contact potentials.
+
+## Arguments 
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which the depletion voltage should be determined.
+* `Umin::T`: The minimum value of the searching range.
+* `Umax::T`: The maximum value of the searching range.
+    
+## Keywords
+* `contact_id::Int`: The `id` of the [`Contact`](@ref) at which the potential is applied.
+* `tolerance::AbstractFloat`: The acceptable accuracy of results. Default is 1e-1.
+* `verbose::Bool = true`: Activate or deactivate additional info output. Default is `true`.
+
+## Example
+```julia
+using SolidStateDetectors
+sim = Simulation(SSD_examples[:InvertedCoax])
+calculate_electric_potential!(sim)
+estimate_depletion_voltage(sim)
+```
+
+!!! note
+    The accuracy of the result depends on the precision of the initial simulation.
+
+!!! note
+    This function performs two 2D or 3D field calculations, depending on `sim`.\\
+    Thus, keep in mind that is might consume some memory. 
+    
+See also [`is_depleted`](@ref).
+
+"""
+function estimate_depletion_voltage(sim::Simulation{T},
+    Umin::T = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
+    Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
+    contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
+    tolerance::AbstractFloat = 1e-1,
+    verbose::Bool = true) where {T <: AbstractFloat}
+
+    @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim)`"
+    @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
+    @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
+    @assert abs(Umax - Umin) > tolerance "Umax - Umin < tolerance. Please change Umin, Umax or tolerance." 
+
+    if all(sim.q_eff_imp.data .== 0) && all(sim.q_eff_fix.data .== 0)
+        @warn "The detector seems to have no impurities. Therefore, the depletion voltage is 0 V"
+        return zero(T) * u"V"
+    end
+
+    potential_range::Tuple{T, T} = (Umin, Umax)
+    if verbose
+        @info "Looking for the depletion voltage applied to contact $(contact_id) "*
+        "in the range $(potential_range.*u"V")."
+    end  
+
+    simDV = deepcopy(sim)
+    if ismissing(simDV.weighting_potentials[contact_id]) || simDV.weighting_potentials[contact_id].grid != simDV.electric_potential.grid
+        _adapt_weighting_potential_to_electric_potential_grid!(simDV, contact_id)
+    end
+
+    # ϕρ is the electric potential resulting only from the impurity density
+    ϕρ = simDV.electric_potential.data
+    ϕV = simDV.weighting_potentials[contact_id].data   
+
+    ϕρ .-= simDV.detector.contacts[contact_id].potential .* ϕV
+
+    inside = findall(simDV.point_types .& 4 .> 0)
+    U::T = NaN
+
+    while Umax-Umin>tolerance
+        U = (Umax + Umin)/2    
+        if U>0
+            maximum(ϕρ[inside] .+ T(U) .* ϕV[inside]) - minimum(ϕρ[inside] .+ T(U) .* ϕV[inside]) < abs(U) ? Umax = U : Umin = U
+        else
+            maximum(ϕρ[inside] .+ T(U) .* ϕV[inside]) - minimum(ϕρ[inside] .+ T(U) .* ϕV[inside]) < abs(U) ? Umin = U : Umax = U
+        end        
+    end
+
+    if verbose
+        @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tolerance))))) ± $(tolerance) V applied to contact $(contact_id)."
+        if (potential_range[2] - U) < tolerance || (U - potential_range[1]) < tolerance
+            @warn "The depletion voltage is probably not in the specified range $(potential_range.*u"V")."
+        end
+    end
+    return U * u"V"
+end
+
+"""
+    old_estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, field_sim_settings = (verbose = true,))::T
 
 Estimates the full depletion voltage, U_D, of a detector in a given [`Simulation`](@ref).\\
 That is is the voltage to fully deplete the detector.\\
@@ -56,7 +152,7 @@ The following default settings are used for the field simulations performed in t
 ```julia  
 using SolidStateDetectors
 sim = Simulation(SSD_examples[:InvertedCoax])
-estimate_depletion_voltage(sim, field_sim_settings = (verbose = true,))
+old_estimate_depletion_voltage(sim, field_sim_settings = (verbose = true,))
 ```
 
 !!! note
@@ -68,7 +164,8 @@ estimate_depletion_voltage(sim, field_sim_settings = (verbose = true,))
     
 See also [`is_depleted`](@ref).
 """
-function estimate_depletion_voltage(
+
+function old_estimate_depletion_voltage(
         sim::Simulation{T,CS}, 
         field_sim_settings::NamedTuple = (verbose = false,);
         bias_voltage_contact_id::Int = determine_bias_voltage_contact_id(sim.detector)
@@ -108,14 +205,14 @@ function estimate_depletion_voltage(
     calculate_weighting_potential!(simDV, bias_voltage_contact_id; fss...)
     _adapt_weighting_potential_to_electric_potential_grid!(simDV, bias_voltage_contact_id)
     
-    estimate_depletion_voltage(
+    old_estimate_depletion_voltage(
         simDV.weighting_potentials[bias_voltage_contact_id],
         simDV.electric_potential,
         simDV.point_types, 
     )
 end
         
-function estimate_depletion_voltage(
+function old_estimate_depletion_voltage(
     zero_imp_ep::ScalarPotential{T}, 
     only_imp_ep::ScalarPotential{T}, 
     point_types::PointTypes

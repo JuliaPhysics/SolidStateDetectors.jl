@@ -120,7 +120,14 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
     
-    passives = []
+    # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
+    # They need to be in order (1, 2, ... , N), so throw an error if this is not the case.
+    if !all(getfield.(contacts, :id) .== eachindex(contacts))
+        ArgumentError("SolidStateDetectors.jl only supports contact IDs that are in order.\n
+            Please set the ID of the first contact to 1, the ID of the second contact to 2, etc.")
+    end
+    
+    passives = Passive{T}[]
     if haskey(config_detector, "passives") # "passives" as entry of "detectors"
         append!(passives, broadcast(p -> Passive{T}(p, input_units, transformations), config_detector["passives"]))
     end
@@ -178,8 +185,8 @@ function show(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(
 function print(io::IO, det::SolidStateDetector{T}) where {T <: SSDFloat} println(io, det) end
 function show(io::IO,::MIME"text/plain", det::SolidStateDetector{T}) where {T <: SSDFloat} show(io, det) end
 
-function determine_bias_voltage_contact_id(det::SolidStateDetector)
-    contact_potentials = Int[c.potential for c in det.contacts]
+function determine_bias_voltage_contact_id(det::SolidStateDetector{T}) where {T <: SSDFloat}
+    contact_potentials = T[c.potential for c in det.contacts]
     inds = findall(!iszero, contact_potentials)
     @assert length(inds) == 1 "Could not determine contact at which the bias voltage is applied as multiple contacts have non-zero contact potentials."
     inds[1]

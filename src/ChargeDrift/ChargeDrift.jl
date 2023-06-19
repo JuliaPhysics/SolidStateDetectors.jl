@@ -1,20 +1,20 @@
 struct DriftPath{T <: SSDFloat}
-    path::Vector{<:AbstractCoordinatePoint{RealQuantity}}
-    timestamps::Vector{RealQuantity}
+    path::Vector{CartesianPoint{T}}
+    timestamps::Vector{T}
 end
 
-struct EHDriftPath{T <: SSDFloat, TT <: RealQuantity}
-    e_path::Vector{<:AbstractCoordinatePoint{T}}
-    h_path::Vector{<:AbstractCoordinatePoint{T}}
-    timestamps_e::Vector{TT}
-    timestamps_h::Vector{TT}
+struct EHDriftPath{T <: SSDFloat}
+    e_path::Vector{CartesianPoint{T}}
+    h_path::Vector{CartesianPoint{T}}
+    timestamps_e::Vector{T}
+    timestamps_h::Vector{T}
 end
 
 abstract type ChargeCarrier end
 abstract type Electron <: ChargeCarrier end 
 abstract type Hole <: ChargeCarrier end
 
-function _common_time(dp::EHDriftPath{T, TT})::TT where {T <: SSDFloat, TT<:RealQuantity}
+function _common_time(dp::EHDriftPath{T})::T where {T <: SSDFloat}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
 _common_time(dps::Vector{<:EHDriftPath}) =
@@ -57,7 +57,7 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
         n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
     
         for i in eachindex(start_points)
-            drift_paths[drift_path_counter + i] = EHDriftPath{T, T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
+            drift_paths[drift_path_counter + i] = EHDriftPath{T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
         end
         
         drift_path_counter += n_hits
@@ -112,8 +112,8 @@ end
 function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if done[n] continue end
-        sinθ::T, cosθ::T = sincos(T(rand())*T(2π))
-        sinφ::T, cosφ::T = sincos(T(rand())*T(π))
+        sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
+        sinφ::T, cosφ::T = sincos(T(rand()*2π))
         step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
     end
     nothing 
@@ -149,18 +149,18 @@ _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::V
 
 function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Electron})::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
-       if !done[n]
-           step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm) * Δt
-       end
+        if !done[n]
+            step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm) * Δt
+        end
     end
     nothing
 end
 
 function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Hole})::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
-       if !done[n]
-           step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm) * Δt
-       end
+        if !done[n]
+            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm) * Δt
+        end
     end
     nothing
 end
@@ -256,32 +256,51 @@ function _drift_charge!(
     drift_path[:,1] = startpos
     timestamps[1] = zero(T)
     ϵ_r::T = T(det.semiconductor.material.ϵ_r)
-    
+
     diffusion_length::T = if diffusion
-        if CC == Electron
-            det.semiconductor.material.diffusion_fieldvector_electrons
-        else # CC == Hole
-            det.semiconductor.material.diffusion_fieldvector_holes
+        if CC == Electron && haskey(det.semiconductor.material, :De)
+            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s") * Δt)
+        elseif CC == Hole && haskey(det.semiconductor.material, :Dh)
+            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s") * Δt)
+        else 
+            @warn "Since v0.9.0, diffusion is modelled via diffusion coefficients `De` (for electrons) and `Dh` (for holes).\n" *
+                  "Please update your material properties and pass the diffusion coefficients as `De` and `Dh`.\n" *
+                  "You can update it in src/MaterialProperties/MaterialProperties.jl or by overwriting\n" *
+                  "`SolidStateDetectors.material_properties` in your julia session and reloading the simulation, e.g.\n
+                   SolidStateDetectors.material_properties[:HPGe] = (
+                      E_ionisation = 2.95u\"eV\",
+                      f_fano = 0.129,
+                      ϵ_r = 16.0,
+                      ρ = 5.323u\"g*cm^-3\",
+                      name = \"High Purity Germanium\",
+                      ml = 1.64,
+                      mt = 0.0819,
+                      De = 200u\"cm^2/s\", # new value 200cm^2/s 
+                      Dh = 200u\"cm^2/s\"  # new value 200cm^2/s
+                   )\n\n" *
+                  "More information can be found at:\n" *
+                  "https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/#Diffusion \n"
+            @info "Ignoring diffusion for now"
+            diffusion = false
+            zero(T)
         end
     else
         zero(T)
     end
-    
+
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
     
-    null_step::CartesianVector{T} = CartesianVector{T}(0, 0, 0)
-    
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
+        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
