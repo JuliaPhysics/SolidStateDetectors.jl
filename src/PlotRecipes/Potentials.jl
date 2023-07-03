@@ -1,21 +1,21 @@
-function _get_potential_plot_information(p::ElectricPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:viridis, (minimum(p.data), maximum(p.data)), "Electric Potential", internal_voltage_unit)
+function _get_potential_plot_information(p::ElectricPotential)::Tuple{Symbol, Tuple{Quantity, Quantity}, String, Unitful.Units}
+    return (:viridis, extrema(p.data).*internal_voltage_unit, "Electric Potential", internal_voltage_unit)
 end
 
-function _get_potential_plot_information(::WeightingPotential)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:viridis, (0, 1), "Weighting Potential", Unitful.NoUnits)
+function _get_potential_plot_information(::WeightingPotential{T})::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}
+    return (:viridis, (zero(T), one(T)), "Weighting Potential", Unitful.NoUnits)
 end
 
-function _get_potential_plot_information(ecd::EffectiveChargeDensity)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:inferno, (minimum(ecd.data), maximum(ecd.data)), "Effective Charge Density", u"V * m")
+function _get_potential_plot_information(ecd::EffectiveChargeDensity)::Tuple{Symbol, Tuple{Quantity, Quantity}, String, Unitful.Units}
+    return (:inferno, extrema(ecd.data).*u"V * m", "Effective Charge Density", u"V * m")
 end
 
-function _get_potential_plot_information(::PointTypes)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:viridis, (0, 7), "Point Type Map", Unitful.NoUnits)
+function _get_potential_plot_information(::PointTypes{T})::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}
+    return (:viridis, (zero(0), 7*one(T)), "Point Type Map", Unitful.NoUnits)
 end
 
-function _get_potential_plot_information(::ImpurityScale)::Tuple{Symbol, Tuple{Real, Real}, String, Unitful.Units}
-    return (:viridis, (0, 1), "Impurity Scale", Unitful.NoUnits)
+function _get_potential_plot_information(::ImpurityScale{T})::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}
+    return (:viridis, (zero(T), one(T)), "Impurity Scale", Unitful.NoUnits)
 end
 
 function get_crosssection_idx_and_value(grid::Grid, ::Any, ::Any, ::Any)
@@ -60,7 +60,7 @@ end
 
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
-    gradient::Symbol, clims::Tuple{Real, Real}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
+    gradient::Symbol, clims::Tuple{MaybeWithUnits{T},MaybeWithUnits{T}}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
     if !(sp.grid[2][end] - sp.grid[2][1] ≈ 2π) sp = get_2π_potential(sp, n_points_in_φ = 72) end
 
@@ -91,23 +91,27 @@ end
         if cross_section == :φ
             aspect_ratio --> 1
             xguide --> "r"
+            xunit --> internal_length_unit
+            xlims --> extrema(grid.r).*internal_length_unit
             yguide --> "z"
-            xlims --> (grid.r[1],grid.r[end])
-            ylims --> (grid.z[1],grid.z[end])
+            yunit --> internal_length_unit
+            ylims --> extrema(grid.z).*internal_length_unit
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(grid.z))
             if full_det
                 cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
                 extended_data =  cat(data[end:-1:2, idx_mirror, :]', data[:, idx, :]', dims = 2)
-                xlims := (-1*grid.r[end],grid.r[end])
+                xlims := (-1*grid.r[end],grid.r[end]).*internal_length_unit
                 vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data*punit
              else
                 midpoints(gr_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[:,idx,:]'*punit
             end
         elseif cross_section == :r
             xguide --> "φ"
+            xunit --> internal_angle_unit
             yguide --> "z"
-            ylims --> (grid.z[1],grid.z[end])
+            yunit --> internal_length_unit
+            ylims --> extrema(grid.z)*internal_length_unit
             grid.φ*internal_angle_unit, grid.z*internal_length_unit, data[idx,:,:]'*punit
         elseif cross_section == :z
             projection --> :polar
@@ -122,32 +126,20 @@ end
             seriescolor := :thermal
             seriestype := :contours
             unitformat --> :slash
-            #if cross_section == :φ
-                aspect_ratio --> 1
-                xguide := "r"
-                yguide := "z"
-                xlims --> (grid.r[1],grid.r[end])
-                ylims --> (grid.z[1],grid.z[end])
-                if full_det
-                    cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
-                    extended_data =  cat(data[end:-1:2, idx_mirror, :]', data[:, idx, :]', dims = 2)
-                    xlims := (-1*grid.r[end],grid.r[end])
-                    vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data.*punit
-                 else
-                    # midpoints(gr_ext), midpoints(gz_ext), data[:,idx,:]'*unit
-                    grid.r*internal_length_unit, grid.z*internal_length_unit, data[:,idx,:]'.*punit
-                end
-                #=
-            elseif cross_section == :r
-                xguide --> "φ / °"
-                yguide --> "z / m"
-                ylims --> (grid.z[1],grid.z[end])
-                grid.φ, grid.z, data[idx,:,:]'
-            elseif cross_section == :z
-                projection --> :polar
-                grid.φ, grid.r, data[:,:,idx]
+            aspect_ratio --> 1
+            xguide := "r"
+            yguide := "z"
+            xlims --> extrema(grid.r).*internal_length_unit
+            ylims --> extrema(grid.z).*internal_length_unit
+            if full_det
+                cross_section_dummy, idx_mirror, value_dummy = get_crosssection_idx_and_value(grid, missing, value+180, missing)
+                extended_data =  cat(data[end:-1:2, idx_mirror, :]', data[:, idx, :]', dims = 2)
+                xlims := (-last(grid.r),last(grid.r)).*internal_length_unit
+                vcat(-1 .* grid.r[end:-1:2], grid.r)*internal_length_unit, grid.z*internal_length_unit, extended_data.*punit
+             else
+                # midpoints(gr_ext), midpoints(gz_ext), data[:,idx,:]'*unit
+                grid.r*internal_length_unit, grid.z*internal_length_unit, data[:,idx,:]'.*punit
             end
-            =#
         end
     end
 end
@@ -175,14 +167,18 @@ end
         if cross_section == :φ
             aspect_ratio --> 1
             xguide --> "r"
+            xunit --> internal_length_unit
             yguide --> "z"
-            xlims --> (grid.r[2],grid.r[end-1])
-            ylims --> (grid.z[2],grid.z[end-1])
+            yunit --> internal_length_unit
+            xlims --> (grid.r[2],grid.r[end-1]).*internal_length_unit
+            ylims --> (grid.z[2],grid.z[end-1]).*internal_length_unit
             gr_ext*internal_length_unit, gz_ext*internal_length_unit, ϵ.data[:,idx,:]'
         elseif cross_section == :r
             xguide --> "φ"
+            xunit --> internal_angle_unit
             yguide --> "z"
-            ylims --> (grid.z[2],grid.z[end-1])
+            yunit --> internal_length_unit
+            ylims --> (grid.z[2],grid.z[end-1]).*internal_length_unit
             gφ_ext*internal_angle_unit, gz_ext*internal_length_unit, ϵ.data[idx,:,:]'
         elseif cross_section == :z
             projection --> :polar
@@ -214,7 +210,7 @@ end
 
 @recipe function f(sp::ScalarPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
     
-    gradient::Symbol, clims::Tuple{Real, Real}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
+    gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
     grid::CartesianGrid3D{T} = sp.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
@@ -239,12 +235,14 @@ end
         foreground_color_border --> nothing
         tick_direction --> :out
         unitformat --> :slash
+        xunit --> internal_length_unit
+        yunit --> internal_length_unit
         if cross_section == :x
             aspect_ratio --> 1
             xguide --> "y"
             yguide --> "z"
-            xlims --> (grid.y[1],grid.y[end])
-            ylims --> (grid.z[1],grid.z[end])
+            xlims --> extrema(grid.y).*internal_length_unit
+            ylims --> extrema(grid.z).*internal_length_unit
             gy_ext = midpoints(get_extended_ticks(grid.y))
             gz_ext = midpoints(get_extended_ticks(grid.z))
             midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[idx,:,:]'*punit
@@ -252,8 +250,8 @@ end
             aspect_ratio --> 1
             xguide --> "x"
             yguide --> "z"
-            xlims --> (grid.x[1],grid.x[end])
-            ylims --> (grid.z[1],grid.z[end])
+            xlims --> extrema(grid.x).*internal_length_unit
+            ylims --> extrema(grid.z).*internal_length_unit
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gz_ext = midpoints(get_extended_ticks(grid.z))
             midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[:,idx,:]'*punit
@@ -261,8 +259,8 @@ end
             aspect_ratio --> 1
             xguide --> "x"
             yguide --> "y"
-            xlims --> (grid.x[1],grid.x[end])
-            ylims --> (grid.y[1],grid.y[end])
+            xlims --> extrema(grid.x).*internal_length_unit
+            ylims --> extrema(grid.y).*internal_length_unit
             gx_ext = midpoints(get_extended_ticks(grid.x))
             gy_ext = midpoints(get_extended_ticks(grid.y))
             midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, data[:,:,idx]'*punit
@@ -276,26 +274,14 @@ end
             aspect_ratio --> 1
             unitformat --> :slash
             if cross_section == :x
-                xguide --> "y"
-                yguide --> "z"
-                xlims --> (grid.y[1],grid.y[end])
-                ylims --> (grid.z[1],grid.z[end])
                 gy_ext = midpoints(get_extended_ticks(grid.y))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
                 midpoints(gy_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[idx,:,:]'*punit
             elseif cross_section == :y
-                xguide --> "x"
-                yguide --> "z"
-                xlims --> (grid.x[1],grid.x[end])
-                ylims --> (grid.z[1],grid.z[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gz_ext = midpoints(get_extended_ticks(grid.z))
                 midpoints(gx_ext)*internal_length_unit, midpoints(gz_ext)*internal_length_unit, data[:,idx,:]'*punit
             elseif cross_section == :z
-                xguide --> "x"
-                yguide --> "y"
-                xlims --> (grid.x[1],grid.x[end])
-                ylims --> (grid.y[1],grid.y[end])
                 gx_ext = midpoints(get_extended_ticks(grid.x))
                 gy_ext = midpoints(get_extended_ticks(grid.y))
                 midpoints(gx_ext)*internal_length_unit, midpoints(gy_ext)*internal_length_unit, data[:,:,idx]'*punit
@@ -322,26 +308,28 @@ end
 
     @series begin
         unitformat --> :slash
+        xunit --> internal_length_unit
+        yunit --> internal_length_unit
         if cross_section == :x
             aspect_ratio --> 1
             xguide --> "y"
             yguide --> "z"
-            xlims --> (grid.y[1],grid.y[end])
-            ylims --> (grid.z[1],grid.z[end])
+            xlims --> extrema(grid.y).*internal_length_unit
+            ylims --> extrema(grid.z).*internal_length_unit
             gy_ext*internal_length_unit, gz_ext*internal_length_unit, ϵ.data[idx,:,:]'
         elseif cross_section == :y
             aspect_ratio --> 1
             xguide --> "x"
             yguide --> "z"
-            xlims --> (grid.x[1],grid.x[end])
-            ylims --> (grid.z[1],grid.z[end])
+            xlims --> extrema(grid.x).*internal_length_unit
+            ylims --> extrema(grid.z).*internal_length_unit
             gx_ext*internal_length_unit, gz_ext*internal_length_unit, ϵ.data[:,idx,:]'
         elseif cross_section == :z
             aspect_ratio --> 1
             xguide --> "x"
             yguide --> "y"
-            xlims --> (grid.x[1],grid.x[end])
-            ylims --> (grid.y[1],grid.y[end])
+            xlims --> extrema(grid.x).*internal_length_unit
+            ylims --> extrema(grid.y).*internal_length_unit
             gx_ext*internal_length_unit, gy_ext*internal_length_unit, ϵ.data[:,:,idx]'
         end
     end

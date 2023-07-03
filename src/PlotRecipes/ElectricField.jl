@@ -16,7 +16,7 @@
     unitformat --> :slash
 
     ef_magn = norm.(ef)
-    ElectricPotential(ef_magn, grid),  cross_section, idx, value, internal_efield_unit, contours_equal_potential, full_det
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential, full_det
 end
 
 @recipe function f(ef::ElectricField{T, 3, Cartesian};
