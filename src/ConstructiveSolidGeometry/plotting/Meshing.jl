@@ -32,8 +32,11 @@ end
 @recipe function f(m::Mesh{T}) where {T}
     seriestype := :mesh3d
     xguide --> "x"
+    xunit --> internal_length_unit
     yguide --> "y"
+    yunit --> internal_length_unit
     zguide --> "z"
+    zunit --> internal_length_unit
     unitformat --> :slash
     label --> ""
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))

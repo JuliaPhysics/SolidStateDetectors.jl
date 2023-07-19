@@ -102,7 +102,8 @@ estimate_depletion_voltage(sim)
 
 calculate_electric_field!(sim, n_points_in_φ = 72)
 
-plot(sim.electric_field, full_det = true, φ = 0.0, size = (700, 700))
+plot(sim.electric_field, full_det = true, φ = 0.0, size = (700, 700), 
+    xunit = u"mm", yunit = u"mm", zunit = u"V/mm", clims = (0,800).*u"V/mm")
 plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 #jl savefig("tutorial_electric_field.pdf") # hide
 #md savefig("tutorial_electric_field.pdf") # hide
