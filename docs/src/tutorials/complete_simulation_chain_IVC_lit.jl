@@ -7,7 +7,7 @@ using Unitful
 T = Float32
 sim = Simulation{T}(SSD_examples[:InvertedCoax])
 
-plot(sim.detector, size = (700, 700))
+plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm", size = (700, 700))
 #jl savefig("tutorial_det.pdf") # hide
 #md savefig("tutorial_det.pdf") # hide
 #md savefig("tutorial_det.svg"); nothing # hide
@@ -134,7 +134,7 @@ evt = Event(starting_positions, energy_depos);
 time_step = 5u"ns"
 drift_charges!(evt, sim, Δt = time_step)
 
-plot(sim.detector, size = (700, 700))
+plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm", size = (700, 700))
 plot!(evt.drift_paths)
 #jl savefig("tutorial_drift_paths.pdf") # hide
 #md savefig("tutorial_drift_paths.pdf") # hide
