@@ -2,14 +2,17 @@
     seriestype --> :csg
     linecolor --> :silver
     seriescolor --> :silver
+    xunit --> internal_length_unit
+    yunit --> internal_length_unit
+    zunit --> internal_length_unit
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
         #add empty line so that label is shown with alpha = 1
-        seriestype := :path
+        seriestype := :path3d
         label --> l
         linewidth := 1
-        T[], T[]
+        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
     end 
     label := ""
     p.geometry
@@ -19,12 +22,15 @@ end
     seriestype --> :csg
     linecolor --> :grey
     seriescolor --> :grey
+    xunit --> internal_length_unit
+    yunit --> internal_length_unit
+    zunit --> internal_length_unit
     @series begin
         #add empty line so that label is shown with alpha = 1
-        seriestype := :path
+        seriestype := :path3d
         label --> "Semiconductor"
         linewidth := 1
-        T[], T[]
+        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
     end 
     label := ""
     sc.geometry
@@ -34,6 +40,9 @@ end
     seriestype --> :csg
     seriescolor --> contact.id
     linecolor --> contact.id
+    xunit --> internal_length_unit
+    yunit --> internal_length_unit
+    zunit --> internal_length_unit
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     @series begin
@@ -41,7 +50,7 @@ end
         seriestype := :path
         label --> l
         linewidth := 1
-        T[], T[]
+        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
     end 
     label := ""
     contact.geometry
@@ -50,6 +59,9 @@ end
 @recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 40)
 
     show_normal --> false
+    xunit --> internal_length_unit
+    yunit --> internal_length_unit
+    zunit --> internal_length_unit
     
     plot_objects = []
     append!(plot_objects, det.contacts)
