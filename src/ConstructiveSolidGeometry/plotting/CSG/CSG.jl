@@ -1,8 +1,8 @@
-primitives(vp::AbstractVolumePrimitive) = (vp,)
-function primitives(csg::AbstractConstructiveGeometry)
+@inline primitives(vp::AbstractVolumePrimitive) = (vp,)
+@inline function primitives(csg::AbstractConstructiveGeometry)
     (
-        (@inline primitives(csg.a))...,
-        (@inline primitives(csg.b))...
+        primitives(csg.a)...,
+        primitives(csg.b)...
     )
 end
 
