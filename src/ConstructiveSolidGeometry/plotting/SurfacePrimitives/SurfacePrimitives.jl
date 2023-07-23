@@ -5,7 +5,11 @@
 #include("Polygon.jl")
 #include("TorusMantle.jl")
 
-@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40) where {T}
+@recipe function f(s::Plane)
+    throw(ArgumentError("No plot recipe defined for Plane."))
+end
+
+@recipe function f(s::AbstractSurfacePrimitive; n_arc = 40, n_vert_lines = 2, n_samples = 40)
     seriestype --> :csg
     l = get_label_name(s)
     if haskey(plotattributes, :seriestype) 

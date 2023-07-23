@@ -1,13 +1,16 @@
-primitives(vp::AbstractVolumePrimitive) = (vp,)
-function primitives(csg::AbstractConstructiveGeometry)
-    ps = []
-    push!(ps, primitives(csg.a)...)
-    push!(ps, primitives(csg.b)...)
-    ps
+@inline primitives(vp::AbstractVolumePrimitive) = (vp,)
+@inline function primitives(csg::AbstractConstructiveGeometry)
+    (
+        primitives(csg.a)...,
+        primitives(csg.b)...
+    )
 end
 
 @recipe function f(csg::AbstractConstructiveGeometry{T}; n_samples = 40, CSG_scale = missing) where {T}
     seriestype --> :csg
+    xunit --> internal_length_unit
+    yunit --> internal_length_unit
+    zunit --> internal_length_unit
     ps = primitives(csg)
     if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
         spacing::T = T((ismissing(CSG_scale) ? get_scale(csg) : CSG_scale)/n_samples)
