@@ -12,7 +12,9 @@ const internal_voltage_unit = u"V"
 const internal_energy_unit  = u"eV"
 const internal_efield_unit  = internal_voltage_unit / internal_length_unit
 const internal_charge_unit  = u"C"
-const internal_diffusion_unit = u"m^2/s"
+const internal_diffusion_unit = internal_length_unit ^ 2 / internal_time_unit
+const internal_charge_density_unit = internal_charge_unit / internal_length_unit ^ 3
+
 const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
 to_internal_units(x::Quantity{<:Real, dimension(internal_time_unit)})    = ustrip(uconvert(internal_time_unit,    x))
@@ -21,6 +23,7 @@ to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})   = ustr
 to_internal_units(x::Quantity{<:Real, dimension(internal_energy_unit)})  = ustrip(uconvert(internal_energy_unit,  x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustrip(uconvert(internal_charge_unit,  x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = ustrip(uconvert(internal_diffusion_unit,  x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(uconvert(internal_charge_density_unit,  x))
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
