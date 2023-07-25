@@ -18,13 +18,13 @@ const internal_charge_density_unit = internal_charge_unit / internal_length_unit
 const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
 to_internal_units(x::Quantity{<:Real}) = throw(ArgumentError("Unit $(unit(x)) unknown to SolidStateDetectors.jl"))
-to_internal_units(x::Quantity{<:Real, dimension(internal_time_unit)})    = ustrip(uconvert(internal_time_unit,    x))
-to_internal_units(x::Quantity{<:Real, dimension(internal_voltage_unit)}) = ustrip(uconvert(internal_voltage_unit, x))
-to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})   = ustrip(uconvert(internal_efield_unit,  x))
-to_internal_units(x::Quantity{<:Real, dimension(internal_energy_unit)})  = ustrip(uconvert(internal_energy_unit,  x))
-to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustrip(uconvert(internal_charge_unit,  x))
-to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = ustrip(uconvert(internal_diffusion_unit,  x))
-to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(uconvert(internal_charge_density_unit,  x))
+to_internal_units(x::Quantity{<:Real, dimension(internal_time_unit)})    = ustrip(internal_time_unit,    x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_voltage_unit)}) = ustrip(internal_voltage_unit, x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})  = ustrip(internal_efield_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_energy_unit)})  = ustrip(internal_energy_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustrip(internal_charge_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = ustrip(internal_diffusion_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(internal_charge_density_unit,  x)
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
