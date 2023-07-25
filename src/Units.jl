@@ -17,6 +17,7 @@ const internal_charge_density_unit = internal_charge_unit / internal_length_unit
 
 const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
+to_internal_units(x::Quantity{<:Real}) = throw(ArgumentError("Unit $(unit(x)) unknown to SolidStateDetectors.jl"))
 to_internal_units(x::Quantity{<:Real, dimension(internal_time_unit)})    = ustrip(uconvert(internal_time_unit,    x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_voltage_unit)}) = ustrip(uconvert(internal_voltage_unit, x))
 to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})   = ustrip(uconvert(internal_efield_unit,  x))
