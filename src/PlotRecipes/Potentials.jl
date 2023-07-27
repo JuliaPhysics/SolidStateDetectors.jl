@@ -7,7 +7,7 @@ function _get_potential_plot_information(::WeightingPotential{T})::Tuple{Symbol,
 end
 
 function _get_potential_plot_information(ecd::EffectiveChargeDensity)::Tuple{Symbol, Tuple{Quantity, Quantity}, String, Unitful.Units}
-    return (:inferno, extrema(ecd.data).*u"V * m", "Effective Charge Density", u"V * m")
+    return (:inferno, extrema(ecd.data).*u"V/m^2", "Effective Charge Density", u"V/m^2")
 end
 
 function _get_potential_plot_information(::PointTypes{T})::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}

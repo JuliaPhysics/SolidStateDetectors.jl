@@ -309,7 +309,7 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
     
     @assert !ismissing(evt.drift_paths) "The charge drift is not yet simulated. Please use `drift_charges!(evt, sim)`!"
     
-    dt::T = T(ustrip(uconvert(u"ns", diff(evt.drift_paths[1].timestamps_e)[1]*u"s")))
+    dt::T = T(ustrip(u"ns", diff(evt.drift_paths[1].timestamps_e)[1]*u"s"))
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     signal_e::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_e, evt.drift_paths))))
     signal_h::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_h, evt.drift_paths))))

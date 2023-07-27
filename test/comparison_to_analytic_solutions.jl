@@ -95,9 +95,9 @@ end
 
     # Analytical solutions for the elements of the capacitance matrix:
     function c_ii(r1, r2, d; n = 10)
-        r1 = ustrip(uconvert(u"m", r1))
-        r2 = ustrip(uconvert(u"m", r2))
-        d  = ustrip(uconvert(u"m", d))
+        r1 = ustrip(u"m", r1)
+        r2 = ustrip(u"m", r2)
+        d  = ustrip(u"m", d)
         c = 0
         F = 4π*ϵ0 * 1u"m"
         u = acosh((d^2 - r1^2 - r2^2) / (2*r1*r2))
@@ -107,9 +107,9 @@ end
         uconvert(u"pF", F * r1 * r2 * sinh(u) * c)
     end
     function c_ij(r1, r2, d; n = 10)
-        r1 = ustrip(uconvert(u"m", r1))
-        r2 = ustrip(uconvert(u"m", r2))
-        d  = ustrip(uconvert(u"m", d))
+        r1 = ustrip(u"m", r1)
+        r2 = ustrip(u"m", r2)
+        d  = ustrip(u"m", d)
         c = 0
         F = 4π*ϵ0 * 1u"m"
         u = acosh((d^2 - r1^2 - r2^2) / (2*r1*r2))

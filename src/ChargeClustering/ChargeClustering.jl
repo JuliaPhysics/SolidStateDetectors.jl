@@ -21,7 +21,7 @@ function cluster_detector_hits(
     r_pos = similar(pos, 0)
 
     posunit = unit(PT)
-    ustripped_cradius = ustrip(uconvert(posunit, cluster_radius))
+    ustripped_cradius = ustrip(posunit, cluster_radius)
     
     for d_hits_nt in grouped
         d_hits = Table(d_hits_nt)
