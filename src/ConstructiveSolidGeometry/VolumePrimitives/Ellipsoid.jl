@@ -71,8 +71,8 @@ end
 
 function Ellipsoid(::Type{CO}=ClosedPrimitive;
     r = 1, 
-    origin = zero(CartesianPoint{Int64}), 
-    rotation = one(SMatrix{3, 3, Int64, 9})
+    origin = zero(CartesianPoint{Int}), 
+    rotation = one(SMatrix{3, 3, Int, 9})
 ) where {CO}
     Ellipsoid(CO, r, origin, rotation)
 end

@@ -105,7 +105,7 @@ function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint
             CartesianVector(CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz))), cm)
 end
 
-function vertices(cm::ConeMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+function vertices(cm::ConeMantle{T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(cm)
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
     φ = range(φMin, φMax, length = n_arc+1)
@@ -127,12 +127,12 @@ function sample(cm::ConeMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where 
     [_transform_into_global_coordinate_system(CartesianPoint{T}((radius_at_z(cm,z) .* reverse(sincos(φ)))..., z), cm) for z in z for r in [radius_at_z(cm,z)] for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/radius_at_z(cm,z), length = max(2,1+Int(ceil(Δφ*radius_at_z(cm,z)/spacing)))))]
 end
 
-function connections(cm::ConeMantle, n_arc::Int64)::Vector{Vector{Int64}} 
+function connections(cm::ConeMantle, n_arc::Int)::Vector{Vector{Int}} 
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
     [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
 
-function connections(cm::ConeMantle, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} 
+function connections(cm::ConeMantle, n_arc::Int, n_vert_lines::Int)::Vector{Vector{Int}} 
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
     verts = [[i, i + n_arc + 1] for i in _get_vert_lines_range(cm,n_arc,n_vert_lines)]
     circ1 =  [[i, i + 1] for i in 1:n_arc]

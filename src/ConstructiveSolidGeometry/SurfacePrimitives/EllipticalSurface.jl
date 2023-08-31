@@ -74,14 +74,14 @@ Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, normal(es))
 normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) where {T} = 
     _transform_into_global_coordinate_system(CartesianVector{T}(zero(T), zero(T), one(T)), es)
 
-function vertices(es::EllipticalSurface{T, T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+function vertices(es::EllipticalSurface{T, T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(es)
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
     φ = range(φMin, φMax, length = n_arc+1)
     append!([es.origin],[_transform_into_global_coordinate_system(CartesianPoint{T}(es.r*cos(φ), es.r*sin(φ), 0), es) for φ in φ])
 end
 
-function vertices(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+function vertices(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
     rMin, rMax = es.r
     φMin, φMax = get_φ_limits(es)
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
@@ -97,24 +97,24 @@ function sample(es::EllipticalSurface{T}, spacing::T)::Vector{CartesianPoint{T}}
     [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in range(rMin, rMax, length = max(2,1+Int(ceil((rMax-rMin)/spacing)))) for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/r, length = max(2,1+Int(ceil(Δφ*r/spacing)))))]
 end
 
-function connections(es::EllipticalSurface{T, T}, n_arc::Int64)::Vector{Vector{Int64}} where {T}
+function connections(es::EllipticalSurface{T, T}, n_arc::Int)::Vector{Vector{Int}} where {T}
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
     [[1,i,i+1] for i in 2:n_arc+1]
 end
 
-function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64)::Vector{Vector{Int64}} where {T}
+function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int)::Vector{Vector{Int}} where {T}
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
     [[i,i+1,i+n_arc+2,i+n_arc+1] for i in 1:n_arc]
 end
 
-function connections(es::EllipticalSurface{T, T}, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+function connections(es::EllipticalSurface{T, T}, n_arc::Int, n_vert_lines::Int)::Vector{Vector{Int}} where {T}
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
     radii = [[1, i + 1] for i in _get_vert_lines_range(es,n_arc,n_vert_lines)]
     circ =  [[i, i+1] for i in 2:n_arc+1]
     append!(radii, circ)
 end
 
-function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+function connections(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int, n_vert_lines::Int)::Vector{Vector{Int}} where {T}
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
     radii = [[i, i + n_arc + 1] for i in _get_vert_lines_range(es,n_arc,n_vert_lines)]
     circ1 =  [[i, i + 1] for i in 1:n_arc]

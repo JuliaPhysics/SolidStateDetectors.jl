@@ -12,17 +12,17 @@ struct Mesh{T}
     x::Vector{T}
     y::Vector{T}
     z::Vector{T}
-    connections::Vector{Vector{Int64}}
+    connections::Vector{Vector{Int}}
 end
 
-function mesh(p::AbstractSurfacePrimitive{T}, n_arc::Int64)::Mesh{T} where {T}
+function mesh(p::AbstractSurfacePrimitive{T}, n_arc::Int)::Mesh{T} where {T}
     vs = vertices(p, n_arc)
     x, y, z = broadcast(i -> getindex.(vs, i), (1,2,3))
     c = connections(p, n_arc)
     Mesh{T}(x,y,z,c)
 end
 
-function mesh(p::AbstractSurfacePrimitive{T}, n_arc::Int64, n_vert_lines::Int64)::Mesh{T} where {T}
+function mesh(p::AbstractSurfacePrimitive{T}, n_arc::Int, n_vert_lines::Int)::Mesh{T} where {T}
     vs = vertices(p, n_arc)
     x, y, z = broadcast(i -> getindex.(vs, i), (1,2,3))
     c = connections(p, n_arc, n_vert_lines)
