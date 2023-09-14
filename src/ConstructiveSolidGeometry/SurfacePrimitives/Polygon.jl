@@ -19,7 +19,7 @@ const Quadrangle{T} = Polygon{4, T}
 normal(p::Polygon) = normalize((p.points[2] - p.points[1]) × (p.points[3] - p.points[1]))
 
 vertices(p::Polygon) = p.points
-vertices(p::Polygon, n::Int64) = vertices(p)
+vertices(p::Polygon, n::Int) = vertices(p)
 
 function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianPoint{T}} where {T}
     push = spacing/2.5#best value for not showing triangle edges
@@ -42,7 +42,7 @@ function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianP
 end
 
 triangles(p::Polygon{N,T}) where {N,T} = [Triangle{T}([p.points[1], p.points[i], p.points[i+1]]) for i in 2:N-1]
-triangles(p::Polygon, n_arc::Int64) = triangles(p)
+triangles(p::Polygon, n_arc::Int) = triangles(p)
 
 function sample(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N,T}
     v = [s for e in edges(p) for s in sample(e,n=max(2,Int(ceil(norm(e.b-e.a)/spacing))))]
@@ -58,8 +58,8 @@ function extremum(p::Polygon{N,T})::T where {N,T}
 end
 
 connections(p::Polygon{N}) where {N} = [collect(1:N)]
-connections(p::Polygon, ::Int64) = connections(p)
-connections(p::Polygon{N}, ::Int64, ::Int64) where {N} = [[i%N+1, (i+1)%N+1] for i in 0:N-1]
+connections(p::Polygon, ::Int) = connections(p)
+connections(p::Polygon{N}, ::Int, ::Int) where {N} = [[i%N+1, (i+1)%N+1] for i in 0:N-1]
 get_label_name(::Polygon) = "Polygon"
 
 extreme_points(p::Polygon) = p.points

@@ -95,7 +95,7 @@ function normal(tm::TorusMantle{T,TP,TT,:outwards}, pt::CartesianPoint{T})::Cart
 end
 normal(tm::TorusMantle{T,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TP,TT} = -normal(flip(tm), pt)
 
-function vertices(tm::TorusMantle{T}, n_arc::Int64)::Vector{CartesianPoint{T}} where {T}
+function vertices(tm::TorusMantle{T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(tm)
     θMin, θMax = get_θ_limits(tm)
     n_arcφ = _get_n_points_in_arc_φ(tm, n_arc) 
@@ -118,13 +118,13 @@ function sample(tm::TorusMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where
 	[_transform_into_global_coordinate_system(CartesianPoint{T}((tm.r_torus + tm.r_tube*cos(θ))*cos(φ), (tm.r_torus + tm.r_tube*cos(θ))*sin(φ), tm.r_tube*sin(θ)), tm) for θ in range(θMin, θMax - full2πθ*spacing/tm.r_tube, length = max(2,1+Int(ceil(Δθ*tm.r_tube/spacing)))) for φ in range(φMin, φMax - full2πφ*spacing/(tm.r_torus + tm.r_tube*cos(θ)), length = max(2,1+Int(ceil(Δφ*(tm.r_torus + tm.r_tube*cos(θ))/spacing))))]
 end
 
-function connections(tm::TorusMantle, n_arc::Int64)::Vector{Vector{Int64}}
+function connections(tm::TorusMantle, n_arc::Int)::Vector{Vector{Int}}
     n_arcφ = _get_n_points_in_arc_φ(tm, n_arc) 
     n_arcθ = _get_n_points_in_arc_θ(tm, n_arc)
     [[i+(n_arcφ+1)*j,i+1+(n_arcφ+1)*j,i+1+(n_arcφ+1)*(j+1),i+(n_arcφ+1)*(j+1)] for j in 0:n_arcθ-1 for i in 1:n_arcφ]
 end
 
-function _get_hor_lines_idx(tm::TorusMantle{T}, n_arcθ::Int64)::Vector{Int64} where {T}
+function _get_hor_lines_idx(tm::TorusMantle{T}, n_arcθ::Int)::Vector{Int} where {T}
     θMin, θMax = get_θ_limits(tm) 
     if mod(θMax-θMin, T(2π)) == 0 
         l_0 = Int(floor(abs(θMin/(θMax-θMin))*n_arcθ)) + 1
@@ -135,7 +135,7 @@ function _get_hor_lines_idx(tm::TorusMantle{T}, n_arcθ::Int64)::Vector{Int64} w
     end
 end
 
-function connections(tm::TorusMantle{T}, n_arc::Int64, n_vert_lines::Int64)::Vector{Vector{Int64}} where {T}
+function connections(tm::TorusMantle{T}, n_arc::Int, n_vert_lines::Int)::Vector{Vector{Int}} where {T}
     n_arcφ = _get_n_points_in_arc_φ(tm, n_arc) 
     n_arcθ = _get_n_points_in_arc_θ(tm, n_arc)
     vcircs = [[i*(n_arcφ+1)+c, (i+1)*(n_arcφ+1)+c] for c in _get_vert_lines_range(tm,n_arcφ,n_vert_lines) for i in 0:n_arcθ-1]

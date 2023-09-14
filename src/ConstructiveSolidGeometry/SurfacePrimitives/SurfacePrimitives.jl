@@ -12,19 +12,19 @@ include("TorusMantle.jl")
 # but the normal method is generally called with a point.
 normal(p::AbstractPlanarSurfacePrimitive, ::AbstractCoordinatePoint) = normal(p)
 
-function _get_n_points_in_arc_φ(p::AbstractSurfacePrimitive{T}, n_arc::Int64)::Int64 where {T}
+function _get_n_points_in_arc_φ(p::AbstractSurfacePrimitive{T}, n_arc::Int)::Int where {T}
     φMin, φMax = get_φ_limits(p)
     f = (φMax - φMin)/T(2π)
     Int(ceil(n_arc*f))
 end
 
-function _get_n_points_in_arc_θ(p::AbstractSurfacePrimitive{T}, n_arc::Int64)::Int64 where {T}
+function _get_n_points_in_arc_θ(p::AbstractSurfacePrimitive{T}, n_arc::Int)::Int where {T}
     θMin, θMax = get_θ_limits(p)
     f = (θMax - θMin)/T(2π)
     Int(ceil(n_arc*f))
 end
 
-function _get_vert_lines_range(p::AbstractSurfacePrimitive{T}, n_arc::Int64, n_vert_lines::Int64)::Vector{Int64} where {T}
+function _get_vert_lines_range(p::AbstractSurfacePrimitive{T}, n_arc::Int, n_vert_lines::Int)::Vector{Int} where {T}
     φMin, φMax = get_φ_limits(p) 
     if mod(φMax-φMin, T(2π)) == 0 
         if n_vert_lines == 0 

@@ -7,7 +7,7 @@ config_dict = Dict(
     "Silicon" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_Si_300K_config.yaml")
 )
 
-geom_sigdigits(::Type{Int64})::Int = 12
+geom_sigdigits(::Type{Int})::Int = 12
 geom_sigdigits(::Type{Float32})::Int = 6
 geom_sigdigits(::Type{Float64})::Int = 12
 
