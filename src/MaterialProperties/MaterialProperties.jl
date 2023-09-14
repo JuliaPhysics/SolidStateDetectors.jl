@@ -42,7 +42,9 @@ material_properties[:Si] = (
     ρ = 2.3290u"g*cm^-3",
     name = "Silicon",
     mt = 0.98,
-    ml = 0.19
+    ml = 0.19,
+    De = 39u"cm^2/s",
+    Dh = 12u"cm^2/s"
 )
 
 material_properties[:Al] = (
