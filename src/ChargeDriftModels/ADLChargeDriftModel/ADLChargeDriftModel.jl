@@ -238,6 +238,8 @@ function ADLChargeDriftModel(configfilename::Union{Missing, AbstractString} = mi
                 temperaturemodel = PowerLawModel{T}(config, temperature = temperature)
             elseif model == "Boltzmann"
                 temperaturemodel = BoltzmannModel{T}(config, temperature = temperature)
+            elseif model == "SquareRoot"
+                temperaturemodel = SquareRootModel{T}(config, temperature = temperature)
             else
                 temperaturemodel = VacuumModel{T}(config)
                 println("Config File does not suit any of the predefined temperature models. The drift velocity will not be rescaled.")
@@ -276,7 +278,7 @@ end
 
         if Emag < Emag_threshold return SVector{3,T}(0, 0, 0) end
 
-        f::NTuple{4,T} = scale_to_given_temperature(cdm.temperaturemodel)
+        f::NTuple{4,T} = scale_to_given_temperature(Emag, cdm.temperaturemodel)
         f100e::T = f[1]
         f111e::T = f[2]
         V100e::T = Vl(Emag, cdm.electrons.axis100) * f100e
@@ -329,7 +331,7 @@ end
 
         if Emag < Emag_threshold return SVector{3,T}(0, 0, 0) end
 
-        f::NTuple{4,T} = scale_to_given_temperature(cdm.temperaturemodel)
+        f::NTuple{4,T} = scale_to_given_temperature(Emag, cdm.temperaturemodel)
         f100h::T = f[3]
         f111h::T = f[4]
 
