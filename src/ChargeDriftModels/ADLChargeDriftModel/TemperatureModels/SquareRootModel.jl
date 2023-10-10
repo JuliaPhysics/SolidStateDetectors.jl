@@ -11,7 +11,7 @@ field strength, ``E``, was proposed by [M.Ali Omar, Lino Reggiani](https://www.s
 ```math
 v_l(T) = v_l(T_0)f(T)/f(T_0) 
 ```
-where v_l(T_0) is a known velocity at reference temperature ``T_0```. The temperature dependence, ``f(T)``,  is parametrized as:
+where v_l(T_0) is a known velocity at reference temperature ``T_0``. The temperature dependence, ``f(T)``,  is parametrized as:
 ```math
 f(T) =  V_s(T)\frac{E/E_c(T)}{(1 + (E/E_c(T))^2)^{1/2}}
 ```
