@@ -36,10 +36,10 @@ function add_fano_noise(rng::AbstractRNG, E_dep::RealQuantity, E_ionisation::Rea
     # dist = Distributions.Poisson(n_expected)
     # n_observed = n_expected + f_fano * (rand(dist) - n_expected)
 
-    # Use normal distribution instead of Poisson, makes no differenc for
+    # Use normal distribution instead of Poisson, makes no difference for
     # typical numbers of charges:
-    σ = sqrt(n_expected)
-    n_observed = n_expected + f_fano * σ * randn(rng)
+    σ = sqrt(f_fano * n_expected)
+    n_observed = n_expected + σ * randn(rng)
     n_observed_pos = max(0, n_observed)
 
     uconvert(target_unit, E_ionisation * n_observed_pos)
