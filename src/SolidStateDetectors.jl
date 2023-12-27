@@ -8,7 +8,7 @@ using LinearAlgebra
 using Random
 using Statistics
 
-using Adapt
+import Adapt
 using ArraysOfArrays
 using FillArrays
 using Formatting

@@ -15,8 +15,10 @@ using KernelAbstractions
 using SolidStateDetectors: 
     ConstructiveSolidGeometry.AbstractCoordinateSystem,
     Cartesian, Cylindrical, PotentialCalculationSetup,
-    _guess_optimal_number_of_threads_for_SOR, adapt,
+    _guess_optimal_number_of_threads_for_SOR,
     get_sor_kernel, update!, _ka_get_backend
+
+import Adapt
 
 fn_pot_calc_benchmark_df = joinpath(ENV["HOME"], "SSD_potential_calculation_benchmark.jld2")
 fn_SOR_update_benchmark_df = joinpath(ENV["HOME"], "SSD_SOR_update_benchmark.jld2")
@@ -58,7 +60,7 @@ df_SOR_update = if !isfile(fn_SOR_update_benchmark_df) || recalculate
 
         for backend in hw_backends
             device_array_type = backend.DAT
-            pcs = adapt(device_array_type, PotentialCalculationSetup(
+            pcs = Adapt.adapt(device_array_type, PotentialCalculationSetup(
                 sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, 
             ));
             ndrange = size(pcs.potential)[1:3] .- 2
