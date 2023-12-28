@@ -37,7 +37,7 @@ UnitfulAtomic = "a7773ee8-282e-5fa2-be4e-bd808c38a91a"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-Adapt = "3"
+Adapt = "3, 4"
 ArraysOfArrays = "0.4, 0.5, 0.6"
 Clustering = "0.13, 0.14, 0.15"
 DataStructures = "0.18"
