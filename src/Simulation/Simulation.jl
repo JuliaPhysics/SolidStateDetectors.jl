@@ -606,7 +606,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
     end
     only_2d = length(sim.electric_potential.grid.axes[2]) == 1
 
-    pcs = adapt(device_array_type, PotentialCalculationSetup(
+    pcs = Adapt.adapt(device_array_type, PotentialCalculationSetup(
         sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, sor_consts = T.(sor_consts),
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
@@ -625,7 +625,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
-    pcs = adapt(Array, pcs)
+    pcs = Adapt.adapt(Array, pcs)
 
     grid = Grid(pcs)
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
@@ -702,7 +702,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
     end
 
     only_2d::Bool = length(sim.weighting_potentials[contact_id].grid.axes[2]) == 1
-    pcs = adapt(device_array_type, PotentialCalculationSetup(
+    pcs = Adapt.adapt(device_array_type, PotentialCalculationSetup(
         sim.detector, 
         sim.weighting_potentials[contact_id].grid, 
         sim.medium, 
@@ -730,7 +730,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                        max_n_iterations = max_n_iterations,
                                        verbose = verbose )
 
-    pcs = adapt(Array, pcs)
+    pcs = Adapt.adapt(Array, pcs)
     sim.weighting_potentials[contact_id] = WeightingPotential(ElectricPotentialArray(pcs), sim.weighting_potentials[contact_id].grid)
 
     cf
