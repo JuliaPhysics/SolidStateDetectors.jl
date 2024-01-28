@@ -191,35 +191,56 @@ function ADLChargeDriftModel(config::AbstractDict; kwargs...)
 end
 
 
-function _ADLChargeDriftModel(config::AbstractDict; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
-                             temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
+function _ADLChargeDriftModel(
+        config::AbstractDict; 
+        T::Type=Float32,
+        e100μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["mu0"], 
+        e100β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["e100"]["beta"], 
+        e100E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["E0"],
+        e100μn::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["mun"],
+        e111μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e111"]["mu0"], 
+        e111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["e111"]["beta"], 
+        e111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e111"]["E0"],
+        e111μn::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e111"]["mun"],
+        h100μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h100"]["mu0"], 
+        h100β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h100"]["beta"], 
+        h100E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h100"]["E0"],
+        h111μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["mu0"], 
+        h111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h111"]["beta"], 
+        h111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["E0"],
+        material::Type{<:AbstractDriftMaterial} = HPGe,
+        temperature::Union{Missing, Real}= missing, 
+        phi110::Union{Missing, Real, AngleQuantity} = missing
+    )::ADLChargeDriftModel{T}
+    
+    e100 = VelocityParameters{T}(
+        _parse_value(T, e100μ0, internal_mobility_unit), 
+        _parse_value(T, e100β,  NoUnits), 
+        _parse_value(T, e100E0, internal_efield_unit),
+        _parse_value(T, e100μn, internal_mobility_unit)
+    )
+    
+    e111 = VelocityParameters{T}(
+        _parse_value(T, e111μ0, internal_mobility_unit), 
+        _parse_value(T, e111β,  NoUnits), 
+        _parse_value(T, e111E0, internal_efield_unit),
+        _parse_value(T, e111μn, internal_mobility_unit)
+    )
+    
+    h100 = VelocityParameters{T}(
+        _parse_value(T, h100μ0, internal_mobility_unit), 
+        _parse_value(T, h100β,  NoUnits), 
+        _parse_value(T, h100E0, internal_efield_unit),
+        0
+    )
+    
+    h111 = VelocityParameters{T}(
+        _parse_value(T, h111μ0, internal_mobility_unit), 
+        _parse_value(T, h111β,  NoUnits), 
+        _parse_value(T, h111E0, internal_efield_unit),
+        0
+    )
 
-    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file
-
-    #mu0 in m^2 / ( V * s )
-    #beta dimensionless
-    #E0 in V / m
-    #mun in m^2 / ( V * s )
-
-    e100mu0::T  = config["drift"]["velocity"]["parameters"]["e100"]["mu0"]
-    e100beta::T = config["drift"]["velocity"]["parameters"]["e100"]["beta"]
-    e100E0::T   = config["drift"]["velocity"]["parameters"]["e100"]["E0"]
-    e100mun::T  = config["drift"]["velocity"]["parameters"]["e100"]["mun"]
-    e111mu0::T  = config["drift"]["velocity"]["parameters"]["e111"]["mu0"]
-    e111beta::T = config["drift"]["velocity"]["parameters"]["e111"]["beta"]
-    e111E0::T   = config["drift"]["velocity"]["parameters"]["e111"]["E0"]
-    e111mun::T  = config["drift"]["velocity"]["parameters"]["e111"]["mun"]
-    h100mu0::T  = config["drift"]["velocity"]["parameters"]["h100"]["mu0"]
-    h100beta::T = config["drift"]["velocity"]["parameters"]["h100"]["beta"]
-    h100E0::T   = config["drift"]["velocity"]["parameters"]["h100"]["E0"]
-    h111mu0::T  = config["drift"]["velocity"]["parameters"]["h111"]["mu0"]
-    h111beta::T = config["drift"]["velocity"]["parameters"]["h111"]["beta"]
-    h111E0::T   = config["drift"]["velocity"]["parameters"]["h111"]["E0"]
-
-    e100 = VelocityParameters{T}(e100mu0, e100beta, e100E0, e100mun)
-    e111 = VelocityParameters{T}(e111mu0, e111beta, e111E0, e111mun)
-    h100 = VelocityParameters{T}(h100mu0, h100beta, h100E0, 0)
-    h111 = VelocityParameters{T}(h111mu0, h111beta, h111E0, 0)
     electrons = CarrierParameters{T}(e100, e111)
     holes     = CarrierParameters{T}(h100, h111)
     
@@ -247,15 +268,17 @@ function _ADLChargeDriftModel(config::AbstractDict; T::Type=Float32, material::T
 
     crystal_orientation::SMatrix{3,3,T,9} = if ismissing(phi110) 
         if "phi110" in keys(config)
-            RotZ{T}(- π/4 - config["phi110"] )
+            RotZ{T}(- π/4 - _parse_value(T, config["phi110"], u"rad"))
         else
             transpose(parse_rotation_matrix(T, config, u"rad")) # replace u"rad" with the units in the config file
         end
     else
-        RotZ{T}(- π/4 - phi110)
+        RotZ{T}(- π/4 - _parse_value(T, phi110, u"rad"))
     end
 
     γ = setup_γj(crystal_orientation, parameters, material)
+
+    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file                         
 
     if "temperature_dependence" in keys(config)
         if "model" in keys(config["temperature_dependence"])
