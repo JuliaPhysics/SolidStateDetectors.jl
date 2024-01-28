@@ -162,9 +162,9 @@ end
 
 ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDriftModel(args...; T=T, kwargs...)
 
-const defaultADLfile = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml")
-function ADLChargeDriftModel(configfilename::AbstractString = defaultADLfile; kwargs...)
-    ADLChargeDriftModel(parse_config_file(configfilename); kwargs...)
+const default_ADL_config_file = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml")
+function ADLChargeDriftModel(config_filename::AbstractString = default_ADL_config_file; kwargs...)
+    ADLChargeDriftModel(parse_config_file(config_filename); kwargs...)
 end
 
 # Check the syntax of the ADLChargeDriftModel config file before parsing
