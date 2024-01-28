@@ -167,7 +167,31 @@ function ADLChargeDriftModel(configfilename::AbstractString = defaultADLfile; kw
     ADLChargeDriftModel(parse_config_file(configfilename); kwargs...)
 end
 
-function ADLChargeDriftModel(config::AbstractDict; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
+# Check the syntax of the ADLChargeDriftModel config file before parsing
+function ADLChargeDriftModel(config::AbstractDict; kwargs...)
+    if !haskey(config, "drift") 
+        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift'.")) 
+    elseif !haskey(config["drift"], "velocity") 
+        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity'.")) 
+    elseif !haskey(config["drift"]["velocity"], "parameters")
+        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters'."))
+    end
+
+    for axis in ("e100", "e111", "h100", "h111")
+        if !haskey(config["drift"]["velocity"]["parameters"], axis)
+            throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)'."))
+        end
+        for param in ("mu0", "beta", "E0", "mun")
+            if !haskey(config["drift"]["velocity"]["parameters"][axis], param) && !(axis[1] == 'h' && param == "mun") # holes have no μn
+                throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)/$(param)'."))
+            end
+        end
+    end
+    _ADLChargeDriftModel(config; kwargs...)
+end
+
+
+function _ADLChargeDriftModel(config::AbstractDict; T::Type=Float32, material::Type{<:AbstractDriftMaterial} = HPGe,
                              temperature::Union{Missing, Real}= missing, phi110::Union{Missing, Real} = missing)::ADLChargeDriftModel{T}
 
     if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file
