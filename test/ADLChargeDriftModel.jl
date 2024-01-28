@@ -143,10 +143,10 @@ end
     @test cdm0.holes.axis111.beta == 0.662f0
     @test cdm0.holes.axis111.E0   == 18200f0
 
-    cdm_units = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_units.yaml"))
-    @test cdm0.electrons == cdm_units.electrons
-    @test cdm0.holes == cdm_units.holes
-    @test cdm0.crystal_orientation ≈ cdm_units.crystal_orientation
+    cdm_nounits = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_nounits.yaml"))
+    @test cdm0.electrons == cdm_nounits.electrons
+    @test cdm0.holes == cdm_nounits.holes
+    @test cdm0.crystal_orientation ≈ cdm_nounits.crystal_orientation
 
 end
 
@@ -197,5 +197,5 @@ end
 
     @test cdm0.electrons == cdmdict.electrons
     @test cdm0.holes == cdmdict.holes
-    @test cdm0.crystal_orientation ≈ cdmdict.crystal_orientation
+    @test cdm0.crystal_orientation == cdmdict.crystal_orientation
 end
