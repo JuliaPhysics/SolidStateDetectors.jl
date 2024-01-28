@@ -1,0 +1,25 @@
+model: ADLChargeDriftModel
+phi110: -45°
+material: HPGe
+drift:
+  velocity:
+    model: Bruyneel2006
+    parameters:
+      e100:
+        mu0: 38609cm^2/(V*s)
+        beta: 0.805
+        E0: 511V/cm
+        mun: -171cm^2/(V*s)
+      e111:
+        mu0: 38536cm^2/(V*s)
+        beta: 0.641
+        E0: 538V/cm
+        mun: 510cm^2/(V*s)
+      h100:
+        mu0: 61824cm^2/(V*s)
+        beta: 0.942
+        E0: 185V/cm
+      h111:
+        mu0: 61215cm^2/(V*s)
+        beta: 0.662
+        E0: 182V/cm
