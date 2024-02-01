@@ -55,7 +55,7 @@ makedocs(
     doctest = ("fixdoctests" in ARGS) ? :fix : true,
     format = Documenter.HTML(canonical = "https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/", prettyurls = !("local" in ARGS)),
     linkcheck = ("linkcheck" in ARGS),
-    strict = !("local" in ARGS),
+    warnonly = ("nonstrict" in ARGS),
 )
 
 deploydocs(
