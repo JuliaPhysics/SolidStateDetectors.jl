@@ -12,6 +12,7 @@ const internal_voltage_unit = u"V"
 const internal_energy_unit  = u"eV"
 const internal_efield_unit  = internal_voltage_unit / internal_length_unit
 const internal_charge_unit  = u"C"
+const internal_mobility_unit = u"m^2/(V*s)"
 const internal_diffusion_unit = internal_length_unit ^ 2 / internal_time_unit
 const internal_charge_density_unit = internal_charge_unit / internal_length_unit ^ 3
 
@@ -23,6 +24,7 @@ to_internal_units(x::Quantity{<:Real, dimension(internal_voltage_unit)}) = ustri
 to_internal_units(x::Quantity{<:Real, dimension(internal_efield_unit)})  = ustrip(internal_efield_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_energy_unit)})  = ustrip(internal_energy_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustrip(internal_charge_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_mobility_unit)})  = ustrip(internal_mobility_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = ustrip(internal_diffusion_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(internal_charge_density_unit,  x)
 
@@ -31,6 +33,7 @@ from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_volta
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_efield_unit)})  = uconvert(unit, x * internal_efield_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_energy_unit)})  = uconvert(unit, x * internal_energy_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_charge_unit)})  = uconvert(unit, x * internal_charge_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_mobility_unit)})  = uconvert(unit, x * internal_mobility_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_diffusion_unit)})  = uconvert(unit, x * internal_diffusion_unit)
 
 # Internal function for now: We should also fano noise here (optionally)

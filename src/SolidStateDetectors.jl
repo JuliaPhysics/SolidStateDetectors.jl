@@ -77,6 +77,7 @@ export NBodyChargeCloud
 
 const SSDFloat = Union{Float16, Float32, Float64}
 
+include("examples.jl")
 
 include("Units.jl")
 include("Axes/DiscreteAxis.jl")
@@ -107,8 +108,6 @@ include("Event/Event.jl")
 include("MCEventsProcessing/MCEventsProcessing.jl")
 
 include("IO/IO.jl")
-
-include("examples.jl")
 
 include("PlotRecipes/PlotRecipes.jl")
 export @P_str # protected strings to overwrite plot labels with units

@@ -7,7 +7,7 @@ Returns the path to the example detector configuration files provided by the pac
 See also [`SSD_examples`](@ref).
 """
 function get_path_to_example_config_files()::String
-    return joinpath(@__DIR__, "../examples/example_config_files")
+    return joinpath(dirname(@__DIR__), "examples", "example_config_files")
 end
 
 """
