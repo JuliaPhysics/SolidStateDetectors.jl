@@ -53,7 +53,7 @@ makedocs(
         "LICENSE" => "LICENSE.md",
     ],
     doctest = ("fixdoctests" in ARGS) ? :fix : true,
-    format = Documenter.HTML(canonical = "https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/", prettyurls = !("local" in ARGS)),
+    format = Documenter.HTML(canonical = "https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/", size_threshold = 1048576, prettyurls = !("local" in ARGS)),
     linkcheck = ("linkcheck" in ARGS),
     warnonly = ("nonstrict" in ARGS),
 )
