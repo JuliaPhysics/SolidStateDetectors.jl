@@ -32,9 +32,9 @@ function _get_vert_lines_range(p::AbstractSurfacePrimitive{T}, n_arc::Int, n_ver
         elseif n_vert_lines == 1 
             [1] 
         else
-            Int.(ceil.(range(1, (n_arc+1)*(n_vert_lines-1)/n_vert_lines, length = n_vert_lines)))
+            Int.(ceil.(range(1, stop = (n_arc+1)*(n_vert_lines-1)/n_vert_lines, length = n_vert_lines)))
         end
     else
-        Int.(ceil.(range(1, n_arc+1, length = max(n_vert_lines, 2))))
+        Int.(ceil.(range(1, stop = n_arc+1, length = max(n_vert_lines, 2))))
     end
 end

@@ -108,7 +108,7 @@ end
 function vertices(cm::ConeMantle{T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(cm)
     n_arc = _get_n_points_in_arc_φ(cm, n_arc)
-    φ = range(φMin, φMax, length = n_arc+1)
+    φ = range(φMin, stop = φMax, length = n_arc+1)
     rbot = radius_at_z(cm,-cm.hZ)
     rtop = radius_at_z(cm,cm.hZ)
     botcircle = [_transform_into_global_coordinate_system(CartesianPoint{T}(rbot*cos(φ), rbot*sin(φ), -cm.hZ), cm) for φ in φ]
@@ -123,8 +123,10 @@ function sample(cm::ConeMantle{T}, spacing::T)::Vector{CartesianPoint{T}} where 
     rbot = radius_at_z(cm,-cm.hZ)
     rtop = radius_at_z(cm,cm.hZ)
     l = hypot(2cm.hZ, rtop - rbot)
-    z = range(-cm.hZ, cm.hZ, length = max(2,1+Int(ceil(l/spacing))))
-    [_transform_into_global_coordinate_system(CartesianPoint{T}((radius_at_z(cm,z) .* reverse(sincos(φ)))..., z), cm) for z in z for r in [radius_at_z(cm,z)] for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/radius_at_z(cm,z), length = max(2,1+Int(ceil(Δφ*radius_at_z(cm,z)/spacing)))))]
+    z = range(-cm.hZ, stop = cm.hZ, length = max(2,1+Int(ceil(l/spacing))))
+    [_transform_into_global_coordinate_system(CartesianPoint{T}((radius_at_z(cm,z) .* reverse(sincos(φ)))..., z), cm) 
+        for z in z for r in [radius_at_z(cm,z)] 
+        for φ in (r == 0 ? [φMin] : range(φMin, stop = φMax - full2π*spacing/radius_at_z(cm,z), length = max(2,1+Int(ceil(Δφ*radius_at_z(cm,z)/spacing)))))]
 end
 
 function connections(cm::ConeMantle, n_arc::Int)::Vector{Vector{Int}} 

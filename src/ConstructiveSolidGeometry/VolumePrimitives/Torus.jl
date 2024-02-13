@@ -463,8 +463,8 @@ extremum(t::Torus{T}) where {T} = t.r_torus + max(t.r_tube...)
 #     φMin::T, φMax::T, _ = get_φ_limits(t)
 #     samples = [
 #         CylindricalPoint{T}(t.r_torus+r_tube*cos(θ),φ,r_tube*sin(θ))
-#         for r_tube in (Nsamps[1] ≤ 1 ? r_tubeMin : range(r_tubeMin, r_tubeMax, length = Nsamps[1]))
-#         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, θMax, length = Nsamps[3]))
-#         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, φMax, length = Nsamps[2]))
+#         for r_tube in (Nsamps[1] ≤ 1 ? r_tubeMin : range(r_tubeMin, stop = r_tubeMax, length = Nsamps[1]))
+#         for θ in (Nsamps[3] ≤ 1 ? θMin : range(θMin, stop = θMax, length = Nsamps[3]))
+#         for φ in (Nsamps[2] ≤ 1 ? φMin : range(φMin, stop = φMax, length = Nsamps[2]))
 #     ]
 # end
