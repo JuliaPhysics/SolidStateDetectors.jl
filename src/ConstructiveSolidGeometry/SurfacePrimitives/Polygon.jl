@@ -36,8 +36,8 @@ function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianP
     if (p2-p1) ⋅ u > 0 
         su = norm(p2-p1)/nu
         [(su*a*u + su*b*v) + p1 
-            for a in range(0, step = 1,     length = max(2, 1 + Int(ceil(su*nu*sθ/spacing)))) 
-            for b in range(0, step = 1 - a, length = max(2, 1 + Int(ceil(su*nv*(1 - a)/spacing))))]
+            for a in range(0, stop = 1,     length = max(2, 1 + Int(ceil(su*nu*sθ/spacing)))) 
+            for b in range(0, stop = 1 - a, length = max(2, 1 + Int(ceil(su*nv*(1 - a)/spacing))))]
     else
         []
     end
