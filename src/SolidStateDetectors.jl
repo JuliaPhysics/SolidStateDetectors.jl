@@ -11,7 +11,7 @@ using Statistics
 import Adapt
 using ArraysOfArrays
 using FillArrays
-using Formatting
+using Format
 using GPUArrays
 using Interpolations
 using IntervalSets
