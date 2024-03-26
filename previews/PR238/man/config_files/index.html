@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Configuration Files · SolidStateDetectors.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/man/config_files/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="SolidStateDetectors.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SolidStateDetectors.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../installation/">Installation</a></li><li class="is-active"><a class="tocitem" href>Configuration Files</a><ul class="internal"><li><a class="tocitem" href="#Example-Configuration-Files"><span>Example Configuration Files</span></a></li><li><a class="tocitem" href="#General-Structure"><span>General Structure</span></a></li><li><a class="tocitem" href="#Splitting-Configuration-Files"><span>Splitting Configuration Files</span></a></li></ul></li><li><a class="tocitem" href="../csg/">Constructive Solid Geometry (CSG)</a></li><li><a class="tocitem" href="../Grids/">Grids</a></li><li><a class="tocitem" href="../electric_potential/">Electric Potential</a></li><li><a class="tocitem" href="../electric_field/">Electric Field</a></li><li><a class="tocitem" href="../charge_drift/">Charge Drift</a></li><li><a class="tocitem" href="../weighting_potentials/">Weighting Potentials</a></li><li><a class="tocitem" href="../capacitances/">Capacitances</a></li><li><a class="tocitem" href="../IO/">IO</a></li><li><a class="tocitem" href="../plotting/">Plotting</a></li></ul></li><li><a class="tocitem" href="../../tutorial/">Tutorial</a></li><li><a class="tocitem" href="../../api/">API</a></li><li><a class="tocitem" href="../../LICENSE/">LICENSE</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Configuration Files</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Configuration Files</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaPhysics/SolidStateDetectors.jl/blob/master/docs/src/man/config_files.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Configuration-Files"><a class="docs-heading-anchor" href="#Configuration-Files">Configuration Files</a><a id="Configuration-Files-1"></a><a class="docs-heading-anchor-permalink" href="#Configuration-Files" title="Permalink"></a></h1><p>The detector, its surroundings and symmetries can be specified in configuration files.</p><p>SolidStateDetectors.jl supports <a href="https://github.com/JuliaData/YAML.jl">YAML</a> and <a href="https://github.com/JuliaIO/JSON.jl">JSON</a> as formats for the configuration files.</p><h2 id="Example-Configuration-Files"><a class="docs-heading-anchor" href="#Example-Configuration-Files">Example Configuration Files</a><a id="Example-Configuration-Files-1"></a><a class="docs-heading-anchor-permalink" href="#Example-Configuration-Files" title="Permalink"></a></h2><p>Several example configuration files can be found under</p><p><code>&lt;package_directory&gt;/examples/example_config_files/</code>.</p><p>They are accessible through a dictionary, <code>SSD_examples</code>, defined in the package:</p><pre><code class="language-julia hljs">using SolidStateDetectors
+keys(SSD_examples) # dictionary holding the full path to the corresponding configuration files</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">KeySet for a Dict{Symbol, String} with 14 entries. Keys:
+  :CoaxialTorus
+  :TwoSpheresCapacitor
+  :InfiniteCoaxialCapacitorCartesianCoords
+  :CGD_CylGrid
+  :Coax
+  :CGD
+  :InfiniteCoaxialCapacitor
+  :Hexagon
+  :Spherical
+  :InvertedCoax
+  :InvertedCoaxInCryostat
+  :SigGen
+  :BEGe
+  :InfiniteParallelPlateCapacitor</code></pre><p>They can be loaded via</p><pre><code class="language-julia hljs">path_to_config_file = SSD_examples[:InvertedCoax]
+sim = Simulation(path_to_config_file)</code></pre><h2 id="General-Structure"><a class="docs-heading-anchor" href="#General-Structure">General Structure</a><a id="General-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#General-Structure" title="Permalink"></a></h2><p>The configuration files need a minimum of information in order to define the detector, its surroundings and symmetries.</p><p>This is a minimum working example of a simple true coaxial detector with two contacts:</p><pre><code class="language-yaml hljs">name: Simple True Coax # optional
+units:
+  length: mm
+  angle: deg
+grid:
+  coordinates: cylindrical
+  axes:
+    r: 45
+    z:
+      from: -40
+      to: 40
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    geometry:
+      tube:
+        r: 
+          from: 0.5cm
+          to: 4cm
+        h: 6cm
+  contacts:
+  - material: HPGe
+    id: 1
+    potential: 6000
+    geometry:
+      tube:
+        r:
+          from: 5
+          to: 5
+        h: 60
+  - material: HPGe
+    id: 2
+    potential: 0
+    geometry:
+      tube:
+        r:
+          from: 40
+          to: 40
+        h: 60</code></pre><p>It will be used to guide through the different parts of the configuration file.</p><h3 id="Units"><a class="docs-heading-anchor" href="#Units">Units</a><a id="Units-1"></a><a class="docs-heading-anchor-permalink" href="#Units" title="Permalink"></a></h3><p>Internally, SolidStateDetectors.jl performs its calculations in SI units. However, configuration files can be written in custom units.</p><p>The field <code>units</code> denotes the standard units with which values will be parsed. Standard units can be defined for <code>length</code>, <code>angle</code>, <code>potential</code> and <code>temperature</code>.</p><p>In the example above, </p><pre><code class="language-yaml hljs">units:
+  length: mm
+  angle: deg</code></pre><p>will lead to all <code>length</code> values to be parsed in units of <code>mm</code>, while all <code>angle</code> values will be parsed in units of <code>deg</code> (degree).</p><p>The configuration files also allow for directly passing units to the values that will be parsed using <code>uparse</code> from the <a href="https://github.com/PainterQubits/Unitful.jl">Unitful.jl</a> package, e.g.</p><pre><code class="language-yaml hljs">units: 
+  length: mm
+  # ....
+tube:
+  r: 
+    from: 5
+    to: 40
+  h: 60</code></pre><p>is equivalent to</p><pre><code class="language-yaml hljs">tube:
+  r: 
+    from: 5mm
+    to: 40mm
+  h: 60mm</code></pre><p>or</p><pre><code class="language-yaml hljs">tube:
+  r: 
+    from: 0.5cm
+    to: 4cm
+  h: 6cm</code></pre><p>In the last example, even if the <code>length</code> unit was set to <code>mm</code>, the values will be parsed in units of <code>cm</code>. Please note to not leave a white space between the value and the unit and to use the <a href="https://github.com/PainterQubits/Unitful.jl">Unitful.jl</a> notation.</p><h3 id="Grid"><a class="docs-heading-anchor" href="#Grid">Grid</a><a id="Grid-1"></a><a class="docs-heading-anchor-permalink" href="#Grid" title="Permalink"></a></h3><p>The calculations are performed on a finite world. To define the world, SolidStateDetectors.jl requires the properties of the grid, which are the coordinate system type and the dimensions. These are defined in the <code>grid</code> section of the configuration file, e.g.</p><pre><code class="language-yaml hljs">grid:
+ coordinates: cartesian
+ axes:
+   x: 
+     from: -40
+     to: 40
+   y:
+     from: -40
+     to: 40
+   z:
+     from: -40
+     to: 40</code></pre><p>The <code>coordinates</code> of the <code>grid</code> can be:</p><ul><li><code>cartesian</code> (with the axes <code>x</code>, <code>y</code> and <code>z</code>)</li><li><code>cylindrical</code> (with the axes <code>r</code>, <code>phi</code> and <code>z</code>).</li></ul><p>The <code>axes</code> field is used to define the dimensions of each axis and, optionally, the boundary handling. In the example above, the <code>x</code>, <code>y</code> and <code>z</code> axes range from <code>-40</code> to <code>40</code> units.</p><h4 id="Grid-boundary-handling"><a class="docs-heading-anchor" href="#Grid-boundary-handling">Grid boundary handling</a><a id="Grid-boundary-handling-1"></a><a class="docs-heading-anchor-permalink" href="#Grid-boundary-handling" title="Permalink"></a></h4><p>Symmetries of the world can be used to reduce the calculation only to a fraction of the world. These can be passed as <code>boundaries</code> to the different <code>axes</code>.</p><p>For linear axes (<code>x</code>, <code>y</code>, <code>z</code>), the <code>boundaries</code> can be chosen <code>infinite</code>, <code>periodic</code>, <code>reflecting</code>, or <code>fixed</code>.</p><p>For radial axes (<code>r</code>), the boundaries can be chosen <code>r0</code>. If no boundaries are given, the default is <code>r0</code> for the left boundary and <code>infinite</code> for the right boundary.</p><p>For angular axes (<code>phi</code>), the boundaries can be chosen <code>reflecting</code> or <code>periodic</code>. If no boundaries are given, the default is <code>periodic</code> for both edges.</p><p>All <span>$\varphi$</span>-symmetric configurations can be calculated in 2D if <code>phi</code> ranges from <code>0</code> to <code>0</code> with <code>periodic</code> boundary handling, i.e.</p><pre><code class="language-yaml hljs">grid:
+ coordinates: cylindrical
+ axes:
+   r: #...
+   phi:
+     from: 0
+     to: 0
+     boundaries: periodic
+   z: #...</code></pre><p>All <span>$\varphi$</span>-periodic configurations can be calculated on the fraction of the full <span>$2\pi$</span> interval, i.e. for a <code>120°</code>-periodic system</p><pre><code class="language-yaml hljs">grid:
+ coordinates: cylindrical
+ axes:
+   r: #...
+   phi:
+     from: 0°
+     to: 120°
+     boundaries: periodic
+   z: #...</code></pre><p>Different boundary handling can be chosen for the <code>left</code> and <code>right</code> end of the interval, i.e. for a <code>60°</code>-periodic system with mirror symmetry at <code>30°</code></p><pre><code class="language-yaml hljs">grid:
+ coordinates: cylindrical
+ axes:
+   r: #...
+   phi:
+     from: 0°
+     to: 30°
+     boundaries:
+       left: periodic
+       right: reflecting
+   z: #...</code></pre><h3 id="Detector-Constituents"><a class="docs-heading-anchor" href="#Detector-Constituents">Detector Constituents</a><a id="Detector-Constituents-1"></a><a class="docs-heading-anchor-permalink" href="#Detector-Constituents" title="Permalink"></a></h3><p>The detectors for the simulation are defined in an array <code>detectors</code>, where each entry corresponds to one detector. Each detector consists of exactly one <code>semiconductor</code>, a minimum of two <code>contacts</code> and, optionally, <code>passives</code> and <code>virtual_drift_volumes</code>.</p><pre><code class="language-yaml hljs">detectors:
+  - name: &quot;Detector 1&quot;
+    semiconductor: #...
+    contacts: 
+      - # Contact 1
+      - # Contact 2 
+    passives: 
+      - # Passive 1 (optional)
+    virtual_drift_volumes:
+      - # Virtual Drift Volume 1 (optional)
+  - name: &quot;Detector 2&quot;
+    semiconductor: #...
+    contacts: 
+      - # Contact 1
+      - # Contact 2</code></pre><h4 id="Semiconductor"><a class="docs-heading-anchor" href="#Semiconductor">Semiconductor</a><a id="Semiconductor-1"></a><a class="docs-heading-anchor-permalink" href="#Semiconductor" title="Permalink"></a></h4><p>An example definition of the semiconductor looks like this:</p><pre><code class="language-yaml hljs">semiconductor:
+  material: HPGe
+  temperature: 78
+  impurity_density: # ...
+  charge_drift_model: # ...
+  geometry: # ...</code></pre><p>The different fields of the semiconductor are:</p><ul><li><code>material</code>: the material of the semiconductor. This is important to know the electric properties of the semiconductor for the electric potential calculation. Possible choices are <code>HPGe</code> (high-purity germanium) and <code>Si</code> (silicon).</li><li><code>temperature</code> (optional): the temperature of the semiconductor. If no <code>temperature</code> is given, the default is 78K for germanium and 293K for all other materials.</li><li><code>impurity_density</code> (optional): the distribution of impurities in the semiconductor material. This has a strong impact on the electric potential calculation. If no <code>impurity_density</code> is given, the default is an impurity-free material (<span>$\rho(\vec{r}) = 0$</span>).</li><li><code>charge_drift_model</code> (optional): a model to describe the drift of charge carriers in the semiconductor material. If no <code>charge_drift_model</code> is given, the default is <code>ElectricFieldChargeDriftModel</code>. Find a detailed description  on how to define an own model under <a href="../charge_drift/#Custom-Charge-Drift-Model">Custom Charge Drift Model</a>.</li><li><code>geometry</code>: the geometry of the semiconductor object. Find a detailed description on how to define geometries under <a href="../csg/#Constructive-Solid-Geometry-(CSG)">Constructive Solid Geometry (CSG)</a>.</li></ul><h4 id="Contacts"><a class="docs-heading-anchor" href="#Contacts">Contacts</a><a id="Contacts-1"></a><a class="docs-heading-anchor-permalink" href="#Contacts" title="Permalink"></a></h4><p>An example definition of contacts looks like this:</p><pre><code class="language-yaml hljs">contacts:
+  - name: &quot;n+ contact&quot;
+    id: 1
+    potential: 5000V
+    material: HPGe # optional
+    geometry: # ....
+  - name: &quot;p+ contact&quot;
+    id: 2
+    potential: 0
+    material: HPGe #optional
+    geometry: # ....</code></pre><p>where each entry of the <code>contacts</code> array defines one contact.</p><p>The different fields of a contact are:</p><ul><li><code>name</code> (optional): the custom name for the contacts, relevant for plotting. </li><li><code>id</code>: a unique id of the contact that will unambiguously identify the contact, for example in the signal generation. All contacts should be given an integer id, ideally from 1 to N where N is the number of contacts.</li><li><code>potential</code>: the electric potential applied to the contact that is fixed throughout the whole contact geometry. This value can be parsed with units (<code>5000V</code>) or without (<code>0</code> with the units defined in the <code>units</code> section).</li><li><code>material</code> (optional): the material of the contact. This is important to know the electric properties of the contact for the electric potential calculation. If no <code>material</code> is given, the default is <code>HPGe</code> (high-purity germanium).</li><li><code>geometry</code>: the geometry of the contact. Find a detailed description on how to define geometries under <a href="../csg/#Constructive-Solid-Geometry-(CSG)">Constructive Solid Geometry (CSG)</a>.</li></ul><h4 id="Passives-and-Charged-Surfaces"><a class="docs-heading-anchor" href="#Passives-and-Charged-Surfaces">Passives and Charged Surfaces</a><a id="Passives-and-Charged-Surfaces-1"></a><a class="docs-heading-anchor-permalink" href="#Passives-and-Charged-Surfaces" title="Permalink"></a></h4><p>Passive objects and charged surfaces can be defined through entries of the <code>passives</code> array for each detector, e.g.</p><pre><code class="language-yaml hljs">passives:
+  - name: Passivated Surface
+    material: HPGe
+    charge_density: # ...
+    geometry: # ...
+  - name: Cryostat
+    id: 3
+    potential: 0
+    temperature: 293K
+    material: Al
+    geometry: # ...
+</code></pre><p>The different fields of a passive are:</p><ul><li><code>name</code> (optional): the name of the passive object. If no <code>name</code> is given, the default name is <code>&quot;external part&quot;</code>.</li><li><code>id</code> (optional): a unique id of the contact that will unambiguously identify the passive object. If no <code>id</code> is given, the default is <code>-1</code>.</li><li><code>potential</code> (optional): the electric potential to which the passive object is fixed. This value can be parsed with units (<code>5000V</code>) or without (<code>0</code> with the units defined in the <code>units</code> section). If no <code>potential</code> is given, the passive object will be treated as floating. </li><li><code>temperature</code> (optional): the temperature of the passive object. This value can be parsed with units (<code>293K</code>) or without (<code>78</code> with the units defined in the <code>units</code> section). If no <code>temperature</code> is given, the default is <code>293K</code>.</li><li><code>material</code>: the material of the passive object. This is important to know the electric properties of the contact for the electric potential calculation.</li><li><code>charge_density</code> (optional): model to describe charge density distributions within the passive object, e.g. charged surfaces. Find a detailed description on how to define charge densities under Charge Density.</li><li><code>geometry</code>: the geometry of the contact. Find a detailed description on how to define geometries in the section under <a href="../csg/#Constructive-Solid-Geometry-(CSG)">Constructive Solid Geometry (CSG)</a>.</li></ul><h3 id="Surroundings"><a class="docs-heading-anchor" href="#Surroundings">Surroundings</a><a id="Surroundings-1"></a><a class="docs-heading-anchor-permalink" href="#Surroundings" title="Permalink"></a></h3><p>The medium of the world is passed as field <code>medium</code>, i.e.</p><pre><code class="language-yaml hljs">name: # ... # optional
+units: #...
+grid: #...
+medium: vacuum
+detectors: # ...</code></pre><p>If no <code>medium</code> is given, the default is vacuum. Implemented media are <code>vacuum</code> and <code>LAr</code> (liquid argon), but other media can be easily added to the <code>material_properties</code> dictionary in  MaterialProperties.jl.</p><p>Passive objects, especially cryostats or holding structures can be defined in an array <code>surroundings</code> without being assigned to a specific detector. </p><pre><code class="language-yaml hljs">name: # ... # optional
+units: #...
+grid: #...
+medium: vacuum
+detectors:
+- semiconductor: # ...
+  contacts: 
+    - # ...
+    - # ...
+  passives:
+    - # ...
+    - # ...
+surroundings:
+  - #...
+  - #...</code></pre><p>The definition of passive objects in the <code>surroundings</code> array is equal to that in the <code>passives</code> array of a detector.</p><h2 id="Splitting-Configuration-Files"><a class="docs-heading-anchor" href="#Splitting-Configuration-Files">Splitting Configuration Files</a><a id="Splitting-Configuration-Files-1"></a><a class="docs-heading-anchor-permalink" href="#Splitting-Configuration-Files" title="Permalink"></a></h2><p>Configuration files for complex geometries can get quite long. SolidStateDetectors.jl allows for splitting configuration files into smaller ones and loading them using the <code>include</code> keyword. This feature supports <a href="https://github.com/JuliaData/YAML.jl">YAML</a> and <a href="https://github.com/JuliaIO/JSON.jl">JSON</a> files.</p><p>When including a separate file, the user has to add its file path in the main configuration file at the place it supposed to be added. To identify the file, set the key of this entry to <code>include</code>. Here, the user can also give an array of file paths. The file paths can be relative to the path of the configuration file or absolute. When including nested files and using relative paths, please always refer to the last parent file.</p><p>Including one file:</p><pre><code class="language-yaml hljs">include : &quot;file_to_be_included.yaml&quot;</code></pre><p>Including a list of files:</p><pre><code class="language-yaml hljs">include: 
+  - &quot;first_file_to_be_included.yaml&quot;
+  - &quot;second_file_to_be_included.yaml&quot;</code></pre><p>Add files to an array in the main configuration file</p><pre><code class="language-yaml hljs">detectors:
+  - include: &quot;first_file_in_array.yaml&quot;
+  - include: &quot;second_file_in_array.yaml&quot;
+  - include: &quot;thrid_file_in_array.yaml&quot;</code></pre><p>A fully working example can be seen in <code>SSD_examples[:InvertedCoaxInCryostat]</code>. Here, the channels, the geometry and other parts are split into separate configuration files.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../installation/">« Installation</a><a class="docs-footer-nextpage" href="../csg/">Constructive Solid Geometry (CSG) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Saturday 30 October 2021 10:25">Saturday 30 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

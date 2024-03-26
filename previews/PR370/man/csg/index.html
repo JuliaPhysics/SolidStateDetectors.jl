@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Constructive Solid Geometry (CSG) · SolidStateDetectors.jl</title><meta name="title" content="Constructive Solid Geometry (CSG) · SolidStateDetectors.jl"/><meta property="og:title" content="Constructive Solid Geometry (CSG) · SolidStateDetectors.jl"/><meta property="twitter:title" content="Constructive Solid Geometry (CSG) · SolidStateDetectors.jl"/><meta name="description" content="Documentation for SolidStateDetectors.jl."/><meta property="og:description" content="Documentation for SolidStateDetectors.jl."/><meta property="twitter:description" content="Documentation for SolidStateDetectors.jl."/><meta property="og:url" content="https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/man/csg/"/><meta property="twitter:url" content="https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/man/csg/"/><link rel="canonical" href="https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/man/csg/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="SolidStateDetectors.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SolidStateDetectors.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../installation/">Installation</a></li><li><a class="tocitem" href="../config_files/">Configuration Files</a></li><li class="is-active"><a class="tocitem" href>Constructive Solid Geometry (CSG)</a><ul class="internal"><li><a class="tocitem" href="#Volume-Primitives"><span>Volume Primitives</span></a></li><li><a class="tocitem" href="#Boolean-operators"><span>Boolean operators</span></a></li><li><a class="tocitem" href="#Transformations"><span>Transformations</span></a></li></ul></li><li><a class="tocitem" href="../Grids/">Grids</a></li><li><a class="tocitem" href="../electric_potential/">Electric Potential</a></li><li><a class="tocitem" href="../electric_field/">Electric Field</a></li><li><a class="tocitem" href="../charge_drift/">Charge Drift</a></li><li><a class="tocitem" href="../weighting_potentials/">Weighting Potentials</a></li><li><a class="tocitem" href="../capacitances/">Capacitances</a></li><li><a class="tocitem" href="../IO/">IO</a></li><li><a class="tocitem" href="../plotting/">Plotting</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorials/complete_simulation_chain_IVC/">Simulation Chain: Inverted Coax Detector</a></li><li><a class="tocitem" href="../../tutorials/custom_impurity_density_pn_junction/">Advanced Example: Custom Impurity Profile</a></li></ul></li><li><a class="tocitem" href="../../api/">API</a></li><li><a class="tocitem" href="../../LICENSE/">LICENSE</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Constructive Solid Geometry (CSG)</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Constructive Solid Geometry (CSG)</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaPhysics/SolidStateDetectors.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaPhysics/SolidStateDetectors.jl/blob/main/docs/src/man/csg.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Constructive-Solid-Geometry-(CSG)"><a class="docs-heading-anchor" href="#Constructive-Solid-Geometry-(CSG)">Constructive Solid Geometry (CSG)</a><a id="Constructive-Solid-Geometry-(CSG)-1"></a><a class="docs-heading-anchor-permalink" href="#Constructive-Solid-Geometry-(CSG)" title="Permalink"></a></h1><p>All objects are defined through Constructive Solid Geometry (CSG), where complex geometries can be constructed by combining simple volume primitives (e.g. <code>Tube</code>) through <a href="#Boolean-operators">Boolean operators</a> and transformed using <a href="#Transformations">Transformations</a>. </p><p>The primitives which can be used are shown under <a href="#Volume-Primitives">Volume Primitives</a> together with how they can be specified in the configuration files.</p><h2 id="Volume-Primitives"><a class="docs-heading-anchor" href="#Volume-Primitives">Volume Primitives</a><a id="Volume-Primitives-1"></a><a class="docs-heading-anchor-permalink" href="#Volume-Primitives" title="Permalink"></a></h2><pre><code class="language-julia hljs">using SolidStateDetectors
+import SolidStateDetectors.ConstructiveSolidGeometry as CSG
+using Plots
+T = Float64;</code></pre><h3 id="List-of-YAML-example-configuration-files-for-Primitives"><a class="docs-heading-anchor" href="#List-of-YAML-example-configuration-files-for-Primitives">List of YAML example configuration files for Primitives</a><a id="List-of-YAML-example-configuration-files-for-Primitives-1"></a><a class="docs-heading-anchor-permalink" href="#List-of-YAML-example-configuration-files-for-Primitives" title="Permalink"></a></h3><p>Under <code>SolidStateDetectors.jl/examples/example_primitive_files</code> there are some examples how to define the different primitives via the YAML format:</p><pre><code class="language-julia hljs">path_to_example_primitives_config_files = joinpath(dirname(dirname(pathof(SolidStateDetectors))), &quot;examples&quot;, &quot;example_primitive_files&quot;)
+example_primitives_config_filenames = readdir(path_to_example_primitives_config_files)
+for fn in example_primitives_config_filenames
+    println(fn)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Box.yaml
+Box_hXhYhZ.yaml
+Box_halfwidths.yaml
+Cone.yaml
+Cone_tube.yaml
+Ellipsoid_full_sphere.yaml
+RegularPrism_hexagon.yaml
+Torus.yaml</code></pre><h3 id="Box"><a class="docs-heading-anchor" href="#Box">Box</a><a id="Box-1"></a><a class="docs-heading-anchor-permalink" href="#Box" title="Permalink"></a></h3><pre><code class="language-julia hljs">cfn = joinpath(path_to_example_primitives_config_files, &quot;Box.yaml&quot;)
+print(open(f -&gt; read(f, String), cfn))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">box:
+  widths: [2, 4, 6] # =&gt; hX = 1; hY = 2; hZ = 3;
+  origin: [0, 0, 0] # [x, y, z] - Optional; Default: [0, 0, 0]
+  rotate: # Optional; Default: no rotation
+    Z: 0</code></pre><p>Load the primitive from the configuration file via <code>CSG.Geometry</code></p><pre><code class="language-julia hljs">box = CSG.Geometry(T, cfn)
+plot(box)</code></pre><img src="8736808a.svg" alt="Example block output"/><h3 id="Cone"><a class="docs-heading-anchor" href="#Cone">Cone</a><a id="Cone-1"></a><a class="docs-heading-anchor-permalink" href="#Cone" title="Permalink"></a></h3><h4 id="Tube"><a class="docs-heading-anchor" href="#Tube">Tube</a><a id="Tube-1"></a><a class="docs-heading-anchor-permalink" href="#Tube" title="Permalink"></a></h4><pre><code class="language-julia hljs">cfn = joinpath(path_to_example_primitives_config_files, &quot;Cone_tube.yaml&quot;)
+print(open(f -&gt; read(f, String), cfn))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">tube:
+  r:
+    from: 1.0
+    to: 2.0
+  phi:
+    from: 0.0
+    to: 6.283185307179586
+  h: 2.0</code></pre><p>Load the primitive from the configuration file via <code>CSG.Geometry</code></p><pre><code class="language-julia hljs">cone = CSG.Geometry(T, cfn)
+plot(cone)</code></pre><img src="e3082319.svg" alt="Example block output"/><h4 id="VaryingTube"><a class="docs-heading-anchor" href="#VaryingTube">VaryingTube</a><a id="VaryingTube-1"></a><a class="docs-heading-anchor-permalink" href="#VaryingTube" title="Permalink"></a></h4><pre><code class="language-julia hljs">cfn = joinpath(path_to_example_primitives_config_files, &quot;Cone.yaml&quot;)
+print(open(f -&gt; read(f, String), cfn))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">cone:
+  r:
+    bottom:
+      from: 1.0
+      to: 2.0
+    top:
+      from: 1.0
+      to: 4.0
+  phi:
+    from: 0.0
+    to: 6.283185307179586
+  h: 2.0
+  origin: [0,0,0] # optional</code></pre><p>Load the primitive from the configuration file via <code>CSG.Geometry</code></p><pre><code class="language-julia hljs">cone = CSG.Geometry(T, cfn)
+plot(cone)</code></pre><img src="954fa15c.svg" alt="Example block output"/><h3 id="Ellipsoid"><a class="docs-heading-anchor" href="#Ellipsoid">Ellipsoid</a><a id="Ellipsoid-1"></a><a class="docs-heading-anchor-permalink" href="#Ellipsoid" title="Permalink"></a></h3><h4 id="Sphere"><a class="docs-heading-anchor" href="#Sphere">Sphere</a><a id="Sphere-1"></a><a class="docs-heading-anchor-permalink" href="#Sphere" title="Permalink"></a></h4><pre><code class="language-julia hljs">cfn = joinpath(path_to_example_primitives_config_files, &quot;Ellipsoid_full_sphere.yaml&quot;)
+print(open(f -&gt; read(f, String), cfn))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">sphere:
+  r: 2</code></pre><p>Load the primitive from the configuration file via <code>CSG.Geometry</code></p><pre><code class="language-julia hljs">ellipsoid = CSG.Geometry(T, cfn)
+plot(ellipsoid)</code></pre><img src="35f471e3.svg" alt="Example block output"/><h3 id="Torus"><a class="docs-heading-anchor" href="#Torus">Torus</a><a id="Torus-1"></a><a class="docs-heading-anchor-permalink" href="#Torus" title="Permalink"></a></h3><pre><code class="language-julia hljs">cfn = joinpath(path_to_example_primitives_config_files, &quot;Torus.yaml&quot;)
+print(open(f -&gt; read(f, String), cfn))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">torus:
+  r_torus: 10.0
+  r_tube: 2
+  phi:
+      from: 0.0°
+      to: 360.0°
+  theta:
+      from: 0.0°
+      to: 360.0°</code></pre><p>Load the primitive from the configuration file via <code>CSG.Geometry</code></p><pre><code class="language-julia hljs">torus = CSG.Geometry(T, cfn)
+plot(torus, zlims = [-6,6], camera = (40, 55))</code></pre><img src="29aa8daf.svg" alt="Example block output"/><h3 id="Prism"><a class="docs-heading-anchor" href="#Prism">Prism</a><a id="Prism-1"></a><a class="docs-heading-anchor-permalink" href="#Prism" title="Permalink"></a></h3><h4 id="Hexagonal-Prism"><a class="docs-heading-anchor" href="#Hexagonal-Prism">Hexagonal Prism</a><a id="Hexagonal-Prism-1"></a><a class="docs-heading-anchor-permalink" href="#Hexagonal-Prism" title="Permalink"></a></h4><pre><code class="language-julia hljs">cfn = joinpath(path_to_example_primitives_config_files, &quot;RegularPrism_hexagon.yaml&quot;)
+print(open(f -&gt; read(f, String), cfn))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">HexagonalPrism:
+  r: 1.0
+  h: 2.0</code></pre><p>Load the primitive from the configuration file via <code>CSG.Geometry</code></p><pre><code class="language-julia hljs">prism = CSG.Geometry(T, cfn)
+plot(prism)</code></pre><img src="ab2f6a8e.svg" alt="Example block output"/><h2 id="Boolean-operators"><a class="docs-heading-anchor" href="#Boolean-operators">Boolean operators</a><a id="Boolean-operators-1"></a><a class="docs-heading-anchor-permalink" href="#Boolean-operators" title="Permalink"></a></h2><p>The Boolean operators are <code>union</code>, <code>difference</code> and <code>intersection</code>:</p><h3 id="Union"><a class="docs-heading-anchor" href="#Union">Union</a><a id="Union-1"></a><a class="docs-heading-anchor-permalink" href="#Union" title="Permalink"></a></h3><p>A <code>union</code> of two objects <code>A</code> and <code>B</code> is defined as the set of points that are in at least one of either <code>A</code> or <code>B</code>. In the configuration files, it is defined using the <code>union</code> field, followed by an array of entries to construct the union, e.g.</p><pre><code class="language-yaml hljs">union: # A || B
+  - tube: # A
+      r: 2
+      h: 1
+  - tube: # B
+      r: 1
+      h: 1.5
+      origin: 
+        z: 0.5</code></pre><p><img src="../../assets/CSGUnion.png" alt="CSGUnion"/></p><p>If more than two geometries are passed, the <code>union</code> is constructed from all of them.</p><h3 id="Difference"><a class="docs-heading-anchor" href="#Difference">Difference</a><a id="Difference-1"></a><a class="docs-heading-anchor-permalink" href="#Difference" title="Permalink"></a></h3><p>A <code>difference</code> of two objects <code>A</code> and <code>B</code> is defined as the set of points that are in <code>A</code> but not in <code>B</code>. Note that <code>B</code> is treated as open primitive. This means that points which are in <code>A</code> and on the surface of <code>B</code> will still be in the <code>difference</code> of <code>A</code> and <code>B</code>. In the configuration files, it is defined using the <code>difference</code> field, followed by an array of entries. The first entry of the array is the main geometry, from which all following geometry entries are subtracted, e.g.</p><pre><code class="language-yaml hljs">difference: # A &amp;&amp; !B
+  - tube: # A
+      r: 2
+      h: 1
+  - tube: # B
+      r: 1
+      h: 1.1</code></pre><p><img src="../../assets/CSGDifference.png" alt="CSGDifference"/></p><p>Keep in mind that to discard the part of the surface of <code>A</code> which is on the surface of <code>B</code>, <code>B</code> should be chosen slightly bigger than <code>A</code>.</p><p>If more than two geometries are passed, all entries starting from the second will be subtracted from the first.</p><h3 id="Intersection"><a class="docs-heading-anchor" href="#Intersection">Intersection</a><a id="Intersection-1"></a><a class="docs-heading-anchor-permalink" href="#Intersection" title="Permalink"></a></h3><p>An <code>intersection</code> of two objects <code>A</code> and <code>B</code> is defined as the set of points that are both in <code>A</code> and in <code>B</code>. In the configuration files, it is defined using the <code>intersection</code> field, followed by an array of entries to construct the intersection, e.g.</p><pre><code class="language-yaml hljs">intersection: # A &amp;&amp; B
+  - tube: # A
+      r: 2
+      h: 1
+  - tube: # B
+      r: 1
+      h: 1.5
+      origin: 
+        z: 0.5</code></pre><p><img src="../../assets/CSGIntersection.png" alt="CSGIntersection"/></p><p>If more than two geometries are passed, the <code>intersection</code> is constructed from all of them.</p><h2 id="Transformations"><a class="docs-heading-anchor" href="#Transformations">Transformations</a><a id="Transformations-1"></a><a class="docs-heading-anchor-permalink" href="#Transformations" title="Permalink"></a></h2><p>All <a href="#Volume-Primitives">Volume Primitives</a> are defined such that they are centered around the origin of the coordinate system. They can be rotated in their local coordinate system and translated to their final position in the global coordinate system.</p><p>There are two possibilities two rotate and translate volume primitives. One is to define the rotation/translation inside the primitive definition. The other one is to define it for complete sets like detectors, unions, etc.</p><h3 id="Rotations"><a class="docs-heading-anchor" href="#Rotations">Rotations</a><a id="Rotations-1"></a><a class="docs-heading-anchor-permalink" href="#Rotations" title="Permalink"></a></h3><p>Rotations are defined in the configuration files by either a 3<span>$\times$</span>3 rotation matrix or a set of angles with respective rotation axes are required.</p><p>If a <code>tube</code> is to be rotated 45° around the <code>x</code> axis, the rotation is parsed to the primitive as additional <code>rotation</code> field in the primitive definition.</p><pre><code class="language-yaml hljs">tube:
+  r: 1
+  h: 1
+  rotation:
+    X: 45°</code></pre><p>In this case, the rotation around the <code>x</code> axis by 45° is parsed in the format seen above: the name of the axis to be rotated around is given as (upper-case) letter, followed by the rotation angle. If no units are given to the rotation angle, it will be parsed with <code>units.angle</code>.</p><p>If the rotation is to be described as multiple subsequent rotations, it can be passed using an array of angles with respective axis description as field name, e.g.</p><pre><code class="language-yaml hljs">tube:
+  r: 1
+  h: 1
+  rotation:
+    XZ: [45°, 30°]</code></pre><p>will first rotate the tube 45° around the <code>x</code> axis, followed by a 30° rotation around the <code>z</code> axis.</p><p>Alternatively, a full 3<span>$\times$</span>3 matrix can be passed using the <code>M</code> field, e.g.</p><pre><code class="language-yaml hljs">tube:
+  r: 1
+  h: 1
+  rotation:
+    M: [1, 0, 0, 0, 0, -1, 0, 1, 0]</code></pre><p>will transform the primitive using the rotation matrix</p><p class="math-container">\[\left[ \begin{array}{ccc}1&amp;0&amp;0\\0&amp;0&amp;-1\\0&amp;1&amp;0\end{array}\right]\]</p><p>which corresponds to <code>X: 90°</code>.</p><p>Alternative naming for the <code>rotation</code> field can be <code>rotate</code>.</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>If <span>$\varphi$</span> is specified for a certain interval, the interval is internally converted into a rotation, <span>$R_{\varphi}$</span>, of the primitive. This rotation is applied prior to the rotation specified in the rotation field, <span>$R$</span>.  Thus, internally, both rotations are calculated into the final rotation matrix of the primitive, <span>$R_f$</span>, via <span>$R_f = R \cdot R_{\varphi}$</span>. </p></div></div><h3 id="Translations"><a class="docs-heading-anchor" href="#Translations">Translations</a><a id="Translations-1"></a><a class="docs-heading-anchor-permalink" href="#Translations" title="Permalink"></a></h3><p>Translations are defined in the configuration files through a Cartesian vector.</p><p>If a <code>tube</code> is translated 1cm along the <code>x</code> axis, the translation is parsed to the primitive as additional <code>origin</code> field in the primitive definition.</p><pre><code class="language-yaml hljs">tube:
+  r: 1
+  h: 1
+  origin:
+    x: 1cm</code></pre><p>The Cartesian vector can also be passed as a vector, i.e.</p><pre><code class="language-yaml hljs">tube:
+  r: 1
+  h: 1
+  origin: [1cm, 0, 0]</code></pre><p>If no units are given, the translation is parsed in units of <code>units.length</code>.</p><p>Alternative naming for the <code>origin</code> field can be <code>translate</code> and <code>translation</code>.</p><h3 id="Combination-of-Transformations"><a class="docs-heading-anchor" href="#Combination-of-Transformations">Combination of Transformations</a><a id="Combination-of-Transformations-1"></a><a class="docs-heading-anchor-permalink" href="#Combination-of-Transformations" title="Permalink"></a></h3><p>If both a rotation and translation are defined in a primitive definition, it is first rotated and then translated.</p><pre><code class="language-yaml hljs">tube:
+  r: 1
+  h: 1
+  rotation:
+    X: 45°
+  origin: 
+    z: 1cm</code></pre><p>would first rotate the <code>tube</code> by 45° around the <code>x</code> axis before translating it 1cm along the <code>z</code> axis.</p><h3 id="Transforming-Sets"><a class="docs-heading-anchor" href="#Transforming-Sets">Transforming Sets</a><a id="Transforming-Sets-1"></a><a class="docs-heading-anchor-permalink" href="#Transforming-Sets" title="Permalink"></a></h3><p>If a <code>union</code> of two primitives should be transformed all together, the transformation can also be defined by nesting the <code>union</code> into a <code>translate</code> with respective information, e.g.</p><pre><code class="language-yaml hljs">translate: 
+  z: 1
+  union:
+    - tube: 
+        r: 1
+        h: 1
+    - box: 
+        widths: [1,1,1]</code></pre><p>Same applies for rotations or other sets, e.g.</p><pre><code class="language-yaml hljs">rotate: 
+  X: 45°
+  difference:
+    - tube: 
+        r: 1
+        h: 1
+    - box: 
+        widths: [1,1,1]</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../config_files/">« Configuration Files</a><a class="docs-footer-nextpage" href="../Grids/">Grids »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Tuesday 26 March 2024 19:14">Tuesday 26 March 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
