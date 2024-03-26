@@ -1,6 +1,6 @@
 #Versions:
-#Plots v1.0.14
-#PyPlot v2.8.2
+#Plots v1.40.2
+#PyPlot v2.11.2
 using Plots; pyplot()
 
 #colors extracted from the Julia logo
@@ -9,9 +9,8 @@ jgreen = [RGB(96/255,173/255,81/255), RGB(56/255,152/255,38/255)]
 jblue = [RGB(102/255,130/255, 233/255), RGB(64/255,99/255,216/255)]
 jpurple = [RGB(170/255,121/255,193/255),RGB(149/255,88/255,178/255)]
 jtext = [[jpurple[2],jpurple[2],jpurple[2]],[jpurple[2],jpurple[2],jpurple[2]]]
-jdet = [:white, :gray]
 
-function plot_frame(bc = :transparent)
+function plot_frame(bc = :transparent, negative_color = :white)
 
     #detector geometry
     top=3.5
@@ -28,15 +27,15 @@ function plot_frame(bc = :transparent)
     if bc == :transparent
         #plot detector background
         rectangle(w, h, x, y) = Shape(x .+ [0,w,w,0], y .+ [0,0,h,h])
-        plot!(rectangle(2*outer,top2+bot,-outer,-bot), color = jdet[1], linecolor = :transparent)
-        plot!(Shape([-outer,outer,middle,-middle],[top2-0.1,top2-0.1,top,top]), color = jdet[1], linecolor = :transparent)
-        for i in inner:0.1:middle; plot!([i*cos(t) for t in 0:pi/100:2pi], [i/ratio*sin(t) + top for t in 0:pi/100:2pi], linewidth = 3, color = jdet[1]); end
-        for i in 0:0.1:outer; plot!([i*cos(t) for t in 0:pi/100:2pi], [i/ratio*sin(t) - bot for t in 0:pi/100:2pi], linewidth = 3, color = jdet[1]); end
+        plot!(rectangle(2*outer,top2+bot,-outer,-bot), color = negative_color, linecolor = :transparent)
+        plot!(Shape([-outer,outer,middle,-middle],[top2-0.1,top2-0.1,top,top]), color = negative_color, linecolor = :transparent)
+        for i in inner:0.1:middle; plot!([i*cos(t) for t in 0:pi/100:3pi], [i/ratio*sin(t) + top for t in 0:pi/100:3pi], linewidth = 3, color = negative_color); end
+        for i in 0:0.1:outer; plot!([i*cos(t) for t in 0:pi/100:3pi], [i/ratio*sin(t) - bot for t in 0:pi/100:3pi], linewidth = 3, color = negative_color); end
     end
     plot!()
 end
 
-function plot_detector()
+function plot_detector(negative_color = :white)
 
     #detector geometry
     top=3.5
@@ -49,10 +48,10 @@ function plot_detector()
     lwidth=5
 
     #plot detector lines and contact
-    for i in 0:0.05:0.95 plot!([i*inner*cos(t) for t in 0:pi/100:2pi], [i*inner/ratio*sin(t) + top for t in 0:pi/100:2pi], linewidth = 3, color = jblue[1]) end
-    plot!([inner*cos(t) for t in 0:pi/100:2pi], [inner/ratio*sin(t)+top for t in 0:pi/100:2pi], linewidth = lwidth, color = jblue[2])
-    plot!([middle*cos(t) for t in 0:pi/100:2pi], [middle/ratio*sin(t)+top for t in 0:pi/100:2pi], linewidth = lwidth, color = jdet[2])
-    plot!(vcat([-middle,-outer],[outer*cos(t) for t in -pi:pi/100:0],[outer,middle]), vcat([top,top2],[outer/ratio*sin(t)-bot for t in -pi:pi/100:0],[top2,top]), linewidth = lwidth, color = jdet[2])
+    for i in 0:0.05:0.95 plot!([i*inner*cos(t) for t in 0:pi/100:3pi], [i*inner/ratio*sin(t) + top for t in 0:pi/100:3pi], linewidth = 3, color = jblue[1]) end
+    plot!([inner*cos(t) for t in 0:pi/100:3pi], [inner/ratio*sin(t)+top for t in 0:pi/100:3pi], linewidth = lwidth, color = jblue[2])
+    plot!([middle*cos(t) for t in 0:pi/100:3pi], [middle/ratio*sin(t)+top for t in 0:pi/100:3pi], linewidth = lwidth, color = :gray)
+    plot!(vcat([-middle,-outer],[outer*cos(t) for t in -pi:pi/100:0],[outer,middle]), vcat([top,top2],[outer/ratio*sin(t)-bot for t in -pi:pi/100:0],[top2,top]), linewidth = lwidth, color = :gray)
 end
 
 
@@ -62,7 +61,7 @@ function SSD(k::Integer)
     if k >= 150 return 1 end
 end
 
-function plot_rest(k::Integer, label::Bool)
+function plot_rest(k::Integer, label::Bool, animate::Bool, negative_color = :white)
 
     #detector geometry
     top=3.5
@@ -94,11 +93,24 @@ function plot_rest(k::Integer, label::Bool)
         plot!(ex,ey, width = lwidth, color = jgreen[2])
         plot!(hx,hy, width = lwidth, color = jred[2])
     end
-    plot_detector()
+    plot_detector(negative_color)
 
     #plot incoming γ ray
-    plot!(newx[1:min(k,end)], newy[1:min(k,end)], width = 2*lwidth, color = :white)
+    contourx = newx[1:min(k,end)]
+    contoury = newy[1:min(k,end)]
+    idx = findall(.!(outer - 0.127 .< contourx .< outer + 0.13))
+    for i in findall(diff(idx) .> 1)
+        line_idx = idx[i]:idx[i+1]
+        dymax = abs(0.2*sqrt(1 + ((-)(extrema(contoury[line_idx])...)/(-)(extrema(contourx[line_idx])...))^2))
+        for dy in range(-dymax, stop = dymax, length = ceil(Int,dymax/0.001))
+            plot!(contourx[line_idx], contoury[line_idx] .+ dy, width = 0.2*lwidth, color = negative_color)
+        end
+    end
+    if animate
+        scatter!(newx[1:min(k,end)], newy[1:min(k,end)], markersize = 10, markerstrokewidth = 0, color = negative_color)
+    end
     plot!(newx[1:min(k,end)], newy[1:min(k,end)], width = lwidth, color = jtext[2][2])
+    
 
 
     #plot the three Julia dots
@@ -123,18 +135,19 @@ function plot_rest(k::Integer, label::Bool)
 end
 
 
-function get_logo(; animate::Bool=false, label::Bool=true, transparent=true, step::Int = 5)
+function get_logo(; animate::Bool=false, label::Bool=true, transparent::Bool = true, dark::Bool = false, step::Int = 5)
+    negative_color = dark ? :black : :white
     if animate
         ks::Vector{Int} = collect(0:step:600)
         if !(600 in ks) push!(ks, 600) end
         return @animate for k in ks
             k = (k == 0 ? k = 600 : k)
-            plot_frame(:white)
-            plot_rest(k, label)
+            plot_frame(negative_color)
+            plot_rest(k,label,animate,negative_color)
         end
     else
-        plot_frame(transparent ? :transparent : :white)
-        plot_rest(600,label)
+        plot_frame(transparent ? :transparent : negative_color, negative_color)
+        plot_rest(600,label,animate,negative_color)
     end
 end
 
@@ -147,12 +160,13 @@ Compute and save the SolidStateDetectors.jl logo.
 # Keyword arguments
 - `animate::Bool=false`: if set to `true`, the logo will be saved as animated GIF, otherwise as static SVG file.
 - `label::Bool=true`: if set to `true`, the words "Solid State Detectors" will appear on the right of the logo.
+- `dark::Bool = false`: if set to `true`, the logo cutouts and background will be plotted black (for dark mode).
+- `transparent::Bool=true`: if set to `true`, the background will be plotted transparent
 
 """
-function get_and_save_logo(; animate::Bool = false, label::Bool = true, transparent::Bool = true, fps = 15, step::Int = 5, loop::Bool = false)
-    logo = get_logo(animate = animate, label = label, transparent = transparent, step = step);
-
-    basename = "logo" * (label ? "" : "_no_name")
+function get_and_save_logo(; animate::Bool = false, label::Bool = true, transparent::Bool = true, dark::Bool = false, fps = 15, step::Int = 5, loop::Int = 0)
+    logo = get_logo(animate = animate, label = label, transparent = transparent, dark = dark, step = step);
+    basename = "logo" * (dark ? "_dark" : "") * (label ? "" : "_no_name")
     animate ? gif(logo, basename*".gif", fps = fps, loop = loop) : savefig(basename*".svg")
 end
 
