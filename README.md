@@ -1,7 +1,7 @@
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/src/assets/logo.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="docs/src/assets/logo_dark.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/src/assets/logo-dark.svg">
   <img alt="SolidStateDetectors.jl" width = 400>
 </picture>
 </ü> </div> 
