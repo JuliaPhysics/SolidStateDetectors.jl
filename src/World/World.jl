@@ -97,6 +97,8 @@ function get_interval_boundary_types(dict::Dict)
     return BL, BR
 end
 
+world_types(world::World{T,N,S}) where {T,N,S} = (T,N,S)   
+
 function is_periodic_plus_mirror_symmetric(BL::Symbol, BR::Symbol)::Bool
     return (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic)
 end
