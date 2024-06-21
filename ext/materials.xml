@@ -1,0 +1,17 @@
+<materials>
+    <material name="Aluminium" Z="13.0" >
+        <D value="2.70" />
+        <atom value="26.98" />
+    </material>
+    <material name="High Purity Germanium" Z="32">
+        <D value="5.32"/>
+        <atom value="72.63"/>
+    </material>
+    <element name="G4_Galactic" Z="1" formula="Galactic">
+      <atom value="1.01" unit="g/mole"/>
+    </element>
+    <material name="Vacuum" state="gas">
+      <D value="1e-25" unit="g/cm3"/>
+      <fraction n="1" ref="G4_Galactic"/>
+    </material>
+</materials>
