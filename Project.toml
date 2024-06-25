@@ -16,6 +16,7 @@ IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+LightXML = "9c8b4983-aa76-5018-a973-4c85ecc9e179"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 ParallelProcessingTools = "8e8a01fc-6193-5ca1-a2f1-20776dae4199"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
@@ -40,10 +41,9 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 [weakdeps]
 Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
 LegendHDF5IO = "c9265ca6-b027-5446-b1a4-febfa8dd10b0"
-LightXML = "9c8b4983-aa76-5018-a973-4c85ecc9e179"
 
 [extensions]
-SolidStateDetectorsGeant4Ext = ["Geant4", "LightXML"]
+SolidStateDetectorsGeant4Ext = "Geant4"
 SolidStateDetectorsLegendHDF5IOExt = "LegendHDF5IO"
 
 [compat]
@@ -88,7 +88,6 @@ julia = "1.6"
 [extras]
 Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
 LegendHDF5IO = "c9265ca6-b027-5446-b1a4-febfa8dd10b0"
-LightXML = "9c8b4983-aa76-5018-a973-4c85ecc9e179"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"

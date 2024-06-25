@@ -7,6 +7,7 @@ using IntervalSets
 using DataStructures: OrderedDict
 using Unitful
 using Rotations
+using LightXML
 
 
 # position relative to origin of a primitive is stored in its parameters
@@ -17,12 +18,12 @@ using Rotations
 @inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(e.a)
 
 # Returns euler angles of the rotation matrix
-function parse_rotation_matrix(e::AbstractVolumePrimitive, v::Bool)
+@inline function parse_rotation_matrix(e::AbstractVolumePrimitive, v::Bool)
     m = RotXYZ(RotMatrix{3}(rotation(e)))
     return m.theta1, m.theta2, m.theta3
 end
 
-function parse_rotation_matrix(e::AbstractConstructiveGeometry, v::Bool)
+@inline function parse_rotation_matrix(e::AbstractConstructiveGeometry, v::Bool)
     v && @warn "Combining multiple rotations is an experimental feature"
     return parse_rotation_matrix(e.a, v) .- parse_rotation_matrix(e.b, v)
 end

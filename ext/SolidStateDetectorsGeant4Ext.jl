@@ -2,17 +2,16 @@
 
 module SolidStateDetectorsGeant4Ext
 
+
 @static if isdefined(Base, :get_extension)
     using Geant4
-    using LightXML
 else
     using ..Geant4
-    using ..LightXML
 end
-
 
 include("io_gdml.jl")
 using Suppressor
+using LightXML
 
 # Given an SSD simulation object, create corresponding GDML file to desired location
 function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filename::String = "tmp.gdml"; verbose::Bool = true)
@@ -92,12 +91,12 @@ function Geant4.G4JLDetector(input_filename::String, output_filename::String = "
 end
 
 
-function G4JLApplication(
+function Geant4.G4JLApplication(
     sim::SolidStateDetectors.Simulation,
     # ... source type/position, ...
 )
 
-    detector = G4JLDetector(sim)
+    detector = Geant4.G4JLDetector(sim)
 
     throw(ErrorException("Not implemented yet"))
 
