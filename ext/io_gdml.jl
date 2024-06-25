@@ -155,7 +155,7 @@ end
 # Builds <solids> section by recursively iterating through geometry tree (DFS)
 
 # Default function to call when parsing not yet implemented
-function parse_geometry(e, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)
+@inline function parse_geometry(e, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)
     throw(AssertionError("$(typeof(e).name.name) not implemented yet"))
 end
 
@@ -206,9 +206,9 @@ function parse_geometry(e::Box, x_solids::XMLElement, x_define::XMLElement, id::
     nothing
 end
 
-parse_φ(::Type{T}, φ::Nothing) where {T} = (T(360), "deg")
-parse_φ(::Type{T}, φ::T) where {T} = (φ, string(SolidStateDetectors.internal_angle_unit))
-parse_φ(::Type, φ) = throw(AssertionError("Cone: the type of φ is unexpected"))
+@inline parse_φ(::Type{T}, φ::Nothing) where {T} = (T(360), "deg")
+@inline parse_φ(::Type{T}, φ::T) where {T} = (φ, string(SolidStateDetectors.internal_angle_unit))
+@inline parse_φ(::Type, φ) = throw(AssertionError("Cone: the type of φ is unexpected"))
 function parse_geometry(e::Cone{T,<:Any, TR}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, TR <: Union{T, Tuple{T,T}}}
     if has_volume(e, x_solids, x_define, id, pf, v)
     
