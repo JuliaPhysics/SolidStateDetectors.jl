@@ -357,3 +357,15 @@ function add_to_world(x_world::XMLElement, x_define::XMLElement, e::AbstractGeom
     ))
     nothing
 end
+
+
+@inline function parse_material(material::String)
+    if material == "High Purity Germanium" return "G4_Ge"
+    elseif material == "Vacuum" return "G4_Galactic"
+    elseif material == "Silicon" return "G4_Si"
+    elseif material == "Aluminium" return "G4_Al"
+    elseif material == "liquid Argon" return "G4_lAr"
+    elseif material == "Copper" return "G4_Cu"
+    end
+    throw("Material characteristics for \"$(material)\" not defined yet")
+end

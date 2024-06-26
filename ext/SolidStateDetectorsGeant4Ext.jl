@@ -38,12 +38,12 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     # Build <solids> section from detector geometry, add volumes to <structure>
     # Parse semiconductor
     parse_geometry(sim.detector.semiconductor.geometry, x_solids, x_define, 1, "sc_", verbose)
-    create_volume(x_structure, "sc", sim.detector.semiconductor.material.name)
+    create_volume(x_structure, "sc", parse_material(sim.detector.semiconductor.material.name))
     # Parse contacts
     for (i, contact) in enumerate(sim.detector.contacts)
         if has_volume(contact.geometry, x_solids, x_define, 1, "ct$(i)_", verbose, parse = false)
             parse_geometry(contact.geometry, x_solids, x_define, 1, "ct$(i)_", verbose)
-            create_volume(x_structure, "ct$(i)", contact.material.name)
+            create_volume(x_structure, "ct$(i)", parse_material(contact.material.name))
         end
     end
     # Parse passives
@@ -51,13 +51,13 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
         for (i, passive) in enumerate(sim.detector.passives)
             if has_volume(passive.geometry, x_solids, x_define, 1, "pv$(i)_", verbose, parse = false)
                 parse_geometry(passive.geometry, x_solids, x_define, 1, "pv$(i)_", verbose)
-                create_volume(x_structure, "pv$(i)", passive.material.name)
+                create_volume(x_structure, "pv$(i)", parse_material(passive.material.name))
             end
         end
     end
     # Parse world (given by grid)
     parse_geometry(sim.world, x_solids, x_define, 1, "wd_", verbose)
-    x_wd_vol = create_volume(x_structure, "wd", sim.medium.name)
+    x_wd_vol = create_volume(x_structure, "wd", parse_material(sim.medium.name))
 
 
     # "physvol" contains the list of all children volumes inside the world
