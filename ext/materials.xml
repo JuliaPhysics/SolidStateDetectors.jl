@@ -1,0 +1,25 @@
+<materials>
+    <material name="G4_Al" Z="13" >
+        <D value="2.699" />
+        <atom value="26.982" />
+    </material>
+    <material name="G4_Ge" Z="32">
+        <D value="5.323"/>
+        <atom value="72.630"/>
+    </material>
+    <material name="G4_Si" Z="14">
+        <D value="2.329"/>
+        <atom value="28.085"/>
+    </material>
+    <material name="G4_Cu" Z="29">
+        <D value="8.960"/>
+        <atom value="63.546"/>
+    </material>
+    <element name="G4_Galactic" Z="1" formula="Galactic">
+      <atom value="1.01" unit="g/mole"/>
+    </element>
+    <material name="Vacuum" state="gas">
+      <D value="1e-25" unit="g/cm3"/>
+      <fraction n="1" ref="G4_Galactic"/>
+    </material>
+</materials>

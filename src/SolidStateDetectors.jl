@@ -18,6 +18,7 @@ using IntervalSets
 using JSON
 using KernelAbstractions
 using LaTeXStrings
+using LightXML
 using ParallelProcessingTools
 using ProgressMeter
 using RadiationDetectorSignals
