@@ -110,7 +110,7 @@ function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer
         v && @warn "Cone $(pf * string(id)): Outer radius must be strictly bigger than inner radius"
         return false
     else
-        return true
+        return e.hZ > 0
     end
 end
 
@@ -121,7 +121,7 @@ function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer
         v && @warn "Cone $(pf * string(id)): The outer radii must be strictly bigger than the inner radii"
         return false
     else
-        return true
+        return e.hZ > 0
     end
 end
 
