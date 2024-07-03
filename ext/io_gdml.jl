@@ -109,9 +109,12 @@ function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer
     if rmin >= rmax
         v && @warn "Cone $(pf * string(id)): Outer radius must be strictly bigger than inner radius"
         return false
-    else
-        return e.hZ > 0
+    elseif e.hZ <= 0
+        v && @warn "Cone $(pf * string(id)): Height should be positive"
+        return false
     end
+
+    return true
 end
 
 function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = true) where {T, TR}    
@@ -120,9 +123,12 @@ function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer
     if rmin1 >= rmax1 || rmin2 >= rmax2
         v && @warn "Cone $(pf * string(id)): The outer radii must be strictly bigger than the inner radii"
         return false
-    else
-        return e.hZ > 0
+    elseif e.hZ <= 0
+        v && @warn "Cone $(pf * string(id)): Height should be positive"
+        return false
     end
+    
+    return true
 end
 
 
