@@ -18,7 +18,7 @@
     <element name="G4_Galactic" Z="1" formula="Galactic">
       <atom value="1.01" unit="g/mole"/>
     </element>
-    <material name="Vacuum" state="gas">
+    <material name="G4_Vacuum" state="gas">
       <D value="1e-25" unit="g/cm3"/>
       <fraction n="1" ref="G4_Galactic"/>
     </material>
