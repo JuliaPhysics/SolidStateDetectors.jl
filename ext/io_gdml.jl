@@ -17,10 +17,8 @@ using LightXML
 # the leftmost child in the tree structure
 @inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(e.a)
 
-# Returns euler angles of the rotation matrix
+# Returns rotation matrix for the Primitive or the leftmost child in the tree
 @inline function parse_rotation(e::AbstractVolumePrimitive)
-    # m = RotXYZ(RotMatrix{3}(rotation(e)))
-    # return m.theta1, m.theta2, m.theta3
     return rotation(e)
 end
 
@@ -99,7 +97,7 @@ end
 
 
 # Checks whether given geometry object has required dimension values (zero volume not supported in Geant4)
-function has_volume(e::Box, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false)    
+function has_volume(e::Box, id::Integer, pf::AbstractString, v::Bool)
     if e.hX > 0 && e.hY > 0 && e.hZ > 0
         return true
     else
@@ -108,35 +106,35 @@ function has_volume(e::Box, ::XMLElement, ::XMLElement, id::Integer, pf::Abstrac
     end
 end
 
-function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false) where {T, TR <: Union{T, Tuple{T,T}}}
+function has_volume(e::Cone{T,<:Any,TR}, id::Integer, pf::AbstractString, v::Bool) where {T, TR <: Union{T, Tuple{T,T}}}
     rmin, rmax = parse_tube_radius(e)
     
     if rmin >= rmax
         v && @warn "Cone $(pf * string(id)): Outer radius must be strictly bigger than inner radius"
         return false
     elseif e.hZ <= 0
-        v && @warn "Cone $(pf * string(id)): Height should be positive"
+        v && @warn "Cone $(pf * string(id)): The height must be a positive number"
         return false
     end
 
     return true
 end
 
-function has_volume(e::Cone{T,<:Any,TR}, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false) where {T, TR}    
+function has_volume(e::Cone{T,<:Any,TR}, id::Integer, pf::AbstractString, v::Bool) where {T, TR}    
     rmin1, rmax1, rmin2, rmax2 = parse_cone_radius(e)
     
     if rmin1 >= rmax1 || rmin2 >= rmax2
         v && @warn "Cone $(pf * string(id)): The outer radii must be strictly bigger than the inner radii"
         return false
     elseif e.hZ <= 0
-        v && @warn "Cone $(pf * string(id)): Height should be positive"
+        v && @warn "Cone $(pf * string(id)): The height must be a positive number"
         return false
+    else 
+        return true
     end
-    
-    return true
 end
 
-function has_volume(e::Ellipsoid{T,<:Any,T}, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false) where {T}
+function has_volume(e::Ellipsoid{T,<:Any,T}, id::Integer, pf::AbstractString, v::Bool) where {T}
     if e.r <= 0
         v && @warn "Ellipsoid $(pf * string(id)): Radius must be a positive number"
         return false
@@ -145,7 +143,7 @@ function has_volume(e::Ellipsoid{T,<:Any,T}, ::XMLElement, ::XMLElement, id::Int
     end
 end
 
-function has_volume(e::Torus, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false)
+function has_volume(e::Torus, id::Integer, pf::AbstractString, v::Bool)
     if isa(e.r_tube, Tuple)
         if e.r_tube[1] >= e.r_tube[2]
             v && @warn "Torus $(pf * string(id)): Outer tube radius must be bigger than the inner tube radius"
@@ -160,12 +158,12 @@ function has_volume(e::Torus, ::XMLElement, ::XMLElement, id::Integer, pf::Abstr
     end
     if e.r_torus <= 0
         v && @warn "Torus $(pf * string(id)): Torus radius must be a positive number"
-        return true
+        return false
     end
     return true
 end
 
-function has_volume(e::RegularPrism, ::XMLElement, ::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false)
+function has_volume(e::RegularPrism, id::Integer, pf::AbstractString, v::Bool)
     if e.r <= 0
         v && @warn "Prism: $(pf * string(id)): Radius of prism must be a positive number"
         return false
@@ -178,21 +176,10 @@ function has_volume(e::RegularPrism, ::XMLElement, ::XMLElement, id::Integer, pf
 end
 
 
-# If composite geometry contains children with zero volume, omit its geometry definition
-# Omit the construction of a Boolean solid if some children have zero volume
-function has_volume(e::AbstractConstructiveGeometry, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool; parse::Bool = false)
-    hva = has_volume(e.a, x_solids, x_define, 2 * id, pf, v)
-    hvb = has_volume(e.b, x_solids, x_define, 2 * id + 1, pf, v)
-    if hva && hvb
-        return true
-    elseif parse && hva 
-        parse_geometry(e.a, x_solids, x_define, 2 * id, pf, v)
-    elseif parse && hvb
-        parse_geometry(e.b, x_solids, x_define, 2 * id + 1, pf, v)
-    end
-    return false
+# Check whether Boolean solid has any volume at all
+function has_volume(e::AbstractConstructiveGeometry, id::Integer, pf::AbstractString, v::Bool)
+    return has_volume(e.a, 2 * id, pf, v) || has_volume(e.b, 2 * id + 1, pf, v)
 end
-
 
 
 # Builds <solids> section by recursively iterating through geometry tree (DFS)
@@ -206,7 +193,11 @@ end
 @inline CSGtoGDML(::CSGDifference) = "subtraction"
 @inline CSGtoGDML(::CSGIntersection) = "intersection"
 function parse_geometry(e::AbstractConstructiveGeometry, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing
-    if has_volume(e, x_solids, x_define, id, pf, v, parse = true)
+    # If composite geometry contains children with zero volume, omit its geometry definition
+    # Omit the construction of a Boolean solid if some children have zero volume
+    hva = has_volume(e.a, 2 * id, pf, v)
+    hvb = has_volume(e.b, 2 * id + 1, pf, v)
+    if hva && hvb
         parse_geometry(e.a, x_solids, x_define, 2 * id, pf, v)
         parse_geometry(e.b, x_solids, x_define, 2 * id + 1, pf, v)
         
@@ -231,12 +222,16 @@ function parse_geometry(e::AbstractConstructiveGeometry, x_solids::XMLElement, x
             set_attribute(z_rot, "ref", rotname)
             create_rotation(e, x_define, rotname, v)
         end
+    elseif hva
+        parse_geometry(e.a, x_solids, x_define, id, pf, v)
+    elseif hvb
+        parse_geometry(e.b, x_solids, x_define, id, pf, v)
     end
     nothing
 end
 
 function parse_geometry(e::Box, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing
-    if has_volume(e, x_solids, x_define, id, pf, v)
+    if has_volume(e, id, pf, v)
         y = new_child(x_solids, "box")
         set_attributes(y, OrderedDict(
             "name" => pf * string(id),
@@ -253,7 +248,7 @@ end
 @inline parse_φ(::Type{T}, φ::T) where {T} = (φ, string(SolidStateDetectors.internal_angle_unit))
 @inline parse_φ(::Type, φ) = throw(AssertionError("Cone: the type of φ is unexpected"))
 function parse_geometry(e::Cone{T,<:Any, TR}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, TR <: Union{T, Tuple{T,T}}}
-    if has_volume(e, x_solids, x_define, id, pf, v)
+    if has_volume(e, id, pf, v)
     
         y = new_child(x_solids, "tube")
 
@@ -275,7 +270,7 @@ function parse_geometry(e::Cone{T,<:Any, TR}, x_solids::XMLElement, x_define::XM
 end
 
 function parse_geometry(e::Cone{T,<:Any,TR, <:Any}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, TR <: Union{Tuple{Tuple{T}, Tuple{T}}, Tuple{Tuple{T, T}, Tuple{T, T}}}}
-    if has_volume(e, x_solids, x_define, id, pf, v)
+    if has_volume(e, id, pf, v)
     
         y = new_child(x_solids, "cone")
         
@@ -299,7 +294,7 @@ function parse_geometry(e::Cone{T,<:Any,TR, <:Any}, x_solids::XMLElement, x_defi
 end
 
 function parse_geometry(e::Ellipsoid{T,<:Any, TR, Nothing, Nothing}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, TR}
-    if has_volume(e, x_solids, x_define, id, pf, v)
+    if has_volume(e, id, pf, v)
        
         y = new_child(x_solids, "orb")
         
@@ -323,10 +318,10 @@ function parse_geometry(e::Ellipsoid{T,<:Any, TR, Nothing, Nothing}, x_solids::X
     nothing
 end
 
-@inline parse_θ(::Type{T}, θ::Nothing) where {T} = (T(0), T(360), "deg")
-@inline parse_θ(::Type{T}, θ::Tuple{T, T}) where {T} = throw(AssertionError("Torus: θ values are currently not supported"))
+# @inline parse_θ(::Type{T}, θ::Nothing) where {T} = (T(0), T(360), "deg")
+# @inline parse_θ(::Type{T}, θ::Tuple{T, T}) where {T} = throw(AssertionError("Torus: θ values are currently not supported"))
 function parse_geometry(e::Torus, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing
-    if has_volume(e, x_solids, x_define, id, pf, v)
+    if has_volume(e, id, pf, v)
         y = new_child(x_solids, "torus")
         # phi, aunit = parse_φ(T, e.φ)
         # theta1, theta2, aunit = parse_θ(T, e.θ)
@@ -354,8 +349,8 @@ function parse_geometry(e::Torus, x_solids::XMLElement, x_define::XMLElement, id
 end
 
 
-function parse_geometry(e::RegularPrism, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing
-    if has_volume(e, x_solids, x_define, id, pf, v)
+function parse_geometry(e::RegularPrism{T, <:Any, N}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, N}
+    if has_volume(e, id, pf, v)
         y = new_child(x_solids, "polyhedra")
         
         r = e.r
@@ -364,7 +359,7 @@ function parse_geometry(e::RegularPrism, x_solids::XMLElement, x_define::XMLElem
             "name" => pf * string(id),
             "startphi" => 0,
             "deltaphi" => 360,
-            "numsides" => 6,
+            "numsides" => N,
             "aunit" => "deg",
             "lunit" => SolidStateDetectors.internal_length_unit
         ))
