@@ -17,10 +17,10 @@ using LightXML
 @inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(e.a)
 
 # Returns rotation matrix for Primitive relative to standard basis
-@inline function parse_rotation(e::AbstractVolumePrimitive) = rotation(e)
+@inline parse_rotation(e::AbstractVolumePrimitive) = rotation(e)
 
 # Returns rotation matrix for leftmost Primitive in geometry tree
-@inline function parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(e.a)
+@inline parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(e.a)
 
 
 # Add <position> to <define> section, referenced in the geometry definition (in <solids>) via the name
