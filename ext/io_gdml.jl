@@ -10,21 +10,17 @@ using Rotations
 using LightXML
 
 
-# position relative to origin of a primitive is stored in its parameters
+# Returns position vector for Primitive relative to origin
 @inline parse_origin(e::AbstractVolumePrimitive) = origin(e)
 
-# position relative to the origin of a boolean solid is defined as position of
-# the leftmost child in the tree structure
+# Returns position vector for leftmost Primitive in geometry tree
 @inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(e.a)
 
-# Returns rotation matrix for the Primitive or the leftmost child in the tree
-@inline function parse_rotation(e::AbstractVolumePrimitive)
-    return rotation(e)
-end
+# Returns rotation matrix for Primitive relative to standard basis
+@inline function parse_rotation(e::AbstractVolumePrimitive) = rotation(e)
 
-@inline function parse_rotation(e::AbstractConstructiveGeometry)
-    return parse_rotation(e.a)
-end
+# Returns rotation matrix for leftmost Primitive in geometry tree
+@inline function parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(e.a)
 
 
 # Add <position> to <define> section, referenced in the geometry definition (in <solids>) via the name
