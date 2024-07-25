@@ -9,7 +9,7 @@ else
     using ..Geant4
 end
 
-include("io_gdml.jl")
+include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
 using Suppressor
 using LightXML
 
@@ -26,7 +26,7 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     )
 
     x_define = new_child(x_root, "define")
-    x_materials = parse_file(joinpath(@__DIR__, "materials.xml"))
+    x_materials = parse_file(joinpath(@__DIR__, "Geant4", "materials.xml"))
     add_child(x_root, root(x_materials))
     x_solids = new_child(x_root, "solids")
     x_structure = new_child(x_root, "structure")
