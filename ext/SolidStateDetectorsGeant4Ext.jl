@@ -86,8 +86,12 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
 end
 
 function Geant4.G4JLDetector(input_filename::String, output_filename::String = "tmp.gdml"; verbose::Bool = true)
-    sim = SolidStateDetectors.Simulation(input_filename)
-    Geant4.G4JLDetector(sim, output_filename, verbose = verbose)
+    if endswith(input_filename, ".gdml")
+        @suppress_out Geant4.G4JLDetectorGDML(input_filename)
+    else
+        sim = SolidStateDetectors.Simulation(input_filename)
+        Geant4.G4JLDetector(sim, output_filename, verbose = verbose)
+    end
 end
 
 
