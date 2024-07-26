@@ -5,13 +5,21 @@ module SolidStateDetectorsGeant4Ext
 
 @static if isdefined(Base, :get_extension)
     using Geant4
+    using Geant4.SystemOfUnits
 else
     using ..Geant4
+    using ..Geant4.SystemOfUnits
 end
 
-include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
-using Suppressor
 using LightXML
+using Parameters
+using RadiationDetectorSignals: DetectorHit, DetectorHits
+using StaticArrays
+using Suppressor
+using Unitful
+
+include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
+include(joinpath(@__DIR__, "Geant4", "g4jl_application.jl"))
 
 # Given an SSD simulation object, create corresponding GDML file to desired location
 function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filename::String = "tmp.gdml"; verbose::Bool = true)
@@ -82,7 +90,11 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     end
 
     save_file(x_doc, output_filename)
-    @suppress_out Geant4.G4JLDetectorGDML(output_filename)
+    detector = @suppress_out Geant4.G4JLDetectorGDML(output_filename)
+    
+    @warn "Temporary file $(output_filename) will be deleted."
+    rm(output_filename)
+    detector 
 end
 
 function Geant4.G4JLDetector(input_filename::String, output_filename::String = "tmp.gdml"; verbose::Bool = true)
@@ -96,13 +108,33 @@ end
 
 
 function Geant4.G4JLApplication(
-    sim::SolidStateDetectors.Simulation,
-    # ... source type/position, ...
+    sim::Union{SolidStateDetectors.Simulation, String},
+    source::SSDSource;
+    physics_type = SSDPhysics,
+    endeventaction_method = endeventaction,
+    kwargs...
 )
 
-    detector = Geant4.G4JLDetector(sim)
+    SensitiveDetector = G4JLSensitiveDetector(
+        "SensitiveDetector", SDData{Float32}();           # SD name and associated data are mandatory
+        processhits_method=_processHits,    # process hist method (also mandatory)
+        initialize_method=_initialize,      # intialize method
+        endofevent_method=_endOfEvent       # end of event method
+    );
 
-    throw(ErrorException("Not implemented yet"))
+    @warn "Please never ever re-run this code"
+    app = @suppress_out G4JLApplication(; 
+        detector = Geant4.G4JLDetector(sim),
+        sdetectors = ["sc" => SensitiveDetector],
+        generator = SSDGenerator(source),
+        physics_type = physics_type,
+        endeventaction_method = endeventaction_method,
+        kwargs...
+    )     
+
+    configure(app)
+    initialize(app)
+    app
 
     # ToDo:
     #=

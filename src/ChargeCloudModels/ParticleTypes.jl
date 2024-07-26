@@ -16,3 +16,12 @@ abstract type Gamma <: ParticleType end
 radius_guess(charge::T, ::Type{Alpha}) where {T} = T(0.0001)
 radius_guess(charge::T, ::Type{Beta}) where {T} = T(0.0005)
 radius_guess(charge::T, ::Type{Gamma}) where {T} = T(0.0005) 
+
+
+struct SSDSource
+  particle_type::String
+  position::SolidStateDetectors.CartesianPoint
+  direction::Union{Symbol, SolidStateDetectors.CartesianVector}
+end
+
+export SSDSource
