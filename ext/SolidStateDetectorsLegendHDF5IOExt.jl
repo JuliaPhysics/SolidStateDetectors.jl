@@ -12,16 +12,16 @@ using SolidStateDetectors
 using SolidStateDetectors: RealQuantity, SSDFloat
 using TypedTables, Unitful
 
-function ssd_write(filename::AbstractString, sim::Simulation)
+function SolidStateDetectors.ssd_write(filename::AbstractString, sim::Simulation)
     if isfile(filename) @warn "Destination `$filename` already exists. Overwriting..." end
-    lh5open(filename, "w") do h5f
-        LegendHDF5IO.writedata( h5f, "SSD_Simulation", NamedTuple(sim)  )
+    LegendHDF5IO.lh5open(filename, "w") do h5f
+        LegendHDF5IO.writedata(h5f.data_store, "SSD_Simulation", NamedTuple(sim)  )
     end       
 end  
 
-function ssd_read(filename::AbstractString, ::Type{Simulation})
-    lh5open(filename, "r") do h5f
-        Simulation(LegendHDF5IO.readdata(h5f, "SSD_Simulation"));
+function SolidStateDetectors.ssd_read(filename::AbstractString, ::Type{Simulation})
+    LegendHDF5IO.lh5open(filename, "r") do h5f
+        Simulation(LegendHDF5IO.readdata(h5f.data_store, "SSD_Simulation"));
     end     
 end  
 
@@ -46,14 +46,14 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
     if !ispath(output_dir) mkpath(output_dir) end
     nfmt(i::Int) = format(i, zeropadding = true, width = length(digits(n_total_physics_events)))
     evt_ranges = chunked_ranges(n_total_physics_events, chunk_n_physics_events)
-    @info "-> $(length(flatview(mcevents.edep))) energy depositions to simulate."
+    @info "-> $(sum(length.(mcevents.edep))) energy depositions to simulate."
 
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
         mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose)
       
-        lh5open(ofn, "w") do output
+        LegendHDF5IO.lh5open(ofn, "w") do output
             LegendHDF5IO.writedata(output, "generated_waveforms", mcevents_sub)
         end        
     end    
