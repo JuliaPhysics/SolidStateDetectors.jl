@@ -18,10 +18,22 @@ radius_guess(charge::T, ::Type{Beta}) where {T} = T(0.0005)
 radius_guess(charge::T, ::Type{Gamma}) where {T} = T(0.0005) 
 
 
-struct SSDSource
+abstract type AbstractParticleSource end
+
+struct MonoenergeticSource{T} <: AbstractParticleSource
   particle_type::String
-  position::SolidStateDetectors.CartesianPoint
-  direction::Union{Symbol, SolidStateDetectors.CartesianVector}
+  energy::RealQuantity{T}
+  position::CartesianPoint
+  direction::Union{Symbol, CartesianVector}
 end
 
-export SSDSource
+struct IsotopeSource{T} <: AbstractParticleSource
+  Z::Integer
+  A::Integer
+  ionCharge::T
+  excitEnergy::T
+  position::CartesianPoint
+  direction::Union{Symbol, CartesianVector}
+end
+
+export AbstractParticleSource, MonoenergeticSource, IsotopeSource
