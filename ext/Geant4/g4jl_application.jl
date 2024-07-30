@@ -74,7 +74,11 @@ function SSDGenerator(source::SolidStateDetectors.SSDSource;  kwargs...)
     function _init(data::GeneratorData, ::Any)
         gun = data.gun = move!(G4ParticleGun())
         particle = data.particle = FindParticle(source.particle_type)
-        data.position = G4ThreeVector(source.position.x, source.position.y, source.position.z)
+        data.position = G4ThreeVector(
+		source.position.x * Geant4.SystemOfUnits.meter,
+		source.position.y * Geant4.SystemOfUnits.meter,
+		source.position.z * Geant4.SystemOfUnits.meter
+	)
         SetParticlePosition(gun, data.position)
         if source.direction isa SolidStateDetectors.CartesianVector
           data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
