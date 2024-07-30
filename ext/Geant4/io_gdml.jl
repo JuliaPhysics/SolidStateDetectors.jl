@@ -460,6 +460,9 @@ end
     elseif material == "Aluminium" return "G4_Al"
     elseif material == "liquid Argon" return "G4_lAr"
     elseif material == "Copper" return "G4_Cu"
+    elseif material == "PEN" return "G4_PEN"
+    elseif material == "PTFE" return "G4_PTFE"
+    elseif material == "CdZnTe" return "G4_CdZnTe"
     end
     throw("Material characteristics for \"$(material)\" not defined yet")
 end

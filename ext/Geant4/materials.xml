@@ -1,25 +1,67 @@
 <materials>
-    <material name="G4_Al" Z="13" >
+    <material name="G4_Al" Z="13">
         <D value="2.699" />
         <atom value="26.982" />
     </material>
     <material name="G4_Ge" Z="32">
-        <D value="5.323"/>
-        <atom value="72.630"/>
+        <D value="5.323" />
+        <atom value="72.630" />
     </material>
     <material name="G4_Si" Z="14">
-        <D value="2.329"/>
-        <atom value="28.085"/>
+        <D value="2.329" />
+        <atom value="28.085" />
     </material>
     <material name="G4_Cu" Z="29">
-        <D value="8.960"/>
-        <atom value="63.546"/>
+        <D value="8.960" />
+        <atom value="63.546" />
     </material>
     <element name="G4_Galactic" Z="1" formula="Galactic">
-      <atom value="1.01" unit="g/mole"/>
+        <atom value="1.01" unit="g/mole" />
     </element>
     <material name="G4_Vacuum" state="gas">
-      <D value="1e-25" unit="g/cm3"/>
-      <fraction n="1" ref="G4_Galactic"/>
+        <D value="1e-25" unit="g/cm3" />
+        <fraction n="1" ref="G4_Galactic" />
+    </material>
+
+    <element name="G4_H" Z="1">
+        <atom value="1.00794" />
+    </element>
+    <element name="G4_C" Z="6">
+        <atom value="12.0107" />
+    </element>
+    <element name="G4_O" Z="8">
+        <atom value="15.9994" />
+    </element>
+    <element name="G4_F" Z="9">
+        <atom value="18.9984032" />
+    </element>
+    <element name="G4_Cd" Z="48">
+        <atom value="112.411" />
+    </element>
+    <element name="G4_Zn" Z="30">
+        <atom value="65.38" />
+    </element>
+    <element name="G4_Te" Z="52">
+        <atom value="127.6" />
+    </element>
+
+    <material name="G4_PEN" formula="C14H10O4">
+        <D value="1.37" unit="g/cm3" />
+        <fraction n="0.7043" ref="G4_C" />
+        <fraction n="0.0505" ref="G4_H" />
+        <fraction n="0.2452" ref="G4_O" />
+    </material>
+
+    <material name="G4_PTFE" formula="C2F4">
+        <D value="2.2" unit="g/cm3" />
+        <fraction n="0.2402" ref="G4_C" />
+        <fraction n="0.7598" ref="G4_F" />
+    </material>
+
+    <material name="G4_CdZnTe" formula="Cd0.9Zn0.1Te">
+        <D value="5.78" unit="g/cm3" />
+        <fraction n="0.41" ref="G4_Cd" /> 
+        <fraction n="0.047" ref="G4_Zn" />
+        <fraction n="0.543" ref="G4_Te" />
     </material>
 </materials>
