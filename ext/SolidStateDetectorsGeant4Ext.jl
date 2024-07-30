@@ -92,7 +92,7 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     save_file(x_doc, output_filename)
     detector = @suppress_out Geant4.G4JLDetectorGDML(output_filename)
     
-    @warn "Temporary file $(output_filename) will be deleted."
+    verbose && @warn "Temporary file $(output_filename) will be deleted."
     rm(output_filename)
     detector 
 end
@@ -112,6 +112,7 @@ function Geant4.G4JLApplication(
     source::SSDSource;
     physics_type = SSDPhysics,
     endeventaction_method = endeventaction,
+    verbose = true,
     kwargs...
 )
 
@@ -122,9 +123,9 @@ function Geant4.G4JLApplication(
         endofevent_method=_endOfEvent       # end of event method
     );
 
-    @warn "Please never ever re-run this code"
+    # @warn "Please never ever re-run this code"
     app = @suppress_out G4JLApplication(; 
-        detector = Geant4.G4JLDetector(sim),
+        detector = Geant4.G4JLDetector(sim, verbose = verbose),
         sdetectors = ["sc" => SensitiveDetector],
         generator = SSDGenerator(source),
         physics_type = physics_type,
