@@ -47,9 +47,9 @@
 
     <material name="G4_PEN" formula="C14H10O4">
         <D value="1.37" unit="g/cm3" />
-        <fraction n="0.7043" ref="G4_C" />
-        <fraction n="0.0505" ref="G4_H" />
-        <fraction n="0.2452" ref="G4_O" />
+        <fraction n="0.6942" ref="G4_C" />
+        <fraction n="0.0416" ref="G4_H" />
+        <fraction n="0.2642" ref="G4_O" />
     </material>
 
     <material name="G4_PTFE" formula="C2F4">
@@ -60,8 +60,8 @@
 
     <material name="G4_CdZnTe" formula="Cd0.9Zn0.1Te">
         <D value="5.78" unit="g/cm3" />
-        <fraction n="0.41" ref="G4_Cd" /> 
-        <fraction n="0.047" ref="G4_Zn" />
-        <fraction n="0.543" ref="G4_Te" />
+        <fraction n="0.4300" ref="G4_Cd" /> 
+        <fraction n="0.0278" ref="G4_Zn" />
+        <fraction n="0.5422" ref="G4_Te" />
     </material>
 </materials>
