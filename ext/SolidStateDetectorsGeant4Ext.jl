@@ -110,7 +110,7 @@ end
 
 function Geant4.G4JLApplication(
     sim::Union{SolidStateDetectors.Simulation, String},
-    source::SSDSource;
+    source::SolidStateDetectors.AbstractParticleSource;
     physics_type = SSDPhysics,
     endeventaction_method = endeventaction,
     verbose = true,

@@ -66,7 +66,7 @@ end
     direction::G4ThreeVector = G4ThreeVector(0, 0, 0)
 end
 
-function SSDGenerator(source::SolidStateDetectors.SSDSource;  kwargs...)
+function SSDGenerator(source::SolidStateDetectors.MonoenergeticSource;  kwargs...)
 
     @assert source.direction isa SolidStateDetectors.CartesianVector || source.direction == :isotropic
 
@@ -75,16 +75,16 @@ function SSDGenerator(source::SolidStateDetectors.SSDSource;  kwargs...)
         gun = data.gun = move!(G4ParticleGun())
         particle = data.particle = FindParticle(source.particle_type)
         data.position = G4ThreeVector(
-		source.position.x * Geant4.SystemOfUnits.meter,
-		source.position.y * Geant4.SystemOfUnits.meter,
-		source.position.z * Geant4.SystemOfUnits.meter
-	)
+            source.position.x * Geant4.SystemOfUnits.meter,
+            source.position.y * Geant4.SystemOfUnits.meter,
+            source.position.z * Geant4.SystemOfUnits.meter
+        )
         SetParticlePosition(gun, data.position)
         if source.direction isa SolidStateDetectors.CartesianVector
           data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
         end
         SetParticleMomentumDirection(gun, data.direction)
-        SetParticleEnergy(gun, 2.615GeV)
+        SetParticleEnergy(gun, ustrip(u"MeV", source.energy))
         SetParticleDefinition(gun, particle)
     end
 
@@ -102,43 +102,41 @@ function SSDGenerator(source::SolidStateDetectors.SSDSource;  kwargs...)
     G4JLPrimaryGenerator("SSDGenerator", data; init_method=_init, generate_method=_gen)
 end
 
-#=
-@with_kw mutable struct GeneratorC3aData <: G4JLGeneratorData
-    gun::Union{Nothing, CxxPtr{G4ParticleGun}} = nothing
-    ion::Union{Nothing, CxxPtr{G4ParticleDefinition}} = nothing
-    Z::Int64 = 82
-    A::Int64 = 212
-    ionCharge::Float64 = 0eplus
-    excitEnergy::Float64 = 0keV
-    position::G4ThreeVector = G4ThreeVector(5cm, 0cm, 5cm)
-    direction::G4ThreeVector = G4ThreeVector(-1, 0, 0)
-end
-function GeneratorC3a(;kwargs...)
-    data = GeneratorC3aData(;kwargs...)
-    function _init(data::GeneratorC3aData, ::Any)
+function SSDGenerator(source::SolidStateDetectors.IsotopeSource;  kwargs...)
+
+    @assert source.direction isa SolidStateDetectors.CartesianVector || source.direction == :isotropic
+
+    data = GeneratorData(;kwargs...)
+    function _init(data::GeneratorData, ::Any)
         gun = data.gun = move!(G4ParticleGun())
-        data.direction = direction = G4ThreeVector(-10,rand()*2 - 1,rand()*2 - 1)
+        data.position = G4ThreeVector(
+            source.position.x * Geant4.SystemOfUnits.meter,
+            source.position.y * Geant4.SystemOfUnits.meter,
+            source.position.z * Geant4.SystemOfUnits.meter
+        )
         SetParticlePosition(gun, data.position)
-        SetParticleMomentumDirection(gun, data.direction)
-        SetParticleEnergy(gun, 0eV)
-    end
-    function _gen(evt::G4Event, data::GeneratorC3aData)::Nothing
-        if isnothing(data.ion)  # late initialize (after physics processes)
-            ion = data.ion = GetIon(data.Z, data.A, data.excitEnergy)
-            SetParticleDefinition(data.gun, ion)
-            SetParticleCharge(data.gun, data.ionCharge)
+        if source.direction isa SolidStateDetectors.CartesianVector
+            data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
         end
-        #position = data.position + G4ThreeVector((rand()-0.5)*1cm, (rand()-0.5)*1cm, (rand()-0.5)*1cm)
-        #SetParticlePosition(data.gun, position)
-        data.direction = direction = G4ThreeVector(-10,rand()*2 - 1,rand()*2 - 1)
-        SetParticleMomentumDirection(data.gun, direction)
-        #data.direction = direction
-        SetParticlePosition(data.gun, data.position)
+        SetParticleMomentumDirection(gun, data.direction)
+        # SetParticleEnergy(gun, source.excitEnergy)
+    end
+
+    function _gen(evt::G4Event, data::GeneratorData)::Nothing
+        if isnothing(data.particle)  # late initialize (after physics processes)
+            data.particle = GetIon(source.Z, source.A, source.excitEnergy)
+            SetParticleDefinition(data.gun, data.particle)
+            SetParticleCharge(data.gun, source.ionCharge)
+        end
+        if source.direction == :isotropic
+            ϕ = rand()*2π 
+            θ = acos(1 - 2*rand())
+            direction = G4ThreeVector(cos(ϕ)*sin(θ), sin(ϕ)*sin(θ), cos(θ))
+            data.direction = direction
+        end
+        SetParticleMomentumDirection(data.gun, data.direction)
+        SetParticlePosition(data.gun, data.position) # needed ?
         GeneratePrimaryVertex(data.gun, CxxPtr(evt))
     end
-    G4JLPrimaryGenerator("GeneratorC3a", data; init_method=_init, generate_method=_gen)
+    G4JLPrimaryGenerator("SSDGenerator", data; init_method=_init, generate_method=_gen)
 end
-=#
-
-
-
