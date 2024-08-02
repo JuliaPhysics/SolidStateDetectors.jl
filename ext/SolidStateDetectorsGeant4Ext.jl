@@ -13,9 +13,10 @@ end
 
 using LightXML
 using Parameters
-using RadiationDetectorSignals: DetectorHit, DetectorHits
+using RadiationDetectorSignals
 using StaticArrays
 using Suppressor
+using TypedTables
 using Unitful
 
 include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
@@ -157,6 +158,26 @@ function Geant4.G4JLApplication(
     )
     =#
 end
+
+
+function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_of_events::Int)
+    evts = DetectorHit[]
+    
+    evtno = 1
+    while evtno <= number_of_events
+        out = missing
+        while ismissing(out) || isempty(out)      
+            @suppress_out beamOn(app,1)
+            out = app.sdetectors["SensitiveDetector"][1].data.detectorHits
+            out = out[findall(!iszero, out.edep)]
+            out.evtno .= evtno
+	   
+        end
+        append!(evts, out)
+        evtno += 1
+    end
+    return RadiationDetectorSignals.group_by_evtno(Table(evts))
+end 
 
 
 end # module Geant4

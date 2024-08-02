@@ -153,3 +153,4 @@ function _generate_waveform( drift_paths::Vector{<:EHDriftPath{T}}, charges::Vec
 end
 
 
+function run_geant4_simulation end
