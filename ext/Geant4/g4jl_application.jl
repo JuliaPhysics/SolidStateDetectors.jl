@@ -124,7 +124,7 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource;  kwargs...)
 
     function _gen(evt::G4Event, data::GeneratorData)::Nothing
         if isnothing(data.particle)  # late initialize (after physics processes)
-            data.particle = GetIon(source.Z, source.A, source.excitEnergy)
+            data.particle = GetIon(source.Z, source.A, Float64(source.excitEnergy))
             SetParticleDefinition(data.gun, data.particle)
             SetParticleCharge(data.gun, source.ionCharge)
         end

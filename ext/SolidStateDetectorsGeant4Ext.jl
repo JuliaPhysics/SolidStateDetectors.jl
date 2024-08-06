@@ -165,13 +165,12 @@ function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_
     
     evtno = 1
     while evtno <= number_of_events
-        out = missing
-        while ismissing(out) || isempty(out)      
+        out = DetectorHit[]
+        while isempty(out)      
             @suppress_out beamOn(app,1)
             out = app.sdetectors["SensitiveDetector"][1].data.detectorHits
-            out = out[findall(!iszero, out.edep)]
+            filter!(hit -> !iszero(hit.edep), out)
             out.evtno .= evtno
-	   
         end
         append!(evts, out)
         evtno += 1
