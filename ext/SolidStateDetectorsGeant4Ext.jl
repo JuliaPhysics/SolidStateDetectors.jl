@@ -23,7 +23,7 @@ include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
 include(joinpath(@__DIR__, "Geant4", "g4jl_application.jl"))
 
 # Given an SSD simulation object, create corresponding GDML file to desired location
-function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filename::String = "tmp.gdml"; verbose::Bool = true)
+function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filename::String = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
     # Create basis for GDML file
     x_doc = XMLDocument()
     x_root = create_root(x_doc, "gdml")
@@ -94,11 +94,11 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     detector = @suppress_out Geant4.G4JLDetectorGDML(output_filename)
     
     verbose && @warn "Temporary file $(output_filename) will be deleted."
-    rm(output_filename)
+    !save_gdml && rm(output_filename)
     detector 
 end
 
-function Geant4.G4JLDetector(input_filename::String, output_filename::String = "tmp.gdml"; verbose::Bool = true)
+function Geant4.G4JLDetector(input_filename::String, output_filename::String = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
     if endswith(input_filename, ".gdml")
         @suppress_out Geant4.G4JLDetectorGDML(input_filename)
     else
