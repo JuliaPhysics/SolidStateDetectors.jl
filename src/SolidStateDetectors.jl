@@ -71,6 +71,7 @@ export ElectricFieldChargeDriftModel, ADLChargeDriftModel
 export get_active_volume, is_depleted, estimate_depletion_voltage
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
+export run_geant4_simulation
 export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
