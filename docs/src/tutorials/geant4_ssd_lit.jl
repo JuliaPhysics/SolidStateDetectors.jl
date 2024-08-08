@@ -96,16 +96,17 @@ plot!(CartesianPoint.(broadcast(p -> ustrip.(u"m", p), events[1:1000].pos.data))
 
 # The output of `run_geant4_simulation` can be stored using the `LegendHDF5IO` package:
 
-using LegendHDF5IO
-
-lh5open("simulation_output.lh5", "w") do h
-     LegendHDF5IO.writedata(h.data_store, "SimulationData", events)
-end
-
-events_in = lh5open("simulation_output.lh5", "r") do h
-    LegendHDF5IO.readdata(h.data_store, "SimulationData")
-end
-
+# ```
+# using LegendHDF5IO
+#
+# lh5open("simulation_output.lh5", "w") do h
+#      LegendHDF5IO.writedata(h.data_store, "SimulationData", events)
+# end
+#
+# events_in = lh5open("simulation_output.lh5", "r") do h
+#     LegendHDF5IO.readdata(h.data_store, "SimulationData")
+# end
+# ```
 
 # In order to visualize the energy spectrum of the events in a histogram, you can use the following code:
 
