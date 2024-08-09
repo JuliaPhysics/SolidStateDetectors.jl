@@ -290,29 +290,25 @@ end
 end
 
 
-@recipe function f(s::AbstractParticleSource)    
+@recipe function f(s::AbstractParticleSource) 
+
     if isa(s.direction, CartesianVector)
         length_direction = norm(s.direction)
         new_vector = s.direction/length_direction * 0.025
-        linewidth --> 3
-        linecolor --> :green
-        linealpha --> 0.5
-        
         @series begin
+            linewidth --> 3
+            linecolor --> :green
+            linealpha --> 0.5
+            label := ""
             [s.position.x, s.position.x + new_vector.x],[s.position.y, s.position.y + new_vector.y],[s.position.z, s.position.z + new_vector.z]
         end
     end   
-    markersize --> 10
-    markerstrokewidth --> 0
-    
-    alpha := 1.0
-    if isa(s.direction, CartesianVector)
-        color := :blue
-    else
-        color := :green
-    end   
     
     @series begin
+        label --> string(typeof(s).name.name)
+        markersize --> 5
+        markerstrokewidth --> 0
+        markercolor --> ifelse(isa(s.direction, CartesianVector), :blue, :green)
         s.position
     end
 end
