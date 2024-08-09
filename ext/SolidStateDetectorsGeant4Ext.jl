@@ -13,6 +13,7 @@ end
 
 using LightXML
 using Parameters
+using ProgressMeter
 using RadiationDetectorSignals
 using StaticArrays
 using Suppressor
@@ -163,6 +164,7 @@ end
 function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_of_events::Int)
     evts = DetectorHit[]
     
+    p = Progress(number_of_events, desc = "Running Geant4 simulations")
     evtno = 1
     while evtno <= number_of_events
         out = DetectorHit[]
@@ -173,6 +175,7 @@ function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_
             out.evtno .= evtno
         end
         append!(evts, out)
+        next!(p)
         evtno += 1
     end
     return RadiationDetectorSignals.group_by_evtno(Table(evts))
