@@ -383,7 +383,7 @@ end
 
 
 @timed_testset "Geant4 extension" begin
-    if VERSION >= v"1.9" include("Geant4.jl") end
+    include("Geant4.jl")
 end
 
 display(testtimer())
