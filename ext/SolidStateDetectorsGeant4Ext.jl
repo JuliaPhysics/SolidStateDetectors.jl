@@ -12,6 +12,7 @@ else
 end
 
 using LightXML
+using LinearAlgebra
 using Parameters
 using ProgressMeter
 using RadiationDetectorSignals
@@ -94,8 +95,11 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     save_file(x_doc, output_filename)
     detector = @suppress_out Geant4.G4JLDetectorGDML(output_filename)
     
-    verbose && @warn "Temporary file $(output_filename) will be deleted."
-    !save_gdml && rm(output_filename)
+    if !save_gdml 
+        verbose && @warn "Temporary file $(output_filename) will be deleted."
+        rm(output_filename)
+    end
+
     detector 
 end
 

@@ -168,7 +168,7 @@ run_geant4_simulation(app, 1000)
 # => returns all events in a `TypedTables.Table` with the fields `evtno`, `detno`, `thit, `edep` and `pos`
 ```
 !!! note 
-    Since the function is running until enough events have been collected, setups in which an event
-        is impossible (e.g. due to incorrect source placement or orientation), will run indefinitely. 
+    Since the function is running until enough events have been collected, setups in which the source
+        does not irradiate the detector will run indefinitely. 
 """
 function run_geant4_simulation end
