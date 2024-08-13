@@ -1,4 +1,4 @@
-# # Geant4 Extension for SolidStateDetectors.jl
+# # Geant4 Support
 
 # SolidStateDetectors.jl provides an extension for Geant4.jl.
 # This extension allows to simulate realistic event distributions resulting from particles emitted by a given source, which can be used as input to the waveform simulation.
@@ -24,33 +24,36 @@ source_1 = MonoenergeticSource(
     "gamma",                              # Type of particle beam
     2.615u"MeV",                          # Energy of particle
     CartesianPoint(0.065, 0., 0.05),      # Location of the source
-    CartesianVector(-1,0,0)               # Direction of the source
+    CartesianVector(-1,0,0),              # Direction of the source
+    10u"°"                                # Opening angle of the source emission
 )
 
 # - The particle type is given as a string (e.g. `"e-"` or `"gamma"`) and directly passed to `Geant4`. See the `Geant4` documentation on how to name the desired particle type.
 # - The energy of the emitted particles is passed as a number with unit.
 # - The `position` of the particle source relative to the origin is defined by a `CartesianPoint` (in units of `m`).
-# - The source can emit particles in a given direction if a `CartesianVector` is provided. 
+# - The source can emit particles in a given `direction` if a `CartesianVector` is provided. 
 #   If not, the emission is isotropic.
+# - If an `opening_angle` is provided, the source emits via a directed cone with the defined opening angle.
 
 # #### 2. `IsotopeSource`
 # 
 # This source emits particles based on the radioactive decay chain of a given isotope.
 
-source_2 = IsotopeSource{Float64}(
+source_2 = IsotopeSource(
     82,                                # Number of protons
     212,                               # Total number of nucleons
     0.0,                               # Excitation energy
     0.0,                               # Ion charge
-    CartesianPoint(0.06, 0, 0.05),    # Location of the source
-    CartesianVector(-1,0,0)            # Direction of the source
+    CartesianPoint(0.06, 0, 0.05),     # Location of the source
+    CartesianVector(-1,0,0),           # Direction of the source
+    10u"°"                             # Opening angle of the source emission
 )
 
 # The source is defined using
 # - The number of protons `Z` and the number of nucleons `A` in the isotope. <br/>
 # - The excitation energy
 # - The charge of the isotope
-# - The position and direction from the source can be defined in the same way as for a `MonoenergeticSource`
+# - The position, direction and opening angle from the source can be defined in the same way as for a `MonoenergeticSource`
 # 
 # The particle source can now be plotted together with the detector, as well as the direction in which particles are emitted.
 
