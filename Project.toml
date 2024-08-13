@@ -94,4 +94,4 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs"]
+test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs", "Geant4"]
