@@ -289,26 +289,40 @@ end
     end
 end
 
-
-@recipe function f(s::AbstractParticleSource) 
-
-    if isa(s.direction, CartesianVector)
-        length_direction = norm(s.direction)
-        new_vector = s.direction/length_direction * 0.025
+@recipe function f(m::AbstractParticleSource; length = 0.01)
+    
+    if iszero(m.opening_angle)
+        v = m.position
+        vnew = m.position + length * normalize(m.direction)
         @series begin
-            linewidth --> 3
-            linecolor --> :green
-            linealpha --> 0.5
+            linewidth --> 2
+            color --> :green
             label := ""
-            [s.position.x, s.position.x + new_vector.x],[s.position.y, s.position.y + new_vector.y],[s.position.z, s.position.z + new_vector.z]
+            [v.x, vnew.x], [v.y, vnew.y], [v.z, vnew.z]
         end
-    end   
+    elseif m.opening_angle <= 90u"°"
+        d = normalize(m.direction)
+        a = normalize(d × (abs(d.x) == 1 ? CartesianVector(0,1,0) : CartesianVector(1,0,0)))
+        b = normalize(a × d)
+        rot = hcat(a,b,d)
+        cone = SolidStateDetectors.ConstructiveSolidGeometry.Cone(r = ((0,0),(0,length*sin(m.opening_angle))), hZ = length*cos(m.opening_angle)/2, 
+        origin = rot * [0,0,length*cos(m.opening_angle)/2] + m.position, 
+        rotation = rot)
+
+        @series begin
+            linewidth := 0
+            color --> :green
+            label := ""
+            cone
+        end
+    end
     
     @series begin
-        label --> string(typeof(s).name.name)
+        seriescolor := :gray
         markersize --> 5
-        markerstrokewidth --> 0
-        markercolor --> ifelse(isa(s.direction, CartesianVector), :blue, :green)
-        s.position
+        markerstrokewidth --> 1
+        linecolor := :black
+        label --> string(typeof(m).name.name)
+        m.position
     end
 end
