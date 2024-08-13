@@ -68,9 +68,10 @@ end
 
 function SSDGenerator(source::SolidStateDetectors.MonoenergeticSource;  kwargs...)
 
-    @assert source.direction isa SolidStateDetectors.CartesianVector || source.direction == :isotropic
+    iszero(source.direction) && throw(ArgumentError("The direction of the source cannot be zero."))
 
     data = GeneratorData(;kwargs...)
+
     function _init(data::GeneratorData, ::Any)
         gun = data.gun = move!(G4ParticleGun())
         particle = data.particle = FindParticle(source.particle_type)
@@ -80,31 +81,34 @@ function SSDGenerator(source::SolidStateDetectors.MonoenergeticSource;  kwargs..
             source.position.z * Geant4.SystemOfUnits.meter
         )
         SetParticlePosition(gun, data.position)
-        if source.direction isa SolidStateDetectors.CartesianVector
-          data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
-        end
+        data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
         SetParticleMomentumDirection(gun, data.direction)
         SetParticleEnergy(gun, ustrip(u"MeV", source.energy))
         SetParticleDefinition(gun, particle)
     end
 
+    
+
     function _gen(evt::G4Event, data::GeneratorData)::Nothing
-      if source.direction == :isotropic
-        ϕ = π/2 + rand()*π #rand()*2π 
-        θ = acos(1 - 2*rand()) # because we want isotropic emission
-        direction = G4ThreeVector(cos(ϕ)*sin(θ), sin(ϕ)*sin(θ), cos(θ))
-        data.direction = direction
-        SetParticleMomentumDirection(data.gun, direction)
-      end
-      GeneratePrimaryVertex(data.gun, CxxPtr(evt))
+        if !iszero(source.opening_angle)
+            d::CartesianVector = normalize(source.direction)
+            a::CartesianVector = normalize(d × (abs(d.x) == 1 ? CartesianVector(0,1,0) : CartesianVector(1,0,0)))
+            b::CartesianVector = normalize(a × d)
+            ϕ = rand()*2π
+            θ = acos(1 - (1 - cos(source.opening_angle))*rand())
+            v = (cos(θ) * d + sin(θ) * (cos(ϕ) * a + sin(ϕ) * b))
+            direction = G4ThreeVector(v.x, v.y, v.z)
+            SetParticleMomentumDirection(data.gun, direction)
+        end
+        GeneratePrimaryVertex(data.gun, CxxPtr(evt))
     end
 
     G4JLPrimaryGenerator("SSDGenerator", data; init_method=_init, generate_method=_gen)
 end
 
-function SSDGenerator(source::SolidStateDetectors.IsotopeSource;  kwargs...)
+function SSDGenerator(source::SolidStateDetectors.IsotopeSource; kwargs...)
 
-    @assert source.direction isa SolidStateDetectors.CartesianVector || source.direction == :isotropic
+    iszero(source.direction) && throw(ArgumentError("The direction of the source cannot be zero."))
 
     data = GeneratorData(;kwargs...)
     function _init(data::GeneratorData, ::Any)
@@ -115,11 +119,8 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource;  kwargs...)
             source.position.z * Geant4.SystemOfUnits.meter
         )
         SetParticlePosition(gun, data.position)
-        if source.direction isa SolidStateDetectors.CartesianVector
-            data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
-        end
+        data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
         SetParticleMomentumDirection(gun, data.direction)
-        # SetParticleEnergy(gun, source.excitEnergy)
     end
 
     function _gen(evt::G4Event, data::GeneratorData)::Nothing
@@ -128,15 +129,18 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource;  kwargs...)
             SetParticleDefinition(data.gun, data.particle)
             SetParticleCharge(data.gun, source.ionCharge)
         end
-        if source.direction == :isotropic
-            ϕ = rand()*2π 
-            θ = acos(1 - 2*rand())
-            direction = G4ThreeVector(cos(ϕ)*sin(θ), sin(ϕ)*sin(θ), cos(θ))
-            data.direction = direction
+        if !iszero(source.opening_angle)
+            d::CartesianVector = normalize(source.direction)
+            a::CartesianVector = normalize(d × (abs(d.x) == 1 ? CartesianVector(0,1,0) : CartesianVector(1,0,0)))
+            b::CartesianVector = normalize(a × d)
+            ϕ = rand()*2π
+            θ = acos(1 - (1 - cos(source.opening_angle))*rand())
+            v = (cos(θ) * d + sin(θ) * (cos(ϕ) * a + sin(ϕ) * b))
+            direction = G4ThreeVector(v.x, v.y, v.z)
+            SetParticleMomentumDirection(data.gun, direction)
         end
-        SetParticleMomentumDirection(data.gun, data.direction)
-        SetParticlePosition(data.gun, data.position) # needed ?
         GeneratePrimaryVertex(data.gun, CxxPtr(evt))
     end
+    
     G4JLPrimaryGenerator("SSDGenerator", data; init_method=_init, generate_method=_gen)
 end
