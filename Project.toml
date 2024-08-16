@@ -55,10 +55,10 @@ Distributions = "0.24.5, 0.25"
 FillArrays = "0.9, 0.10, 0.11, 0.12, 0.13, 1"
 Format = "1.2, 1.3"
 GPUArrays = "8, 9, 10"
-Geant4 = "0.1"
+Geant4 = "0.1.13"
 Interpolations = "0.14, 0.15"
 IntervalSets = "0.5, 0.6, 0.7"
-JSON = "0.21"
+JSON = "0.21.2"
 KernelAbstractions = "0.8, 0.9"
 LaTeXStrings = "1"
 LegendHDF5IO = "0.1"
@@ -78,12 +78,12 @@ StaticArrays = "1"
 Statistics = "<0.0.1, 1"
 StatsBase = "0.33.7, 0.34"
 Suppressor = "0.2"
-Tables = "0.2, 1"
+Tables = "1.1"
 TypedTables = "1.2"
 Unitful = "1.11, 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19"
 UnitfulAtomic = "1"
 YAML = "0.3, 0.4"
-julia = "1.6"
+julia = "1.9"
 
 [extras]
 Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
@@ -94,4 +94,4 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs"]
+test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs", "Geant4"]

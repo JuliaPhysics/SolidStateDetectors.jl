@@ -14,7 +14,7 @@ function cluster_detector_hits(
     unsorted = Table(detno = detno, edep = edep, pos = pos)
     sorting_idxs = sortperm(unsorted.detno)
     sorted = unsorted[sorting_idxs]
-    grouped = Table(consgroupedview(sorted.detno, Tables.columns(sorted)))
+    grouped = Table(consgroupedview(sorted.detno, TypedTables.columns(sorted)))
 
     r_detno = similar(detno, 0)
     r_edep = similar(edep, 0)
