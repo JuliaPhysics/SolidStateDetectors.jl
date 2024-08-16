@@ -1,9 +1,9 @@
 struct SSDPhysics <: G4VUserPhysicsList
     function SSDPhysics(verbose)
         pl = G4VModularPhysicsList()
-        RegisterPhysics(pl, move!(G4DecayPhysics(verbose)))             # Default physics
-        RegisterPhysics(pl, move!(G4EmStandardPhysics(verbose)))        # EM physics
-        RegisterPhysics(pl, move!(G4RadioactiveDecayPhysics(verbose)))  # Radioactive decay
+        RegisterPhysics(pl, move!(G4DecayPhysics(verbose)))              # Default physics
+        RegisterPhysics(pl, move!(G4EmStandardPhysics_option4(verbose))) # EM physics
+        RegisterPhysics(pl, move!(G4RadioactiveDecayPhysics(verbose)))   # Radioactive decay
         return pl
     end
 end
