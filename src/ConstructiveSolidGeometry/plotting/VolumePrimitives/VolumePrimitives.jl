@@ -16,15 +16,14 @@ end
         if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
             sample(p, extremum(p)/n_samples)
         elseif haskey(plotattributes, :seriestype) && plotattributes[:seriestype] in projections
-            #Unlike f(CartesianPoint), there is no ssd plot recipe for f(array,array) so must define attributes here
-            xguide --> "x"
-            xunit --> internal_length_unit
-            yguide --> "y"
-            yunit --> internal_length_unit
-            unitformat --> :slash
             spacing = extremum(p)/n_samples
             samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, sample(p, spacing))
             proj = filter(x -> x != plotattributes[:seriestype], projections)
+            xguide --> string(proj[1])
+            xunit --> internal_length_unit
+            yguide --> string(proj[2])
+            yunit --> internal_length_unit
+            unitformat --> :slash
             internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
         else
             [surfaces(p)...]

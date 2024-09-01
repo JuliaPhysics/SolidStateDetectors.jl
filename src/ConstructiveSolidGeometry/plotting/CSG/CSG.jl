@@ -22,12 +22,11 @@ end
                 zunit --> internal_length_unit
                 filter(p -> in(p,csg), sample(ps[1], spacing))
             elseif plotattributes[:seriestype] in projections
-                #Unlike f(CartesianPoint), there is no ssd plot recipe for f(array,array) so must define attributes here
-                xguide --> "x"
-                yguide --> "y"
-                unitformat --> :slash
                 samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, filter(p -> in(p,csg), sample(ps[1], spacing)))
                 proj = filter(x -> x != plotattributes[:seriestype], projections)
+                xguide --> string(proj[1])
+                yguide --> string(proj[2])
+                unitformat --> :slash
                 internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
             else
                 zunit --> internal_length_unit
@@ -52,11 +51,11 @@ end
                     seriesalpha --> 0.2
                     filter(p -> in(p,csg), sample(ps[i], spacing))
                 elseif plotattributes[:seriestype] in projections
-                    xguide --> "x"
-                    yguide --> "y"
-                    unitformat --> :slash
                     samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, filter(p -> in(p,csg), sample(ps[i], spacing)))
                     proj = filter(x -> x != plotattributes[:seriestype], projections)
+                    xguide --> string(proj[1])
+                    yguide --> string(proj[2])
+                    unitformat --> :slash
                     internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
                 else
                     if !isClosedPrimitive(ps[i])

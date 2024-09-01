@@ -44,15 +44,14 @@ end
             sample(s, extremum(s)/n_samples)
         elseif plotattributes[:seriestype] in projections
             label --> l
-            #Unlike f(CartesianPoint), there is no ssd plot recipe for f(array,array) so must define attributes here
-            xguide --> "x"
-            xunit --> internal_length_unit
-            yguide --> "y"
-            yunit --> internal_length_unit
-            unitformat --> :slash
             spacing = extremum(s)/n_samples
             samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, sample(s, spacing))
             proj = filter(x -> x != plotattributes[:seriestype], projections)
+            xguide --> string(proj[1])
+            xunit --> internal_length_unit
+            yguide --> string(proj[2])
+            yunit --> internal_length_unit
+            unitformat --> :slash
             internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
         else
             @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, :samplesurface, and :x, :y, or :z."
