@@ -116,8 +116,8 @@ function vertices(em::EllipsoidMantle{T}, n_arc::Int)::Vector{CartesianPoint{T}}
     n_arcφ = _get_n_points_in_arc_φ(em, n_arc) 
     n_arcθ = _get_n_points_in_arc_θ(em, n_arc)
     
-    θ = range(θMin, θMax, length = n_arcθ + 1)
-    φ = range(φMin, φMax, length = n_arcφ + 1)
+    θ = range(θMin, stop = θMax, length = n_arcθ + 1)
+    φ = range(φMin, stop = φMax, length = n_arcφ + 1)
     
     [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) for θ in θ for φ in φ]
 end
@@ -131,7 +131,9 @@ function sample(em::EllipsoidMantle{T}, spacing::T)::Vector{CartesianPoint{T}} w
     Δθ = abs(θMax - θMin)
     full2π = isnothing(em.φ)
     
-    [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) for θ in range(θMin, θMax, length = max(2,1+Int(ceil(Δθ*r/spacing)))) for φ in (mod(θ, T(2π)) in T[π/2,3π/2] ? [φMin] : range(φMin, φMax - full2π*spacing/(r*cos(θ)), length = max(2,1+Int(ceil(Δφ*r*cos(θ)/spacing)))))]
+    [_transform_into_global_coordinate_system(CartesianPoint{T}(rx*cos(θ)*cos(φ), ry*cos(θ)*sin(φ), rz*sin(θ)), em) 
+        for θ in range(θMin, stop = θMax, length = max(2,1+Int(ceil(Δθ*r/spacing)))) 
+        for φ in (mod(θ, T(2π)) in T[π/2,3π/2] ? [φMin] : range(φMin, stop = φMax - full2π*spacing/(r*cos(θ)), length = max(2,1+Int(ceil(Δφ*r*cos(θ)/spacing)))))]
 end
 
 function connections(em::EllipsoidMantle, n_arc::Int)::Vector{Vector{Int}}

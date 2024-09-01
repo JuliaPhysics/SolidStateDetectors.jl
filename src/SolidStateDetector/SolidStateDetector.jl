@@ -117,7 +117,7 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."     
     semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
 
-    @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
+    @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
     
     # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)

@@ -6,6 +6,7 @@ using SolidStateDetectors
 
 using SpecialFunctions
 using StaticArrays
+using Statistics
 using StatsBase
 using Tables, TypedTables
 using Unitful
@@ -276,6 +277,11 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
+end
+
+@timed_testset "Fano factor" begin
+    
+
 end
 
 @timed_testset "Table Simulation" begin 

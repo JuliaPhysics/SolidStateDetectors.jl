@@ -43,12 +43,12 @@ jobs:
             os: windows-latest
             arch: x64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: 'Conda'
@@ -57,7 +57,7 @@ jobs:
           coverage: ${{ matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64' }}
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         with:
           file: lcov.info
@@ -65,11 +65,11 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: 'Conda'

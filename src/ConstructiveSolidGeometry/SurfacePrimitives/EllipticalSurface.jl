@@ -77,7 +77,7 @@ normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) 
 function vertices(es::EllipticalSurface{T, T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
     φMin, φMax = get_φ_limits(es)
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
-    φ = range(φMin, φMax, length = n_arc+1)
+    φ = range(φMin, stop = φMax, length = n_arc+1)
     append!([es.origin],[_transform_into_global_coordinate_system(CartesianPoint{T}(es.r*cos(φ), es.r*sin(φ), 0), es) for φ in φ])
 end
 
@@ -85,7 +85,7 @@ function vertices(es::EllipticalSurface{T, Tuple{T,T}}, n_arc::Int)::Vector{Cart
     rMin, rMax = es.r
     φMin, φMax = get_φ_limits(es)
     n_arc = _get_n_points_in_arc_φ(es, n_arc)
-    φ = range(φMin, φMax, length = n_arc+1)
+    φ = range(φMin, stop = φMax, length = n_arc+1)
     [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in (rMin,rMax) for φ in φ]
 end
 
@@ -94,7 +94,9 @@ function sample(es::EllipticalSurface{T}, spacing::T)::Vector{CartesianPoint{T}}
     Δφ = abs(φMax - φMin)
     full2π = isnothing(es.φ)
     rMin, rMax = length(es.r) == 1 ? (0, es.r) : es.r
-    [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) for r in range(rMin, rMax, length = max(2,1+Int(ceil((rMax-rMin)/spacing)))) for φ in (r == 0 ? [φMin] : range(φMin, φMax - full2π*spacing/r, length = max(2,1+Int(ceil(Δφ*r/spacing)))))]
+    [_transform_into_global_coordinate_system(CartesianPoint{T}(r*cos(φ), r*sin(φ), 0), es) 
+        for r in range(rMin, stop = rMax, length = max(2,1+Int(ceil((rMax-rMin)/spacing)))) 
+        for φ in (r == 0 ? [φMin] : range(φMin, stop = φMax - full2π*spacing/r, length = max(2,1+Int(ceil(Δφ*r/spacing)))))]
 end
 
 function connections(es::EllipticalSurface{T, T}, n_arc::Int)::Vector{Vector{Int}} where {T}

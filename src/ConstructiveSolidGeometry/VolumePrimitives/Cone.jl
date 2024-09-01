@@ -12,8 +12,8 @@ being aligned with the `xy` plane (before possible rotations).
 * `TR`: Type of the radius `r`.
     * `TR == T`: Cylinder (constant radius `r` at all `z`).
     * `TR == Tuple{T, T}`: Tube (inner radius at `r[1]`, outer radius at `r[2]`).
-    * `TR == Tuple{Tuple{T}, Tuple{T}}`: Varying Cylinder (full cylinder with radius changing linearly in `z` from `r[1]` at the bottom to `r[2]` at the top).
-    * `TR == Tuple{Tuple{T, T}, Tuple{T, T}}`: Varying Tube (inner radius changes linearly in `z` from `r[1][1]` at the bottom to `r[1][2]` at the top, outer radius changes linearly in `z` from `r[2][1]` at the bottom to `r[1][2]` at the top).
+    * `TR == Tuple{Tuple{T}, Tuple{T}}`: Varying Cylinder (full cylinder with radius changing linearly in `z` from `r[1][1]` at the bottom to `r[2][1]` at the top).
+    * `TR == Tuple{Tuple{T, T}, Tuple{T, T}}`: Varying Tube (inner radius changes linearly in `z` from `r[1][1]` at the bottom to `r[2][1]` at the top, outer radius changes linearly in `z` from `r[1][2]` at the bottom to `r[2][2]` at the top).
     * `TR == Tuple{Nothing, Tuple{T, T}}`: Cone (Tip at the bottom, top is a circular base with inner radius `r[2][1]` and outer radius `r[2][2]`).
     * `TR == Tuple{Tuple{T, T}, Nothing}`: Cone (Tip at the top, bottom is a circular base with inner radius `r[1][1]` and outer radius `r[1][2]`).
 * `TP`: Type of the angular range `φ`.

@@ -180,7 +180,7 @@ end
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
     @inbounds knots = spot.grid.axes[1].ticks, cat(spot.grid.axes[2].ticks,T(2π),dims=1), spot.grid.axes[3].ticks
     ext_data = cat(spot.data, spot.data[:,1:1,:], dims=2)
-    i = interpolate(knots, ext_data, Gridded(Linear()))
+    i = interpolate!(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
 end

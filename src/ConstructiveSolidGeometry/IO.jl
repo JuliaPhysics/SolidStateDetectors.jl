@@ -58,8 +58,11 @@ end
 
 # parses dictionary entries of type Real or String to their value in internal units
 @inline _parse_value(::Type{T}, x::Real, unit::Unitful.Units) where {T} = T(to_internal_units(float(x) * unit))
-@inline _parse_value(::Type{T}, x::Quantity, unit::Unitful.Units) where {T} = T(ustrip(unit, x))
-@inline _parse_value(::Type{T}, s::String, ::Unitful.Units) where {T} = T(to_internal_units(uparse(s)))
+@inline _parse_value(::Type{T}, x::Quantity, unit::Unitful.Units) where {T} = begin
+    if dimension(x) != dimension(unit) throw(ConfigFileError("The quantity '$(x)' cannot be converted to unit '$(unit)'")) end
+    T(to_internal_units(float(x)))
+end
+@inline _parse_value(::Type{T}, s::String, unit::Unitful.Units) where {T} = _parse_value(T, uparse(s), unit)
 @inline _parse_value(::Type{T}, a::AbstractVector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries

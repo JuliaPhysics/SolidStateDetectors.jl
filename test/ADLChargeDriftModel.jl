@@ -1,10 +1,12 @@
-using SolidStateDetectors: getVe, getVh, Vl
+using SolidStateDetectors
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files
 using StaticArrays
 using LinearAlgebra
+using Unitful
 
 config_dict = Dict(
-    "High-purity germanium" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config.yaml"),
-    "Silicon" => joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_Si_300K_config.yaml")
+    "High-purity germanium" => joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml"),
+    "Silicon" => joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_Si_300K_config.yaml")
 )
 
 geom_sigdigits(::Type{Int})::Int = 12
@@ -124,3 +126,76 @@ for T in (Float32, Float64)
     end
 end
 
+@testset "Test parsing of ADLChargeDriftModel config files with units" begin
+    cdm0 = ADLChargeDriftModel() # default charge drift model
+    @test cdm0.electrons.axis100.mu0  == 3.8609f0
+    @test cdm0.electrons.axis100.beta == 0.805f0
+    @test cdm0.electrons.axis100.E0   == 51100f0
+    @test cdm0.electrons.axis100.mun  == -0.0171f0
+    @test cdm0.electrons.axis111.mu0  == 3.8536f0
+    @test cdm0.electrons.axis111.beta == 0.641f0
+    @test cdm0.electrons.axis111.E0   == 53800f0
+    @test cdm0.electrons.axis111.mun  == 0.051f0
+    @test cdm0.holes.axis100.mu0  == 6.1824f0
+    @test cdm0.holes.axis100.beta == 0.942f0
+    @test cdm0.holes.axis100.E0   == 18500f0
+    @test cdm0.holes.axis111.mu0  == 6.1215f0
+    @test cdm0.holes.axis111.beta == 0.662f0
+    @test cdm0.holes.axis111.E0   == 18200f0
+
+    cdm_nounits = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_nounits.yaml"))
+    @test cdm0.electrons == cdm_nounits.electrons
+    @test cdm0.holes == cdm_nounits.holes
+    @test cdm0.crystal_orientation ≈ cdm_nounits.crystal_orientation
+
+end
+
+@testset "Modify mobility parameters using keyword arguments" begin
+    cdm = ADLChargeDriftModel{Float64}(e100μ0 = 40000u"cm^2/(V*s)", e111μn = 5u"cm^2/(V*s)", h100β = 2, h111E0 = 50u"V/cm")
+    @test cdm.electrons.axis100.mu0 == 4.0     # internal unit is m^2/(V*s)
+    @test cdm.electrons.axis111.mun == 0.0005  # internal unit is m^2/(V*s)
+    @test cdm.holes.axis100.beta == 2.0        # no unit conversion
+    @test cdm.holes.axis111.E0 == 5000.0       # internal unit is V/m
+end
+
+@testset "Construct ADLChargeDriftModel from dictionary (with units)" begin
+    config = Dict(
+        "phi110" => -45u"°",
+        "material" => "HPGe",
+        "drift" => Dict(
+            "velocity" => Dict(
+                "parameters" => Dict(
+                    "e100" => Dict(
+                        "mu0" => 38609u"cm^2/(V*s)",
+                        "beta" => 0.805,
+                        "E0" => 511u"V/cm",
+                        "mun" => -171u"cm^2/(V*s)"
+                    ),
+                    "e111" => Dict(
+                        "mu0" => 38536u"cm^2/(V*s)",
+                        "beta" => 0.641,
+                        "E0" => 538u"V/cm",
+                        "mun" => 510u"cm^2/(V*s)"
+                    ),
+                    "h100" => Dict(
+                        "mu0" => 61824u"cm^2/(V*s)",
+                        "beta" => 0.942,
+                        "E0" => 185u"V/cm"
+                    ),
+                    "h111" => Dict(
+                        "mu0" => 61215u"cm^2/(V*s)",
+                        "beta" => 0.662,
+                        "E0" => 182u"V/cm"
+                    )
+                )
+            )
+        )
+    )
+
+    cdm0 = ADLChargeDriftModel() # default charge drift model
+    cdmdict = ADLChargeDriftModel(config)
+
+    @test cdm0.electrons == cdmdict.electrons
+    @test cdm0.holes == cdmdict.holes
+    @test cdm0.crystal_orientation == cdmdict.crystal_orientation
+end
