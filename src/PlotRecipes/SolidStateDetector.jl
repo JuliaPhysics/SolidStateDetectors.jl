@@ -84,7 +84,7 @@ end
 end
 
 @recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 40)
-
+    seriestype --> :csg
     show_normal --> false
     xunit --> internal_length_unit
     yunit --> internal_length_unit
