@@ -4,15 +4,24 @@
     seriescolor --> :silver
     xunit --> internal_length_unit
     yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
+    if st in [:x, :y, :z]
+        n_samples --> 200
+    else
+        zunit --> internal_length_unit
+    end
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
         #add empty line so that label is shown with alpha = 1
-        seriestype := :path3d
+        seriestype := :path
         label --> l
         linewidth := 1
-        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        if st in [:x, :y, :z]
+            T[]*internal_length_unit, T[]*internal_length_unit
+        else
+            T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        end
     end 
     label := ""
     p.geometry
@@ -24,13 +33,22 @@ end
     seriescolor --> :grey
     xunit --> internal_length_unit
     yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
+    if st in [:x, :y, :z]
+        n_samples --> 200
+    else
+        zunit --> internal_length_unit
+    end
     @series begin
         #add empty line so that label is shown with alpha = 1
-        seriestype := :path3d
+        seriestype := :path
         label --> "Semiconductor"
         linewidth := 1
-        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        if st in [:x, :y, :z]
+            T[]*internal_length_unit, T[]*internal_length_unit
+        else
+            T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        end
     end 
     label := ""
     sc.geometry
@@ -42,7 +60,12 @@ end
     linecolor --> contact.id
     xunit --> internal_length_unit
     yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
+    if st in [:x, :y, :z]
+        n_samples --> 200
+    else
+        zunit --> internal_length_unit
+    end
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     @series begin
@@ -50,7 +73,11 @@ end
         seriestype := :path
         label --> l
         linewidth := 1
-        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        if st in [:x, :y, :z]
+            T[]*internal_length_unit, T[]*internal_length_unit
+        else
+            T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        end
     end 
     label := ""
     contact.geometry
@@ -61,7 +88,12 @@ end
     show_normal --> false
     xunit --> internal_length_unit
     yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
+    if st in [:x, :y, :z]
+        n_samples --> 200
+    else
+        zunit --> internal_length_unit
+    end
     
     plot_objects = []
     append!(plot_objects, det.contacts)

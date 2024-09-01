@@ -9,10 +9,11 @@
     throw(ArgumentError("No plot recipe defined for Plane."))
 end
 
-@recipe function f(s::AbstractSurfacePrimitive; n_arc = 40, n_vert_lines = 2, n_samples = 40)
+@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40, slice_val = T(0)) where {T}
     seriestype --> :csg
     l = get_label_name(s)
     if haskey(plotattributes, :seriestype) 
+        projections = [:x, :y, :z]
         if plotattributes[:seriestype] == :csg 
             @series begin 
                 label := ""
@@ -41,8 +42,20 @@ end
             label --> l
             seriesalpha --> 0.4
             sample(s, extremum(s)/n_samples)
+        elseif plotattributes[:seriestype] in projections
+            label --> l
+            #Unlike f(CartesianPoint), there is no ssd plot recipe for f(array,array) so must define attributes here
+            xguide --> "x"
+            xunit --> internal_length_unit
+            yguide --> "y"
+            yunit --> internal_length_unit
+            unitformat --> :slash
+            spacing = extremum(s)/n_samples
+            samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, sample(s, spacing))
+            proj = filter(x -> x != plotattributes[:seriestype], projections)
+            internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
         else
-            @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, and :samplesurface"
+            @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, :samplesurface, and :x, :y, or :z."
         end
     end    
 end
@@ -52,6 +65,21 @@ end
     seriesalpha --> 0.2
     markerstrokewidth --> 0
     markersize --> 4
+    if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+        aspect_ratio --> 1.0
+    end 
+    seriestype := :scatter
+    ()
+end
+
+@recipe function f(::Union{Type{Val{:x}}, Type{Val{:y}}, Type{Val{:z}}}, x, y, z)
+    seriescolor --> 1
+    seriesalpha --> 1
+    markerstrokewidth --> 0
+    markersize --> 1
+    if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+        aspect_ratio --> 1.0
+    end 
     seriestype := :scatter
     ()
 end
