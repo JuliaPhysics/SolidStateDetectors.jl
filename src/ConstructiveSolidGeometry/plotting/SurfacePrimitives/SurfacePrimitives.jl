@@ -44,14 +44,15 @@ end
             sample(s, extremum(s)/n_samples)
         elseif plotattributes[:seriestype] in projections
             label --> l
+            proj = filter(x -> x != plotattributes[:seriestype], projections)
+            xunit --> internal_length_unit
+            yunit --> internal_length_unit
+            xguide --> string(proj[1])
+            yguide --> string(proj[2])
+            unitformat --> :slash
             spacing = extremum(s)/n_samples
             samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, sample(s, spacing))
             proj = filter(x -> x != plotattributes[:seriestype], projections)
-            xguide --> string(proj[1])
-            xunit --> internal_length_unit
-            yguide --> string(proj[2])
-            yunit --> internal_length_unit
-            unitformat --> :slash
             internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
         else
             @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, :samplesurface, and :x, :y, or :z."
@@ -61,9 +62,9 @@ end
 
 @recipe function f(::Type{Val{:samplesurface}}, x, y, z)
     seriescolor --> 1
-    seriesalpha --> 0.2
+    seriesalpha --> 0.1
     markerstrokewidth --> 0
-    markersize --> 4
+    markersize --> 3
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         aspect_ratio --> 1.0
     end 

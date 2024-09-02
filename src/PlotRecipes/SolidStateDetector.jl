@@ -2,13 +2,9 @@
     seriestype --> :csg
     linecolor --> :silver
     seriescolor --> :silver
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
     st = plotattributes[:seriestype]
     if st in [:x, :y, :z]
         n_samples --> 200
-    else
-        zunit --> internal_length_unit
     end
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
@@ -31,13 +27,9 @@ end
     seriestype --> :csg
     linecolor --> :grey
     seriescolor --> :grey
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
     st = plotattributes[:seriestype]
     if st in [:x, :y, :z]
         n_samples --> 200
-    else
-        zunit --> internal_length_unit
     end
     @series begin
         #add empty line so that label is shown with alpha = 1
@@ -58,13 +50,9 @@ end
     seriestype --> :csg
     seriescolor --> contact.id
     linecolor --> contact.id
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
     st = plotattributes[:seriestype]
     if st in [:x, :y, :z]
         n_samples --> 200
-    else
-        zunit --> internal_length_unit
     end
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
@@ -86,13 +74,9 @@ end
 @recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 40)
     seriestype --> :csg
     show_normal --> false
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
     st = plotattributes[:seriestype]
     if st in [:x, :y, :z]
         n_samples --> 200
-    else
-        zunit --> internal_length_unit
     end
     
     plot_objects = []
