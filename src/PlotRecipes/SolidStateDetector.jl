@@ -3,7 +3,7 @@
     linecolor --> :silver
     seriescolor --> :silver
     st = plotattributes[:seriestype]
-    if st in [:x, :y, :z]
+    if st == :slice
         n_samples --> 200
     end
     fillalpha --> 0.2
@@ -13,7 +13,7 @@
         seriestype := :path
         label --> l
         linewidth := 1
-        if st in [:x, :y, :z]
+        if st == :slice
             T[]*internal_length_unit, T[]*internal_length_unit
         else
             T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
@@ -28,7 +28,7 @@ end
     linecolor --> :grey
     seriescolor --> :grey
     st = plotattributes[:seriestype]
-    if st in [:x, :y, :z]
+    if st == :slice
         n_samples --> 200
     end
     @series begin
@@ -36,7 +36,7 @@ end
         seriestype := :path
         label --> "Semiconductor"
         linewidth := 1
-        if st in [:x, :y, :z]
+        if st == :slice
             T[]*internal_length_unit, T[]*internal_length_unit
         else
             T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
@@ -51,7 +51,7 @@ end
     seriescolor --> contact.id
     linecolor --> contact.id
     st = plotattributes[:seriestype]
-    if st in [:x, :y, :z]
+    if st == :slice
         n_samples --> 200
     end
     fillalpha --> 0.2
@@ -61,7 +61,7 @@ end
         seriestype := :path
         label --> l
         linewidth := 1
-        if st in [:x, :y, :z]
+        if st == :slice
             T[]*internal_length_unit, T[]*internal_length_unit
         else
             T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
@@ -75,7 +75,7 @@ end
     seriestype --> :csg
     show_normal --> false
     st = plotattributes[:seriestype]
-    if st in [:x, :y, :z]
+    if st == :slice
         n_samples --> 200
     end
     

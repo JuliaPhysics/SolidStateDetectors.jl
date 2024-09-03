@@ -9,55 +9,43 @@
     throw(ArgumentError("No plot recipe defined for Plane."))
 end
 
-@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40, slice_val = T(0)) where {T}
+@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40, slice_plane = (:y, 0)) where {T}
     seriestype --> :csg
+    st = plotattributes[:seriestype]
     l = get_label_name(s)
-    if haskey(plotattributes, :seriestype) 
-        projections = [:x, :y, :z]
-        if plotattributes[:seriestype] == :csg 
-            @series begin 
-                label := ""
-                linewidth := 0
-                linecolor --> :white
-                mesh(s, n_arc)
-            end
-            @series begin 
-                label --> l
-                linecolor --> :black
-                fillalpha := 1
-                linewidth --> 2
-                mesh(s, n_arc, n_vert_lines)
-            end 
-        elseif plotattributes[:seriestype] == :mesh3d
-            label --> l   
+    if st == :csg 
+        @series begin 
+            label := ""
+            linewidth := 0
             linecolor --> :white
             mesh(s, n_arc)
-        elseif plotattributes[:seriestype] == :wireframe
+        end
+        @series begin 
             label --> l
-            seriescolor --> :black
+            linecolor --> :black
             fillalpha := 1
             linewidth --> 2
             mesh(s, n_arc, n_vert_lines)
-        elseif plotattributes[:seriestype] == :samplesurface
-            label --> l
-            seriesalpha --> 0.4
-            sample(s, extremum(s)/n_samples)
-        elseif plotattributes[:seriestype] in projections
-            label --> l
-            proj = filter(x -> x != plotattributes[:seriestype], projections)
-            xunit --> internal_length_unit
-            yunit --> internal_length_unit
-            xguide --> string(proj[1])
-            yguide --> string(proj[2])
-            unitformat --> :slash
-            spacing = extremum(s)/n_samples
-            samples = filter(pt -> abs(getproperty(pt, plotattributes[:seriestype]) - slice_val) < spacing/2, sample(s, spacing))
-            proj = filter(x -> x != plotattributes[:seriestype], projections)
-            internal_length_unit*getproperty.(samples, proj[1]), internal_length_unit*getproperty.(samples, proj[2])
-        else
-            @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, :samplesurface, and :x, :y, or :z."
-        end
-    end    
+        end 
+    elseif st == :mesh3d
+        label --> l   
+        linecolor --> :white
+        mesh(s, n_arc)
+    elseif st == :wireframe
+        label --> l
+        seriescolor --> :black
+        fillalpha := 1
+        linewidth --> 2
+        mesh(s, n_arc, n_vert_lines)
+    elseif st == :samplesurface
+        label --> l
+        seriesalpha --> 0.4
+        sample(s, extremum(s)/n_samples)
+    elseif st == :slice
+        @warn ":slice is not supported for AbstractSurfacePrimitive. Use :csg, :wireframe, :mesh3d, or :samplesurface."
+    else
+        @warn "The only seriestypes which will return a plot are :csg, :wireframe, :mesh3d, :samplesurface, and :slice."
+    end  
 end
 
 @recipe function f(::Type{Val{:samplesurface}}, x, y, z)
@@ -72,7 +60,7 @@ end
     ()
 end
 
-@recipe function f(::Union{Type{Val{:x}}, Type{Val{:y}}, Type{Val{:z}}}, x, y, z)
+@recipe function f(::Type{Val{:slice}}, x, y, z)
     seriescolor --> 1
     seriesalpha --> 1
     markerstrokewidth --> 0
