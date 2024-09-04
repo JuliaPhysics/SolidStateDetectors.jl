@@ -3,9 +3,6 @@
     linecolor --> :silver
     seriescolor --> :silver
     st = plotattributes[:seriestype]
-    if st == :slice
-        n_samples --> 200
-    end
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
@@ -28,9 +25,6 @@ end
     linecolor --> :grey
     seriescolor --> :grey
     st = plotattributes[:seriestype]
-    if st == :slice
-        n_samples --> 200
-    end
     @series begin
         #add empty line so that label is shown with alpha = 1
         seriestype := :path
@@ -51,9 +45,6 @@ end
     seriescolor --> contact.id
     linecolor --> contact.id
     st = plotattributes[:seriestype]
-    if st == :slice
-        n_samples --> 200
-    end
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     @series begin
@@ -71,14 +62,11 @@ end
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 40)
+@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true)
     seriestype --> :csg
     show_normal --> false
     st = plotattributes[:seriestype]
-    if st == :slice
-        n_samples --> 200
-    end
-    
+
     plot_objects = []
     append!(plot_objects, det.contacts)
     if show_semiconductor
@@ -88,17 +76,11 @@ end
         append!(plot_objects, det.passives)
     end
     
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-        scales = [get_scale(o.geometry) for o in plot_objects]
-        max_scale = maximum(scales)
-    end
+    max_scale = st in (:samplesurface, :slice) ? maximum(broadcast(o -> get_scale(o.geometry), plot_objects)) : missing
     
-    for (i,o) in enumerate(plot_objects)
+    for o in plot_objects
         @series begin
-            if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-                n_samples --> Int(ceil(n_samples * scales[i]/max_scale))
-                CSG_scale := scales[i]
-            end
+            CSG_scale := max_scale
             o
         end
     end

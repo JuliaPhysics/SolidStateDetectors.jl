@@ -7,14 +7,41 @@ function sample(p::AbstractVolumePrimitive{T}, spacing::T)::Vector{CartesianPoin
     vs
 end
 
-function _get_volume_primitive_plot_objects(p::AbstractVolumePrimitive{T}, n_samples, slice_plane, st) where {T}
+function get_crosssection_and_value(x::Union{Real, LengthQuantity, Missing}, y::Union{Real, LengthQuantity, Missing}, z::Union{Real, LengthQuantity, Missing}, φ::Union{Real, AngleQuantity, Missing})::Tuple{Symbol, Real}
+    crosssections = Dict(:x => x, :y => y, :z => z, :φ => φ)
+    idx = findfirst(cs -> !ismissing(cs), crosssections)
+    if isnothing(idx)
+        :y, 0
+    else
+        return idx, to_internal_units(crosssections[idx])
+    end
+end
+
+function is_coplanar(s::AbstractSurfacePrimitive{T}, plane::Tuple{Symbol,T}) where {T}
+    axis, slice = plane
+    crosssections = Dict(   :x => CartesianVector{T}(1,0,0), 
+                            :y => CartesianVector{T}(0,1,0), 
+                            :z => CartesianVector{T}(0,0,1),
+                            :φ => CartesianVector{T}(cos(π/2+slice),sin(π/2+slice),0)
+                   )
+    pointtype = axis == :φ ? CylindricalPoint : CartesianPoint
+    point = pointtype(vertices(s,1)[1])
+    if abs(dot(normal(s), crosssections[axis])) == 1 && abs(getproperty(point, axis) - slice) < csg_default_tol(T)
+        true
+    else
+        false
+    end
+end
+
+@recipe function f(p::AbstractPrimitive{T}, axis::Symbol, slice::T, st::Symbol; n_samples = missing, CSG_scale = missing) where {T}
     if st == :samplesurface
-        spacing = T(extremum(p)/n_samples)
+        CSG_scale = ismissing(CSG_scale) ? extremum(p) : CSG_scale
+        spacing = T(CSG_scale/n_samples)
         sample(p, spacing)
     elseif st == :slice
-        axis, slice  = slice_plane
         pointtype, axisrot = CartesianPoint, axis
-        spacing = T(extremum(p)/n_samples)
+        CSG_scale = ismissing(CSG_scale) ? extremum(p) : CSG_scale
+        spacing = T(CSG_scale/n_samples)
         if axis == :φ
             p = rotate(p, T.(RotZ(-to_internal_units(slice))))
             pointtype, axisrot, slice, spacing = CylindricalPoint, :y, 0, spacing*T(0.5)
@@ -28,33 +55,35 @@ function _get_volume_primitive_plot_objects(p::AbstractVolumePrimitive{T}, n_sam
             u = u[idx]
             v = v[idx]
         end
-        if length(u) > 10000
-            n_samples = Int(floor(n_samples*0.5))
-            _get_volume_primitive_plot_objects(p, n_samples, slice_plane, st)
-        else
-            internal_length_unit*u, internal_length_unit*v
-        end
+        proj = filter(x -> x != axis, fieldnames(pointtype))
+        xguide --> string(proj[1])
+        yguide --> string(proj[2])
+        xunit --> internal_length_unit
+        yunit --> internal_length_unit
+        internal_length_unit*u, internal_length_unit*v
     else
         [surfaces(p)...]
     end
 end
 
-@recipe function f(p::AbstractVolumePrimitive{T}; n_samples = 40, slice_plane = (:y, 0)) where {T}
+@recipe function f(p::AbstractVolumePrimitive{T}; x = missing, y = missing, z = missing, φ = missing) where {T}
     linecolor --> :black
     seriestype --> :csg
     st = plotattributes[:seriestype]
-    axis, slice  = slice_plane
-    pointtype = axis == :φ ? CylindricalPoint : CartesianPoint
+    unitformat --> :slash
+    axis, slice  = get_crosssection_and_value(x,y,z,φ)
+    if st == :slice
+        surfs = filter(s -> typeof(s) <: AbstractPlanarSurfacePrimitive{T}, surfaces(p))
+        if any(s -> is_coplanar(s, (axis, T(slice))), surfs)
+            n_samples --> 100
+        else
+            n_samples --> 200
+        end
+    else
+        n_samples --> 40
+    end
     @series begin
         label --> "$(nameof(typeof(p)))"
-        if st == :slice
-            proj = filter(x -> x != axis, fieldnames(pointtype))
-            xguide --> string(proj[1])
-            yguide --> string(proj[2])
-            xunit --> internal_length_unit
-            yunit --> internal_length_unit
-            unitformat --> :slash
-        end
-        _get_volume_primitive_plot_objects(p, n_samples, slice_plane, st)
+        p, axis, T(slice), st
     end
 end
