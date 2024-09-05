@@ -66,7 +66,6 @@ end
     seriestype --> :csg
     show_normal --> false
     st = plotattributes[:seriestype]
-    isgr = occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
 
     plot_objects = []
     append!(plot_objects, det.contacts)

@@ -36,9 +36,8 @@ end
             markersize := linewidth
         end
         if projection == :polar && axis == :z
-            if isgr aspect_ratio := :none end
             xunit --> internal_angle_unit
-            internal_angle_unit*atan.(v,u), internal_length_unit*sqrt.(u.^2 + v.^2)
+            uconvert.(internal_angle_unit, atan.(v,u)), internal_length_unit*sqrt.(u.^2 + v.^2)
         else
             if isgr aspect_ratio --> 1.0 end
             xunit --> internal_length_unit

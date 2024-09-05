@@ -35,41 +35,56 @@ plot(det, size = (500, 500))
 ````
 ### Plot Styles
 
-The style of the detector plot can be controlled via the `seriestype` keyword. There are 4 available styles:
+The style of the detector plot can be controlled via the `seriestype` keyword. There are 4 available styles for 3D plotting:
 
 ````@example tutorial
 plot(
       plot(det, seriestype = :csg, title = ":csg"),
       plot(det, seriestype = :wireframe, title = ":wireframe"),
       plot(det, seriestype = :mesh3d, title = ":mesh3d"), 
-      plot(
-            det, seriestype = :samplesurface, n_samples = 100, 
-            markersize = 2, markeralpha = 0.03, title = ":samplesurface"
-            ), 
+      plot(det, seriestype = :samplesurface, title = ":samplesurface",
+            markersize = 1, n_samples = 50), 
       layout = (1,4), size = (800,200), legend = false, ticks = false, 
-      guide = "", zlims = (-0.005,0.1)
+      guide = "", zlims = (-0.005,0.1), axis = false
 )
 ````
 
-The `seriestype` can be set to `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`. `:csg` plots a wireframe on top of a mesh (with no mesh gridlines). For fastest plotting use either `:wireframe` or `:mesh3d` and consider changing `n_arc` (see [Optional Keywords](@ref)). `:csg`, `:wireframe`, and `:mesh3d` are all mesh-based. For geometries containing differences or intersections the recommended seriestype is `:samplesurface`. This can be seen by plotting the detector's semiconductor below. `:samplesurface` is marker-based. The marker density is set low by default for speed. For increased plot fidelity use `n_samples = 100` and `markersize = 2`.
+To generate a 3D plot the `seriestype` can be set to `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`. `:csg` plots a wireframe on top of a mesh (with no mesh grid lines). For fastest plotting use either `:wireframe` or `:mesh3d` and consider changing `n_arc` (see [Optional Keywords](@ref)). 
 
+!!! tip
+      `:csg`, `:wireframe`, and `:mesh3d` are all mesh-based. For geometries containing differences or intersections the recommended `seriestype` is `:samplesurface` which is marker-based. The marker density is set low by default for speed. For increased plot fidelity use `n_samples` above `100` and adjust the `markersize`.
+
+Plotting the detector's semiconductor helps illustrate the difference between each `seriestype`.
 ````@example tutorial
 plot(
       plot(det.semiconductor, seriestype = :csg, title = ":csg"),
       plot(det.semiconductor, seriestype = :wireframe, title = ":wireframe"),
       plot(det.semiconductor, seriestype = :mesh3d, title = ":mesh3d"), 
-      plot(
-            det.semiconductor, seriestype = :samplesurface, n_samples = 100, 
-            markersize = 2, markeralpha = 0.03, title = ":samplesurface"
-            ), 
+      plot(det.semiconductor, seriestype = :samplesurface, title = ":samplesurface",
+            markersize = 1, n_samples = 50), 
       layout = (1,4), size = (800,200), legend = false, ticks = false, 
-      guide = "", zlims = (-0.005,0.1)
+      guide = "", zlims = (-0.005,0.1), axis = false
 )
 ````
 
 !!! note
-    So far, when using mesh-based seriestypes (`:csg`, `:wireframe`, `:mesh3d`), plots are produced by plotting whole primitives. Thus, usually, nicer plots are produced if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thinner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
-    
+    When using mesh-based `seriestype`'s (`:csg`, `:wireframe`, `:mesh3d`), plots are produced by plotting whole primitives. Thus, usually, nicer plots are produced if the geometry consists only of unions of primitives and not differences or intersections. If the geometry contains differences, the resulting negative geometries are plotted with thinner wireframe lines and/or with semi-transparent white mesh faces depending on the `seriestype` used. 
+
+For 2D plotting, use `seriestype = :slice`. Like `:samplesurface`, `:slice` is marker based and will respond to all marker keywords like `markersize`. As the `seriestype` implies, a slice of the detector is plotted. To select the slice value use the `x`, `y` or `z` or `φ` keywords.
+
+````@example tutorial
+plot(
+    plot(det, st = :slice, x = 2u"mm"),
+    plot(det, st = :slice, y = 20u"mm", c = :black),
+    plot(det, st = :slice, z = 0u"mm"),
+    plot(det, st = :slice, φ = 90u"°", lw = 3),
+    layout = (1,4), size = (800,200), legend = false
+    )
+````  
+`seriestype = :slice` has all the advantages of `:samplesurface` but with much greater fidelity and speed.
+!!! tip
+      For `seriestype = :slice`, `markersize` and `linewidth` (or their abbreviations `ms` and `lw`) can be used interchangeably. For very small `markersize`, consider increasing `n_samples`. This `seriestype` is particularly useful for showing contacts over potentials. See examples in [Scalar Potential Plots](@ref)
+
 ### How does the plot recipe work?
 
 The detector consists of a semiconductor, `det.semiconductor`, its contacts, `det.contacts`,
@@ -89,32 +104,40 @@ plot!(det.contacts[2], st = :wireframe, n_vert_lines = 5)
 ### Optional Keywords
 * `show_semiconductor`: Will display the semiconductor if set to `true`. Default is `false`.
 * `show_passives`: Will display the objects surrounding the detector if set to `true`. Default is `true`.
-* `seriestype`: Can be `:csg` (default), `:wireframe`, `:mesh3d`, or `:samplesurface`.
-* `linewidth`: Sets the line width of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linewidth` sets the line width of the wireframe.
+* `seriestype`: Can be `:csg` (default), `:wireframe`, `:mesh3d`, `:samplesurface` or `:slice`.
+* `linewidth`: Sets the line width of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linewidth` sets the line width of the wireframe. For `seriestype = :slice`, `linewidth` sets the `markersize`.
 * `linecolor`: Sets the line color of the edges of the mesh gridlines when using `seriestype = :mesh3d`. When using `seriestype = :csg` or `seriestype = :wireframe`, `linecolor` sets the line color of the wireframe.
 * `fillcolor`: Sets the face color of all faces of the mesh.
 * `fillalpha`: Sets the alpha value of all faces of the mesh.
 * `markercolor`: Sets the marker color.
-* `markersize`: Sets the marker size. `markersize = 4` is the default value.
+* `markersize`: Sets the marker size. The default `markersize` is `3` and `1` for `:samplesurface` and `:slice` respectively.
 * `markeralpha`: Sets the alpha value for markers.
 * `n_arc`: Controls the discretization of curved objects in a mesh. Each full ellipse is divided into `n_arc` segments. Partial ellipses are drawn with a proportional number (`n_arc*f` with `f<1`) of segments.`n_arc = 40` is the default value. Smaller `n_arc` values will result in faster plotting, specially if the geometry contains tori or ellipsoids.
 * `n_vert_lines`: Controls the number of wireframe "vertical" lines in a mesh. `n_vert_lines = 2` is the default value. A maximum of `n_arc*f` vertical lines can be drawn on each curved object. This keyword is ignored by polygons.
-* `n_samples`: Controls the marker density. `n_samples = 40` is the default value. Reduce this value for faster plotting. Consider increasing `markersize` and/or `markeralpha` to compensate for the visual impact of lower marker densities. Note that the marker density is intended to be even across all dimensions. Therefore, visual distortions will occur if the aspect ratio of the axes is far from unity.
+* `n_samples`: Controls the marker density. `n_samples = 40` is the default value for `:samplesurface`. For `:slice` the default value is set dynamically to `100` or `200`. Reduce this value for faster plotting. Consider increasing `markersize` and/or `markeralpha` to compensate for the visual impact of lower marker densities. Note that the marker density is intended to be even across all dimensions. Therefore, visual distortions will occur if the aspect ratio of the axes is far from unity.
+* `x,y,z,φ`: In combination with `seriestype = :slice` selects the slice to be plotted.
+* `full_det`: For `φ` slices determines if the cross section in `φ` is extended to "negative" `r`. Default value is `false`.
+* `projection`: (or `proj`) Determines if `z` slices will be shown in a `:polar` projection. Default value is `:none`.
+
 
 ## Scalar Potential Plots
 
 When calculating the electric potential, a set of scalar potentials are stored in the `Simulation` object, e.g. `sim.electric_potential`, `sim.point_types`, and `sim.q_eff_imp`. SolidStateDetectors.jl has plot recipes for these scalar potentials.
 
 ````@example tutorial
-plot(sim.electric_potential)
+plot(sim.electric_potential, φ = 0)
+plot!(sim.detector, st = :slice, φ = 0, legendfontsize = 4)
 ````
 
 There are several keyword arguments that can be passed to adjust the potential plots.
 First, the simulated potentials are simulated on a three-dimensional `Grid`, but the plots will always be a two-dimensional cross section (for a `CylindricalGrid` at constant `r`, `φ` or `z`, for a `CartesianGrid3D` at constant `x`, `y` or `z`).
-The cross section can be specified in the `plot` command. A cross section of the `ElectricPotential` at `z = 20mm` can be plotted via
+The cross section can be specified in the `plot` command. A cross section of the `ElectricPotential` at `z = 30mm` can be plotted via
 ````@example tutorial
-plot(sim.electric_potential, z = 20u"mm")
+plot(sim.electric_potential, z = 30u"mm")
+plot!(det, st = :slice, z = 30u"mm", proj = :polar, lw = 2)
 ````
+!!! warning
+      Only plot the detector over scalar potentials with `seriestype = :slice`. When plotting the detector over a polar projection of the potential (such as above), `proj = :polar` must be selected in the detector plot.
 
 In addition to all plot attributes that are implemented in [Plots.jl](https://github.com/JuliaPlots/Plots.jl), plots of scalar potentials can take two additional keyword arguments, `contours_equal_potential` and `full_det`, which both are of type `Bool`:
 * `contours_equal_potential`: If this set to `true`, the plot will additionally display contour lines at points with equal potential value.
