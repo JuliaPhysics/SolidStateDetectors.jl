@@ -9,7 +9,7 @@
     throw(ArgumentError("No plot recipe defined for Plane."))
 end
 
-@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40, slice_plane = (:y, 0)) where {T}
+@recipe function f(s::AbstractSurfacePrimitive{T}; n_arc = 40, n_vert_lines = 2, n_samples = 40) where {T}
     seriestype --> :csg
     st = plotattributes[:seriestype]
     l = get_label_name(s)
@@ -65,9 +65,6 @@ end
     seriesalpha --> 1
     markerstrokewidth --> 0
     markersize --> 1
-    if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
-        aspect_ratio --> 1.0
-    end 
     seriestype := :scatter
     ()
 end

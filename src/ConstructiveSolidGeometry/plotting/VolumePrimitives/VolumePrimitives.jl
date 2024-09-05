@@ -26,19 +26,16 @@ function is_coplanar(s::AbstractSurfacePrimitive{T}, plane::Tuple{Symbol,T}) whe
                    )
     pointtype = axis == :φ ? CylindricalPoint : CartesianPoint
     point = pointtype(vertices(s,1)[1])
-    if abs(dot(normal(s), crosssections[axis])) == 1 && abs(getproperty(point, axis) - slice) < csg_default_tol(T)
-        true
-    else
-        false
-    end
+    abs(abs(dot(normal(s), crosssections[axis])) - 1) < csg_default_tol(T) && abs(getproperty(point, axis) - slice) < csg_default_tol(T)
 end
 
-@recipe function f(p::AbstractPrimitive{T}, axis::Symbol, slice::T, st::Symbol; n_samples = missing, CSG_scale = missing) where {T}
+@recipe function f(p::AbstractPrimitive{T}, axis::Symbol, slice::T, st::Symbol; n_samples = 40, CSG_scale = missing, projection = :none, full_det = false, linewidth = :auto) where {T}
     if st == :samplesurface
         CSG_scale = ismissing(CSG_scale) ? extremum(p) : CSG_scale
         spacing = T(CSG_scale/n_samples)
         sample(p, spacing)
     elseif st == :slice
+        isgr = occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         pointtype, axisrot = CartesianPoint, axis
         CSG_scale = ismissing(CSG_scale) ? extremum(p) : CSG_scale
         spacing = T(CSG_scale/n_samples)
@@ -50,17 +47,27 @@ end
         proj = fieldnames(CartesianPoint)[findall(x -> x != axis, fieldnames(pointtype))]
         u = getproperty.(samples, proj[1])
         v = getproperty.(samples, proj[2])
-        if axis == :φ
+        if axis == :φ && !full_det
             idx = findall(0 .≤ u)
             u = u[idx]
             v = v[idx]
         end
         proj = filter(x -> x != axis, fieldnames(pointtype))
+        yunit --> internal_length_unit
         xguide --> string(proj[1])
         yguide --> string(proj[2])
-        xunit --> internal_length_unit
-        yunit --> internal_length_unit
-        internal_length_unit*u, internal_length_unit*v
+        if linewidth != :auto
+            markersize := linewidth
+        end
+        if projection == :polar && axis == :z
+            if isgr aspect_ratio := :none end
+            xunit --> internal_angle_unit
+            internal_angle_unit*atan.(v,u), internal_length_unit*sqrt.(u.^2 + v.^2)
+        else
+            if isgr aspect_ratio --> 1.0 end
+            xunit --> internal_length_unit
+            internal_length_unit*u, internal_length_unit*v
+        end
     else
         [surfaces(p)...]
     end
