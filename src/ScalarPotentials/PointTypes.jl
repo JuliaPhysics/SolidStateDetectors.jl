@@ -103,7 +103,7 @@ is_depleted(sim.point_types)
 ```
 """
 is_depleted(point_types::PointTypes)::Bool = 
-    !any(b -> undepleted_bit & b > 0, point_types.data)
+    !any(b -> bulk_bit > 0 && undepleted_bit & b > 0, point_types.data)
 
 
 """
