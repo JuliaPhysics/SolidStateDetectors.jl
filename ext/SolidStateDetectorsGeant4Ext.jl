@@ -24,8 +24,29 @@ using Unitful
 include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
 include(joinpath(@__DIR__, "Geant4", "g4jl_application.jl"))
 
+
+"""
+    G4JLDetector(input::Union{Simulation, AbstractString}, output_filename::String = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
+
+Creates a `Geant4.G4JLDetectorGDML` from an SSD Simulation, an SSD config file or a GDML file.
+
+
+## Arguments
+* `input::Union{Simulation, AbstractString}`: SSD Simulation, or path to a SSD config file or GDML file.
+* `output_filename::AbstractString`: Name of the GDML output file.
+
+## Keywords
+* `verbose::Bool=true`: Boolean whether info output is produced or not.
+* `save_gdml::Bool=false`: If set to `true`, the GDML file will be saved as `output_filename`.
+
+## Examples
+```julia 
+source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.065, 0., 0.05), CartesianVector(-1,0,0))
+app = G4JLApplication(SSD_examples[:InvertedCoax], source)
+```
+"""
 # Given an SSD simulation object, create corresponding GDML file to desired location
-function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filename::String = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
+function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filename::AbstractString = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
     # Create basis for GDML file
     x_doc = XMLDocument()
     x_root = create_root(x_doc, "gdml")
@@ -103,7 +124,7 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     detector 
 end
 
-function Geant4.G4JLDetector(input_filename::String, output_filename::String = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
+function Geant4.G4JLDetector(input_filename::AbstractString, output_filename::AbstractString = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
     if endswith(input_filename, ".gdml")
         @suppress_out Geant4.G4JLDetectorGDML(input_filename)
     else
@@ -112,9 +133,24 @@ function Geant4.G4JLDetector(input_filename::String, output_filename::String = "
     end
 end
 
+"""
+    G4JLApplication(sim::Union{Simulation, AbstractString}, source::AbstractParticleSource; kwargs...)
 
+Creates a `Geant4.G4JLApplication` from an SSD config file, an SSD simulation, or a GDML file
+and a particle source emitting primary particles.
+
+## Arguments
+* `sim::Union{Simulation, AbstractString}`: SSD Simulation, or path to a SSD config file or GDML file.
+* `source::AbstractParticleSource`: Particle source emitting primary particles.
+
+## Examples
+```julia 
+source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.065, 0., 0.05), CartesianVector(-1,0,0))
+app = G4JLApplication(SSD_examples[:InvertedCoax], source)
+```
+"""
 function Geant4.G4JLApplication(
-    sim::Union{SolidStateDetectors.Simulation, String},
+    sim::Union{SolidStateDetectors.Simulation, AbstractString},
     source::SolidStateDetectors.AbstractParticleSource;
     physics_type = SSDPhysics,
     endeventaction_method = endeventaction,
@@ -165,7 +201,7 @@ function Geant4.G4JLApplication(
 end
 
 
-function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_of_events::Int; energy_threshold = eps(Float64)*u"keV")
+function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_of_events::Int; energy_threshold::Unitful.Energy = eps(Float64)*u"keV")
     evts = DetectorHit[]
     
     p = Progress(number_of_events, desc = "Running Geant4 simulations")
