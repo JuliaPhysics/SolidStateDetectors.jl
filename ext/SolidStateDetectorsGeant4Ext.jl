@@ -2,14 +2,8 @@
 
 module SolidStateDetectorsGeant4Ext
 
-
-@static if isdefined(Base, :get_extension)
-    using Geant4
-    using Geant4.SystemOfUnits
-else
-    using ..Geant4
-    using ..Geant4.SystemOfUnits
-end
+using Geant4
+using Geant4.SystemOfUnits
 
 using LightXML
 using LinearAlgebra

@@ -2,11 +2,7 @@
 
 module SolidStateDetectorsLegendHDF5IOExt
 
-@static if isdefined(Base, :get_extension)
-    import LegendHDF5IO
-else
-    import ..LegendHDF5IO
-end
+import LegendHDF5IO
 
 using SolidStateDetectors
 using SolidStateDetectors: RealQuantity, SSDFloat
