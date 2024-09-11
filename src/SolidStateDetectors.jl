@@ -18,11 +18,11 @@ using IntervalSets
 using JSON
 using KernelAbstractions
 using LaTeXStrings
+using LightXML
 using ParallelProcessingTools
 using ProgressMeter
 using RadiationDetectorSignals
 using RecipesBase
-using Requires
 using Rotations
 using StaticArrays
 using StatsBase
@@ -70,6 +70,7 @@ export ElectricFieldChargeDriftModel, ADLChargeDriftModel
 export get_active_volume, is_depleted, estimate_depletion_voltage
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
+export run_geant4_simulation
 export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
@@ -112,14 +113,5 @@ include("IO/IO.jl")
 
 include("PlotRecipes/PlotRecipes.jl")
 export @P_str # protected strings to overwrite plot labels with units
-
-function __init__()
-    @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
-        @require LegendHDF5IO="c9265ca6-b027-5446-b1a4-febfa8dd10b0" begin
-            include("IO/hdf5_specific.jl")
-        end
-        include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
-    end
-end
 
 end # module

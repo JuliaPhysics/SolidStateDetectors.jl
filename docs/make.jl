@@ -47,6 +47,7 @@ makedocs(
         "Tutorials" => [
             "tutorials/complete_simulation_chain_IVC.md",
             "tutorials/custom_impurity_density_pn_junction.md",
+            "tutorials/geant4_ssd.md"
         ],
         "API" => "api.md",
         "LICENSE" => "LICENSE.md",

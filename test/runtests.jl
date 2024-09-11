@@ -381,4 +381,10 @@ end
     @test sim == Simulation(nt)
 end 
 
+if Sys.WORD_SIZE == 64
+@timed_testset "Geant4 extension" begin
+    include("Geant4.jl")
+end
+end
+
 display(testtimer())
