@@ -93,12 +93,6 @@ function construct_units(config_file_dict::AbstractDict)::UnitTuple
     return UnitTuple(dunits)
 end
 
-
-
-const MaybeWithUnits{T} = Union{T, Quantity{<:T}}
-const RealQuantity = MaybeWithUnits{<:Real}
-
-
 DetectorHitEvents = TypedTables.Table{
     <:NamedTuple{
         (:evtno, :detno, :thit, :edep, :pos),

@@ -56,12 +56,12 @@ end
 
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity}, N::Int; 
                particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
-               radius::Vector{<:RealQuantity{T}} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
+               radius::Vector{<:RealQuantity} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
               )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
     
     return Event(broadcast(i -> 
                 NBodyChargeCloud(locations[i], energies[i], N, particle_type, 
-                radius = radius[i], number_of_shells = number_of_shells),
+                radius = T(to_internal_units(radius[i])), number_of_shells = number_of_shells),
            eachindex(locations)))
 end
 

@@ -75,6 +75,7 @@ export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
 
+using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
 
 include("examples.jl")
