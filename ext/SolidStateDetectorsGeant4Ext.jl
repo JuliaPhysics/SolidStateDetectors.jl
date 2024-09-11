@@ -165,14 +165,14 @@ function Geant4.G4JLApplication(
 end
 
 
-function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_of_events::Int)
+function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_of_events::Int; energy_threshold = eps(Float64)*u"keV")
     evts = DetectorHit[]
     
     p = Progress(number_of_events, desc = "Running Geant4 simulations")
     evtno = 1
     while evtno <= number_of_events
-        out = DetectorHit[]
-        while isempty(out)      
+        out = missing
+	while ismissing(out) || sum(out.edep) < energy_threshold      
             @suppress_out beamOn(app,1)
             out = app.sdetectors["SensitiveDetector"][1].data.detectorHits
             filter!(hit -> !iszero(hit.edep), out)

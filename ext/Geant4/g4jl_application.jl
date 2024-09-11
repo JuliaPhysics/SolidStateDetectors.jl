@@ -1,6 +1,10 @@
 struct SSDPhysics <: G4VUserPhysicsList
     function SSDPhysics(verbose)
         pl = G4VModularPhysicsList()
+        # pl = FTFP_BERT(verbose)
+        # lp = G4StepLimiterPhysics()
+        # SetApplyToAll(lp, true)            # Apply to all particles
+        # RegisterPhysics(pl, move!(lp))     # Register to the physics list
         RegisterPhysics(pl, move!(G4DecayPhysics(verbose)))              # Default physics
         RegisterPhysics(pl, move!(G4EmStandardPhysics_option4(verbose))) # EM physics
         RegisterPhysics(pl, move!(G4RadioactiveDecayPhysics(verbose)))   # Radioactive decay
@@ -44,20 +48,9 @@ function _processHits(step::G4Step, ::G4TouchableHistory, data::SDData{T})::Bool
 end
 
 function endeventaction(evt::G4Event, app::G4JLApplication)
-    # hits = getSDdata(app, "SensitiveDetector").detectorHits
-    # eventID = evt |> GetEventID
     return
 end
 
-struct PhysicsList <: G4VUserPhysicsList
-  function PhysicsList(verbose)
-      pl = FTFP_BERT(verbose)
-      lp = G4StepLimiterPhysics()
-      SetApplyToAll(lp, true)            # Apply to all particles
-      RegisterPhysics(pl, move!(lp))     # Register to the physics list
-      return pl
-  end 
-end
 
 @with_kw mutable struct GeneratorData <: G4JLGeneratorData
     gun::Union{Nothing, CxxPtr{G4ParticleGun}} = nothing
