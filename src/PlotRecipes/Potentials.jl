@@ -60,7 +60,7 @@ end
 
 @recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
-    gradient::Symbol, clims::Tuple{MaybeWithUnits{T},MaybeWithUnits{T}}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
+    gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
     if !(sp.grid[2][end] - sp.grid[2][1] ≈ 2π) sp = get_2π_potential(sp, n_points_in_φ = 72) end
 
