@@ -2,7 +2,7 @@
 
 module SolidStateDetectorsLegendHDF5IOExt
 
-import LegendHDF5IO
+import ..LegendHDF5IO
 
 using SolidStateDetectors
 using SolidStateDetectors: RealQuantity, SSDFloat
