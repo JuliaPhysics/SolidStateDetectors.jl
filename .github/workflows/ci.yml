@@ -49,6 +49,9 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
+      - name: Add LegendJuliaRegistry
+        run: julia -e 'using Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General")); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
+        shell: bash
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: 'Conda'

@@ -58,7 +58,7 @@ Interpolations = "0.14, 0.15"
 IntervalSets = "0.5, 0.6, 0.7"
 JSON = "0.21.2"
 KernelAbstractions = "0.8, 0.9"
-LaTeXStrings = "1"
+LaTeXStrings = "1.1"
 LightXML = "0.9"
 LinearAlgebra = "<0.0.1, 1"
 ParallelProcessingTools = "0.4"
@@ -80,13 +80,3 @@ Unitful = "1.11, 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19"
 UnitfulAtomic = "1"
 YAML = "0.3, 0.4"
 julia = "1.10"
-
-[extras]
-Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
-Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-
-[targets]
-test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs", "Geant4"]

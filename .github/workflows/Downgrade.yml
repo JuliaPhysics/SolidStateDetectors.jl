@@ -21,6 +21,9 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
+      - name: Add LegendJuliaRegistry
+        run: julia -e 'using Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General")); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
+        shell: bash
       - uses: julia-actions/julia-downgrade-compat@v1
 #        if: ${{ matrix.version == '1.6' }}
         with:
