@@ -26,6 +26,7 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 RadiationDetectorSignals = "bf2c0563-65cf-5db2-a620-ceb7de82658c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -39,11 +40,9 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [weakdeps]
 Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
-LegendHDF5IO = "c9265ca6-b027-5446-b1a4-febfa8dd10b0"
 
 [extensions]
 SolidStateDetectorsGeant4Ext = "Geant4"
-SolidStateDetectorsLegendHDF5IOExt = "LegendHDF5IO"
 
 [compat]
 Adapt = "3, 4"
@@ -59,8 +58,7 @@ Interpolations = "0.14, 0.15"
 IntervalSets = "0.5, 0.6, 0.7"
 JSON = "0.21.2"
 KernelAbstractions = "0.8, 0.9"
-LaTeXStrings = "1"
-LegendHDF5IO = "0.1"
+LaTeXStrings = "1.1"
 LightXML = "0.9"
 LinearAlgebra = "<0.0.1, 1"
 ParallelProcessingTools = "0.4"
@@ -82,14 +80,3 @@ Unitful = "1.11, 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19"
 UnitfulAtomic = "1"
 YAML = "0.3, 0.4"
 julia = "1.10"
-
-[extras]
-Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
-LegendHDF5IO = "c9265ca6-b027-5446-b1a4-febfa8dd10b0"
-SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
-Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-
-[targets]
-test = ["Test", "Unitful", "SpecialFunctions", "TimerOutputs", "Geant4"]

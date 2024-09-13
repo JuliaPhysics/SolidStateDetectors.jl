@@ -362,29 +362,11 @@ end
 end
 
 @timed_testset "IO" begin
-    sim = Simulation(SSD_examples[:InvertedCoax])
-    
-    timed_calculate_electric_potential!(sim, verbose = false, device_array_type = device_array_type)
-    nt = NamedTuple(sim)
-    @test sim == Simulation(nt)
-    
-    timed_calculate_electric_field!(sim)
-    nt = NamedTuple(sim)
-    @test sim == Simulation(nt)
-
-    timed_calculate_weighting_potential!(sim, 1, verbose = false, device_array_type = device_array_type)
-    nt = NamedTuple(sim)
-    @test sim == Simulation(nt)
-
-    for i in findall(ismissing.(sim.weighting_potentials)) timed_calculate_weighting_potential!(sim, i, verbose = false, device_array_type = device_array_type) end
-    nt = NamedTuple(sim)
-    @test sim == Simulation(nt)
+    include("IO.jl")
 end 
 
-if Sys.WORD_SIZE == 64
 @timed_testset "Geant4 extension" begin
-    include("Geant4.jl")
-end
+    if Sys.WORD_SIZE == 64 include("Geant4.jl") end
 end
 
 display(testtimer())

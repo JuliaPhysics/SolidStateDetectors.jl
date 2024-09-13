@@ -23,6 +23,7 @@ using ParallelProcessingTools
 using ProgressMeter
 using RadiationDetectorSignals
 using RecipesBase
+using Requires
 using Rotations
 using StaticArrays
 using StatsBase
@@ -113,5 +114,12 @@ include("IO/IO.jl")
 
 include("PlotRecipes/PlotRecipes.jl")
 export @P_str # protected strings to overwrite plot labels with units
+
+
+function __init__()
+    @require LegendHDF5IO ="c9265ca6-b027-5446-b1a4-febfa8dd10b0" begin
+        include("../ext/SolidStateDetectorsLegendHDF5IOExt.jl")
+    end
+end
 
 end # module
