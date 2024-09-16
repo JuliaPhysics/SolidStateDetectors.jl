@@ -1,5 +1,5 @@
 """
-    parse_config_file(filename::AbstractString)::Dict where {T <: SSDFloat}
+    parse_config_file(filename::AbstractString)::AbstractDict where {T <: SSDFloat}
 
 Reads in a configuration file and returns a parsed dictionary which holds all the
 information specified in the configuration file.
@@ -80,7 +80,7 @@ function scan_and_merge_included_json_files!(dict, config_filename::AbstractStri
     key_word = "include"
     config_dir = dirname(config_filename)
     for k in keys(dict)
-        is_subdict = typeof(dict[k]) <: Dict
+        is_subdict = typeof(dict[k]) <: AbstractDict
         if !is_subdict && string(k) != key_word
             typeof(dict[k]) <: Array ? is_subdict = true : is_subdict = false
         end

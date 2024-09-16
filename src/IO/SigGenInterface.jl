@@ -100,20 +100,20 @@ end
 
 
 """
-    siggentodict(config::Dict; units::Dict)
+    siggentodict(config::AbstractDict; units::AbstractDict)
     
 Converts the dictionary containing the parameters from a [SigGen](https://github.com/radforddc/icpc_siggen) configuration file
 to a dictionary that can be understood by SolidStateDetectors.jl. 
 
 ## Arguments
-* `config::Dict`: Dictionary containing [SigGen](https://github.com/radforddc/icpc_siggen) parameters (output of `readsiggen()``).
+* `config::AbstractDict`: Dictionary containing [SigGen](https://github.com/radforddc/icpc_siggen) parameters (output of `readsiggen()``).
 
 ## Keywords
-* `units::Dict`: Units used in [SigGen](https://github.com/radforddc/icpc_siggen) configuration file (set to `"mm"`, `"deg"`, `"V"` and `"K"`).
+* `units::AbstractDict`: Units used in [SigGen](https://github.com/radforddc/icpc_siggen) configuration file (set to `"mm"`, `"deg"`, `"V"` and `"K"`).
     The dictionary needs the fields `"length"`, `"angle"`, `"potential"` and `"temperature"`.
 """
-function siggentodict(config::Dict;
-        units::Dict = Dict("length" => "mm","angle" => "deg","potential" => "V","temperature" => "K"))
+function siggentodict(config::AbstractDict;
+        units::AbstractDict = Dict("length" => "mm","angle" => "deg","potential" => "V","temperature" => "K"))
 
     #>----------------Settings START-------------------------------------------<
 

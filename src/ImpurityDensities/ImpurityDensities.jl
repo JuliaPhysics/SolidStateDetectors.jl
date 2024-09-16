@@ -17,7 +17,7 @@ For each impurity density, there should be a method
 """
 abstract type AbstractImpurityDensity{T <: SSDFloat} end
 
-@inline function ImpurityDensity(T::DataType, dict::Union{Dict{String, Any}, Dict{Any, Any}}, input_units::NamedTuple)
+@inline function ImpurityDensity(T::DataType, dict::AbstractDict, input_units::NamedTuple)
     return ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
 end
 

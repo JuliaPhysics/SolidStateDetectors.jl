@@ -1,10 +1,10 @@
 mutable struct VacuumModel{T <: SSDFloat} <: AbstractTemperatureModel{T} end
 
-function VacuumModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::VacuumModel
-    return VacuumModel{T}(config_file::Dict)
+function VacuumModel(config_file::AbstractDict; T::Type{<:AbstractFloat} = Float32)::VacuumModel
+    return VacuumModel{T}(config_file::AbstractDict)
 end
 
-function VacuumModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::VacuumModel where {T <: SSDFloat}
+function VacuumModel{T}(config_file::AbstractDict; temperature::Union{Missing, T} = missing)::VacuumModel where {T <: SSDFloat}
     m = VacuumModel{T}()
 end
 

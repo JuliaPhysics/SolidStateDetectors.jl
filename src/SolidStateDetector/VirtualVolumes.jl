@@ -3,7 +3,7 @@ abstract type AbstractVirtualVolume{T} end
 in(pt::AbstractCoordinatePoint{T}, avv::AbstractVirtualVolume{T}) where {T <: SSDFloat} = in(pt, avv.geometry)
 
 
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, transformations::Transformations)
+function construct_virtual_volume(T, pass::AbstractDict, input_units::NamedTuple, transformations::Transformations)
     construct_virtual_volume(T, pass, input_units, Val{Symbol(pass["model"])}, transformations)
 end
 
@@ -44,13 +44,13 @@ function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, tl:
     return CartesianVector{T}(0,0,0)
 end
 
-function DeadVolume{T}(dict::Dict, input_units::NamedTuple, transformations::Transformations) where T <: SSDFloat
+function DeadVolume{T}(dict::AbstractDict, input_units::NamedTuple, transformations::Transformations) where T <: SSDFloat
     n = haskey(dict, "name") ? dict["name"] : "external part"
     g = Geometry(T, dict["geometry"], input_units, transformations)
     return DeadVolume{T, typeof(g)}(n, g)
 end
 
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Transformations)
+function construct_virtual_volume(T, pass::AbstractDict, input_units::NamedTuple, ::Type{Val{:dead}}, transformations::Transformations)
     DeadVolume{T}(pass, input_units, transformations)
 end
 
@@ -73,14 +73,14 @@ function modulate_driftvector(sv::CartesianVector{T}, pt::CartesianPoint{T}, tl:
 end
 
 
-function ArbitraryDriftModificationVolume{T}(dict::Dict, input_units::NamedTuple, transformations::Transformations) where T <: SSDFloat
+function ArbitraryDriftModificationVolume{T}(dict::AbstractDict, input_units::NamedTuple, transformations::Transformations) where T <: SSDFloat
     n = haskey(dict, "name") ? dict["name"] : "external part"
     g = Geometry(T, dict["geometry"], input_units, transformations)
     id = Int(dict["id"])
     return ArbitraryDriftModificationVolume{T}(n, id, g)
 end
 
-function construct_virtual_volume(T, pass::Dict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Transformations)
+function construct_virtual_volume(T, pass::AbstractDict, input_units::NamedTuple, ::Type{Val{:arbitrary}}, transformations::Transformations)
     ArbitraryDriftModificationVolume{T}(pass, input_units, transformations)
 end
 

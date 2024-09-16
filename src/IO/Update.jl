@@ -14,27 +14,27 @@ using YAML
 
 
 #old implementation of Constructive Solid Geometries:  
-function Geometry(::Type{T}, t::Type{CSGUnion}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+function Geometry(::Type{T}, t::Type{CSGUnion}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
     sum( map(x-> Geometry(T, x, input_units, transformations), dict["parts"]) )
 end
 
-function Geometry(::Type{T}, ::Type{CSGIntersection}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+function Geometry(::Type{T}, ::Type{CSGIntersection}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
     parts = map(x-> Geometry(T, x, input_units, transformations), dict["parts"]) 
     reduce(&, parts)
 end
 
-function Geometry(::Type{T}, ::Type{CSGDifference}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+function Geometry(::Type{T}, ::Type{CSGDifference}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     @assert haskey(dict, "parts") "Please specify 'parts' of the '$(dict["type"])'."
     Geometry(T, dict["parts"][1], input_units, transformations) - sum( map(x-> Geometry(T, x, input_units, transformations), dict["parts"][2:end]) )
 end
 
-function Geometry(::Type{T}, dict::Union{Dict, OrderedDict}, input_units::NamedTuple, transformations::Transformations{T}) where {T}
+function Geometry(::Type{T}, dict::AbstractDict, input_units::NamedTuple, transformations::Transformations{T}) where {T}
     if haskey(dict, "translate")
         length_unit = input_units.length
         t::CartesianVector{T} = parse_translate_vector(T, dict["translate"], length_unit)
-        gdict::Dict{Any,Any} = filter(p -> first(p) != "translate", dict)
+        gdict::AbstractDict{Any,Any} = filter(p -> first(p) != "translate", dict)
         return Geometry(T, gdict, input_units, transformations) + t
     end
     Geometry(T, CSG_dict[dict["type"]], dict, input_units, transformations)

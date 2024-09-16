@@ -58,7 +58,7 @@ end
 
 const POTENTIAL_FLOATING = NaN
 
-function Passive{T}(dict::Dict, input_units::NamedTuple, outer_transformations) where {T <: SSDFloat}
+function Passive{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T <: SSDFloat}
     name = haskey(dict, "name") ? dict["name"] : "External part"
     id::Int = haskey(dict, "id") ? dict["id"] : -1
     potential = haskey(dict, "potential") ? T(dict["potential"]) : T(POTENTIAL_FLOATING)

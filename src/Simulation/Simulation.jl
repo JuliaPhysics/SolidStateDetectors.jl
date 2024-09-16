@@ -10,7 +10,7 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `CS`: Coordinate system (`Cartesian` or `Cylindrical`).
 
 ## Fields 
-* `config_dict::Dict`: Dictionary (parsed configuration file) which initialized the simulation.
+* `config_dict::AbstractDict`: Dictionary (parsed configuration file) which initialized the simulation.
 * `input_units::NamedTuple`: Units with which the `config_dict` should be parsed.
 * `medium::NamedTuple`: Medium of the world.
 * `detector::Union{SolidStateDetector{T}, Missing}`: The [`SolidStateDetector`](@ref) of the simulation.
@@ -25,7 +25,7 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `electric_field::Union{ElectricField{T}, Missing}`: The [`ElectricField`](@ref) of the simulation.
 """
 mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
-    config_dict::Dict
+    config_dict::AbstractDict
     input_units::NamedTuple
     medium::NamedTuple # this should become a struct at some point
     detector::Union{SolidStateDetector{T}, Missing}
@@ -151,10 +151,10 @@ function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFlo
 end
 
 
-function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
+function Simulation{T}(dict::AbstractDict)::Simulation{T} where {T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
     if haskey(dict, "grid")
-        if isa(dict["grid"], Dict)
+        if isa(dict["grid"], AbstractDict)
             CS = if dict["grid"]["coordinates"] == "cartesian" 
                 Cartesian
             elseif dict["grid"]["coordinates"]  == "cylindrical"
@@ -177,7 +177,7 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim.input_units = construct_units(dict)
     sim.medium = material_properties[materials[haskey(dict, "medium") ? dict["medium"] : "vacuum"]]
     sim.detector = SolidStateDetector{T}(dict, sim.input_units) 
-    sim.world = if haskey(dict, "grid") && isa(dict["grid"], Dict) && haskey(dict["grid"], "axes")
+    sim.world = if haskey(dict, "grid") && isa(dict["grid"], AbstractDict) && haskey(dict["grid"], "axes")
             World(T, dict["grid"], sim.input_units)
         else let det = sim.detector 
             world_limits = get_world_limits_from_objects(CS, det)
