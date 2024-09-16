@@ -37,7 +37,7 @@ function parse_config_file(filename::AbstractString; dicttype::Type = Dict)::dic
 end
 
 function yaml2json_convert(filename::String)
-    data = YAML.load(open(filename), dicttype = DataStructures.OrderedDict)
+    data = YAML.load(open(filename), dicttype = OrderedCollections.OrderedDict)
     if isempty(data)
         @warn "The file $(filename) is empty and will not be converted."
     else
@@ -58,7 +58,7 @@ function yaml2json(directory::String)# or filename
 end
 
 function json2yaml_convert(filename::String)::Nothing
-    data = JSON.parsefile(filename, dicttype = DataStructures.OrderedDict)
+    data = JSON.parsefile(filename, dicttype = OrderedCollections.OrderedDict)
     if isempty(data)
         @warn "The file $(filename) is empty and will not be converted."
     else
@@ -77,19 +77,19 @@ function json2yaml(directory::String)# or filename
     end
 end
 
-function scan_and_merge_included_json_files!(dict::AbstractDict, config_filename::AbstractString)
+function scan_and_merge_included_json_files!(dict, config_filename::AbstractString)
     key_word = "include"
     config_dir = dirname(config_filename)
     for k in keys(dict)
         is_subdict = typeof(dict[k]) <: AbstractDict
         if !is_subdict && string(k) != key_word
-            typeof(dict[k]) <: Array ? is_subdict = true : is_subdict = false
+            is_subdict = (typeof(dict[k]) <: AbstractArray)
         end
         if is_subdict
             scan_and_merge_included_json_files!(dict[k], config_filename)
         elseif string(k) == key_word
             files = []
-            if typeof(dict[k]) <: Array
+            if typeof(dict[k]) <: AbstractArray
                 append!(files, dict[k])
             else
                 push!(files, dict[k])

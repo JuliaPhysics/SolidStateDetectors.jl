@@ -4,7 +4,7 @@ using SolidStateDetectors: construct_units
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
 using SolidStateDetectors.ConstructiveSolidGeometry: AbstractGeometry, Transformations,
     CSGUnion, CSGDifference, CSGIntersection, Cone, CartesianVector, HexagonalPrism
-using DataStructures: OrderedDict
+using OrderedCollections: OrderedDict
 using IntervalSets
 using Rotations
 using StaticArrays
