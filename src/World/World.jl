@@ -62,7 +62,7 @@ function World{T, N, S}(args...) where {T <: SSDFloat, N, S}
 end
 
 
-function World(T, dict::Dict, input_units::NamedTuple)::World
+function World(T, dict::AbstractDict, input_units::NamedTuple)::World
     if dict["coordinates"] == "cylindrical"
         CylindricalWorld(T, dict["axes"], input_units)
     elseif dict["coordinates"] == "cartesian"
@@ -76,7 +76,7 @@ function IntervalSets.endpoints(int::SSDInterval{T, L, R, BL, BR}) where {T <:SS
     (int.left, int.right) 
 end
 
-function get_interval_boundary_types(dict::Dict)
+function get_interval_boundary_types(dict::AbstractDict)
     BL, BR = missing, missing
     if haskey(dict, "boundaries")
         if typeof(dict["boundaries"]) == String
@@ -102,7 +102,7 @@ function is_periodic_plus_mirror_symmetric(BL::Symbol, BR::Symbol)::Bool
 end
 
 function get_r_SSDInterval(T, dict, input_units::NamedTuple)
-    if isa(dict, Dict)
+    if isa(dict, AbstractDict)
         from::T = 0 
         if "from" in keys(dict) @warn "ConfigFileWarning: \"from\" is not used in r-axis. It is fixed to 0." end
         to::T = "to" in keys(dict) ? _parse_value(T, dict["to"], input_units.length) : throw(ConfigFileError("No \"to\" given for r-axis."))
@@ -118,7 +118,7 @@ function get_r_SSDInterval(T, dict, input_units::NamedTuple)
         SSDInterval{T, :closed, :closed, :r0, :infinite}(0, _parse_value(T, dict, input_units.length))
     end
 end
-function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)
+function get_φ_SSDInterval(T, dict::AbstractDict, input_units::NamedTuple)
     if haskey(dict, "phi")
         dp = dict["phi"]
         from::T = "from" in keys(dp) ?  _parse_value(T, dp["from"], input_units.angle) : T(0)
@@ -143,7 +143,7 @@ function get_φ_SSDInterval(T, dict::Dict, input_units::NamedTuple)
     end
 end
 
-function get_cartesian_SSDInterval(T, dict::Dict, input_units::NamedTuple)
+function get_cartesian_SSDInterval(T, dict::AbstractDict, input_units::NamedTuple)
     from::T = "from" in keys(dict) ? _parse_value(T, dict["from"], input_units.length) : 0
     to = "to" in keys(dict) ? _parse_value(T, dict["to"], input_units.length) : throw(ConfigFileError("No \"to\" given for z-axis."))
     L = :closed
@@ -158,7 +158,7 @@ function get_cartesian_SSDInterval(T, dict::Dict, input_units::NamedTuple)
 end
 
 
-function CylindricalWorld(T, dict::Dict, input_units::NamedTuple)::World
+function CylindricalWorld(T, dict::AbstractDict, input_units::NamedTuple)::World
     r_int = get_r_SSDInterval(T, dict["r"], input_units)
     φ_int = get_φ_SSDInterval(T, dict, input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
@@ -166,7 +166,7 @@ function CylindricalWorld(T, dict::Dict, input_units::NamedTuple)::World
 end
 
 
-function CartesianWorld(T, dict::Dict, input_units::NamedTuple)::World
+function CartesianWorld(T, dict::AbstractDict, input_units::NamedTuple)::World
     x_int = get_cartesian_SSDInterval(T, dict["x"], input_units)
     y_int = get_cartesian_SSDInterval(T, dict["y"], input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)

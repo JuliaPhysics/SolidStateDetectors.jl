@@ -11,11 +11,11 @@ mutable struct PowerLawModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
     p1h111::T
 end
 
-function PowerLawModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::PowerLawModel
-    return PowerLawModel{T}(config_file::Dict)
+function PowerLawModel(config_file::AbstractDict; T::Type{<:AbstractFloat} = Float32)::PowerLawModel
+    return PowerLawModel{T}(config_file::AbstractDict)
 end
 
-function PowerLawModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::PowerLawModel where {T <: SSDFloat}
+function PowerLawModel{T}(config_file::AbstractDict; temperature::Union{Missing, T} = missing)::PowerLawModel where {T <: SSDFloat}
     config_file["temperature_dependence"]["model"] != "PowerLaw" ? error() : nothing
     ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = PowerLawModel{T}(

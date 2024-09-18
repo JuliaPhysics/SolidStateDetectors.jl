@@ -22,11 +22,11 @@ mutable struct BoltzmannModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
     p3h111::T
 end
 
-function BoltzmannModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::BoltzmannModel
-    return BoltzmannModel{T}(config_file::Dict)
+function BoltzmannModel(config_file::AbstractDict; T::Type{<:AbstractFloat} = Float32)::BoltzmannModel
+    return BoltzmannModel{T}(config_file::AbstractDict)
 end
 
-function BoltzmannModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::BoltzmannModel where T <: SSDFloat
+function BoltzmannModel{T}(config_file::AbstractDict; temperature::Union{Missing, T} = missing)::BoltzmannModel where T <: SSDFloat
     config_file["temperature_dependence"]["model"] != "Boltzmann" ? error() : nothing
     ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = BoltzmannModel{T}(

@@ -26,7 +26,7 @@ of the materials) will be used as input to the calculation of [`ElectricPotentia
 See also [`Semiconductor`](@ref), [`Contact`](@ref), [`Passive`](@ref) and [`DeadVolume`](@ref).
 """
 struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
-    name::String  # optional
+    name::AbstractString # optional
     semiconductor::SC
     contacts::CT
     passives::PT
@@ -91,7 +91,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, det::SolidStateDetecto
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where {T <: SSDFloat}
+function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTuple) where {T <: SSDFloat}
     
     @assert !haskey(config_file, "objects") "Configuration file deprecation.\n
         The configuration file format was updated in v0.6.0.
@@ -148,7 +148,7 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     SolidStateDetector{T}( name, semiconductor, contacts, passives, virtual_drift_volumes )
 end
 
-function SolidStateDetector(dict::Dict)
+function SolidStateDetector(dict::AbstractDict)
     SolidStateDetector{Float32}(dict)
 end
 

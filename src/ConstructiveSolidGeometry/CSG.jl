@@ -56,7 +56,7 @@ end
 
 Dictionary(g::CSGUnion{T}) where {T} = OrderedDict{String,Any}("union" => vcat(UnionDictionary(g.a), UnionDictionary(g.b)))
 UnionDictionary(g::CSGUnion{T}) where {T} = vcat(UnionDictionary(g.a), UnionDictionary(g.b))
-UnionDictionary(g::AbstractGeometry{T}) where {T} = OrderedDict[Dictionary(g)]
+UnionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
 
 """
     struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}

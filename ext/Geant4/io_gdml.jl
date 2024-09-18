@@ -4,7 +4,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGDifference, CS
     Box, Cone, Ellipsoid, Torus, RegularPrism, show_CSG_tree, AbstractVolumePrimitive, AbstractGeometry,
     AbstractConstructiveGeometry, CylindricalPoint, origin, rotation
 using IntervalSets
-using DataStructures: OrderedDict
+using OrderedCollections: OrderedDict
 using Unitful
 using Rotations
 using LightXML

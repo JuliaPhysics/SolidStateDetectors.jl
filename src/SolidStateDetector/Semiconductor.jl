@@ -44,7 +44,7 @@ struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
     geometry::G
 end
 
-function Semiconductor{T}(dict::Dict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
+function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
     impurity_density_model = if haskey(dict, "impurity_density") 
         ImpurityDensity(T, dict["impurity_density"], input_units)
     elseif haskey(dict, "charge_density_model") 

@@ -19,7 +19,7 @@ module ConstructiveSolidGeometry
     using Unitful
     using YAML
 
-    using DataStructures: OrderedDict
+    using OrderedCollections: OrderedDict
 
     import Base: in, *, +, -, &, size, zero
 

@@ -49,7 +49,7 @@ struct Contact{T,G,MT} <: AbstractContact{T}
 end
 
 
-function Contact{T}(dict::Union{Dict{String,Any}, Dict{Any, Any}}, input_units::NamedTuple, outer_transformations)::Contact{T} where {T <: SSDFloat}
+function Contact{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations)::Contact{T} where {T <: SSDFloat}
     id::Int = haskey(dict, "id") ? dict["id"] : -1
     material = haskey(dict, "material") ? material_properties[materials[dict["material"]]] : material_properties[materials["HPGe"]]
     name = haskey(dict,"name") ? dict["name"] : ""
