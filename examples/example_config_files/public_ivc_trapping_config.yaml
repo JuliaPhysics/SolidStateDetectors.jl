@@ -1,0 +1,159 @@
+name: Public Inverted Coax
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 40
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries: periodic
+    z:
+      from: -10
+      to: 90
+      boundaries:
+        left: inf
+        right: inf
+# grid:
+#   coordinates: cartesian
+#   axes:
+#     x:
+#       from: -40
+#       to: 40
+#       boundaries:
+#         left: inf
+#         right: inf
+#     y:
+#       from: -40
+#       to: 40
+#       boundaries:
+#         left: inf
+#         right: inf
+#     z:
+#       from: -10
+#       to: 90
+#       boundaries:
+#         left: inf
+#         right: inf
+medium: vacuum
+detectors:
+  - semiconductor:
+      material: HPGe
+      temperature: 78
+      impurity_density:
+        name: cylindrical
+        r:
+          init: 0
+          gradient: 0
+        z:
+          init: -1e7
+          gradient: -1e5
+      charge_drift_model:
+        include: ADLChargeDriftModel/drift_velocity_config.yaml
+      charge_trapping_model:
+        model: Boggs
+        parameters:
+          nσe-1: 1020cm
+          nσh-1: 2040cm
+      geometry:
+        difference:
+          - tube:
+              r: 35
+              h: 80
+              origin:
+                z: 40
+          - cone:
+              r:
+                bottom:
+                  from: 35
+                  to: 36
+                top:
+                  from: 23.71
+                  to: 36
+              h: 64
+              origin:
+                z: 52
+          - tube:
+              r: 5
+              h: 80
+              origin:
+                z: 65
+    contacts:
+      - material: HPGe
+        id: 1
+        potential: 0
+        geometry:
+          tube:
+            r: 3
+            h: 2
+            origin:
+              z: 1
+      - material: HPGe
+        id: 2
+        potential: 3500
+        geometry:
+          union:
+            - tube:
+                r:
+                  from: 15
+                  to: 35
+                h: 0
+            - tube:
+                r:
+                  from: 35
+                  to: 35
+                h: 20
+                origin:
+                  z: 10
+            - cone:
+                r:
+                  bottom:
+                    from: 35
+                    to: 35
+                  top:
+                    from: 24.42
+                    to: 24.42
+                h: 60
+                origin:
+                  z: 50
+            - tube:
+                r:
+                  from: 5
+                  to: 24.42
+                h: 0
+                origin:
+                  z: 80
+            - tube:
+                r:
+                    from: 5
+                    to: 5
+                h: 55
+                origin:
+                  z: 52.5
+            - tube:
+                r: 5
+                h: 0
+                origin:
+                  z: 25
+surroundings:
+  - material: HPGe
+    name: Passivation Layer
+    geometry:
+      tube:
+        r: 
+          from: 4
+          to: 14
+        h: 0.1
+        origin:
+          - 0
+          - 0
+          - -0.05
+    charge_density:
+      name: constant
+      value: 0 # Reasonable density: +2e-11 # => 2*10⁻¹1 C/m⁻³
