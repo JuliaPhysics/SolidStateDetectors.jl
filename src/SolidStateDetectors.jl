@@ -52,6 +52,7 @@ import Clustering
 import Distributions
 import IntervalSets
 import OrderedCollections
+import Parameters
 import Tables
 import TypedTables
 
@@ -92,6 +93,7 @@ include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
+include("ChargeTrapping/ChargeTrapping.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
 include("ScalarPotentials/ScalarPotential.jl")

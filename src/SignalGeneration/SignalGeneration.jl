@@ -14,12 +14,17 @@ end
 end
 
 
-function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, path::Vector{CartesianPoint{T}}, pathtimestamps::AbstractVector{T}, charge::T, 
-                        wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
-    tmp_signal = Vector{T}(undef, length(pathtimestamps))
-    @inbounds for i in eachindex(tmp_signal)
-        tmp_signal[i] = get_interpolation(wpot, path[i], S)::T * charge
-    end
+function add_signal!(
+        signal::AbstractVector{T}, 
+        timestamps::AbstractVector{T}, 
+        path::AbstractVector{CartesianPoint{T}}, 
+        pathtimestamps::AbstractVector{T}, 
+        charge::T,          
+        wpot::Interpolations.Extrapolation{T, 3}, 
+        S::CoordinateSystemType
+    )::Nothing where {T <: SSDFloat}
+
+    tmp_signal::Vector{T} = _calculate_signal(NoChargeTrappingModel{T}(), path, pathtimestamps, charge, wpot, S)
     itp = interpolate!( (pathtimestamps,), tmp_signal, Gridded(Linear()))
     t_max::T = last(pathtimestamps)
     i_max::Int = searchsortedlast(timestamps, t_max)
