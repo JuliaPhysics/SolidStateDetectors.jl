@@ -21,10 +21,11 @@ function add_signal!(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType
+        S::CoordinateSystemType,
+        ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()
     )::Nothing where {T <: SSDFloat}
 
-    tmp_signal::Vector{T} = _calculate_signal(NoChargeTrappingModel{T}(), path, pathtimestamps, charge, wpot, S)
+    tmp_signal::Vector{T} = _calculate_signal(ctm, path, pathtimestamps, charge, wpot, S)
     itp = interpolate!( (pathtimestamps,), tmp_signal, Gridded(Linear()))
     t_max::T = last(pathtimestamps)
     i_max::Int = searchsortedlast(timestamps, t_max)
@@ -36,15 +37,17 @@ function add_signal!(
 end
 
 
-function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, path::EHDriftPath{T}, charge::T, wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
-    add_signal!(signal, timestamps, path.e_path, path.timestamps_e, -charge, wpot, S) # electrons induce negative charge
-    add_signal!(signal, timestamps, path.h_path, path.timestamps_h,  charge, wpot, S)
+function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{T}, path::EHDriftPath{T}, charge::T, 
+        wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}())::Nothing where {T <: SSDFloat}
+    add_signal!(signal, timestamps, path.e_path, path.timestamps_e, -charge, wpot, S, ctm) # electrons induce negative charge
+    add_signal!(signal, timestamps, path.h_path, path.timestamps_h,  charge, wpot, S, ctm)
     nothing
 end
 
-function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{<:RealQuantity}, paths::Vector{<:EHDriftPath{T}}, charges::Vector{T}, wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType)::Nothing where {T <: SSDFloat}
+function add_signal!(signal::AbstractVector{T}, timestamps::AbstractVector{<:RealQuantity}, paths::Vector{<:EHDriftPath{T}}, charges::Vector{T}, 
+        wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}())::Nothing where {T <: SSDFloat}
     for ipath in eachindex(paths)
-        add_signal!(signal, timestamps, paths[ipath], charges[ipath], wpot, S)
+        add_signal!(signal, timestamps, paths[ipath], charges[ipath], wpot, S, ctm)
     end
     nothing
 end

@@ -1210,8 +1210,8 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
     wpot::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS)
-    unitless_energy_to_charge = unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS, sim.detector.semiconductor.charge_trapping_model)
+    unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * unitless_energy_to_charge)
 end
 
