@@ -26,7 +26,7 @@ This is the volume in which electrons and holes will drift during the signal dev
 ## Definition in Configuration File
 
 A `Semiconductor` is defined through the `semiconductor` field of a detector.
-It needs `material` and `geometry`, and can optionally be given a `temperature`, `impurity_density` and `charge_drift_model`.
+It needs `material` and `geometry`, and can optionally be given a `temperature`, `impurity_density`, `charge_drift_model` and `charge_trapping_model`.
 
 An example definition of a semiconductor looks like this:
 ```yaml 
@@ -35,12 +35,9 @@ semiconductor:
   temperature: 78
   impurity_density: # ...
   charge_drift_model: # ...
+  charge_trapping_model: # ...
   geometry: # ...
 ```
-
-!!! note
-    Defining a charge trapping model in the configuration file is not supported yet.
-    Please use `sim.detector = SolidStateDetector(sim.detector, ::AbstractChargeTrappingModel{T})` for now.
 """
 struct Semiconductor{T,G,MT,CDM,IDM,CTM} <: AbstractSemiconductor{T}
     temperature::T
@@ -52,6 +49,7 @@ struct Semiconductor{T,G,MT,CDM,IDM,CTM} <: AbstractSemiconductor{T}
 end
 
 function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
+
     impurity_density_model = if haskey(dict, "impurity_density") 
         ImpurityDensity(T, dict["impurity_density"], input_units)
     elseif haskey(dict, "charge_density_model") 
@@ -62,6 +60,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     else
         ConstantImpurityDensity{T}(0)
     end
+
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if model in names(SolidStateDetectors, all = true) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
@@ -72,15 +71,24 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     else
         ElectricFieldChargeDriftModel{T}()
     end
-    charge_trapping_model = NoChargeTrappingModel{T}()
+
     material = material_properties[materials[dict["material"]]]
     temperature = if haskey(dict, "temperature") 
-        T(dict["temperature"])
+        _parse_value(T, dict["temperature"], input_units.temperature)
     elseif material.name == "High Purity Germanium"
         T(78)
     else
         T(293)
     end
+
+    charge_trapping_model = if haskey(dict, "charge_trapping_model") &&
+                               haskey(dict["charge_trapping_model"], "model") &&
+                               dict["charge_trapping_model"]["model"] == "Boggs"
+        BoggsChargeTrappingModel{T}(dict["charge_trapping_model"], temperature = temperature)
+    else
+        NoChargeTrappingModel{T}()
+    end
+    
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)
     geometry = Geometry(T, dict["geometry"], input_units, transformations)
