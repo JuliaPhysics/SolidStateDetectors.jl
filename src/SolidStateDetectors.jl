@@ -52,7 +52,6 @@ import Clustering
 import Distributions
 import IntervalSets
 import OrderedCollections
-import Parameters
 import Tables
 import TypedTables
 

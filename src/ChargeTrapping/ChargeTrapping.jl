@@ -38,6 +38,9 @@ function _calculate_signal(
     tmp_signal
 end
 
+NoChargeTrappingModel(args...; T::Type{<:SSDFloat} = Float32, kwargs...) = NoChargeTrappingModel{T}(args...; kwargs...)
+NoChargeTrappingModel{T}(config_dict::AbstractDict; kwargs...) where {T <: SSDFloat} = NoChargeTrappingModel{T}()
+
 
 """
     struct BoggsChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T}
@@ -47,13 +50,15 @@ Charge trapping model presented in [Steve Boggs (2023)](https://doi.org/10.1016/
 ## Fields
 * `nσe::T`: Trapping product for electrons.
 * `nσh::T`: Trapping product for holes.
-* `Temp::T`: Temperature of the crystal.
+* `temperature::T`: Temperature of the crystal.
 
 """
-Parameters.@with_kw struct BoggsChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T} 
-    nσe::T = ustrip(u"m^-1", inv(1020u"cm"))
-    nσh::T = ustrip(u"m^-1", inv(2040u"cm"))
-    Temp::T = T(80)
+struct BoggsChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T} 
+    nσe::T  # in m^-1
+    nσh::T  # in m^-1
+    meffe::T # in units of me
+    meffh::T # in units of me
+    temperature::T # in K
 end
 
 function _calculate_signal( 
@@ -65,7 +70,7 @@ function _calculate_signal(
         S::CoordinateSystemType
     )::Vector{T} where {T <: SSDFloat}
 
-    vth::T = sqrt(3 * kB * ctm.Temp / (ifelse(charge > 0, 0.21, 0.12) * me)) # in m/s
+    vth::T = sqrt(3 * kB * ctm.temperature / (ifelse(charge > 0, ctm.meffh, ctm.meffe) * me)) # in m/s
     nσ::T = ifelse(charge > 0, ctm.nσh, ctm.nσe)
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
 
@@ -82,6 +87,26 @@ function _calculate_signal(
     end
 
     tmp_signal
+end
+
+
+BoggsChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = BoggsChargeTrappingModel{T}(args...; kwargs...)
+function BoggsChargeTrappingModel{T}(config_dict::AbstractDict; temperature::RealQuantity = T(78)) where {T <: SSDFloat}
+    nσe::T = ustrip(u"m^-1", inv(1020u"cm"))
+    nσh::T = ustrip(u"m^-1", inv(2040u"cm"))
+    meffe::T = 0.12
+    meffh::T = 0.21
+    temperature::T = _parse_value(T, temperature, internal_temperature_unit)
+    if haskey(config_dict, "parameters")
+        if haskey(config_dict, "nσe")   nσe =     _parse_value(T, config_dict["nσe"], internal_length_unit^-1) end
+        if haskey(config_dict, "nσe-1") nσe = inv(_parse_value(T, config_dict["nσe-1"], internal_length_unit)) end
+        if haskey(config_dict, "nσh")   nσh =     _parse_value(T, config_dict["nσh"], internal_length_unit^-1) end
+        if haskey(config_dict, "nσh-1") nσh = inv(_parse_value(T, config_dict["nσh-1"], internal_length_unit)) end
+        if haskey(config_dict, "meffe") meffe =   _parse_value(T, config_dict["meffe"], Unitful.NoUnits) end
+        if haskey(config_dict, "meffh") meffh =   _parse_value(T, config_dict["meffh"], Unitful.NoUnits) end
+        if haskey(config_dict, "temperature") temperature = _parse_value(T, config_dict["temperature"], internal_temperature_unit) end
+    end
+    BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temperature)
 end
 
 
