@@ -35,19 +35,25 @@ struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
     SolidStateDetector{T}(n::AbstractString,s::SC,c::C,p::P,v::VDM) where {T,SC,C,P,VDM}= new{T,SC,C,P,VDM}(n,s,c,p,v)
 end
 
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, impurity_density::AbstractImpurityDensity{T}) where {T,SC,CT,PT,VDM}
+function SolidStateDetector(det::SolidStateDetector{T}, impurity_density::AbstractImpurityDensity{T}) where {T <: SSDFloat}
     sc = Semiconductor(det.semiconductor, impurity_density)
     SolidStateDetector{T}(
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
 end
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, chargedriftmodel::AbstractChargeDriftModel{T}) where {T,SC,CT,PT,VDM}
-    sc = Semiconductor(det.semiconductor, chargedriftmodel)
+function SolidStateDetector(det::SolidStateDetector{T}, charge_drift_model::AbstractChargeDriftModel{T}) where {T <: SSDFloat}
+    sc = Semiconductor(det.semiconductor, charge_drift_model)
     SolidStateDetector{T}(
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
 end
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}; contact_id::Int, contact_potential::Real) where {T,SC,CT,PT,VDM}
+function SolidStateDetector(det::SolidStateDetector{T}, charge_trapping_model::AbstractChargeTrappingModel{T}) where {T <: SSDFloat}
+    sc = Semiconductor(det.semiconductor, charge_trapping_model)
+    SolidStateDetector{T}(
+        det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
+    )
+end
+function SolidStateDetector(det::SolidStateDetector{T}; contact_id::Int, contact_potential::Real) where {T <: SSDFloat}
     oc = det.contacts[contact_id]
     nc = Contact(T(contact_potential), oc.material, oc.id, oc.name, oc.geometry )
     contacts = [c.id == contact_id ? nc : c for c in det.contacts]
