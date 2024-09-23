@@ -144,7 +144,6 @@ The first step is to define a `struct` for the model which is a subtype of `Soli
 ```julia
 using SolidStateDetectors
 using SolidStateDetectors: SSDFloat, AbstractChargeDriftModel
-using StaticArrays
 
 struct CustomChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T} 
     # optional fields to parameterize the model
@@ -155,6 +154,7 @@ The second step is to define two methods (`getVe` for electrons and `getVh` for 
 Note, that the vectors are in cartesian coordinates, independent of the coordinate system (cartesian or cylindrical) of the simulation. 
 
 ```julia
+using StaticArrays
 function SolidStateDetectors.getVe(fv::SVector{3, T}, cdm::CustomChargeDriftModel)::SVector{3, T} where {T <: SSDFloat}
     # arbitrary transformation of fv
     return -fv
@@ -172,6 +172,95 @@ T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
 charge_drift_model = CustomChargeDriftModel{T}()
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 ```
+
+
+
+## Charge Trapping Models
+
+Electrons and holes can be trapped on their way to the contacts, resulting in a decrease in height of the observed charge pulse. SolidStateDetectors.jl allows for incorporating and testing different charge trapping models.
+
+In order to implement a charge trapping model, the first step is to define a `struct` for the model which is a subtype of `SolidStateDetectors.AbstractChargeTrappingModel`:
+
+```julia
+using SolidStateDetectors
+using SolidStateDetectors: SSDFloat, AbstractChargeTrappingModel
+
+struct CustomChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T} 
+    # optional fields to parameterize the model
+end
+```
+
+The second step would be to define a method for `_calculate_signal`, which returns a charge signal based on a given charge drift `path` and its `pathtimestamps`, the `charge` value of the charge cloud, the interpolated weighting potential `wpot` and the coordinate system type `S` (`Cartesian` or `Cylindrical`):
+
+```julia
+using SolidStateDetectors: CoordinateSystemType, SSDFloat
+using Interpolations
+function SolidStateDetectors._calculate_signal( 
+        ctm::CustomChargeTrappingModel{T}, 
+        path::AbstractVector{CartesianPoint{T}}, 
+        pathtimestamps::AbstractVector{T}, 
+        charge::T,          
+        wpot::Interpolations.Extrapolation{T, 3}, 
+        S::CoordinateSystemType
+    )::Vector{T} where {T <: SSDFloat}
+
+    # Implement method here
+end
+```
+
+!!! note
+    So far, the charge trapping models do not influence the charge drift path simulation, but just the signal calculation afterwards.
+
+### `NoChargeTrappingModel`
+
+If no charge trapping model is selected, the default is the `NoChargeTrappingModel`.
+In this case, the signal is calculated using the Schockley-Ramo theorem, i.e. by evaluating the weighting potential `wpot` at every point `path[i]` of the charge drift path and multiplying it with the `charge` of the charge cloud.
+
+
+### `BoggsChargeTrappingModel`
+
+In SolidStateDetectors.jl, the only charge trapping model implemented so far is the one presented in [Boggs _et al._ (2023)](https://doi.org/10.1016/j.nima.2023.168756).
+In this model, the charge cloud loses part of its charge at every point `path[i]` of the charge drift, depending on its drift and thermal velocity, as well as the trapping product $[n\sigma_{E/h}]^{-1}$ for electrons and holes.
+The charge signal is then given by the charge-decreased charge cloud reaching the contacts and the charges trapped on the way.
+
+The `BoggsChargeTrappingModel` can be applied in the configuration file by adding a field `charge_trapping_model` to the `semiconductor` with `model: Boggs` and `parameters` defining the (inverse) trapping products and (optionally) the `temperature`:
+```yaml 
+detectors:
+  - semiconductor:
+      material: #...
+      geometry: #...
+      charge_trapping_model:
+        model: Boggs
+        parameters:
+          nσe-1: 1020cm
+          nσh-1: 2040cm
+          temperature: 78K
+
+# ... or ...
+
+detectors:
+  - semiconductor:
+      material: #...
+      geometry: #...
+      charge_trapping_model:
+        model: Boggs
+        parameters:
+          nσe: 0.001cm^-1
+          nσh: 0.0005cm^-1
+          temperature: 78K
+```
+
+It can also be applied to an already read-in `SolidStateDetector` using for example:
+```julia
+using SolidStateDetectors, Unitful
+T = Float32
+sim = Simulation{T}(SSD_examples[:InvertedCoax])
+
+parameters = Dict("parameters" => 
+  Dict("nσe-1" => 1000u"cm", "nσh-1" => 500u"cm", "temperature" => 78u"K"))
+sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}(parameters))
+```
+
 
 ## Group Effects
 

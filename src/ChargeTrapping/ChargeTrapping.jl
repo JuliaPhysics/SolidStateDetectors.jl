@@ -45,13 +45,14 @@ NoChargeTrappingModel{T}(config_dict::AbstractDict; kwargs...) where {T <: SSDFl
 """
     struct BoggsChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T}
         
-Charge trapping model presented in [Steve Boggs (2023)](https://doi.org/10.1016/j.nima.2023.168756).
+Charge trapping model presented in [Boggs _et al._ (2023)](https://doi.org/10.1016/j.nima.2023.168756).
 
 ## Fields
-* `nσe::T`: Trapping product for electrons.
-* `nσh::T`: Trapping product for holes.
-* `temperature::T`: Temperature of the crystal.
+* `nσe::T`: Trapping product for electrons (default: `(nσe)^-1 = 1020cm`).
+* `nσh::T`: Trapping product for holes (default: `(nσh)^-1 = 2040cm`).
+* `temperature::T`: Temperature of the crystal (default: `78K`).
 
+See also [Charge Trapping Models](@ref).
 """
 struct BoggsChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T} 
     nσe::T  # in m^-1
