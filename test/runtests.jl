@@ -261,22 +261,41 @@ T = Float32
     end
 end
 
-@timed_testset "Diffusion and Self-Repulsion" begin
+@timed_testset "Charge Drift" begin
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
     timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
 
     pos = CartesianPoint{T}(0.02,0,0.05); Edep = 1u"eV"
     nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)
 
-    evt = Event(nbcc)
-    timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
-    signalsum = T(0)
-    for i in 1:length(evt.waveforms)
-        signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
+    @timed_testset "Diffusion and Self-Repulsion" begin
+        evt = Event(nbcc)
+        timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
+        end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+        @info signalsum
+        @test isapprox( signalsum, T(2), atol = 5e-3 )
     end
-    signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
-    @info signalsum
-    @test isapprox( signalsum, T(2), atol = 5e-3 )
+
+    @timed_testset "Charge Trapping" begin
+        sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}())
+        evt = Event(pos, Edep)
+        timed_simulate!(evt, sim)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
+        end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+        @info signalsum
+        @test signalsum < T(2)
+    end
+
+    @timed_testset "ADLChargeDriftModel" begin
+        include("ADLChargeDriftModel.jl")
+    end
 end
 
 @timed_testset "Fano factor" begin
@@ -355,10 +374,6 @@ end
     # Test if all holes made it to the point contact and all electrons made it to the mantle contact
     @test all(broadcast(dp -> dp.h_path[end] in sim.detector.contacts[1], ev.drift_paths))
     @test all(broadcast(dp -> dp.e_path[end] in sim.detector.contacts[2], ev.drift_paths))
-end
-
-@timed_testset "ADLChargeDriftModel" begin
-    include("ADLChargeDriftModel.jl")
 end
 
 @timed_testset "IO" begin
