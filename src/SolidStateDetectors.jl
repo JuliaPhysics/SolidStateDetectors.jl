@@ -37,7 +37,7 @@ include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
-            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            CartesianVector, CylindricalVector, Plane, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
@@ -64,6 +64,7 @@ export SSD_examples
 
 export Grid, GridPoint
 
+export CartesianMirrorSymmetry, CylindricalMirrorSymmetry
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
@@ -85,6 +86,7 @@ include("examples.jl")
 include("Units.jl")
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
+include("Symmetry/Symmetry.jl")
 include("Grids/Grids.jl")
 
 include("MaterialProperties/MaterialProperties.jl")
