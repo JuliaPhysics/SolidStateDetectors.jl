@@ -56,7 +56,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
         ConstantImpurityDensity{T}(0)
     end
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
-        cdm = getfield(Main, Symbol(dict["charge_drift_model"]["model"])){T}
+        cdm = getfield(SolidStateDetectors, Symbol(dict["charge_drift_model"]["model"])){T}
         cdm <: AbstractChargeDriftModel{T} ? cdm() : ElectricFieldChargeDriftModel{T}()
     else
         ElectricFieldChargeDriftModel{T}()
