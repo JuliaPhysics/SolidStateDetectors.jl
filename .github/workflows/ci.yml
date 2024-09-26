@@ -27,7 +27,7 @@ jobs:
         version:
           - '1.10'
           - '1'
-          # - 'pre'
+          - 'pre'
         os:
           - ubuntu-latest
         arch:
