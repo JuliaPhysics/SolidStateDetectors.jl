@@ -1,8 +1,10 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
-
-const elementary_charge = Float64(1.602176487e-19)
-const ϵ0  = Float64(8.8541878176e-12)
+# Maybe not strip the units at some point?
+const elementary_charge = Float64(ustrip(u"C", Unitful.q))
+const ϵ0 = Float64(ustrip(u"F/m", Unitful.ϵ0))
+const kB = Float64(ustrip(u"J/K", Unitful.k))
+const me = Float64(ustrip(u"kg", Unitful.me))
 
 const material_properties = Dict{Symbol, NamedTuple}()
 

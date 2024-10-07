@@ -3,11 +3,13 @@ on:
   pull_request:
     branches:
       - main
+      - dev
     paths-ignore:
       - 'docs/**'
   push:
     branches:
       - main
+      - dev
     paths-ignore:
       - 'docs/**'
 jobs:
@@ -22,10 +24,9 @@ jobs:
         with:
           version: ${{ matrix.version }}
       - name: Add LegendJuliaRegistry
-        run: julia -e 'using Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General")); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
+        run: julia -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
         shell: bash
       - uses: julia-actions/julia-downgrade-compat@v1
-#        if: ${{ matrix.version == '1.6' }}
         with:
           skip: Pkg,TOML
       - uses: julia-actions/julia-buildpkg@v1

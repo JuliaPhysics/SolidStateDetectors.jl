@@ -64,6 +64,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     for contact in contacts if !ismissing(sim.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
     wpots_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
     electric_field = interpolated_vectorfield(sim.electric_field)
+    ctm = sim.detector.semiconductor.charge_trapping_model
 
     unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     @info "Detector has $(n_contacts) contact"*(n_contacts != 1 ? "s" : "")
@@ -78,7 +79,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     @info "Generating waveforms..."
     waveforms = map( 
         wpot ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, S, unitless_energy_to_charge),
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, S, unitless_energy_to_charge, ctm),
             TypedTables.Table(dps = drift_paths, edeps = edeps)
         ),
         wpots_interpolated
@@ -144,11 +145,12 @@ end
 
 
 function _generate_waveform( drift_paths::Vector{<:EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
-                             wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, unitless_energy_to_charge) where {T <: SSDFloat}
+                             wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, unitless_energy_to_charge, 
+                             ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S)
+    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S, ctm)
     RDWaveform( timestamps_with_units, signal * unitless_energy_to_charge)
 end
 

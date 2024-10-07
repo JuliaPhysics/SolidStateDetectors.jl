@@ -1,7 +1,7 @@
 abstract type AbstractSemiconductor{T} <: AbstractObject{T} end
 
 """
-    struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
+    struct Semiconductor{T,G,MT,CDM,IDM,CTM} <: AbstractSemiconductor{T}
         
 Semiconductor bulk of a [`SolidStateDetector`](@ref).
 
@@ -13,18 +13,20 @@ This is the volume in which electrons and holes will drift during the signal dev
 * `MT`: Type of `material`.
 * `CDM`: Type of `charge_drift_model`.
 * `IDM`: Type of `impurity_density_model`.
+* `CTM`: Type of `charge_trapping_model`.
 
 ## Fields
 * `temperature::T`: Temperature (in K) of the semiconductor.
 * `material::MT`: Material of the semiconductor.
 * `impurity_density_model::IDM`: Impurity density model for the points inside the semiconductor.
 * `charge_drift_model::CDM`: Model that describes the drift of electrons and holes inside the semiconductor.
+* `charge_trapping_model::CTM`: Model that describes the trapping of electrons and holes inside the semiconductor.
 * `geometry::G`: Geometry of the semiconductor, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
 
 A `Semiconductor` is defined through the `semiconductor` field of a detector.
-It needs `material` and `geometry`, and can optionally be given a `temperature`, `impurity_density` and `charge_drift_model`.
+It needs `material` and `geometry`, and can optionally be given a `temperature`, `impurity_density`, `charge_drift_model` and `charge_trapping_model`.
 
 An example definition of a semiconductor looks like this:
 ```yaml 
@@ -33,18 +35,21 @@ semiconductor:
   temperature: 78
   impurity_density: # ...
   charge_drift_model: # ...
+  charge_trapping_model: # ...
   geometry: # ...
 ```
 """
-struct Semiconductor{T,G,MT,CDM,IDM} <: AbstractSemiconductor{T}
+struct Semiconductor{T,G,MT,CDM,IDM,CTM} <: AbstractSemiconductor{T}
     temperature::T
     material::MT
     impurity_density_model::IDM
     charge_drift_model::CDM
+    charge_trapping_model::CTM
     geometry::G
 end
 
 function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
+
     impurity_density_model = if haskey(dict, "impurity_density") 
         ImpurityDensity(T, dict["impurity_density"], input_units)
     elseif haskey(dict, "charge_density_model") 
@@ -55,6 +60,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     else
         ConstantImpurityDensity{T}(0)
     end
+
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
@@ -65,24 +71,38 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     else
         ElectricFieldChargeDriftModel{T}()
     end
+
     material = material_properties[materials[dict["material"]]]
     temperature = if haskey(dict, "temperature") 
-        T(dict["temperature"])
+        _parse_value(T, dict["temperature"], input_units.temperature)
     elseif material.name == "High Purity Germanium"
         T(78)
     else
         T(293)
     end
+
+    charge_trapping_model = if haskey(dict, "charge_trapping_model") &&
+                               haskey(dict["charge_trapping_model"], "model") &&
+                               dict["charge_trapping_model"]["model"] == "Boggs"
+        BoggsChargeTrappingModel{T}(dict["charge_trapping_model"], temperature = temperature)
+    else
+        NoChargeTrappingModel{T}()
+    end
+    
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)
     geometry = Geometry(T, dict["geometry"], input_units, transformations)
-    return Semiconductor(temperature, material, impurity_density_model, charge_drift_model, geometry)
+    return Semiconductor(temperature, material, impurity_density_model, charge_drift_model, charge_trapping_model, geometry)
 end
 
 function println(io::IO, d::Semiconductor{T}) where {T <: SSDFloat}
     println("\t---General Properties---")
     println("\t-Detector Material: \t $(d.material.name)")
+    println("\t-Impurity Density Model: $(typeof(d.impurity_density_model).name.name)")
     println("\t-Charge Drift Model:\t $(typeof(d.charge_drift_model).name.name)")
+    if !(d.charge_trapping_model isa NoChargeTrappingModel)
+        println("\t-Charge Trapping Model:\t $(typeof(d.charge_trapping_model).name.name)")
+    end
 end
 
 print(io::IO, d::Semiconductor{T}) where {T} = print(io, "Semiconductor{$T} - $(d.material.name)")
@@ -91,11 +111,14 @@ show(io::IO, d::Semiconductor) = print(io, d)
 show(io::IO,::MIME"text/plain", d::Semiconductor) = show(io, d)
 
 
-function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, impurity_density::AbstractImpurityDensity{T}) where {T,G,MT,CDM,IDM}
-    Semiconductor(sc.temperature, sc.material, impurity_density, sc.charge_drift_model, sc.geometry)
+function Semiconductor(sc::Semiconductor{T}, impurity_density::AbstractImpurityDensity{T}) where {T <: SSDFloat}
+    Semiconductor(sc.temperature, sc.material, impurity_density, sc.charge_drift_model, sc.charge_trapping_model, sc.geometry)
 end
-function Semiconductor(sc::Semiconductor{T,G,MT,CDM,IDM}, chargedriftmodel::AbstractChargeDriftModel{T}) where {T,G,MT,CDM,IDM}
-    Semiconductor(sc.temperature, sc.material, sc.impurity_density_model, chargedriftmodel, sc.geometry)
+function Semiconductor(sc::Semiconductor{T}, charge_drift_model::AbstractChargeDriftModel{T}) where {T <: SSDFloat}
+    Semiconductor(sc.temperature, sc.material, sc.impurity_density_model, charge_drift_model, sc.charge_trapping_model, sc.geometry)
+end
+function Semiconductor(sc::Semiconductor{T}, charge_trapping_model::AbstractChargeTrappingModel{T}) where {T <: SSDFloat}
+    Semiconductor(sc.temperature, sc.material, sc.impurity_density_model, sc.charge_drift_model, charge_trapping_model, sc.geometry)
 end
 
 """

@@ -68,6 +68,7 @@ export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribu
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
 export ElectricFieldChargeDriftModel, ADLChargeDriftModel
+export NoChargeTrappingModel, BoggsChargeTrappingModel
 export get_active_volume, is_depleted, estimate_depletion_voltage
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
@@ -92,6 +93,7 @@ include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
+include("ChargeTrapping/ChargeTrapping.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
 include("ScalarPotentials/ScalarPotential.jl")

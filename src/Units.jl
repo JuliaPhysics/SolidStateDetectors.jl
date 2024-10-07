@@ -15,6 +15,7 @@ const internal_charge_unit  = u"C"
 const internal_mobility_unit = u"m^2/(V*s)"
 const internal_diffusion_unit = internal_length_unit ^ 2 / internal_time_unit
 const internal_charge_density_unit = internal_charge_unit / internal_length_unit ^ 3
+const internal_temperature_unit = u"K"
 
 const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
@@ -27,6 +28,7 @@ to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustri
 to_internal_units(x::Quantity{<:Real, dimension(internal_mobility_unit)})  = ustrip(internal_mobility_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = ustrip(internal_diffusion_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(internal_charge_density_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_temperature_unit)})     = ustrip(internal_temperature_unit,  x)
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
@@ -35,6 +37,7 @@ from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_energ
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_charge_unit)})  = uconvert(unit, x * internal_charge_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_mobility_unit)})  = uconvert(unit, x * internal_mobility_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_diffusion_unit)})  = uconvert(unit, x * internal_diffusion_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_temperature_unit)}) = uconvert(unit, x * internal_temperature_unit)
 
 # Internal function for now: We should also fano noise here (optionally)
 _convert_internal_energy_to_external_charge(material) = inv(to_internal_units(material.E_ionisation)) * external_charge_unit
