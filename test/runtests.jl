@@ -13,6 +13,8 @@ using Unitful
 using TimerOutputs
 
 
+@info "Running tests with $(Base.Threads.nthreads()) Julia threads active."
+
 T = Float32
 device_array_type = (@isdefined CUDAKernels) ? CUDAKernels.CUDA.CuArray : Array
 
