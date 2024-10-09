@@ -50,11 +50,15 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
       - name: Add LegendJuliaRegistry
-        run: julia -e 'using Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/JuliaRegistries/General")); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
+        run: julia -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
         shell: bash
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: 'Conda'
+      - name: Remove Geant4 on x86
+        run: julia --project="test" -e 'using Pkg; Pkg.rm("Geant4")'
+        shell: bash
+        if: matrix.arch == 'x86'
       - uses: julia-actions/julia-runtest@v1
         with:
           coverage: ${{ matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64' }}
