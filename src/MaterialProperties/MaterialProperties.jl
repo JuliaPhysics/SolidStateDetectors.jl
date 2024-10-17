@@ -82,12 +82,16 @@ SolidStateDetectors.material_properties[:PTFE] = (
     
 )
 
+abstract type CdZnTe <: AbstractDriftMaterial end
+Symbol(::Type{CdZnTe}) = :CdZnTe
 material_properties[:CdZnTe] = (
     name = "Cadmium zinc telluride",
     E_ionisation = 4.64u"eV",
     f_fano = 0.089, # https://doi.org/10.1557/PROC-487-101
     ϵ_r = 10.9,
-    ρ = 5.78u"g*cm^-3"
+    ρ = 5.78u"g*cm^-3",
+    μ_e = 1350u"cm^2/V/s", # https://doi.org/10.1016/j.net.2018.12.024
+    μ_h = 120u"cm^2/V/s"
 )
 # Add new materials above this line
 # and just put different spellings into the dict `materials` below
