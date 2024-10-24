@@ -186,7 +186,7 @@ calculate_capacitance_matrix(sim)
 
 # ## Detector waveform generation
 
-# Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the resulting detector charge signals (e.g. at the point contact):
+# Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the time evolution of the charges induced on the contacts (e.g. on the point contact):
 
 simulate!(evt, sim) # drift_charges + signal generation of all channels
 
@@ -197,7 +197,7 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 #md savefig("tutorial_waveforms.svg"); nothing # hide
 #md # [![tutorial_waveforms](tutorial_waveforms.svg)](tutorial_waveforms.pdf)
 
-# SolidStateDetectors.jl also allows to separate the waveform into the two contributions from electrons and holes
+# SolidStateDetectors.jl also allows to separate the observed charge signal into the charge induced by the electrons and the charge induced by the holes.
 
 contact_id = 1
 plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time",
