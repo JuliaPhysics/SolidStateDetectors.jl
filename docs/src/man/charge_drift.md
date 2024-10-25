@@ -220,7 +220,7 @@ In this case, the signal is calculated using the Schockley-Ramo theorem, i.e. by
 ### `BoggsChargeTrappingModel`
 
 In SolidStateDetectors.jl, the only charge trapping model implemented so far is the one presented in [Boggs _et al._ (2023)](https://doi.org/10.1016/j.nima.2023.168756).
-In this model, the charge cloud loses part of its charge at every point `path[i]` of the charge drift, depending on its drift and thermal velocity, as well as the trapping product $[n\sigma_{E/h}]^{-1}$ for electrons and holes.
+In this model, the charge cloud loses part of its charge at every point `path[i]` of the charge drift, depending on its drift and thermal velocity, as well as the trapping product $[n\sigma_{e/h}]^{-1}$ for electrons and holes.
 The charge signal is then given by the charge-decreased charge cloud reaching the contacts and the charges trapped on the way.
 
 The `BoggsChargeTrappingModel` can be applied in the configuration file by adding a field `charge_trapping_model` to the `semiconductor` with `model: Boggs` and `parameters` defining the (inverse) trapping products and (optionally) the `temperature`:
