@@ -12,7 +12,6 @@ import Adapt
 using ArraysOfArrays
 using FillArrays
 using Format
-using GPUArrays
 using Interpolations
 using IntervalSets
 using JSON
@@ -50,6 +49,7 @@ export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
 import Distributions
+import GPUArrays
 import IntervalSets
 import OrderedCollections
 import Tables
