@@ -24,21 +24,19 @@ sim = FileIO.load("<name-of-simulation.file>.jld", "Simulation")
 
 ## Saving output with HDF5
 
-One more compact way of saving simulation results is based on converting the output to a `NamedTuple` and saving it to a HDF5 file. This requires the [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) package, as well as the (unregistered) service packages [LegendDataTypes.jl](https://github.com/legend-exp/LegendHDF5IO.jl) and [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl).
+One more compact way of saving simulation results is based on converting the output to a `NamedTuple` and saving it to a HDF5 file. This requires the (unregistered) service packages [LegendDataTypes.jl](https://github.com/legend-exp/LegendHDF5IO.jl) and [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl).
 
 Install the required packages once by running:
 ```julia
-using Pkg
+import Pkg
 Pkg.add(url="https://github.com/legend-exp/LegendDataTypes.jl.git")
 Pkg.add(url="https://github.com/legend-exp/LegendHDF5IO.jl.git")
-Pkg.add("HDF5")
 ```
 
 Simulation output can be written to a HDF5 file using [`ssd_write`](@ref):
 ```julia
-using HDF5
-using LegendHDF5IO
 using SolidStateDetectors 
+using LegendHDF5IO
 # ...
 
 ssd_write("<name-of-simulation-file>.h5", sim)
@@ -46,11 +44,10 @@ ssd_write("<name-of-simulation-file>.h5", sim)
 
 The data stored in the HDF5 file can be read using [`ssd_read`](@ref):
 ```julia
-using HDF5
-using LegendHDF5IO
 using SolidStateDetectors
+using LegendHDF5IO
 ssd_read("<name-of-simulation-file>.h5", Simulation)
 ```
 
 !!! note
-    All HDF5 related packages must be loaded **before** loading SolidStateDetectors.jl
+    `LegendHDF5IO` must be loaded **after** loading `SolidStateDetectors`!

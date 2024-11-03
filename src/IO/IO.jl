@@ -20,8 +20,8 @@ with a given `filename` using [LegendHDF5IO.jl](https://github.com/legend-exp/Le
 
 ## Example 
 ```julia
-using LegendHDF5IO
 using SolidStateDetectors
+using LegendHDF5IO
 sim = Simulation(SSD_examples[:InvertedCoax])
 simulate!(sim)
 ssd_write("example_sim.h5", sim)
@@ -32,7 +32,7 @@ ssd_write("example_sim.h5", sim)
 
 !!! note 
     In order to use this method, the package [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) 
-    has to be loaded before loading SolidStateDetectors.jl.
+    has to be loaded after loading SolidStateDetectors.jl.
 
 See also [`ssd_read`](@ref).
 """
@@ -51,14 +51,14 @@ using [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl).
 
 ## Example 
 ```julia
-using LegendHDF5IO
 using SolidStateDetectors
+using LegendHDF5IO
 sim = ssd_read("example_sim.h5", Simulation)
 ```
 
 !!! note 
     In order to use this method, the package [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) 
-    has to be loaded before loading SolidStateDetectors.jl.
+    has to be loaded after loading SolidStateDetectors.jl.
 
 See also [`ssd_write`](@ref).
 """
