@@ -10,14 +10,13 @@ Simulates the waveforms for all events defined in `mcevents` for a given [`Simul
 2. determining the signal (waveforms) for each [`Contact`](@ref), 
     for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
-
 ## Arguments
 * `mcevents::TypedTables.Table`: Table with information about events in the simulated setup.
 * `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `mcevents` should drift.
 
-If [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) is loaded, this function has additional arguments. 
+If [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) is loaded, this function has additional arguments. 
 
-## Additional Arguments (HDF5)
+## Additional Arguments (`LegendHDF5IO`)
 * `output_dir::AbstractString`: Directory where the HDF5 output file is saved.
 * `output_base_name::AbstractString`: Basename of the HDF5 output file, default is `"generated_waveforms"`.
 
@@ -29,7 +28,7 @@ If [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) is loaded, this function has ad
 * `number_of_carriers::Int = 1`: Number of charge carriers to be used in the N-Body simulation of an energy deposition. 
 * `number_of_shells::Int = 1`: Number of shells around the `center` point of the energy deposition.
 * `verbose = false`: Activate or deactivate additional info output.
-* `chunk_n_physics_events::Int = 1000` (HDF5 only): Number of events that should be saved in a single HDF5 output file.
+* `chunk_n_physics_events::Int = 1000` (`LegendHDF5IO` only): Number of events that should be saved in a single HDF5 output file.
 
 ## Examples
 ```julia 
@@ -37,7 +36,7 @@ simulate_waveforms(mcevents, sim, Δt = 1u"ns", verbose = false)
 # => returns the input table `mcevents` with an additional column `waveform` in which the generated waveforms are stored
 ```
 ```julia 
-import HDF5
+using LegendHDF5IO
 simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", verbose = false)
 # => simulates the charge drift and saves the output to "output_dir/my_basename_evts_xx.h5"
 ```
