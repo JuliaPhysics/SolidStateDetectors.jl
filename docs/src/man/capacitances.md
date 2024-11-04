@@ -6,7 +6,7 @@ calculate_mutual_capacitance(sim, (i, j))
 ```
 
 The weighting potentials of the two contacts must have already been calculated
-as they are needed in the [calculation](https://www.jpier.org/PIERB/pierb92/01.21011501.pdf):
+as they are needed in the [calculation](https://doi.org/10.2528/PIERB21011501):
 ```math
 c_{ij} = \epsilon_0 \int_{World} \nabla \Phi_i^w(\vec{r}) ϵ_r(\vec{r}) \nabla \Phi_j^w(\vec{r}) d\vec{r}
 ```
