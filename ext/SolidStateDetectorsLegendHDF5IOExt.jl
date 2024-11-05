@@ -5,8 +5,9 @@ module SolidStateDetectorsLegendHDF5IOExt
 import ..LegendHDF5IO
 
 using SolidStateDetectors
-using SolidStateDetectors: RealQuantity, SSDFloat
+using SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges
 using TypedTables, Unitful
+using Format
 
 function SolidStateDetectors.ssd_write(filename::AbstractString, sim::Simulation)
     if isfile(filename) @warn "Destination `$filename` already exists. Overwriting..." end
@@ -49,8 +50,8 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
         mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose)
       
-        LegendHDF5IO.lh5open(ofn, "w") do output
-            LegendHDF5IO.writedata(output, "generated_waveforms", mcevents_sub)
+        LegendHDF5IO.lh5open(ofn, "w") do h5f
+            LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", mcevents_sub)
         end        
     end    
 end
