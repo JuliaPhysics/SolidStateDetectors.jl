@@ -19,7 +19,7 @@ T = Float32
 end
 
 @timed_testset "SOR GPU Backend" begin
-    include("SOR_GPU_Backend.jl")
+    include("test_gpu_backend.jl")
 end
 
 @timed_testset "ConstructiveSolidGeometry" begin
