@@ -326,7 +326,7 @@ end
 end 
 
 @timed_testset "Geant4 extension" begin
-    if Sys.WORD_SIZE == 64 include("Geant4.jl") end
+    if Sys.WORD_SIZE == 64 include("test_geant4.jl") end
 end
 
 display(testtimer())

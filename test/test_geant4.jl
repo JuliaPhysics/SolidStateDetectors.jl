@@ -1,3 +1,7 @@
+# This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
+
+using Test
+
 using SolidStateDetectors
 using Geant4
 using RadiationDetectorSignals
@@ -59,10 +63,13 @@ end
     # Simulate 100 events
     evts = run_geant4_simulation(app, 100)
     @test evts isa Table
+    @test length(evts) == 100
 
     # Generate waveforms
     simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
     wf = simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
+    @test :waveform in columnnames(wf)
+    @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
 
 end
