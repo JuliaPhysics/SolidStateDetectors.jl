@@ -6,6 +6,15 @@ using Unitful
 
 T = Float32
 
+@testset "Parse materials in Geant4 extension" begin
+    parse_material = Base.get_extension(SolidStateDetectors, :SolidStateDetectorsGeant4Ext).parse_material
+    for (m,material) in SolidStateDetectors.material_properties
+        @testset "$(m)" begin
+            @test_nowarn parse_material(material.name)
+        end
+    end
+end
+
 @testset "Define particle sources" begin
 
     # Isotropic emission when no direction is passed
