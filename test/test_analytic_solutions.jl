@@ -1,3 +1,16 @@
+# This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
+
+using Test
+
+using SolidStateDetectors
+using SpecialFunctions
+using StatsBase
+using Unitful
+
+include("test_utils.jl")
+
+T = Float32
+
 ϵ0 = SolidStateDetectors.ϵ0 * u"F / m"
 e = SolidStateDetectors.elementary_charge * u"C"
 
@@ -228,7 +241,7 @@ end
             ρ0 = 2e14
             if ustrip(R1) < r < ustrip(R2)
                 # return r == r_pn_junction ? 0 : (r < r_pn_junction ? ρ0 : -ρ0)
-                ρ0 * erf(2000*(r - r_pn_junction)) 
+                ρ0 * SpecialFunctions.erf(2000*(r - r_pn_junction)) 
             else 
                 return 0
             end

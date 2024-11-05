@@ -12,10 +12,8 @@ using Unitful
 
 include("test_utils.jl")
 
-T = Float32
-
 @timed_testset "Comparison to analytic solutions" begin
-    include("comparison_to_analytic_solutions.jl")
+    include("test_analytic_solutions.jl")
 end
 
 @timed_testset "SOR GPU Backend" begin
