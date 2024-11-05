@@ -248,33 +248,6 @@ end
 
 end
 
-@timed_testset "Table Simulation" begin 
-    sim = Simulation{T}(SSD_examples[:InvertedCoax])
-    timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
-
-    evt_table = Table(
-        evtno = Int32[1], 
-        detno = Int32[1],
-        thit = [T[0] * u"s"],
-        edep = [T[1] * u"eV"],
-        pos = [[SVector{3, T}.(0.01, 0.01, 0.01) * u"m"]]
-    )
-    contact_charge_signals = timed_simulate_waveforms(      
-        evt_table,
-        sim,
-        max_nsteps = 4000, 
-        Δt = 1u"ns", 
-        number_of_carriers = 20,
-        number_of_shells = 2,
-        verbose = false);
-    signalsum = T(0)
-    for i in 1:length(contact_charge_signals.waveform)
-        signalsum += abs(ustrip(contact_charge_signals.waveform[i].signal[end]))
-    end
-    signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
-    @test isapprox( signalsum, T(2), atol = 5e-3 )
-end
-
 @timed_testset "Isochrone" begin
     T = Float64 # to prevent rounding errors that might cause the final test to fail
     sim = Simulation{T}(SSD_examples[:IsochroneTest])
@@ -322,7 +295,7 @@ end
 end
 
 @timed_testset "IO" begin
-    include("IO.jl")
+    include("test_io.jl")
 end 
 
 @timed_testset "Geant4 extension" begin
