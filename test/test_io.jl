@@ -11,7 +11,7 @@ using StaticArrays
 using TypedTables
 using Unitful
 
-include("test_utils.jl")
+# include("test_utils.jl")
 
 @testset "Read in different config file formats" begin
 

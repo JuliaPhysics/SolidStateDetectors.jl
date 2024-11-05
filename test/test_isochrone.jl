@@ -5,7 +5,7 @@ using Test
 using SolidStateDetectors
 using Unitful
 
-include("test_utils.jl")
+# include("test_utils.jl")
 
 T = Float64 # to prevent rounding errors that might cause the final test to fail
 sim = Simulation{T}(SSD_examples[:IsochroneTest])
