@@ -92,19 +92,25 @@ function estimate_depletion_voltage(sim::Simulation{T},
     ϕV = simDV.weighting_potentials[contact_id].data   
 
     ϕρ .-= simDV.detector.contacts[contact_id].potential .* ϕV
-
+    Urng = Umin..Umax
     inside = findall(simDV.point_types .& 4 .> 0)
     U::T = NaN
-
+    ϕ̃ = similar(ϕV)
     while Umax-Umin>tolerance
         U = (Umax + Umin)/2    
+        ϕ̃ .= ϕρ .+ T(U) .* ϕV
+        ϕmax = maximum(ϕ̃[inside])
+        ϕmin = minimum(ϕ̃[inside])
         if U>0
-            maximum(ϕρ[inside] .+ T(U) .* ϕV[inside]) - minimum(ϕρ[inside] .+ T(U) .* ϕV[inside]) < abs(U) ? Umax = U : Umin = U
+            ϕmax - ϕmin < abs(U) ? Umax = U : Umin = U
         else
-            maximum(ϕρ[inside] .+ T(U) .* ϕV[inside]) - minimum(ϕρ[inside] .+ T(U) .* ϕV[inside]) < abs(U) ? Umin = U : Umax = U
+            ϕmax - ϕmin < abs(U) ? Umin = U : Umax = U
         end        
     end
-
+    bulk = findall(sim.point_types.data .& bulk_bit .> 0)
+    U_min_max = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
+    U2 = isempty(U_min_max) ? U : only(U_min_max)    
+    U = U > 0 ? min(U, U2) : min(U, U2)
     if verbose
         @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tolerance))))) ± $(tolerance) V applied to contact $(contact_id)."
         if (potential_range[2] - U) < tolerance || (U - potential_range[1]) < tolerance
@@ -112,6 +118,68 @@ function estimate_depletion_voltage(sim::Simulation{T},
         end
     end
     return U * u"V"
+end
+
+function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
+    bulk_points::Vector{CartesianIndex{3}}) where {T}
+
+    indices = CartesianIndices(ϕ)
+    maxI = last(indices)
+    minI = first(indices)
+    Δ = oneunit(minI)
+    has_local_maxima = 0
+    for x₀ in bulk_points
+        is_local_maxima = true
+        ϕ₀ = ϕ[x₀]
+        neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
+        for x in neighbours
+            Δx = sum(abs.((x₀ - x).I))
+            ((x₀ == x) || Δx > 1)  && continue
+            is_local_maxima &= ϕ[x] >= ϕ₀
+        end
+        has_local_maxima += is_local_maxima
+        has_local_maxima > 0 && ((@info x₀); break)
+    end
+    has_local_maxima
+end
+
+function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3}, 
+        bulk_points::Vector{CartesianIndex{3}}) where {T}
+
+    L = length(bulk_points)
+    Umin = zeros(L)
+    Umax = zeros(L)
+    indices = CartesianIndices(ϕᵥ)
+    maxI = last(indices)
+    minI = first(indices)
+    Δ = oneunit(minI)
+    for (i, x₀) in enumerate(bulk_points)
+        ϕᵨ₀ = ϕᵨ[x₀]
+        ϕᵥ₀ = ϕᵥ[x₀]
+        neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
+       _uminl = -Inf
+       _uminr = Inf
+       _umaxl = -Inf
+       _umaxr = Inf
+        for x in neighbours
+            x₀ == x && continue
+            δ1 = ϕᵨ₀ - ϕᵨ[x]
+            δ2 = ϕᵥ₀ - ϕᵥ[x]
+            isapprox(δ2, zero(T)) && continue
+            U = -(δ1 / δ2)
+            if δ2 > 0
+                _umaxl = max(_umaxl, U)
+                _uminr = min(_uminr, U)
+            end
+            if δ2 < 0
+                _umaxr = min(_umaxr, U)
+                _uminl = max(_uminl, U)
+            end
+        end
+        Umin[i] = min((_uminl < _uminr) ? _uminl : Inf, (_umaxl < _umaxr) ? _umaxl : Inf)
+        Umax[i] = max((_uminl < _uminr) ? _uminr : -Inf, (_umaxl < _umaxr) ? _umaxr : -Inf)
+    end
+    minimum(Umin), maximum(Umax)
 end
 
 """
