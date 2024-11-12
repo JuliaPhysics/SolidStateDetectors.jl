@@ -387,7 +387,7 @@ function parse_geometry(e::World{T, 3, Cylindrical}, x_solids::XMLElement, x_def
         "name" => name,
         "rmin" => zero(T),
         "rmax" => rmax,
-        "z" => z,
+        "z" => 2*z,
         "startphi" => zero(T),
         "deltaphi" => T(360),
         "lunit" => SolidStateDetectors.internal_length_unit,
@@ -405,9 +405,9 @@ function parse_geometry(e::World{T, 3, Cartesian}, x_solids::XMLElement, x_defin
     name = pf * string(id)
     set_attributes(w, OrderedDict(
         "name" => name,
-        "x" => x,
-        "y" => y,
-        "z" => z,
+        "x" => 2*x,
+        "y" => 2*y,
+        "z" => 2*z,
         "lunit" => SolidStateDetectors.internal_length_unit
     ))
     
