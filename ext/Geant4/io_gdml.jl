@@ -463,6 +463,8 @@ end
     elseif material == "Polyethylene Naphthalate" return "G4_PEN"
     elseif material == "Polytetrafluorethylen" return "G4_PTFE"
     elseif material == "Cadmium zinc telluride" return "G4_CdZnTe"
+    elseif material == "CsPbBr3" return "G4_CsPbBr3"
+    elseif material == "Lead" return "G4_Pb"
     end
     throw("Material characteristics for \"$(material)\" not defined yet")
 end

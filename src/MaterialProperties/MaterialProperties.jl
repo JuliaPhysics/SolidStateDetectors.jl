@@ -89,6 +89,21 @@ material_properties[:CdZnTe] = (
     ϵ_r = 10.9,
     ρ = 5.78u"g*cm^-3"
 )
+
+abstract type CsPbBr3 <: AbstractDriftMaterial end
+Symbol(::Type{CsPbBr3}) = :CsPbBr3
+material_properties[:CsPbBr3] = (
+    name = "CsPbBr3",
+    E_ionisation = 6.9u"eV",
+    ϵ_r = 16.46,
+    ρ = 4.73u"g*cm^-3"
+)
+
+material_properties[:Pb] = (
+    name = "Lead",
+    ϵ_r = 1e6, # high value for lead as for conductor. Usage of lead is shielding.
+    ρ = 11.35u"g*cm^-3"
+)
 # Add new materials above this line
 # and just put different spellings into the dict `materials` below
 
@@ -101,7 +116,8 @@ materials = Dict{String, Symbol}(
     "Al"  => :Al,
     "LAr" => :LAr,
     "CZT" => :CdZnTe,
-    "Si" => :Si
+    "Si" => :Si,
+    "Lead" => :Pb
 )
 
 

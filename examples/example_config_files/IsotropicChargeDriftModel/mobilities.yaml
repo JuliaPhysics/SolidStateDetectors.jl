@@ -1,0 +1,4 @@
+model: IsotropicChargeDriftModel
+mobilities:
+  e: 1000cm^2/(V*s)
+  h: 1000cm^2/(V*s)

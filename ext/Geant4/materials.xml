@@ -64,4 +64,26 @@
         <fraction n="0.0278" ref="G4_Zn" />
         <fraction n="0.5422" ref="G4_Te" />
     </material>
+
+    <element name="G4_Cs" Z="55">
+        <atom value="132.9054" />
+    </element>
+    <element name="G4_Pb" Z="82">
+        <atom value="207.2" />
+    </element>
+    <element name="G4_Br" Z="35">
+        <atom value="79.904" />
+    </element>
+
+    <material name="G4_CsPbBr3" formula="CsPbBr3">
+        <D value="4.73" unit="g/cm3" />
+        <fraction n="0.2292" ref="G4_Cs" />
+        <fraction n="0.3574" ref="G4_Pb" />
+        <fraction n="0.4134" ref="G4_Br" />
+    </material>
+    
+    <material name="G4_Pb" Z="82">
+        <D value="11.34" />
+        <atom value="207.2" />
+    </material>
 </materials>

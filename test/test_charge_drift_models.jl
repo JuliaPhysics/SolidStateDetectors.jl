@@ -3,7 +3,8 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel
+using InteractiveUtils
 using StaticArrays
 using LinearAlgebra
 using Unitful
@@ -41,6 +42,52 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test signalsum < T(1.99)
+end
+
+@timed_testset "Test completeness of charge drift models" begin
+    for c in InteractiveUtils.subtypes(AbstractChargeDriftModel)
+        if isstructtype(c)
+            @testset "$(c)" begin 
+                cdm = c{T}
+                fv = @SVector T[1,0,0]
+
+                # default constructor
+                @test cdm() isa c
+                # electron-drift velocity
+                @test hasmethod(getVe, Tuple{SVector{3,T}, cdm})
+                @test getVe(fv, cdm()) isa SVector
+                # hole-drift velocity
+                @test hasmethod(getVh, Tuple{SVector{3,T}, cdm})
+                @test getVh(fv, cdm()) isa SVector
+            end
+        end
+    end
+end
+
+
+@timed_testset "Test IsotropicChargeDriftModel" begin
+
+    @testset "Test constructors of IsotropicChargeDriftModel" begin
+        cdm0 = IsotropicChargeDriftModel{T}() # default charge drift model
+        @test cdm0.μ_e  == 0.1f0
+        @test cdm0.μ_h == 0.1f0
+
+        cdm1 = IsotropicChargeDriftModel{T}(1000u"cm^2/(V*s)", 1000u"cm^2/(V*s)")
+        @test cdm1 == cdm0
+
+        cdm2 = IsotropicChargeDriftModel{T}(0.1, 0.1)
+        @test cdm2 == cdm0
+
+        config_dict = Dict(
+            "model" => "IsotropicChargeDriftModel",
+            "mobilities" => Dict(
+                "e" => "1000cm^2/(V*s)",
+                "h" => "1000cm^2/(V*s)"
+            )
+        )
+        cdm3 = IsotropicChargeDriftModel{T}(config_dict)
+        @test cdm3 == cdm0
+    end
 end
 
 @timed_testset "Test ADLChargeDriftModel" begin
