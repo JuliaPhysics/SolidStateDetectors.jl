@@ -43,8 +43,8 @@ end
     if Sys.WORD_SIZE == 64 include("test_geant4.jl") end
 end
 
-display(testtimer())
-
 @timed_testset "Depletion estimation" begin
     include("test_depletion.jl")
 end
+
+display(testtimer())
