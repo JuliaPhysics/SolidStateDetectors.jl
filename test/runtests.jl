@@ -46,5 +46,5 @@ end
 display(testtimer())
 
 @timed_testset "Depletion estimation" begin
-    include("depletion_test.jl")
+    include("test_depletion.jl")
 end
