@@ -28,7 +28,7 @@ module ConstructiveSolidGeometry
     abstract type Cylindrical <: AbstractCoordinateSystem end
     const CoordinateSystemType = Union{Type{Cartesian}, Type{Cylindrical}}
 
-    import Base: print, show
+    import Base: print, show, float
     print(io::IO, ::Type{Cartesian}) = print(io, "Cartesian")
     print(io::IO, ::Type{Cylindrical}) = print(io, "Cylindrical")
     show(io::IO, CS::CoordinateSystemType) = print(io, CS)
@@ -38,7 +38,7 @@ module ConstructiveSolidGeometry
     const CartesianTicksTuple{T} = NamedTuple{(:x,:y,:z), NTuple{3,Vector{T}}}
     const CylindricalTicksTuple{T} = NamedTuple{(:r,:φ,:z), NTuple{3,Vector{T}}}
 
-    abstract type AbstractGeometry{T <: AbstractFloat} end
+    abstract type AbstractGeometry{T <: Number} end
 
     abstract type AbstractPrimitive{T} <: AbstractGeometry{T} end
     abstract type ClosedPrimitive end
@@ -50,11 +50,16 @@ module ConstructiveSolidGeometry
 
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
     
-    _csg_convert_args(eltype::Type{T}, r::Real) where T = convert(T, r) 
+    _csg_convert_args(eltype::Type{T}, r::Real) where T = convert(T, r)
     _csg_convert_args(eltype::Type{T}, r::Tuple) where T = broadcast(x -> _csg_convert_args(T, x), r)
     _csg_convert_args(eltype::Type{T}, r::Nothing) where T = nothing
+    _csg_convert_args(eltype::Type{Quantity{T}}, r::Quantity) where {T} = T(r)
+    _csg_convert_args(eltype::Type{Quantity{T}}, r::Real) where {T} = T(r) * T(1)u"m"
+    _csg_convert_args(eltype::Type{T}, r::PtOrVec) where {T, PtOrVec<:StaticArrays.FieldVector} = broadcast(x -> _csg_convert_args(T, x), r)
+    _csg_convert_args(::Type{RT}, ::Type{T}) where {RT<:Real,T<:Real} = RT
+    _csg_convert_args(::Type{RT}, ::Type{T}) where {RT<:Real,T<:Quantity} = Quantity{RT}
 
-    _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = eltype(T)
+    _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = _csg_get_promoted_eltype.(eltype(T))
     _csg_get_promoted_eltype(::Type{T}) where {T <: Real} = T
     _csg_get_promoted_eltype(::Type{Nothing}) = Int
     _csg_get_promoted_eltype(::Type{Tuple{T}}) where {T<:Real} = T
@@ -62,9 +67,16 @@ module ConstructiveSolidGeometry
     _csg_get_promoted_eltype(::Type{Tuple{T1,T2}}) where {T1<:Union{Real, Tuple}, T2<:Union{Real, Tuple}} = promote_type(_csg_get_promoted_eltype(T1), _csg_get_promoted_eltype(T2))
     _csg_get_promoted_eltype(::Type{Tuple{Nothing,T2}}) where {T2<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T2)
     _csg_get_promoted_eltype(::Type{Tuple{T1,Nothing}}) where {T1<:Union{Real, Tuple}} = _csg_get_promoted_eltype(T1)
+    _csg_get_promoted_eltype(::Type{Q}) where {Q <: Quantity}= Q
     
     _handle_phi(φ, rotation) = (φ, rotation)
     _handle_phi(φ::Tuple, rotation) = (abs(φ[2]-φ[1]), rotation*RotZ(φ[1]))
+    
+    _precision_type(::Type{T}) where {T <: Real} = T
+    _precision_type(::Type{Quantity{T}}) where {T <: Real} = T
+    
+    _float_precision(::Type{Quantity{T}}) where T = float(T)
+    _float_precision(::Type{T}) where T = float(T)
 
     include("Units.jl")
     include("PointsAndVectors/PointsAndVectors.jl")
