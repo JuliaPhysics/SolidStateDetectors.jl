@@ -1,0 +1,74 @@
+name: Point-contact detector
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 60
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -20
+      to: 60
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+
+detectors:
+- semiconductor:
+    material: HPGe
+    impurity_density:
+      name: constant
+      value: -5e9cm^-3
+    geometry:
+      translate:
+        tube:
+          r: 40
+          h: 40
+        z: 20
+  contacts:
+  - name: Core
+    material: HPGe
+    id: 1
+    potential: -3000
+    geometry:
+      tube:
+        r: 3
+        h: 0.3
+        origin:
+          z: 39.85
+  - name: Mantle
+    material: HPGe
+    id: 2
+    potential: 0
+    geometry:
+      union:
+      - tube:
+          r:
+            from: 0
+            to: 40
+          h: 0
+      - tube:
+          r:
+            from: 40
+            to: 40
+          h: 40
+          origin:
+            z: 20
+      - tube:
+          r:
+            from: 10
+            to: 40
+          h: 0
+          origin:
+            z: 40
