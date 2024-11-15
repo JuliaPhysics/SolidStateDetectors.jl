@@ -378,7 +378,7 @@ end
 function parse_geometry(e::World{T, 3, Cylindrical}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T}
     w = new_child(x_solids, "tube")
     rmin, rmax = endpoints(e.intervals[1])
-    z = width(e.intervals[3])
+    z = endpoints(e.intervals[3])
     
     !iszero(rmin) && throw(AssertionError("The r-interval of the world must start at 0."))
     
@@ -387,7 +387,7 @@ function parse_geometry(e::World{T, 3, Cylindrical}, x_solids::XMLElement, x_def
         "name" => name,
         "rmin" => zero(T),
         "rmax" => rmax,
-        "z" => 2*z,
+        "z" => 2*max(abs.(z)...),
         "startphi" => zero(T),
         "deltaphi" => T(360),
         "lunit" => SolidStateDetectors.internal_length_unit,
@@ -400,14 +400,14 @@ end
 
 function parse_geometry(e::World{T, 3, Cartesian}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T}
     w = new_child(x_solids, "box")
-    x, y, z = width.(e.intervals)
+    x, y, z = endpoints.(e.intervals)
     
     name = pf * string(id)
     set_attributes(w, OrderedDict(
         "name" => name,
-        "x" => 2*x,
-        "y" => 2*y,
-        "z" => 2*z,
+        "x" => 2*max(abs.(x)...),
+        "y" => 2*max(abs.(y)...),
+        "z" => 2*max(abs.(z)...),
         "lunit" => SolidStateDetectors.internal_length_unit
     ))
     
