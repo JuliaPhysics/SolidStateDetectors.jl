@@ -16,15 +16,11 @@ T = Float32
     # simulate over and under depletion voltage
     U₋ = U_est - ΔU
     U₊ = U_est + ΔU
-    sim.detector = SolidStateDetector(
-        sim.detector, contact_id=1, contact_potential=U₊, 
-        depletion_handling=true)
-    calculate_electric_potential!(sim, refinement_limits=0.01)
-    undepleted = is_depleted(sim.point_types)
-    sim.detector = SolidStateDetector(
-        sim.detector, contact_id=1, contact_potential=U₋,
-        depletion_handling=true)
-    calculate_electric_potential!(sim, refinement_limits=0.01)
+    sim.detector = SolidStateDetector(sim.detector, contact_id=1, contact_potential=U₊)
+    calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
+    undepleted = !is_depleted(sim.point_types)
+    sim.detector = SolidStateDetector(sim.detector, contact_id=1, contact_potential=U₋)
+    calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
     depleted = is_depleted(sim.point_types)
     @test undepleted && depleted
 end
