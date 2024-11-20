@@ -67,7 +67,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         with:
-          file: lcov.info
+          files: lcov.info
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   docs:
