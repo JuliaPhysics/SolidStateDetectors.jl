@@ -152,8 +152,10 @@ function Geant4.G4JLApplication(
     kwargs...
 )
 
+    T = sim isa SolidStateDetectors.Simulation ? SolidStateDetectors.get_precision_type(sim) : Float32
+
     SensitiveDetector = G4JLSensitiveDetector(
-        "SensitiveDetector", SDData{Float32}();           # SD name and associated data are mandatory
+        "SensitiveDetector", SDData{T}();           # SD name and associated data are mandatory
         processhits_method=_processHits,    # process hist method (also mandatory)
         initialize_method=_initialize,      # intialize method
         endofevent_method=_endOfEvent       # end of event method
