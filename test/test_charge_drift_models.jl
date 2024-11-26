@@ -55,6 +55,9 @@ end
         )
         simA = @test_nowarn Simulation{T}(config_dict)
         @test simA.detector.semiconductor.charge_trapping_model isa BoggsChargeTrappingModel{T}
+        @test simA.detector.semiconductor.charge_trapping_model.nσe == T(0.1)
+        @test simA.detector.semiconductor.charge_trapping_model.nσh == T(0.05)
+        @test simA.detector.semiconductor.charge_trapping_model.temperature == T(78)
     end
     @testset "Parse config file 2" begin
         config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
@@ -69,6 +72,12 @@ end
         )
         simB = @test_nowarn Simulation{T}(config_dict)
         @test simB.detector.semiconductor.charge_trapping_model isa BoggsChargeTrappingModel{T}
+        @test simB.detector.semiconductor.charge_trapping_model.nσe == T(0.2)
+        @test simB.detector.semiconductor.charge_trapping_model.nσh == T(0.2)
+        @test simB.detector.semiconductor.charge_trapping_model.meffe == T(0.1)
+        @test simB.detector.semiconductor.charge_trapping_model.meffh == T(0.2)
+        @test simB.detector.semiconductor.charge_trapping_model.temperature == T(100)
+
     end
 end
 
