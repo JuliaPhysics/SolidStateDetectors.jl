@@ -42,6 +42,34 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test signalsum < T(1.99)
+
+    config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:InvertedCoax])
+    @testset "Parse config file 1" begin
+        config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
+            "model" => "Boggs",
+            "parameters" => Dict(
+                "nσe" => "0.001cm^-1",
+                "nσh" => "0.0005cm^-1",
+                "temperature" => "78K"
+            )
+        )
+        simA = @test_nowarn Simulation{T}(config_dict)
+        @test simA.detector.semiconductor.charge_trapping_model isa BoggsChargeTrappingModel{T}
+    end
+    @testset "Parse config file 2" begin
+        config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
+            "model" => "Boggs",
+            "parameters" => Dict(
+                "nσe-1" => "500cm",
+                "nσh-1" => "500cm",
+                "meffe" => 0.1,
+                "meffh" => 0.2,
+                "temperature" => "100K"
+            )
+        )
+        simB = @test_nowarn Simulation{T}(config_dict)
+        @test simB.detector.semiconductor.charge_trapping_model isa BoggsChargeTrappingModel{T}
+    end
 end
 
 @timed_testset "Test completeness of charge drift models" begin
