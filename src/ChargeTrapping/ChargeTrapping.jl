@@ -98,15 +98,24 @@ function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); tempera
     meffe::T = 0.12
     meffh::T = 0.21
     temperature::T = _parse_value(T, temperature, internal_temperature_unit)
-    if haskey(config_dict, "parameters")
-        if haskey(config_dict, "nσe")   nσe =     _parse_value(T, config_dict["nσe"], internal_length_unit^-1) end
-        if haskey(config_dict, "nσe-1") nσe = inv(_parse_value(T, config_dict["nσe-1"], internal_length_unit)) end
-        if haskey(config_dict, "nσh")   nσh =     _parse_value(T, config_dict["nσh"], internal_length_unit^-1) end
-        if haskey(config_dict, "nσh-1") nσh = inv(_parse_value(T, config_dict["nσh-1"], internal_length_unit)) end
-        if haskey(config_dict, "meffe") meffe =   _parse_value(T, config_dict["meffe"], Unitful.NoUnits) end
-        if haskey(config_dict, "meffh") meffh =   _parse_value(T, config_dict["meffh"], Unitful.NoUnits) end
-        if haskey(config_dict, "temperature") temperature = _parse_value(T, config_dict["temperature"], internal_temperature_unit) end
+
+    if haskey(config_dict, "model") && !haskey(config_dict, "parameters")
+        throw(ConfigFileError("`BoggsChargeTrappingModel` does not have `parameters`"))
     end
+
+    parameters = haskey(config_dict, "parameters") ? config_dict["parameters"] : config_dict
+    
+    allowed_keys = ("nσe","nσe-1","nσh","nσh-1","meffe","meffh","temperature")
+    k = filter(k -> !(k in allowed_keys), keys(parameters))
+    !isempty(k) && @warn "The following keys will be ignored: $(k).\nAllowed keys are: $(allowed_keys)"
+
+    if haskey(parameters, "nσe")   nσe =     _parse_value(T, parameters["nσe"], internal_length_unit^-1) end
+    if haskey(parameters, "nσe-1") nσe = inv(_parse_value(T, parameters["nσe-1"], internal_length_unit)) end
+    if haskey(parameters, "nσh")   nσh =     _parse_value(T, parameters["nσh"], internal_length_unit^-1) end
+    if haskey(parameters, "nσh-1") nσh = inv(_parse_value(T, parameters["nσh-1"], internal_length_unit)) end
+    if haskey(parameters, "meffe") meffe =   _parse_value(T, parameters["meffe"], Unitful.NoUnits) end
+    if haskey(parameters, "meffh") meffh =   _parse_value(T, parameters["meffh"], Unitful.NoUnits) end
+    if haskey(parameters, "temperature") temperature = _parse_value(T, parameters["temperature"], internal_temperature_unit) end
     BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temperature)
 end
 
