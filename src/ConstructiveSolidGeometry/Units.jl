@@ -8,6 +8,7 @@ const AngleQuantity = Quantity{<:Real, NoDims, <:Union{_get_TDU(1u"rad")[3], _ge
 to_internal_units(x::Real) = x
 to_internal_units(x::LengthQuantity) = ustrip(internal_length_unit, x)
 to_internal_units(x::AngleQuantity)  = ustrip(internal_angle_unit, x)
+to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-1)}) = ustrip(internal_length_unit^(-1), x) # charge trapping
 to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-3)}) = ustrip(internal_length_unit^(-3), x) # densities
 to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-4)}) = ustrip(internal_length_unit^(-4), x) # density gradients
 to_internal_units(x::AbstractArray) = to_internal_units.(x)
