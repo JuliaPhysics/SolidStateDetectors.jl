@@ -1,0 +1,40 @@
+model: ADLChargeDriftModel
+phi110: 0
+drift:
+  velocity:
+    model: Bruyneel2006
+    temperature: 78
+    parameters:
+      e100:
+        mu0: 3.8609
+        beta: 0.805
+        E0: 51100
+        mun: -0.0171
+      e111:
+        mu0: 3.8536
+        beta: 0.641
+        E0: 53800
+        mun: 0.051
+      h100:
+        mu0: 6.1824
+        beta: 0.942
+        E0: 18500
+      h111:
+        mu0: 6.1215
+        beta: 0.662
+        E0: 18200
+temperature_dependence:
+  model: SquareRoot
+  temperature: 95
+  parameters:
+  #values from M.Ali Omar, Lino Reggiani 1987 slightly modified for siggen
+    e100:
+      A: 5660
+      P: -1.680
+      B: 130000
+      theta: 200
+    h100:
+      A: 163000
+      P: -2.398
+      B: 120000
+      theta: 200
