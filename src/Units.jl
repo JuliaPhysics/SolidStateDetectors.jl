@@ -43,10 +43,10 @@ from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_tempe
 _convert_internal_energy_to_external_charge(material) = inv(to_internal_units(material.E_ionisation)) * external_charge_unit
 
 unit_conversion = Dict{String, Unitful.Units}(
-    "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
-    "deg" => u"°","rad" => u"rad", #angle
-    "V" => u"V", "kV" => u"kV", #potential
-    "K" => u"K", "Kelvin" => u"K", "C" => u"°C", "Celsius" => u"°C", #temperature
+    "um" => u"μm", # length
+    "deg" => u"°", # angle
+    "Kelvin" => u"K", "Celsius" => u"°C", #temperature
+    "e" => u"e_au" # elementary charge
 )
 
 const UnitTuple = NamedTuple{(:length, :angle, :potential, :temperature), Tuple{
@@ -66,7 +66,7 @@ end
 
 function construct_unit(ustring::String)::Unitful.Units
     try
-        parsed_unit = uparse(ustring)
+        parsed_unit = uparse(ustring, unit_context=[Unitful, UnitfulAtomic])
         @assert parsed_unit isa Unitful.Units
         return parsed_unit
     catch 
