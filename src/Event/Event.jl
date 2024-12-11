@@ -181,7 +181,7 @@ The output is stored in `evt.waveforms`.
 
 ## Example 
 ```julia
-get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in time steps of 1ns
+SolidStateDetectors.get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in time steps of 1ns
 ```
 
 !!! note 
