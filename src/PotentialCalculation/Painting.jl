@@ -117,7 +117,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     eZ = CartesianVector{T}(0,0,1);
 
     widths_ax1 = diff(get_extended_ticks(grid[1]))
-    widths_ax2 = diff(get_extended_ticks(grid[2]))
+    # widths_ax2 = diff(get_extended_ticks(grid[2]))
     widths_ax3 = diff(get_extended_ticks(grid[3]))
     Δw_max_factor = T(1e-5)
     #= 
@@ -176,7 +176,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 i1 = searchsortednearest(ticks[1], pt_cyl[1])
                 csgtol = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
-                    widths_ax2[i2], widths_ax2[i2+1],
+                    # skip φ (as done in the previous loop)
+                    # widths_ax2[i2], widths_ax2[i2+1]) 
                 ) 
                 if in(pt_cyl, grid) && abs(pt_cyl[2] - ticks[2][i2]) < T(0.1) && in(pt_car, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
