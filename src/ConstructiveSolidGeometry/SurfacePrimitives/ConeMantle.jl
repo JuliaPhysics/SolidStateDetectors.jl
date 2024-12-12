@@ -230,6 +230,9 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
     end
     ints1 = obj_l.origin + λ1 * obj_l.direction 
     ints2 = obj_l.origin + λ2 * obj_l.direction 
+    # Could be reintroduced as sanity check
+    # ints1 = ints1 * ifelse(abs(ints1.z) <= cm.hZ, one(T), T(NaN))
+    # ints2 = ints2 * ifelse(abs(ints2.z) <= cm.hZ, one(T), T(NaN))
     return _transform_into_global_coordinate_system(ints1, cm), 
            _transform_into_global_coordinate_system(ints2, cm)
 end
