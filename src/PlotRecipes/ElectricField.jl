@@ -92,6 +92,7 @@ end
                     sampling = 2u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
                     offset = 0.5u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
                     spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
+                    Δt = 1u"ns",
                     full_det = false,
                     skip_contact = 1) # Usually the "core" contact is skipped, and the other contacts are equally sampled for charges to drift
     sim = gdd.args[1]
@@ -165,7 +166,7 @@ end
 
     for el_field in (el_field_itp, el_field_itp_inv)
         paths::Array{CartesianPoint{T}, 2} = fill(zero(CartesianVector{T}), length(spawn_positions), max_nsteps)
-        last_step::Int = _drift_charge!(paths, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint.(spawn_positions), ones(T, length(spawn_positions)), T(1e-9), el_field, Electron, verbose = false )
+        last_step::Int = _drift_charge!(paths, Vector{T}(undef, max_nsteps), sim.detector, sim.point_types, sim.electric_potential.grid, CartesianPoint.(spawn_positions), ones(T, length(spawn_positions)), T(to_internal_units(Δt)), el_field, Electron, verbose = false )
         for i in 1:size(paths, 1)
             path = @view paths[i, 1:last_step]
             @series begin
