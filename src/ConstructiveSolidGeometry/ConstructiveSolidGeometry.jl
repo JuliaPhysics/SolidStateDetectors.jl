@@ -118,4 +118,16 @@ module ConstructiveSolidGeometry
     # Plotting
     include("plotting/plotting.jl")
 
+    # define the alias "deg" for °C --> this will also allow to use deg in config files
+    # u"deg" will be defined when explicitly calling
+    # using SolidStateDetectors.ConstructiveSolidGeometry.CSGUnits
+    module CSGUnits 
+        using Unitful
+        deg = Unitful.°
+    end
+    
+    function __init__()
+        Unitful.register(CSGUnits)
+    end
+
 end
