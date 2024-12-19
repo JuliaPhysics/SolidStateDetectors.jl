@@ -118,4 +118,15 @@ module ConstructiveSolidGeometry
     # Plotting
     include("plotting/plotting.jl")
 
+    # define the alias "deg" for ° --> this will also allow to use deg in config files
+    # u"deg" will be defined when explicitly calling
+    # using SolidStateDetectors.ConstructiveSolidGeometry
+    const deg = Unitful.°
+
+    Unitful.register(ConstructiveSolidGeometry)
+    const localunits = Unitful.basefactors
+    function __init__()
+        merge!(Unitful.basefactors, localunits)
+        Unitful.register(ConstructiveSolidGeometry)
+    end
 end
