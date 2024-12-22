@@ -1,4 +1,6 @@
 name: Downgrade
+env:
+  JULIA_NUM_THREADS: 4
 on:
   pull_request:
     branches:
