@@ -1,8 +1,5 @@
 name: CI
 
-env:
-  JULIA_NUM_THREADS: 4
-
 on:
   push:
     branches:
@@ -28,28 +25,35 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
+    env:
+      JULIA_NUM_THREADS: ${{ matrix.threads }}
     continue-on-error: ${{ matrix.version == 'pre' }}
     strategy:
       fail-fast: false
       matrix:
         version:
-          - '1.10'
           - '1'
-          - 'pre'
         os:
           - ubuntu-latest
+          - macOS-latest
+          - windows-latest
         arch:
           - x64
+        threads: 
+          - 4
         include:
-          - version: 1
+          - version: '1.10'
+            os: ubuntu-latest
+            arch: x64
+            threads: '1'
+          - version: pre
+            os: ubuntu-latest
+            arch: x64
+            threads: 4
+          - version: '1'
             os: ubuntu-latest
             arch: x86
-          - version: 1
-            os: macOS-latest
-            arch: x64
-          - version: 1
-            os: windows-latest
-            arch: x64
+            threads: 4
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
