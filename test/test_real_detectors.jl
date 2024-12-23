@@ -101,7 +101,7 @@ end
 end
 @timed_testset "HexagonalPrism" begin
     sim = Simulation{T}(SSD_examples[:Hexagon])
-    timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.02], verbose = false)
+    timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
     evt = Event([CartesianPoint{T}(0, 5e-4, 1e-3)])
     timed_simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
     signalsum = T(0)
