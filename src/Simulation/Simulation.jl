@@ -962,7 +962,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 end
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
-                verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
+                verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
@@ -976,7 +976,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
-                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
+                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,

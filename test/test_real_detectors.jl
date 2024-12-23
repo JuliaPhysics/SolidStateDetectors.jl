@@ -9,7 +9,7 @@ using Unitful
 
 T = Float32
 
-@timed_testset "Simulate example detector: Inverted Coax" begin
+@timed_testset "Inverted Coax" begin
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
     timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.03, 0.02, 0.01], verbose = false)
     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
@@ -35,7 +35,7 @@ T = Float32
     timed_calculate_electric_potential!(sim, depletion_handling = true)
     @test is_depleted(sim.point_types)
 end
-@timed_testset "Simulate example detector: Inverted Coax (in cryostat)" begin
+@timed_testset "Inverted Coax (in cryostat)" begin
     sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
     timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))
@@ -48,7 +48,7 @@ end
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
-# @timed_testset "Simulate example detector: Coax" begin
+# @timed_testset "Coax" begin
 #     sim = Simulation{T}(SSD_examples[:Coax])
 #     timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
 #     timed_calculate_electric_field!(sim)
@@ -67,7 +67,7 @@ end
 #     @info signalsum
 #     @test isapprox( signalsum, T(2), atol = 5e-3 )
 # end
-@timed_testset "Simulate example detector: BEGe" begin
+@timed_testset "BEGe" begin
     sim = Simulation{T}(SSD_examples[:BEGe])
     timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     timed_calculate_electric_field!(sim)
@@ -99,7 +99,7 @@ end
     end
     @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
 end
-@timed_testset "Simulate example detector: HexagonalPrism" begin
+@timed_testset "HexagonalPrism" begin
     sim = Simulation{T}(SSD_examples[:Hexagon])
     timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.02], verbose = false)
     evt = Event([CartesianPoint{T}(0, 5e-4, 1e-3)])
@@ -113,7 +113,7 @@ end
     @test isapprox( signalsum, T(2), atol = 5e-3 )
     @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false), T(-13.15)*u"V", atol = 1.0u"V") 
 end
-@timed_testset "Simulate example detector: CGD" begin
+@timed_testset "CGD" begin
     sim = Simulation{T}(SSD_examples[:CGD])
     timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     evt = Event([CartesianPoint{T}(0,2e-3,0)])
@@ -128,7 +128,7 @@ end
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 end
-@timed_testset "Simulate example detector: Spherical" begin
+@timed_testset "Spherical" begin
     sim = Simulation{T}(SSD_examples[:Spherical])
     timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     evt = Event([CartesianPoint{T}(0,0,0)])
@@ -141,7 +141,7 @@ end
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end 
-@timed_testset "Simulate example detector: Toroidal" begin
+@timed_testset "Toroidal" begin
     sim = Simulation{T}(SSD_examples[:CoaxialTorus])
     timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.02, 0.01], 
         max_tick_distance = 0.5u"mm", verbose = false)
@@ -155,7 +155,7 @@ end
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
-@timed_testset "Simulate example detector: Coaxial for partial phi range" begin
+@timed_testset "Coaxial for partial phi range" begin
     sim = Simulation{T}(SSD_examples[:Cone2D])
     timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
     
@@ -169,7 +169,7 @@ end
     idx = findall(pt -> SolidStateDetectors.is_pn_junction_point_type(pt), sim.point_types.data)
     @test maximum(abs.(sim_alt.electric_potential.data[idx] .- sim.electric_potential.data[idx])) .< T(0.2)
 end
-@timed_testset "Simulate example detector: SigGen PPC" begin
+@timed_testset "SigGen PPC" begin
     sim = Simulation{T}(SSD_examples[:SigGen])
     timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 10e-3 )]))

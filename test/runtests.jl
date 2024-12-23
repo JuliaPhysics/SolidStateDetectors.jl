@@ -3,6 +3,8 @@
 using Test
 using SolidStateDetectors
 
+@info "Running tests with $(Base.Threads.nthreads()) Julia threads active."
+
 include("test_utils.jl")
 
 @timed_testset "Comparison to analytic solutions" begin
