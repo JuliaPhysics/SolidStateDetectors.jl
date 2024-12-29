@@ -52,10 +52,11 @@ makedocs(
         "API" => "api.md",
         "LICENSE" => "LICENSE.md",
     ],
-    doctest = ("fixdoctests" in ARGS) ? :fix : true,
-    format = Documenter.HTML(canonical = "https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/", prettyurls = !("local" in ARGS)),
+    doctest   = ("fixdoctests" in ARGS) ? :fix : true,
+    format    = Documenter.HTML(canonical = "https://JuliaPhysics.github.io/SolidStateDetectors.jl/stable/", 
+                 prettyurls = !("local" in ARGS), size_threshold = nothing, size_threshold_warn = nothing, example_size_threshold = nothing),
     linkcheck = ("linkcheck" in ARGS),
-    strict = !("local" in ARGS),
+    warnonly  = ("nonstrict" in ARGS),
 )
 
 deploydocs(
