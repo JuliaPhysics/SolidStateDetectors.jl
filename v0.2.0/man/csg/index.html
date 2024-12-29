@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>CSG · SolidStateDetectors.jl</title><link rel="canonical" href="https://JuliaHEP.github.io/SolidStateDetectors.jl/stable/man/csg/index.html"/><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>SolidStateDetectors.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><span class="toctext">Manual</span><ul><li><a class="toctext" href="../installation/">Installation</a></li><li><span class="toctext">Detectors</span><ul><li><a class="toctext" href="../config_files/">Config Files</a></li></ul></li><li><span class="toctext">Geometries (CSG)</span><ul><li class="current"><a class="toctext" href>CSG</a><ul class="internal"><li><a class="toctext" href="#Boolean-operators-1">Boolean operators</a></li></ul></li><li><a class="toctext" href="../primitives/">Primitives</a></li></ul></li><li><a class="toctext" href="../electric_potentials/">Electric Potentials</a></li><li><a class="toctext" href="../weighting_potentials/">Weighting Potentials</a></li><li><a class="toctext" href="../electric_fields/">Electric Fields</a></li><li><a class="toctext" href="../drift_fields/">Drift Fields</a></li><li><a class="toctext" href="../IO/">IO</a></li></ul></li><li><a class="toctext" href="../../tutorial/">Tutorial</a></li><li><a class="toctext" href="../../api/">API</a></li><li><a class="toctext" href="../../LICENSE/">LICENSE</a></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li>Geometries (CSG)</li><li><a href>CSG</a></li></ul><a class="edit-page" href="https://github.com/JuliaHEP/SolidStateDetectors.jl/blob/master/docs/src/man/csg.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>CSG</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Constructive-Solid-Geometry-(CSG)-1" href="#Constructive-Solid-Geometry-(CSG)-1">Constructive Solid Geometry (CSG)</a></h1><h2><a class="nav-anchor" id="Boolean-operators-1" href="#Boolean-operators-1">Boolean operators</a></h2><h3><a class="nav-anchor" id="Union-1" href="#Union-1">Union</a></h3><pre><code class="language-json">&quot;geometry&quot;: {
+    &quot;type&quot;: &quot;union&quot;,
+    &quot;parts&quot;: [
+        {
+            &quot;name&quot;:&quot;Seg1 bottom&quot;,
+            &quot;type&quot;: &quot;tube&quot;,
+            &quot;r&quot;: {
+                &quot;from&quot;: 13.5,
+                &quot;to&quot;: 39.5
+            },
+            &quot;phi&quot;: {
+                &quot;from&quot;: 0.3582,
+                &quot;to&quot;: 59.6419
+            },
+            &quot;h&quot;: 0
+        },
+        {
+            &quot;name&quot;: &quot;Seg1 side&quot;,
+            &quot;type&quot;: &quot;tube&quot;,
+            &quot;r&quot;: {
+                &quot;from&quot;: 39.5,
+                &quot;to&quot;: 39.5
+            },
+            &quot;phi&quot;: {
+                &quot;from&quot;: 0.3582,
+                &quot;to&quot;: 59.6419
+            },
+            &quot;h&quot;: 40
+        },
+    }
+}</code></pre><h3><a class="nav-anchor" id="Difference-1" href="#Difference-1">Difference</a></h3><pre><code class="language-json">&quot;geometry&quot;: {
+    &quot;type&quot;: &quot;difference&quot;,
+    &quot;parts&quot;: [
+        {
+            &quot;name&quot;: &quot;Initial Cylinder&quot;,
+            &quot;type&quot;: &quot;tube&quot;,
+            &quot;r&quot;: {
+                &quot;from&quot;: 0.0,
+                &quot;to&quot;:  35.0
+            },
+            &quot;phi&quot;: {
+                &quot;from&quot;: 0.0,
+                &quot;to&quot;: 360.0
+            },
+            &quot;z&quot;: {
+                &quot;from&quot;: 0,
+                &quot;to&quot;:  40
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Borehole&quot;,
+            &quot;type&quot;: &quot;tube&quot;,
+            &quot;r&quot;: {
+                &quot;from&quot;: 0.0,
+                &quot;to&quot;:   5.0
+            },
+            &quot;phi&quot;: {
+                &quot;from&quot;: 0.0,
+                &quot;to&quot;: 360.0
+            },
+            &quot;z&quot;: {
+                &quot;from&quot;: 0,
+                &quot;to&quot;:  40
+            }
+        }
+    ]
+}</code></pre><h3><a class="nav-anchor" id="Intersection-1" href="#Intersection-1">Intersection</a></h3><p>ToDo...</p><footer><hr/><a class="previous" href="../config_files/"><span class="direction">Previous</span><span class="title">Config Files</span></a><a class="next" href="../primitives/"><span class="direction">Next</span><span class="title">Primitives</span></a></footer></article></body></html>
