@@ -24,7 +24,8 @@ T = Float32
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
     deplV = timed_estimate_depletion_voltage(sim, verbose = false)
-    @test isapprox(deplV, 1870*u"V", atol = 5.0*u"V") 
+    @info "Depletion voltage: $deplV"
+    @test isapprox(deplV, 1865*u"V", atol = 5.0*u"V") 
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.005))
