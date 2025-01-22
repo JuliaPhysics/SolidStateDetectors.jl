@@ -1,7 +1,7 @@
 using SolidStateDetectors
 using SolidStateDetectors: Cylindrical, Cartesian, World, Simulation, SSDFloat
 using SolidStateDetectors.ConstructiveSolidGeometry: CSGUnion, CSGDifference, CSGIntersection, 
-    Box, Cone, Ellipsoid, Torus, RegularPrism, show_CSG_tree, AbstractVolumePrimitive, AbstractGeometry,
+    Box, Cone, Ellipsoid, Torus, RegularPrism, Polycone, AbstractVolumePrimitive, AbstractGeometry,
     AbstractConstructiveGeometry, CylindricalPoint, origin, rotation
 using IntervalSets
 using OrderedCollections: OrderedDict
@@ -166,6 +166,14 @@ function has_volume(e::RegularPrism, v::Bool = false)
     end
     if e.hZ <= 0
         v && @warn "Prism: Height of prism must be a positive number"
+        return false
+    end
+    return true
+end
+
+function has_volume(p::Polycone, v::Bool = false)
+    if isapprox(PolygonOps.area(tuple.(p.r, p.z)), 0)
+        v && @warn "Polycone: The points passed result in a zero-volume Polycone"
         return false
     end
     return true
@@ -370,6 +378,28 @@ function parse_geometry(e::RegularPrism{T, <:Any, N}, x_solids::XMLElement, x_de
         set_attributes(z_bottom, OrderedDict(
             "rmax" => r,
             "z" => -hZ
+        ))
+    end
+end
+
+function parse_geometry(p::Polycone, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing
+    if has_volume(p, v)
+        y = new_child(x_solids, "genericPolycone")
+
+        for i in eachindex(p.r)
+            rzpoint = new_child(y, "rzpoint")
+            set_attributes(rzpoint, OrderedDict(
+                "r" => p.r[i],
+                "z" => p.z[i]
+            ))
+        end
+
+        set_attributes(y, OrderedDict(
+            "name" => pf * string(id),
+            "startphi" => 0,
+            "deltaphi" => 360,
+            "lunit" => SolidStateDetectors.internal_length_unit,
+            "aunit" => "deg"
         ))
     end
 end

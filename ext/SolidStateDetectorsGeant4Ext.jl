@@ -8,6 +8,7 @@ using Geant4.SystemOfUnits
 using LightXML
 using LinearAlgebra
 using Parameters
+using PolygonOps
 using ProgressMeter
 using RadiationDetectorSignals
 using StaticArrays
