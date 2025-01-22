@@ -56,6 +56,10 @@ struct Polycone{T,CO,N,TP<:Nothing} <: AbstractVolumePrimitive{T,CO}
         else
             (r...,), (z...,)
         end
+        # sort the points counter-clockwise in the r-z-plane
+        if PolygonOps.area(tuple.(_r,_z)) < 0
+            _r, _z = reverse(_r), reverse!(_z)
+        end
         new{T,CO,nr,typeof(φ)}(_r, _z, φ, origin, rotation)
     end
 end
@@ -126,9 +130,9 @@ function surfaces(c::Polycone{T,<:Any,N,Nothing}) where {T,N}
         z2::T = c.z[i+1]
         origin = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), (z1+z2)/2), c) 
         vol = if z1 == z2
-            EllipticalSurface(r = (r1, r2), origin = origin, rotation = c.rotation)
+            EllipticalSurface{T}(r = r1 <= r2 ? (r1,r2) : (r2,r1), origin = origin, rotation = r1 <= r2 ? c.rotation : -c.rotation * RotZ{T}(π))
         else
-            ConeMantle(r = (r1,r2), hZ = abs(z1-z2)/2, origin = origin, rotation = c.rotation)
+            FullConeMantle{T, z1 < z2 ? (:inwards) : (:outwards)}(z1 < z2 ? (r1,r2) : (r2,r1), c.φ, abs(z1-z2)/2, origin, c.rotation)
         end
         push!(s, vol)
     end
