@@ -73,6 +73,22 @@ cone = CSG.Geometry(T, cfn)
 plot(cone)
 ````
 
+#### Polycone
+
+
+````@example primitives
+cfn = joinpath(path_to_example_primitives_config_files, "Polycone.yaml")
+print(open(f -> read(f, String), cfn))
+````
+
+Load the primitive from the configuration file via `CSG.Geometry`
+
+````@example primitives
+polycone = CSG.Geometry(T, cfn)
+plot(polycone)
+````
+
+
 ### Ellipsoid
 #### Sphere
 
