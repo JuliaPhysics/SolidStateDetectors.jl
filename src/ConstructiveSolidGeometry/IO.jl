@@ -10,6 +10,7 @@ const CSG_dict = Dict{String, Any}(
     "sphere" => Ellipsoid,
     "box" => Box,
     "torus" => Torus,
+    "polycone" => Polycone,
     "TriangularPrism" => TriangularPrism,
     "QuadranglePrism" => QuadranglePrism,
     "PentagonalPrism" => PentagonalPrism,
@@ -59,7 +60,7 @@ end
     T(to_internal_units(float(x)))
 end
 @inline _parse_value(::Type{T}, s::String, unit::Unitful.Units) where {T} = _parse_value(T, uparse(s), unit)
-@inline _parse_value(::Type{T}, a::AbstractVector, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
+@inline _parse_value(::Type{T}, a::Union{<:AbstractVector, <:Tuple}, unit::Unitful.Units) where {T} = _parse_value.(T, a, unit)
 
 # parses dictionary entries of type {"from": ..., "to": ... } to a Tuple of the interval boundaries
 function _parse_interval_from_to(::Type{T}, dict::AbstractDict, unit::Unitful.Units)::Tuple{T,T} where {T}
