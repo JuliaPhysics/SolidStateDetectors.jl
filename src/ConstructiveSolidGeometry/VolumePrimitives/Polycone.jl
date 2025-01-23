@@ -109,9 +109,27 @@ Polycone{T,CO,N,TP}( c::Polycone{T,CO,N,TP}; COT = CO,
 ####################################################################
 
 
+function _inpolygon(pt::Tuple{T,T}, polygon::NTuple{N,Tuple{T,T}}; csgtol::T = csg_default_tol(T)) where {N,T <: Real}
+    # use the normal PolygonOps.inpolygon method to check if the point is inside
+    PolygonOps.inpolygon(pt, polygon, in = true, on = true, out = false) && return true
+    # if it is flagged as outside, check if the distance to any of the edges is smaller than csgtol
+    rp,zp = pt
+    @inbounds for i in Base.OneTo(N-1)
+        r1,z1 = polygon[i]
+	r2,z2 = polygon[i+1]
+        r1 == r2 && z1 == z2 && continue
+        s = clamp(((zp - z1) * (z2 - z1) + (rp - r1) * (r2 - r1)) / ((z2 - z1)^2 + (r2 - r1)^2), zero(T), one(T))
+        if hypot(rp - r1 - s * (r2 - r1), zp - z1 - s * (z2 - z1)) <= csgtol
+            return true
+        end
+    end
+    # if not, then it is really outside
+    return false
+end
+
 function _in(pt::CartesianPoint{T}, c::Polycone{<:Any, ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
     return (isnothing(c.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)) && 
-        PolygonOps.inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z), in = true, on = true, out = false) 
+        _inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z); csgtol) 
 end
 
 function _in(pt::CartesianPoint{T}, c::Polycone{<:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}

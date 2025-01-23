@@ -8,7 +8,7 @@ using RadiationDetectorSignals
 using TypedTables
 using Unitful
 
-T = Float64
+T = Float32
 
 @testset "Parse materials in Geant4 extension" begin
     parse_material = Base.get_extension(SolidStateDetectors, :SolidStateDetectorsGeant4Ext).parse_material
