@@ -1,3 +1,9 @@
+# All volume primitives need to have the following methods defined: 
+# * _in(::CartesianPoint, ::VolumePrimitive)  (in the local coordinate system)
+# * surfaces(::VolumePrimitive) --> all surfaces of the volume primitive as Tuple
+# * Geometry(...) --> a method to read the geometry from a config file
+# * Dictionary(...) --> a method to convert the primitive to a config 
+
 ClosedPrimitive(p::VP) where {VP <:AbstractVolumePrimitive} = VP(p, COT = ClosedPrimitive)
 OpenPrimitive(p::VP) where {VP <: AbstractVolumePrimitive} = VP(p, COT = OpenPrimitive)
 switchClosedOpen(p::AbstractVolumePrimitive{<:Any,ClosedPrimitive}) = OpenPrimitive(p)
@@ -19,4 +25,5 @@ include("Box.jl")
 include("Cone.jl")
 include("Ellipsoid.jl")
 include("RegularPrism.jl")
+include("Polycone.jl")
 include("Torus.jl")

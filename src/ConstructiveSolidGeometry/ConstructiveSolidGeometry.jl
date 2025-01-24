@@ -50,9 +50,9 @@ module ConstructiveSolidGeometry
 
     abstract type AbstractConstructiveGeometry{T} <: AbstractGeometry{T} end
     
-    _csg_convert_args(eltype::Type{T}, r::Real) where T = convert(T, r) 
-    _csg_convert_args(eltype::Type{T}, r::Tuple) where T = broadcast(x -> _csg_convert_args(T, x), r)
-    _csg_convert_args(eltype::Type{T}, r::Nothing) where T = nothing
+    _csg_convert_args(::Type{T}, r::Real) where T = convert(T, r) 
+    _csg_convert_args(::Type{T}, r::Tuple) where T = broadcast(x -> _csg_convert_args(T, x), r)
+    _csg_convert_args(::Type{T}, r::Nothing) where T = nothing
 
     _csg_get_promoted_eltype(::Type{T}) where {T <: AbstractArray} = eltype(T)
     _csg_get_promoted_eltype(::Type{T}) where {T <: Real} = T
