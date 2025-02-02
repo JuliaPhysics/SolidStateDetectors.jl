@@ -53,6 +53,7 @@ abstract type CsPbBr3 <: AbstractDriftMaterial end
 Symbol(::Type{CsPbBr3}) = :CsPbBr3
 material_properties[:CsPbBr3] = (
     name = "CsPbBr3",
+    f_fano = 0.1, # https://doi.org/10.1038/s41566-020-00727-1
     E_ionisation = 6.9u"eV",
     ϵ_r = 16.46,
     ρ = 4.73u"g*cm^-3"
