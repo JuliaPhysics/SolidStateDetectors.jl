@@ -14,13 +14,13 @@ using LightXML
 @inline parse_origin(e::AbstractVolumePrimitive) = origin(e)
 
 # Returns position vector for leftmost Primitive in geometry tree
-@inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(e.a)
+@inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(has_volume(e.a) ? e.a : e.b)
 
 # Returns rotation matrix for Primitive relative to standard basis
 @inline parse_rotation(e::AbstractVolumePrimitive) = rotation(e)
 
 # Returns rotation matrix for leftmost Primitive in geometry tree
-@inline parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(e.a)
+@inline parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(has_volume(e.a) ? e.a : e.b)
 
 
 # Add <position> to <define> section, referenced in the geometry definition (in <solids>) via the name
