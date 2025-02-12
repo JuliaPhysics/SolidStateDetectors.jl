@@ -119,7 +119,7 @@ end
 function has_volume(e::Cone{T,<:Any,TR}, v::Bool = false) where {T, TR}    
     rmin1, rmax1, rmin2, rmax2 = parse_cone_radius(e)
     
-    if rmin1 >= rmax1 || rmin2 >= rmax2
+    if rmin1 > rmax1 || rmin2 > rmax2 || (rmin1 == rmax1 && rmin2 == rmax2)
         v && @warn "Cone: The outer radii must be strictly bigger than the inner radii"
         return false
     elseif e.hZ <= 0
@@ -152,8 +152,8 @@ function has_volume(e::Torus, v::Bool = false)
         v && @warn "Torus: Tube radius must be a positive number"
         return false
     end
-    if e.r_torus <= 0
-        v && @warn "Torus: Torus radius must be a positive number"
+    if e.r_torus < 0
+        v && @warn "Torus: Torus radius cannot be negative"
         return false
     end
     return true
