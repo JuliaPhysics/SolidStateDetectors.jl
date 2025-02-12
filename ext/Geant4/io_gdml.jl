@@ -152,8 +152,8 @@ function has_volume(e::Torus, v::Bool = false)
         v && @warn "Torus: Tube radius must be a positive number"
         return false
     end
-    if e.r_torus <= 0
-        v && @warn "Torus: Torus radius must be a positive number"
+    if e.r_torus < 0
+        v && @warn "Torus: Torus radius cannot be negative"
         return false
     end
     return true
