@@ -119,7 +119,7 @@ end
 function has_volume(e::Cone{T,<:Any,TR}, v::Bool = false) where {T, TR}    
     rmin1, rmax1, rmin2, rmax2 = parse_cone_radius(e)
     
-    if rmin1 >= rmax1 || rmin2 >= rmax2
+    if rmin1 > rmax1 || rmin2 > rmax2 || (rmin1 == rmax1 && rmin2 == rmax2)
         v && @warn "Cone: The outer radii must be strictly bigger than the inner radii"
         return false
     elseif e.hZ <= 0
