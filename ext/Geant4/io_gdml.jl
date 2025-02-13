@@ -14,13 +14,13 @@ using LightXML
 @inline parse_origin(e::AbstractVolumePrimitive) = origin(e)
 
 # Returns position vector for leftmost Primitive in geometry tree
-@inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(e.a)
+@inline parse_origin(e::AbstractConstructiveGeometry) = parse_origin(has_volume(e.a) ? e.a : e.b)
 
 # Returns rotation matrix for Primitive relative to standard basis
 @inline parse_rotation(e::AbstractVolumePrimitive) = rotation(e)
 
 # Returns rotation matrix for leftmost Primitive in geometry tree
-@inline parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(e.a)
+@inline parse_rotation(e::AbstractConstructiveGeometry) = parse_rotation(has_volume(e.a) ? e.a : e.b)
 
 
 # Add <position> to <define> section, referenced in the geometry definition (in <solids>) via the name
@@ -322,21 +322,26 @@ function parse_geometry(e::Ellipsoid{T,<:Any, TR, Nothing, Nothing}, x_solids::X
     nothing
 end
 
-# @inline parse_θ(::Type{T}, θ::Nothing) where {T} = (T(0), T(360), "deg")
-# @inline parse_θ(::Type{T}, θ::Tuple{T, T}) where {T} = throw(AssertionError("Torus: θ values are currently not supported"))
-function parse_geometry(e::Torus, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing
-    if has_volume(e, v)
-        y = new_child(x_solids, "torus")
-        # phi, aunit = parse_φ(T, e.φ)
-        # theta1, theta2, aunit = parse_θ(T, e.θ)
-        
-        rmin, rmax = if isa(e.r_tube, Tuple)
-            e.r_tube[1], e.r_tube[2]
-        else 
-            0, e.r_tube
-        end
+function parse_geometry(e::Torus{T,<:Any,<:Any,Nothing,Nothing}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T}
+    
+    # if e.r_torus == 0, the torus is basically a sphere => convert it to a sphere
+    if iszero(e.r_torus)
+        parse_geometry(
+            if isa(e.r_tube, Tuple)
+                CSGDifference(
+                    Ellipsoid{T}(r = e.r_tube[2], origin = e.origin, rotation = e.rotation), 
+                    Ellipsoid{T}(r = e.r_tube[1], origin = e.origin, rotation = e.rotation)
+                )
+            else
+                Ellipsoid{T}(r = e.r_tube, origin = e.origin, rotation = e.rotation)
+            end,
+            x_solids, x_define, id, pf, v
+        )
 
-        # rmin = 0
+    elseif has_volume(e, v)
+        y = new_child(x_solids, "torus")
+        
+        rmin, rmax = isa(e.r_tube, Tuple) ? e.r_tube : (0, e.r_tube)
 
         set_attributes(y, OrderedDict(
             "name" => pf * string(id),
@@ -348,7 +353,48 @@ function parse_geometry(e::Torus, x_solids::XMLElement, x_define::XMLElement, id
             "lunit" => SolidStateDetectors.internal_length_unit,
             "aunit" => "deg"
         ))
-    
+    end
+end
+
+function _rectangle_point(x::T)::Tuple{T,T} where {T <: Real}
+    return (
+        clamp(tand(abs(mod(x-90,360)-180)-90),-1,1),
+        clamp(tand(abs(mod(   x,360)-180)-90),-1,1)
+    )
+end
+
+function parse_geometry(e::Torus{T,<:Any,<:Any,Nothing,Tuple{T,T}}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T}
+    if has_volume(e, v)
+        
+        theta1::T, theta2::T = rad2deg.(e.θ)
+        rmax = isa(e.r_tube, Tuple) ? e.r_tube[2] : e.r_tube
+
+        parse_geometry( 
+            CSGIntersection(
+                # create full-θ Torus
+                Torus(r_torus = e.r_torus, r_tube = e.r_tube, φ = e.φ, θ = nothing, origin = e.origin, rotation = e.rotation),
+                
+                # create Polycone to intersect with
+                begin
+                    points = Tuple{T,T}[(zero(T), zero(T))]
+                    push!(points, _rectangle_point(theta2))
+                    tmp::T = theta2 - mod(theta2 - 45, 90)
+                    while theta1 < tmp && tmp > 0
+                        push!(points, _rectangle_point(tmp))
+                        tmp -= 90
+                    end
+                    push!(points, _rectangle_point(theta1))
+                    push!(points, (zero(T), zero(T)))
+                    Polycone(
+                        r = getindex.(points,1) .* rmax .+ e.r_torus,
+                        z = getindex.(points,2) .* rmax,
+                        origin = e.origin,
+                        rotation = e.rotation
+                    )
+                end
+            ),
+            x_solids, x_define, id, pf, v
+        )
     end
 end
 
