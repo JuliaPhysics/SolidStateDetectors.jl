@@ -59,10 +59,23 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
                radius::Vector{<:RealQuantity} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
               )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
     
+    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
     return Event(broadcast(i -> 
                 NBodyChargeCloud(locations[i], energies[i], N, particle_type, 
                 radius = T(to_internal_units(radius[i])), number_of_shells = number_of_shells),
            eachindex(locations)))
+end
+
+function Event(
+        locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, 
+        energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
+        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
+        radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(T.(to_internal_units.(e)), particle_type), energies)
+    ) where {T <: SSDFloat, PT <: ParticleType}
+    
+    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
+    events = map(i -> Event(locations[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
+    Event(flatview.(getfield.(events, :locations)), flatview.(getfield.(events, :energies)))
 end
 
 function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
