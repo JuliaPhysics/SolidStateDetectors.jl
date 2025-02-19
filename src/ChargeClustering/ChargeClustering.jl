@@ -72,3 +72,42 @@ function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQua
         )
     ))
 end
+
+
+distance_squared(p1::CartesianPoint{T}, p2::CartesianPoint{T}) where {T <: SSDFloat} = (p1.x - p2.x)^2 + (p1.y - p2.y)^2 + (p1.z - p2.z)^2
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+    
+    n::Int = length(pts)
+    
+    # use BFS to find connected components
+    visited        = falses(n)
+    clustersidx    = similar(eachindex(pts))
+    elem_ptr       = similar(eachindex(pts), n+1)
+    queue          = DataStructures.CircularBuffer{Int}(n)
+    
+    counter        = firstindex(pts)
+    Cidx           = firstindex(elem_ptr)
+    elem_ptr[Cidx] = counter
+    
+    @inbounds for start in eachindex(pts)
+        if !visited[start]
+            push!(queue, start)
+            visited[start] = true
+            while !isempty(queue)
+                node = popfirst!(queue)
+                clustersidx[counter] = node
+                counter += 1
+                for neighbor in eachindex(pts)
+                    if !visited[neighbor] && distance_squared(pts[node], pts[neighbor]) <= group_distance^2
+                        push!(queue, neighbor)
+                        visited[neighbor] = true
+                    end
+                end
+            end
+            Cidx += 1
+            elem_ptr[Cidx] = counter
+        end
+    end
+    VectorOfVectors(pts[clustersidx], elem_ptr[begin:Cidx]), VectorOfVectors(energies[clustersidx], elem_ptr[begin:Cidx])
+end
