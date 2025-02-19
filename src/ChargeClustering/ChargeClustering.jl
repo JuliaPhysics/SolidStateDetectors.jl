@@ -74,8 +74,6 @@ function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQua
 end
 
 
-distance_squared(p1::CartesianPoint{T}, p2::CartesianPoint{T}) where {T <: SSDFloat} = (p1.x - p2.x)^2 + (p1.y - p2.y)^2 + (p1.z - p2.z)^2
-
 function _group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::Tuple{Vector{Int}, Vector{Int}} where {T}
     
     n::Int = length(pts)
