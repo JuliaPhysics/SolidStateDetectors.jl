@@ -76,7 +76,7 @@ end
 
 distance_squared(p1::CartesianPoint{T}, p2::CartesianPoint{T}) where {T <: SSDFloat} = (p1.x - p2.x)^2 + (p1.y - p2.y)^2 + (p1.z - p2.z)^2
 
-function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+function _group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::Tuple{Vector{Int}, Vector{Int}} where {T}
     
     n::Int = length(pts)
     
@@ -109,5 +109,22 @@ function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energi
             elem_ptr[Cidx] = counter
         end
     end
-    VectorOfVectors(pts[clustersidx], elem_ptr[begin:Cidx]), VectorOfVectors(energies[clustersidx], elem_ptr[begin:Cidx])
+    clustersidx, elem_ptr[begin:Cidx]
+end
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+    clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
+    VectorOfVectors(pts[clustersidx], elem_ptr)
+end
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+    @assert eachindex(pts) == eachindex(energies)
+    clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
+    VectorOfVectors(pts[clustersidx], elem_ptr), VectorOfVectors(energies[clustersidx], elem_ptr)
+end
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, radius::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}, VectorOfVectors{T}} where {T <: SSDFloat}
+    @assert eachindex(pts) == eachindex(energies) == eachindex(radius)
+    clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
+    VectorOfVectors(pts[clustersidx], elem_ptr), VectorOfVectors(energies[clustersidx], elem_ptr), VectorOfVectors(radius[clustersidx], elem_ptr)
 end
