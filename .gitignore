@@ -8,3 +8,4 @@ Manifest.toml
 .vscode*
 *.gdml
 test/*h5
+*h5

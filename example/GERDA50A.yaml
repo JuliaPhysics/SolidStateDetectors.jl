@@ -1,0 +1,114 @@
+name: GERDA 50A
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 50
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries: periodic
+    z:
+      from: -10
+      to: 90
+      boundaries: inf
+medium: vacuum
+detectors:
+  - semiconductor:
+      material: HPGe
+      temperature: 90K
+      geometry:
+        difference:
+          - tube:
+              r: 37.1
+              h: 80.4
+              origin:
+                z: 40.2
+          - tube:
+              r: 5.25
+              h: 42
+              origin:
+                z: 61.4
+    contacts:
+      - material: HPGe
+        id: 1
+        potential: 0V
+        geometry:
+          tube:
+            r: 10
+            h: 0
+      - material: HPGe
+        id: 2
+        potential: 3700V
+        geometry:
+          union:
+            - tube:
+                r:
+                  from: 13
+                  to: 37.1
+                h: 0
+            - tube:
+                r:
+                  from: 37.1
+                  to: 37.1
+                h: 80.4
+                origin: 
+                  z: 40.2
+            - tube:
+                r:
+                  from: 5.25
+                  to: 37.1
+                h: 0
+                origin:
+                  z: 80.4
+            - tube:
+                r:
+                  from: 5.25
+                  to: 5.25
+                h: 40
+                origin: 
+                  z: 60.4
+            - tube:
+                r: 5.25
+                h: 0
+                origin:
+                  z: 40.4
+surroundings:
+  - name: Detector Holder
+    material: Al
+    potential: 0V
+    id: 1
+    geometry:
+      tube:
+        r:
+          from: 39
+          to: 40
+        h: 80.4
+        origin:
+          z: 40.2
+  - name: Cryostat
+    material: Al
+    potential: 0V
+    id: 2
+    geometry:
+      union:
+        - tube:
+            r:
+              from: 47
+              to: 48
+            h: 100
+            origin:
+              z: 40
+        - tube:
+            r: 48
+            h: 1
+            origin:
+              z: 89.5
+              
+            
