@@ -5,7 +5,7 @@ module SolidStateDetectorsLegendHDF5IOExt
 import ..LegendHDF5IO
 
 using SolidStateDetectors
-using SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges
+using SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
 using TypedTables, Unitful
 using Format
 
@@ -34,6 +34,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
                              self_repulsion::Bool = false,
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
+                             max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
                              verbose = false) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
@@ -48,7 +49,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
-        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose)
+        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, verbose)
       
         LegendHDF5IO.lh5open(ofn, "w") do h5f
             LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", mcevents_sub)
