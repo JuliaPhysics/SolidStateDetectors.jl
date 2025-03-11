@@ -26,9 +26,9 @@ function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(
     return evt
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)); group_distance::Union{<:Real, <:LengthQuantity} = NaN)::Event{T} where {T <: SSDFloat}
-    d::T = T(to_internal_units(group_distance))
-    @assert isnan(d) || d >= 0 "Group distance must be positive or NaN (no grouping), but $(group_distance) was given."
+function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)::Event{T} where {T <: SSDFloat}
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
     evt = Event{T}()
     if isnan(d) # default: no grouping, the charges from different hits drift independently
         evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
@@ -64,14 +64,14 @@ end
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity}, N::Int; 
         particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
         radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(energies)), particle_type),
-        group_distance::Union{<:Real, <:LengthQuantity} = NaN
+        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN
     )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
 
 
     @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
 
-    d::T = T(to_internal_units(group_distance))
-    @assert isnan(d) || d >= 0 "Group distance must be positive or NaN (no grouping), but $(group_distance) was given."
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
 
     if isnan(d) # default: no grouping, the charges from different hits drift independently
         Event(
