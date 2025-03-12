@@ -41,16 +41,16 @@ end
     include("test_io.jl")
 end 
 
-@timed_testset "Geant4 extension" begin
-    if Sys.WORD_SIZE == 64 include("test_geant4.jl") end
-end
-
 @timed_testset "Depletion estimation" begin
     include("test_depletion.jl")
 end
 
 @timed_testset "Two step potential refinement" begin
     include("test_refine_existing_potential.jl")
+end
+
+@timed_testset "Geant4 extension" begin
+    if Sys.WORD_SIZE == 64 include("test_geant4.jl") end
 end
 
 display(testtimer())
