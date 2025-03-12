@@ -49,4 +49,8 @@ end
     include("test_depletion.jl")
 end
 
+@timed_testset "Two step potential refinement" begin
+    include("test_refine_existing_potential.jl")
+end
+
 display(testtimer())

@@ -814,7 +814,6 @@ end
 
 
 function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
-        grid::Union{Missing, Grid{T}} = missing,
         convergence_limit::Real = 1e-7,
         refinement_limits::Union{Missing, <:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}} = [0.2, 0.1, 0.05],
         min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
@@ -829,7 +828,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         paint_contacts::Bool = true,
         verbose::Bool = true,
         device_array_type::Type{<:AbstractArray} = Array,
-        initialize::Bool = true
+        initialize::Bool = true,
+        grid::Union{Missing, Grid{T}} = initialize ? missing : (potential_type == ElectricPotential ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid)
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
     begin # preperations
@@ -837,9 +837,6 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
-        if !initialize
-            grid = isEP ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid
-        end
         if ismissing(grid)
             grid = Grid(sim, for_weighting_potential = isWP, max_tick_distance = max_tick_distance, max_distance_ratio = max_distance_ratio)
         end
