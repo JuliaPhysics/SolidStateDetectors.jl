@@ -26,10 +26,16 @@ function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(
     return evt
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
+function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)::Event{T} where {T <: SSDFloat}
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
     evt = Event{T}()
-    evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
-    evt.energies = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
+    if isnan(d) # default: no grouping, the charges from different hits drift independently
+        evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
+        evt.energies = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
+    else
+        evt.locations, evt.energies = group_points_by_distance(CartesianPoint.(locations), T.(to_internal_units.(energies)), d)
+    end
     return evt
 end
 
@@ -42,6 +48,7 @@ end
 
 function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
+    # charges in one NBodyChargeCloud should see each other by default
     evt.locations = VectorOfArrays([nbcc.locations])
     evt.energies = VectorOfArrays([nbcc.energies])
     return evt
@@ -55,15 +62,40 @@ function Event(nbccs::Vector{<:NBodyChargeCloud{T}})::Event{T} where {T <: SSDFl
 end
 
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity}, N::Int; 
-               particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
-               radius::Vector{<:RealQuantity} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
-              )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
-    
+        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
+        radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(energies)), particle_type),
+        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN
+    )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
+
+
     @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
-    return Event(broadcast(i -> 
-                NBodyChargeCloud(locations[i], energies[i], N, particle_type, 
+
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
+
+    if isnan(d) # default: no grouping, the charges from different hits drift independently
+        Event(
+            broadcast(i -> 
+                NBodyChargeCloud(locations[i], energies[i], N, 
                 radius = T(to_internal_units(radius[i])), number_of_shells = number_of_shells),
-           eachindex(locations)))
+            eachindex(locations))
+        )
+    else # otherwise: group the CENTERS by distance and compose the NBodyChargeClouds around them
+        loc, ene, rad = group_points_by_distance(CartesianPoint.(locations), T.(to_internal_units.(energies)), T.(to_internal_units.(radius)), d)
+        nbccs = broadcast(i -> 
+            broadcast(j -> 
+                let nbcc = NBodyChargeCloud(loc[i][j], ene[i][j], N, 
+                    radius = rad[i][j], number_of_shells = number_of_shells)
+                    nbcc.locations, nbcc.energies
+                end, 
+            eachindex(loc[i])), 
+        eachindex(loc))
+
+        Event(
+            broadcast(nbcc -> vcat(getindex.(nbcc, 1)...), nbccs),
+            broadcast(nbcc -> vcat(getindex.(nbcc, 2)...), nbccs)
+        )
+    end
 end
 
 function Event(
