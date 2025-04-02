@@ -15,10 +15,6 @@ Boule impurity densities are meant to be used when the impurity density is defin
 
 Different models are provided. In each the field `det_z0` is the z-coordinate of the detector origin in boule coordinates. The z-direction of the detector is opposite to the z-direction of the boule coordinates.
 
-## Examples
-* [`LinBouleImpurityDensity`](@ref)
-* [`LinExpBouleImpurityDensity`](@ref)
-
 In this matter the detector impurities are automatically determined from those of the boule, depending on `det_z0`.
 
 !!! note
