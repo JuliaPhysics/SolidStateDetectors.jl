@@ -40,3 +40,4 @@ include("ConstantImpurityDensity.jl")
 include("LinearImpurityDensity.jl")
 include("CylindricalImpurityDensity.jl")
 
+include("BouleImpurityDensities/BouleImpurityDensities.jl")
