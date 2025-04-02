@@ -1,7 +1,7 @@
 """
-    struct LinBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+    struct LinExpBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-Impurity density model which assumes a linear gradient in impurity density in z.
+Impurity density model which assumes a linear + exponential component in impurity density in z.
  
 ## Fields
 * `a:T`: impurity density values at the boule origin.
@@ -12,7 +12,7 @@ Impurity density model which assumes a linear gradient in impurity density in z.
 * `det_z0::T`: z coordinate of the detector origin in boule coordinates. The z-dirrection of the detector is opposite to the z-direction of the boule coordinates.
 """
 
-struct LinExpBouleImpurityDensity{T} <: AbstractImpurityDensity{T}
+struct LinExpBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     # a + b*z + c*exp((z-L)/tau) -> needs at least 4 points
     a::T
     b::T 
