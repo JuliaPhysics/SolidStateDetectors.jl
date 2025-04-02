@@ -99,14 +99,14 @@ end
 in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.locations))
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, flatview(evt.locations))
 
-function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2))::Event{T} where {T <: SSDFloat}
-    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction)
+function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true)::Event{T} where {T <: SSDFloat}
+    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction, verbose)
     evt
 end
 
 function move_charges_inside_semiconductor!(
         locations::AbstractVector{<:AbstractVector{CartesianPoint{T}}}, energies::AbstractVector{<:AbstractVector{T}},
-        det::SolidStateDetector{T}; fraction::T = T(0.2)) where {T <: SSDFloat}
+        det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true) where {T <: SSDFloat}
     for n in eachindex(locations)
         idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
@@ -129,8 +129,10 @@ function move_charges_inside_semiconductor!(
                 end
             end
             charge_center_new = sum(locations[n] .* energies[n]) / sum(energies[n])
-            @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
-            " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+            if verbose
+                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
+                " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+            end
         end
     end
     nothing
@@ -162,7 +164,7 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector)
+    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector, verbose = verbose)
     evt.drift_paths = drift_charges(sim, evt.locations, evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     nothing
 end
