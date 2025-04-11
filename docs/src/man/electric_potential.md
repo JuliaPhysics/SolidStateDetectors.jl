@@ -162,6 +162,6 @@ Another contribution to the charge density $\rho(\vec{r})$ can be charged surfac
 ```yaml
 charge_density:
   name: constant
-  value: 1e-10 # => 10⁻¹⁰ C/m⁻³
+  value: 1e-10 # => 10⁻¹⁰ C/m³
 ```
-Note that, in contrast to impurity densities, charge densities are given in units of the **elementary charge** per volume.
+Note that, in contrast to impurity densities, charge densities are given in units of the **Coulomb** per volume (instead of elementary charge per volume).

@@ -10,14 +10,13 @@ Simulates the waveforms for all events defined in `mcevents` for a given [`Simul
 2. determining the signal (waveforms) for each [`Contact`](@ref), 
     for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
-
 ## Arguments
 * `mcevents::TypedTables.Table`: Table with information about events in the simulated setup.
 * `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `mcevents` should drift.
 
-If [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) is loaded, this function has additional arguments. 
+If [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) is loaded, this function has additional arguments. 
 
-## Additional Arguments (HDF5)
+## Additional Arguments (`LegendHDF5IO`)
 * `output_dir::AbstractString`: Directory where the HDF5 output file is saved.
 * `output_base_name::AbstractString`: Basename of the HDF5 output file, default is `"generated_waveforms"`.
 
@@ -29,7 +28,7 @@ If [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) is loaded, this function has ad
 * `number_of_carriers::Int = 1`: Number of charge carriers to be used in the N-Body simulation of an energy deposition. 
 * `number_of_shells::Int = 1`: Number of shells around the `center` point of the energy deposition.
 * `verbose = false`: Activate or deactivate additional info output.
-* `chunk_n_physics_events::Int = 1000` (HDF5 only): Number of events that should be saved in a single HDF5 output file.
+* `chunk_n_physics_events::Int = 1000` (`LegendHDF5IO` only): Number of events that should be saved in a single HDF5 output file.
 
 ## Examples
 ```julia 
@@ -37,7 +36,7 @@ simulate_waveforms(mcevents, sim, Δt = 1u"ns", verbose = false)
 # => returns the input table `mcevents` with an additional column `waveform` in which the generated waveforms are stored
 ```
 ```julia 
-import HDF5
+using LegendHDF5IO
 simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", verbose = false)
 # => simulates the charge drift and saves the output to "output_dir/my_basename_evts_xx.h5"
 ```
@@ -64,6 +63,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     for contact in contacts if !ismissing(sim.weighting_potentials[contact.id]) push!(contact_ids, contact.id) end end
     wpots_interpolated = [ interpolated_scalarfield(sim.weighting_potentials[id]) for id in contact_ids ];
     electric_field = interpolated_vectorfield(sim.electric_field)
+    ctm = sim.detector.semiconductor.charge_trapping_model
 
     unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     @info "Detector has $(n_contacts) contact"*(n_contacts != 1 ? "s" : "")
@@ -78,7 +78,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     @info "Generating waveforms..."
     waveforms = map( 
         wpot ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, S, unitless_energy_to_charge),
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, S, unitless_energy_to_charge, ctm),
             TypedTables.Table(dps = drift_paths, edeps = edeps)
         ),
         wpots_interpolated
@@ -144,12 +144,38 @@ end
 
 
 function _generate_waveform( drift_paths::Vector{<:EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
-                             wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, unitless_energy_to_charge) where {T <: SSDFloat}
+                             wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, unitless_energy_to_charge, 
+                             ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S)
+    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S, ctm)
     RDWaveform( timestamps_with_units, signal * unitless_energy_to_charge)
 end
 
 
+"""
+    run_geant4_simulation(app::Geant4.G4JLApplication, number_of_events::Int; energy_threshold::Unitful.Energy)
+
+Simulates the given `Geant4.G4JLApplication` until `number_of_events` events with non-zero energy depositions have been generated.
+
+## Arguments
+* `app::Geant4.G4JLApplication`: Contains information about the detector setup and the particle source.
+* `number_of_events::Int`: The amount of events inside of the detector that should be recorded.
+
+## Keywords
+* `energy_threshold::Unitful.Energy`: Defines a lower threshold on the summed energy of an event to be recorded.
+   Default is `eps(Float64)*u"keV"`, i.e. all events with non-zero deposits are recorded.
+   If set to `0u"keV"`, all primary events will be recorded.
+
+## Examples
+```julia 
+run_geant4_simulation(app, 1000)
+# => returns all events in a `TypedTables.Table` with the fields `evtno`, `detno`, `thit, `edep` and `pos`
+```
+
+!!! note 
+    Since the function is running until enough events have been collected, setups in which the source
+        does not irradiate the detector will run indefinitely. 
+"""
+function run_geant4_simulation end

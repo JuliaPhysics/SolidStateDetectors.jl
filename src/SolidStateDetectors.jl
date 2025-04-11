@@ -11,13 +11,13 @@ using Statistics
 import Adapt
 using ArraysOfArrays
 using FillArrays
-using Formatting
-using GPUArrays
+using Format
 using Interpolations
 using IntervalSets
 using JSON
 using KernelAbstractions
 using LaTeXStrings
+using LightXML
 using ParallelProcessingTools
 using ProgressMeter
 using RadiationDetectorSignals
@@ -48,9 +48,10 @@ import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_unit
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
-import DataStructures
 import Distributions
+import GPUArrays
 import IntervalSets
+import OrderedCollections
 import Tables
 import TypedTables
 
@@ -66,15 +67,19 @@ export Grid, GridPoint
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
-export ElectricFieldChargeDriftModel, ADLChargeDriftModel
+export ElectricFieldChargeDriftModel, ADLChargeDriftModel, IsotropicChargeDriftModel
+export NoChargeTrappingModel, BoggsChargeTrappingModel
 export get_active_volume, is_depleted, estimate_depletion_voltage
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
+export run_geant4_simulation
 export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
+export LinearImpurityDensity, LinBouleImpurityDensity, LinExpBouleImpurityDensity
 
+using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
 
 include("examples.jl")
@@ -89,6 +94,7 @@ include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
+include("ChargeTrapping/ChargeTrapping.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
 include("ScalarPotentials/ScalarPotential.jl")
@@ -112,12 +118,10 @@ include("IO/IO.jl")
 include("PlotRecipes/PlotRecipes.jl")
 export @P_str # protected strings to overwrite plot labels with units
 
+
 function __init__()
-    @require HDF5="f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f" begin
-        @require LegendHDF5IO="c9265ca6-b027-5446-b1a4-febfa8dd10b0" begin
-            include("IO/hdf5_specific.jl")
-        end
-        include("MCEventsProcessing/MCEventsProcessing_hdf5.jl")
+    @require LegendHDF5IO ="c9265ca6-b027-5446-b1a4-febfa8dd10b0" begin
+        include("../ext/SolidStateDetectorsLegendHDF5IOExt.jl")
     end
 end
 

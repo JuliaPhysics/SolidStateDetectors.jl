@@ -1,8 +1,10 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
-
-const elementary_charge = Float64(1.602176487e-19)
-const ϵ0  = Float64(8.8541878176e-12)
+# Maybe not strip the units at some point?
+const elementary_charge = Float64(ustrip(u"C", Unitful.q))
+const ϵ0 = Float64(ustrip(u"F/m", Unitful.ϵ0))
+const kB = Float64(ustrip(u"J/K", Unitful.k))
+const me = Float64(ustrip(u"kg", Unitful.me))
 
 const material_properties = Dict{Symbol, NamedTuple}()
 
@@ -47,6 +49,16 @@ material_properties[:Si] = (
     Dh = 12u"cm^2/s"
 )
 
+abstract type CsPbBr3 <: AbstractDriftMaterial end
+Symbol(::Type{CsPbBr3}) = :CsPbBr3
+material_properties[:CsPbBr3] = (
+    name = "CsPbBr3",
+    f_fano = 0.1, # https://doi.org/10.1038/s41566-020-00727-1
+    E_ionisation = 6.9u"eV",
+    ϵ_r = 16.46,
+    ρ = 4.73u"g*cm^-3"
+)
+
 material_properties[:Al] = (
     name = "Aluminium",
     ϵ_r = 10.8, # Aluminium Foil
@@ -67,17 +79,16 @@ material_properties[:Cu] = (
     ρ = 8.96u"g*cm^-3"
 )
 
-SolidStateDetectors.material_properties[:PEN] = (
+material_properties[:PEN] = (
     name = "Polyethylene Naphthalate",
     ϵ_r = 3.0, # https://topas.com/low-dielectric-constant-plastic-materials-low-permittivity-plastics-topas
-    ρ = 1.36u"g*cm^-3",
+    ρ = 1.36u"g*cm^-3"
 )
 
-SolidStateDetectors.material_properties[:PTFE] = (
+material_properties[:PTFE] = (
     name = "Polytetrafluorethylen",
     ϵ_r = 2.02, # https://topas.com/low-dielectric-constant-plastic-materials-low-permittivity-plastics-topas
-    ρ = 2.2u"g*cm^-3",
-    
+    ρ = 2.2u"g*cm^-3"
 )
 
 material_properties[:CdZnTe] = (
@@ -86,6 +97,12 @@ material_properties[:CdZnTe] = (
     f_fano = 0.089, # https://doi.org/10.1557/PROC-487-101
     ϵ_r = 10.9,
     ρ = 5.78u"g*cm^-3"
+)
+
+material_properties[:Pb] = (
+    name = "Lead",
+    ϵ_r = 1e6, # high value for lead as for conductor. Usage of lead is shielding.
+    ρ = 11.35u"g*cm^-3"
 )
 # Add new materials above this line
 # and just put different spellings into the dict `materials` below
@@ -99,7 +116,8 @@ materials = Dict{String, Symbol}(
     "Al"  => :Al,
     "LAr" => :LAr,
     "CZT" => :CdZnTe,
-    "Si" => :Si
+    "Si" => :Si,
+    "Lead" => :Pb
 )
 
 

@@ -11,13 +11,19 @@ For each impurity density, there should be a method
 * [`LinearImpurityDensity`](@ref)
 * [`CylindricalImpurityDensity`](@ref)
 
+Boule impurity densities are meant to be used when the impurity density is defined in the boule coordinates, where the z-axis is aligned with the boule growth direction. 
+
+Different models are provided. In each the field `det_z0` is the z-coordinate of the detector origin in boule coordinates. The z-direction of the detector is opposite to the z-direction of the boule coordinates.
+
+In this matter the detector impurities are automatically determined from those of the boule, depending on `det_z0`.
+
 !!! note
     The sign of the impurity density is important. It is taken into account in the conversion to a charge density
     and, thus, defines where the semiconductor is n-type or p-type. 
 """
 abstract type AbstractImpurityDensity{T <: SSDFloat} end
 
-@inline function ImpurityDensity(T::DataType, dict::Union{Dict{String, Any}, Dict{Any, Any}}, input_units::NamedTuple)
+@inline function ImpurityDensity(T::DataType, dict::AbstractDict, input_units::NamedTuple)
     return ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
 end
 
@@ -40,3 +46,4 @@ include("ConstantImpurityDensity.jl")
 include("LinearImpurityDensity.jl")
 include("CylindricalImpurityDensity.jl")
 
+include("BouleImpurityDensities/BouleImpurityDensities.jl")

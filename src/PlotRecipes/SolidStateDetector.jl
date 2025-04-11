@@ -2,17 +2,19 @@
     seriestype --> :csg
     linecolor --> :silver
     seriescolor --> :silver
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
     fillalpha --> 0.2
     l = p.name != "" ? p.name : "Passive $(p.id)"
     @series begin
         #add empty line so that label is shown with alpha = 1
-        seriestype := :path3d
+        seriestype := :path
         label --> l
         linewidth := 1
-        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        if st == :slice
+            T[]*internal_length_unit, T[]*internal_length_unit
+        else
+            T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        end
     end 
     label := ""
     p.geometry
@@ -22,15 +24,17 @@ end
     seriestype --> :csg
     linecolor --> :grey
     seriescolor --> :grey
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
     @series begin
         #add empty line so that label is shown with alpha = 1
-        seriestype := :path3d
+        seriestype := :path
         label --> "Semiconductor"
         linewidth := 1
-        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        if st == :slice
+            T[]*internal_length_unit, T[]*internal_length_unit
+        else
+            T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        end
     end 
     label := ""
     sc.geometry
@@ -40,9 +44,7 @@ end
     seriestype --> :csg
     seriescolor --> contact.id
     linecolor --> contact.id
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
-    zunit --> internal_length_unit
+    st = plotattributes[:seriestype]
     fillalpha --> 0.2
     l = contact.name != "" ? "$(contact.name) (id: $(contact.id))" : "Contact - id: $(contact.id)"
     @series begin
@@ -50,19 +52,21 @@ end
         seriestype := :path
         label --> l
         linewidth := 1
-        T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        if st == :slice
+            T[]*internal_length_unit, T[]*internal_length_unit
+        else
+            T[]*internal_length_unit, T[]*internal_length_unit, T[]*internal_length_unit
+        end
     end 
     label := ""
     contact.geometry
 end
 
-@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true, n_samples = 40)
-
+@recipe function f(det::SolidStateDetector; show_semiconductor = false, show_passives = true)
+    seriestype --> :csg
     show_normal --> false
-    xunit --> internal_length_unit
-    yunit --> internal_length_unit
-    zunit --> internal_length_unit
-    
+    st = plotattributes[:seriestype]
+
     plot_objects = []
     append!(plot_objects, det.contacts)
     if show_semiconductor
@@ -72,17 +76,11 @@ end
         append!(plot_objects, det.passives)
     end
     
-    if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-        scales = [get_scale(o.geometry) for o in plot_objects]
-        max_scale = maximum(scales)
-    end
+    max_scale = st in (:samplesurface, :slice) ? maximum(broadcast(o -> get_scale(o.geometry), plot_objects)) : missing
     
-    for (i,o) in enumerate(plot_objects)
+    for o in plot_objects
         @series begin
-            if haskey(plotattributes, :seriestype) && plotattributes[:seriestype] == :samplesurface
-                n_samples --> Int(ceil(n_samples * scales[i]/max_scale))
-                CSG_scale := scales[i]
-            end
+            CSG_scale := max_scale
             o
         end
     end

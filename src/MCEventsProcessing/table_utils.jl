@@ -14,7 +14,7 @@
     _rename_fields_impl(nt, Val(pattern.first), Val(pattern.second))
 
 @inline rename_cols(table::Any, pattern::Pair{Symbol,Symbol}) =
-    TypedTables.Tables.materializer(table)(rename_fields(TypedTables.Tables.columns(table), pattern))
+    Tables.materializer(table)(rename_fields(TypedTables.columns(table), pattern))
 
 
 function common_length(x, y)
@@ -90,7 +90,7 @@ end
 function groub_by_evt_number(table::TypedTables.Table, colname::Symbol = :mcevtno)
     sorting_idxs = sortperm(getproperty(table, colname))
     sorted = table[sorting_idxs]
-    return TypedTables.Table(consgroupedview((getproperty(table, colname), Tables.columns(sorted))))
+    return TypedTables.Table(consgroupedview((getproperty(table, colname), TypedTables.columns(sorted))))
 end
 
 

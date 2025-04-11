@@ -56,13 +56,26 @@ end
 
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity}, N::Int; 
                particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
-               radius::Vector{<:RealQuantity{T}} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
+               radius::Vector{<:RealQuantity} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
               )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
     
+    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
     return Event(broadcast(i -> 
                 NBodyChargeCloud(locations[i], energies[i], N, particle_type, 
-                radius = radius[i], number_of_shells = number_of_shells),
+                radius = T(to_internal_units(radius[i])), number_of_shells = number_of_shells),
            eachindex(locations)))
+end
+
+function Event(
+        locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, 
+        energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
+        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
+        radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(T.(to_internal_units.(e)), particle_type), energies)
+    ) where {T <: SSDFloat, PT <: ParticleType}
+    
+    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
+    events = map(i -> Event(locations[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
+    Event(flatview.(getfield.(events, :locations)), flatview.(getfield.(events, :energies)))
 end
 
 function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
@@ -86,14 +99,14 @@ end
 in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.locations))
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, flatview(evt.locations))
 
-function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2))::Event{T} where {T <: SSDFloat}
-    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction)
+function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true)::Event{T} where {T <: SSDFloat}
+    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction, verbose)
     evt
 end
 
 function move_charges_inside_semiconductor!(
         locations::AbstractVector{<:AbstractVector{CartesianPoint{T}}}, energies::AbstractVector{<:AbstractVector{T}},
-        det::SolidStateDetector{T}; fraction::T = T(0.2)) where {T <: SSDFloat}
+        det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true) where {T <: SSDFloat}
     for n in eachindex(locations)
         idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
@@ -116,8 +129,10 @@ function move_charges_inside_semiconductor!(
                 end
             end
             charge_center_new = sum(locations[n] .* energies[n]) / sum(energies[n])
-            @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
-            " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+            if verbose
+                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
+                " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+            end
         end
     end
     nothing
@@ -149,7 +164,7 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector)
+    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector, verbose = verbose)
     evt.drift_paths = drift_charges(sim, evt.locations, evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     nothing
 end
@@ -181,7 +196,7 @@ The output is stored in `evt.waveforms`.
 
 ## Example 
 ```julia
-get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in time steps of 1ns
+SolidStateDetectors.get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths were calculated in time steps of 1ns
 ```
 
 !!! note 
@@ -314,16 +329,17 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
     signal_e::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_e, evt.drift_paths))))
     signal_h::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_h, evt.drift_paths))))
 
+    ctm = sim.detector.semiconductor.charge_trapping_model
     for i in eachindex(evt.drift_paths)
         energy = flatview(evt.energies)[i]
         
         dp_e::Vector{CartesianPoint{T}} = evt.drift_paths[i].e_path
         dp_e_t::Vector{T} = evt.drift_paths[i].timestamps_e
-        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, T(-1)*energy, wp, S)
+        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, -energy, wp, S, ctm)
         
         dp_h::Vector{CartesianPoint{T}} = evt.drift_paths[i].h_path
         dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
-        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S)
+        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S, ctm)
     end
     unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * unitless_energy_to_charge),

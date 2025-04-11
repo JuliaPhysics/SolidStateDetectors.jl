@@ -13,7 +13,7 @@ which returns the charge density in SI units (C/m³) at a given point `pt`.
 """
 abstract type AbstractChargeDensity{T <: SSDFloat} end
 
-@inline function ChargeDensity(T::DataType, dict::Union{Dict{String, Any}, Dict{Any, Any}}, input_units::NamedTuple)
+@inline function ChargeDensity(T::DataType, dict::AbstractDict, input_units::NamedTuple)
     return ChargeDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
 end
 

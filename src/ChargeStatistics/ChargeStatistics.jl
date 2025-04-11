@@ -50,7 +50,7 @@ function add_fano_noise(rng::AbstractRNG, evts::DetectorHitEvents, E_ionisation:
     noisy_edep = deepmap(x -> add_fano_noise(x, E_ionisation, f_fano), evts.edep)
 
     TypedTables.Table(merge(
-        Tables.columns(evts),
+        TypedTables.columns(evts),
         (edep = noisy_edep,)
     ))
 end

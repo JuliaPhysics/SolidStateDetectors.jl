@@ -28,7 +28,7 @@ struct CylindricalImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     gradients::NTuple{3, T}
 end
 
-function ImpurityDensity(T::DataType, t::Val{:cylindrical}, dict::Union{Dict{String, Any}, Dict{Any, Any}}, input_units::NamedTuple)
+function ImpurityDensity(T::DataType, t::Val{:cylindrical}, dict::AbstractDict, input_units::NamedTuple)
     offsets, gradients = zeros(T,3), zeros(T,3)
     density_unit = input_units.length^(-3)
     density_gradient_unit = input_units.length^(-4)

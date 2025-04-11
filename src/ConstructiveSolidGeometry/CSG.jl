@@ -4,8 +4,6 @@
 A `CSGUnion` of two geometries `a` and `b` is defined as the set of points that are in at least 
 one of either `a` or `b` (`a || b`).
 
-![CSGUnion](../../docs/src/assets/CSGUnion.png)
-
 ## Parametric types
 * `T`: Precision type.
 * `A`: Type of geometry `a`.
@@ -56,15 +54,13 @@ end
 
 Dictionary(g::CSGUnion{T}) where {T} = OrderedDict{String,Any}("union" => vcat(UnionDictionary(g.a), UnionDictionary(g.b)))
 UnionDictionary(g::CSGUnion{T}) where {T} = vcat(UnionDictionary(g.a), UnionDictionary(g.b))
-UnionDictionary(g::AbstractGeometry{T}) where {T} = OrderedDict[Dictionary(g)]
+UnionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
 
 """
     struct CSGIntersection{T, A <: AbstractGeometry{T}, B <: AbstractGeometry{T}} <: AbstractConstructiveGeometry{T}
         
 A `CSGIntersection` of two geometries `a` and `b` is defined as the set of points 
 that are both in `a` and in `b` (`a && b`).
-
-![CSGIntersection](../../docs/src/assets/CSGIntersection.png)
 
 ## Parametric types
 * `T`: Precision type.
@@ -124,8 +120,6 @@ IntersectionDictionary(g::AbstractGeometry{T}) where {T} = [Dictionary(g)]
         
 A `CSGDifference` of two geometries `a` and `b` is defined as the set of points that are 
 in `a` but not in `b` (`a && !b`).
-
-![CSGDifference](../../docs/src/assets/CSGDifference.png)
 
 !!! note
     Note that `b` is treated as open primitive. This means that points which are in 

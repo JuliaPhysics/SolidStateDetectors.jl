@@ -18,11 +18,11 @@ mutable struct LinearModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
     p2h111::T
 end
 
-function LinearModel(config_file::Dict; T::Type{<:AbstractFloat} = Float32)::LinearModel
-    return LinearModel{T}(config_file::Dict)
+function LinearModel(config_file::AbstractDict; T::Type{<:AbstractFloat} = Float32)::LinearModel
+    return LinearModel{T}(config_file::AbstractDict)
 end
 
-function LinearModel{T}(config_file::Dict; temperature::Union{Missing, T} = missing)::LinearModel where T <: SSDFloat
+function LinearModel{T}(config_file::AbstractDict; temperature::Union{Missing, T} = missing)::LinearModel where T <: SSDFloat
     config_file["temperature_dependence"]["model"] != "Linear" ? error() : nothing
     ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = LinearModel{T}(

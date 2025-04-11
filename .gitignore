@@ -6,3 +6,5 @@ Manifest.toml
 .ipynb_checkpoints
 *.ipynb
 .vscode*
+*.gdml
+test/*h5

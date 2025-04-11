@@ -1,10 +1,11 @@
 include("SigGenInterface.jl")
 include("ParseConfigFiles.jl")
 
-NamedTuple(::Missing) = (object = "missing",)
-NamedTuple(d::Dict) = (dict_json_string = json(d),)
-Base.convert(T::Type{NamedTuple}, x::Dict) = T(x)
-Dict(nt::NamedTuple) = JSON.parse(nt.dict_json_string)
+_namedtuple(x) = NamedTuple(x)
+_namedtuple(::Missing) = (object = "missing",)
+_namedtuple(d::AbstractDict) = (dict_json_string = json(d),)
+# Base.convert(::Type{NamedTuple}, x::AbstractDict) = _namedtuple(x)
+_dict(nt::NamedTuple) = JSON.parse(nt.dict_json_string)
 
 
 """
@@ -19,9 +20,8 @@ with a given `filename` using [LegendHDF5IO.jl](https://github.com/legend-exp/Le
 
 ## Example 
 ```julia
-using HDF5 
-using LegendHDF5IO
 using SolidStateDetectors
+using LegendHDF5IO
 sim = Simulation(SSD_examples[:InvertedCoax])
 simulate!(sim)
 ssd_write("example_sim.h5", sim)
@@ -31,9 +31,8 @@ ssd_write("example_sim.h5", sim)
     If a file with `filename` already exists, it will be overwritten by this method.
 
 !!! note 
-    In order to use this method, the packages [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) and 
-    [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) have to be
-    loaded before loading SolidStateDetectors.jl.
+    In order to use this method, the package [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) 
+    has to be loaded after loading SolidStateDetectors.jl.
 
 See also [`ssd_read`](@ref).
 """
@@ -52,16 +51,14 @@ using [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl).
 
 ## Example 
 ```julia
-using HDF5 
-using LegendHDF5IO
 using SolidStateDetectors
+using LegendHDF5IO
 sim = ssd_read("example_sim.h5", Simulation)
 ```
 
 !!! note 
-    In order to use this method, the packages [HDF5.jl](https://github.com/JuliaIO/HDF5.jl) and 
-    [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) have to be
-    loaded before loading SolidStateDetectors.jl.
+    In order to use this method, the package [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) 
+    has to be loaded after loading SolidStateDetectors.jl.
 
 See also [`ssd_write`](@ref).
 """

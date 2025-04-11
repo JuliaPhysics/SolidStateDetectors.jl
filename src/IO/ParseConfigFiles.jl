@@ -1,5 +1,5 @@
 """
-    parse_config_file(filename::AbstractString)::Dict where {T <: SSDFloat}
+    parse_config_file(filename::AbstractString; dicttype::Type = Dict)::dicttype
 
 Reads in a configuration file and returns a parsed dictionary which holds all the
 information specified in the configuration file.
@@ -10,25 +10,26 @@ Find detailed information on configuration files in [Configuration Files](@ref).
 * `filename::AbstractString`: File name of the configuration file. If the file is not
     in the same directory, a path to the file is required.
 
+## Keywords
+* `dicttype::Type`: Type of the dictionary returned.
+
 !!! note
     Currently supported formats for the configuration files:
         - [YAML](https://github.com/JuliaData/YAML.jl): `filename` ends with `.yaml`.
         - [JSON](https://github.com/JuliaIO/JSON.jl): `filename` ends with `.json`.
         - [SigGen](https://github.com/radforddc/icpc_siggen): `filename` ends with `.config`.
 """
-function parse_config_file(filename::AbstractString)::Dict{Any,Any}
-    if endswith(filename, ".toml")
-        error("Currently only .json and .yaml files are supported.")
-    elseif endswith(filename, ".json")
+function parse_config_file(filename::AbstractString; dicttype::Type = Dict)::dicttype
+    if endswith(filename, ".json")
         dicttext = read(filename, String)
-        dict = JSON.parse(dicttext)
+        dict = JSON.parse(dicttext, dicttype = dicttype)
         scan_and_merge_included_json_files!(dict, filename)
     elseif endswith(filename, ".yaml")
-        dict = YAML.load_file(filename)
+        dict = YAML.load_file(filename, dicttype = dicttype)
         scan_and_merge_included_json_files!(dict, filename)
     elseif endswith(filename, ".config")
-        siggen_dict = readsiggen(filename)
-        dict = siggentodict(siggen_dict)
+        siggen_dict = readsiggen(filename, dicttype = dicttype)
+        dict = siggentodict(siggen_dict, dicttype = dicttype)
     else
         error("Currently only .json and .yaml files are supported.")
     end
@@ -36,7 +37,7 @@ function parse_config_file(filename::AbstractString)::Dict{Any,Any}
 end
 
 function yaml2json_convert(filename::String)
-    data = YAML.load(open(filename), dicttype = DataStructures.OrderedDict)
+    data = YAML.load(open(filename), dicttype = OrderedCollections.OrderedDict)
     if isempty(data)
         @warn "The file $(filename) is empty and will not be converted."
     else
@@ -57,7 +58,7 @@ function yaml2json(directory::String)# or filename
 end
 
 function json2yaml_convert(filename::String)::Nothing
-    data = JSON.parsefile(filename, dicttype = DataStructures.OrderedDict)
+    data = JSON.parsefile(filename, dicttype = OrderedCollections.OrderedDict)
     if isempty(data)
         @warn "The file $(filename) is empty and will not be converted."
     else
@@ -80,15 +81,15 @@ function scan_and_merge_included_json_files!(dict, config_filename::AbstractStri
     key_word = "include"
     config_dir = dirname(config_filename)
     for k in keys(dict)
-        is_subdict = typeof(dict[k]) <: Dict
+        is_subdict = typeof(dict[k]) <: AbstractDict
         if !is_subdict && string(k) != key_word
-            typeof(dict[k]) <: Array ? is_subdict = true : is_subdict = false
+            is_subdict = (typeof(dict[k]) <: AbstractArray)
         end
         if is_subdict
             scan_and_merge_included_json_files!(dict[k], config_filename)
         elseif string(k) == key_word
             files = []
-            if typeof(dict[k]) <: Array
+            if typeof(dict[k]) <: AbstractArray
                 append!(files, dict[k])
             else
                 push!(files, dict[k])

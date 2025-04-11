@@ -214,33 +214,36 @@ Calculates the intersections of a `Line` with a `TorusMantle`.
 function intersection(tm::TorusMantle{T}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, tm) # direction is not normalized
     
-    L1 = obj_l.origin.x
-    L2 = obj_l.origin.y
-    L3 = obj_l.origin.z
-    D1 = obj_l.direction.x
-    D2 = obj_l.direction.y
-    D3 = obj_l.direction.z
+    let T2 = Float64 # will this work on 32bit-machines?
 
-    R = tm.r_torus
-    r = tm.r_tube
+    L1::T2 = obj_l.origin.x |> T2
+    L2::T2 = obj_l.origin.y |> T2
+    L3::T2 = obj_l.origin.z |> T2
+    D1::T2 = obj_l.direction.x |> T2
+    D2::T2 = obj_l.direction.y |> T2
+    D3::T2 = obj_l.direction.z |> T2
 
-    A = L1^2 + L2^2 + L3^2 + R^2 - r^2
-    B = 2*(L1*D1 + L2*D2 + L3*D3)
-    C = D1^2 + D2^2 + D3^2
+    R::T2 = tm.r_torus |> T2
+    r::T2 = tm.r_tube  |> T2
 
-    a = (2*B*C) / C^2
-    b = (2*A*C + B^2 - 4*R^2*(D1^2 + D2^2)) / C^2
-    c = (2*A*B - 8*R^2*(L1*D1 + L2*D2)) / C^2
-    d = (A^2 - 4*R^2*(L1^2 + L2^2)) / C^2
+    A::T2 = L1^2 + L2^2 + L3^2 + R^2 - r^2
+    B::T2 = 2*(L1*D1 + L2*D2 + L3*D3)
+    C::T2 = D1^2 + D2^2 + D3^2
+
+    a::T2 = (2*B*C)
+    b::T2 = (2*A*C + B^2 - 4*R^2*(D1^2 + D2^2))
+    c::T2 = (2*A*B - 8*R^2*(L1*D1 + L2*D2))
+    d::T2 = (A^2 - 4*R^2*(L1^2 + L2^2))
 
     # Solve: `solve (sqrt((L1 + λ*D1)^2 + (L2 + λ*D2)^2)-R)^2 + (L3 + λ*D3)^2 = r^2 for λ`
 
 	# λ1, λ2, λ3, λ4 = roots_of_4th_order_polynomial(a, b, c, d) # That does not work for all combinations of a, b, c, d...
 	# fallback to Polynomials.jl, which is slower... We should improve `roots_of_4th_order_polynomial`... 
     return broadcast(λ -> _transform_into_global_coordinate_system(obj_l.origin + λ * obj_l.direction, tm), 
-        real.(Polynomials.roots(Polynomial((d, c, b, a, one(T))))))
+        T.(real.(Polynomials.roots(Polynomial((d, c, b, a, C^2))))))
     # pts[.!in.(pts, Ref(tm))] .= Ref(CartesianPoint{T}(NaN,NaN,NaN)) # for Partial Tori: discard all intersection points that are not part of the Torus
     # return pts
+    end
 end
 
 # These function compose cross sections of Tori at constant θ and ensure that the height is always positive

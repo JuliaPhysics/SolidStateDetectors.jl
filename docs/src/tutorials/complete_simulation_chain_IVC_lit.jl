@@ -13,6 +13,19 @@ plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm", size = (700, 700
 #md savefig("tutorial_det.svg"); nothing # hide
 #md # [![tutorial_det](tutorial_det.svg)](tutorial_det.pdf)
 
+# By default only the contacts and passives are shown in detector plots. One can also take a look at the semiconductor. The following plots show the semiconductor and slices in the y and z direction. 
+
+plot(
+    plot(sim.detector.semiconductor, st = :samplesurface),
+    plot(sim.detector.semiconductor, st = :slice, y = 0u"mm", lw = 2),
+    plot(sim.detector.semiconductor, st = :slice, z = 40u"mm", lw = 2),
+    layout = (1,3), size = (1500,500), legend = false
+    )
+#jl savefig("tutorial_semiconductor.pdf") # hide
+#md savefig("tutorial_semiconductor.pdf") # hide
+#md savefig("tutorial_semiconductor.svg"); nothing # hide
+#md # [![tutorial_semiconductor](tutorial_semiconductor.svg)](tutorial_semiconductor.pdf)
+
 # One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
 
 apply_initial_state!(sim, ElectricPotential) # optional
@@ -150,9 +163,12 @@ for contact in sim.detector.contacts
     calculate_weighting_potential!(sim, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
 end
 
+wp1 = plot(sim.weighting_potentials[1])
+      plot!(sim.detector, st = :slice, φ = 0)
+wp2 = plot(sim.weighting_potentials[2])
+      plot!(sim.detector, st = :slice, φ = 0)
 plot(
-    plot(sim.weighting_potentials[1]),
-    plot(sim.weighting_potentials[2]),
+    wp1, wp2,
     size = (900, 700)
 )
 #jl savefig("tutorial_weighting_potentials.pdf") # hide
@@ -170,7 +186,7 @@ calculate_capacitance_matrix(sim)
 
 # ## Detector waveform generation
 
-# Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the resulting detector charge signals (e.g. at the point contact):
+# Given an interaction at an arbitrary point in the detector, we can now simulate the charge drift and the time evolution of the charges induced on the contacts (e.g. on the point contact):
 
 simulate!(evt, sim) # drift_charges + signal generation of all channels
 
@@ -181,7 +197,7 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 #md savefig("tutorial_waveforms.svg"); nothing # hide
 #md # [![tutorial_waveforms](tutorial_waveforms.svg)](tutorial_waveforms.pdf)
 
-# SolidStateDetectors.jl also allows to separate the waveform into the two contributions from electrons and holes
+# SolidStateDetectors.jl also allows to separate the observed charge signal into the charge induced by the electrons and the charge induced by the holes.
 
 contact_id = 1
 plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time",

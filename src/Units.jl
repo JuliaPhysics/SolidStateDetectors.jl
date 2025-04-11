@@ -15,6 +15,7 @@ const internal_charge_unit  = u"C"
 const internal_mobility_unit = u"m^2/(V*s)"
 const internal_diffusion_unit = internal_length_unit ^ 2 / internal_time_unit
 const internal_charge_density_unit = internal_charge_unit / internal_length_unit ^ 3
+const internal_temperature_unit = u"K"
 
 const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
@@ -27,6 +28,7 @@ to_internal_units(x::Quantity{<:Real, dimension(internal_charge_unit)})  = ustri
 to_internal_units(x::Quantity{<:Real, dimension(internal_mobility_unit)})  = ustrip(internal_mobility_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = ustrip(internal_diffusion_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(internal_charge_density_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_temperature_unit)})     = ustrip(internal_temperature_unit,  x)
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
@@ -35,15 +37,16 @@ from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_energ
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_charge_unit)})  = uconvert(unit, x * internal_charge_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_mobility_unit)})  = uconvert(unit, x * internal_mobility_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_diffusion_unit)})  = uconvert(unit, x * internal_diffusion_unit)
+from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_temperature_unit)}) = uconvert(unit, x * internal_temperature_unit)
 
 # Internal function for now: We should also fano noise here (optionally)
 _convert_internal_energy_to_external_charge(material) = inv(to_internal_units(material.E_ionisation)) * external_charge_unit
 
 unit_conversion = Dict{String, Unitful.Units}(
-    "nm" => u"nm", "um" => u"μm", "mm" => u"mm", "cm" => u"cm", "m" => u"m", #length
-    "deg" => u"°","rad" => u"rad", #angle
-    "V" => u"V", "kV" => u"kV", #potential
-    "K" => u"K", "Kelvin" => u"K", "C" => u"°C", "Celsius" => u"°C", #temperature
+    "um" => u"μm", # length
+    "deg" => u"°", # angle
+    "Kelvin" => u"K", "Celsius" => u"°C", #temperature
+    "e" => u"e_au" # elementary charge
 )
 
 const UnitTuple = NamedTuple{(:length, :angle, :potential, :temperature), Tuple{
@@ -63,7 +66,7 @@ end
 
 function construct_unit(ustring::String)::Unitful.Units
     try
-        parsed_unit = uparse(ustring)
+        parsed_unit = uparse(ustring, unit_context=[Unitful, UnitfulAtomic])
         @assert parsed_unit isa Unitful.Units
         return parsed_unit
     catch 
@@ -92,12 +95,6 @@ function construct_units(config_file_dict::AbstractDict)::UnitTuple
         
     return UnitTuple(dunits)
 end
-
-
-
-const MaybeWithUnits{T} = Union{T, Quantity{<:T}}
-const RealQuantity = MaybeWithUnits{<:Real}
-
 
 DetectorHitEvents = TypedTables.Table{
     <:NamedTuple{

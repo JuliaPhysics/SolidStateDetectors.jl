@@ -1,26 +1,7 @@
 geometry:
-  difference:
-    - tube:
-        r: 35
-        h: 80
-        origin:
-          z: 40
-    - cone:
-        r:
-          bottom:
-            from: 35
-            to: 36
-          top:
-            from: 23.71
-            to: 36
-        h: 64
-        origin:
-          z: 52
-    - tube:
-        r: 5
-        h: 80
-        origin:
-          z: 65
+  polycone:
+    r: [0, 35, 35, 24.42, 5, 5, 0]
+    z: [0, 0, 20, 80, 80, 25, 25]
 contacts:
 - material: HPGe
   id: 1

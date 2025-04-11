@@ -117,13 +117,13 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     eZ = CartesianVector{T}(0,0,1);
 
     widths_ax1 = diff(get_extended_ticks(grid[1]))
-    widths_ax2 = diff(get_extended_ticks(grid[2]))
+    # widths_ax2 = diff(get_extended_ticks(grid[2]))
     widths_ax3 = diff(get_extended_ticks(grid[3]))
     Δw_max_factor = T(1e-5)
     #= 
         Δw_max_factor is chosen by trying out different values for it. 
-        This value seems to be okay if the grid is not to unevenly spaced. 
-        But this can be secured via the `max_ratio`- and the `the max_tick_distance`-keywords.
+        This value seems to be okay if the grid is not too unevenly spaced. 
+        But this can be secured via the `max_ratio`- and the `max_tick_distance`-keywords.
         The critical parameter is `csgtol` inside the `in`-method, which is currently defined through 
         the widths of the voxel of the grid point next to the calculated intersection point.
         It would be probably better to turn this into an `NTuple{3,T}` and pass the widths of the voxel instead
@@ -176,7 +176,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 i1 = searchsortednearest(ticks[1], pt_cyl[1])
                 csgtol = Δw_max_factor * max(
                     widths_ax1[i1], widths_ax1[i1+1],
-                    widths_ax2[i2], widths_ax2[i2+1],
+                    # skip φ (as done in the previous loop)
+                    # widths_ax2[i2], widths_ax2[i2+1]) 
                 ) 
                 if in(pt_cyl, grid) && abs(pt_cyl[2] - ticks[2][i2]) < T(0.1) && in(pt_car, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)

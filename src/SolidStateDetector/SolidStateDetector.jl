@@ -26,7 +26,7 @@ of the materials) will be used as input to the calculation of [`ElectricPotentia
 See also [`Semiconductor`](@ref), [`Contact`](@ref), [`Passive`](@ref) and [`DeadVolume`](@ref).
 """
 struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
-    name::String  # optional
+    name::AbstractString # optional
     semiconductor::SC
     contacts::CT
     passives::PT
@@ -35,21 +35,27 @@ struct SolidStateDetector{T,SC,CT,PT,VDM} <: AbstractConfig{T}
     SolidStateDetector{T}(n::AbstractString,s::SC,c::C,p::P,v::VDM) where {T,SC,C,P,VDM}= new{T,SC,C,P,VDM}(n,s,c,p,v)
 end
 
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, impurity_density::AbstractImpurityDensity{T}) where {T,SC,CT,PT,VDM}
+function SolidStateDetector(det::SolidStateDetector{T}, impurity_density::AbstractImpurityDensity{T}) where {T <: SSDFloat}
     sc = Semiconductor(det.semiconductor, impurity_density)
     SolidStateDetector{T}(
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
 end
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}, chargedriftmodel::AbstractChargeDriftModel{T}) where {T,SC,CT,PT,VDM}
-    sc = Semiconductor(det.semiconductor, chargedriftmodel)
+function SolidStateDetector(det::SolidStateDetector{T}, charge_drift_model::AbstractChargeDriftModel{T}) where {T <: SSDFloat}
+    sc = Semiconductor(det.semiconductor, charge_drift_model)
     SolidStateDetector{T}(
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
 end
-function SolidStateDetector(det::SolidStateDetector{T,SC,CT,PT,VDM}; contact_id::Int, contact_potential::Real) where {T,SC,CT,PT,VDM}
+function SolidStateDetector(det::SolidStateDetector{T}, charge_trapping_model::AbstractChargeTrappingModel{T}) where {T <: SSDFloat}
+    sc = Semiconductor(det.semiconductor, charge_trapping_model)
+    SolidStateDetector{T}(
+        det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
+    )
+end
+function SolidStateDetector(det::SolidStateDetector{T}; contact_id::Int, contact_potential::RealQuantity) where {T <: SSDFloat}
     oc = det.contacts[contact_id]
-    nc = Contact(T(contact_potential), oc.material, oc.id, oc.name, oc.geometry )
+    nc = Contact(_parse_value(T, contact_potential, internal_voltage_unit), oc.material, oc.id, oc.name, oc.geometry )
     contacts = [c.id == contact_id ? nc : c for c in det.contacts]
     SolidStateDetector{T}( det.name, det.semiconductor, contacts, det.passives, det.virtual_drift_volumes )
 end
@@ -91,7 +97,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, det::SolidStateDetecto
     return ax1l, ax1r, ax2l, ax2r, ax3l, ax3r
 end
 
-function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where {T <: SSDFloat}
+function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTuple) where {T <: SSDFloat}
     
     @assert !haskey(config_file, "objects") "Configuration file deprecation.\n
         The configuration file format was updated in v0.6.0.
@@ -117,7 +123,7 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."     
     semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
 
-    @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define the them in the configuration file."                    
+    @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
     
     # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
@@ -148,7 +154,7 @@ function SolidStateDetector{T}(config_file::Dict, input_units::NamedTuple) where
     SolidStateDetector{T}( name, semiconductor, contacts, passives, virtual_drift_volumes )
 end
 
-function SolidStateDetector(dict::Dict)
+function SolidStateDetector(dict::AbstractDict)
     SolidStateDetector{Float32}(dict)
 end
 

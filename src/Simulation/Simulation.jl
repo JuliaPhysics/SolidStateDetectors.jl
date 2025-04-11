@@ -10,7 +10,7 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `CS`: Coordinate system (`Cartesian` or `Cylindrical`).
 
 ## Fields 
-* `config_dict::Dict`: Dictionary (parsed configuration file) which initialized the simulation.
+* `config_dict::AbstractDict`: Dictionary (parsed configuration file) which initialized the simulation.
 * `input_units::NamedTuple`: Units with which the `config_dict` should be parsed.
 * `medium::NamedTuple`: Medium of the world.
 * `detector::Union{SolidStateDetector{T}, Missing}`: The [`SolidStateDetector`](@ref) of the simulation.
@@ -25,7 +25,7 @@ Collection of all parts of a simulation of a [`SolidStateDetector`](@ref).
 * `electric_field::Union{ElectricField{T}, Missing}`: The [`ElectricField`](@ref) of the simulation.
 """
 mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: AbstractSimulation{T}
-    config_dict::Dict
+    config_dict::AbstractDict
     input_units::NamedTuple
     medium::NamedTuple # this should become a struct at some point
     detector::Union{SolidStateDetector{T}, Missing}
@@ -64,26 +64,26 @@ get_coordinate_system(::Simulation{T, CS}) where {T, CS} = CS
 function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     wpots_strings = ["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts]
     nt = (
-        detector_json_string = NamedTuple(sim.config_dict),
-        electric_potential = NamedTuple(sim.electric_potential),
-        q_eff_imp = NamedTuple(sim.q_eff_imp),
-        imp_scale = NamedTuple(sim.imp_scale),
-        q_eff_fix = NamedTuple(sim.q_eff_fix),
-        ϵ_r = NamedTuple(sim.ϵ_r),
-        point_types = NamedTuple(sim.point_types),
-        electric_field = NamedTuple(sim.electric_field),
-        weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(NamedTuple.(sim.weighting_potentials))
+        detector_json_string = _namedtuple(sim.config_dict),
+        electric_potential = _namedtuple(sim.electric_potential),
+        q_eff_imp = _namedtuple(sim.q_eff_imp),
+        imp_scale = _namedtuple(sim.imp_scale),
+        q_eff_fix = _namedtuple(sim.q_eff_fix),
+        ϵ_r = _namedtuple(sim.ϵ_r),
+        point_types = _namedtuple(sim.point_types),
+        electric_field = _namedtuple(sim.electric_field),
+        weighting_potentials = NamedTuple{Tuple(Symbol.(wpots_strings))}(_namedtuple.(sim.weighting_potentials))
     )
     return nt
 end
 Base.convert(T::Type{NamedTuple}, x::Simulation) = T(x)
 
 function Simulation(nt::NamedTuple)
-    missing_tuple = NamedTuple(missing)
+    missing_tuple = _namedtuple(missing)
     if nt.electric_potential !== missing_tuple
         epot = ElectricPotential(nt.electric_potential)
         T = eltype(epot.data)
-        sim = Simulation{T}( Dict(nt.detector_json_string) )
+        sim = Simulation{T}( _dict(nt.detector_json_string) )
         sim.electric_potential = epot
         sim.q_eff_imp = EffectiveChargeDensity(nt.q_eff_imp)
         sim.q_eff_fix = EffectiveChargeDensity(nt.q_eff_fix)
@@ -104,7 +104,7 @@ function Simulation(nt::NamedTuple)
         sim.electric_field = haskey(nt, :electric_field) && nt.electric_field !== missing_tuple ? ElectricField(nt.electric_field) : missing
     else
         T = Float32
-        sim = Simulation{T}( Dict(nt.detector_json_string) )
+        sim = Simulation{T}( _dict(nt.detector_json_string) )
     end
     sim.weighting_potentials = if haskey(nt, :weighting_potentials) 
         [let wp = Symbol("WeightingPotential_$(contact.id)")
@@ -151,10 +151,10 @@ function show(io::IO, ::MIME"text/plain", sim::Simulation{T}) where {T <: SSDFlo
 end
 
 
-function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
+function Simulation{T}(dict::AbstractDict)::Simulation{T} where {T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
     if haskey(dict, "grid")
-        if isa(dict["grid"], Dict)
+        if isa(dict["grid"], AbstractDict)
             CS = if dict["grid"]["coordinates"] == "cartesian" 
                 Cartesian
             elseif dict["grid"]["coordinates"]  == "cylindrical"
@@ -177,7 +177,7 @@ function Simulation{T}(dict::Dict)::Simulation{T} where {T <: SSDFloat}
     sim.input_units = construct_units(dict)
     sim.medium = material_properties[materials[haskey(dict, "medium") ? dict["medium"] : "vacuum"]]
     sim.detector = SolidStateDetector{T}(dict, sim.input_units) 
-    sim.world = if haskey(dict, "grid") && isa(dict["grid"], Dict) && haskey(dict["grid"], "axes")
+    sim.world = if haskey(dict, "grid") && isa(dict["grid"], AbstractDict) && haskey(dict["grid"], "axes")
             World(T, dict["grid"], sim.input_units)
         else let det = sim.detector 
             world_limits = get_world_limits_from_objects(CS, det)
@@ -814,7 +814,6 @@ end
 
 
 function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
-        grid::Union{Missing, Grid{T}} = missing,
         convergence_limit::Real = 1e-7,
         refinement_limits::Union{Missing, <:Real, Vector{<:Real}, Tuple{<:Real,<:Real,<:Real}, Vector{<:Tuple{<:Real, <:Real, <:Real}}} = [0.2, 0.1, 0.05],
         min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
@@ -829,6 +828,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         paint_contacts::Bool = true,
         verbose::Bool = true,
         device_array_type::Type{<:AbstractArray} = Array,
+        initialize::Bool = true,
+        grid::Union{Missing, Grid{T}} = initialize ? missing : (potential_type == ElectricPotential ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid)
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
     begin # preperations
@@ -926,26 +927,27 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             )
         end
     end
-    if isEP
-        apply_initial_state!(sim, potential_type, grid; not_only_paint_contacts, paint_contacts)
-        update_till_convergence!( sim, potential_type, convergence_limit,
-                                  n_iterations_between_checks = n_iterations_between_checks,
-                                  max_n_iterations = max_n_iterations,
-                                  depletion_handling = depletion_handling,
-                                  device_array_type = device_array_type,
-                                  use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
-                                  sor_consts = sor_consts )
-    else
-        apply_initial_state!(sim, potential_type, contact_id, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
-        update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
+    if initialize 
+        if isEP
+            apply_initial_state!(sim, potential_type, grid; not_only_paint_contacts, paint_contacts)
+            update_till_convergence!( sim, potential_type, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
                                     depletion_handling = depletion_handling,
                                     device_array_type = device_array_type,
-                                    use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
+                                    use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
                                     sor_consts = sor_consts )
+        else
+            apply_initial_state!(sim, potential_type, contact_id, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
+            update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
+                                        n_iterations_between_checks = n_iterations_between_checks,
+                                        max_n_iterations = max_n_iterations,
+                                        depletion_handling = depletion_handling,
+                                        device_array_type = device_array_type,
+                                        use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
+                                        sor_consts = sor_consts )
+        end
     end
-
     # refinement_counter::Int = 1
     if refine
         for iref in 1:n_refinement_steps
@@ -962,7 +964,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 end
                 refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
-                verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
+                verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
@@ -976,7 +978,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
-                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU"):") 
+                verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                                 n_iterations_between_checks = n_iterations_between_checks,
                                                 max_n_iterations = max_n_iterations,
@@ -1210,8 +1212,8 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
     wpot::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS)
-    unitless_energy_to_charge = unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS, sim.detector.semiconductor.charge_trapping_model)
+    unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * unitless_energy_to_charge)
 end
 
