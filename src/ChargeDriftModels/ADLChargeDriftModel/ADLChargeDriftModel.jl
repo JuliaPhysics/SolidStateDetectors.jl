@@ -319,8 +319,7 @@ end
     AE, RE
 end
 
-
-@fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T,M,N}, current_pos::CartesianPoint{T}, Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat, M, N}
+@fastmath function getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T,M,N}, current_pos::CartesianPoint{T} = zero(CartesianPoint{T}), Emag_threshold::T = T(1e-5))::SVector{3, T} where {T <: SSDFloat, M, N}
     @inbounds begin
         Emag::T = norm(fv)
         Emag_inv::T = inv(Emag)
@@ -373,7 +372,7 @@ end
     p1 * x + p2 * x^2 + p3 * x^3 + p4 * x^4
 end
 
-@fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T, M}, current_pos::CartesianPoint{T}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, M}
+@fastmath function getVh(fv::SVector{3,T}, cdm::ADLChargeDriftModel{T, M}, current_pos::CartesianPoint{T} = zero(CartesianPoint{T}), Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, M}
     @inbounds begin
         Emag::T = norm(fv)
         Emag_inv::T = inv(Emag)

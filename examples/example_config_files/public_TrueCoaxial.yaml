@@ -12,7 +12,7 @@ grid:
       boundaries: inf
     phi:
       from: 0
-      to: 120
+      to: 0
       boundaries:
         left: periodic
         right: periodic
@@ -28,19 +28,15 @@ detectors:
     material: HPGe
     temperature: 77
     impurity_density:
-      name: "constant"
+      name: constant
       value: 1e8cm^-3
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:
       cone:
         r:
-          bottom:
-            from: 1.0
-            to: 10.0
-          top:
-            from: 1.0
-            to: 10.0    
+          from: 1.0
+          to: 10.0
         h: 10 
         origin:
           z: 5
@@ -64,12 +60,8 @@ detectors:
       geometry:
         tube:
           r:
-            bottom:
-              from: 10.0
-              to: 10.5
-            top:
-              from: 10.
-              to: 10.5
+            from: 10.0
+            to: 10.5
           h: 10.
           origin:
             z: 5
