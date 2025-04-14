@@ -72,3 +72,57 @@ function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQua
         )
     ))
 end
+
+
+function _group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::Tuple{Vector{Int}, Vector{Int}} where {T}
+    
+    n::Int = length(pts)
+    
+    # use BFS to find connected components
+    visited        = falses(n)
+    clustersidx    = similar(eachindex(pts))
+    elem_ptr       = similar(eachindex(pts), n+1)
+    queue          = DataStructures.CircularBuffer{Int}(n)
+    
+    counter        = firstindex(pts)
+    Cidx           = firstindex(elem_ptr)
+    elem_ptr[Cidx] = counter
+    
+    @inbounds for start in eachindex(pts)
+        if !visited[start]
+            push!(queue, start)
+            visited[start] = true
+            while !isempty(queue)
+                node = popfirst!(queue)
+                clustersidx[counter] = node
+                counter += 1
+                for neighbor in eachindex(pts)
+                    if !visited[neighbor] && distance_squared(pts[node], pts[neighbor]) <= group_distance^2
+                        push!(queue, neighbor)
+                        visited[neighbor] = true
+                    end
+                end
+            end
+            Cidx += 1
+            elem_ptr[Cidx] = counter
+        end
+    end
+    clustersidx, elem_ptr[begin:Cidx]
+end
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+    clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
+    VectorOfVectors(pts[clustersidx], elem_ptr)
+end
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+    @assert eachindex(pts) == eachindex(energies)
+    clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
+    VectorOfVectors(pts[clustersidx], elem_ptr), VectorOfVectors(energies[clustersidx], elem_ptr)
+end
+
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, radius::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}, VectorOfVectors{T}} where {T <: SSDFloat}
+    @assert eachindex(pts) == eachindex(energies) == eachindex(radius)
+    clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
+    VectorOfVectors(pts[clustersidx], elem_ptr), VectorOfVectors(energies[clustersidx], elem_ptr), VectorOfVectors(radius[clustersidx], elem_ptr)
+end

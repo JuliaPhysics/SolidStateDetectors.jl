@@ -48,6 +48,7 @@ import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_unit
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
+import DataStructures
 import Distributions
 import GPUArrays
 import IntervalSets
