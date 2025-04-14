@@ -25,6 +25,7 @@ sim = Simulation(path_to_config_file)
 """
 const SSD_examples = Dict{Symbol,String}([
     :TwoSpheresCapacitor                     => joinpath(get_path_to_example_config_files(), "two_spheres_capacitor.yaml"),
+    :TrueCoaxial                             => joinpath(get_path_to_example_config_files(), "public_TrueCoaxial.yaml"),
     :InvertedCoax                            => joinpath(get_path_to_example_config_files(), "public_ivc_config.yaml"),
     :InvertedCoaxInCryostat                  => joinpath(get_path_to_example_config_files(), "ivc_splitted_config/public_ivc_cryostat_config.yaml"),
     :InvertedCoaxTrapping                    => joinpath(get_path_to_example_config_files(), "public_ivc_trapping_config.yaml"),

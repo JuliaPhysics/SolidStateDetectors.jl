@@ -147,19 +147,19 @@ function _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, curre
 end
 _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, ::Missing) where {T <: SSDFloat} = nothing
 
-function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Electron})::Nothing where {T <: SSDFloat}
+function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, current_pos::Vector{CartesianPoint{T}}, ::Type{Electron})::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if !done[n]
-            step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm) * Δt
+            step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm, current_pos[n]) * Δt
         end
     end
     nothing
 end
 
-function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Hole})::Nothing where {T <: SSDFloat}
+function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, current_pos::Vector{CartesianPoint{T}}, ::Type{Hole})::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if !done[n]
-            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm) * Δt
+            step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm, current_pos[n]) * Δt
         end
     end
     nothing
@@ -299,7 +299,7 @@ function _drift_charge!(
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
-        _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
+        _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, current_pos, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)

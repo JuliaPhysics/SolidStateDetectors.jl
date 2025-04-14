@@ -39,13 +39,13 @@ function IsotropicChargeDriftModel{T}(config::AbstractDict) where {T <: SSDFloat
     IsotropicChargeDriftModel{T}(config["mobilities"]["e"], config["mobilities"]["h"])
 end
 
-@fastmath function getVe(fv::SVector{3, T}, cdm::IsotropicChargeDriftModel{T}) where {T <: SSDFloat}
+@fastmath function getVe(fv::SVector{3, T}, cdm::IsotropicChargeDriftModel{T}, current_pos::CartesianPoint{T} = zero(CartesianPoint{T})) where {T <: SSDFloat}
     @inbounds begin 
         -cdm.μ_e*fv
     end
 end
 
-@fastmath function getVh(fv::SVector{3, T}, cdm::IsotropicChargeDriftModel{T}) where {T <: SSDFloat}
+@fastmath function getVh(fv::SVector{3, T}, cdm::IsotropicChargeDriftModel{T}, current_pos::CartesianPoint{T} = zero(CartesianPoint{T})) where {T <: SSDFloat}
     @inbounds begin 
         cdm.μ_h*fv
     end
