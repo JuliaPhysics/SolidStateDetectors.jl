@@ -151,17 +151,17 @@ end
 ```
 
 The second step is to define two methods (`getVe` for electrons and `getVh` for holes), which perform the transformation of an electric field vector, `fv::SVector{3,T}`, into a velocity vector.
-Note, that the vectors are in cartesian coordinates, independent of the coordinate system (cartesian or cylindrical) of the simulation. 
+Note, that the vectors are in cartesian coordinates, independent of the coordinate system (cartesian or cylindrical) of the simulation. Even if not used, the third argument of `getVe` and `getVh` should be a `CartesianPoint{T}`, which also allows to define position-dependent mobility models.
 
 ```julia
 using StaticArrays
-function SolidStateDetectors.getVe(fv::SVector{3, T}, cdm::CustomChargeDriftModel)::SVector{3, T} where {T <: SSDFloat}
-    # arbitrary transformation of fv
+function SolidStateDetectors.getVe(fv::SVector{3, T}, cdm::CustomChargeDriftModel, current_pos::CartesianPoint{T})::SVector{3, T} where {T <: SSDFloat}
+    # arbitrary transformation of fv, optionally position dependent 
     return -fv
 end
 
-function SolidStateDetectors.getVh(fv::SVector{3, T}, cdm::CustomChargeDriftModel)::SVector{3, T} where {T <: SSDFloat}
-    # arbitrary transformation of fv
+function SolidStateDetectors.getVh(fv::SVector{3, T}, cdm::CustomChargeDriftModel, current_pos::CartesianPoint{T})::SVector{3, T} where {T <: SSDFloat}
+    # arbitrary transformation of fv, optionally position dependent
     return fv
 end
 ```
