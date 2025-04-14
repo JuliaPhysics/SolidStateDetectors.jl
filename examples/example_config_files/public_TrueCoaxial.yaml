@@ -1,0 +1,75 @@
+name: TrueCoaxial
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 10.01
+      boundaries: inf
+    phi:
+      from: 0
+      to: 120
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -0.01
+      to: 10.01
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 77
+    impurity_density:
+      name: "constant"
+      value: 1e8cm^-3
+    charge_drift_model:
+      include: ADLChargeDriftModel/drift_velocity_config.yaml
+    geometry:
+      cone:
+        r:
+          bottom:
+            from: 1.0
+            to: 10.0
+          top:
+            from: 1.0
+            to: 10.0    
+        h: 10 
+        origin:
+          z: 5
+  contacts:
+    - name: "P+"
+      id: 1
+      material: HPGe
+      potential: -500
+      geometry:
+        tube:
+          r:
+            from: 0.5
+            to: 1
+          h: 10
+          origin:
+            z: 5
+    - name: "N+"
+      id: 2
+      material: HPGe
+      potential: 0
+      geometry:
+        tube:
+          r:
+            bottom:
+              from: 10.0
+              to: 10.5
+            top:
+              from: 10.
+              to: 10.5
+          h: 10.
+          origin:
+            z: 5
