@@ -29,7 +29,7 @@ If [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) is loaded, t
 * `number_of_shells::Int = 1`: Number of shells around the `center` point of the energy deposition.
 * `verbose = false`: Activate or deactivate additional info output.
 * `chunk_n_physics_events::Int = 1000` (`LegendHDF5IO` only): Number of events that should be saved in a single HDF5 output file.
-* `killdrift_while_nofield::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
+* `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
 
 ## Examples
 ```julia 
@@ -55,7 +55,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
                              verbose::Bool = false,
-                             killdrift_while_nofield::Bool = true ) where {T <: SSDFloat}
+                             end_drift_when_no_field::Bool = true ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -73,7 +73,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
 
     # First simulate drift paths
     drift_paths_and_edeps = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, 
-        diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose, killdrift_while_nofield)
+        diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose, end_drift_when_no_field)
     drift_paths = map(x -> vcat([vcat(ed...) for ed in x[1]]...), drift_paths_and_edeps)
     edeps = map(x -> vcat([vcat(ed...) for ed in x[2]]...), drift_paths_and_edeps)
     # now iterate over contacts and generate the waveform for each contact
@@ -130,13 +130,13 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   number_of_carriers::Int, 
                                   number_of_shells::Int,
                                   verbose::Bool,
-                                  killdrift_while_nofield::Bool ) where {T <: SSDFloat}
+                                  end_drift_when_no_field::Bool ) where {T <: SSDFloat}
     @showprogress map(mcevents) do phyevt
         locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
                 VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]),
                 electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, 
-                diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, killdrift_while_nofield = killdrift_while_nofield
+                diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field
             ),
             eachindex(edeps)            
         )
