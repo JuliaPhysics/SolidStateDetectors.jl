@@ -31,7 +31,8 @@ material_properties[:HPGe] = (
     ml = 1.64,
     mt = 0.0819,
     De = 101u"cm^2/s",
-    Dh = 49u"cm^2/s"
+    Dh = 49u"cm^2/s",
+    DT = 78u"K" # Temperature in Einstein's relation for diffusion calculation
 )
 
 # These values might just be approximations

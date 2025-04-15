@@ -103,7 +103,7 @@ function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, curre
     for n in eachindex(step_vectors)
        if !done[n]
            step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
-           done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
+        #    done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
        end
     end
     nothing
@@ -112,6 +112,34 @@ end
 function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if done[n] continue end
+        sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
+        sinφ::T, cosφ::T = sincos(T(rand()*2π))
+        step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
+    end
+    nothing 
+end
+function _add_fieldvector_diffusion_TiedWithMobility!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, calculate_mobility::Function, current_pos::Vector{CartesianPoint{T}}, crystal_temperature::T, CC::Type{Electron})::Nothing where {T <: SSDFloat}
+    for n in eachindex(step_vectors)
+        if done[n] continue end
+
+        mu=calculate_mobility(current_pos[n], CC) # mobility_mu in m^2/V/s
+        D=mu*crystal_temperature*8.617e-5 # D = mobility_mu * k0*T_Deadlayer/e # D in m^2/s # k0=8.617e-5 eV/K
+        length=sqrt(6*D*Δt)
+
+        sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
+        sinφ::T, cosφ::T = sincos(T(rand()*2π))
+        step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
+    end
+    nothing 
+end
+function _add_fieldvector_diffusion_TiedWithMobility!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, calculate_mobility::Function, current_pos::Vector{CartesianPoint{T}}, crystal_temperature::T, CC::Type{Hole})::Nothing where {T <: SSDFloat}
+    for n in eachindex(step_vectors)
+        if done[n] continue end
+
+        mu=calculate_mobility(current_pos[n], CC) # mobility_mu in m^2/V/s
+        D=mu*crystal_temperature*8.617e-5 # D = mobility_mu * k0*T_Deadlayer/e # D in m^2/s # k0=8.617e-5 eV/K
+        length=sqrt(6*D*Δt)
+
         sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
         sinφ::T, cosφ::T = sincos(T(rand()*2π))
         step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
@@ -287,12 +315,27 @@ function _drift_charge!(
     else
         zero(T)
     end
+    crystal_temperature::T = if diffusion
+        if haskey(det.semiconductor.material, :DT)
+            _parse_value(T, det.semiconductor.material.DT, u"K")
+        else 
+            @info "Ignoring diffusion for now"
+            diffusion = false
+            T(77)
+        end
+    else
+        T(77)
+    end
 
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
+
+    # if the drifting model has a calculate_mobility function (scalar mobility), then we use the mobility-tied diffusion model
+    # TODO: adapt the code to 3D-vector mobility
+    use_mobility_tied_diffusion = :calculate_mobility in propertynames(det.semiconductor.charge_drift_model) 
     
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
@@ -300,7 +343,8 @@ function _drift_charge!(
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, current_pos, CC)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
+        diffusion && !use_mobility_tied_diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
+        diffusion && use_mobility_tied_diffusion && _add_fieldvector_diffusion_TiedWithMobility!(step_vectors, done, Δt, det.semiconductor.charge_drift_model.calculate_mobility, current_pos, crystal_temperature, CC)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
