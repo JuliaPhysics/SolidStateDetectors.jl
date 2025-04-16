@@ -99,7 +99,7 @@ function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <
 end
 
 function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, 
-    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S}, end_drift_when_no_field::Bool)::Nothing where {T, S}
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S}, end_drift_when_no_field::Bool = true)::Nothing where {T, S}
     for n in eachindex(step_vectors)
        if !done[n]
            step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
