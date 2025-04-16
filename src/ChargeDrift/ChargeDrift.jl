@@ -118,7 +118,7 @@ function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, d
     end
     nothing 
 end
-function _add_fieldvector_diffusion_TiedWithMobility!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, calculate_mobility::Function, current_pos::Vector{CartesianPoint{T}}, crystal_temperature::T, ::Type{CC})::Nothing where {T <: SSDFloat, CC <: ChargeCarrier}
+function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, calculate_mobility::Function, current_pos::Vector{CartesianPoint{T}}, crystal_temperature::T, ::Type{CC})::Nothing where {T <: SSDFloat, CC <: ChargeCarrier}
     for n in eachindex(step_vectors)
         if done[n] continue end
 
@@ -320,8 +320,7 @@ function _drift_charge!(
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S, end_drift_when_no_field)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, current_pos, CC)
-        diffusion && !use_mobility_tied_diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
-        diffusion && use_mobility_tied_diffusion && _add_fieldvector_diffusion_TiedWithMobility!(step_vectors, done, Δt, det.semiconductor.charge_drift_model.calculate_mobility, current_pos, crystal_temperature, CC)
+        diffusion && (use_mobility_tied_diffusion ? _add_fieldvector_diffusion!(step_vectors, done, Δt, det.semiconductor.charge_drift_model.calculate_mobility, current_pos, crystal_temperature, CC) : _add_fieldvector_diffusion!(step_vectors, done, diffusion_length))
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
