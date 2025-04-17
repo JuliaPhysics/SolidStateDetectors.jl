@@ -77,7 +77,7 @@ export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
-export LinearImpurityDensity, LinBouleImpurityDensity, LinExpBouleImpurityDensity
+export LinBouleImpurityDensity, ParBouleImpurityDensity, LinExpBouleImpurityDensity, ParExpBouleImpurityDensity
 
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
