@@ -11,6 +11,7 @@ to_internal_units(x::AngleQuantity)  = ustrip(internal_angle_unit, x)
 to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-1)}) = ustrip(internal_length_unit^(-1), x) # charge trapping
 to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-3)}) = ustrip(internal_length_unit^(-3), x) # densities
 to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-4)}) = ustrip(internal_length_unit^(-4), x) # density gradients
+to_internal_units(x::Quantity{<:Real, Unitful.𝐋^(-5)}) = ustrip(internal_length_unit^(-5), x) # density quadratic components
 to_internal_units(x::AbstractArray) = to_internal_units.(x)
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, Unitful.𝐋}) = uconvert(unit, x * internal_length_unit)
