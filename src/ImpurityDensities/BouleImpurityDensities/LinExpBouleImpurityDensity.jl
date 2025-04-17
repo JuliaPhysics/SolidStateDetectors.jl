@@ -27,7 +27,7 @@ function ImpurityDensity(T::DataType, t::Val{:linear_exponential_boule}, dict::A
     b::T = haskey(dict, "b") ? _parse_value(T, dict["b"], input_units.length^(-4)) : T(0)
     n::T = haskey(dict, "n") ? _parse_value(T, dict["n"], input_units.length^(-3)) : T(0)
     l::T = haskey(dict, "l") ? _parse_value(T, dict["l"], input_units.length) : T(0)
-    m::T = haskey(dict, "m") ? _parse_value(T, dict["m"], input_units.length) : T(0)
+    m::T = haskey(dict, "m") ? _parse_value(T, dict["m"], input_units.length) : T(1)
     det_z0::T = haskey(dict, "det_z0") ? _parse_value(T, dict["det_z0"], input_units.length) : T(0)
     LinExpBouleImpurityDensity{T}(a, b, n, l, m, det_z0)
 end

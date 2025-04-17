@@ -30,7 +30,7 @@ function ImpurityDensity(T::DataType, t::Val{:parabolic_exponential_boule}, dict
     c::T = haskey(dict, "c") ? _parse_value(T, dict["c"], input_units.length^(-5)) : T(0)
     n::T = haskey(dict, "n") ? _parse_value(T, dict["n"], input_units.length^(-3)) : T(0)
     l::T = haskey(dict, "l") ? _parse_value(T, dict["l"], input_units.length) : T(0)
-    m::T = haskey(dict, "m") ? _parse_value(T, dict["m"], input_units.length) : T(0)
+    m::T = haskey(dict, "m") ? _parse_value(T, dict["m"], input_units.length) : T(1)
     det_z0::T = haskey(dict, "det_z0") ? _parse_value(T, dict["det_z0"], input_units.length) : T(0)
     ParExpBouleImpurityDensity{T}(a, b, c, n, l, m, det_z0)
 end
