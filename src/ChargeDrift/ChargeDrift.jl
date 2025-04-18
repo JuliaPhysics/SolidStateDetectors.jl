@@ -36,7 +36,7 @@ end
 function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                         starting_points::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T},
                         electric_field::Interpolations.Extrapolation{<:SVector{3}, 3},
-                        Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
+                        Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true, end_drift_when_no_field::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
     drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(flatview(starting_points)))
     dt::T = T(to_internal_units(Δt))
@@ -53,8 +53,8 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
         timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
         timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
         
-        n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
-        n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose )
+        n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field )
+        n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field )
     
         for i in eachindex(start_points)
             drift_paths[drift_path_counter + i] = EHDriftPath{T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
@@ -99,11 +99,11 @@ function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <
 end
 
 function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, 
-    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S}, end_drift_when_no_field::Bool = true)::Nothing where {T, S}
     for n in eachindex(step_vectors)
        if !done[n]
            step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
-           done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
+           done[n] = end_drift_when_no_field && (step_vectors[n] == CartesianVector{T}(0,0,0))
        end
     end
     nothing
@@ -112,6 +112,20 @@ end
 function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if done[n] continue end
+        sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
+        sinφ::T, cosφ::T = sincos(T(rand()*2π))
+        step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
+    end
+    nothing 
+end
+function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, calculate_mobility::Function, current_pos::Vector{CartesianPoint{T}}, crystal_temperature::T, ::Type{CC})::Nothing where {T <: SSDFloat, CC <: ChargeCarrier}
+    for n in eachindex(step_vectors)
+        if done[n] continue end
+
+        mu=calculate_mobility(current_pos[n], CC) # mu in m^2/V/s
+        D=mu*crystal_temperature*kB/elementary_charge # D in m^2/s
+        length=sqrt(6*D*Δt)
+
         sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
         sinφ::T, cosφ::T = sincos(T(rand()*2π))
         step_vectors[n] += CartesianVector{T}( length * cosφ * sinθ, length * sinφ * sinθ, length * cosθ )
@@ -249,7 +263,8 @@ function _drift_charge!(
                             ::Type{CC};
                             diffusion::Bool = false,
                             self_repulsion::Bool = false,
-                            verbose::Bool = true
+                            verbose::Bool = true,
+                            end_drift_when_no_field::Bool = true
                         )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
                         
     n_hits::Int, max_nsteps::Int = size(drift_path)
@@ -287,20 +302,25 @@ function _drift_charge!(
     else
         zero(T)
     end
+    crystal_temperature::T = det.semiconductor.temperature
 
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
+
+    # if the drifting model has a calculate_mobility function (scalar mobility), then we use the mobility-tied diffusion model
+    # TODO: adapt the code to 3D-vector mobility
+    use_mobility_tied_diffusion = hasproperty(det.semiconductor.charge_drift_model, :calculate_mobility)
     
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
-        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
+        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S, end_drift_when_no_field)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, current_pos, CC)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
+        diffusion && (use_mobility_tied_diffusion ? _add_fieldvector_diffusion!(step_vectors, done, Δt, det.semiconductor.charge_drift_model.calculate_mobility, current_pos, crystal_temperature, CC) : _add_fieldvector_diffusion!(step_vectors, done, diffusion_length))
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
