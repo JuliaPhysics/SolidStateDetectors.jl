@@ -92,9 +92,10 @@ function project_to_plane(v⃗::AbstractArray, n⃗::AbstractArray) #Vector to b
 end
 
 function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
-    for n in eachindex(v)
-        v[n] = CartesianVector{T}(0,0,0)
-    end
+    v .= (CartesianVector{T}(0,0,0),)
+    # for n in eachindex(v)
+    #     v[n] = CartesianVector{T}(0,0,0)
+    # end
     nothing
 end
 
