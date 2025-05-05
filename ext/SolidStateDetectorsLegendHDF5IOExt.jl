@@ -4,8 +4,8 @@ module SolidStateDetectorsLegendHDF5IOExt
 
 import ..LegendHDF5IO
 
-using SolidStateDetectors
-using SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
+using ..SolidStateDetectors
+using ..SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
 using TypedTables, Unitful
 using Format
 
