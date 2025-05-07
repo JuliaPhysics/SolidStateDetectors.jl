@@ -121,3 +121,90 @@ end
 
 
 
+
+"""
+    struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T}
+        
+This constant-lifetime-based charge trapping model is similar to the Boggs model, which is constant-mean-free-path based.
+
+The model implemented has two sets of parameters for the sensitive (bulk) and inactive (dead layer/surface layer) volume respectively.
+The inactive layer effect will only be considered if the corresponding `inactive_layer_geometry` is defined.
+
+## Fields
+* `τh::T`: Lifetime for holes in bulk volume (sensitive region) (default: `τh = 1ms`).
+* `τe::T`: Lifetime for electrons in bulk volume (default: `τe = 1ms`).
+* `τh_inactive::T`: Lifetime for holes in surface layer (dead layer/inactive layer) (default: `τh_inactive = 1ms`).
+* `τe_inactive::T`: Lifetime for electrons in surface layer (default: `τe_inactive = 1ms`).
+* `inactive_layer_geometry`: The geometry of the inactive layer. When this is defined, the model will consider the inactive effect.
+> Note: All τ must be much bigger than `Δt`.
+
+See also [Charge Trapping Models](@ref).
+"""
+struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractChargeTrappingModel{T}
+    τh::T
+    τe::T
+    τh_inactive::T
+    τe_inactive::T
+    inactive_layer_geometry::G
+end
+
+function _calculate_signal( 
+        ctm::ConstantLifetimeChargeTrappingModel{T}, 
+        path::AbstractVector{CartesianPoint{T}}, 
+        pathtimestamps::AbstractVector{T}, 
+        charge::T,          
+        wpot::Interpolations.Extrapolation{T, 3}, 
+        S::CoordinateSystemType
+    )::Vector{T} where {T <: SSDFloat}
+
+    tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
+
+    running_sum::T = zero(T)
+    q::T = charge
+
+    inactive_layer_exist = !isnothing(ctm.inactive_layer_geometry)
+    τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
+    τ_inactive::T = ifelse(charge > 0, ctm.τh_inactive, ctm.τe_inactive)
+    Δt_minimum = minimum(diff(pathtimestamps))
+    if τ<Δt_minimum || τ_inactive<Δt_minimum 
+        throw(ArgumentError("The carrier lifetime should be at least bigger than Δt in the `ConstantLifetimeChargeTrappingModel`"))
+    end
+
+    @inbounds for i in eachindex(tmp_signal)
+        Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
+        τi::T = (inactive_layer_exist && in(path[i], ctm.inactive_layer_geometry)) ? τ_inactive : τ
+        Δq::T = q * Δt/τi
+        q -= Δq
+        w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
+        running_sum += w * Δq
+        tmp_signal[i] = running_sum + w * q
+    end
+
+    tmp_signal
+end
+
+
+ConstantLifetimeChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = ConstantLifetimeChargeTrappingModel{T}(args...; kwargs...)
+function ConstantLifetimeChargeTrappingModel{T}(config_dict::AbstractDict = Dict()) where {T <: SSDFloat}
+    τh::T = ustrip(u"s", 1u"ms")
+    τe::T = ustrip(u"s", 1u"ms")
+    τh_inactive::T = ustrip(u"s", 80u"ns")
+    τe_inactive::T = ustrip(u"s", 80u"ns")
+
+    if haskey(config_dict, "model") && !haskey(config_dict, "parameters")
+        throw(ConfigFileError("`ConstantLifetimeChargeTrappingModel` does not have `parameters`"))
+    end
+
+    parameters = haskey(config_dict, "parameters") ? config_dict["parameters"] : config_dict
+    inactive_layer_geometry = haskey(config_dict, "inactive_layer_geometry") ? config_dict["inactive_layer_geometry"] : nothing
+
+    allowed_keys = ("τh", "τe", "τh_inactive", "τe_inactive")
+    k = filter(k -> !(k in allowed_keys), keys(parameters))
+    !isempty(k) && @warn "The following keys will be ignored: $(k).\nAllowed keys are: $(allowed_keys)"
+
+    if haskey(parameters, "τh")   τh =     _parse_value(T, parameters["τh"], internal_time_unit) end
+    if haskey(parameters, "τe")   τe =     _parse_value(T, parameters["τe"], internal_time_unit) end
+    if haskey(parameters, "τh_inactive")   τh_inactive =     _parse_value(T, parameters["τh_inactive"], internal_time_unit) end
+    if haskey(parameters, "τe_inactive")   τe_inactive =     _parse_value(T, parameters["τe_inactive"], internal_time_unit) end
+    ConstantLifetimeChargeTrappingModel{T, typeof(inactive_layer_geometry)}(τh, τe, τh_inactive, τe_inactive, inactive_layer_geometry)
+end
