@@ -140,6 +140,44 @@ function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}
     nothing
 end
 
+function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}}, XI::Vector{T}, YI::Vector{T}, ZI::Vector{T}, XJ::Vector{T}, YJ::Vector{T}, ZJ::Vector{T}, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz::Vector{T}, ΔY_nz::Vector{T}, ΔZ_nz::Vector{T}, charges::Vector{T}, S_X, S_Y, S_Z, Field_X::Vector{T}, Field_Y::Vector{T}, Field_Z::Vector{T}, ϵ_r::T)::Nothing where {T <: SSDFloat}
+
+    # Update equivalents of nonzeros(spdiagm(X) * Adj), etc.:
+    XI .= view_XI
+    YI .= view_YI
+    ZI .= view_ZI
+    # Update equivalents of nonzeros(Adj * spdiagm(X)), etc.:
+    XJ .= view_XJ
+    YJ .= view_YJ
+    ZJ .= view_ZJ
+
+    update_distances(XI, YI, ZI, XJ, YJ, ZJ, ΔX_nz, ΔY_nz, ΔZ_nz)
+    
+    inv_4π_ϵ0_ϵ_r = inv(4π * ϵ0 * ϵ_r)
+
+    function calc_tmp_d3(Δx::T, Δy::T, Δz::T) where {T<:Real}
+        #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
+        inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
+        elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
+    end
+
+    # Update Tmp_D3_nz:
+    Tmp_D3_nz .= calc_tmp_d3.(ΔX_nz, ΔY_nz, ΔZ_nz)
+    # Update S_X, S_Y, S_Z:
+    nonzeros(S_X) .= ΔX_nz .* Tmp_D3_nz
+    nonzeros(S_Y) .= ΔY_nz .* Tmp_D3_nz
+    nonzeros(S_Z) .= ΔZ_nz .* Tmp_D3_nz
+
+    # Update E-field components:
+    mul!(Field_X, S_X, charges)
+    mul!(Field_Y, S_Y, charges)
+    mul!(Field_Z, S_Z, charges)
+
+    step_vectors .+= CartesianVector.(Field_X, Field_Y, Field_Z)
+    nothing
+end
+
+
 function _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, vdv::Vector{V})::Nothing where {T <: SSDFloat, V <: AbstractVirtualVolume{T}}
     for n in eachindex(step_vectors)
         step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], vdv)
