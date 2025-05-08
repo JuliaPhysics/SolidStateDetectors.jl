@@ -7,8 +7,8 @@ import LegendHDF5IO
 
 include("sim.jl")
 
-starting_positions = [CartesianPoint{T}(-0.02, 0.015, 0.04),
-    CartesianPoint{T}(0.015, -0.012, 0.02),
+starting_positions = [CartesianPoint{T}(-0.02, 0.015, 0.04), 
+    CartesianPoint{T}(0.015, -0.012, 0.02), 
     CartesianPoint{T}(0.01, -0.025, 0.01)]
 energy_depos = T[1460, 609, 1000] * u"keV" # are needed later in the signal generation
 
@@ -43,11 +43,11 @@ dt::T = T(to_internal_units(Δt))
 drift_path_counter::Int = 0
 
 # for (i, start_points) in enumerate(starting_points)
-i = 1
-start_points = first(starting_points)
+# i = 1
+start_points = flatview(starting_points)
 
 n_hits::Int = length(start_points)
-charges::Vector{T} = energies[i] ./ to_internal_units(det.semiconductor.material.E_ionisation)
+charges::Vector{T} = flatview(energies) ./ to_internal_units(det.semiconductor.material.E_ionisation)
 
 drift_path_e::Array{CartesianPoint{T},2} = Array{CartesianPoint{T},2}(undef, n_hits, max_nsteps)
 drift_path_h::Array{CartesianPoint{T},2} = Array{CartesianPoint{T},2}(undef, n_hits, max_nsteps)
