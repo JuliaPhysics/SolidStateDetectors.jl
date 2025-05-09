@@ -58,7 +58,7 @@ import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
              range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in, convert,
-             show, print, println, display, +, -, &
+             show, print, println, display, +, -, &, *
 
 export SolidStateDetector
 export SSD_examples
