@@ -129,7 +129,7 @@ function _convertEnergyDepsToChargeDeps(
                     T.(to_internal_units(edep[iEdep_indep][i_together])),
                     number_of_carriers,
                     number_of_shells = number_of_shells,
-                    radius = T(to_internal_units(edep[iEdep_indep][i_together]))
+                    radius = T(to_internal_units(radius[iEdep_indep][i_together]))
                 )
                 move_charges_inside_semiconductor!([nbcc.locations], [nbcc.energies], det)
                 nbcc
