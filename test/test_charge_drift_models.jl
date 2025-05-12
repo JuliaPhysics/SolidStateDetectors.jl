@@ -27,11 +27,10 @@ nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)
         signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
     end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
-    @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
 
-@timed_testset "Charge Trapping" begin
+@timed_testset "Charge Trapping: BoggsChargeTrappingModel" begin
     sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}())
     evt = Event(pos, Edep)
     timed_simulate!(evt, sim)
@@ -40,7 +39,6 @@ end
         signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
     end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
-    @info signalsum
     @test signalsum < T(1.99)
 
     config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:InvertedCoax])
@@ -79,6 +77,106 @@ end
         @test simB.detector.semiconductor.charge_trapping_model.temperature == T(100)
 
     end
+end
+
+@timed_testset "Charge Trapping: ConstantLifetimeChargeTrappingModel" begin
+    # test 1: parse the lifetimes and the inactive layer geometry
+    simA = @test_nowarn Simulation{T}(SSD_examples[:TrueCoaxial])
+    @testset "Parse the TrueCoaxial config file" begin
+        @test simA.detector.semiconductor.charge_trapping_model isa ConstantLifetimeChargeTrappingModel{T}
+        @test simA.detector.semiconductor.charge_trapping_model.τh == T(1e-3)
+        @test simA.detector.semiconductor.charge_trapping_model.τe == T(1e-3)
+        @test simA.detector.semiconductor.charge_trapping_model.τh_inactive == T(8e-8)
+        @test simA.detector.semiconductor.charge_trapping_model.τe_inactive  == T(8e-8)
+        @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.origin == CartesianPoint{T}(0.0, 0.0, 0.005)
+        r0, r1 = T.((0.009, 0.01))
+        @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.r == tuple((r0, r1), (r0, r1))
+        @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.hZ == T(0.005)
+    end
+
+    timed_simulate!(simA, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
+    simA_inactive_layer_geometry=deepcopy(simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry)
+
+    # test2: only model the bulk volume, test the bulk signals while varying the lifetime: τ
+    pos = CartesianPoint{T}(0.005,0,0.005); Edep = 1u"eV"
+    signalsum_list = T[]
+    τ_list = (10 .^ (-3:0.3:0))*u"ms"
+    for τ in τ_list
+        parameters = Dict("parameters" => Dict("τh" => τ, "τe" => τ))
+        trapping_model=ConstantLifetimeChargeTrappingModel{T}(parameters)
+        simA.detector = SolidStateDetector(simA.detector, trapping_model)
+        evt = Event(pos, Edep)
+        timed_simulate!(evt, simA)
+        signalsum = T(0)
+        for i in 1:length(evt.waveforms)
+            signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
+        end
+        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(simA.detector.semiconductor.material)))
+        push!(signalsum_list, signalsum)
+    end
+    @test all(signalsum_list .< T(2.0))
+    @test all(diff(signalsum_list) .> 0)
+
+    # test3: model both the bulk/inactive volumes
+    ## test 3.1: the bulk/inactive signals while varying the lifetimes: τ, τ_inactive
+    pos_bulk = CartesianPoint{T}(0.0085,0,0.005); Edep = 1u"eV"
+    @test !in(pos_bulk, simA_inactive_layer_geometry)
+    signalsum_list_bulk = T[]
+    τ_list = (10 .^ (-2:0.2:0))*u"ms"
+    pos_inactive = CartesianPoint{T}(0.0095,0,0.005); Edep = 1u"eV"
+    @test in(pos_inactive, simA_inactive_layer_geometry)
+    signalsum_list_inactive = T[]
+    τ_inactive_list = τ_list/100
+    for (τ,τ_inactive) in zip(τ_list, τ_inactive_list)
+        parameters = Dict("parameters" => Dict("τh" => τ, "τe" => τ, "τh_inactive" => τ_inactive, "τe_inactive" => τ_inactive),
+            "inactive_layer_geometry" => simA_inactive_layer_geometry)
+        trapping_model=ConstantLifetimeChargeTrappingModel{T}(parameters)
+        simA.detector = SolidStateDetector(simA.detector, trapping_model)
+        evt_bulk = Event(pos_bulk , Edep)
+        timed_simulate!(evt_bulk, simA)
+        signalsum_bulk  = T(0)
+        for i in 1:length(evt_bulk.waveforms)
+            signalsum_bulk  += abs(ustrip(evt_bulk.waveforms[i].signal[end]))
+        end
+        signalsum_bulk  *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(simA.detector.semiconductor.material)))
+        push!(signalsum_list_bulk, signalsum_bulk)
+
+        evt_inactive = Event(pos_inactive , Edep)
+        timed_simulate!(evt_inactive, simA)
+        signalsum_inactive  = T(0)
+        for i in 1:length(evt_inactive.waveforms)
+            signalsum_inactive  += abs(ustrip(evt_inactive.waveforms[i].signal[end]))
+        end
+        signalsum_inactive  *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(simA.detector.semiconductor.material)))
+        push!(signalsum_list_inactive, signalsum_inactive)
+    end
+    @test all(signalsum_list_bulk .< T(2.0))
+    @test all(diff(signalsum_list_bulk) .> 0)
+    @test all(signalsum_list_inactive .< T(2.0))
+    @test all(diff(signalsum_list_inactive) .> 0)
+    @test all(signalsum_list_bulk .> signalsum_list_inactive)
+
+    ## test 3.2: the inactive layer signals while varying the depth
+    τ, τ_inactive = 1u"ms", 100u"ns"
+    parameters = Dict("parameters" => Dict("τh" => τ, "τe" => τ, "τh_inactive" => τ_inactive, "τe_inactive" => τ_inactive),
+        "inactive_layer_geometry" => simA_inactive_layer_geometry)
+    trapping_model=ConstantLifetimeChargeTrappingModel{T}(parameters)
+    simA.detector = SolidStateDetector(simA.detector, trapping_model)
+    signalsum_list_inactive = T[]
+    for depth in (0.1:0.1:0.9)/1000
+        pos_inactive = CartesianPoint{T}(0.01-depth,0,0.005); Edep = 1u"eV"
+        @test in(pos_inactive, simA_inactive_layer_geometry)
+        evt_inactive = Event(pos_inactive , Edep)
+        timed_simulate!(evt_inactive, simA, Δt=1u"ns")
+        signalsum_inactive  = T(0)
+        for i in 1:length(evt_inactive.waveforms)
+            signalsum_inactive  += abs(ustrip(evt_inactive.waveforms[i].signal[end]))
+        end
+        signalsum_inactive  *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(simA.detector.semiconductor.material)))
+        push!(signalsum_list_inactive, signalsum_inactive)
+    end
+    @test all(signalsum_list_inactive .< T(2.0))
+    @test all(diff(signalsum_list_inactive) .> 0)
 end
 
 @timed_testset "Test completeness of charge drift models" begin

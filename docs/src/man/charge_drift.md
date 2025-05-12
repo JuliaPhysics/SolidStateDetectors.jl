@@ -219,7 +219,7 @@ In this case, the signal is calculated using the Schockley-Ramo theorem, i.e. by
 
 ### `BoggsChargeTrappingModel`
 
-In SolidStateDetectors.jl, the only charge trapping model implemented so far is the one presented in [Boggs _et al._ (2023)](https://doi.org/10.1016/j.nima.2023.168756).
+In SolidStateDetectors.jl, the Boggs charge trapping model implemented is the one presented in [Boggs _et al._ (2023)](https://doi.org/10.1016/j.nima.2023.168756).
 In this model, the charge cloud loses part of its charge at every point `path[i]` of the charge drift, depending on its drift and thermal velocity, as well as the trapping product $[n\sigma_{e/h}]^{-1}$ for electrons and holes.
 The charge signal is then given by the charge-decreased charge cloud reaching the contacts and the charges trapped on the way.
 
@@ -259,6 +259,74 @@ sim = Simulation{T}(SSD_examples[:InvertedCoax])
 parameters = Dict("parameters" => 
   Dict("nσe-1" => 1000u"cm", "nσh-1" => 500u"cm", "temperature" => 78u"K"))
 sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}(parameters))
+```
+
+### `ConstantLifetimeChargeTrappingModel`
+This constant-lifetime-based charge trapping model assumes electrons and holes to have a constant free lifetime throughout the crystal.
+In this model, the charge cloud loses part of its charge at every point `path[i]` of the charge drift, depending on the lifetime.
+The charge signal is then given by the charge-decreased charge cloud reaching the contacts and the charges trapped on the way.
+
+This idea is presented in [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638).
+
+Besides, the model implemented has two sets of parameters for the sensitive (bulk) and inactive (dead layer/surface layer) volume respectively.
+The inactive layer effect will only be considered if the corresponding `inactive_layer_geometry` is defined in the configuration file.
+
+The `ConstantLifetimeChargeTrappingModel` can be applied in the configuration file by adding a field `charge_trapping_model` to the `semiconductor` with `model: ConstantLifetime`, `parameters` defining the constant lifetime and `inactive_layer_geometry`(optional) defining the inactive volume:
+```yaml 
+detectors:
+  - semiconductor:
+      material: #...
+      geometry: #...
+      charge_trapping_model:
+        model: ConstantLifetime
+        parameters:
+          τh: 1ms
+          τe: 1ms
+          τh_inactive: 80ns
+          τe_inactive: 80ns
+        inactive_layer_geometry:
+          tube:
+            r:
+              from: 9.0
+              to: 10.0
+            h: 10.0
+            origin:
+              z: 5.0
+```
+
+The `ConstantLifetimeChargeTrappingModel` can also be applied to an already read-in `SolidStateDetector`, for example:
+```julia
+using SolidStateDetectors, Unitful
+T = Float64
+sim = Simulation{T}(SSD_examples[:TrueCoaxial])
+simulate!(sim)
+
+# only model the sensitive volume
+τh = τe = 1u"ms"
+parameters = Dict("parameters" => Dict("τh" => τh, "τe" => τe))
+
+# or model both the sensitive and inactive volumes based on a user-defined `inactive_layer_geometry`
+τh = τe = 1u"ms"
+τh_inactive = τe_inactive = 80u"ns"
+## define the inactive_layer_geometry, an example:
+inactive_layer_geometry_dict = Dict(
+        "tube" => Dict(
+            "r" => Dict("from" => 1.0u"mm", "to" => 10.0u"mm"),
+            "h" => 5.0u"mm",
+            "origin" => Dict("z" => 2.5u"mm")
+        )
+    )
+using SolidStateDetectors: AbstractGeometry, parse_CSG_transformation, combine_transformations, Geometry, construct_units
+outer_transformations = parse_CSG_transformation(T, sim.config_dict["detectors"][1], sim.input_units)
+inner_transformations = parse_CSG_transformation(T,sim.config_dict["detectors"][1]["semiconductor"], sim.input_units)
+transformations = combine_transformations(inner_transformations, outer_transformations)
+inactive_layer_geometry = Geometry(T, inactive_layer_geometry_dict, sim.input_units, transformations)
+## or simply use the already constructed geometry if the `inactive_layer_geometry ` geometry is defined in the configuration file
+# inactive_layer_geometry = sim.detector.semiconductor.charge_trapping_model.inactive_layer_geometry
+parameters = Dict("parameters" => Dict("τh" => τh, "τe" => τe, "τh_inactive" => τh_inactive, "τe_inactive" => τe_inactive), "inactive_layer_geometry" => inactive_layer_geometry)
+
+# pass the trapping model to the `sim.detector`
+sim.detector = SolidStateDetector(sim.detector, ConstantLifetimeChargeTrappingModel{T}(parameters))
 ```
 
 
