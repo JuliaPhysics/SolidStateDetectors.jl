@@ -819,7 +819,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
         max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
         max_distance_ratio::Real = 5,
-        depletion_handling::Bool = false
+        depletion_handling::Bool = false,
         use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
