@@ -26,10 +26,12 @@ medium: vacuum
 detectors:
 - semiconductor:
     material: HPGe
-    temperature: 77
+    temperature: 90
     impurity_density:
-      name: constant
-      value: 1e8cm^-3
+      name: PtypePNjunction
+      Li_annealing_temperature: 623
+      Li_annealing_time: 1080
+      bulk_imp: -1e10cm^-3
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     charge_trapping_model:
@@ -37,12 +39,12 @@ detectors:
       parameters:
         τh: 1ms
         τe: 1ms
-        τh_inactive: 80ns
-        τe_inactive: 80ns
+        τh_inactive: 1μs
+        τe_inactive: 1μs
       inactive_layer_geometry:
         tube:
           r:
-            from: 9.0
+            from: 8.957282
             to: 10.0
           h: 10.0
           origin:
@@ -56,19 +58,19 @@ detectors:
         origin:
           z: 5.0
   contacts:
-    - name: "P+"
+    - name: "P⁺"
       id: 1
       material: HPGe
       potential: -500
       geometry:
         tube:
           r:
-            from: 0.5
+            from: 1.0
             to: 1.0
           h: 10.0
           origin:
             z: 5.0
-    - name: "N+"
+    - name: "N⁺"
       id: 2
       material: HPGe
       potential: 0

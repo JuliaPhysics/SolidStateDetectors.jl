@@ -105,6 +105,25 @@ impurity_density:
 Here, the impurity density at the origin is $10^{10}$cm$^{-3}$ and it increases radially with the gradient $10^{10}$cm$^{-4}$.
 If no units are given, `init` is parsed in units of `units.length`$^{-3}$ and `gradient` in units of `units.length`$^{-4}$.
 
+### P-type PN junction Impurity Density
+A PN junctin impurity model based on lithium thermal diffusion and constant bulk impurity density. The surface lithium density is saturated.
+ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
+
+This density model could be defined in the code: 
+```julia
+T = Float64
+sim = Simulation{T}(SSD_examples[:TrueCoaxial])
+
+calculate_depth2surface = pt -> 0.01-hypot(pt[1], pt[2])
+Li_annealing_temperature::T=623
+Li_annealing_time::T=18*60
+Bulk_Impurity = p_type_density = -1e10 * 1e6
+
+pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, calculate_depth2surface, p_type_density)
+sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density)
+```
+
+This model couldn't be defined in the configuration because a depth2surface function is needed, except when using the public_TrueCoaxial.yaml.
 
 ### Custom Impurity Density
 
