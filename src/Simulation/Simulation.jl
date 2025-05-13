@@ -995,14 +995,14 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         maximum_applied_potential = maximum(broadcast(c -> c.potential, sim.detector.contacts))
         minimum_applied_potential = minimum(broadcast(c -> c.potential, sim.detector.contacts))
         @inbounds for i in eachindex(sim.electric_potential.data)
-            if sim.electric_potential.data[i] < minimum_applied_potential# p-type
+            if sim.electric_potential.data[i] < minimum_applied_potential # p-type
                 @warn """Detector seems not to be fully depleted at a bias voltage of $(bias_voltage) V.
                     At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
                     than the minimum applied potential ($(minimum_applied_potential) V). This should not be.
                     However, small overshoots could be due to numerical precision."""
                 break
             end
-            if sim.electric_potential.data[i] > maximum_applied_potential# n-type
+            if sim.electric_potential.data[i] > maximum_applied_potential # n-type
                 @warn """Detector seems not to be not fully depleted at a bias voltage of $(bias_voltage) V.
                     At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
                     than the maximum applied potential ($(maximum_applied_potential) V). This should not be.
