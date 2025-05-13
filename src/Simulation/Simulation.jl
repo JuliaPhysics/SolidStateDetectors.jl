@@ -819,7 +819,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         min_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
         max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, <:Union{LengthQuantity, AngleQuantity}, LengthQuantity}} = missing,
         max_distance_ratio::Real = 5,
-        depletion_handling::Bool = false,
+        depletion_handling::Bool = false
         use_nthreads::Union{Int, Vector{Int}} = Base.Threads.nthreads(),
         sor_consts::Union{Missing, <:Real, Tuple{<:Real,<:Real}} = missing,
         max_n_iterations::Int = 50000,
@@ -992,18 +992,17 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         end
     end
     if verbose && depletion_handling && isEP
-        depletion_tol = 0.1
         maximum_applied_potential = maximum(broadcast(c -> c.potential, sim.detector.contacts))
         minimum_applied_potential = minimum(broadcast(c -> c.potential, sim.detector.contacts))
         @inbounds for i in eachindex(sim.electric_potential.data)
-            if sim.electric_potential.data[i] < minimum_applied_potential - depletion_tol# p-type
+            if sim.electric_potential.data[i] < minimum_applied_potential# p-type
                 @warn """Detector seems not to be fully depleted at a bias voltage of $(bias_voltage) V.
                     At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
                     than the minimum applied potential ($(minimum_applied_potential) V). This should not be.
                     However, small overshoots could be due to numerical precision."""
                 break
             end
-            if sim.electric_potential.data[i] > maximum_applied_potential + depletion_tol # n-type
+            if sim.electric_potential.data[i] > maximum_applied_potential# n-type
                 @warn """Detector seems not to be not fully depleted at a bias voltage of $(bias_voltage) V.
                     At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
                     than the maximum applied potential ($(maximum_applied_potential) V). This should not be.
