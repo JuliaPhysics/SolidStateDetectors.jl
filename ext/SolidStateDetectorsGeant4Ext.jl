@@ -109,7 +109,7 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     end
 
     save_file(x_doc, output_filename)
-    detector = @suppress_out Geant4.G4JLDetectorGDML(output_filename)
+    detector = @suppress_out Geant4.G4JLDetectorGDML(output_filename; validate_schema = false)
     
     if !save_gdml 
         verbose && @warn "Temporary file $(output_filename) will be deleted."
@@ -119,12 +119,12 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
     detector 
 end
 
-function Geant4.G4JLDetector(input_filename::AbstractString, output_filename::AbstractString = "tmp.gdml"; verbose::Bool = true, save_gdml::Bool = false)
+function Geant4.G4JLDetector(input_filename::AbstractString, output_filename::AbstractString = "tmp.gdml"; validate_schema::Bool = true, kwargs...)
     if endswith(input_filename, ".gdml")
-        @suppress_out Geant4.G4JLDetectorGDML(input_filename)
+        @suppress_out Geant4.G4JLDetectorGDML(input_filename; validate_schema)
     else
         sim = SolidStateDetectors.Simulation(input_filename)
-        Geant4.G4JLDetector(sim, output_filename, verbose = verbose)
+        Geant4.G4JLDetector(sim, output_filename; kwargs...)
     end
 end
 
