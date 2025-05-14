@@ -30,3 +30,5 @@ function ImpurityDensity(T::DataType, t::Val{:constant}, dict::AbstractDict, inp
     ρ::T = haskey(dict, "value") ? _parse_value(T, dict["value"], input_units.length^(-3)) : T(0)
     ConstantImpurityDensity{T}( ρ )
 end
+
+(*)(scale::Real, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(scale * lcdm.ρ))

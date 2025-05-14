@@ -22,6 +22,13 @@ struct LinExpBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     det_z0::T
 end
 
+function LinExpBouleImpurityDensity{T}(pars::Vector{<:Number}, det_z0::Number) where {T}
+    LinExpBouleImpurityDensity{T}(
+        T.(to_internal_units(pars))..., 
+        T(to_internal_units(det_z0))
+        )
+end
+
 function ImpurityDensity(T::DataType, t::Val{:linear_exponential_boule}, dict::AbstractDict, input_units::NamedTuple)
     a::T = haskey(dict, "a") ? _parse_value(T, dict["a"], input_units.length^(-3)) : T(0)
     b::T = haskey(dict, "b") ? _parse_value(T, dict["b"], input_units.length^(-4)) : T(0)
@@ -37,3 +44,5 @@ function get_impurity_density(idm::LinExpBouleImpurityDensity, pt::AbstractCoord
     z = cpt[3]
     idm.a + idm.b * (idm.det_z0 - z) + idm.n * exp((idm.det_z0 - z - idm.l)/idm.m)
 end
+
+(*)(scale::Real, idm::LinExpBouleImpurityDensity{T}) where {T} = LinExpBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.n), idm.l, idm.m, idm.det_z0)
