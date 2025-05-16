@@ -30,6 +30,8 @@ using Unitful
 using UnitfulAtomic
 using YAML
 
+using StructArrays: StructVector 
+
 include("ka_compat.jl")
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
@@ -103,6 +105,7 @@ include("PotentialCalculation/PotentialCalculation.jl")
 
 include("ElectricField/ElectricField.jl")
 
+include("Simulation/Simulation.jl")
 include("ChargeCloudModels/ChargeCloudModels.jl")
 include("ChargeDrift/ChargeDrift.jl")
 include("SignalGeneration/SignalGeneration.jl")
@@ -110,7 +113,7 @@ include("SignalGeneration/SignalGeneration.jl")
 include("ChargeStatistics/ChargeStatistics.jl")
 include("ChargeClustering/ChargeClustering.jl")
 
-include("Simulation/Simulation.jl")
+#include("Simulation/Simulation.jl")
 include("Event/Event.jl")
 include("MCEventsProcessing/MCEventsProcessing.jl")
 

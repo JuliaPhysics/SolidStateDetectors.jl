@@ -109,6 +109,9 @@ end
 @inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cylindrical}) = CylindricalPoint(pt)
 @inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cartesian}) = CartesianPoint(pt)
 
+@inline _convert_point(pt::CartesianVector, ::Type{Cylindrical}) = CylindricalVector(pt)
+@inline _convert_point(pt::CartesianVector, ::Type{Cartesian}) = CartesianVector(pt)
+
 # function _Δφ(φ1::T, φ2::T)::T where {T}
 #     δφ = mod(φ2 - φ1, T(2π))
 #     min(δφ, T(2π) - δφ)
