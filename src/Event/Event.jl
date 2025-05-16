@@ -19,6 +19,59 @@ mutable struct Event{T <: SSDFloat}
     Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
 end
 
+# struct EDepEvent{T<:RealQuantity, U<:RealQuantity}
+#     Pos::AbstractVector{<:CartesianVector{T}}
+#     Q::AbstractVector{<:U}
+# end
+
+function convert_to_cartesian(vec::SVector{3, T}) where T
+    CartesianVector(vec[1], vec[2], vec[3])
+end
+
+function convert_to_cartesian(vec::CartesianPoint{T})::CartesianVector{T} where {T<: SSDFloat}
+    CartesianVector(vec.x, vec.y, vec.z)
+end
+
+function _ustrip_recursive(x::CartesianVector)
+    return CartesianVector(_ustrip_recursive.(Tuple(x))...)
+end
+
+function _ustrip_recursive(x::NamedTuple)
+    return NamedTuple{keys(x)}(_ustrip_recursive_keep_cartesian.(values(x)))
+end
+
+function _ustrip_recursive(x::Quantity)
+        return ustrip(x)
+end
+
+function _ustrip_recursive(x::SVector{3, T}) where T
+        return SVector{length(x)}(map(_ustrip_recursive, x))
+end
+
+function _ustrip_recursive(x::StaticArray)
+        return map(_ustrip_recursive, x)
+end
+
+function _ustrip_recursive(x::AbstractArray)
+    return map(_ustrip_recursive, x)
+end
+
+function _ustrip_recursive(x::Tuple)
+    return tuple((_ustrip_recursive.(x))...)
+end
+
+function _ustrip_recursive(x::Any)
+        return x
+end
+
+function convert_edepevents(event_table::Any)
+    Tables.istable(event_table) || throw(ArgumentError("event_table must be a table"))
+    Pos = Tables.getcolumn(event_table, :pos)
+    Pos = VectorOfVectors(innermap(convert_to_cartesian, Pos))
+    Q = Tables.getcolumn(event_table, :edep)
+    return StructVector{EDepEvent}((Pos, Q))
+end
+
 function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(T))::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
     evt.locations = VectorOfArrays([[CartesianPoint(location)]])

@@ -1,4 +1,5 @@
 using Plots
+using SolidStateDetectors
 using SolidStateDetectors: drift_charges, _drift_charges, interpolated_vectorfield, to_internal_units, interpolate!, Gridded, Linear, extrapolate, Periodic, EHDriftPath, flatview, _drift_charge!, Electron, Hole, _is_next_point_in_det, _set_to_zero_vector!, _add_fieldvector_drift!, _add_fieldvector_selfrepulsion!, get_coordinate_system, get_velocity_vector, _convert_point, _get_driftvectors!, getVe, SVector, _modulate_driftvectors!, modulate_driftvector, _check_and_update_position!, _parse_value, _add_fieldvector_diffusion!
 using Unitful
 using Interpolations
@@ -7,9 +8,9 @@ import LegendHDF5IO
 
 include("sim.jl")
 
-starting_positions = [CartesianPoint{T}(-0.02, 0.015, 0.04), 
-    CartesianPoint{T}(0.015, -0.012, 0.02), 
-    CartesianPoint{T}(0.01, -0.025, 0.01)]
+starting_positionsv = [CartesianVector{T}(-0.02, 0.015, 0.04), 
+    CartesianVector{T}(0.015, -0.012, 0.02), 
+    CartesianVector{T}(0.01, -0.025, 0.01)]
 energy_depos = T[1460, 609, 1000] * u"keV" # are needed later in the signal generation
 
 

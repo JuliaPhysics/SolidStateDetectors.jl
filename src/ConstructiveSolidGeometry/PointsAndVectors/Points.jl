@@ -208,6 +208,9 @@ end
 _vec_from_zero(pt::CylindricalPoint) = CartesianPoint(pt) - cartesian_zero
 
 
+@inline _convert_point(pt::CartesianVector, ::Type{Cylindrical}) = CylindricalVector(pt)
+@inline _convert_point(pt::CartesianVector, ::Type{Cartesian}) = CartesianVector(pt)
+
 # function _Δφ(φ1::T, φ2::T)::T where {T}
 #     δφ = mod(φ2 - φ1, T(2π))
 #     min(δφ, T(2π) - δφ)

@@ -145,7 +145,7 @@ function _convertEnergyDepsToChargeDeps(
     edeps = map.(cc -> cc.energies, charge_clouds)
     locations, edeps
 end
-
+# changing this so that it calls the correct drift_charges function with all events at once
 function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T},
                                   Δt::RealQuantity, max_nsteps::Int, 
                                   electric_field::Interpolations.Extrapolation,
