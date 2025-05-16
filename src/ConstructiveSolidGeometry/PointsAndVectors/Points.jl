@@ -47,7 +47,29 @@ function CartesianPoint{T}(;
     CartesianPoint{T}(T(x),T(y),T(z))
 end
 
-zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
+function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint{U}) where {T,U}
+    return CartesianPoint{T}(convert(T, pt.x), convert(T, pt.y), convert(T, pt.z))
+end
+
+
+Base.:(==)(a::CartesianPoint, b::CartesianPoint) = a.x == b.x && a.y == b.y && a.z == b.z
+
+function Base.isapprox(a::CartesianPoint, b::CartesianPoint; kwargs...)
+    return isapprox(a.x, b.x; kwargs...) && isapprox(a.y, b.y; kwargs...) && isapprox(a.z, b.z; kwargs...)
+end
+
+
+@inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
+@inline Base.:(-)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x - v.x, pt.y - v.y, pt.z - v.z)
+@inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
+
+
+Base.:(*)(A::StaticMatrix{3,3}, pt::CartesianPoint) = _ascartpoint(A * _asvector(pt))
+
+@inline _asvector(pt::CartesianPoint{T}) where {T} = SVector(pt.x, pt.y, pt.z)
+@inline _ascartpoint(v::StaticVector{3}) = CartesianPoint(v[1], v[2], v[3])
+
+
 
 """
     struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
@@ -108,6 +130,26 @@ end
 
 @inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cylindrical}) = CylindricalPoint(pt)
 @inline _convert_point(pt::AbstractCoordinatePoint, ::Type{Cartesian}) = CartesianPoint(pt)
+
+
+function Base.convert(::Type{CylindricalPoint{T}}, pt::CylindricalPoint{U}) where {T,U}
+    return CylindricalPoint{T}(convert(T, pt.r), convert(T, pt.φ), convert(T, pt.z))
+end
+
+
+Base.:(==)(a::CylindricalPoint, b::CylindricalPoint) = a.r == b.r && a.φ == b.φ && a.z == b.z
+
+function Base.isapprox(a::CylindricalPoint, b::CylindricalPoint; kwargs...)
+    return isapprox(a.r, b.r; kwargs...) && isapprox(a.φ, b.φ; kwargs...) && isapprox(a.z, b.z; kwargs...)
+end
+
+
+@inline Base.:(+)(pt::CylindricalPoint, v::CylindricalVector) = CylindricalPoint(pt.r + v.r, pt.φ + v.φ, pt.z + v.z)
+
+@inline Base.:(-)(pt::CylindricalPoint, v::CylindricalVector) = CylindricalPoint(pt.r - v.r, pt.φ - v.φ, pt.z - v.z)
+
+@inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CylindricalVector(a.r - b.r, a.φ - b.φ, a.z - b.z)
+
 
 # function _Δφ(φ1::T, φ2::T)::T where {T}
 #     δφ = mod(φ2 - φ1, T(2π))
