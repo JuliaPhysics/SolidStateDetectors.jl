@@ -30,28 +30,18 @@ end
 
 #Type promotion happens here
 function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
+    # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
     CartesianPoint{T}(T(x),T(y),T(z))
 end
 
-function CartesianPoint(;
-    x = 0,
-    y = 0,
-    z = 0
-)
-    CartesianPoint(x,y,z)
-end
+CartesianPoint(; x = 0, y = 0, z = 0) = CartesianPoint(x, y, z)
 
-function CartesianPoint{T}(;
-    x = 0,
-    y = 0,
-    z = 0
-) where {T}
-    CartesianPoint{T}(T(x),T(y),T(z))
-end
+CartesianPoint{T}(;x = 0, y = 0, z = 0) where {T} = CartesianPoint{T}(T(x),T(y),T(z))
 
-CartesianPoint{T}(v::AbstractVector)where {T} = CartesianPoint{T}(v[1], v[2], v[3])
+# ToDo: Remove this, if possible, otherwise at least check that v has length 3:
+CartesianPoint{T}(v::AbstractVector) where {T} = CartesianPoint{T}(v[1], v[2], v[3])
 
 function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint{U}) where {T,U}
     return CartesianPoint{T}(convert(T, pt.x), convert(T, pt.y), convert(T, pt.z))
@@ -109,26 +99,15 @@ struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
 end
 
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
+    # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
     T = float(promote_type(eltypes...))
     CylindricalPoint{T}(T(r),T(φ),T(z))
 end
 
-function CylindricalPoint(;
-    r = 0,
-    φ = 0,
-    z = 0
-)
-    CylindricalPoint(r,φ,z)
-end
+CylindricalPoint(; r = 0, φ = 0, z = 0) = CylindricalPoint(r,φ,z)
 
-function CylindricalPoint{T}(;
-    r = 0,
-    φ = 0,
-    z = 0
-) where {T}
-    CylindricalPoint{T}(T(r),T(φ),T(z))
-end
+CylindricalPoint{T}(; r = 0, φ = 0, z = 0) where {T} = CylindricalPoint{T}(T(r),T(φ),T(z))
 
 function CylindricalPoint(pt::CartesianPoint{T})::CylindricalPoint{T} where {T}
     return CylindricalPoint{T}(hypot(pt.x, pt.y), atan(pt.y, pt.x), pt.z)
