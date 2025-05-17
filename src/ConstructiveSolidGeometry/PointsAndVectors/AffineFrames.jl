@@ -25,38 +25,38 @@ struct LocalAffineFrame{PT<:CartesianPoint,LM} <: AbstractAffineFrame
 end
 
 
-struct AffineFrameTransformation{V<:CartesianVector,LM}
-    offset::V
+struct AFTransformLinOpFirst{V<:CartesianVector,LM}
     linop::LM
+    offset::V
 end
 
-(f::AffineFrameTransformation)(pt::CartesianPoint) = muladd(f.linop, pt, f.offset)
-(f::AffineFrameTransformation)(v::CartesianVector) = f.linop * v
+(f::AFTransformLinOpFirst)(pt::CartesianPoint) = muladd(f.linop, pt, f.offset)
+(f::AFTransformLinOpFirst)(v::CartesianVector) = f.linop * v
 
-(f::AffineFrameTransformation)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
+(f::AFTransformLinOpFirst)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
 
-InverseFunctions.inverse(f::AffineFrameTransformation) = InvAffineFrameTransformation(f.offset, f.linop)
+InverseFunctions.inverse(f::AFTransformLinOpFirst) = AFTransformOffsetFirst(-f.offset, inv(f.linop))
 
 
-struct InvAffineFrameTransformation{V,M}
+struct AFTransformOffsetFirst{V,M}
     offset::V
     linop::M
 end
 
-(f::InvAffineFrameTransformation)(pt::CartesianPoint) = f.linop \ (pt - f.offset)
-(f::InvAffineFrameTransformation)(v::CartesianVector) = f.linop \ v
+(f::AFTransformOffsetFirst)(pt::CartesianPoint) = f.linop * (pt + f.offset)
+(f::AFTransformOffsetFirst)(v::CartesianVector) = f.linop * v
 
-(f::InvAffineFrameTransformation)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
+(f::AFTransformOffsetFirst)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
 
-InverseFunctions.inverse(f::InvAffineFrameTransformation) = AffineFrameTransformation(f.offset, f.linop)
+InverseFunctions.inverse(f::AFTransformOffsetFirst) = AFTransformLinOpFirst(inv(f.linop), -f.offset)
 
 
 @inline function frame_transformation(frame::LocalAffineFrame, ::GlobalAffineFrame)
-    return AffineFrameTransformation(frame.origin - cartesian_zero, frame.linop)
+    return AFTransformLinOpFirst(frame.linop, frame.origin - cartesian_zero)
 end
 
 @inline function frame_transformation(::GlobalAffineFrame, frame::LocalAffineFrame)
-    return InvAffineFrameTransformation(frame.origin - cartesian_zero, frame.linop)
+    return AFTransformOffsetFirst(cartesian_zero - frame.origin, inv(frame.linop))
 end
 
 function frame_transformation(a::LocalAffineFrame, b::LocalAffineFrame)
