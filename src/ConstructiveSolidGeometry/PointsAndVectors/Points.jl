@@ -148,11 +148,11 @@ function Base.isapprox(a::CylindricalPoint, b::CylindricalPoint; kwargs...)
 end
 
 
-@inline Base.:(+)(pt::CylindricalPoint, v::CylindricalVector) = CylindricalPoint(pt.r + v.r, pt.φ + v.φ, pt.z + v.z)
+@inline Base.:(+)(pt::CylindricalPoint, v::CartesianVector) = CylindricalPoint(CartesianPoint(pt) + v)
 
-@inline Base.:(-)(pt::CylindricalPoint, v::CylindricalVector) = CylindricalPoint(pt.r - v.r, pt.φ - v.φ, pt.z - v.z)
+@inline Base.:(-)(pt::CylindricalPoint, v::CartesianVector) = CylindricalPoint(CartesianPoint(pt) - v)
 
-@inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CylindricalVector(a.r - b.r, a.φ - b.φ, a.z - b.z)
+@inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CartesianPoint(a) - CartesianPoint(b)
 
 
 # function _Δφ(φ1::T, φ2::T)::T where {T}

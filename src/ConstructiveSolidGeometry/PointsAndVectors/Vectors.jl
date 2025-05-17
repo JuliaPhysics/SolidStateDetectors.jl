@@ -12,8 +12,6 @@ Describes a three-dimensional vector in Cartesian coordinates.
 * `x`: x-coordinate (in m).
 * `y`: y-coordinate (in m).
 * `z`: z-coordinate (in m).
-
-See also [`CylindricalVector`](@ref).
 """
 struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     x::T
@@ -64,49 +62,3 @@ zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zer
 
 
 const CartesianRotation{T} = SMatrix{3,3,T,9}
-
-
-
-"""
-    struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
-
-Describes a three-dimensional vector in cylindrical coordinates. 
-
-## Fields
-* `r`: Radius (in m).
-* `φ`: Polar angle (in rad).
-* `z`: `z`-coordinate (in m).
-
-!!! note 
-    `φ == 0` corresponds to the `x`-axis in the Cartesian coordinate system.
-    
-See also [`CartesianVector`](@ref).
-"""
-struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
-    r::T
-    φ::T
-    z::T
-end
-
-#Type promotion happens here
-function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
-    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
-    T = float(promote_type(eltypes...))
-    CylindricalVector{T}(T(r),T(φ),T(z))
-end
-
-function CylindricalVector(;
-    r = 0,
-    φ = 0,
-    z = 0
-)
-    CylindricalVector(r,φ,z)
-end
-
-function CylindricalVector{T}(;
-    r = 0,
-    φ = 0,
-    z = 0
-) where {T}
-    CylindricalVector{T}(T(r),T(φ),T(z))
-end
