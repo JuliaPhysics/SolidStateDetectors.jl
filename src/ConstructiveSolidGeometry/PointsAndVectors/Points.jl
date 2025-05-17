@@ -68,6 +68,7 @@ end
 
 
 Base.:(*)(A::StaticMatrix{3,3}, pt::CartesianPoint) = _ascartpoint(A * _asvector(pt))
+Base.:(\)(A::StaticMatrix{3,3}, pt::CartesianPoint) = _ascartpoint(A \ _asvector(pt))
 
 @inline _asvector(pt::CartesianPoint{T}) where {T} = SVector(pt.x, pt.y, pt.z)
 @inline _ascartpoint(v::StaticVector{3}) = CartesianPoint(v[1], v[2], v[3])

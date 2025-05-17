@@ -83,9 +83,6 @@ export LinBouleImpurityDensity, ParBouleImpurityDensity, LinExpBouleImpurityDens
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
 
-import InverseFunctions
-using InverseFunctions: inverse
-
 include("examples.jl")
 
 include("Units.jl")

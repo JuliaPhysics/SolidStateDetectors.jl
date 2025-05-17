@@ -62,6 +62,11 @@ zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zer
 # @inline translate!(vvpt::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::CartesianVector{T}) where {T} =  begin for i in eachindex(vvpt) translate!(vvpt[i], v) end; vvpt end
 
 
+
+const CartesianRotation{T} = SMatrix{3,3,T,9}
+
+
+
 """
     struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
 
