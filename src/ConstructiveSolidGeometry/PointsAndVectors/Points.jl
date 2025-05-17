@@ -47,6 +47,8 @@ function CartesianPoint{T}(;
     CartesianPoint{T}(T(x),T(y),T(z))
 end
 
+CartesianPoint{T}(v::AbstractVector)where {T} = CartesianPoint{T}(v[1], v[2], v[3])
+
 function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint{U}) where {T,U}
     return CartesianPoint{T}(convert(T, pt.x), convert(T, pt.y), convert(T, pt.z))
 end
@@ -60,6 +62,7 @@ end
 
 
 @inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
+@inline Base.:(+)(pt::CartesianPoint, v::CartesianPoint) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
 @inline Base.:(-)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x - v.x, pt.y - v.y, pt.z - v.z)
 @inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
 
