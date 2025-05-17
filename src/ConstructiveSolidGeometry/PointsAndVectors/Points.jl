@@ -73,11 +73,15 @@ end
 @inline Base.:(-)(::CartesianZero, pt::CartesianPoint) = CartesianVector(-pt.x, -pt.y, -pt.z)
 
 
-Base.:(*)(A::StaticMatrix{3,3}, pt::CartesianPoint) = _ascartpoint(A * _asvector(pt))
-Base.:(\)(A::StaticMatrix{3,3}, pt::CartesianPoint) = _ascartpoint(A \ _asvector(pt))
+Base.:(*)(A::StaticMatrix{3,3}, pt::CartesianPoint) = cartesian_zero + (A * (pt - cartesian_zero))
+Base.:(\)(A::StaticMatrix{3,3}, pt::CartesianPoint) = cartesian_zero + (A \ (pt - cartesian_zero))
 
-@inline _asvector(pt::CartesianPoint{T}) where {T} = SVector(pt.x, pt.y, pt.z)
-@inline _ascartpoint(v::StaticVector{3}) = CartesianPoint(v[1], v[2], v[3])
+# Barycentric combination
+function  Statistics.mean(A::AbstractArray{<:CartesianPoint}; dims = :)
+    cartesian_zero + mean(_vec_from_zero, A; dims = dims)
+end
+
+_vec_from_zero(pt::CartesianPoint) = pt - cartesian_zero
 
 
 
@@ -159,6 +163,13 @@ end
 @inline Base.:(-)(pt::CylindricalPoint, v::CartesianVector) = CylindricalPoint(CartesianPoint(pt) - v)
 
 @inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CartesianPoint(a) - CartesianPoint(b)
+
+# Barycentric combination
+function  Statistics.mean(A::AbstractArray{<:CylindricalPoint}; dims = :)
+    CylindricalPoint(cartesian_zero + mean(_vec_from_zero, A; dims = dims))
+end
+
+_vec_from_zero(pt::CylindricalPoint) = CartesianPoint(pt) - cartesian_zero
 
 
 # function _Δφ(φ1::T, φ2::T)::T where {T}
