@@ -7,10 +7,6 @@ using SolidStateDetectors
 
 include("test_utils.jl")
 
-@timed_testset "Basic types" begin
-    include("test_points_and_vectors.jl")
-end
-
 @timed_testset "Comparison to analytic solutions" begin
     include("test_analytic_solutions.jl")
 end
@@ -21,6 +17,7 @@ end
 
 @timed_testset "ConstructiveSolidGeometry" begin
     include("ConstructiveSolidGeometry/CSG_IO.jl")
+    include("ConstructiveSolidGeometry/CSG_coordinates.jl")
     include("ConstructiveSolidGeometry/CSG_primitives.jl")
 end
 
