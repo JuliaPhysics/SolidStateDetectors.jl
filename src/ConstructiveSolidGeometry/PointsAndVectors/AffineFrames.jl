@@ -17,8 +17,11 @@ frame_transformation(::GlobalAffineFrame, ::GlobalAffineFrame) = identity
 
 
 struct LocalAffineFrame{PT<:CartesianPoint,LM} <: AbstractAffineFrame
-    global_origin::PT
-    global_linop::LM
+    # origin in the global frame
+    origin::PT
+
+    # linear operator (rotation matrix, etc.) in respect to the global frame
+    linop::LM
 end
 
 
@@ -49,11 +52,11 @@ InverseFunctions.inverse(f::InvAffineFrameTransformation) = AffineFrameTransform
 
 
 @inline function frame_transformation(frame::LocalAffineFrame, ::GlobalAffineFrame)
-    return AffineFrameTransformation(frame.global_origin - cartesian_zero, frame.global_linop)
+    return AffineFrameTransformation(frame.origin - cartesian_zero, frame.linop)
 end
 
 @inline function frame_transformation(::GlobalAffineFrame, frame::LocalAffineFrame)
-    return InvAffineFrameTransformation(frame.global_origin - cartesian_zero, frame.global_linop)
+    return InvAffineFrameTransformation(frame.origin - cartesian_zero, frame.linop)
 end
 
 function frame_transformation(a::LocalAffineFrame, b::LocalAffineFrame)
