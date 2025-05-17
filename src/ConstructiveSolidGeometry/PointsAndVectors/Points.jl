@@ -54,6 +54,8 @@ function Base.isapprox(a::CartesianPoint, b::CartesianPoint; kwargs...)
     return isapprox(a.x, b.x; kwargs...) && isapprox(a.y, b.y; kwargs...) && isapprox(a.z, b.z; kwargs...)
 end
 
+Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zero(T))
+
 
 @inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
 @inline Base.:(-)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x - v.x, pt.y - v.y, pt.z - v.z)
@@ -136,6 +138,7 @@ function Base.isapprox(a::CylindricalPoint, b::CylindricalPoint; kwargs...)
     return isapprox(a.r, b.r; kwargs...) && isapprox(a.φ, b.φ; kwargs...) && isapprox(a.z, b.z; kwargs...)
 end
 
+Base.zero(::CylindricalPoint{T}) where {T} = CylindricalPoint{T}(zero(T), zero(T), zero(T))
 
 @inline Base.:(+)(pt::CylindricalPoint, v::CartesianVector) = CylindricalPoint(CartesianPoint(pt) + v)
 

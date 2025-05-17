@@ -27,6 +27,8 @@ using InverseFunctions: inverse
         @test @inferred(a - b) == CartesianVector(-2.0, 1.0, 1.0)
         @test @inferred(A * a) == CartesianPoint(30.0, 38.0, 50.0)
 
+        @test @inferred(zero(a) + (a - zero(a))) == a
+
         @test @inferred(Size(a)) === Size(v)
         @test @inferred(size(a)) === size(v)
         @test @inferred(length(a)) === length(v)
@@ -48,7 +50,6 @@ using InverseFunctions: inverse
         cyl2 = @inferred CylindricalPoint(φ=3π)
         @test CartesianPoint(cyl) == CartesianPoint(x=2f0,z=1f0)
 
-
         a = CylindricalPoint(1.0, π/2, 3.0)
         b = CylindricalPoint(3.0, π/2, 2.0)
         v = CartesianVector(0.0, 0.2, 0.3)
@@ -56,6 +57,9 @@ using InverseFunctions: inverse
         @test  @inferred(a + v) ≈ CylindricalPoint(1.2, π/2, 3.3)
         @test  @inferred(a - v) ≈ CylindricalPoint(0.8, π/2, 2.7)
         @test  @inferred(a - b) ≈ CartesianVector(0, -2, 1)
+
+        @test @inferred(zero(a) + (a - zero(a))) == a
+
         @test  @inferred(Size(a)) === Size(v)
         @test  @inferred(size(a)) === size(v)
         @test  @inferred(length(a)) === length(v)

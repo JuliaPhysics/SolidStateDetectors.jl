@@ -21,28 +21,17 @@ end
 
 #Type promotion happens here
 function CartesianVector(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
+    # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
     CartesianVector{T}(T(x),T(y),T(z))
 end
 
-function CartesianVector(;
-    x = 0,
-    y = 0,
-    z = 0
-)
-    CartesianVector(x,y,z)
-end
+CartesianVector(; x = 0, y = 0, z = 0) = CartesianVector(x,y,z)
 
-function CartesianVector{T}(;
-    x = 0,
-    y = 0,
-    z = 0
-) where {T}
-    CartesianVector{T}(T(x),T(y),T(z))
-end
+CartesianVector{T}(; x = 0, y = 0, z = 0) where {T} = CartesianVector{T}(T(x),T(y),T(z))
 
-zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zero(T))
+Base.zero(::CartesianVector{T}) where {T} = CartesianVector{T}(zero(T),zero(T),zero(T))
 
 # @inline rotate(pt::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * pt
 # @inline rotate(pt::CylindricalPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = CylindricalPoint(rotate(CartesianPoint(pt), r))
