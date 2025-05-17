@@ -1,10 +1,14 @@
-# abstract type AbstractPlanarPoint{T} <: StaticArrays.FieldVector{2, T} end
-# abstract type AbstractPlanarVector{T} <: StaticArrays.FieldVector{2, T} end
-# 
-# struct PlanarPoint{T} <: AbstractPlanarPoint{T}
-#     u::T
-#     v::T
-# end
+struct CartesianZero{T} <: AbstractCoordinatePoint{T, Cartesian} end
+const cartesian_zero = CartesianZero{Bool}()
+
+@inline Base.:(+)(::CartesianZero, v::CartesianVector) = CartesianPoint(v.x, v.y, v.z)
+@inline Base.:(-)(::CartesianZero, v::CartesianVector) = CartesianPoint(-v.x, -v.y, -v.z)
+
+@inline function Base.:(-)(::CartesianZero{T}, pt::CartesianZero{U}) where {T,U}
+    R = promote_type(T, U)
+    return CartesianVector(zero(R), zero(R), zero(R))
+end
+
 
 """
     struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
@@ -62,9 +66,11 @@ end
 
 
 @inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
-@inline Base.:(+)(pt::CartesianPoint, v::CartesianPoint) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
 @inline Base.:(-)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x - v.x, pt.y - v.y, pt.z - v.z)
+
 @inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
+@inline Base.:(-)(pt::CartesianPoint, ::CartesianZero) = CartesianVector(pt.x, pt.y, pt.z)
+@inline Base.:(-)(::CartesianZero, pt::CartesianPoint) = CartesianVector(-pt.x, -pt.y, -pt.z)
 
 
 Base.:(*)(A::StaticMatrix{3,3}, pt::CartesianPoint) = _ascartpoint(A * _asvector(pt))

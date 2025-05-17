@@ -1,54 +1,61 @@
-abstract type AbstractAffineFrame end
+frame_transformation(a, b, pt::AbstractCoordinatePoint) = frame_transformation(a, b)(pt)
+frame_transformation(a, b, pts::AbstractVector{<:AbstractCoordinatePoint}) = frame_transformation(a, b).(pts)
 
-affine_frame(frame::AbstractAffineFrame) = frame
+frame_transformation(a, b, v::AbstractCoordinateVector) = frame_transformation(a, b)(v)
+frame_transformation(a, b, vs::AbstractVector{<:AbstractCoordinateVector}) = frame_transformation(a, b).(vs)
+
+
+
+abstract type AbstractAffineFrame end
 
 struct GlobalAffineFrame <: AbstractAffineFrame end
 
 const global_frame = GlobalAffineFrame()
 
-frame_transformation(a, b, pt::CartesianPoint) = frame_transformation(a, b)(pt)
-frame_transformation(a, b, pt::AbstractVector{<:CartesianPoint}) = frame_transformation(a, b).(pt)
-
 frame_transformation(::GlobalAffineFrame, ::GlobalAffineFrame) = identity
 
 
 
-struct LocalAffineFrame{T} <: AbstractAffineFrame
-    global_origin::CartesianPoint{T}
-    global_rotation::CartesianRotation{T}
+struct LocalAffineFrame{PT<:CartesianPoint,LM} <: AbstractAffineFrame
+    global_origin::PT
+    global_linop::LM
 end
 
 
-struct AffineFrameTransformation{V,M}
-    translation::V
-    rotation::M
+struct AffineFrameTransformation{V<:CartesianVector,LM}
+    offset::V
+    linop::LM
 end
 
-(f::AffineFrameTransformation)(pt::CartesianPoint) = muladd(f.rotation, pt, f.translation)
-(f::AffineFrameTransformation)(v::CartesianVector) = f.rotation * v
+(f::AffineFrameTransformation)(pt::CartesianPoint) = muladd(f.linop, pt, f.offset)
+(f::AffineFrameTransformation)(v::CartesianVector) = f.linop * v
 
-InverseFunctions.inverse(f::AffineFrameTransformation) = InvAffineFrameTransformation(f.translation, f.rotation)
+(f::AffineFrameTransformation)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
 
-@inline function frame_transformation(frame::LocalAffineFrame, ::GlobalAffineFrame)
-    pt = frame.global_origin
-    # semantically `v = pt - CartesianVector(0, 0, 0)`, but faster:
-    trans = CartesianVector(pt.x, pt.y, pt.z)
-    rot = frame.global_rotation
-    return AffineFrameTransformation(trans, rot)
-end
-
+InverseFunctions.inverse(f::AffineFrameTransformation) = InvAffineFrameTransformation(f.offset, f.linop)
 
 
 struct InvAffineFrameTransformation{V,M}
-    translation::V
-    rotation::M
+    offset::V
+    linop::M
 end
 
-(f::InvAffineFrameTransformation)(pt::CartesianPoint) = f.rotation \ (pt - f.translation)
-(f::InvAffineFrameTransformation)(v::CartesianVector) = f.rotation \ v
+(f::InvAffineFrameTransformation)(pt::CartesianPoint) = f.linop \ (pt - f.offset)
+(f::InvAffineFrameTransformation)(v::CartesianVector) = f.linop \ v
 
-InverseFunctions.inverse(f::InvAffineFrameTransformation) = AffineFrameTransformation(f.translation, f.rotation)
+(f::InvAffineFrameTransformation)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
+
+InverseFunctions.inverse(f::InvAffineFrameTransformation) = AffineFrameTransformation(f.offset, f.linop)
+
+
+@inline function frame_transformation(frame::LocalAffineFrame, ::GlobalAffineFrame)
+    return AffineFrameTransformation(frame.global_origin - cartesian_zero, frame.global_linop)
+end
 
 @inline function frame_transformation(::GlobalAffineFrame, frame::LocalAffineFrame)
-    return inverse(frame_transformation(global_frame, frame))
+    return InvAffineFrameTransformation(frame.global_origin - cartesian_zero, frame.global_linop)
+end
+
+function frame_transformation(a::LocalAffineFrame, b::LocalAffineFrame)
+    return frame_transformation(a, global_frame) ∘ frame_transformation(global_frame, b)
 end
