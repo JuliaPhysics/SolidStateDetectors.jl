@@ -6,7 +6,7 @@ T = Float32
 @timed_testset "Test boule impurity densities and corrections" begin
     sim = Simulation{T}("BEGe_01.yaml")
 
-    @test SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0)) == T(0.8*SolidStateDetectors.to_internal_units(-5e9u"cm^-3") + SolidStateDetectors.to_internal_units(-5e8u"cm^-3"))
+    @test SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0)) == T(0.8*T(SolidStateDetectors.to_internal_units(-5e9u"cm^-3")) + T(SolidStateDetectors.to_internal_units(-5e8u"cm^-3")))
 
     det_z0 = T(0.12)
     boule_ρ0 = T(-1e16)
