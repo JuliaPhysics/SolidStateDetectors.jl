@@ -32,3 +32,5 @@ function ImpurityDensity(T::DataType, t::Val{:constant}, dict::AbstractDict, inp
 end
 
 (*)(scale::Real, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(scale * lcdm.ρ))
+
+(+)(offset::Real, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(offset + lcdm.ρ))

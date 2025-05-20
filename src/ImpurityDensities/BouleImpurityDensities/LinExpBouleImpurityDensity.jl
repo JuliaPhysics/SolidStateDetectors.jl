@@ -46,3 +46,5 @@ function get_impurity_density(idm::LinExpBouleImpurityDensity, pt::AbstractCoord
 end
 
 (*)(scale::Real, idm::LinExpBouleImpurityDensity{T}) where {T} = LinExpBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.n), idm.l, idm.m, idm.det_z0)
+
+(+)(offset::Real, idm::LinExpBouleImpurityDensity{T}) where {T} = LinExpBouleImpurityDensity{T}(T(offset+idm.a), idm.b, idm.n, idm.l, idm.m, idm.det_z0)

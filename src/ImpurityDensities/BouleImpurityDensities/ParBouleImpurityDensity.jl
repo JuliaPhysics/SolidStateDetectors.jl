@@ -40,3 +40,5 @@ function get_impurity_density(idm::ParBouleImpurityDensity, pt::AbstractCoordina
 end
 
 (*)(scale::Real, idm::ParBouleImpurityDensity{T}) where {T} = ParBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.c), idm.det_z0)
+
+(+)(offset::Real, idm::ParBouleImpurityDensity{T}) where {T} = ParBouleImpurityDensity{T}(T(offset+idm.a), idm.b, idm.c, idm.det_z0)
