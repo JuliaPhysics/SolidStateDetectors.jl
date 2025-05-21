@@ -52,8 +52,8 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
 
     impurity_density_model = if haskey(dict, "impurity_density") 
         hascorrections = haskey(dict["impurity_density"], "corrections")
-        impurity_density_scale = hascorrections && haskey(dict["impurity_density"]["corrections"], "scale") ? _parse_value(T, dict["impurity_density"]["corrections"]["scale"], NoUnits) : T(1)
-        impurity_density_offset = hascorrections && haskey(dict["impurity_density"]["corrections"], "offset") ? _parse_value(T, dict["impurity_density"]["corrections"]["offset"], input_units.length^(-3)) : T(0)
+        impurity_density_scale = hascorrections ? _parse_value(T, get(dict["impurity_density"]["corrections"], "scale", 1), NoUnits) : T(1)
+        impurity_density_offset = hascorrections ? _parse_value(T, get(dict["impurity_density"]["corrections"], "offset", 0), input_units.length^(-3)) : T(0)
         impurity_density_scale * ImpurityDensity(T, dict["impurity_density"], input_units) + impurity_density_offset
     elseif haskey(dict, "charge_density_model") 
         @warn "Config file deprication: The field \"charge_density_model\" under semiconductor is deprecated. 
