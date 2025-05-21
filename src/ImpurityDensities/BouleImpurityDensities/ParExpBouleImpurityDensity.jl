@@ -50,4 +50,4 @@ end
 
 (*)(scale::Real, idm::ParExpBouleImpurityDensity{T}) where {T} = ParExpBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.c), T(scale*idm.n), idm.l, idm.m, idm.det_z0)
 
-(+)(offset::Real, idm::ParExpBouleImpurityDensity{T}) where {T} = ParExpBouleImpurityDensity{T}(T(offset+idm.a), idm.b, idm.c, idm.n, idm.l, idm.m, idm.det_z0)
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, idm::ParExpBouleImpurityDensity{T}) where {T} = ParExpBouleImpurityDensity{T}(T(to_internal_units(offset)+idm.a), idm.b, idm.c, idm.n, idm.l, idm.m, idm.det_z0)

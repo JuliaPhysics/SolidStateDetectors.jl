@@ -38,4 +38,4 @@ end
 
 (*)(scale::Real, idm::LinBouleImpurityDensity{T}) where {T} = LinBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), idm.det_z0)
 
-(+)(offset::Real, idm::LinBouleImpurityDensity{T}) where {T} = LinBouleImpurityDensity{T}(T(offset+idm.a), idm.b, idm.det_z0)
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, idm::LinBouleImpurityDensity{T}) where {T} = LinBouleImpurityDensity{T}(T(to_internal_units(offset)+idm.a), idm.b, idm.det_z0)

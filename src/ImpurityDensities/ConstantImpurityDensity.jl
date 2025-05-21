@@ -33,4 +33,4 @@ end
 
 (*)(scale::Real, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(scale * lcdm.ρ))
 
-(+)(offset::Real, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(offset + lcdm.ρ))
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(to_internal_units(offset) + lcdm.ρ))
