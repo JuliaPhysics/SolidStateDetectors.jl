@@ -54,3 +54,5 @@ function get_impurity_density(lcdm::CylindricalImpurityDensity{T}, pt::AbstractC
 end
 
 (*)(scale::Real, lcdm::CylindricalImpurityDensity{T}) where {T} = CylindricalImpurityDensity{T}(T.(scale .* lcdm.offsets), T.(scale .* lcdm.gradients))
+
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, lcdm::CylindricalImpurityDensity{T}) where {T} = CylindricalImpurityDensity{T}(T.(to_internal_units(offset) .+ lcdm.offsets), lcdm.gradients)

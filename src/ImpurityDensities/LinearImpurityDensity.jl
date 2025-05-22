@@ -57,3 +57,5 @@ function get_impurity_density(lcdm::LinearImpurityDensity{T}, pt::AbstractCoordi
 end
 
 (*)(scale::Real, lcdm::LinearImpurityDensity{T}) where {T} = LinearImpurityDensity{T}(T.(scale .* lcdm.offsets), T.(scale .* lcdm.gradients))
+
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, lcdm::LinearImpurityDensity{T}) where {T} = LinearImpurityDensity{T}(T.(to_internal_units(offset) .+ lcdm.offsets), lcdm.gradients)

@@ -30,6 +30,9 @@ detectors:
     impurity_density:
       name: constant
       value: -5e9cm^-3
+      corrections:
+        scale: 0.8
+        offset: -5e8cm^-3
     geometry:
       translate:
         tube:
