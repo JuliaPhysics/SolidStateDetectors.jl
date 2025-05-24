@@ -47,3 +47,6 @@ include("LinearImpurityDensity.jl")
 include("CylindricalImpurityDensity.jl")
 
 include("BouleImpurityDensities/BouleImpurityDensities.jl")
+
+include("ThermalDiffusionLithiumDensity.jl")
+include("PtypePNJunctionImpurityDensity.jl")
