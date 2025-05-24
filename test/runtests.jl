@@ -17,6 +17,7 @@ end
 
 @timed_testset "ConstructiveSolidGeometry" begin
     include("ConstructiveSolidGeometry/CSG_IO.jl")
+    include("ConstructiveSolidGeometry/CSG_coordinates.jl")
     include("ConstructiveSolidGeometry/CSG_primitives.jl")
 end
 
