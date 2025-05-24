@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity
 using InteractiveUtils
 using StaticArrays
 using LinearAlgebra
@@ -82,14 +82,15 @@ end
 @timed_testset "Charge Trapping: ConstantLifetimeChargeTrappingModel" begin
     # test 1: parse the lifetimes and the inactive layer geometry
     simA = @test_nowarn Simulation{T}(SSD_examples[:TrueCoaxial])
+    simA.detector = SolidStateDetector(simA.detector, ConstantImpurityDensity{T}(-1e-10))
     @testset "Parse the TrueCoaxial config file" begin
         @test simA.detector.semiconductor.charge_trapping_model isa ConstantLifetimeChargeTrappingModel{T}
         @test simA.detector.semiconductor.charge_trapping_model.τh == T(1e-3)
         @test simA.detector.semiconductor.charge_trapping_model.τe == T(1e-3)
-        @test simA.detector.semiconductor.charge_trapping_model.τh_inactive == T(8e-8)
-        @test simA.detector.semiconductor.charge_trapping_model.τe_inactive  == T(8e-8)
+        @test simA.detector.semiconductor.charge_trapping_model.τh_inactive == T(1e-6)
+        @test simA.detector.semiconductor.charge_trapping_model.τe_inactive  == T(1e-6)
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.origin == CartesianPoint{T}(0.0, 0.0, 0.005)
-        r0, r1 = T.((0.009, 0.01))
+        r0, r1 = T.((0.008957282, 0.01))
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.r == tuple((r0, r1), (r0, r1))
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.hZ == T(0.005)
     end
