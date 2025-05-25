@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: ['1.10']
+        version: ['1.10', '1', 'pre']
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -29,8 +29,17 @@ jobs:
         run: julia -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
         shell: bash
       - uses: julia-actions/julia-downgrade-compat@v1
+        if: matrix.version == '1.10'
         with:
           skip: Pkg,TOML
+      - uses: julia-actions/julia-downgrade-compat@v1
+        if: matrix.version == '1'
+        with:
+          skip: Pkg,TOML,Distributions,FillArrays,StaticArrays
+      - uses: julia-actions/julia-downgrade-compat@v1
+        if: matrix.version == 'pre'
+        with:
+          skip: Pkg,TOML,Distributions,FillArrays,StaticArrays,Unitful
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
