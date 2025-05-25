@@ -156,4 +156,4 @@ surroundings:
           - -0.05
     charge_density:
       name: constant
-      value: 0 # Reasonable density: +2e-11 # => 2*10⁻¹1 C/m⁻³
+      value: 0C/m^3 # Reasonable density: +2e-11 # => 2*10⁻¹¹ C/m³

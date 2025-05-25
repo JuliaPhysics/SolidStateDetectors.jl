@@ -30,6 +30,11 @@ example_primitive_dir = joinpath(@__DIR__, "../../examples/example_primitive_fil
         @test ellipsoid_full_sphere isa CSG.FullSphere{T}
     end
 
+    @testset "Polycone" begin
+        polycone = Geometry(T, joinpath(example_primitive_dir, "Polycone.yaml"))
+        @test polycone isa CSG.Polycone{T}
+    end
+
     @testset "RegularPrism" begin
         hexagon = Geometry(T, joinpath(example_primitive_dir, "RegularPrism_hexagon.yaml"))
         @test hexagon isa CSG.HexagonalPrism{T}

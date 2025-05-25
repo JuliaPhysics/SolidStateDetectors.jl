@@ -164,6 +164,22 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         rot_torus = @inferred CSG.Torus{Float64}(φ=π/2,θ=nothing,rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0) * SMatrix{3}(cos(π/4),sin(π/4),0,-sin(π/4),cos(π/4),0,0,0,1))
         @test tuple_torus ==rot_torus
     end    
+    @testset "Polycone" begin
+        polycone1 = CSG.Polycone(CSG.ClosedPrimitive,r=Float32[0,2,4,0,0],z=Float32[0,1,2,3,0],origin=zero(CartesianPoint{Float16}),rotation=one(SMatrix{3, 3, Float16, 9}))
+        polycone2 = CSG.Polycone{Float32}(r = [0,2,4,0], z = [0,1,2,3]) # omit last entry
+        @test polycone1 == polycone2
+        
+        dict = Dict("polycone" => Dict(
+            "r" => (0,2,4,0,0),
+            "z" => (0,1,2,3,0),
+        ))
+        polycone3 = Geometry(T,dict,default_units,no_translations)
+        @test dict == Dictionary(polycone3)
+
+        polycone_open = CSG.Polycone(CSG.OpenPrimitive,r=Float32[0,2,4,0,0],z=Float32[0,1,2,3,0],origin=zero(CartesianPoint{Float16}),rotation=one(SMatrix{3, 3, Float16, 9}))
+        @test  in(CartesianPoint{Float32}(4,0,2), polycone1)
+        @test !in(CartesianPoint{Float32}(4,0,2), polycone_open)
+    end
     @testset "Ellipsoid" begin
         ellip1 = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1f0,origin = zero(CartesianPoint{Float16}),rotation = one(SMatrix{3, 3, Float16, 9}))
         ellip2 = @inferred CSG.Ellipsoid{Float32}(r=1.0)

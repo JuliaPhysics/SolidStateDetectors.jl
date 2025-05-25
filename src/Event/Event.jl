@@ -26,10 +26,16 @@ function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(
     return evt
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)))::Event{T} where {T <: SSDFloat}
+function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)::Event{T} where {T <: SSDFloat}
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
     evt = Event{T}()
-    evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
-    evt.energies = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
+    if isnan(d) # default: no grouping, the charges from different hits drift independently
+        evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
+        evt.energies = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
+    else
+        evt.locations, evt.energies = group_points_by_distance(CartesianPoint.(locations), T.(to_internal_units.(energies)), d)
+    end
     return evt
 end
 
@@ -42,6 +48,7 @@ end
 
 function Event(nbcc::NBodyChargeCloud{T})::Event{T} where {T <: SSDFloat}
     evt = Event{T}()
+    # charges in one NBodyChargeCloud should see each other by default
     evt.locations = VectorOfArrays([nbcc.locations])
     evt.energies = VectorOfArrays([nbcc.energies])
     return evt
@@ -55,14 +62,52 @@ function Event(nbccs::Vector{<:NBodyChargeCloud{T}})::Event{T} where {T <: SSDFl
 end
 
 function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity}, N::Int; 
-               particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
-               radius::Vector{<:RealQuantity} = radius_guess.(T.(to_internal_units.(energies)), particle_type)
-              )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
-    
-    return Event(broadcast(i -> 
-                NBodyChargeCloud(locations[i], energies[i], N, particle_type, 
+        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
+        radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(energies)), particle_type),
+        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN
+    )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
+
+
+    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
+
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
+
+    if isnan(d) # default: no grouping, the charges from different hits drift independently
+        Event(
+            broadcast(i -> 
+                NBodyChargeCloud(locations[i], energies[i], N, 
                 radius = T(to_internal_units(radius[i])), number_of_shells = number_of_shells),
-           eachindex(locations)))
+            eachindex(locations))
+        )
+    else # otherwise: group the CENTERS by distance and compose the NBodyChargeClouds around them
+        loc, ene, rad = group_points_by_distance(CartesianPoint.(locations), T.(to_internal_units.(energies)), T.(to_internal_units.(radius)), d)
+        nbccs = broadcast(i -> 
+            broadcast(j -> 
+                let nbcc = NBodyChargeCloud(loc[i][j], ene[i][j], N, 
+                    radius = rad[i][j], number_of_shells = number_of_shells)
+                    nbcc.locations, nbcc.energies
+                end, 
+            eachindex(loc[i])), 
+        eachindex(loc))
+
+        Event(
+            broadcast(nbcc -> vcat(getindex.(nbcc, 1)...), nbccs),
+            broadcast(nbcc -> vcat(getindex.(nbcc, 2)...), nbccs)
+        )
+    end
+end
+
+function Event(
+        locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, 
+        energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
+        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
+        radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(T.(to_internal_units.(e)), particle_type), energies)
+    ) where {T <: SSDFloat, PT <: ParticleType}
+    
+    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
+    events = map(i -> Event(locations[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
+    Event(flatview.(getfield.(events, :locations)), flatview.(getfield.(events, :energies)))
 end
 
 function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
@@ -86,14 +131,14 @@ end
 in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.locations))
 in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, flatview(evt.locations))
 
-function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2))::Event{T} where {T <: SSDFloat}
-    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction)
+function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true)::Event{T} where {T <: SSDFloat}
+    move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction, verbose)
     evt
 end
 
 function move_charges_inside_semiconductor!(
         locations::AbstractVector{<:AbstractVector{CartesianPoint{T}}}, energies::AbstractVector{<:AbstractVector{T}},
-        det::SolidStateDetector{T}; fraction::T = T(0.2)) where {T <: SSDFloat}
+        det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true) where {T <: SSDFloat}
     for n in eachindex(locations)
         idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
@@ -116,8 +161,10 @@ function move_charges_inside_semiconductor!(
                 end
             end
             charge_center_new = sum(locations[n] .* energies[n]) / sum(energies[n])
-            @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
-            " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+            if verbose
+                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
+                " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+            end
         end
     end
     nothing
@@ -149,7 +196,7 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector)
+    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector, verbose = verbose)
     evt.drift_paths = drift_charges(sim, evt.locations, evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
     nothing
 end

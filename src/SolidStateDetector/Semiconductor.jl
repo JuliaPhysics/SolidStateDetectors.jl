@@ -51,7 +51,10 @@ end
 function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations) where T <: SSDFloat
 
     impurity_density_model = if haskey(dict, "impurity_density") 
-        ImpurityDensity(T, dict["impurity_density"], input_units)
+        hascorrections = haskey(dict["impurity_density"], "corrections")
+        impurity_density_scale = hascorrections ? _parse_value(T, get(dict["impurity_density"]["corrections"], "scale", 1), NoUnits) : T(1)
+        impurity_density_offset = hascorrections ? _parse_value(T, get(dict["impurity_density"]["corrections"], "offset", 0), input_units.length^(-3)) : T(0)
+        impurity_density_scale * ImpurityDensity(T, dict["impurity_density"], input_units) + impurity_density_offset
     elseif haskey(dict, "charge_density_model") 
         @warn "Config file deprication: The field \"charge_density_model\" under semiconductor is deprecated. 
             It should be changed to \"impurity_density\". In later version this will result in an error.

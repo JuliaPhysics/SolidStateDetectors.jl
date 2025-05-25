@@ -64,10 +64,13 @@ function estimate_depletion_voltage(sim::Simulation{T},
     Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
     contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
     tolerance::AbstractFloat = 1e-1,
-    verbose::Bool = true) where {T <: AbstractFloat}
+    verbose::Bool = true,
+    check_for_depletion = true) where {T <: AbstractFloat}
 
     @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim)`"
-    @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
+    if check_for_depletion
+        @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
+    end
     @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
     @assert abs(Umax - Umin) > tolerance "Umax - Umin < tolerance. Please change Umin, Umax or tolerance." 
 

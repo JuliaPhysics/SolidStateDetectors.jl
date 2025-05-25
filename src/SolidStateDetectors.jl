@@ -48,6 +48,7 @@ import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_unit
 export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
+import DataStructures
 import Distributions
 import GPUArrays
 import IntervalSets
@@ -57,7 +58,7 @@ import TypedTables
 
 import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broadcast,
              range, ndims, eachindex, enumerate, iterate, IndexStyle, eltype, in, convert,
-             show, print, println, display, +, -, &
+             show, print, println, display, +, -, &, *
 
 export SolidStateDetector
 export SSD_examples
@@ -77,6 +78,7 @@ export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
+export LinBouleImpurityDensity, ParBouleImpurityDensity, LinExpBouleImpurityDensity, ParExpBouleImpurityDensity
 
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}

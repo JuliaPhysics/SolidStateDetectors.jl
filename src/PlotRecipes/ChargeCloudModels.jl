@@ -291,29 +291,31 @@ end
 
 @recipe function f(m::AbstractParticleSource; length = 0.01)
     
-    if iszero(m.opening_angle)
-        v = m.position
-        vnew = m.position + length * normalize(m.direction)
-        @series begin
-            linewidth --> 2
-            color --> :green
-            label := ""
-            [v.x, vnew.x], [v.y, vnew.y], [v.z, vnew.z]
-        end
-    elseif m.opening_angle <= 90u"°"
-        d = normalize(m.direction)
-        a = normalize(d × (abs(d.x) == 1 ? CartesianVector(0,1,0) : CartesianVector(1,0,0)))
-        b = normalize(a × d)
-        rot = hcat(a,b,d)
-        cone = SolidStateDetectors.ConstructiveSolidGeometry.Cone(r = ((0,0),(0,length*sin(m.opening_angle))), hZ = length*cos(m.opening_angle)/2, 
-        origin = rot * [0,0,length*cos(m.opening_angle)/2] + m.position, 
-        rotation = rot)
+    if hasproperty(m, :opening_angle)
+        if iszero(m.opening_angle)
+            v = m.position
+            vnew = m.position + length * normalize(m.direction)
+            @series begin
+                linewidth --> 2
+                color --> :green
+                label := ""
+                [v.x, vnew.x], [v.y, vnew.y], [v.z, vnew.z]
+            end
+        elseif m.opening_angle <= 90u"°"
+            d = normalize(m.direction)
+            a = normalize(d × (abs(d.x) == 1 ? CartesianVector(0,1,0) : CartesianVector(1,0,0)))
+            b = normalize(a × d)
+            rot = hcat(a,b,d)
+            cone = SolidStateDetectors.ConstructiveSolidGeometry.Cone(r = ((0,0),(0,length*sin(m.opening_angle))), hZ = length*cos(m.opening_angle)/2, 
+            origin = rot * [0,0,length*cos(m.opening_angle)/2] + m.position, 
+            rotation = rot)
 
-        @series begin
-            linewidth := 0
-            color --> :green
-            label := ""
-            cone
+            @series begin
+                linewidth := 0
+                color --> :green
+                label := ""
+                cone
+            end
         end
     end
     

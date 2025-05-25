@@ -28,6 +28,6 @@ end
 
 
 function ChargeDensity(T::DataType, t::Val{:constant}, dict::AbstractDict, input_units::NamedTuple)
-    ρ::T = haskey(dict, "value") ? _parse_value(T, dict["value"], input_units.length^(-3)) : T(0)
+    ρ::T = haskey(dict, "value") ? _parse_value(T, dict["value"], internal_charge_unit * input_units.length^(-3)) : T(0)
     ConstantChargeDensity{T}( ρ )
 end

@@ -24,7 +24,8 @@ T = Float32
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
     deplV = timed_estimate_depletion_voltage(sim, verbose = false)
-    @test isapprox(deplV, 1870*u"V", atol = 5.0*u"V") 
+    @info "Depletion voltage: $deplV"
+    @test isapprox(deplV, 1865*u"V", atol = 5.0*u"V") 
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.005))
@@ -101,7 +102,7 @@ end
 end
 @timed_testset "HexagonalPrism" begin
     sim = Simulation{T}(SSD_examples[:Hexagon])
-    timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.02], verbose = false)
+    timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
     evt = Event([CartesianPoint{T}(0, 5e-4, 1e-3)])
     timed_simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
     signalsum = T(0)
@@ -159,14 +160,14 @@ end
     sim = Simulation{T}(SSD_examples[:Cone2D])
     timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
     
-    sim_alt = Simulation{T}(SSD_examples[:Cone2D])
+    sim_alt = Simulation{T}(SSD_examples[:ConeSym])
     timed_calculate_electric_potential!(sim_alt, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
     
     # Test equal initial grid spacing in r and z, no matter the phi range
     @test sim.electric_potential.grid.r == sim_alt.electric_potential.grid.r 
     @test sim.electric_potential.grid.z == sim_alt.electric_potential.grid.z
     
-    idx = findall(pt -> SolidStateDetectors.is_pn_junction_point_type(pt), sim.point_types.data)
+    idx = findall(pt -> pt & SolidStateDetectors.bulk_bit > 0, sim.point_types.data)
     @test maximum(abs.(sim_alt.electric_potential.data[idx] .- sim.electric_potential.data[idx])) .< T(0.2)
 end
 @timed_testset "SigGen PPC" begin

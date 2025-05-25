@@ -3,10 +3,11 @@
 using Test
 
 using SolidStateDetectors
-using Geant4
 using RadiationDetectorSignals
 using TypedTables
 using Unitful
+
+import Geant4
 
 T = Float32
 
@@ -56,9 +57,9 @@ end
 @testset "Run Geant4 simulations" begin
 
     # Create G4JLApplication
-    sim = Simulation{T}(SSD_examples[:InvertedCoax])
+    sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
-    app = G4JLApplication(sim, source)
+    app = Geant4.G4JLApplication(sim, source)
 
     # Simulate 100 events
     evts = run_geant4_simulation(app, 100)
