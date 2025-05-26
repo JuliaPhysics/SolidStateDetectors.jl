@@ -36,7 +36,7 @@ include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
-            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            CartesianVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
