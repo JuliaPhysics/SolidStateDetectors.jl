@@ -106,7 +106,7 @@ Here, the impurity density at the origin is $10^{10}$cm$^{-3}$ and it increases 
 If no units are given, `init` is parsed in units of `units.length`$^{-3}$ and `gradient` in units of `units.length`$^{-4}$.
 
 ### P-type PN junction Impurity Density
-A PN junctin impurity model based on lithium thermal diffusion and constant bulk impurity density. The surface lithium density is saturated.
+A PN junction impurity model based on lithium thermal diffusion and constant bulk impurity density. The surface lithium density is saturated.
 ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 
 This density model could be defined in the code: 

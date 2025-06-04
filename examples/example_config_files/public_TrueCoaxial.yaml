@@ -29,9 +29,12 @@ detectors:
     temperature: 90
     impurity_density:
       name: PtypePNjunction
-      Li_annealing_temperature: 623
-      Li_annealing_time: 1080
-      bulk_imp: -1e10cm^-3
+      Li_annealing_temperature: 623K
+      Li_annealing_time: 18minute
+      doped_contact_id: 2
+      bulk_impurity_density:
+        name: constant
+        value: -1e10cm^-3
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     charge_trapping_model:
@@ -44,7 +47,7 @@ detectors:
       inactive_layer_geometry:
         tube:
           r:
-            from: 8.957282
+            from: 8.957282 # set to the depth of the pn junction boundary when lithium diffusion temperature is 623K, time is 18 minutes
             to: 10.0
           h: 10.0
           origin:

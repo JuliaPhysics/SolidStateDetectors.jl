@@ -190,3 +190,45 @@ end
 #         end
 #     end
 # end
+
+
+@inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
+@inline _in_cyl_r(p::CartesianPoint, r::Tuple{T,T}) where {T} =  r[1]<=hypot(p.x, p.y)<=r[2]
+@inline _in_cyl_r(p::CylindricalPoint, r::Union{Real, Tuple{T,T}}) where {T} =  _in_cyl_r(CartesianPoint(p), r)
+
+@inline _left_radial_interval(r::Real) = 0
+@inline _left_radial_interval(r::Tuple{T,T}) where {T} = r[1]
+
+@inline _right_radial_interval(r::Real) = r
+@inline _right_radial_interval(r::Tuple{T,T}) where {T} = r[2]
+
+get_r_limits(a::EllipticalSurface{T, <:Union{T, <:Any, Nothing}, <:Any}) where {T} =
+    (_left_radial_interval(a.r), _right_radial_interval(a.r))
+
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, Nothing})::T where {T}
+    a_z=a.origin[3]
+    pt = CylindricalPoint(pt)
+    rMin::T, rMax::T = get_r_limits(a)
+    _in_cyl_r(pt, a.r) ? abs(pt.z - a_z) : hypot(pt.z - a_z, min(abs(pt.r - rMin), abs(pt.r - rMax)))
+end
+
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, <:Tuple{T,T}})::T where {T}
+    pcy = CylindricalPoint(pt)
+    rMin::T, rMax::T = get_r_limits(a)
+    φMin::T, φMax::T, _ = get_φ_limits(a)
+    if _in_φ(pcy, a.φ)
+        Δz = abs(pcy.z - a_z)
+        return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
+    else
+        φNear = _φNear(pcy.φ, φMin, φMax)
+        if rMin == rMax
+            return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a_z)))
+        else
+            return distance_to_line(CartesianPoint(pt),
+                                    LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a_z)),
+                                                CartesianPoint(CylindricalPoint{T}(rMax,φNear,a_z))
+                                                )
+                                    )
+        end
+    end
+end

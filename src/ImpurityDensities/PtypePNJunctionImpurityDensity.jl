@@ -1,59 +1,55 @@
 """
     struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-A PN junctin impurity model based on lithium thermal diffusion and constant bulk impurity density.
+A PN junction impurity model based on lithium thermal diffusion and constant bulk impurity density.
 The surface lithium density is saturated.
 
 ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
  
 ## Fields
-* `Li_annealing_temperature::T`: lithium annealing temperature when the lithium is diffused into the crystal. The default value is 623 K.
-* `Li_annealing_time::T`: lithium annealing time. The default value is 18 minutes.
-* `calculate_depth2surface::Function`: the function for describing the depth to surface.
-* `bulk_imp::T`: the bulk impurity density constant.
-* `bulk/surface_imp_model::T`: there two variables will be constructed with above parameters.
+* `lithium_annealing_temperature::T`: lithium annealing temperature when the lithium is diffused into the crystal. The default value is 623 K.
+* `lithium_annealing_time::T`: lithium annealing time. The default value is 18 minutes.
+* `surface_imp_model::ThermalDiffusionLithiumDensity{T,G}`: the density profile of lithium (n-type). This will be constructed with above parameters.
+* `bulk_imp_model::AbstractImpurityDensity{T}`: the density of the p-type impurity.
 """
 
-struct PtypePNJunctionImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
-	Li_annealing_temperature::T
-	Li_annealing_time::T
-    calculate_depth2surface::Function
-    bulk_imp::T
-    surface_imp_model::ThermalDiffusionLithiumDensity{T}
-    bulk_imp_model::ConstantImpurityDensity{T}
+struct PtypePNJunctionImpurityDensity{T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractImpurityDensity{T}
+	lithium_annealing_temperature::T
+	lithium_annealing_time::T
+    contact_with_lithium_doped::G
+    surface_imp_model::ThermalDiffusionLithiumDensity{T,G}
+    bulk_imp_model::AbstractImpurityDensity{T}
 end
-function PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature::T,
-    Li_annealing_time::T,
-    calculate_depth2surface::Function,
-    bulk_imp::T
-    ) where {T <: SSDFloat}
-    bulk_imp_model = ConstantImpurityDensity{T}(bulk_imp)
-    surface_imp_model = ThermalDiffusionLithiumDensity{T}(Li_annealing_temperature, Li_annealing_time, calculate_depth2surface)
-    PtypePNJunctionImpurityDensity(Li_annealing_temperature,Li_annealing_time,calculate_depth2surface, bulk_imp, surface_imp_model, bulk_imp_model)
+function PtypePNJunctionImpurityDensity{T,G}(
+    lithium_annealing_temperature::T,
+    lithium_annealing_time::T,
+    contact_with_lithium_doped::G,
+    bulk_imp_model::AbstractImpurityDensity{T}
+    ) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
+    surface_imp_model = ThermalDiffusionLithiumDensity{T,G}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped)
+    PtypePNJunctionImpurityDensity{T,G}(lithium_annealing_temperature,lithium_annealing_time, contact_with_lithium_doped, surface_imp_model, bulk_imp_model)
+end
+function PtypePNJunctionImpurityDensity{T,G}(
+    lithium_annealing_temperature::T,
+    lithium_annealing_time::T,
+    contact_with_lithium_doped::G,
+    bulk_imp_model::AbstractImpurityDensity{T},
+    distance_to_contact::Function
+    ) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
+    surface_imp_model = ThermalDiffusionLithiumDensity{T,G}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, distance_to_contact=distance_to_contact)
+    PtypePNJunctionImpurityDensity{T,G}(lithium_annealing_temperature,lithium_annealing_time, contact_with_lithium_doped, surface_imp_model, bulk_imp_model)
 end
 
 function ImpurityDensity(T::DataType, t::Val{:PtypePNjunction}, dict::AbstractDict, input_units::NamedTuple)
-    Li_annealing_temperature = T(623)
-    Li_annealing_time= T(18*60)
-    calculate_depth2surface = pt->0.01-hypot(pt[1],pt[2]) # default for the public_TrueCoaxial.yaml
-    bulk_imp = T(-1e16)
+    lithium_annealing_temperature = _parse_value(T, get(dict, "lithium_annealing_temperature", 623u"K"), internal_temperature_unit)
+    lithium_annealing_time = _parse_value(T, get(dict, "lithium_annealing_time", 18u"minute"), internal_time_unit)
+    contact_with_lithium_doped = haskey(dict, "contact_with_lithium_doped") ? dict["contact_with_lithium_doped"] : nothing
 
-    if haskey(dict, "Li_annealing_temperature")
-        Li_annealing_temperature = _parse_value(T, dict["Li_annealing_temperature"], u"K")
-    end
-    if haskey(dict, "Li_annealing_time")
-        Li_annealing_time = _parse_value(T, dict["Li_annealing_time"], u"s")
-    end
-    if haskey(dict, "calculate_depth2surface")
-        calculate_depth2surface = dict["calculate_depth2surface"]
-    end
-    if haskey(dict, "bulk_imp")
-        bulk_imp = _parse_value(T, dict["bulk_imp"], input_units.length^(-3))
-    end
+    bulk_imp_model = haskey(dict, "bulk_imp_model") ? ImpurityDensity(T, dict["bulk_imp_model"], input_units) : ConstantImpurityDensity{T}(-1e16)
 
-    PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, calculate_depth2surface, bulk_imp)
+    PtypePNJunctionImpurityDensity{T,typeof(contact_with_lithium_doped)}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, bulk_imp_model)
 end
 
-function get_impurity_density(PtypePNjunction::PtypePNJunctionImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
+function get_impurity_density(PtypePNjunction::PtypePNJunctionImpurityDensity{T,G}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
     get_impurity_density(PtypePNjunction.bulk_imp_model, pt)+get_impurity_density(PtypePNjunction.surface_imp_model, pt)
 end

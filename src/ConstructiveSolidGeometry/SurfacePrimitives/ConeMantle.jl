@@ -321,3 +321,48 @@ end
 #         return distance_to_line(CartesianPoint(pt), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
 #     end
 # end
+
+
+function distance_to_line_segment(point::AbstractCoordinatePoint{T}, seg::Tuple{AbstractCoordinatePoint{T},AbstractCoordinatePoint{T}})::T where {T}
+    point = CartesianPoint(point)
+    seg = (CartesianPoint(seg[1]), CartesianPoint(seg[2]))
+    v12 = normalize(CartesianVector{T}(seg[2] - seg[1]))
+    v_point_1 = CartesianVector{T}(point - seg[1])
+    proj_on_v12 = dot(v12,v_point_1)
+    if geom_round(proj_on_v12) ≤ T(0)
+        return norm(seg[1] - point)
+    else
+        v_point_2 = CartesianVector{T}(point - seg[2])
+        if geom_round(dot(v12,v_point_2)) ≥ T(0)
+            return norm(seg[2] - point)
+        else
+            return sqrt(abs(dot(v_point_1,v_point_1) - proj_on_v12^2))
+        end
+    end
+end
+
+@inline _left_linear_interval(z::Real) = -z
+@inline _right_linear_interval(z::Real) = z
+get_r_limits(c::ConeMantle{T, T, <:Any, <:Any}) where {T} = (T(c.r), T(c.r))
+get_r_limits(c::ConeMantle{T, <:Tuple, <:Any, <:Any}) where {T} = c.r
+get_z_limits(c::ConeMantle{T}) where {T} = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    distance_to_line_segment(CartesianPoint{T}(pcy.r,0,pcy.z), (CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:Tuple{T,T}, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    φMin::T, φMax::T = get_φ_limits(c)
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    if _in_φ(pcy, c.φ)
+        return distance_to_line_segment(CartesianPoint{T}(pcy.r,0,pcy.z), (CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+    else
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        return distance_to_line_segment(point, (CylindricalPoint{T}(rbot,φNear,zMin),CylindricalPoint{T}(rtop,φNear,zMax)))
+    end
+end

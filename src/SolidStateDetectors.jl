@@ -49,6 +49,7 @@ export CartesianPoint, CartesianVector, CylindricalPoint
 
 import Clustering
 import Distributions
+import SpecialFunctions
 import GPUArrays
 import IntervalSets
 import OrderedCollections
