@@ -123,21 +123,13 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
     @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
 
-    if haskey(config_detector["semiconductor"], "impurity_density") &&
-       haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
-       config_detector["semiconductor"]["impurity_density"]["name"] == "li_diffusion"
-        doped_contact_id = Int(config_detector["semiconductor"]["impurity_density"]["doped_contact_id"])
-        config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
-    end
-    if haskey(config_detector["semiconductor"], "impurity_density") &&
-       haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
-       (config_detector["semiconductor"]["impurity_density"]["name"] == "li_diffusion" ||
-        config_detector["semiconductor"]["impurity_density"]["name"] == "PtypePNjunction")
-        doped_contact_id = Int(config_detector["semiconductor"]["impurity_density"]["doped_contact_id"])
-        config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
-    end
-
     @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."
+    if haskey(config_detector["semiconductor"], "impurity_density") &&
+       haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
+       config_detector["semiconductor"]["impurity_density"]["name"] in ("li_diffusion", "PtypePNjunction")
+        doped_contact_id = Int(config_detector["semiconductor"]["impurity_density"]["doped_contact_id"])
+        config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
+    end
     semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
     
     # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
