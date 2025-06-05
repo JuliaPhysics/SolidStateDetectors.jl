@@ -106,24 +106,41 @@ Here, the impurity density at the origin is $10^{10}$cm$^{-3}$ and it increases 
 If no units are given, `init` is parsed in units of `units.length`$^{-3}$ and `gradient` in units of `units.length`$^{-4}$.
 
 ### P-type PN junction Impurity Density
-A PN junction impurity model based on lithium thermal diffusion and constant bulk impurity density. The surface lithium density is saturated.
+
+A PN junction impurity model based on lithium thermal diffusion and custom bulk impurity density. The surface lithium density is saturated.
 ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 
-This density model could be defined in the code: 
+This density model can be defined in the config file, e.g.
+```yaml
+impurity_density:
+  name: PtypePNjunction
+  Li_annealing_temperature: 623K
+  Li_annealing_time: 18minute
+  doped_contact_id: 2
+  bulk_impurity_density:
+    name: constant
+    value: -1e10cm^-3
+```
+which defines a detector with a constant p-type impurity density of
+$10^{10}$cm$^{-3}$ and a highly-doped Lithium contact close to the contact with ID 2, created using a lithium annealing temperature of 623K and an annealing time of 18 minutes.
+
+It is based on the internal implementation of `distance_to_surface`, which might not work for all combinations of primitives.
+
+Users can also define their own method for calculating the distance to the contact in code, e.g. using
 ```julia
 T = Float64
 sim = Simulation{T}(SSD_examples[:TrueCoaxial])
 
-calculate_depth2surface = pt -> 0.01-hypot(pt[1], pt[2])
-Li_annealing_temperature::T=623
-Li_annealing_time::T=18*60
-Bulk_Impurity = p_type_density = -1e10 * 1e6
+distance_to_contact = pt -> 0.01 - hypot(pt[1], pt[2])
+Li_annealing_temperature::T = 623 # Kelvin
+Li_annealing_time::T = 18*60 # seconds
+p_type_density = -1e10 * 1e6
 
-pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, calculate_depth2surface, p_type_density)
+# This code breaks and needs to be updated !!
+pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, distance_to_contact, p_type_density)
 sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density)
 ```
 
-This model couldn't be defined in the configuration because a depth2surface function is needed, except when using the public_TrueCoaxial.yaml.
 
 ### Custom Impurity Density
 
