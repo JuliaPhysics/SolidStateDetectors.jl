@@ -43,10 +43,8 @@ end
 function ImpurityDensity(T::DataType, t::Val{:PtypePNjunction}, dict::AbstractDict, input_units::NamedTuple)
     lithium_annealing_temperature = _parse_value(T, get(dict, "lithium_annealing_temperature", 623u"K"), internal_temperature_unit)
     lithium_annealing_time = _parse_value(T, get(dict, "lithium_annealing_time", 18u"minute"), internal_time_unit)
-    contact_with_lithium_doped = haskey(dict, "contact_with_lithium_doped") ? dict["contact_with_lithium_doped"] : nothing
-
+    contact_with_lithium_doped = get(dict, "contact_with_lithium_doped", nothing)
     bulk_imp_model = haskey(dict, "bulk_imp_model") ? ImpurityDensity(T, dict["bulk_imp_model"], input_units) : ConstantImpurityDensity{T}(-1e16)
-
     PtypePNJunctionImpurityDensity{T,typeof(contact_with_lithium_doped)}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, bulk_imp_model)
 end
 
