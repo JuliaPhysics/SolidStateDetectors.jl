@@ -341,11 +341,8 @@ function distance_to_line_segment(point::AbstractCoordinatePoint{T}, seg::Tuple{
     end
 end
 
-@inline _left_linear_interval(z::Real) = -z
-@inline _right_linear_interval(z::Real) = z
-get_r_limits(c::ConeMantle{T, T, <:Any, <:Any}) where {T} = (T(c.r), T(c.r))
-get_r_limits(c::ConeMantle{T, <:Tuple, <:Any, <:Any}) where {T} = c.r
-get_z_limits(c::ConeMantle{T}) where {T} = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
+get_r_limits(c::ConeMantle) = _radial_endpoints(c.r)
+get_z_limits(c::ConeMantle) = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
 
 function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
     pcy = CylindricalPoint(point)

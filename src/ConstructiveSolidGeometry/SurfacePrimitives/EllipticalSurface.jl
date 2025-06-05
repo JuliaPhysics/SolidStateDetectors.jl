@@ -196,14 +196,7 @@ end
 @inline _in_cyl_r(p::CartesianPoint, r::Tuple{T,T}) where {T} =  r[1]<=hypot(p.x, p.y)<=r[2]
 @inline _in_cyl_r(p::CylindricalPoint, r::Union{Real, Tuple{T,T}}) where {T} =  _in_cyl_r(CartesianPoint(p), r)
 
-@inline _left_radial_interval(r::Real) = 0
-@inline _left_radial_interval(r::Tuple{T,T}) where {T} = r[1]
-
-@inline _right_radial_interval(r::Real) = r
-@inline _right_radial_interval(r::Tuple{T,T}) where {T} = r[2]
-
-get_r_limits(a::EllipticalSurface{T, <:Union{T, <:Any, Nothing}, <:Any}) where {T} =
-    (_left_radial_interval(a.r), _right_radial_interval(a.r))
+get_r_limits(a::EllipticalSurface{T, <:Union{T, <:Any, Nothing}, <:Any}) where {T} = _radial_endpoints(a.r) 
 
 function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, Nothing})::T where {T}
     a_z=a.origin[3]
