@@ -134,7 +134,19 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
     if haskey(config_detector["semiconductor"], "impurity_density") &&
        haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
        config_detector["semiconductor"]["impurity_density"]["name"] in ("li_diffusion", "PtypePNjunction")
-        doped_contact_id = Int(config_detector["semiconductor"]["impurity_density"]["doped_contact_id"])
+        if haskey(config_detector["semiconductor"]["impurity_density"], "doped_contact_id")
+            doped_contact_id::Int = config_detector["semiconductor"]["impurity_density"]["doped_contact_id"]
+            if !in(doped_contact_id, getfield.(contacts, :id))
+                ArgumentError("The doped_contact_id is not defined in the configuration file.")
+            end
+        else
+            contact_potentials = T[c.potential for c in det.contacts]
+            max_potential = maximum(contact_potentials)
+            inds = findall(==(max_potential), contact_potentials)
+            @assert length(inds) == 1 "Could not determine doped contact (N+) id as multiple contacts' potentials equal the maxima."
+            doped_contact_id = inds[1]
+        end
+
         config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
     end
     semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
