@@ -28,13 +28,7 @@ end
 function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T)::T where {T <: SSDFloat}
     # D0 [m^2*s^-1]
     # H [cal]
-    if lithium_annealing_temperature<=873
-        D0 = 2.5e-3*1e-4
-        H = 11800
-    else
-        D0 = 1.3e-3*1e-4
-        H = 10700
-    end
+    D0::T, H::T = ifelse(lithium_annealing_temperature <= 873, T.((2.5e-3*1e-4, 11800)), T.((1.3e-3*1e-4, 10700)))
     D0 * exp(-H/(R_gas*lithium_annealing_temperature))
 end
 function calculate_lithium_saturated_density(lithium_annealing_temperature::T)::T where {T <: SSDFloat}
