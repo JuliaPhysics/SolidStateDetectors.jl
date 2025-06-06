@@ -123,6 +123,13 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
     @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
 
+    # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
+    # They need to be in order (1, 2, ... , N), so throw an error if this is not the case.
+    if !all(getfield.(contacts, :id) .== eachindex(contacts))
+        ArgumentError("SolidStateDetectors.jl only supports contact IDs that are in order.\n
+            Please set the ID of the first contact to 1, the ID of the second contact to 2, etc.")
+    end
+    
     @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."
     if haskey(config_detector["semiconductor"], "impurity_density") &&
        haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
@@ -131,13 +138,6 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
         config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
     end
     semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
-    
-    # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
-    # They need to be in order (1, 2, ... , N), so throw an error if this is not the case.
-    if !all(getfield.(contacts, :id) .== eachindex(contacts))
-        ArgumentError("SolidStateDetectors.jl only supports contact IDs that are in order.\n
-            Please set the ID of the first contact to 1, the ID of the second contact to 2, etc.")
-    end
     
     passives = Passive{T}[]
     if haskey(config_detector, "passives") # "passives" as entry of "detectors"

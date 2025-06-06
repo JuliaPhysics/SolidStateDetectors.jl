@@ -53,7 +53,7 @@ function ThermalDiffusionLithiumDensity{T,G}(
 end
 
 function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict, input_units::NamedTuple)
-    lithium_annealing_temperature = _parse_value(T, get(dict, "lithium_annealing_temperature", 623u"K"), internal_temperature_unit)
+    lithium_annealing_temperature = _parse_value(T, get(dict, "lithium_annealing_temperature", 623u"K"), input_units.temperature)
     lithium_annealing_time = _parse_value(T, get(dict, "lithium_annealing_time", 18u"minute"), internal_time_unit)
     contact_with_lithium_doped = haskey(dict, "contact_with_lithium_doped") ? dict["contact_with_lithium_doped"] : nothing # you don't have to pass the geometry of doped contact only when the distance_to_contact is passed
     ThermalDiffusionLithiumDensity{T,typeof(contact_with_lithium_doped)}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped)
