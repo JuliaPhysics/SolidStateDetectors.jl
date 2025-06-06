@@ -128,16 +128,18 @@ It is based on the internal implementation of `distance_to_surface`, which might
 
 Users can also define their own method for calculating the distance to the contact in code, e.g. using
 ```julia
+using SolidStateDetectors
+using SolidStateDetectors: ConstantImpurityDensity
 T = Float64
 sim = Simulation{T}(SSD_examples[:TrueCoaxial])
 
 distance_to_contact = pt -> 0.01 - hypot(pt[1], pt[2])
 Li_annealing_temperature::T = 623 # Kelvin
 Li_annealing_time::T = 18*60 # seconds
-p_type_density = -1e10 * 1e6
+p_type_density::T = -1e16 # m^-3
+bulk_imp_model = ConstantImpurityDensity{T}(p_type_density)
 
-# This code breaks and needs to be updated !!
-pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, distance_to_contact, p_type_density)
+pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, nothing, bulk_imp_model, distance_to_contact)
 sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density)
 ```
 

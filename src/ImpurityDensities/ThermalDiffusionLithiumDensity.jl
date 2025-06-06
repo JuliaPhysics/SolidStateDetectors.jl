@@ -34,7 +34,7 @@ function calculate_lithium_saturated_density(lithium_annealing_temperature::T)::
     exp10(21.27 - 2610.0/(lithium_annealing_temperature) + 6)
 end
 
-function ThermalDiffusionLithiumDensity{T, G}(
+function ThermalDiffusionLithiumDensity{T}(
     lithium_annealing_temperature::T,
     lithium_annealing_time::T,
     contact_with_lithium_doped::G;
@@ -49,7 +49,7 @@ function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict,
     lithium_annealing_temperature = _parse_value(T, get(dict, "lithium_annealing_temperature", 623u"K"), input_units.temperature)
     lithium_annealing_time = _parse_value(T, get(dict, "lithium_annealing_time", 18u"minute"), internal_time_unit)
     contact_with_lithium_doped = haskey(dict, "contact_with_lithium_doped") ? dict["contact_with_lithium_doped"] : nothing # you don't have to pass the geometry of doped contact only when the distance_to_contact is passed
-    ThermalDiffusionLithiumDensity{T, typeof(contact_with_lithium_doped)}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped)
+    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped)
 end
 
 function get_impurity_density(li_diffusion::ThermalDiffusionLithiumDensity{T, G}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
