@@ -10,8 +10,7 @@ ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 * `lithium_annealing_time::T`: lithium annealing time in seconds. The default value is 18 minutes.
 * `distance_to_contact::Function`: the function for describing the depth to surface. 
 1) use the built-in function `ConstructiveSolidGeometry.distance_to_surface` to calculate the distance to the surface of the doped contact 
-2) custom. 
-Custom function might be much faster while the detector has good symmetry.
+2) custom. Custom function might be much faster while the detector has good symmetry.
 * `lithium_density_on_contact::T`: the lithium concentration in the surface (in m^-3)
 * `lithium_diffusivity_in_germanium::T`: the diffusivity of lithium in germanium (in m^2*s^-1)
 """

@@ -7,9 +7,7 @@ The surface lithium density is saturated.
 ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
  
 ## Fields
-* `lithium_annealing_temperature::T`: lithium annealing temperature when the lithium is diffused into the crystal. The default value is 623 K.
-* `lithium_annealing_time::T`: lithium annealing time. The default value is 18 minutes.
-* `surface_imp_model::ThermalDiffusionLithiumDensity{T,G}`: the density profile of lithium (n-type). This will be constructed with above parameters.
+* `surface_imp_model::ThermalDiffusionLithiumDensity{T,G}`: the density profile of lithium (n-type).
 * `bulk_imp_model::AbstractImpurityDensity{T}`: the density of the p-type impurity.
 """
 
