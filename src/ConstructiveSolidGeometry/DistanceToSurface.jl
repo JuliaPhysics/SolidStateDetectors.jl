@@ -1,5 +1,5 @@
 function distance_to_surface(point::AbstractCoordinatePoint{T}, c::Union{<:AbstractConstructiveGeometry{T}, <:AbstractVolumePrimitive{T}}) where {T}
-    distance_list=[distance_to_surface(point,surf) for surf in surfaces(c)]
+    min_distance::T = T(Inf)
     for surf in surfaces(c)
         d::T = distance_to_surface(point, surf)
         min_distance = ifelse(isnan(d), min_distance, min(d, min_distance))
