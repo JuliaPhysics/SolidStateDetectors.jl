@@ -1,18 +1,16 @@
 """
-struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+struct PtypePNJunctionImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
 A PN junction impurity model based on lithium thermal diffusion and constant bulk impurity density.
-The surface lithium density is saturated.
-
-ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
+The surface lithium density is saturated. Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
  
 ## Fields
-* `surface_imp_model::ThermalDiffusionLithiumDensity{T,G}`: the density profile of lithium (n-type).
+* `surface_imp_model::ThermalDiffusionLithiumDensity{T}`: the density profile of lithium (n-type).
 * `bulk_imp_model::AbstractImpurityDensity{T}`: the density of the p-type impurity.
 """
 
-struct PtypePNJunctionImpurityDensity{T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractImpurityDensity{T}
-    surface_imp_model::ThermalDiffusionLithiumDensity{T, G}
+struct PtypePNJunctionImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+    surface_imp_model::ThermalDiffusionLithiumDensity{T}
     bulk_imp_model::AbstractImpurityDensity{T}
 end
 function PtypePNJunctionImpurityDensity{T}(
@@ -23,7 +21,7 @@ function PtypePNJunctionImpurityDensity{T}(
     distance_to_contact::Function = pt::AbstractCoordinatePoint{T} -> ConstructiveSolidGeometry.distance_to_surface(pt, contact_with_lithium_doped)
     ) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
     surface_imp_model = ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, distance_to_contact=distance_to_contact)
-    PtypePNJunctionImpurityDensity{T,G}(surface_imp_model, bulk_imp_model)
+    PtypePNJunctionImpurityDensity{T}(surface_imp_model, bulk_imp_model)
 end
 
 function ImpurityDensity(T::DataType, t::Val{:PtypePNjunction}, dict::AbstractDict, input_units::NamedTuple)
@@ -34,6 +32,6 @@ function ImpurityDensity(T::DataType, t::Val{:PtypePNjunction}, dict::AbstractDi
     PtypePNJunctionImpurityDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, bulk_imp_model)
 end
 
-function get_impurity_density(PtypePNjunction::PtypePNJunctionImpurityDensity{T, G}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
+function get_impurity_density(PtypePNjunction::PtypePNJunctionImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
     get_impurity_density(PtypePNjunction.bulk_imp_model, pt)+get_impurity_density(PtypePNjunction.surface_imp_model, pt)
 end
