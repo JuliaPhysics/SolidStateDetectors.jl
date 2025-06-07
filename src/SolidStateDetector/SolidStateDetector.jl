@@ -120,18 +120,36 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
 
     transformations = parse_CSG_transformation(T, config_detector, input_units)
     
-    @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."     
-    semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
-
     @assert haskey(config_detector, "contacts") "Each detector needs at least two contacts. Please define them in the configuration file."                    
     contacts = broadcast(c -> Contact{T}(c, input_units, transformations), config_detector["contacts"])
-    
+
     # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
     # They need to be in order (1, 2, ... , N), so throw an error if this is not the case.
     if !all(getfield.(contacts, :id) .== eachindex(contacts))
         ArgumentError("SolidStateDetectors.jl only supports contact IDs that are in order.\n
             Please set the ID of the first contact to 1, the ID of the second contact to 2, etc.")
     end
+    
+    @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."
+    if haskey(config_detector["semiconductor"], "impurity_density") &&
+       haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
+       config_detector["semiconductor"]["impurity_density"]["name"] in ("li_diffusion", "PtypePNjunction")
+        if haskey(config_detector["semiconductor"]["impurity_density"], "doped_contact_id")
+            doped_contact_id::Int = config_detector["semiconductor"]["impurity_density"]["doped_contact_id"]
+            if !in(doped_contact_id, getfield.(contacts, :id))
+                ArgumentError("The doped_contact_id is not defined in the configuration file.")
+            end
+        else
+            contact_potentials = T[c.potential for c in det.contacts]
+            max_potential = maximum(contact_potentials)
+            inds = findall(==(max_potential), contact_potentials)
+            @assert length(inds) == 1 "Could not determine doped contact (N+) id as multiple contacts' potentials equal the maxima."
+            doped_contact_id = inds[1]
+        end
+
+        config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
+    end
+    semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
     
     passives = Passive{T}[]
     if haskey(config_detector, "passives") # "passives" as entry of "detectors"
