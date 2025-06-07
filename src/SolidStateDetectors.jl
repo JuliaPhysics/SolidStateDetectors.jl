@@ -83,6 +83,10 @@ export LinearImpurityDensity, LinBouleImpurityDensity, LinExpBouleImpurityDensit
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
 
+abstract type ChargeCarrier end
+abstract type Electron <: ChargeCarrier end 
+abstract type Hole <: ChargeCarrier end
+
 include("examples.jl")
 
 include("Units.jl")

@@ -4,93 +4,95 @@
 Charge drift model in which the electrons and holes drift along the electric field.
 There factors are considered in the mobility calculation: ionized impurities, neutral impurities, and acoustic phonon.
 
+Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
+
 ## Fields
 - `calculate_mobility::Function`: Mobility calculation function
-"""
-abstract type VolumeType end
-abstract type BulkVolume <: VolumeType end 
-abstract type SurfaceVolume <: VolumeType end
+- `neutral_imp_model::AbstractImpurityDensity{T}`: the neutral impurity density model
+- `bulk_imp_model::AbstractImpurityDensity{T}`: the bulk impurity density model (p-type impurity)
+- `surface_imp_model::AbstractImpurityDensity{T}`: the surface impurity density model (n-type impurity)
 
+## Extra field for constructing the model
+- `temperature::T`: temperature of the crystal (Kelvin)
+"""
 
 struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
     calculate_mobility::Function
-    pn_depth::T
-    surface_imp_model::T
-    pn_hole_mobility::T
-    pn_electron_mobility::T
+	neutral_imp_model::AbstractImpurityDensity{T}
+	bulk_imp_model::AbstractImpurityDensity{T}
+    surface_imp_model::AbstractImpurityDensity{T}
 end
 
-function calculate_mobility(
-	pt::SolidStateDetectors.AbstractCoordinatePoint{T}, ::Type{Hole}) where {T}
+function InactiveLayerChargeDriftModel{T}(
+	temperature::T, # Kelvin
+	neutral_imp_model::AbstractImpurityDensity{T},
+	bulk_imp_model::AbstractImpurityDensity{T},
+    surface_imp_model::AbstractImpurityDensity{T}
+	) where {T <: SSDFloat}
 
-	depth=calculate_depth2surface(pt)
-	volume_type = depth>pn_depth ? BulkVolume : SurfaceVolume
-	Temp = T_Deadlayer/K
-	
-	if (volume_type <: BulkVolume)
-		u = hole_bulk_mobility
-
-	elseif (volume_type <: SurfaceVolume)
-		# pass the density to the following equation in unit cm^-3
-		Nn = Neural_Impurity / cm^-3
-		Ni = min(5e20*cm^-3, (p_type_density + the_li_concentration(pt))) / cm^-3 # in cm^-3 
-		 
-		uI = (2.35e17*Temp^1.5/Ni/log(9.13e13*Temp^2/Ni) + 1.51e18*Temp^1.5/Ni/log(5.82e14*Temp^2/Ni)) * (cm^2/V/s)
-		uA = (7.77e7 * Temp^-1.5) * (cm^2/V/s)
-		uN = (1/Nn * (2.31e18+2.36e20) * 0.82 * (0.228*Temp^0.5 + 0.976*Temp^-0.5)) * (cm^2/V/s)
-		u = 1/(1/uI + 1/uA + 1/uN)
+	function calculate_mobility(pt::AbstractCoordinatePoint{T}, CC::Type{CC_type}) where {T <: SSDFloat, CC_type <: ChargeCarrier}
+		calculate_mobility_(
+			get_impurity_density(neutral_imp_model, pt),
+			get_impurity_density(bulk_imp_model, pt),
+			get_impurity_density(surface_imp_model, pt),
+			temperature, CC)
 	end
-	u
+
+    InactiveLayerChargeDriftModel{T}(calculate_mobility, neutral_imp_model, bulk_imp_model, surface_imp_model)
 end
 
-function calculate_mobility(
-	pt::SolidStateDetectors.AbstractCoordinatePoint{T}, ::Type{Electron}) where {T}
+function calculate_mobility_(
+	Nn::T, bulk_imp::T, surface_imp::T,
+	temperature::T,
+	::Type{Hole}) where {T}
+	Ni = -bulk_imp + surface_imp
 
-	depth=calculate_depth2surface(pt)
-	volume_type = depth>pn_depth ? BulkVolume : SurfaceVolume
+	μI = 2.35e19*temperature^1.5/Ni/log(9.13e19*temperature^2/Ni) + 1.51e20*temperature^1.5/Ni/log(5.82e20*temperature^2/Ni)
+	μA = 7.77e3 * temperature^-1.5
+	μN = 1e2/Nn * (2.31e18+2.36e20) * 0.82 * (0.228*temperature^0.5 + 0.976*temperature^-0.5)
 
-	Temp = T_Deadlayer/K # pass to the following equation in unit K
-	
-	if (volume_type <: BulkVolume)
-		# from dwh-sagepss: from ieee
-		# u = 3.6e4 * (cm^2/s/V)
+	1/(1/μI + 1/μA + 1/μN)
+end
+function calculate_mobility_(
+	Nn::T, bulk_imp::T, surface_imp::T,
+	temperature::T,
+	::Type{Electron}) where {T}
+	Ni = -bulk_imp + surface_imp
 
-		# use the value at the pn point to substitute the value at the bulk (super close, save time)
-		u = 34824.545  * (cm^2/s/V)
+	μI = 2.442e20*temperature^1.5/Ni/(log(2.496e20*temperature^2/Ni))
+	μA = 9.32e3 * temperature^-1.5
+	μN = 1.07e22/Nn * (0.28*temperature^0.5 + 0.54*temperature^-0.5)
 
-	elseif (volume_type <: SurfaceVolume)
-		# from dwh-sagepss, 这个结果的范围是0.18-1.58 m2/s/V (从深度0mm-PN结)
-		# A = 1.115e-7
-		# B = 5.22e-18 *(cm^3)
-		# Ni = max(p_type_density,the_li_concentration(pt))
-		# u = 1 / (A*Temp^1.5+B*Ni*Temp^-1.5) * 1.5 * (cm^2/s/V) # FIX-ME 
+	1/(1/μI + 1/μA + 1/μN)
+end
 
-		# from mdm-jinst-ntype # more ref to: #electron model from jinst-electron-MDM
-		# pass to the following equation in unit cm^-3
-		Nn = Neural_Impurity / cm^-3
-		Ni = (p_type_density + the_li_concentration(pt)) / cm^-3 # in cm^-3 
+function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
+	imp_model::AbstractImpurityDensity, input_units::NamedTuple
+	) where {T <: SSDFloat}
+    temperature = _parse_value(T, get(config, "temperature", 90u"K"), input_units.temperature)
 
-		uI = 2.442e18*Temp^1.5/Ni/(log(2.496e14*Temp^2/Ni)) * (cm^2/V/s)
-		uA = 9.32e7 * Temp^-1.5 * (cm^2/V/s)
-		uN = 1.07e20/Nn * (0.28*Temp^0.5 + 0.54*Temp^-0.5) * (cm^2/V/s)
-		u = 1/(1/uI + 1/uA + 1/uN)
+	neutral_imp_model = if haskey(config, "neutral_impurity_density")
+		ImpurityDensity(T, config["neutral_impurity_density"], input_units)
+	else
+		ConstantImpurityDensity{T}(1e21)
 	end
-	u
-end
 
+	bulk_imp_model = if haskey(config, "bulk_impurity_density")
+		ImpurityDensity(T, config["bulk_impurity_density"], input_units)
+	elseif isdefined(imp_model, :bulk_imp_model)
+		imp_model.bulk_imp_model
+	else 
+		imp_model
+	end
 
-function InactiveLayerChargeDriftModel{T}(config::AbstractDict) where {T <: SSDFloat}
-    if !haskey(config, "mobilities")
-        throw(ConfigFileError("InactiveLayerChargeDriftModel config file needs entry 'mobilities'."))
-    end
-
-    for axis in ("e", "h")
-        if !haskey(config["mobilities"], axis)
-            throw(ConfigFileError("InactiveLayerChargeDriftModel config file needs entry 'mobilities/$axis'."))
-        end
-    end
-    
-    InactiveLayerChargeDriftModel{T}(config["mobilities"]["e"], config["mobilities"]["h"])
+	surface_imp_model = if haskey(config, "surface_impurity_density")
+		ImpurityDensity(T, config["surface_impurity_density"], input_units)
+	elseif isdefined(imp_model, :surface_imp_model)
+		imp_model.surface_imp_model
+	else
+		throw(ConfigFileError("There is no surface impurity density profile provided."))
+	end
+    InactiveLayerChargeDriftModel{T}(temperature, neutral_imp_model, bulk_imp_model, surface_imp_model)
 end
 
 @fastmath function getVe(fv::SVector{3, T}, cdm::InactiveLayerChargeDriftModel{T}, current_pos::CartesianPoint{T} = zero(CartesianPoint{T})) where {T <: SSDFloat}

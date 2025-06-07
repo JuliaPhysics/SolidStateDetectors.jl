@@ -10,10 +10,6 @@ struct EHDriftPath{T <: SSDFloat}
     timestamps_h::Vector{T}
 end
 
-abstract type ChargeCarrier end
-abstract type Electron <: ChargeCarrier end 
-abstract type Hole <: ChargeCarrier end
-
 function _common_time(dp::EHDriftPath{T})::T where {T <: SSDFloat}
     max(last(dp.timestamps_e), last(dp.timestamps_h))
 end
