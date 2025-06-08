@@ -24,10 +24,10 @@ struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{
 end
 
 function InactiveLayerChargeDriftModel{T}(
-	temperature::T, # Kelvin
-	neutral_imp_model::AbstractImpurityDensity{T},
-	bulk_imp_model::AbstractImpurityDensity{T},
-    surface_imp_model::AbstractImpurityDensity{T}
+	temperature::T = T(90), # Kelvin
+	neutral_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(1e21)),
+	bulk_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(-1e16)),
+    surface_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(0))
 	) where {T <: SSDFloat}
 
 	function calculate_mobility(pt::AbstractCoordinatePoint{T}, CC::Type{CC_type}) where {T <: SSDFloat, CC_type <: ChargeCarrier}
