@@ -176,7 +176,7 @@ function Dictionary(c::Polycone{T})::OrderedDict{String, Any} where {T}
     @assert isnothing(c.φ) "Polycone needs `φ` field to be nothing."
     dict["r"] = c.r
     dict["z"] = c.z
-    if c.origin != zero(CartesianVector{T}) dict["origin"] = c.origin end
+    if c.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(c.origin) end
     if c.rotation != one(SMatrix{3,3,T,9})  dict["rotation"] = Dictionary(c.rotation) end 
     OrderedDict{String, Any}("polycone" => dict)
 end

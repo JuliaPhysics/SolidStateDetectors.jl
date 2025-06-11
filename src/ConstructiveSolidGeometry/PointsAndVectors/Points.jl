@@ -43,10 +43,20 @@ CartesianPoint{T}(;x = 0, y = 0, z = 0) where {T} = CartesianPoint{T}(T(x),T(y),
 # ToDo: Remove this, if possible, otherwise at least check that v has length 3:
 CartesianPoint{T}(v::AbstractVector) where {T} = CartesianPoint{T}(v[1], v[2], v[3])
 
-function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint{U}) where {T,U}
+CartesianPoint{T}(pt::CartesianPoint{T}) where {T} = pt
+
+function CartesianPoint{T}(pt::CartesianPoint{U}) where {T, U} 
     return CartesianPoint{T}(convert(T, pt.x), convert(T, pt.y), convert(T, pt.z))
 end
 
+function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint) where {T}
+    return CartesianPoint{T}(pt)
+end
+
+Base.keys(::CartesianPoint) = (:x, :y, :z)
+Base.getindex(p::CartesianPoint, k::Symbol) = getfield(p, k)
+
+AbstractCoordinatePoint{T, Cartesian}(x::Real, y::Real, z::Real) where T = CartesianPoint{T}(x, y, z)
 
 Base.:(==)(a::CartesianPoint, b::CartesianPoint) = a.x == b.x && a.y == b.y && a.z == b.z
 
@@ -55,7 +65,8 @@ function Base.isapprox(a::CartesianPoint, b::CartesianPoint; kwargs...)
 end
 
 Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zero(T))
-
+# @inline Base.Tuple(pt::CartesianPoint) = (pt.x, pt.y, pt.z)
+@inline Base.copy(pt::CartesianPoint) = CartesianPoint(pt.x, pt.y, pt.z)
 
 @inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
 @inline Base.:(-)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x - v.x, pt.y - v.y, pt.z - v.z)
@@ -65,13 +76,13 @@ Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zer
 @inline Base.:(-)(::CartesianZero, pt::CartesianPoint) = CartesianVector(-pt.x, -pt.y, -pt.z)
 
 
-Base.:(*)(A::StaticMatrix{3,3}, pt::CartesianPoint) = cartesian_zero + (A * (pt - cartesian_zero))
-Base.:(\)(A::StaticMatrix{3,3}, pt::CartesianPoint) = cartesian_zero + (A \ (pt - cartesian_zero))
 
 # Barycentric combination
 function  Statistics.mean(A::AbstractArray{<:CartesianPoint}; dims = :)
     cartesian_zero + mean(_vec_from_zero, A; dims = dims)
 end
+
+# Base.broadcastable(p::CartesianPoint) = (p.x, p.y, p.z)
 
 _vec_from_zero(pt::CartesianPoint) = pt - cartesian_zero
 
@@ -131,6 +142,7 @@ function Base.convert(::Type{CylindricalPoint{T}}, pt::CylindricalPoint{U}) wher
     return CylindricalPoint{T}(convert(T, pt.r), convert(T, pt.φ), convert(T, pt.z))
 end
 
+AbstractCoordinatePoint{T, Cylindrical}(r::Real, φ::Real, z::Real) where T = CylindricalPoint{T}(r, φ, z)
 
 Base.:(==)(a::CylindricalPoint, b::CylindricalPoint) = a.r == b.r && a.φ == b.φ && a.z == b.z
 
@@ -139,6 +151,8 @@ function Base.isapprox(a::CylindricalPoint, b::CylindricalPoint; kwargs...)
 end
 
 Base.zero(::CylindricalPoint{T}) where {T} = CylindricalPoint{T}(zero(T), zero(T), zero(T))
+
+@inline Base.copy(pt::CylindricalPoint) = CylindricalPoint(pt.r, pt.φ, pt.z)
 
 @inline Base.:(+)(pt::CylindricalPoint, v::CartesianVector) = CylindricalPoint(CartesianPoint(pt) + v)
 

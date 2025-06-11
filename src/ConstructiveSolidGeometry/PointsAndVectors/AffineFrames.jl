@@ -30,7 +30,9 @@ struct AFTransformLinOpFirst{V<:CartesianVector,LM}
     offset::V
 end
 
-(f::AFTransformLinOpFirst)(pt::CartesianPoint) = muladd(f.linop, pt, f.offset)
+function (f::AFTransformLinOpFirst)(pt::CartesianPoint)
+    cartesian_zero + muladd(f.linop, pt - cartesian_zero, f.offset) 
+end
 (f::AFTransformLinOpFirst)(v::CartesianVector) = f.linop * v
 
 (f::AFTransformLinOpFirst)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
@@ -43,7 +45,7 @@ struct AFTransformOffsetFirst{V,M}
     linop::M
 end
 
-(f::AFTransformOffsetFirst)(pt::CartesianPoint) = f.linop * (pt + f.offset)
+(f::AFTransformOffsetFirst)(pt::CartesianPoint) =  cartesian_zero + (f.linop * (pt - cartesian_zero + f.offset))
 (f::AFTransformOffsetFirst)(v::CartesianVector) = f.linop * v
 
 (f::AFTransformOffsetFirst)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))

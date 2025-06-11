@@ -163,10 +163,11 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     # end 
 
     for i3 in t_idx_r3 # z;   Maybe switch loops so that the direction of `l` has to be calculated less times..
-        o = CartesianPoint{T}(zero(T), zero(T), ticks[3][i3])
+        z = ticks[3][i3]
+        o = CartesianPoint{T}(zero(T), zero(T), z)
         for i2 in eachindex(ticks[2]) # φ
-            dir = CartesianVector(CartesianPoint(CylindricalPoint{T}(one(T), ticks[2][i2], zero(T)))) 
-            l = ConstructiveSolidGeometry.Line(o, dir) # dir should be normalized
+            radial_point = CartesianPoint(CylindricalPoint{T}(one(T), ticks[2][i2], z))
+            l = ConstructiveSolidGeometry.Line(o, radial_point)
             pts_car = ConstructiveSolidGeometry.intersection(face, l)
             for pt_car in pts_car
                 pt_cyl = CylindricalPoint(pt_car)

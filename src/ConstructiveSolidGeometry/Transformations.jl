@@ -6,7 +6,19 @@ const Transformations{T} = NamedTuple{(:rotation, :translation), Tuple{SMatrix{3
 
 # Transformations{T}() where {T} = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
 
-rotate(p::P, r::AbstractMatrix) where {P <: AbstractPrimitive} = P(p, origin = r * p.origin, rotation = r * p.rotation)
+# rotate(p::P, r::AbstractMatrix) where {P <: AbstractPrimitive} = P(p, origin = r * p.origin, rotation = r * p.rotation)
+function rotate(p::P, r::AbstractMatrix) where {P <: AbstractPrimitive}
+    # Compose rotation with the primitive's local frame
+    rotated_linop = r * p.rotation
+    rotated_origin = frame_transformation(
+        LocalAffineFrame(cartesian_zero, r),
+        global_frame,
+        p.origin
+    )
+
+    return P(p; origin = rotated_origin, rotation = rotated_linop)
+end
+
 (*)(r::AbstractMatrix, p::AbstractPrimitive) = rotate(p, r)
 
 translate(p::P, v::CartesianVector) where {P <: AbstractPrimitive} = P(p, origin = p.origin + v, rotation = p.rotation)
@@ -38,4 +50,6 @@ function Dictionary(m::SMatrix{3,3,T,9}) where {T}
     end
     dict
 end
+
+Dictionary(pt::CartesianPoint) = [pt.x, pt.y, pt.z]
 

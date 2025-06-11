@@ -134,7 +134,7 @@ function Dictionary(e::Ellipsoid{T})::OrderedDict{String, Any} where {T}
     dict["r"] = e.r # always a Real 
     if !isnothing(e.φ) error("Partial Ellipsoid (`φ = φ`) is not yet supported.") end
     if !isnothing(e.θ) error("Partial Ellipsoid (`θ = θ`) is not yet supported.") end
-    if e.origin != zero(CartesianVector{T}) dict["origin"] = e.origin end
+    if e.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(e.origin) end
     if e.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(e.rotation) end
     OrderedDict{String, Any}("sphere" => dict)
 end

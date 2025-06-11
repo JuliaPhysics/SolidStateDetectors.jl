@@ -23,7 +23,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
                     "h"       => 1.0))
                 for i in 1:2
             ])
-    
+            
             c = Geometry(T, dict, default_units, no_translations)
     
             # Conversion from Geometry -> Dict and Dict -> Geometry should result in the same geometry

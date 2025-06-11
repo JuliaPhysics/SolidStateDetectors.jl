@@ -2,9 +2,9 @@
 
 using Test
 
-using SolidStateDetectors: ConstructiveSolidGeometry as CSG
-using .CSG: CartesianPoint, CartesianVector, CylindricalPoint
-using .CSG: LocalAffineFrame, global_frame, frame_transformation
+using SolidStateDetectors: ConstructiveSolidGeometry
+using .ConstructiveSolidGeometry: CartesianPoint, CartesianVector, CylindricalPoint
+using .ConstructiveSolidGeometry: LocalAffineFrame, global_frame, frame_transformation
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
 
@@ -25,7 +25,6 @@ using InverseFunctions: inverse
         @test @inferred(a - v) == CartesianPoint(0.9, 1.8, 2.7)
         @test @inferred(a - v) == CartesianPoint(0.9, 1.8, 2.7)
         @test @inferred(a - b) == CartesianVector(-2.0, 1.0, 1.0)
-        @test @inferred(A * a) == CartesianPoint(30.0, 38.0, 50.0)
 
         @test @inferred(zero(a) + (a - zero(a))) == a
 
@@ -40,7 +39,7 @@ using InverseFunctions: inverse
         frame = LocalAffineFrame(b, A)
 
         f = frame_transformation(frame, global_frame)
-        @test @inferred(f(a)) == A * a + CartesianVector(b[1], b[2], b[3])
+        @test @inferred(f(a)) == cartesian_zero + A * (a - cartesian_zero) + CartesianVector(b[1], b[2], b[3])
         @test @inferred(inverse(f)(f(a))) ≈ a
         # ToDo: Add more tests!
     end

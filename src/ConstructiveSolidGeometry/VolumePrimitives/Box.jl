@@ -136,22 +136,22 @@ function Dictionary(b::Box{T})::OrderedDict{String, Any} where {T}
     dict["hX"] = b.hX
     dict["hY"] = b.hY
     dict["hZ"] = b.hZ
-    if b.origin != zero(CartesianVector{T}) dict["origin"] = b.origin end
+    if b.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(b.origin) end
     if b.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(b.rotation) end
     OrderedDict{String,Any}("box" => dict)
 end
 
 function vertices(b::Box{T}) where {T}
-    return (
-        b.rotation * SVector{3,T}(-b.hX, -b.hY, -b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(+b.hX, -b.hY, -b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(+b.hX, +b.hY, -b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(-b.hX, +b.hY, -b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(-b.hX, -b.hY, +b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(+b.hX, -b.hY, +b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(+b.hX, +b.hY, +b.hZ) .+ b.origin,
-        b.rotation * SVector{3,T}(-b.hX, +b.hY, +b.hZ) .+ b.origin,
-    )
+    return _transform_into_global_coordinate_system.((
+        CartesianPoint{T}(-b.hX, -b.hY, -b.hZ),
+        CartesianPoint{T}(+b.hX, -b.hY, -b.hZ),
+        CartesianPoint{T}(-b.hX, +b.hY, -b.hZ),
+        CartesianPoint{T}(+b.hX, +b.hY, -b.hZ),
+        CartesianPoint{T}(-b.hX, -b.hY, +b.hZ),
+        CartesianPoint{T}(+b.hX, -b.hY, +b.hZ),
+        CartesianPoint{T}(-b.hX, +b.hY, +b.hZ),
+        CartesianPoint{T}(+b.hX, +b.hY, +b.hZ)
+    ), Ref(b))
 end
 
 function sample(b::Box{T})::Vector{CartesianPoint{T}} where {T} 

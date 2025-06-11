@@ -25,14 +25,13 @@ function Edge{T}(;
     Edge{T}(a, b)
 end
 
-direction(e::Edge) = e.b - e.a
-
-Line(e::Edge{T}) where {T} = Line{T}(e.a, direction(e))
+Line(e::Edge) = Line(e.a, e.b)
 
 function distance(pt::CartesianPoint{T}, e::Edge{T}) where {T}
-    return if (pt - e.b) ⋅ direction(e) >= 0
+    v = e.b - e.a
+    return if (pt - e.b) ⋅ v >= 0
         norm(pt - e.b)
-    elseif (pt - e.a) ⋅ direction(e) <= 0 
+    elseif (pt - e.a) ⋅ v <= 0 
         norm(pt - e.a)
     else
         distance(pt, Line(e))
@@ -42,9 +41,9 @@ end
 function sample(e::Edge{T}; n = 2)::Vector{CartesianPoint{T}} where {T}
     xs = range(zero(T), stop = one(T), length = n)
     pts = Vector{CartesianPoint{T}}(undef, n)
-    dir = direction(e)
+    v = e.b - e.a
     for i in eachindex(pts)
-        pts[i] = e.a + xs[i] .* dir
+        pts[i] = e.a + xs[i] .* v
     end
     pts
 end
