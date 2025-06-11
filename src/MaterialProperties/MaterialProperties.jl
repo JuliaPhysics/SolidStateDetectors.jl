@@ -30,8 +30,8 @@ material_properties[:HPGe] = (
     name = "High Purity Germanium",
     ml = 1.64,
     mt = 0.0819,
-    De = 101u"cm^2/s",
-    Dh = 49u"cm^2/s"
+    De = 332u"cm^2/s", # Values are pulled from Siggen. https://github.com/radforddc/icpc_siggen/blob/master/calc_signal.c
+    Dh = 265u"cm^2/s"
 )
 
 # These values might just be approximations
