@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors: ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: CartesianPoint, CartesianVector, CylindricalPoint
+using .ConstructiveSolidGeometry: CartesianPoint, CartesianVector, CylindricalPoint, cartesian_zero
 using .ConstructiveSolidGeometry: LocalAffineFrame, global_frame, frame_transformation
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
