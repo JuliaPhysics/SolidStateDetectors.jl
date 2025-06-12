@@ -36,7 +36,7 @@ include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry:
             CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
-            CartesianVector, CylindricalVector, AbstractCoordinateVector,
+            CartesianVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
@@ -63,7 +63,7 @@ import Base: size, sizeof, length, getindex, setindex!, axes, getproperty, broad
 export SolidStateDetector
 export SSD_examples
 
-export Grid, GridPoint
+export Grid
 
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
@@ -118,6 +118,11 @@ include("IO/IO.jl")
 
 include("PlotRecipes/PlotRecipes.jl")
 export @P_str # protected strings to overwrite plot labels with units
+
+
+export GridPoint
+@deprecate GridPoint(grid::Grid{T, N, S}, idxs::Vararg{Int, N}) where {T, N, S} getpoint(grid, idxs...)
+@deprecate GridPoint(grid::Grid{T, N, S}, idxs::NTuple{N, Int}) where {T, N, S} getpoint(grid, idxs)
 
 
 function __init__()

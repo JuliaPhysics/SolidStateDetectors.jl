@@ -716,7 +716,7 @@ function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, T
     end
     if !isnothing(c.φ) dict["phi"] = OrderedDict("from" => "0°", "to" => string(rad2deg(c.φ))*"°") end
     dict["h"] = 2*c.hZ
-    if c.origin != zero(CartesianVector{T}) dict["origin"] = c.origin end
+    if c.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(c.origin) end
     if c.rotation != one(SMatrix{3,3,T,9}) 
         d = Dictionary(c.rotation)
         if unique(keys(d)) == ["Z"]

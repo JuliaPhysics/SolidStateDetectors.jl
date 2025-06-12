@@ -124,7 +124,7 @@ function Dictionary(rp::RegularPrism{N,T, <:Any})::OrderedDict{String, Any} wher
     dict = OrderedDict{String, Any}()
     dict["r"] = rp.r # always a Real 
     dict["h"] = rp.hZ*2
-    if rp.origin != zero(CartesianVector{T}) dict["origin"] = rp.origin end
+    if rp.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(rp.origin) end
     if rp.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(rp.rotation) end
     OrderedDict{String, Any}(PrismAliases[N] => dict)
 end
