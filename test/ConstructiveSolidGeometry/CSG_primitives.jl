@@ -195,8 +195,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test in(CartesianPoint{Float32}(1,0,0),ellip1)
         @test !in(CartesianPoint{Float32}(1,0,0),ellip_open)
     
-        ellip_closed_trafo = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1.0, origin=CartesianPoint{Float32}(1/sqrt(3),1/sqrt(3),1/sqrt(3)),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
-        ellip_open_trafo = @inferred CSG.Ellipsoid(CSG.OpenPrimitive,r=1.0, origin=CartesianPoint{Float32}(1/sqrt(3),1/sqrt(3),1/sqrt(3)),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
+        ellip_closed_trafo = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1.0, origin=CartesianPoint{Float64}(1/sqrt(3),1/sqrt(3),1/sqrt(3)),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
+        ellip_open_trafo = @inferred CSG.Ellipsoid(CSG.OpenPrimitive,r=1.0, origin=CartesianPoint{Float64}(1/sqrt(3),1/sqrt(3),1/sqrt(3)),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
         @test !in(CartesianPoint{Float64}(-1e-8,0,0),ellip_closed_trafo)
         @test in(CartesianPoint{Float64}(1e-8,0,0),ellip_open_trafo)
     end
