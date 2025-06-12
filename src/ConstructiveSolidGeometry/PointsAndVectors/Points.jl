@@ -11,7 +11,15 @@ end
 
 
 """
-    struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
+    const AbstractCartesianPoint{T} = AbstractCoordinatePoint{T,Cartesian}
+
+Supertype for cartesian point types.
+"""
+const AbstractCartesianPoint{T} = AbstractCoordinatePoint{T,Cartesian}
+
+
+"""
+    struct CartesianPoint{T} <: AbstractCartesianPoint{T}
 
 Describes a three-dimensional point in Cartesian coordinates.
 
@@ -22,7 +30,7 @@ Describes a three-dimensional point in Cartesian coordinates.
 
 See also [`CylindricalPoint`](@ref).
 """
-struct CartesianPoint{T} <: AbstractCoordinatePoint{T, Cartesian}
+struct CartesianPoint{T} <: AbstractCartesianPoint{T}
     x::T
     y::T
     z::T
@@ -87,9 +95,16 @@ end
 _vec_from_zero(pt::CartesianPoint) = pt - cartesian_zero
 
 
+"""
+    const AbstractCylindricalPoint{T} = AbstractCoordinatePoint{T,Cylindrical}
+
+Supertype for cylindrical point types.
+"""
+const AbstractCylindricalPoint{T} = AbstractCoordinatePoint{T,Cylindrical}
+
 
 """
-    struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
+    struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
 
 Describes a three-dimensional point in cylindrical coordinates. 
 
@@ -103,7 +118,7 @@ Describes a three-dimensional point in cylindrical coordinates.
     
 See also [`CartesianPoint`](@ref).
 """
-struct CylindricalPoint{T} <: AbstractCoordinatePoint{T, Cylindrical}
+struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
     r::T
     φ::T
     z::T

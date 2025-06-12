@@ -16,7 +16,7 @@ frame_transformation(::GlobalAffineFrame, ::GlobalAffineFrame) = identity
 
 
 
-struct LocalAffineFrame{PT<:CartesianPoint,LM} <: AbstractAffineFrame
+struct LocalAffineFrame{PT<:AbstractCartesianPoint,LM} <: AbstractAffineFrame
     # origin in the global frame
     origin::PT
 
@@ -30,7 +30,7 @@ struct AFTransformLinOpFirst{V<:CartesianVector,LM}
     offset::V
 end
 
-function (f::AFTransformLinOpFirst)(pt::CartesianPoint)
+function (f::AFTransformLinOpFirst)(pt::AbstractCartesianPoint)
     cartesian_zero + muladd(f.linop, pt - cartesian_zero, f.offset) 
 end
 (f::AFTransformLinOpFirst)(v::CartesianVector) = f.linop * v
@@ -45,7 +45,7 @@ struct AFTransformOffsetFirst{V,M}
     linop::M
 end
 
-(f::AFTransformOffsetFirst)(pt::CartesianPoint) =  cartesian_zero + (f.linop * (pt - cartesian_zero + f.offset))
+(f::AFTransformOffsetFirst)(pt::AbstractCartesianPoint) =  cartesian_zero + (f.linop * (pt - cartesian_zero + f.offset))
 (f::AFTransformOffsetFirst)(v::CartesianVector) = f.linop * v
 
 (f::AFTransformOffsetFirst)(pt::CylindricalPoint) = CylindricalPoint(f(CartesianPoint(pt)))
