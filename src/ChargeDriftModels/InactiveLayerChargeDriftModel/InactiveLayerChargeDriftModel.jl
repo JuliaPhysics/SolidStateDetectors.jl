@@ -7,13 +7,13 @@ There factors are considered in the mobility calculation: ionized impurities, ne
 Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 
 ## Fields
-- `calculate_mobility::Function`: Mobility calculation function
-- `neutral_imp_model::AbstractImpurityDensity{T}`: the neutral impurity density model
-- `bulk_imp_model::AbstractImpurityDensity{T}`: the bulk impurity density model
-- `surface_imp_model::AbstractImpurityDensity{T}`: the surface impurity density model
+- `calculate_mobility::Function`: Mobility calculation function.
+- `neutral_imp_model::AbstractImpurityDensity{T}`: the neutral impurity density model. The default is a constant impurity density of 1e21 m⁻³.
+- `bulk_imp_model::AbstractImpurityDensity{T}`: the bulk impurity density model. The default is the defined (bulk) impurity density.
+- `surface_imp_model::AbstractImpurityDensity{T}`: the surface impurity density model. The default is the defined surface impurity density.
 
 ## Extra field for constructing the model
-- `temperature::T`: temperature of the crystal (Kelvin)
+- `temperature::T`: temperature of the crystal (Kelvin).
 """
 
 struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
