@@ -200,6 +200,25 @@ end
     end
 end
 
+@timed_testset "Test InactiveLayerChargeDriftModel" begin
+    @testset "Test constructors of InactiveLayerChargeDriftModel" begin
+        cdm0 = InactiveLayerChargeDriftModel{T}()
+        @test cdm0.temperature == T(90)
+        @test cdm0.neutral_imp_model == ConstantImpurityDensity{T}(1e21)
+        @test cdm0.bulk_imp_model == ConstantImpurityDensity{T}(-1e16)
+        @test cdm0.surface_imp_model == ConstantImpurityDensity{T}(0)
+    end
+
+    simA = @test_nowarn Simulation{T}(SSD_examples[:TrueCoaxial])
+    @testset "Parse the TrueCoaxial config file" begin
+        @test simA.detector.semiconductor.charge_drift_model isa AbstractChargeDriftModel{T}
+        @test simA.detector.semiconductor.charge_drift_model.temperature == T(90)
+        @test simA.detector.semiconductor.charge_drift_model.neutral_imp_model == ConstantImpurityDensity{T}(5.6769e21)
+        @test simA.detector.semiconductor.charge_drift_model.bulk_imp_model == simA.detector.semiconductor.impurity_density_model.bulk_imp_model
+        @test simA.detector.semiconductor.charge_drift_model.surface_imp_model == simA.detector.semiconductor.impurity_density_model.surface_imp_model
+    end
+
+end
 
 @timed_testset "Test IsotropicChargeDriftModel" begin
 

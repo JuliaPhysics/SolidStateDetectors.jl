@@ -68,7 +68,7 @@ export Grid, GridPoint
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
-export ElectricFieldChargeDriftModel, ADLChargeDriftModel, IsotropicChargeDriftModel
+export ElectricFieldChargeDriftModel, ADLChargeDriftModel, IsotropicChargeDriftModel, InactiveLayerChargeDriftModel
 export NoChargeTrappingModel, BoggsChargeTrappingModel, ConstantLifetimeChargeTrappingModel
 export get_active_volume, is_depleted, estimate_depletion_voltage
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
@@ -82,6 +82,10 @@ export LinearImpurityDensity, LinBouleImpurityDensity, LinExpBouleImpurityDensit
 
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
+
+abstract type ChargeCarrier end
+abstract type Electron <: ChargeCarrier end 
+abstract type Hole <: ChargeCarrier end
 
 include("examples.jl")
 

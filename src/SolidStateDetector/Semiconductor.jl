@@ -64,7 +64,11 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
-            getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"])
+            if model == :InactiveLayerChargeDriftModel
+                InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units)
+            else
+                getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"])
+            end
         else
             throw(ConfigFileError("There is no charge drift model called `$(dict["charge_drift_model"]["model"])`."))
         end
