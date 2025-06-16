@@ -36,7 +36,11 @@ detectors:
         name: constant
         value: -1e10cm^-3
     charge_drift_model:
-      include: ADLChargeDriftModel/drift_velocity_config.yaml
+      model: InactiveLayerChargeDriftModel
+      temperature: 90K
+      neutral_impurity_density:
+        name: constant
+        value: 5.6769e15cm^-3
     charge_trapping_model:
       model: ConstantLifetime
       parameters:
