@@ -1,4 +1,10 @@
 struct CartesianZero{T} <: AbstractCoordinatePoint{T, Cartesian} end
+
+"""
+    const CartesianZero{T} = CartesianZero{T}(zero(T))
+
+Origin of the Cartesian coordinate system.
+"""
 const cartesian_zero = CartesianZero{Bool}()
 
 @inline Base.:(+)(::CartesianZero, v::CartesianVector) = CartesianPoint(v.x, v.y, v.z)
