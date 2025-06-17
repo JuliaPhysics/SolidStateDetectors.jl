@@ -97,19 +97,22 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
 end
 
 function _convertEnergyDepsToChargeDeps(
-        pos::AbstractVector{<:SVector{3}}, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
+        pos_vec::AbstractVector{<:SVector{3}}, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
         particle_type::Type{PT} = Gamma, 
         radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(edep)), particle_type),
         max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
         kwargs...
     ) where {T <: SSDFloat, PT <: ParticleType} 
 
-    @assert eachindex(pos) == eachindex(edep) == eachindex(radius)
+    @assert eachindex(pos_vec) == eachindex(edep) == eachindex(radius)
 
     d::T = T(to_internal_units(max_interaction_distance))
     @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
 
-    loc, ene, rad = group_points_by_distance(CartesianPoint.(map(x -> to_internal_units.(x), pos)), T.(to_internal_units.(edep)), T.(to_internal_units.(radius)), d)
+    unitless_pos = Ref(ConstructiveSolidGeometry.cartesian_zero) .+ map(x -> to_internal_units.(x), pos_vec)
+    unitless_edep = T.(to_internal_units.(edep))
+    unitless_radius = T.(to_internal_units.(radius))
+    loc, ene, rad = group_points_by_distance(unitless_pos, unitless_edep, unitless_radius, d)
     _convertEnergyDepsToChargeDeps(loc, ene, det; radius = rad, kwargs...)
 end
 
@@ -125,7 +128,7 @@ function _convertEnergyDepsToChargeDeps(
         iEdep_indep -> broadcast(
             i_together -> begin 
                 nbcc = NBodyChargeCloud(
-                    CartesianPoint(T.(to_internal_units.(pos[iEdep_indep][i_together]))), 
+                    CartesianPoint{T}(to_internal_units(pos[iEdep_indep][i_together])), 
                     T.(to_internal_units(edep[iEdep_indep][i_together])),
                     number_of_carriers,
                     number_of_shells = number_of_shells,

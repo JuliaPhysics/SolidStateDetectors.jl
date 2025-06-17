@@ -4,6 +4,19 @@ const cartesian_zero = CartesianZero{Bool}()
 @inline Base.:(+)(::CartesianZero, v::CartesianVector) = CartesianPoint(v.x, v.y, v.z)
 @inline Base.:(-)(::CartesianZero, v::CartesianVector) = CartesianPoint(-v.x, -v.y, -v.z)
 
+@inline Base.:(+)(pt::CartesianZero, v::StaticVector{3}) = CartesianPoint(v[1], v[2], v[3])
+@inline Base.:(-)(pt::CartesianZero, v::StaticVector{3}) = CartesianPoint(-v[1], -v[2], -v[3])
+
+@inline function Base.:(+)(pt::CartesianZero, v::AbstractVector)
+    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
+    CartesianPoint(v[1], v[2], v[3])
+end
+
+@inline function Base.:(-)(pt::CartesianZero, v::AbstractVector)
+    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
+    CartesianPoint(-v[1], -v[2], -v[3])
+end
+
 @inline function Base.:(-)(::CartesianZero{T}, pt::CartesianZero{U}) where {T,U}
     R = promote_type(T, U)
     return CartesianVector(zero(R), zero(R), zero(R))
@@ -48,8 +61,8 @@ CartesianPoint(; x = 0, y = 0, z = 0) = CartesianPoint(x, y, z)
 
 CartesianPoint{T}(;x = 0, y = 0, z = 0) where {T} = CartesianPoint{T}(T(x),T(y),T(z))
 
-# ToDo: Remove this, if possible, otherwise at least check that v has length 3:
-CartesianPoint{T}(v::AbstractVector) where {T} = CartesianPoint{T}(v[1], v[2], v[3])
+# ToDo: Remove this, if possible
+CartesianPoint{T}(v::AbstractVector) where {T} = cartesian_zero + v
 
 CartesianPoint{T}(pt::CartesianPoint{T}) where {T} = pt
 
@@ -60,6 +73,8 @@ end
 function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint) where {T}
     return CartesianPoint{T}(pt)
 end
+
+to_internal_units(x::CartesianPoint) = CartesianPoint(to_internal_units(x.x), to_internal_units(x.y), to_internal_units(x.z))
 
 Base.keys(::CartesianPoint) = (:x, :y, :z)
 Base.getindex(p::CartesianPoint, k::Symbol) = getfield(p, k)
@@ -78,6 +93,16 @@ Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zer
 
 @inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
 @inline Base.:(-)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x - v.x, pt.y - v.y, pt.z - v.z)
+
+@inline function Base.:(+)(pt::CartesianPoint, v::AbstractVector)
+    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
+    CartesianPoint(pt.x + v[1], pt.y + v[2], pt.z + v[3])
+end
+
+@inline function Base.:(-)(pt::CartesianPoint, v::AbstractVector)
+    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
+    CartesianPoint(pt.x - v[1], pt.y - v[2], pt.z - v[3])
+end
 
 @inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
 @inline Base.:(-)(pt::CartesianPoint, ::CartesianZero) = CartesianVector(pt.x, pt.y, pt.z)

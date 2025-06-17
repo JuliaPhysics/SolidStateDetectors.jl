@@ -306,7 +306,7 @@ end
         b = normalize(a × d)
         rot = hcat(a,b,d)
         cone = SolidStateDetectors.ConstructiveSolidGeometry.Cone(r = ((0,0),(0,length*sin(m.opening_angle))), hZ = length*cos(m.opening_angle)/2, 
-        origin = rot * [0,0,length*cos(m.opening_angle)/2] + m.position, 
+        origin = m.position + CartesianVector(rot * [0,0,length*cos(m.opening_angle)/2]), 
         rotation = rot)
 
         @series begin

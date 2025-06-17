@@ -78,7 +78,7 @@ function _calculate_signal(
     running_sum::T = zero(T)
     q::T = charge
     @inbounds for i in eachindex(tmp_signal)
-        Δldrift::T = (i > 1) ? norm(path[i] .- path[i-1]) : zero(T)
+        Δldrift::T = (i > 1) ? norm(path[i] - path[i-1]) : zero(T)
         Δl::T = Δldrift > 0 ? hypot(Δldrift, vth * (pathtimestamps[i] - pathtimestamps[i-1])) : zero(T)
         Δq::T = q * nσ * Δl
         q -= Δq
