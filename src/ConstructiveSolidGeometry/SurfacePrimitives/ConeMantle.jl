@@ -76,33 +76,73 @@ radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, c
 get_φ_limits(cm::ConeMantle{T,<:Any,T}) where {T} = T(0), cm.φ
 get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
-function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-    pto = _transform_into_object_coordinate_system(pt, cm)
-    cyl = CylindricalPoint(pto)
-    return _transform_into_global_coordinate_system(
-            CartesianVector(CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, zero(T)))), cm)
-end
+# function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
+#     pto = _transform_into_object_coordinate_system(pt, cm)
+#     cyl = CylindricalPoint(pto)
+#     return _transform_into_global_coordinate_system(
+#             CartesianVector(CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, zero(T)))), cm)
+# end
+# function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
+#     pto = _transform_into_object_coordinate_system(pt, cm)
+#     cyl = CylindricalPoint(pto)
+#     return _transform_into_global_coordinate_system(
+#             CartesianVector(CartesianPoint(CylindricalPoint{T}(cyl.r, cyl.φ, zero(T)))), cm)
+# end
+
 function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-    pto = _transform_into_object_coordinate_system(pt, cm)
-    cyl = CylindricalPoint(pto)
-    return _transform_into_global_coordinate_system(
-            CartesianVector(CartesianPoint(CylindricalPoint{T}(cyl.r, cyl.φ, zero(T)))), cm)
+    p_local = _transform_into_object_coordinate_system(pt, cm)
+    x, y, _ = p_local
+    normal_local = normalize(CartesianVector(x, y, 0))
+    #FELIX z component ?
+    return _transform_into_global_coordinate_system(normal_local, cm)
 end
+
+function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
+    p_local = _transform_into_object_coordinate_system(pt, cm)
+    x, y, _ = p_local
+    normal_local = -normalize(CartesianVector(x, y, 0))
+    return _transform_into_global_coordinate_system(normal_local, cm)
+end
+
+# function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
+#     pto = _transform_into_object_coordinate_system(pt, cm)
+#     cyl = CylindricalPoint(pto)
+#     Δr = cm.r[2] - cm.r[1]
+#     Δz = 2cm.hZ
+#     return _transform_into_global_coordinate_system(
+#             CartesianVector(CartesianPoint(CylindricalPoint{T}(-one(T), cyl.φ, Δr / Δz))), cm)
+# end
 function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-    pto = _transform_into_object_coordinate_system(pt, cm)
-    cyl = CylindricalPoint(pto)
+    p_local = _transform_into_object_coordinate_system(pt, cm)
+    x = p_local.x
+    y = p_local.y
+    
     Δr = cm.r[2] - cm.r[1]
     Δz = 2cm.hZ
-    return _transform_into_global_coordinate_system(
-            CartesianVector(CartesianPoint(CylindricalPoint{T}(-one(T), cyl.φ, Δr / Δz))), cm)
+    norm_vec_local = normalize(CartesianVector(-x, -y, Δr / Δz))
+    return _transform_into_global_coordinate_system(norm_vec_local, cm)
+
 end
+
+# function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
+#     pto = _transform_into_object_coordinate_system(pt, cm)
+#     cyl = CylindricalPoint(pto)
+#     Δr = cm.r[2] - cm.r[1]
+#     Δz = 2cm.hZ
+#     return _transform_into_global_coordinate_system(
+#             CartesianVector(CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz))), cm)
+# end
+
 function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-    pto = _transform_into_object_coordinate_system(pt, cm)
-    cyl = CylindricalPoint(pto)
+    p_local = _transform_into_object_coordinate_system(pt, cm)
+    x = p_local.x
+    y = p_local.y
+
     Δr = cm.r[2] - cm.r[1]
     Δz = 2cm.hZ
-    return _transform_into_global_coordinate_system(
-            CartesianVector(CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz))), cm)
+    norm_vec_local = normalize(CartesianVector(x, y, -Δr / Δz))
+    return _transform_into_global_coordinate_system(norm_vec_local, cm)
+
 end
 
 function vertices(cm::ConeMantle{T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
