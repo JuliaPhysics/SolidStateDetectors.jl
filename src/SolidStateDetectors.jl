@@ -35,7 +35,8 @@ include("ka_compat.jl")
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
 using .ConstructiveSolidGeometry
 using .ConstructiveSolidGeometry:
-            CylindricalPoint, CartesianPoint, AbstractCoordinatePoint, _convert_point,
+            CartesianPoint, CartesianVector, CartesianZero, cartesian_zero, CylindricalPoint,
+            AbstractCoordinatePoint, _convert_point,
             CartesianVector, AbstractCoordinateVector,
             Cartesian, Cylindrical, AbstractCoordinateSystem, CoordinateSystemType,
             Geometry, AbstractGeometry, AbstractSurfacePrimitive,
@@ -44,8 +45,8 @@ using .ConstructiveSolidGeometry:
             ConfigFileError, _parse_value,
             LengthQuantity, AngleQuantity, get_scale
         
-import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_units, cartesian_zero
-export CartesianPoint, CartesianVector, CylindricalPoint, cartesian_zero
+import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_units
+export CartesianPoint, CartesianVector, CartesianZero, cartesian_zero, CylindricalPoint
 
 import Clustering
 import DataStructures

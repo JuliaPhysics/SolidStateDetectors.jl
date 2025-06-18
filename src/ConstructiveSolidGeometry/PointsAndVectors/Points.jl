@@ -1,40 +1,46 @@
-struct CartesianZero{T} <: AbstractCoordinatePoint{T, Cartesian} end
-
-"""
-    const CartesianZero{T} = CartesianZero{T}(zero(T))
-
-Origin of the Cartesian coordinate system.
-"""
-const cartesian_zero = CartesianZero{Bool}()
-
-@inline Base.:(+)(::CartesianZero, v::CartesianVector) = CartesianPoint(v.x, v.y, v.z)
-@inline Base.:(-)(::CartesianZero, v::CartesianVector) = CartesianPoint(-v.x, -v.y, -v.z)
-
-@inline Base.:(+)(pt::CartesianZero, v::StaticVector{3}) = CartesianPoint(v[1], v[2], v[3])
-@inline Base.:(-)(pt::CartesianZero, v::StaticVector{3}) = CartesianPoint(-v[1], -v[2], -v[3])
-
-@inline function Base.:(+)(pt::CartesianZero, v::AbstractVector)
-    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
-    CartesianPoint(v[1], v[2], v[3])
-end
-
-@inline function Base.:(-)(pt::CartesianZero, v::AbstractVector)
-    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
-    CartesianPoint(-v[1], -v[2], -v[3])
-end
-
-@inline function Base.:(-)(::CartesianZero{T}, pt::CartesianZero{U}) where {T,U}
-    R = promote_type(T, U)
-    return CartesianVector(zero(R), zero(R), zero(R))
-end
-
-
 """
     const AbstractCartesianPoint{T} = AbstractCoordinatePoint{T,Cartesian}
 
 Supertype for cartesian point types.
 """
 const AbstractCartesianPoint{T} = AbstractCoordinatePoint{T,Cartesian}
+
+Base.:(==)(a::AbstractCartesianPoint, b::AbstractCartesianPoint) = get_x(a) == get_x(b) && get_y(a) == get_y(b) && get_z(a) == get_z(b)
+
+function Base.isapprox(a::AbstractCartesianPoint, b::AbstractCartesianPoint; kwargs...)
+    return isapprox(get_x(a), get_x(b); kwargs...) &&
+           isapprox(get_y(a), get_y(b); kwargs...) &&
+           isapprox(get_z(a), get_z(b); kwargs...)
+end
+
+function to_internal_units(x::AbstractCartesianPoint)
+    CartesianPoint(to_internal_units(get_x(x)), to_internal_units(get_y(x)), to_internal_units(get_z(x)))
+end
+
+
+
+# Unitful uses the `*` and `/` operators to combine values with units. But mathematically that's really not an algebraic
+# product (not defined for affine points), but a cartesian product, so supporting this should be fine:
+Base.:(*)(pt::AbstractCartesianPoint{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) * u, get_y(pt) * u, get_z(pt) * u)
+Base.:(/)(pt::AbstractCartesianPoint{<:Quantity{<:Real, Unitful.𝐋}}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) / u, get_y(pt) / u, get_z(pt) / u)
+
+
+# In that spirit, and to enable constructs like `ustrip(u"mm", pt)` and `NoUnits(pt / u"mm")`, we'll support uconvert/ustrip
+# for CartesianPoint. Unitful doesn't encourage defining those for collections, but we'll view cartesian points as single
+# mathematical objects in regard to units:
+function Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.𝐋}, pt::AbstractCartesianPoint{<:Quantity{<:Real, Unitful.𝐋}})
+    CartesianPoint(uconvert(u, get_x(pt)), uconvert(u, get_y(pt)), uconvert(u, get_z(pt)))
+end
+
+function Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.NoDims}, pt::AbstractCartesianPoint{<:Quantity{<:Real, Unitful.NoDims}})
+    CartesianPoint(uconvert(u, get_x(pt)), uconvert(u, get_y(pt)), uconvert(u, get_z(pt)))
+end
+
+Unitful.ustrip(pt::AbstractCartesianPoint) = CartesianPoint(ustrip(get_x(pt)), ustrip(get_y(pt)), ustrip(get_z(pt)))
+
+
+
+
 
 
 """
@@ -46,6 +52,9 @@ Describes a three-dimensional point in Cartesian coordinates.
 * `x`: x-coordinate (in m).
 * `y`: y-coordinate (in m).
 * `z`: z-coordinate (in m).
+
+Given a point `pt = CartesianPoint(x, y, z)`, use `pt - cartesian_zero` to get
+a `CartesianVector` from the origin to point `pt`.
 
 See also [`CylindricalPoint`](@ref).
 """
@@ -80,18 +89,17 @@ function Base.convert(::Type{CartesianPoint{T}}, pt::CartesianPoint) where {T}
     return CartesianPoint{T}(pt)
 end
 
-to_internal_units(x::CartesianPoint) = CartesianPoint(to_internal_units(x.x), to_internal_units(x.y), to_internal_units(x.z))
+
+@inline get_x(pt::CartesianPoint) = pt.x
+@inline get_y(pt::CartesianPoint) = pt.y
+@inline get_z(pt::CartesianPoint) = pt.z
+
 
 Base.keys(::CartesianPoint) = (:x, :y, :z)
 Base.getindex(p::CartesianPoint, k::Symbol) = getfield(p, k)
 
 AbstractCoordinatePoint{T, Cartesian}(x::Real, y::Real, z::Real) where T = CartesianPoint{T}(x, y, z)
 
-Base.:(==)(a::CartesianPoint, b::CartesianPoint) = a.x == b.x && a.y == b.y && a.z == b.z
-
-function Base.isapprox(a::CartesianPoint, b::CartesianPoint; kwargs...)
-    return isapprox(a.x, b.x; kwargs...) && isapprox(a.y, b.y; kwargs...) && isapprox(a.z, b.z; kwargs...)
-end
 
 Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zero(T))
 # @inline Base.Tuple(pt::CartesianPoint) = (pt.x, pt.y, pt.z)
@@ -111,9 +119,6 @@ end
 end
 
 @inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
-@inline Base.:(-)(pt::CartesianPoint, ::CartesianZero) = CartesianVector(pt.x, pt.y, pt.z)
-@inline Base.:(-)(::CartesianZero, pt::CartesianPoint) = CartesianVector(-pt.x, -pt.y, -pt.z)
-
 
 
 # Barycentric combination
@@ -126,12 +131,85 @@ end
 _vec_from_zero(pt::CartesianPoint) = pt - cartesian_zero
 
 
+
+"""
+    CartesianZero{T} <: AbstractCoordinatePoint{T, Cartesian}
+
+Represents origin of the Cartesian coordinate system.
+
+See also [`cartesian_zero`](@ref) and [`CartesianVector`](@ref).
+
+Constructors:
+
+```julia
+CartesianZero{T}()
+CartesianZero() == CartesianZero{Bool}()
+```
+"""
+struct CartesianZero{T} <: AbstractCoordinatePoint{T, Cartesian} end
+CartesianZero() = CartesianZero{Bool}()
+
+@inline get_x(pt::CartesianZero{T}) where T = zero(T)
+@inline get_y(pt::CartesianZero{T}) where T = zero(T)
+@inline get_z(pt::CartesianZero{T}) where T = zero(T)
+
+
+"""
+    const cartesian_zero = CartesianZero()
+
+Origin of the Cartesian coordinate system.
+
+See also [`CartesianZero`](@ref) and [`CartesianVector`](@ref).
+"""
+const cartesian_zero = CartesianZero()
+
+
+@inline Base.:(==)(::CartesianZero, ::CartesianZero) = true
+@inline Base.isapprox(::CartesianZero, ::CartesianZero; kwargs...) = true
+
+@inline Base.:(-)(pt::CartesianPoint, ::CartesianZero) = CartesianVector(pt.x, pt.y, pt.z)
+@inline Base.:(-)(::CartesianZero, pt::CartesianPoint) = CartesianVector(-pt.x, -pt.y, -pt.z)
+
+
+@inline Base.:(+)(::CartesianZero, v::CartesianVector) = CartesianPoint(v.x, v.y, v.z)
+@inline Base.:(-)(::CartesianZero, v::CartesianVector) = CartesianPoint(-v.x, -v.y, -v.z)
+
+@inline Base.:(+)(::CartesianZero, v::StaticVector{3}) = CartesianPoint(v[1], v[2], v[3])
+@inline Base.:(-)(::CartesianZero, v::StaticVector{3}) = CartesianPoint(-v[1], -v[2], -v[3])
+
+@inline function Base.:(+)(::CartesianZero, v::AbstractVector)
+    length(v) == 3 || throw(DimensionMismatch("Can only subtract vectors of length 3 from Cartesian points."))
+    CartesianPoint(v[1], v[2], v[3])
+end
+
+@inline function Base.:(-)(::CartesianZero, v::AbstractVector)
+    length(v) == 3 || throw(DimensionMismatch("Can only add vectors of length 3 to Cartesian points."))
+    CartesianPoint(-v[1], -v[2], -v[3])
+end
+
+@inline function Base.:(-)(::CartesianZero{T}, ::CartesianZero{U}) where {T,U}
+    R = promote_type(T, U)
+    return CartesianVector(zero(R), zero(R), zero(R))
+end
+
+Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
+
+
+Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
+
+function Unitful.uconvert(u::Unitful.Units{T,Unitful.NoDims}, pt::CartesianZero{<:Quantity{U, Unitful.NoDims}}) where {T,U}
+    CartesianZero{promote_type(T,U)}()
+end
+
+
+
 """
     const AbstractCylindricalPoint{T} = AbstractCoordinatePoint{T,Cylindrical}
 
 Supertype for cylindrical point types.
 """
 const AbstractCylindricalPoint{T} = AbstractCoordinatePoint{T,Cylindrical}
+
 
 
 """
