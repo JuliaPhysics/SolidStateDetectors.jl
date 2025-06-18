@@ -96,20 +96,29 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     return vcat(mcevents_chns...)  
 end
 
+
+# Support detectors hits with positions given as vectors:
+function _get_unitless_positions(point_vectors::AbstractVector{<:StaticVector{3}})
+    Ref(cartesian_zero) .+ to_internal_units.(point_vectors)
+end
+
+# Support detectors hits with positions given as points:
+_get_unitless_positions(points::AbstractVector{<:CartesianPoint}) = to_internal_units.(points)
+
 function _convertEnergyDepsToChargeDeps(
-        pos_vec::AbstractVector{<:SVector{3}}, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
+        positions::AbstractVector, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
         particle_type::Type{PT} = Gamma, 
         radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(edep)), particle_type),
         max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
         kwargs...
-    ) where {T <: SSDFloat, PT <: ParticleType} 
+    ) where {T <: SSDFloat, PT <: ParticleType}
 
-    @assert eachindex(pos_vec) == eachindex(edep) == eachindex(radius)
+    @assert eachindex(positions) == eachindex(edep) == eachindex(radius)
 
     d::T = T(to_internal_units(max_interaction_distance))
     @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
 
-    unitless_pos = Ref(ConstructiveSolidGeometry.cartesian_zero) .+ map(x -> to_internal_units.(x), pos_vec)
+    unitless_pos =_get_unitless_positions(positions)
     unitless_edep = T.(to_internal_units.(edep))
     unitless_radius = T.(to_internal_units.(radius))
     loc, ene, rad = group_points_by_distance(unitless_pos, unitless_edep, unitless_radius, d)
@@ -117,7 +126,7 @@ function _convertEnergyDepsToChargeDeps(
 end
 
 function _convertEnergyDepsToChargeDeps(
-        pos::AbstractVector{<:AbstractVector}, edep::AbstractVector{<:AbstractVector}, det::SolidStateDetector{T}; 
+        pos::AbstractVector{<:AbstractVector{<:CartesianPoint}}, edep::AbstractVector{<:AbstractVector}, det::SolidStateDetector{T}; 
         particle_type::Type{PT} = Gamma,
         radius::AbstractVector{<:AbstractVector{<:Union{<:Real, <:LengthQuantity}}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), edep),
         number_of_carriers::Int = 1, number_of_shells::Int = 1, 
