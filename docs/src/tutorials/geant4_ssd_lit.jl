@@ -12,7 +12,7 @@ using Geant4
 # The extension features a function that creates a `Geant4.G4JLApplcation` object from a SSD `Simulation` object and a particle source.
 
 using Plots
-using Unitful
+using ArraysOfArrays, Unitful
 
 # Two types of particle source are pre-defined in `SolidStateDetectors`:
 # 
@@ -89,7 +89,7 @@ events = run_geant4_simulation(app, N_events)
 
 plot(sim.detector, show_passives = false, size = (500,500), fmt = :png)
 plot!(source_1)
-plot!(CartesianPoint.(broadcast(p -> ustrip.(u"m", p), events[1:1000].pos.data)), ms = 0.5, msw = 0, color=:black, label = "")
+plot!(ustrip.(u"m", flatview(events[1:1000].pos)), ms = 0.5, msw = 0, color=:black, label = "")
 #jl savefig("events.pdf") # hide
 #md savefig("events.pdf") # hide
 #md savefig("events.svg"); nothing # hide
