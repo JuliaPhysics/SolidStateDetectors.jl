@@ -7,6 +7,7 @@ module SolidStateDetectors
 using LinearAlgebra
 using Random
 using Statistics
+using SparseArrays
 
 import Adapt
 using ArraysOfArrays
