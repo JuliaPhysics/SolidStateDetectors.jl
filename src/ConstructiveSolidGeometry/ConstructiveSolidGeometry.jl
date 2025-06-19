@@ -19,6 +19,8 @@ module ConstructiveSolidGeometry
     using Unitful
     using YAML
 
+    import StatsBase
+
     using OrderedCollections: OrderedDict
 
     import InverseFunctions
