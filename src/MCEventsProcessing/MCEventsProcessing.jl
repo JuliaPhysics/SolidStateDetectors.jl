@@ -1,8 +1,8 @@
 include("table_utils.jl")
 
 """
-    simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T}; kwargs...)
-    simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T}, output_dir::AbstractString, output_base_name::AbstractString; kwargs...)
+    simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T}; kwargs...)
+    simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T}, output_dir::AbstractString, output_base_name::AbstractString; kwargs...)
 
 Simulates the waveforms for all events defined in `mcevents` for a given [`Simulation`](@ref) by
 
@@ -47,7 +47,7 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
-function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
+function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
                              diffusion::Bool = false,
@@ -56,6 +56,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              number_of_shells::Int = 1,
                              max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
                              verbose::Bool = false ) where {T <: SSDFloat}
+    mcevents = TypedTables.Table(mcevents_table)
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
