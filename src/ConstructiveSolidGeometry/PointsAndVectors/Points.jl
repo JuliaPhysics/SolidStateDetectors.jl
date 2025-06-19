@@ -192,8 +192,8 @@ end
     return CartesianVector(zero(R), zero(R), zero(R))
 end
 
-Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
-
+@inline Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
+@inline Base.iszero(::CartesianZero) = true
 
 Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
 
@@ -275,6 +275,7 @@ function Base.isapprox(a::CylindricalPoint, b::CylindricalPoint; kwargs...)
 end
 
 Base.zero(::CylindricalPoint{T}) where {T} = CylindricalPoint{T}(zero(T), zero(T), zero(T))
+Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 
 @inline Base.copy(pt::CylindricalPoint) = CylindricalPoint(pt.r, pt.φ, pt.z)
 
