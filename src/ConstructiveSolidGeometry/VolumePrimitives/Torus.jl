@@ -171,8 +171,8 @@ function Dictionary(t::Torus{T,<:Any,TR})::OrderedDict{String, Any} where {T,TR}
     dict["r_tube"] = TR <: Real ? t.r_tube : OrderedDict{String, Any}("from" => t.r_tube[1], "to" => t.r_tube[2]) 
     if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => "0°", "to" => string(rad2deg(t.φ))*"°") end
     if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(rad2deg(t.θ[1]))*"°", "to" => string(rad2deg(t.θ[2]))*"°") end
-    if t.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(t.origin) end
-    if t.rotation != one(SMatrix{3,3,T,9}) 
+    if !iszero(t.origin) dict["origin"] = Dictionary(t.origin) end
+    if !isone(t.rotation) 
         d = Dictionary(t.rotation)
         if unique(keys(d)) == ["Z"]
             φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
