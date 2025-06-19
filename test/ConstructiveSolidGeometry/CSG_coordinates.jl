@@ -4,10 +4,11 @@ using Test
 # test 
 
 using SolidStateDetectors: ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: CartesianPoint, CartesianVector, CylindricalPoint, cartesian_zero
+using .ConstructiveSolidGeometry: CartesianPoint, CartesianVector, CartesianZero, cartesian_zero, CylindricalPoint
 using .ConstructiveSolidGeometry: LocalAffineFrame, global_frame, frame_transformation
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
+import Unitful
 
 @testset "points_and_vectors" begin
     @testset "cartesian" begin
@@ -42,6 +43,9 @@ using InverseFunctions: inverse
         f = frame_transformation(frame, global_frame)
         @test @inferred(f(a)) == cartesian_zero + A * (a - cartesian_zero) + CartesianVector(b[1], b[2], b[3])
         @test @inferred(inverse(f)(f(a))) ≈ a
+
+
+        @test @inferred(CartesianZero{Float32}() * Unitful.u"mm") === CartesianZero{typeof(zero(Float32) * Unitful.u"mm")}()
         # ToDo: Add more tests!
     end
 

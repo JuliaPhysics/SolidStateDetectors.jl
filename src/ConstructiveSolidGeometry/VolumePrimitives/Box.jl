@@ -136,8 +136,8 @@ function Dictionary(b::Box{T})::OrderedDict{String, Any} where {T}
     dict["hX"] = b.hX
     dict["hY"] = b.hY
     dict["hZ"] = b.hZ
-    if b.origin != zero(CartesianPoint{T}) dict["origin"] = Dictionary(b.origin) end
-    if b.rotation != one(SMatrix{3,3,T,9}) dict["rotation"] = Dictionary(b.rotation) end
+    if !iszero(b.origin) dict["origin"] = Dictionary(b.origin) end
+    if !isone(b.rotation) dict["rotation"] = Dictionary(b.rotation) end
     OrderedDict{String,Any}("box" => dict)
 end
 
