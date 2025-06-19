@@ -164,7 +164,8 @@ end
     end
         
     function get_cutoff(all_positions, el_field_itp::Interpolations.Extrapolation{<:StaticVector{3}, 3})
-        arr = []
+        T = eltype(eltype(all_positions))
+        arr = Vector{typeof(zero(T) * u"m")}()
         N = length(all_positions)
         ϵ₀ = 8.854e-12u"F/m"
         k_e = 1 / (4 * π * ϵ₀)
@@ -198,7 +199,7 @@ end
                 end
             end
         end
-        return ustrip(maximum(arr))
+        return ustrip(isempty(arr) ? zero(eltype(arr)) : maximum(arr))
     end
 
     function build_cutoff_matrix(current_pos, electric_field::Interpolations.Extrapolation{<:StaticVector{3, T}, 3}) where {T <: SSDFloat}
