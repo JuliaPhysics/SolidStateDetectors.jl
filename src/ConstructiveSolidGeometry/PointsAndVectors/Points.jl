@@ -95,6 +95,7 @@ end
 @inline get_z(pt::CartesianPoint) = pt.z
 
 
+Base.eltype(::Type{<:CartesianPoint{T}}) where {T} = T
 Base.keys(::CartesianPoint) = (:x, :y, :z)
 Base.getindex(p::CartesianPoint, k::Symbol) = getfield(p, k)
 
