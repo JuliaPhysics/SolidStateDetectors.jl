@@ -7,9 +7,7 @@ using JLD2
 
 SSD = SolidStateDetectors
 
-T = Float32
-sim = JLD2.load("../test_sim.jld2", "sim")
-mcevents = JLD2.load("../test_mcevents.jld2", "mcevents")
+include("gen_test_charges.jl")
 
 (; edep, pos) = mcevents[1]
 pos = CartesianPoint.(ustrip.(pos))
@@ -29,8 +27,14 @@ charges::Vector{T} = to_internal_units.(edep) ./ to_internal_units(sim.detector.
         drift_path_e::Array{CartesianPoint{T},2} = Array{CartesianPoint{T},2}(undef, n_hits, max_nsteps)
         timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
 
-        @benchmark _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-        @benchmark SSD.__drift_charge_old!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        SSD._drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        SSD._drift_charge_debug!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        SSD._drift_charge_old!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+
+        @benchmark SSD._drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        @benchmark SSD._drift_charge_debug!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        @benchmark SSD._drift_charge_old!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+
         @profview _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
         @profview for i in 1:100
             _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
