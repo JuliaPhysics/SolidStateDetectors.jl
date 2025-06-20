@@ -30,42 +30,45 @@ end
 @snapshot sim = build_detsim(Float32, :InvertedCoax)
 
 
-n_events = 100
-n_hits_avg = 10
-n_charges_avg = 100
+function generate_charges(;
+    n_events::Integer = 100, n_hits_avg::Integer = 10, n_charges_avg::Integer = 100,
+    hit_dist_scale = T(50) * u"mm", charge_scale = T(1000) * u"keV", charge_cloud_scale = T(2) * u"mm"
+)
+    flat_evtno = Vector{Int}()
+    flat_edep = Vector{typeof(charge_scale)}()
+    PT = typeof(hit_dist_scale)
+    flat_pos = StructVector{CartesianPoint{PT}}(undef, 0)
 
-hit_dist_scale = T(50) * u"mm"
-charge_scale = T(1000) * u"keV"
-charge_cloud_scale = T(2) * u"mm"
+    for evtno in 1:n_events
+        n_hits = rand(round(Int, 0.5 * n_hits_avg):round(Int, 1.5 * n_hits_avg))
+        for _ in 1:n_hits
+            n_charges = rand(round(Int, 0.5 * n_charges_avg):round(Int, 1.5 * n_charges_avg))
 
-flat_evtno = Vector{Int}()
-flat_edep = Vector{typeof(charge_scale)}()
-PT = typeof(hit_dist_scale)
-flat_pos = StructVector{CartesianPoint{PT}}(undef, 0)
+            pos_center = cartesian_zero + hit_dist_scale/2 * CartesianVector(2*rand(T)-1, 2*rand(T)-1, 2*rand(T)-1)
 
-for evtno in 1:n_events
-    n_hits = rand(round(Int, 0.5 * n_hits_avg):round(Int, 1.5 * n_hits_avg))
-    for _ in 1:n_hits
-        n_charges = rand(round(Int, 0.5 * n_charges_avg):round(Int, 1.5 * n_charges_avg))
+            edep = charge_scale * randexp(T, n_charges)
 
-        pos_center = cartesian_zero + hit_dist_scale/2 * CartesianVector(2*rand(T)-1, 2*rand(T)-1, 2*rand(T)-1)
+            pos = Ref(pos_center) .+ charge_cloud_scale .* CartesianVector.(randn(T, n_charges), randn(T, n_charges), randn(T, n_charges))
 
-        edep = charge_scale * randexp(T, n_charges)
+            idxs = let semi = sim.detector.semiconductor
+                findall(in.(ustrip.(internal_length_unit, pos), Ref(semi)))
+            end
 
-        pos = Ref(pos_center) .+ charge_cloud_scale .* CartesianVector.(randn(T, n_charges), randn(T, n_charges), randn(T, n_charges))
+            filtered_edep = edep[idxs]
+            filtered_pos = pos[idxs]
 
-        idxs = let semi = sim.detector.semiconductor
-            findall(in.(ustrip.(internal_length_unit, pos), Ref(semi)))
+            append!(flat_evtno, fill(evtno, length(filtered_edep)))
+            append!(flat_edep, filtered_edep)
+            append!(flat_pos, filtered_pos)
         end
-
-        filtered_edep = edep[idxs]
-        filtered_pos = pos[idxs]
-
-        append!(flat_evtno, fill(evtno, length(filtered_edep)))
-        append!(flat_edep, filtered_edep)
-        append!(flat_pos, filtered_pos)
     end
+    return (;flat_evtno, flat_edep, flat_pos)
 end
+
+@snapshot generated_charges = generate_charges()
+
+(;flat_evtno, flat_edep, flat_pos) = generated_charges
+
 
 #=
 using Plots
