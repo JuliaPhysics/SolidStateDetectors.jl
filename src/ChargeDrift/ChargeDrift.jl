@@ -29,12 +29,32 @@ function _common_timestamps(dp::Union{<:EHDriftPath{T}, Vector{<:EHDriftPath{T}}
     range(zero(Δt), step = Δt, stop = typeof(Δt)(_common_time(dp)) + Δt)
 end
 
+
+#!!!!!!!!!!!!!!!!! Remove either get_velocity_vector or get_velocity_vector_withconv
 @inline function get_velocity_vector(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CartesianPoint{T})::CartesianVector{T} where {T <: SSDFloat}
     return CartesianVector{T}(velocity_field(pt.x, pt.y, pt.z))
 end
 
 @inline function get_velocity_vector(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::CylindricalPoint{T}) where {T <: SSDFloat}
     return CartesianVector{T}(velocity_field(pt.r, pt.φ, pt.z))
+end
+
+@inline function get_velocity_vector_withconv(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::AbstractCoordinatePoint{T}, ::Type{Cartesian}, done::Bool)::CartesianVector{T} where {T <: SSDFloat}
+    if done
+        return CartesianVector{T}(0, 0, 0)
+    else
+        conv_pt = _convert_point(pt, Cartesian)
+        return CartesianVector{T}(velocity_field(conv_pt.x, conv_pt.y, conv_pt.z))
+    end
+end
+
+@inline function get_velocity_vector_withconv(velocity_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, pt::AbstractCoordinatePoint{T}, ::Type{Cylindrical}, done::Bool) where {T <: SSDFloat}
+    if done
+        return CartesianVector{T}(0, 0, 0)
+    else
+        conv_pt = _convert_point(pt, Cylindrical)
+        return CartesianVector{T}(velocity_field(conv_pt.r, conv_pt.φ, conv_pt.z))
+    end
 end
 
 
@@ -246,13 +266,6 @@ end
         nothing
     end
 
-    function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, velocity_vector::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
-        _set_to_zero_vector!(velocity_vector)
-        velocity_vector .= get_velocity_vector.(Ref(electric_field), _convert_point.(current_pos, S))
-        step_vectors .= step_vectors .+ velocity_vector .* (.! done)
-        nothing
-    end
-
     function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
         for n in eachindex(step_vectors)
             if done[n] continue end
@@ -428,90 +441,6 @@ end
     end
 # endregion
 
-#!!!!!!!!!!!! REMOVE THIS
-function _drift_charge_old!(
-                            drift_path::Array{CartesianPoint{T},2},
-                            timestamps::Vector{T},
-                            det::SolidStateDetector{T},
-                            point_types::PointTypes{T, 3, S},
-                            grid::Grid{T, 3, S},
-                            startpos::AbstractVector{CartesianPoint{T}},
-                            charges::Vector{T},
-                            Δt::T,
-                            electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
-                            ::Type{CC};
-                            diffusion::Bool = false,
-                            self_repulsion::Bool = false,
-                            verbose::Bool = true
-                        )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
-                        
-    n_hits::Int, max_nsteps::Int = size(drift_path)
-    drift_path[:,1] = startpos
-    timestamps[1] = zero(T)
-    ϵ_r::T = T(det.semiconductor.material.ϵ_r)
-
-    diffusion_length::T = if diffusion
-        if CC == Electron && haskey(det.semiconductor.material, :De)
-            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s") * Δt)
-        elseif CC == Hole && haskey(det.semiconductor.material, :Dh)
-            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s") * Δt)
-        else 
-            @warn "Since v0.9.0, diffusion is modelled via diffusion coefficients `De` (for electrons) and `Dh` (for holes).\n" *
-                  "Please update your material properties and pass the diffusion coefficients as `De` and `Dh`.\n" *
-                  "You can update it in src/MaterialProperties/MaterialProperties.jl or by overwriting\n" *
-                  "`SolidStateDetectors.material_properties` in your julia session and reloading the simulation, e.g.\n
-                   SolidStateDetectors.material_properties[:HPGe] = (
-                      E_ionisation = 2.95u\"eV\",
-                      f_fano = 0.129,
-                      ϵ_r = 16.0,
-                      ρ = 5.323u\"g*cm^-3\",
-                      name = \"High Purity Germanium\",
-                      ml = 1.64,
-                      mt = 0.0819,
-                      De = 200u\"cm^2/s\", # new value 200cm^2/s 
-                      Dh = 200u\"cm^2/s\"  # new value 200cm^2/s
-                   )\n\n" *
-                  "More information can be found at:\n" *
-                  "https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/#Diffusion \n"
-            @info "Ignoring diffusion for now"
-            diffusion = false
-            zero(T)
-        end
-    else
-        zero(T)
-    end
-
-    last_real_step_index::Int = 1
-    current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
-    step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
-    done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
-    normal::Vector{Bool} = deepcopy(done)
-    
-    @inbounds for istep in 2:max_nsteps
-        last_real_step_index += 1
-        _set_to_zero_vector!(step_vectors)
-        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        #self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
-        _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
-        _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
-        _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
-        if all(done) break end
-    end
-
-    return last_real_step_index
-end
-
-function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, 
-    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
-    for n in eachindex(step_vectors)
-       if !done[n]
-           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
-           done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
-       end
-    end
-    nothing
-end
 
 function _drift_charge!(
                             drift_path::Array{CartesianPoint{T},2},
@@ -571,9 +500,6 @@ function _drift_charge!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-    # Memory allocation for parallelizable _add_fieldvector_selfrepulsion!
-    velocity_vector = Vector{CartesianVector{T}}(undef, length(step_vectors))
-
     matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
 
     nz_I, nz_J = findnz(matrix)
@@ -601,7 +527,7 @@ function _drift_charge!(
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
-        _add_fieldvector_drift!(step_vectors, velocity_vector, current_pos, done, electric_field, det, S)
+        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
@@ -614,12 +540,7 @@ function _drift_charge!(
 end
 
 
-
-
-
-
-
-
+#!!!!!!!!!!!!!! REMOVE THIS
 function _drift_charge_debug!(
                             drift_path::Array{CartesianPoint{T},2},
                             timestamps::Vector{T},
@@ -678,9 +599,6 @@ function _drift_charge_debug!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-    # Memory allocation for parallelizable _add_fieldvector_selfrepulsion!
-    velocity_vector = Vector{CartesianVector{T}}(undef, length(step_vectors))
-
     #matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
 
     #nz_I, nz_J = findnz(matrix)
@@ -708,7 +626,6 @@ function _drift_charge_debug!(
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
-        #_add_fieldvector_drift!(step_vectors, velocity_vector, current_pos, done, electric_field, det, S)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
         #self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
@@ -721,13 +638,17 @@ function _drift_charge_debug!(
     return last_real_step_index
 end
 
-
-
-
-
-
-
-
+function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+    #for n in eachindex(step_vectors)
+    #   if !done[n]
+    #       step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
+    #       done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
+    #   end
+    #end
+    step_vectors .= step_vectors .+ get_velocity_vector_withconv.(Ref(electric_field), current_pos, S, done)
+    done .= iszero.(step_vectors)
+    nothing
+end
 
 
 # Point types for charge drift
