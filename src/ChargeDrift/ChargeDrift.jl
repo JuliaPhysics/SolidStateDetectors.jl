@@ -200,15 +200,13 @@ end
         return ustrip(isempty(arr) ? zero(eltype(arr)) : maximum(arr))
     end
 
-    function build_cutoff_matrix(current_pos, electric_field::Interpolations.Extrapolation{<:StaticVector{3, T}, 3}) where {T <: SSDFloat}
-        d_cutoff = get_cutoff(current_pos, electric_field)
+    function build_cutoff_matrix(current_pos, electric_field::Interpolations.Extrapolation{<:StaticVector{3, T}, 3}) where {T <: SSDFloat} #, d_cutoff::T
         N = length(current_pos)
         row_indices = Int[]
         col_indices = Int[]
         x = T[]
         y = T[]
         z = T[]
-        values = Bool[]
 
         for p in current_pos
             push!(x, p[1])#* u"mm"
@@ -222,11 +220,10 @@ end
                 Δz = z[i] - z[j]
                 dist = sqrt(Δx^2 + Δy^2 + Δz^2)/1000
 
-                if dist < d_cutoff
+                # if dist < d_cutoff
                     push!(row_indices, i)
                     push!(col_indices, j)
-                    push!(values, true)
-                end
+                # end
             end
         end
         return sparse(row_indices, col_indices, fill(one(T), length(row_indices)), N, N), x, y, z
@@ -247,6 +244,14 @@ end
     end
 
     function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, velocity_vector::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+        _set_to_zero_vector!(velocity_vector)
+        velocity_vector .= get_velocity_vector.(Ref(electric_field), _convert_point.(current_pos, S))
+        step_vectors .= step_vectors .+ velocity_vector .* (.! done)
+        nothing
+    end
+
+        function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+        velocity_vector = Vector{CartesianVector{T}}(undef, length(step_vectors))
         _set_to_zero_vector!(velocity_vector)
         velocity_vector .= get_velocity_vector.(Ref(electric_field), _convert_point.(current_pos, S))
         step_vectors .= step_vectors .+ velocity_vector .* (.! done)
@@ -488,36 +493,40 @@ function _drift_charge!(
 
     # Memory allocation for parallelizable _add_fieldvector_selfrepulsion!
     velocity_vector = Vector{CartesianVector{T}}(undef, length(step_vectors))
+    # self_repulsion_cutoff = get_cutoff(current_pos, electric_field)
+    # if self_repulsion_cutoff == T(0)
+    #     @warn "Cutoff distance is zero, no self-repulsion will be applied."
+    #     self_repulsion = false
+    # else
+        matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field) #, self_repulsion_cutoff
 
-    matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
+        nz_I, nz_J = findnz(matrix)
 
-    nz_I, nz_J = findnz(matrix)
+        # For equivalent of nonzeros(spdiagm(X) * Adj), etc.:
+        XI = similar(X, length(nz_I)); YI = similar(Y, length(nz_I)); ZI = similar(Z, length(nz_I))
+        view_XI = view(X, nz_I); view_YI = view(Y, nz_I); view_ZI = view(Z, nz_I)
+        # For equivalent of nonzeros(Adj * spdiagm(X)), etc.:
+        XJ = similar(X, length(nz_J)); YJ = similar(Y, length(nz_J)); ZJ = similar(Z, length(nz_J))
+        view_XJ = view(X, nz_J); view_YJ = view(Y, nz_J); view_ZJ = view(Z, nz_J)
 
-    # For equivalent of nonzeros(spdiagm(X) * Adj), etc.:
-    XI = similar(X, length(nz_I)); YI = similar(Y, length(nz_I)); ZI = similar(Z, length(nz_I))
-    view_XI = view(X, nz_I); view_YI = view(Y, nz_I); view_ZI = view(Z, nz_I)
-    # For equivalent of nonzeros(Adj * spdiagm(X)), etc.:
-    XJ = similar(X, length(nz_J)); YJ = similar(Y, length(nz_J)); ZJ = similar(Z, length(nz_J))
-    view_XJ = view(X, nz_J); view_YJ = view(Y, nz_J); view_ZJ = view(Z, nz_J)
-
-    # Δx, Δy, Δz where Adj non-zero:
-    ΔX_nz = similar(nonzeros(matrix)); ΔY_nz = similar(nonzeros(matrix)); ΔZ_nz = similar(nonzeros(matrix))
+        # Δx, Δy, Δz where Adj non-zero:
+        ΔX_nz = similar(nonzeros(matrix)); ΔY_nz = similar(nonzeros(matrix)); ΔZ_nz = similar(nonzeros(matrix))
 
 
-    Tmp_D3_nz = similar(nonzeros(matrix))
+        Tmp_D3_nz = similar(nonzeros(matrix))
 
-    # 1/(4π * ϵ0 * ϵ_r) * Δx/distance^3, same for Δy and Δz:
-    S_X = similar(matrix); S_Y = similar(matrix); S_Z = similar(matrix)
+        # 1/(4π * ϵ0 * ϵ_r) * Δx/distance^3, same for Δy and Δz:
+        S_X = similar(matrix); S_Y = similar(matrix); S_Z = similar(matrix)
 
-    # E-field components:
-    Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
+        # E-field components:
+        Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
+    # end
 
-        
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, velocity_vector, current_pos, done, electric_field, det, S)
-        self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
+        # self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
