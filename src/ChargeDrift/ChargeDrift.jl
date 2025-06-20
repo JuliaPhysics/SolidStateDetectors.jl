@@ -75,14 +75,14 @@ end
 
 # for event table
 function drift_charges( sim::Simulation{T}, edep_events_table::Any;
-    Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )where {T <: SSDFloat} #::Vector{EHDriftPath{T}} where {T <: SSDFloat}
+    Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat} 
     edep_events = convert_edepevents(edep_events_table)
     return drift_charges(sim, edep_events; Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
 end
 
-# strips Units and calls _drift_charges
+# strips Unit asnd calls _drift_charges
 function drift_charges(sim::Simulation{T}, edep_events::StructVector{EDepEvent};
-    Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )where {T <: SSDFloat} # ::Vector{EHDriftPath{T}} 
+    Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     starting_positions = VectorOfVectors(_ustrip_recursive(edep_events.Pos))
     energies = VectorOfVectors(_ustrip_recursive(edep_events.Q))
     dt::T = to_internal_units(Δt)
@@ -103,7 +103,7 @@ end
 function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                         starting_points::VectorOfVectors{CartesianPoint{T}}, energies::VectorOfVectors{T},
                         electric_field::Interpolations.Extrapolation{<:SVector{3}, 3},
-                        Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true) where {T <: SSDFloat, RQ <: RealQuantity} # ::Vector{EHDriftPath{T}}
+                        Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity} 
 
     starting_points_pointer = starting_points.elem_ptr
     start_points = flatview(starting_points)
@@ -120,7 +120,7 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
         drift_path_h::Array{CartesianPoint{T}, 2} = Array{CartesianPoint{T}, 2}(undef, n_hits, max_nsteps)
         timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
         timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
-        #return drift_path_e, timestamps_e, det, point_types, grid, start_points, charges, dt, electric_field, Electron, diffusion, self_repulsion, verbose
+
         n_e = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose ) # ::Int
         n_h = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose ) # ::Int
     
@@ -130,7 +130,6 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
         
         drift_path_counter += n_hits
 
-    
     return drift_paths
 end
 # region other functions 
@@ -248,8 +247,7 @@ end
         nothing
     end
 
-    function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
-        velocity_vector = Vector{CartesianVector{Float32}}(undef, length(step_vectors))# defining before istep
+    function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, velocity_vector::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
         _set_to_zero_vector!(velocity_vector)
         velocity_vector .= get_velocity_vector.(Ref(electric_field), _convert_point.(current_pos, S))
         step_vectors .= step_vectors .+ velocity_vector .* (.! done)
@@ -519,7 +517,7 @@ function _drift_charge!(
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
-        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
+        _add_fieldvector_drift!(step_vectors, velocity_vector, current_pos, done, electric_field, det, S)
         self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
