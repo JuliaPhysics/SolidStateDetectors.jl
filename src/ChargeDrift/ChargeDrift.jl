@@ -428,6 +428,7 @@ end
     end
 # endregion
 
+#!!!!!!!!!!!! REMOVE THIS
 function _drift_charge_old!(
                             drift_path::Array{CartesianPoint{T},2},
                             timestamps::Vector{T},
@@ -485,11 +486,12 @@ function _drift_charge_old!(
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
+    
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
         _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        # self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
+        self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, current_pos, done, charges, ϵ_r)
         _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
@@ -500,10 +502,14 @@ function _drift_charge_old!(
     return last_real_step_index
 end
 
-function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, velocity_vector::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
-    _set_to_zero_vector!(velocity_vector)
-    velocity_vector .= get_velocity_vector.(Ref(electric_field), _convert_point.(current_pos, S))
-    step_vectors .= step_vectors .+ velocity_vector .* (.! done)
+function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, 
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+    for n in eachindex(step_vectors)
+       if !done[n]
+           step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
+           done[n] = (step_vectors[n] == CartesianVector{T}(0,0,0))
+       end
+    end
     nothing
 end
 
