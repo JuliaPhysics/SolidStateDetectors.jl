@@ -15,18 +15,18 @@ T = Float32
 
 function build_detsim(::Type{T}, example_geometry::Symbol) where T<:Real
     detector_config_filename = SSD_examples[example_geometry]
-    detsim = Simulation{T}(detector_config_filename)
-    calculate_electric_potential!(detsim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01])
-    calculate_electric_field!(detsim, n_points_in_φ = 72)
-    for contact in detsim.detector.contacts
-        calculate_weighting_potential!(detsim, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
+    sim = Simulation{T}(detector_config_filename)
+    calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01])
+    calculate_electric_field!(sim, n_points_in_φ = 72)
+    for contact in sim.detector.contacts
+        calculate_weighting_potential!(sim, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
     end
     charge_drift_model = ADLChargeDriftModel()
-    detsim.detector = SolidStateDetector(detsim.detector, charge_drift_model);
-    return detsim
+    sim.detector = SolidStateDetector(sim.detector, charge_drift_model);
+    return sim
 end
 
-@snapshot detsim = build_detsim(Float32, :InvertedCoax)
+@snapshot sim = build_detsim(Float32, :InvertedCoax)
 
 
 n_events = 100
@@ -53,7 +53,7 @@ for evtno in 1:n_events
 
         pos = Ref(pos_center) .+ charge_cloud_scale .* CartesianVector.(randn(T, n_charges), randn(T, n_charges), randn(T, n_charges))
 
-        idxs = let semi = detsim.detector.semiconductor
+        idxs = let semi = sim.detector.semiconductor
             findall(in.(ustrip.(internal_length_unit, pos), Ref(semi)))
         end
 
@@ -84,11 +84,8 @@ nested_sa = StructArray{typeof(flat_sa)}(
 )
 
 
-tbl = Table(
+mcevents = Table(
     evtno = consgroupedview(flat_evtno, flat_evtno),
     edep = consgroupedview(flat_evtno, flat_edep),
     pos = consgroupedview(flat_evtno, flat_pos),
 )
-
-
-# simulate_waveforms(tbl, detsim)
