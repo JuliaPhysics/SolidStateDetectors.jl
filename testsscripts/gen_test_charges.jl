@@ -4,6 +4,7 @@ using StructArrays, ArraysOfArrays
 using Unitful
 using RadiationDetectorSignals
 using StructArrays, TypedTables
+using JLD2
 
 using SolidStateDetectors: internal_length_unit
 
@@ -89,3 +90,6 @@ mcevents = Table(
     edep = consgroupedview(flat_evtno, flat_edep),
     pos = consgroupedview(flat_evtno, flat_pos),
 )
+
+# JLD2.save("../test_sim.jld2", "sim", sim)
+# JLD2.save("../test_mcevents.jld2", "mcevents", mcevents)

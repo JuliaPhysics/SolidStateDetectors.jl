@@ -1,17 +1,17 @@
-using Plots
+# using Plots
 using SolidStateDetectors
 using Unitful
 import LegendHDF5IO
 
 T = Float32
 
-sim_file = "$(@__DIR__)/ssd-sims.h5"
+sim_file = "$(@__DIR__)/../ssd-sims.h5"
 sim = if ispath(sim_file)
     ssd_read(sim_file, Simulation)
 else
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
 
-    plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm", size = (700, 700))
+    #plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm", size = (700, 700))
 
     calculate_electric_potential!( sim, refinement_limits = [0.2, 0.1, 0.05, 0.01])
 

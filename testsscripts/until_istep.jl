@@ -1,4 +1,4 @@
-using Plots
+# using Plots
 using SolidStateDetectors
 using SolidStateDetectors: drift_charges, _drift_charges, interpolated_vectorfield, to_internal_units, interpolate!, Gridded, Linear, extrapolate, Periodic, EHDriftPath, flatview, _drift_charge!, Electron, Hole, _is_next_point_in_det, _set_to_zero_vector!, _add_fieldvector_drift!, _add_fieldvector_selfrepulsion!, get_coordinate_system, get_velocity_vector, _convert_point, _get_driftvectors!, getVe, SVector, _modulate_driftvectors!, modulate_driftvector, _check_and_update_position!, _parse_value, _add_fieldvector_diffusion!
 using Unitful
@@ -8,9 +8,9 @@ import LegendHDF5IO
 
 include("sim.jl")
 
-starting_positionsv = [CartesianVector{T}(-0.02, 0.015, 0.04), 
-    CartesianVector{T}(0.015, -0.012, 0.02), 
-    CartesianVector{T}(0.01, -0.025, 0.01)]
+starting_positions = [CartesianPoint{T}(-0.02, 0.015, 0.04), 
+    CartesianPoint{T}(0.015, -0.012, 0.02), 
+    CartesianPoint{T}(0.01, -0.025, 0.01)]
 energy_depos = T[1460, 609, 1000] * u"keV" # are needed later in the signal generation
 
 
@@ -54,6 +54,11 @@ drift_path_e::Array{CartesianPoint{T},2} = Array{CartesianPoint{T},2}(undef, n_h
 drift_path_h::Array{CartesianPoint{T},2} = Array{CartesianPoint{T},2}(undef, n_hits, max_nsteps)
 timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
 timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
+
+global a_state = (; drift_path_e, timestamps_e, det, point_types, grid, start_points, charges, dt, electric_field, Electron, diffusion, self_repulsion, verbose)
+
+SSD.wrapper(a_state)
+
 #### _drift_charge!(drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 CC = dummy_CC = Electron
 drift_path = drift_path_e

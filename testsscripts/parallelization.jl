@@ -10,6 +10,8 @@ using SparseArrays
 import LegendHDF5IO
 import SolidStateDetectors: _add_fieldvector_drift!, _add_fieldvector_selfrepulsion! 
 
+
+using SolidStateDetectors
 include("until_istep.jl")
 (; step_vectors, current_pos, done, normal, electric_field, S, charges, ϵ_r, CC, diffusion_length, drift_path, timestamps, istep, det, grid, point_types, startpos, Δ_t, verbose) = g_state
 
@@ -27,14 +29,21 @@ function get_cutoff(all_positions; sim=sim)
     k_e = 1 / (4 * π * ϵ₀)
     el_field_itp = interpolated_vectorfield(sim.electric_field.data, sim.electric_field.grid)
     for i in 1:N, j in 1:N
+        i = 1 
+        j = 2
         if j != i
-            q1 = e
-            q2 = e
-            efield = el_field_itp(all_positions[i]...) * u"V/m"
+            q1 = SSD.elementary_charge * u"C"
+            q2 = SSD.elementary_charge * u"C"
+            efield = el_field_itp(all_positions[i].x, all_positions[i].y, all_positions[i].z) * u"V/m"
             F_el = q1 * efield 
             
-            x1, y1, z1 = all_positions[i] .* u"mm"
-            x2, y2, z2 = all_positions[j] .* u"mm"
+            x1 = all_positions[i].x * u"mm"
+            y1 = all_positions[i].y * u"mm"
+            z1 = all_positions[i].z * u"mm"
+
+            x2 = all_positions[j].x * u"mm"
+            y2 = all_positions[j].y * u"mm"
+            z2 = all_positions[j].z * u"mm"
 
             Δx2 = (x2 - x1)^2
             Δy2 = (y2 - y1)^2
@@ -44,7 +53,7 @@ function get_cutoff(all_positions; sim=sim)
             r = uconvert(u"m", r)
             F_qq = (k_e * q1 * q2) / r^2
 
-            if norm(F_el) >= F_qq
+            if SSD.norm(F_el) >= F_qq
                 nothing
             else
                 push!(arr, r)
@@ -164,10 +173,10 @@ end
 #     nothing
 # end 
 ###################################### TODOS
-
+SSD = SolidStateDetectors
 velocity_vector = Vector{CartesianVector{T}}(undef, length(step_vectors))
 
-matrix, X, Y, Z = build_cutoff_matrix(current_pos)
+matrix, X, Y, Z = SSD.build_cutoff_matrix(current_pos; sim = sim)
 
 nz_I, nz_J = findnz(matrix)
 
@@ -193,4 +202,4 @@ Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
 ## to be put in _drift_charge! after istep for loop
 _set_to_zero_vector!(step_vectors)
 _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-_add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
+_add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
