@@ -500,6 +500,8 @@ function _drift_charge!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
+
+    
     matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
 
     nz_I, nz_J = findnz(matrix)
@@ -522,8 +524,9 @@ function _drift_charge!(
 
     # E-field components:
     Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
+    
 
-        
+
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)
@@ -541,7 +544,7 @@ end
 
 
 #!!!!!!!!!!!!!! REMOVE THIS
-function _drift_charge_debug!(
+function _drift_charge_nosrp!(
                             drift_path::Array{CartesianPoint{T},2},
                             timestamps::Vector{T},
                             det::SolidStateDetector{T},
@@ -599,30 +602,33 @@ function _drift_charge_debug!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-    #matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
 
-    #nz_I, nz_J = findnz(matrix)
+    #=
+    matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
+
+    nz_I, nz_J = findnz(matrix)
 
     # For equivalent of nonzeros(spdiagm(X) * Adj), etc.:
-    #XI = similar(X, length(nz_I)); YI = similar(Y, length(nz_I)); ZI = similar(Z, length(nz_I))
-    #view_XI = view(X, nz_I); view_YI = view(Y, nz_I); view_ZI = view(Z, nz_I)
+    XI = similar(X, length(nz_I)); YI = similar(Y, length(nz_I)); ZI = similar(Z, length(nz_I))
+    view_XI = view(X, nz_I); view_YI = view(Y, nz_I); view_ZI = view(Z, nz_I)
     # For equivalent of nonzeros(Adj * spdiagm(X)), etc.:
-    #XJ = similar(X, length(nz_J)); YJ = similar(Y, length(nz_J)); ZJ = similar(Z, length(nz_J))
-    #view_XJ = view(X, nz_J); view_YJ = view(Y, nz_J); view_ZJ = view(Z, nz_J)
+    XJ = similar(X, length(nz_J)); YJ = similar(Y, length(nz_J)); ZJ = similar(Z, length(nz_J))
+    view_XJ = view(X, nz_J); view_YJ = view(Y, nz_J); view_ZJ = view(Z, nz_J)
 
     # Δx, Δy, Δz where Adj non-zero:
-    #ΔX_nz = similar(nonzeros(matrix)); ΔY_nz = similar(nonzeros(matrix)); ΔZ_nz = similar(nonzeros(matrix))
+    ΔX_nz = similar(nonzeros(matrix)); ΔY_nz = similar(nonzeros(matrix)); ΔZ_nz = similar(nonzeros(matrix))
 
 
-    #Tmp_D3_nz = similar(nonzeros(matrix))
+    Tmp_D3_nz = similar(nonzeros(matrix))
 
     # 1/(4π * ϵ0 * ϵ_r) * Δx/distance^3, same for Δy and Δz:
-    #S_X = similar(matrix); S_Y = similar(matrix); S_Z = similar(matrix)
+    S_X = similar(matrix); S_Y = similar(matrix); S_Z = similar(matrix)
 
     # E-field components:
-    #Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
+    Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
+    =#
 
-        
+
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(step_vectors)

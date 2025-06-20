@@ -17,7 +17,7 @@ charges::Vector{T} = to_internal_units.(edep) ./ to_internal_units(sim.detector.
     time_step = 5u"ns"
     max_nsteps = 1000
     diffusion = false
-    self_repulsion = true
+    self_repulsion = false
     verbose = true
 
     # benchmarking _drift_charge!
@@ -28,10 +28,10 @@ charges::Vector{T} = to_internal_units.(edep) ./ to_internal_units(sim.detector.
         timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
 
         SSD._drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-        SSD._drift_charge_debug!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        SSD._drift_charge_nosrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
         @benchmark SSD._drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-        @benchmark SSD._drift_charge_debug!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+        @benchmark SSD._drift_charge_nosrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
         @profview _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
         @profview for i in 1:100
