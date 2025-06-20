@@ -442,6 +442,34 @@ end
 # endregion
 
 
+function _get_diffusion_length(det::SolidStateDetector{T}, Δt::Real, ::Type{CC})::T where {T,CC}
+    if CC == Electron && haskey(det.semiconductor.material, :De)
+        return sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s") * Δt)
+    elseif CC == Hole && haskey(det.semiconductor.material, :Dh)
+        return sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s") * Δt)
+    else 
+        @warn "Since v0.9.0, diffusion is modelled via diffusion coefficients `De` (for electrons) and `Dh` (for holes).\n" *
+                "Please update your material properties and pass the diffusion coefficients as `De` and `Dh`.\n" *
+                "You can update it in src/MaterialProperties/MaterialProperties.jl or by overwriting\n" *
+                "`SolidStateDetectors.material_properties` in your julia session and reloading the simulation, e.g.\n
+                SolidStateDetectors.material_properties[:HPGe] = (
+                    E_ionisation = 2.95u\"eV\",
+                    f_fano = 0.129,
+                    ϵ_r = 16.0,
+                    ρ = 5.323u\"g*cm^-3\",
+                    name = \"High Purity Germanium\",
+                    ml = 1.64,
+                    mt = 0.0819,
+                    De = 200u\"cm^2/s\", # new value 200cm^2/s 
+                    Dh = 200u\"cm^2/s\"  # new value 200cm^2/s
+                )\n\n" *
+                "More information can be found at:\n" *
+                "https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/#Diffusion \n"
+        @info "Ignoring diffusion for now"
+        return zero(T)
+    end
+end
+
 function _drift_charge!(
                             drift_path::Array{CartesianPoint{T},2},
                             timestamps::Vector{T},
@@ -463,36 +491,8 @@ function _drift_charge!(
     timestamps[1] = zero(T)
     ϵ_r::T = T(det.semiconductor.material.ϵ_r)
 
-    diffusion_length::T = if diffusion
-        if CC == Electron && haskey(det.semiconductor.material, :De)
-            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s") * Δt)
-        elseif CC == Hole && haskey(det.semiconductor.material, :Dh)
-            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s") * Δt)
-        else 
-            @warn "Since v0.9.0, diffusion is modelled via diffusion coefficients `De` (for electrons) and `Dh` (for holes).\n" *
-                  "Please update your material properties and pass the diffusion coefficients as `De` and `Dh`.\n" *
-                  "You can update it in src/MaterialProperties/MaterialProperties.jl or by overwriting\n" *
-                  "`SolidStateDetectors.material_properties` in your julia session and reloading the simulation, e.g.\n
-                   SolidStateDetectors.material_properties[:HPGe] = (
-                      E_ionisation = 2.95u\"eV\",
-                      f_fano = 0.129,
-                      ϵ_r = 16.0,
-                      ρ = 5.323u\"g*cm^-3\",
-                      name = \"High Purity Germanium\",
-                      ml = 1.64,
-                      mt = 0.0819,
-                      De = 200u\"cm^2/s\", # new value 200cm^2/s 
-                      Dh = 200u\"cm^2/s\"  # new value 200cm^2/s
-                   )\n\n" *
-                  "More information can be found at:\n" *
-                  "https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/#Diffusion \n"
-            @info "Ignoring diffusion for now"
-            diffusion = false
-            zero(T)
-        end
-    else
-        zero(T)
-    end
+    diffusion_length::T = diffusion ? diff_get_diffusion_length(det, Δt, CC) : zero(T)
+    diffusion = diffusion && !iszero(diffusion_length)
 
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
@@ -565,36 +565,8 @@ function _drift_charge_nosrp!(
     timestamps[1] = zero(T)
     ϵ_r::T = T(det.semiconductor.material.ϵ_r)
 
-    diffusion_length::T = if diffusion
-        if CC == Electron && haskey(det.semiconductor.material, :De)
-            sqrt(6*_parse_value(T, det.semiconductor.material.De, u"m^2/s") * Δt)
-        elseif CC == Hole && haskey(det.semiconductor.material, :Dh)
-            sqrt(6*_parse_value(T, det.semiconductor.material.Dh, u"m^2/s") * Δt)
-        else 
-            @warn "Since v0.9.0, diffusion is modelled via diffusion coefficients `De` (for electrons) and `Dh` (for holes).\n" *
-                  "Please update your material properties and pass the diffusion coefficients as `De` and `Dh`.\n" *
-                  "You can update it in src/MaterialProperties/MaterialProperties.jl or by overwriting\n" *
-                  "`SolidStateDetectors.material_properties` in your julia session and reloading the simulation, e.g.\n
-                   SolidStateDetectors.material_properties[:HPGe] = (
-                      E_ionisation = 2.95u\"eV\",
-                      f_fano = 0.129,
-                      ϵ_r = 16.0,
-                      ρ = 5.323u\"g*cm^-3\",
-                      name = \"High Purity Germanium\",
-                      ml = 1.64,
-                      mt = 0.0819,
-                      De = 200u\"cm^2/s\", # new value 200cm^2/s 
-                      Dh = 200u\"cm^2/s\"  # new value 200cm^2/s
-                   )\n\n" *
-                  "More information can be found at:\n" *
-                  "https://juliaphysics.github.io/SolidStateDetectors.jl/stable/man/charge_drift/#Diffusion \n"
-            @info "Ignoring diffusion for now"
-            diffusion = false
-            zero(T)
-        end
-    else
-        zero(T)
-    end
+    diffusion_length::T = diffusion ? diff_get_diffusion_length(det, Δt, CC) : zero(T)
+    diffusion = diffusion && !iszero(diffusion_length)
 
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
