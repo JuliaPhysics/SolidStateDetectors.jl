@@ -196,10 +196,15 @@ function _check_and_update_position!(
             crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = 
                 get_crossing_pos(det, point_types, copy(current_pos[n]), current_pos[n] + step_vectors[n])
             if cd_point_type == CD_ELECTRODE
-                done[n] = true
-                drift_path[n,istep] = crossing_pos
-                current_pos[n] = crossing_pos
-            elseif cd_point_type == CD_FLOATING_BOUNDARY
+                if crossing_pos in det.contacts
+                    done[n] = true
+                    drift_path[n,istep] = crossing_pos
+                    current_pos[n] = crossing_pos
+                else
+                    cd_point_type = CD_FLOATING_BOUNDARY
+                end
+            end
+            if cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
                 next_pos::CartesianPoint{T} = current_pos[n] + projected_vector
@@ -219,7 +224,7 @@ function _check_and_update_position!(
                 Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
-            else # if cd_point_type == CD_BULK or CD_OUTSIDE
+            elseif cd_point_type!= CD_ELECTRODE # if cd_point_type == CD_BULK or CD_OUTSIDE
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
