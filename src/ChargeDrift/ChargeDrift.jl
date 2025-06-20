@@ -166,8 +166,7 @@ end
         T = eltype(eltype(all_positions))
         arr = Vector{typeof(zero(T) * u"m")}()
         N = length(all_positions)
-        ϵ₀ = 8.854e-12u"F/m"
-        k_e = 1 / (4 * π * ϵ₀)
+        k_e = 1 / (4 * π * ϵ0*u"F/m")
         for i in 1:N, j in 1:N
             if j != i
                 q1 = elementary_charge * u"C"
