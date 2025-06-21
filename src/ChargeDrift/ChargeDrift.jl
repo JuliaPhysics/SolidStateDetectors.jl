@@ -220,21 +220,16 @@ end
         return ustrip(isempty(arr) ? zero(eltype(arr)) : maximum(arr))
     end
 
-    function build_cutoff_matrix(current_pos, electric_field::Interpolations.Extrapolation{<:StaticVector{3, T}, 3}) where {T <: SSDFloat}
-        d_cutoff = get_cutoff(current_pos, electric_field)
-        N = length(current_pos)
+    function build_cutoff_matrix(pos, electric_field::Interpolations.Extrapolation{<:StaticVector{3, T}, 3}) where {T <: SSDFloat}
+        d_cutoff = get_cutoff(pos, electric_field)
+        N = length(pos)
+
+        (;x, y, z) = pos
+
         row_indices = Int[]
         col_indices = Int[]
-        x = T[]
-        y = T[]
-        z = T[]
         values = Bool[]
 
-        for p in current_pos
-            push!(x, p[1])#* u"mm"
-            push!(y, p[2])#* u"mm"
-            push!(z, p[3])#* u"mm"
-        end
         for i in 1:N, j in 1:N
             if i != j
                 Δx = x[i] - x[j]
@@ -249,13 +244,7 @@ end
                 end
             end
         end
-        return sparse(row_indices, col_indices, fill(one(T), length(row_indices)), N, N), x, y, z
-    end
-
-    function update_distances(XI, YI, ZI, XJ, YJ, ZJ, ΔX_nz, ΔY_nz, ΔZ_nz)
-        ΔX_nz .= XI .- XJ
-        ΔY_nz .= YI .- YJ
-        ΔZ_nz .= ZI .- ZJ
+        return sparse(row_indices, col_indices, fill(one(T), length(row_indices)), N, N)
     end
 
     function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
@@ -294,53 +283,6 @@ end
             end
             nothing
         end
-    end
-
-    function _add_fieldvector_selfrepulsion!(field_vectors::AbstractVector{CartesianVector{T}}, 
-        XI::AbstractVector{T}, YI::AbstractVector{T}, ZI::AbstractVector{T}, 
-        XJ::AbstractVector{T}, YJ::AbstractVector{T}, ZJ::AbstractVector{T}, 
-        view_XI::AbstractVector{T}, view_YI::AbstractVector{T}, view_ZI::AbstractVector{T}, 
-        view_XJ::AbstractVector{T}, view_YJ::AbstractVector{T}, view_ZJ::AbstractVector{T}, 
-        ΔX_nz::AbstractVector{T}, ΔY_nz::AbstractVector{T}, ΔZ_nz::AbstractVector{T}, 
-        Tmp_D3_nz, 
-        charges::AbstractVector{T}, 
-        S_X, S_Y, S_Z, 
-        Field_X::AbstractVector{T}, Field_Y::AbstractVector{T}, Field_Z::AbstractVector{T}, 
-        ϵ_r::T)::Nothing where {T <: SSDFloat}
-
-        # Update equivalents of nonzeros(spdiagm(X) * Adj), etc.:
-        XI .= view_XI
-        YI .= view_YI
-        ZI .= view_ZI
-        # Update equivalents of nonzeros(Adj * spdiagm(X)), etc.:
-        XJ .= view_XJ
-        YJ .= view_YJ
-        ZJ .= view_ZJ
-
-        update_distances(XI, YI, ZI, XJ, YJ, ZJ, ΔX_nz, ΔY_nz, ΔZ_nz)
-        
-        inv_4π_ϵ0_ϵ_r = inv(4π * ϵ0 * ϵ_r)
-
-        function calc_tmp_d3(Δx::T, Δy::T, Δz::T) where {T<:Real}
-            #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
-            inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
-            elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
-        end
-
-        # Update Tmp_D3_nz:
-        Tmp_D3_nz .= calc_tmp_d3.(ΔX_nz, ΔY_nz, ΔZ_nz)
-        # Update S_X, S_Y, S_Z:
-        nonzeros(S_X) .= ΔX_nz .* Tmp_D3_nz
-        nonzeros(S_Y) .= ΔY_nz .* Tmp_D3_nz
-        nonzeros(S_Z) .= ΔZ_nz .* Tmp_D3_nz
-
-        # Update E-field components:
-        mul!(Field_X, S_X, charges)
-        mul!(Field_Y, S_Y, charges)
-        mul!(Field_Z, S_Z, charges)
-
-        field_vectors .+= CartesianVector.(Field_X, Field_Y, Field_Z)
-        nothing
     end
 
 
@@ -470,22 +412,126 @@ function _get_diffusion_length(det::SolidStateDetector{T}, Δt::Real, ::Type{CC}
     end
 end
 
+
+struct ChargeInteractionState{
+    T<:Real, TV <: AbstractVector{T}, TM <: AbstractMatrix{T},
+    PV <: StructVector{<:CartesianPoint{T}}, PVView <: StructVector{<:CartesianPoint{T}},
+    VV <: StructVector{<:CartesianVector{T}},
+    TS <: NamedTuple{(:x,:y,:z), <:Tuple{TM,TM,TM}}
+}
+    M_adj::TM # sparse charge interaction adjacency matrix, elements must be one or zero, diagonal must be zero
+    pI::PV
+    pJ::PV
+    vpI::PVView # pJ as a view into the original charge positions
+    vpJ::PVView # pI as a view into the original charge positions
+    ΔpIJ::VV # pI - pJ
+    Tmp_D3_nz::TV
+    S::TS # 1/(4π * ϵ0 * ϵ_r) * [Δx,Δy,Δz]/distance^3
+    F::VV # E-field
+    ϵ_r::T # Relative permittivity
+end
+
+# ToDo: Make this dummy ctor faster
+function ChargeInteractionState(chargepos::StructVector{<:CartesianPoint{T}}) where T
+    # All-zero adjecency matrix, no charge interaction:
+    x = chargepos.x
+    M_adj = sparse(Int[], Int[], similar(x, 0), length(x), length(x))
+    ϵ_r = one(T)
+    return ChargeInteractionState(chargepos, ϵ_r, M_adj)
+end
+
+function ChargeInteractionState(
+    chargepos::StructVector{<:CartesianPoint{T}}, ϵ_r::Real,
+    M_adj::AbstractMatrix{T}
+) where T
+    issparse(M_adj) || throw(ArgumentError("M_adj must be a sparse matrix"))
+    iszero(diag(M_adj)) || throw(ArgumentError("Diagonal of M_adj must be zero"))
+
+    adj_I, adj_J = findnz(M_adj)
+
+    pI = similar(chargepos, length(adj_I))
+    vpI = view(chargepos, adj_I)
+    pJ = similar(chargepos, length(adj_J))
+    vpJ = view(chargepos, adj_J)
+    ΔpIJ = pI .- pJ
+
+    Tmp_D3_nz = similar(nonzeros(M_adj))
+    S = (x = similar(M_adj), y = similar(M_adj), z = similar(M_adj))
+    F = similar(ΔpIJ, length(chargepos))
+
+    return ChargeInteractionState(
+        M_adj, pI, pJ, vpI, vpJ, ΔpIJ, Tmp_D3_nz, S, F, T(ϵ_r)
+    )
+end
+
+function ChargeInteractionState(
+    chargepos::StructVector{<:CartesianPoint}, ϵ_r::Real,
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
+)
+    # ToDo: Rewrite build_cutoff_matrix, can use a ChargeInteractionState
+    # with a full adjacency matrix, as a basis, then compare field-contributions
+    # from each charge to external E-field at target charge. Current implementation
+    # is not efficient:
+    M_adj = build_cutoff_matrix(chargepos, electric_field)
+
+    return ChargeInteractionState(chargepos, ϵ_r, M_adj)
+end
+
+
+function update_charge_interaction!!(ci_state::ChargeInteractionState{T}, charges::AbstractVector{<:Real}) where T
+    # ToDo: ignore charges that have been collected (not trapped though!)
+    # Will have to remove them from adjecency matrix.
+
+    (;pI, pJ, vpI, vpJ, ΔpIJ, Tmp_D3_nz, S, F, ϵ_r) = ci_state
+
+    # Charges may have moved, update pI and pJ from views into charge positions:
+    pI .= vpI
+    pJ .= vpJ;
+
+    # Update distances between charges:
+    ΔpIJ .= pI .- pJ;
+
+    inv_4π_ϵ0_ϵ_r = inv(4π * ϵ0 * ϵ_r)
+    function calc_tmp_d3(Δx::T, Δy::T, Δz::T) where {T<:Real}
+        #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
+        inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
+        elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
+    end
+
+    # Update interaction:
+
+    Tmp_D3_nz .= calc_tmp_d3.(ΔpIJ.x, ΔpIJ.y, ΔpIJ.z)
+
+    # ToDo: This will probably need to be modified for CUDA, CuSparseMatrixCSC
+    # seems to use different indexing for non-zero elements than SparseMatrixCSC,
+    # see implementation of findnz for SparseMatrixCSC.
+    nonzeros(S.x) .= Tmp_D3_nz .* ΔpIJ.x
+    nonzeros(S.y) .= Tmp_D3_nz .* ΔpIJ.y
+    nonzeros(S.z) .= Tmp_D3_nz .* ΔpIJ.z
+
+    mul!(F.x, S.x, charges)
+    mul!(F.y, S.y, charges)
+    mul!(F.z, S.z, charges)
+
+    return ci_state
+end
+
+
 function _drift_charge!(
-                            drift_path::Array{CartesianPoint{T},2},
-                            timestamps::Vector{T},
-                            det::SolidStateDetector{T},
-                            point_types::PointTypes{T, 3, S},
-                            grid::Grid{T, 3, S},
-                            startpos::AbstractVector{CartesianPoint{T}},
-                            charges::Vector{T},
-                            Δt::T,
-                            electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
-                            ::Type{CC};
-                            diffusion::Bool = false,
-                            self_repulsion::Bool = false,
-                            verbose::Bool = true, 
-                        )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier} # ::AbstractVector 
-                        
+    drift_path::Array{CartesianPoint{T},2},
+    timestamps::Vector{T},
+    det::SolidStateDetector{T},
+    point_types::PointTypes{T, 3, S},
+    grid::Grid{T, 3, S},
+    startpos::AbstractVector{CartesianPoint{T}},
+    charges::Vector{T},
+    Δt::T,
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
+    ::Type{CC};
+    diffusion::Bool = false,
+    self_repulsion::Bool = false,
+    verbose::Bool = true,
+)::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
     n_hits::Int, max_nsteps::Int = size(drift_path)
     drift_path[:,1] = startpos
     timestamps[1] = zero(T)
@@ -495,44 +541,33 @@ function _drift_charge!(
     diffusion = diffusion && !iszero(diffusion_length)
 
     last_real_step_index::Int = 1
-    current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
+    current_pos = StructVector(deepcopy(startpos))
     field_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-
-    
-    matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
-
-    nz_I, nz_J = findnz(matrix)
-
-    # For equivalent of nonzeros(spdiagm(X) * Adj), etc.:
-    XI = similar(X, length(nz_I)); YI = similar(Y, length(nz_I)); ZI = similar(Z, length(nz_I))
-    view_XI = view(X, nz_I); view_YI = view(Y, nz_I); view_ZI = view(Z, nz_I)
-    # For equivalent of nonzeros(Adj * spdiagm(X)), etc.:
-    XJ = similar(X, length(nz_J)); YJ = similar(Y, length(nz_J)); ZJ = similar(Z, length(nz_J))
-    view_XJ = view(X, nz_J); view_YJ = view(Y, nz_J); view_ZJ = view(Z, nz_J)
-
-    # Δx, Δy, Δz where Adj non-zero:
-    ΔX_nz = similar(nonzeros(matrix)); ΔY_nz = similar(nonzeros(matrix)); ΔZ_nz = similar(nonzeros(matrix))
-
-
-    Tmp_D3_nz = similar(nonzeros(matrix))
-
-    # 1/(4π * ϵ0 * ϵ_r) * Δx/distance^3, same for Δy and Δz:
-    S_X = similar(matrix); S_Y = similar(matrix); S_Z = similar(matrix)
-
-    # E-field components:
-    Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
-    
-
+    ci_state = if self_repulsion
+        ChargeInteractionState(current_pos, ϵ_r, electric_field)
+    else
+        # Dummy ChargeInteractionState
+        ChargeInteractionState(current_pos)
+    end
 
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(field_vectors)
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
-        self_repulsion && _add_fieldvector_selfrepulsion!(field_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
+
+        if self_repulsion
+            # New:
+            ci_state = update_charge_interaction!!(ci_state, charges)
+            field_vectors .+= ci_state.F
+
+            # Old:
+            # _add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
+        end
+
         _get_drift_steps!(step_vectors, field_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(field_vectors, done, diffusion_length)
         _modulate_driftvectors!(field_vectors, current_pos, det.virtual_drift_volumes)
@@ -545,22 +580,21 @@ end
 
 
 #!!!!!!!!!!!!!! REMOVE THIS
-function _drift_charge_nosrp!(
-                            drift_path::Array{CartesianPoint{T},2},
-                            timestamps::Vector{T},
-                            det::SolidStateDetector{T},
-                            point_types::PointTypes{T, 3, S},
-                            grid::Grid{T, 3, S},
-                            startpos::AbstractVector{CartesianPoint{T}},
-                            charges::Vector{T},
-                            Δt::T,
-                            electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
-                            ::Type{CC};
-                            diffusion::Bool = false,
-                            self_repulsion::Bool = false,
-                            verbose::Bool = true, 
-                        )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier} # ::AbstractVector 
-                        
+function _drift_charge_oldsrp!(
+    drift_path::Array{CartesianPoint{T},2},
+    timestamps::Vector{T},
+    det::SolidStateDetector{T},
+    point_types::PointTypes{T, 3, S},
+    grid::Grid{T, 3, S},
+    startpos::AbstractVector{CartesianPoint{T}},
+    charges::Vector{T},
+    Δt::T,
+    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
+    ::Type{CC};
+    diffusion::Bool = false,
+    self_repulsion::Bool = false,
+    verbose::Bool = true,
+)::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
     n_hits::Int, max_nsteps::Int = size(drift_path)
     drift_path[:,1] = startpos
     timestamps[1] = zero(T)
@@ -576,38 +610,11 @@ function _drift_charge_nosrp!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-
-    #=
-    matrix, X, Y, Z = build_cutoff_matrix(current_pos, electric_field)
-
-    nz_I, nz_J = findnz(matrix)
-
-    # For equivalent of nonzeros(spdiagm(X) * Adj), etc.:
-    XI = similar(X, length(nz_I)); YI = similar(Y, length(nz_I)); ZI = similar(Z, length(nz_I))
-    view_XI = view(X, nz_I); view_YI = view(Y, nz_I); view_ZI = view(Z, nz_I)
-    # For equivalent of nonzeros(Adj * spdiagm(X)), etc.:
-    XJ = similar(X, length(nz_J)); YJ = similar(Y, length(nz_J)); ZJ = similar(Z, length(nz_J))
-    view_XJ = view(X, nz_J); view_YJ = view(Y, nz_J); view_ZJ = view(Z, nz_J)
-
-    # Δx, Δy, Δz where Adj non-zero:
-    ΔX_nz = similar(nonzeros(matrix)); ΔY_nz = similar(nonzeros(matrix)); ΔZ_nz = similar(nonzeros(matrix))
-
-
-    Tmp_D3_nz = similar(nonzeros(matrix))
-
-    # 1/(4π * ϵ0 * ϵ_r) * Δx/distance^3, same for Δy and Δz:
-    S_X = similar(matrix); S_Y = similar(matrix); S_Z = similar(matrix)
-
-    # E-field components:
-    Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
-    =#
-
-
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
         _set_to_zero_vector!(field_vectors)
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
-        #self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
+        self_repulsion && _add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
         _get_drift_steps!(step_vectors, field_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
