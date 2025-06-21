@@ -276,7 +276,7 @@ end
         nothing 
     end
 
-    function _add_fieldvector_selfrepulsion!(field_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, charges::Vector{T}, ϵ_r::T)::Nothing where {T <: SSDFloat}
+    function _add_fieldvector_selfrepulsion!(field_vectors::AbstractVector{CartesianVector{T}}, current_pos::AbstractVector{CartesianPoint{T}}, done::AbstractVector{Bool}, charges::AbstractVector{T}, ϵ_r::T)::Nothing where {T <: SSDFloat}
         #TO DO: ignore charges that are already collected (not trapped though!)
         for n in eachindex(field_vectors)
             if done[n] continue end
@@ -344,13 +344,13 @@ end
     end
 
 
-    function _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, vdv::Vector{V})::Nothing where {T <: SSDFloat, V <: AbstractVirtualVolume{T}}
+    function _modulate_driftvectors!(step_vectors::AbstractVector{CartesianVector{T}}, current_pos::AbstractVector{CartesianPoint{T}}, vdv::AbstractVector{V})::Nothing where {T <: SSDFloat, V <: AbstractVirtualVolume{T}}
         for n in eachindex(step_vectors)
             step_vectors[n] = modulate_driftvector(step_vectors[n], current_pos[n], vdv)
         end
         nothing
     end
-    _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, ::Missing) where {T <: SSDFloat} = nothing
+    _modulate_driftvectors!(step_vectors::AbstractVector{CartesianVector{T}}, current_pos::AbstractVector{CartesianPoint{T}}, ::Missing) where {T <: SSDFloat} = nothing
 
 
     function _get_drift_step(field_vector::CartesianVector{T}, cdm::AbstractChargeDriftModel{T}, Δt::T, done::Bool) where {T}
@@ -371,12 +371,12 @@ end
 
 
     function _check_and_update_position!(
-                step_vectors::Vector{CartesianVector{T}}, 
-                current_pos::Vector{CartesianPoint{T}},
-                done::Vector{Bool},
-                normal::Vector{Bool},
-                drift_path::Array{CartesianPoint{T},2},
-                timestamps::Vector{T},
+                step_vectors::AbstractVector{CartesianVector{T}},
+                current_pos::AbstractVector{CartesianPoint{T}},
+                done::AbstractVector{Bool},
+                normal::AbstractVector{Bool},
+                drift_path::AbstractArray{CartesianPoint{T},2},
+                timestamps::AbstractVector{T},
                 istep::Int,
                 det::SolidStateDetector{T},
                 g::Grid{T, 3, S},
@@ -618,7 +618,7 @@ function _drift_charge_nosrp!(
     return last_real_step_index
 end
 
-function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
+function _add_fieldvector_drift!(step_vectors::AbstractVector{CartesianVector{T}}, current_pos::AbstractVector{CartesianPoint{T}}, done::AbstractVector{Bool}, electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3}, det::SolidStateDetector{T}, ::Type{S})::Nothing where {T, S}
     #for n in eachindex(step_vectors)
     #   if !done[n]
     #       step_vectors[n] += get_velocity_vector(electric_field, _convert_point(current_pos[n], S))
