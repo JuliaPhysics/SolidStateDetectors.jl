@@ -31,8 +31,7 @@ using Unitful
 using UnitfulAtomic
 using YAML
 
-using StructArrays: StructVector
-using Accessors: @get, @set, @reset, @optic
+using StructArrays: StructVector 
 
 include("ka_compat.jl")
 
