@@ -3,6 +3,7 @@ uuid = "71e43887-2bd9-5f77-aebd-47f656f0a3f0"
 version = "0.10.17"
 
 [deps]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ArraysOfArrays = "65a8f2f4-9b39-5baf-92e2-a9cc46fdf018"
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
@@ -50,6 +51,7 @@ Geant4_julia_jll = "e202cb52-5471-567a-9cb0-0ca301e27810"
 SolidStateDetectorsGeant4Ext = ["Geant4", "Geant4_julia_jll"]
 
 [compat]
+Accessors = "0.1.36"
 Adapt = "3, 4"
 ArraysOfArrays = "0.5, 0.6"
 Clustering = "0.15"
