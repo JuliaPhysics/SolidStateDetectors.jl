@@ -276,11 +276,11 @@ end
         nothing 
     end
 
-    function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, charges::Vector{T}, ϵ_r::T)::Nothing where {T <: SSDFloat}
+    function _add_fieldvector_selfrepulsion!(field_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, done::Vector{Bool}, charges::Vector{T}, ϵ_r::T)::Nothing where {T <: SSDFloat}
         #TO DO: ignore charges that are already collected (not trapped though!)
-        for n in eachindex(step_vectors)
+        for n in eachindex(field_vectors)
             if done[n] continue end
-            for m in eachindex(step_vectors)
+            for m in eachindex(field_vectors)
                 if done[m] continue end
                 if m > n
                     direction::CartesianVector{T} = current_pos[n] - current_pos[m]
@@ -288,15 +288,15 @@ end
                         continue         # don't let them self-repel each other but treat them as same change
                     end                  # if diffusion is simulated, they will very likely be separated in the next step
                     tmp::T = elementary_charge * inv(4π * ϵ0 * ϵ_r * max(distance_squared(direction), T(1e-10))) # minimum distance is 10µm 
-                    step_vectors[n] += charges[m] * tmp * normalize(direction)
-                    step_vectors[m] -= charges[n] * tmp * normalize(direction)
+                    field_vectors[n] += charges[m] * tmp * normalize(direction)
+                    field_vectors[m] -= charges[n] * tmp * normalize(direction)
                 end
             end
             nothing
         end
     end
 
-    function _add_fieldvector_selfrepulsion!(step_vectors::AbstractVector{CartesianVector{T}}, 
+    function _add_fieldvector_selfrepulsion!(field_vectors::AbstractVector{CartesianVector{T}}, 
         XI::AbstractVector{T}, YI::AbstractVector{T}, ZI::AbstractVector{T}, 
         XJ::AbstractVector{T}, YJ::AbstractVector{T}, ZJ::AbstractVector{T}, 
         view_XI::AbstractVector{T}, view_YI::AbstractVector{T}, view_ZI::AbstractVector{T}, 
@@ -339,7 +339,7 @@ end
         mul!(Field_Y, S_Y, charges)
         mul!(Field_Z, S_Z, charges)
 
-        step_vectors .+= CartesianVector.(Field_X, Field_Y, Field_Z)
+        field_vectors .+= CartesianVector.(Field_X, Field_Y, Field_Z)
         nothing
     end
 
@@ -352,23 +352,23 @@ end
     end
     _modulate_driftvectors!(step_vectors::Vector{CartesianVector{T}}, current_pos::Vector{CartesianPoint{T}}, ::Missing) where {T <: SSDFloat} = nothing
 
-    function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Electron})::Nothing where {T <: SSDFloat}
-        for n in eachindex(step_vectors)
-            if !done[n]
-                step_vectors[n] = getVe(SVector{3,T}(step_vectors[n]), cdm) * Δt
-            end
+
+    function _get_drift_step(field_vector::CartesianVector{T}, cdm::AbstractChargeDriftModel{T}, Δt::T, done::Bool) where {T}
+        if !done
+            return (getVe(SVector{3,T}(field_vector), cdm) * Δt)::SVector{3,T}
+        else
+            return SVector{3,T}(0, 0, 0)
         end
+    end
+
+    function _get_drift_steps!(
+        step_vectors::AbstractVector{<:CartesianVector{T}}, field_vectors::AbstractVector{<:CartesianVector{T}},
+        done::AbstractVector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{CC}
+    )::Nothing where {T <: SSDFloat, CC <: ChargeCarrier}
+        broadcast!(_get_drift_step, step_vectors, field_vectors, Ref(cdm), Δt, done)
         nothing
     end
 
-    function _get_driftvectors!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, Δt::T, cdm::AbstractChargeDriftModel{T}, ::Type{Hole})::Nothing where {T <: SSDFloat}
-        for n in eachindex(step_vectors)
-            if !done[n]
-                step_vectors[n] = getVh(SVector{3,T}(step_vectors[n]), cdm) * Δt
-            end
-        end
-        nothing
-    end
 
     function _check_and_update_position!(
                 step_vectors::Vector{CartesianVector{T}}, 
@@ -496,6 +496,7 @@ function _drift_charge!(
 
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
+    field_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
@@ -529,13 +530,13 @@ function _drift_charge!(
 
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
-        _set_to_zero_vector!(step_vectors)
-        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
-        self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
-        _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
-        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
-        _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
-        _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
+        _set_to_zero_vector!(field_vectors)
+        _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
+        self_repulsion && _add_fieldvector_selfrepulsion!(field_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
+        _get_drift_steps!(step_vectors, field_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
+        diffusion && _add_fieldvector_diffusion!(field_vectors, done, diffusion_length)
+        _modulate_driftvectors!(field_vectors, current_pos, det.virtual_drift_volumes)
+        _check_and_update_position!(field_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
     end
 
@@ -570,6 +571,7 @@ function _drift_charge_nosrp!(
 
     last_real_step_index::Int = 1
     current_pos::Vector{CartesianPoint{T}} = deepcopy(startpos)
+    field_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
@@ -603,10 +605,10 @@ function _drift_charge_nosrp!(
 
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
-        _set_to_zero_vector!(step_vectors)
-        _add_fieldvector_drift!(step_vectors, current_pos, done, electric_field, det, S)
+        _set_to_zero_vector!(field_vectors)
+        _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
         #self_repulsion && _add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
-        _get_driftvectors!(step_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
+        _get_drift_steps!(step_vectors, field_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
         diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
         _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
