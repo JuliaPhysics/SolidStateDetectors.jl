@@ -192,7 +192,6 @@ end
 function move_charges_inside_semiconductor!(
         locations::AbstractVector{<:AbstractVector{CartesianPoint{T}}}, energies::AbstractVector{<:AbstractVector{T}},
         det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true) where {T <: SSDFloat}
-    global g_state = (;locations, energies, det)
     for n in eachindex(locations)
         idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
