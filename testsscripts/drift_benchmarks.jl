@@ -3,7 +3,9 @@ include("gen_test_charges.jl")
 using SolidStateDetectors
 import SolidStateDetectors as SSD
 using .SSD: drift_charges, _drift_charge!, Event, EHDriftPath, to_internal_units, Event, to_internal_units, interpolated_vectorfield, Electron, internal_length_unit, _is_next_point_in_det, nonzeros
-using .SSD: ChargeInteractionState
+using .SSD: _drift_charge_oldsrp!
+using .SSD: ChargeInteractionState, dummy_ci_state, full_ci_state
+using .SSD: update_charge_interaction!!, trim_charge_interaction!!, apply_charge_interaction!, resize_charge_interaction_state!!
 
 using LinearAlgebra, SparseArrays
 using ArraysOfArrays, StructArrays
@@ -40,38 +42,75 @@ current_pos = deepcopy(startpos)
 
 # Benchmark _drift_charge!
 
-SSD._drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, startpos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-SSD._drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+_drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, startpos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+_drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
-@benchmark SSD._drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-@benchmark SSD._drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-
-@profview _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-@profview for i in 1:100
-    _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-end
+@benchmark _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+@benchmark _drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
 
 # Benchmark ChargeInteractionState
 
-M_adj_full = sparse(fill!(similar(charges, length(charges), length(charges)), 1) - I)
+field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
+e_field = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
 
-ci_state = ChargeInteractionState(current_pos)
-@benchmark ChargeInteractionState($current_pos)
 
-ci_state = ChargeInteractionState(current_pos, ϵ_r, M_adj_full)
-@benchmark ChargeInteractionState($current_pos, $ϵ_r, $M_adj_full)
+## Dummy adjacency matrix:
+ci_state = dummy_ci_state(current_pos, charges)
+@benchmark dummy_ci_state($current_pos, $charges)
 
-ci_state = ChargeInteractionState(current_pos, ϵ_r, electric_field)
-@benchmark ChargeInteractionState($current_pos, $ϵ_r, $electric_field)
 
-SSD.update_charge_interaction!!(ci_state::ChargeInteractionState{T}, charges::AbstractVector{<:Real})
+## Full adjacency matrix:
+ci_state = full_ci_state(current_pos, charges, ϵ_r)
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+apply_charge_interaction!(field_vectors, ci_state)
+
+@benchmark full_ci_state($current_pos, $charges, $ϵ_r)
+@benchmark update_charge_interaction!!($ci_state, $current_pos, $charges)
+@benchmark apply_charge_interaction!($field_vectors, $ci_state)
+
+
+## Empty adjacency matrix:
+M_adj_empty = sparse(fill!(similar(charges, (length(charges), length(charges))), 0))
+ci_state = ChargeInteractionState(current_pos, charges, ϵ_r, M_adj_empty)
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+ci_state = trim_charge_interaction!!(ci_state, e_field) # DEBUG! Produces NaNs!
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+apply_charge_interaction!(field_vectors, ci_state)
+
+@benchmark update_charge_interaction!!($ci_state, $current_pos, $charges)
+@benchmark apply_charge_interaction!($field_vectors, $ci_state)
+
+
+## Trimmed adjacency matrix:
+ci_state = full_ci_state(current_pos, charges, ϵ_r)
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+ci_state = trim_charge_interaction!!(ci_state, e_field)
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+apply_charge_interaction!(field_vectors, ci_state)
+
+@benchmark update_charge_interaction!!($ci_state, $current_pos, $charges)
+@benchmark apply_charge_interaction!($field_vectors, $ci_state)
+
+ci_state = full_ci_state(current_pos, charges, ϵ_r)
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+@benchmark let ci_state = deepcopy($ci_state)
+    trim_charge_interaction!!(ci_state, $e_field)
+end
+
+ci_state = full_ci_state(current_pos, charges, ϵ_r)
+ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+ci_state = trim_charge_interaction!!(ci_state, e_field)
+@benchmark let ci_state = deepcopy($ci_state)
+    update_charge_interaction!!(ci_state, $current_pos, $charges)
+end
+
 
 # Benchmark old _add_fieldvector_selfrepulsion!:
 
 n_hits, max_nsteps = size(drift_path_e)
 done = fill!(similar(charges, Bool), false)
-field_vectors = Vector{CartesianVector{T}}(undef, n_hits)
+field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
 SSD._add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
 
 @benchmark SSD._add_fieldvector_selfrepulsion!($field_vectors, $current_pos, $done, $charges, $ϵ_r)
