@@ -566,9 +566,7 @@ end
 # Does not always update charges_J.
 function update_charge_interaction!!(
     ci_state::ChargeInteractionState{T},
-    new_pos::StructVector{<:CartesianPoint{T}}, new_charges::AbstractVector{<:Real},
-    field_vectors::Union{Nothing, AbstractArray{<:CartesianVector{T}}} = nothing;
-    ci_threshold::T = T(0.001)
+    new_pos::StructVector{<:CartesianPoint{T}}, new_charges::AbstractVector{<:Real}
 ) where T
     # ToDo: ignore charges that have been collected (not trapped though!)
     # Will have to remove them from adjecency matrix.
