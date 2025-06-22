@@ -495,7 +495,7 @@ function resize_charge_interaction_state!!(
     (;
         adj_row_sums, pos_I, pos_J, Δpos_IJ,
         charges_J,
-        Tmp_D3_nz, #=S,=# onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
+        Tmp_D3_nz, S, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     ) = ci_state
 
     M_adj = new_M_adj
@@ -510,31 +510,46 @@ function resize_charge_interaction_state!!(
     adj_nnz = length(adj_nz)
     @assert length(adj_I) == length(adj_J) == adj_nnz
 
-    resize!(onesT, n_charges); fill!(onesT, one(T))
-    resize!(adj_row_sums, n_charges); mul!(adj_row_sums, M_adj, onesT)
+    resize!(onesT, n_charges)
+    ⋮(onesT) .= one(T)
+    resize!(adj_row_sums, n_charges)
+    mul!(adj_row_sums, M_adj, onesT)
 
     resize!(pos_I, adj_nnz)
-    pos_vI = view(pos, adj_I)
+    @inbounds pos_vI = view(pos, adj_I)
     resize!(pos_J, adj_nnz)
-    pos_vJ = view(pos, adj_J)
+    @inbounds pos_vJ = view(pos, adj_J)
     resize!(Δpos_IJ, adj_nnz)
 
     resize!(charges_J, adj_nnz)
-    charges_vJ = view(charges, adj_J)
+    @inbounds charges_vJ = view(charges, adj_J)
 
     resize!(Tmp_D3_nz, adj_nnz)
-    # ToDo: Replace by allocation-free equivalent:
-    S = (x = similar(M_adj), y = similar(M_adj), z = similar(M_adj))
+    S = (
+        x = _make_similar!!(S.x, M_adj),
+        y = _make_similar!!(S.y, M_adj),
+        z = _make_similar!!(S.z, M_adj)
+    )
 
     resize!(contr_thresh, n_charges)
     resize!(contr_thresh_I, adj_nnz)
-    contr_thresh_vI = view(contr_thresh, adj_I)
+    @inbounds contr_thresh_vI = view(contr_thresh, adj_I)
 
     return ChargeInteractionState(
         M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
         charges, charges_J, charges_vJ,
         Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     )::typeof(ci_state)
+end
+
+function _make_similar!!(A::SparseMatrixCSC, B::SparseMatrixCSC)
+    m, n = B.m, B.n
+    resize!(A.colptr, length(B.colptr))
+    parallel_copyto!(A.colptr, B.colptr)
+    resize!(A.rowval, length(B.rowval))
+    parallel_copyto!(A.rowval, B.rowval)
+    resize!(A.nzval, length(B.nzval))
+    return SparseMatrixCSC(m, n, A.colptr, A.rowval, A.nzval::Vector)
 end
 
 
@@ -630,7 +645,7 @@ function trim_charge_interaction!!(
     adj_nz .*= (nz_S_x.^2 .+ nz_S_y.^2 .+ nz_S_z.^2) .* ⋮(charges_J).^2 .>= ⋮(contr_thresh_I).^2
     dropzeros!(M_adj) # ToDo: dropzeros! is not available for CUDA arrays, find alternative.
 
-    return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r::Real, M_adj)
+    return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r, M_adj)
 end
 
 function apply_charge_interaction!(field_vectors::StructVector{<:CartesianVector{T}}, ci_state::ChargeInteractionState{T}) where T
