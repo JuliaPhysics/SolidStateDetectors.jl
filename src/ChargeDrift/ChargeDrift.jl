@@ -627,7 +627,7 @@ function trim_charge_interaction!!(
     # Trim adjecency matrix:
     nz_S_x, nz_S_y, nz_S_z = nonzeros(S.x), nonzeros(S.y), nonzeros(S.z)
     adj_nz = nonzeros(M_adj)
-    adj_nz .*= nz_S_x.^2 + nz_S_y.^2 .+ nz_S_z .* charges_J.^2 .>= contr_thresh_I .^ 2
+    adj_nz .*= (nz_S_x.^2 .+ nz_S_y.^2 .+ nz_S_z.^2) .* charges_J.^2 .>= contr_thresh_I .^ 2
     dropzeros!(M_adj) # ToDo: dropzeros! is not available for CUDA arrays, find alternative.
 
     return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r::Real, M_adj)
