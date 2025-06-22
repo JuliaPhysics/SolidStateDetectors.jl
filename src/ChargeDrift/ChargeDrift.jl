@@ -414,82 +414,180 @@ end
 
 
 struct ChargeInteractionState{
-    T<:Real, TV <: AbstractVector{T}, TM <: AbstractMatrix{T},
+    T<:Real, TV <: AbstractVector{T}, TVView <: AbstractVector{T}, TM <: AbstractMatrix{T},
     PV <: StructVector{<:CartesianPoint{T}}, PVView <: StructVector{<:CartesianPoint{T}},
     VV <: StructVector{<:CartesianVector{T}},
     TS <: NamedTuple{(:x,:y,:z), <:Tuple{TM,TM,TM}}
 }
     M_adj::TM # sparse charge interaction adjacency matrix, elements must be one or zero, diagonal must be zero
-    pI::PV
-    pJ::PV
-    vpI::PVView # pJ as a view into the original charge positions
-    vpJ::PVView # pI as a view into the original charge positions
-    ΔpIJ::VV # pI - pJ
+    adj_row_sums::TV # count of non-zero elements in each row of M_adj
+    pos::PV # positions of charges
+    pos_I::PV # pos expanded to interaction-target adj. indices
+    pos_J::PV # pos expanded to interaction-source adj. indices
+    pos_vI::PVView # pos_J as a view into the original charge positions
+    pos_vJ::PVView # pos_I as a view into the original charge positions
+    Δpos_IJ::VV # pos_I - pos_J
+    charges::TV # charge values
+    charges_J::TV # charges expanded to interaction-source adj. indices
+    charges_vJ::TVView # charges_J as a view into the original charges
     Tmp_D3_nz::TV
     S::TS # 1/(4π * ϵ0 * ϵ_r) * [Δx,Δy,Δz]/distance^3
-    F::VV # E-field
     ϵ_r::T # Relative permittivity
-end
-
-# ToDo: Make this dummy ctor faster
-function ChargeInteractionState(chargepos::StructVector{<:CartesianPoint{T}}) where T
-    # All-zero adjecency matrix, no charge interaction:
-    x = chargepos.x
-    M_adj = sparse(Int[], Int[], similar(x, 0), length(x), length(x))
-    ϵ_r = one(T)
-    return ChargeInteractionState(chargepos, ϵ_r, M_adj)
+    onesT::TV # Vector of ones, same length as charges
+    contr_thresh::TV # Interaction threshold by target charge
+    contr_thresh_I::TV # Interaction threshold by target charge, expanded to interaction-target adj. indices
+    contr_thresh_vI::TVView # Threshold for interaction for each row of M_adj
 end
 
 function ChargeInteractionState(
-    chargepos::StructVector{<:CartesianPoint{T}}, ϵ_r::Real,
+    pos::StructVector{<:CartesianPoint{T}}, charges::AbstractVector{T}, ϵ_r::T,
     M_adj::AbstractMatrix{T}
 ) where T
+    # ToDo:
+    # For `idxJ, idxJ, nzA = findnz(A)`, `nzA` is a copy, while `nonzeros(A)` returns
+    # the inner non-zero data of A. In our charge-interaction implementation we depend
+    # on them being euqal (equivalent in respect to `idxJ, idxJ`). This seems to be the
+    # case for `SparseMatrixCSC` and `CuSparseMatrixCSC`, but is it guaranteed in
+    # general? If not, we should test this in this constructor, for the given sparse
+    # matrix type.
+
+    n_charges = length(pos)
+
     issparse(M_adj) || throw(ArgumentError("M_adj must be a sparse matrix"))
     iszero(diag(M_adj)) || throw(ArgumentError("Diagonal of M_adj must be zero"))
 
     adj_I, adj_J = findnz(M_adj)
+    adj_nz = nonzeros(M_adj)
+    adj_nnz = length(adj_nz)
+    @assert length(adj_I) == length(adj_J) == adj_nnz
 
-    pI = similar(chargepos, length(adj_I))
-    vpI = view(chargepos, adj_I)
-    pJ = similar(chargepos, length(adj_J))
-    vpJ = view(chargepos, adj_J)
-    ΔpIJ = pI .- pJ
+    onesT = one.(charges)
+    adj_row_sums = M_adj * onesT
 
-    Tmp_D3_nz = similar(nonzeros(M_adj))
+    pos_I = similar(pos, adj_nnz)
+    pos_vI = view(pos, adj_I)
+    pos_J = similar(pos, adj_nnz)
+    pos_vJ = view(pos, adj_J)
+    Δpos_IJ = pos_I .- pos_J # ToDo: Just allocate, don't calculate yet
+
+    charges_J = charges[adj_J]
+    charges_vJ = view(charges, adj_J)
+
+    Tmp_D3_nz = similar(adj_nz)
     S = (x = similar(M_adj), y = similar(M_adj), z = similar(M_adj))
-    F = similar(ΔpIJ, length(chargepos))
+
+    contr_thresh = similar(charges, n_charges)
+    contr_thresh_I = similar(contr_thresh, adj_nnz)
+    contr_thresh_vI = view(contr_thresh, adj_I)
 
     return ChargeInteractionState(
-        M_adj, pI, pJ, vpI, vpJ, ΔpIJ, Tmp_D3_nz, S, F, T(ϵ_r)
+        M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
+        charges, charges_J, charges_vJ,
+        Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     )
 end
 
-function ChargeInteractionState(
-    chargepos::StructVector{<:CartesianPoint}, ϵ_r::Real,
-    electric_field::Interpolations.Extrapolation{<:StaticVector{3}, 3},
-)
-    # ToDo: Rewrite build_cutoff_matrix, can use a ChargeInteractionState
-    # with a full adjacency matrix, as a basis, then compare field-contributions
-    # from each charge to external E-field at target charge. Current implementation
-    # is not efficient:
-    M_adj = build_cutoff_matrix(chargepos, electric_field)
+function resize_charge_interaction_state!!(
+    ci_state::ChargeInteractionState{T},
+    new_pos::StructVector{<:CartesianPoint{T}}, new_charges::AbstractVector{<:T}, new_ϵ_r::T,
+    new_M_adj::AbstractMatrix{T}
+) where T
+    (;
+        adj_row_sums, pos_I, pos_J, Δpos_IJ,
+        charges_J,
+        Tmp_D3_nz, #=S,=# onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
+    ) = ci_state
 
-    return ChargeInteractionState(chargepos, ϵ_r, M_adj)
+    M_adj = new_M_adj
+    pos = new_pos
+    charges = new_charges
+    ϵ_r = new_ϵ_r
+
+    n_charges = length(pos)
+
+    adj_I, adj_J = findnz(M_adj) # ToDo: Allocation-free change of adj_I and adj_J
+    adj_nz = nonzeros(M_adj)
+    adj_nnz = length(adj_nz)
+    @assert length(adj_I) == length(adj_J) == adj_nnz
+
+    resize!(onesT, n_charges); fill!(onesT, one(T))
+    resize!(adj_row_sums, n_charges); mul!(adj_row_sums, M_adj, onesT)
+
+    resize!(pos_I, adj_nnz)
+    pos_vI = view(pos, adj_I)
+    resize!(pos_J, adj_nnz)
+    pos_vJ = view(pos, adj_J)
+    resize!(Δpos_IJ, adj_nnz)
+
+    resize!(charges_J, adj_nnz)
+    charges_vJ = view(charges, adj_J)
+
+    resize!(Tmp_D3_nz, adj_nnz)
+    # ToDo: Replace by allocation-free equivalent:
+    S = (x = similar(M_adj), y = similar(M_adj), z = similar(M_adj))
+
+    resize!(contr_thresh, n_charges)
+    resize!(contr_thresh_I, adj_nnz)
+    contr_thresh_vI = view(contr_thresh, adj_I)
+
+    return ChargeInteractionState(
+        M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
+        charges, charges_J, charges_vJ,
+        Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
+    )::typeof(ci_state)
 end
 
 
-function update_charge_interaction!!(ci_state::ChargeInteractionState{T}, charges::AbstractVector{<:Real}) where T
+# ToDo: Make this faster
+function dummy_ci_state(pos::StructVector{<:CartesianPoint{T}}, charges::AbstractVector{T}) where T
+    # All-zero adjecency matrix, no charge interaction:
+    x = pos.x
+    M_adj = sparse(Int[], Int[], similar(x, 0), length(x), length(x))
+    ϵ_r = one(T)
+    return ChargeInteractionState(pos, charges, ϵ_r, M_adj)
+end
+
+function full_ci_state(
+    pos::StructVector{<:CartesianPoint{T}}, charges::AbstractVector{T}, ϵ_r::T,
+) where T
+    # Not efficient:
+    # M_adj = build_cutoff_matrix(pos, electric_field)
+
+    n_charges = length(charges)
+    # ToDo: For charges belonging to multiple events, will need to create a
+    # block-diagonal structure:
+    M_adj = sparse(fill!(similar(charges, (n_charges, n_charges)), one(T)) - I)
+
+    return ChargeInteractionState(pos, charges, ϵ_r, M_adj)
+end
+
+
+# If field vectors are given, trim adjecency.
+# Does not always update charges_J.
+function update_charge_interaction!!(
+    ci_state::ChargeInteractionState{T},
+    new_pos::StructVector{<:CartesianPoint{T}}, new_charges::AbstractVector{<:Real},
+    field_vectors::Union{Nothing, AbstractArray{<:CartesianVector{T}}} = nothing;
+    ci_threshold::T = T(0.001)
+) where T
     # ToDo: ignore charges that have been collected (not trapped though!)
     # Will have to remove them from adjecency matrix.
 
-    (;pI, pJ, vpI, vpJ, ΔpIJ, Tmp_D3_nz, S, F, ϵ_r) = ci_state
+    (;
+        M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
+        charges, charges_J, charges_vJ,
+        Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
+    ) = ci_state
 
-    # Charges may have moved, update pI and pJ from views into charge positions:
-    pI .= vpI
-    pJ .= vpJ;
+    pos .= new_pos
+    charges .= new_charges
+
+    # Charges may have moved, update pos_I and pos_J from views into charge positions:
+    pos_I .= pos_vI
+    pos_J .= pos_vJ;
 
     # Update distances between charges:
-    ΔpIJ .= pI .- pJ;
+    Δpos_IJ .= pos_I .- pos_J;
 
     inv_4π_ϵ0_ϵ_r = inv(4π * ϵ0 * ϵ_r)
     function calc_tmp_d3(Δx::T, Δy::T, Δz::T) where {T<:Real}
@@ -500,20 +598,50 @@ function update_charge_interaction!!(ci_state::ChargeInteractionState{T}, charge
 
     # Update interaction:
 
-    Tmp_D3_nz .= calc_tmp_d3.(ΔpIJ.x, ΔpIJ.y, ΔpIJ.z)
+    Tmp_D3_nz .= calc_tmp_d3.(Δpos_IJ.x, Δpos_IJ.y, Δpos_IJ.z)
 
-    # ToDo: This will probably need to be modified for CUDA, CuSparseMatrixCSC
-    # seems to use different indexing for non-zero elements than SparseMatrixCSC,
-    # see implementation of findnz for SparseMatrixCSC.
-    nonzeros(S.x) .= Tmp_D3_nz .* ΔpIJ.x
-    nonzeros(S.y) .= Tmp_D3_nz .* ΔpIJ.y
-    nonzeros(S.z) .= Tmp_D3_nz .* ΔpIJ.z
-
-    mul!(F.x, S.x, charges)
-    mul!(F.y, S.y, charges)
-    mul!(F.z, S.z, charges)
+    nonzeros(S.x) .= Tmp_D3_nz .* Δpos_IJ.x
+    nonzeros(S.y) .= Tmp_D3_nz .* Δpos_IJ.y
+    nonzeros(S.z) .= Tmp_D3_nz .* Δpos_IJ.z
 
     return ci_state
+end
+
+# Need to call update_charge_interaction!! before and after trim_charge_interaction!!.
+function trim_charge_interaction!!(
+    ci_state::ChargeInteractionState{T},
+    field_vectors::Union{Nothing, AbstractArray{<:CartesianVector{T}}} = nothing;
+    ci_threshold::T = T(0.001)
+) where T
+    (;
+        M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
+        charges, charges_J, charges_vJ,
+        Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
+    ) = ci_state
+
+    # Compute thresholds for interaction j -> i:
+    contr_thresh .= ci_threshold .* norm.(field_vectors) ./ adj_row_sums
+    contr_thresh_I .= contr_thresh_vI
+    charges_J .= charges_vJ
+
+    # Trim adjecency matrix:
+    nz_S_x, nz_S_y, nz_S_z = nonzeros(S.x), nonzeros(S.y), nonzeros(S.z)
+    adj_nz = nonzeros(M_adj)
+    adj_nz .*= nz_S_x.^2 + nz_S_y.^2 .+ nz_S_z .* charges_J.^2 .>= contr_thresh_I .^ 2
+    dropzeros!(M_adj) # ToDo: dropzeros! is not available for CUDA arrays, find alternative.
+
+    return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r::Real, M_adj)
+end
+
+function apply_charge_interaction!(field_vectors::StructVector{<:CartesianVector{T}}, ci_state::ChargeInteractionState{T}) where T
+    (;S, charges) = ci_state
+
+    # In-place muladd, field_vectors.x = S.x * charges * 1 + field_vectors.x * 1, etc:
+    mul!(field_vectors.x, S.x, charges, one(T), one(T))
+    mul!(field_vectors.y, S.y, charges, one(T), one(T))
+    mul!(field_vectors.z, S.z, charges, one(T), one(T))
+
+    return field_vectors
 end
 
 
@@ -531,6 +659,7 @@ function _drift_charge!(
     diffusion::Bool = false,
     self_repulsion::Bool = false,
     verbose::Bool = true,
+    srp_trim_every::Integer = 100
 )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
     n_hits::Int, max_nsteps::Int = size(drift_path)
     drift_path[:,1] = startpos
@@ -547,22 +676,29 @@ function _drift_charge!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-    ci_state = if self_repulsion
-        ChargeInteractionState(current_pos, ϵ_r, electric_field)
+    if self_repulsion
+        ci_state = full_ci_state(current_pos, charges, ϵ_r)
+        ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+        ci_state = trim_charge_interaction!!(ci_state, field_vectors)
     else
         # Dummy ChargeInteractionState
-        ChargeInteractionState(current_pos)
+        ci_state = dummy_ci_state(current_pos, charges)
     end
 
+    nsteps::Int = 0
     @inbounds for istep in 2:max_nsteps
+        nsteps += 1
         last_real_step_index += 1
         _set_to_zero_vector!(field_vectors)
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
 
         if self_repulsion
             # New:
-            ci_state = update_charge_interaction!!(ci_state, charges)
-            field_vectors .+= ci_state.F
+            ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+            apply_charge_interaction!(field_vectors, ci_state)
+            if nsteps % srp_trim_every == 0
+                ci_state = trim_charge_interaction!!(ci_state, field_vectors)
+            end
 
             # Old:
             # _add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
