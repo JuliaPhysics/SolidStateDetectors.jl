@@ -31,7 +31,8 @@ using Unitful
 using UnitfulAtomic
 using YAML
 
-using StructArrays: StructVector 
+using StructArrays: StructVector
+using Strided: StridedView
 
 include("ka_compat.jl")
 
