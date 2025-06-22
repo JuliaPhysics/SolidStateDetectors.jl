@@ -31,7 +31,8 @@ using Unitful
 using UnitfulAtomic
 using YAML
 
-using StructArrays: StructVector
+import StructArrays
+using StructArrays: StructArray, StructVector
 using Strided: StridedView
 
 include("ka_compat.jl")
@@ -90,6 +91,7 @@ const SSDFloat = Union{Float16, Float32, Float64}
 
 include("examples.jl")
 
+include("Parallelization.jl")
 include("Units.jl")
 include("Axes/DiscreteAxis.jl")
 include("World/World.jl")
