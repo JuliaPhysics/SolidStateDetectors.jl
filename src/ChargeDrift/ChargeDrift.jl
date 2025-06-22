@@ -577,33 +577,35 @@ function update_charge_interaction!!(
         Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     ) = ci_state
 
-    pos .= new_pos
-    charges .= new_charges
+    parallel_copyto!(pos, new_pos)
+    parallel_copyto!(charges, new_charges)
 
     # Charges may have moved, update pos_I and pos_J from views into charge positions:
-    pos_I .= pos_vI
-    pos_J .= pos_vJ;
+    parallel_copyto!(pos_I, pos_vI)
+    parallel_copyto!(pos_J, pos_vJ)
 
     # Update distances between charges:
-    Δpos_IJ .= pos_I .- pos_J;
+    parallel_broadcast!(-, Δpos_IJ, pos_I, pos_J)
 
-    inv_4π_ϵ0_ϵ_r = inv(4π * ϵ0 * ϵ_r)
-    function calc_tmp_d3(Δx::T, Δy::T, Δz::T) where {T<:Real}
-        #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
-        inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
-        elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
-    end
+    inv_4π_ϵ0_ϵ_r = T(inv(4π * ϵ0 * ϵ_r))
 
     # Update interaction:
 
-    Tmp_D3_nz .= calc_tmp_d3.(Δpos_IJ.x, Δpos_IJ.y, Δpos_IJ.z)
+    parallel_broadcast!(calc_tmp_d3, Tmp_D3_nz, Δpos_IJ.x, Δpos_IJ.y, Δpos_IJ.z, inv_4π_ϵ0_ϵ_r)
 
-    nonzeros(S.x) .= Tmp_D3_nz .* Δpos_IJ.x
-    nonzeros(S.y) .= Tmp_D3_nz .* Δpos_IJ.y
-    nonzeros(S.z) .= Tmp_D3_nz .* Δpos_IJ.z
+    parallel_broadcast!(*, nonzeros(S.x), Tmp_D3_nz, Δpos_IJ.x)
+    parallel_broadcast!(*, nonzeros(S.y), Tmp_D3_nz, Δpos_IJ.y)
+    parallel_broadcast!(*, nonzeros(S.z), Tmp_D3_nz, Δpos_IJ.z)
 
     return ci_state
 end
+
+function calc_tmp_d3(Δx::T, Δy::T, Δz::T, inv_4π_ϵ0_ϵ_r::T) where {T<:Real}
+    #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
+    inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
+    elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
+end
+
 
 # Need to call update_charge_interaction!! before and after trim_charge_interaction!!.
 function trim_charge_interaction!!(
