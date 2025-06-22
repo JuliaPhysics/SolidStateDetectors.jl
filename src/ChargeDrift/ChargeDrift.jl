@@ -620,14 +620,14 @@ function trim_charge_interaction!!(
     ) = ci_state
 
     # Compute thresholds for interaction j -> i:
-    contr_thresh .= ci_threshold .* norm.(field_vectors) ./ adj_row_sums
-    contr_thresh_I .= contr_thresh_vI
-    charges_J .= charges_vJ
+    ⋮(contr_thresh) .= ⋮(ci_threshold) .* norm.(⋮(field_vectors)) ./ ⋮(adj_row_sums)
+    parallel_copyto!(contr_thresh_I, contr_thresh_vI)
+    parallel_copyto!(charges_J, charges_vJ)
 
     # Trim adjecency matrix:
-    nz_S_x, nz_S_y, nz_S_z = nonzeros(S.x), nonzeros(S.y), nonzeros(S.z)
-    adj_nz = nonzeros(M_adj)
-    adj_nz .*= (nz_S_x.^2 .+ nz_S_y.^2 .+ nz_S_z.^2) .* charges_J.^2 .>= contr_thresh_I .^ 2
+    nz_S_x, nz_S_y, nz_S_z = ⋮(nonzeros(S.x)), ⋮(nonzeros(S.y)), ⋮(nonzeros(S.z))
+    adj_nz = ⋮(nonzeros(M_adj))
+    adj_nz .*= (nz_S_x.^2 .+ nz_S_y.^2 .+ nz_S_z.^2) .* ⋮(charges_J).^2 .>= ⋮(contr_thresh_I).^2
     dropzeros!(M_adj) # ToDo: dropzeros! is not available for CUDA arrays, find alternative.
 
     return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r::Real, M_adj)
