@@ -5,7 +5,9 @@ import SolidStateDetectors as SSD
 using .SSD: drift_charges, _drift_charge!, Event, EHDriftPath, to_internal_units, Event, to_internal_units, interpolated_vectorfield, Electron, internal_length_unit, _is_next_point_in_det, nonzeros
 using .SSD: _drift_charge_oldsrp!
 using .SSD: ChargeInteractionState, dummy_ci_state, full_ci_state
-using .SSD: update_charge_interaction!!, trim_charge_interaction!!, apply_charge_interaction!, resize_charge_interaction_state!!
+using .SSD: update_charge_interaction!!, trim_charge_interaction!!, apply_charge_interaction!, resize_charge_interaction_state!!, calc_tmp_d3
+using .SSD: ⋮, parallel_broadcast, parallel_broadcast!, parallel_copyto!
+using .SSD: ϵ0, elementary_charge
 
 using LinearAlgebra, SparseArrays
 using ArraysOfArrays, StructArrays
