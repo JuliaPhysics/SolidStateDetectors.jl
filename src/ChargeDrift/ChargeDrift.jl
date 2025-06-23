@@ -247,14 +247,6 @@ end
         return sparse(row_indices, col_indices, fill(one(T), length(row_indices)), N, N)
     end
 
-    function _set_to_zero_vector!(v::StructVector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
-        v .= (CartesianVector{T}(0,0,0),)
-        # for n in eachindex(v)
-        #     v[n] = CartesianVector{T}(0,0,0)
-        # end
-        nothing
-    end
-
     function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
         for n in eachindex(step_vectors)
             if done[n] continue end
@@ -715,7 +707,7 @@ function _drift_charge!(
     @inbounds for istep in 2:max_nsteps
         nsteps += 1
         last_real_step_index += 1
-        _set_to_zero_vector!(field_vectors)
+        fill!(field_vectors, zero(eltype(field_vectors)))
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
         if self_repulsion
             # New:
@@ -773,7 +765,7 @@ function _drift_charge_oldsrp!(
 
     @inbounds for istep in 2:max_nsteps
         last_real_step_index += 1
-        _set_to_zero_vector!(field_vectors)
+        fill!(field_vectors, zero(eltype(field_vectors)))
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
         self_repulsion && _add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
         _get_drift_steps!(step_vectors, field_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
