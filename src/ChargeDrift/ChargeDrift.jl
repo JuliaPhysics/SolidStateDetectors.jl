@@ -247,7 +247,7 @@ end
         return sparse(row_indices, col_indices, fill(one(T), length(row_indices)), N, N)
     end
 
-    function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
+    function _set_to_zero_vector!(v::StructVector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
         v .= (CartesianVector{T}(0,0,0),)
         # for n in eachindex(v)
         #     v[n] = CartesianVector{T}(0,0,0)
@@ -686,7 +686,7 @@ function _drift_charge!(
 
     last_real_step_index::Int = 1
     current_pos = StructVector(deepcopy(startpos))
-    field_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
+    field_vectors::StructVector{CartesianVector{T}} = StructVector{CartesianVector{T}}(undef, n_hits)
     step_vectors::Vector{CartesianVector{T}} = Vector{CartesianVector{T}}(undef, n_hits)
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
@@ -706,7 +706,6 @@ function _drift_charge!(
         last_real_step_index += 1
         _set_to_zero_vector!(field_vectors)
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
-
         if self_repulsion
             # New:
             ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
@@ -720,9 +719,9 @@ function _drift_charge!(
         end
 
         _get_drift_steps!(step_vectors, field_vectors, done, Δt, det.semiconductor.charge_drift_model, CC)
-        diffusion && _add_fieldvector_diffusion!(field_vectors, done, diffusion_length)
-        _modulate_driftvectors!(field_vectors, current_pos, det.virtual_drift_volumes)
-        _check_and_update_position!(field_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
+        diffusion && _add_fieldvector_diffusion!(step_vectors, done, diffusion_length)
+        _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
+        _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
         if all(done) break end
     end
 
