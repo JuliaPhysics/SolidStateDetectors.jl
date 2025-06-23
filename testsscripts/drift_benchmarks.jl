@@ -6,7 +6,7 @@ using .SSD: drift_charges, _drift_charge!, Event, EHDriftPath, to_internal_units
 using .SSD: _drift_charge_oldsrp!
 using .SSD: ChargeInteractionState, dummy_ci_state, full_ci_state
 using .SSD: update_charge_interaction!!, trim_charge_interaction!!, apply_charge_interaction!, resize_charge_interaction_state!!, calc_tmp_d3
-using .SSD: ⋮, parallel_broadcast, parallel_broadcast!, parallel_copyto!
+using .SSD: ⋮, ⋰, adapted_bcast, adapted_bcast!, parallel_copyto!, parallel_broadcast, parallel_broadcast!
 using .SSD: ϵ0, elementary_charge
 
 using LinearAlgebra, SparseArrays
