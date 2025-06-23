@@ -602,22 +602,24 @@ function update_charge_interaction!!(
     parallel_copyto!(pos_J, pos_vJ)
 
     # Update distances between charges:
-    parallel_broadcast!(-, Δpos_IJ, pos_I, pos_J)
+    adapted_bcast!(-, ⋮, Δpos_IJ.x, pos_I.x, pos_J.x)
+    adapted_bcast!(-, ⋮, Δpos_IJ.y, pos_I.y, pos_J.y)
+    adapted_bcast!(-, ⋮, Δpos_IJ.z, pos_I.z, pos_J.z)
 
     inv_4π_ϵ0_ϵ_r = T(inv(4π * ϵ0 * ϵ_r))
 
     # Update interaction:
 
-    parallel_broadcast!(calc_tmp_d3, Tmp_D3_nz, Δpos_IJ.x, Δpos_IJ.y, Δpos_IJ.z, inv_4π_ϵ0_ϵ_r)
+    adapted_bcast!(calc_tmp_d3, ⋰, Tmp_D3_nz, Δpos_IJ.x, Δpos_IJ.y, Δpos_IJ.z, inv_4π_ϵ0_ϵ_r)
 
-    parallel_broadcast!(*, nonzeros(S.x), Tmp_D3_nz, Δpos_IJ.x)
-    parallel_broadcast!(*, nonzeros(S.y), Tmp_D3_nz, Δpos_IJ.y)
-    parallel_broadcast!(*, nonzeros(S.z), Tmp_D3_nz, Δpos_IJ.z)
+    adapted_bcast!(*, ⋮, nonzeros(S.x), Tmp_D3_nz, Δpos_IJ.x)
+    adapted_bcast!(*, ⋮, nonzeros(S.y), Tmp_D3_nz, Δpos_IJ.y)
+    adapted_bcast!(*, ⋮, nonzeros(S.z), Tmp_D3_nz, Δpos_IJ.z)
 
     return ci_state
 end
 
-function calc_tmp_d3(Δx::T, Δy::T, Δz::T, inv_4π_ϵ0_ϵ_r::T) where {T<:Real}
+function calc_tmp_d3(Δx, Δy, Δz, inv_4π_ϵ0_ϵ_r::T) where T
     #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
     inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
     elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
