@@ -33,7 +33,8 @@ using YAML
 
 import StructArrays
 using StructArrays: StructArray, StructVector
-using Strided: StridedView
+
+import Strided
 import StrideArrays
 
 include("ka_compat.jl")
