@@ -108,6 +108,18 @@ ci_state = trim_charge_interaction!!(ci_state, e_field)
 end
 
 
+# Profiling on all charge interaction steps:
+@profview let current_pos = current_pos, charges = charges, ϵ_r = ϵ_r, field_vectors = field_vectors, e_field = e_field, ci_state = dummy_ci_state(current_pos, charges), t0 = time()
+    while time() < t0 + 10
+        ci_state = full_ci_state(current_pos, charges, ϵ_r)
+        ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+        ci_state = trim_charge_interaction!!(ci_state, e_field)
+        ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+        apply_charge_interaction!(field_vectors, ci_state)
+    end
+end
+
+
 # Benchmark old _add_fieldvector_selfrepulsion!:
 
 n_hits, max_nsteps = size(drift_path_e)
