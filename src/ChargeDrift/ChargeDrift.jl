@@ -592,6 +592,8 @@ function update_charge_interaction!!(
         Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     ) = ci_state
 
+    isempty(Tmp_D3_nz) && return ci_state # No interaction, nothing to do.
+
     parallel_copyto!(pos, new_pos)
     parallel_copyto!(charges, new_charges)
 
@@ -634,6 +636,8 @@ function trim_charge_interaction!!(
         Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     ) = ci_state
 
+    isempty(nonzeros(M_adj)) && return ci_state # No interaction, nothing to do.
+
     # Compute thresholds for interaction j -> i:
     ⋮(contr_thresh) .= ⋮(ci_threshold) .* norm.(⋮(field_vectors)) ./ ⋮(adj_row_sums)
     parallel_copyto!(contr_thresh_I, contr_thresh_vI)
@@ -645,11 +649,13 @@ function trim_charge_interaction!!(
     adj_nz .*= (nz_S_x.^2 .+ nz_S_y.^2 .+ nz_S_z.^2) .* ⋮(charges_J).^2 .>= ⋮(contr_thresh_I).^2
     dropzeros!(M_adj) # ToDo: dropzeros! is not available for CUDA arrays, find alternative.
 
-    return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r, M_adj)
+    return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r, M_adj)::typeof(ci_state)
 end
 
 function apply_charge_interaction!(field_vectors::StructVector{<:CartesianVector{T}}, ci_state::ChargeInteractionState{T}) where T
     (;S, charges) = ci_state
+
+    isempty(nonzeros(S.x)) && return field_vectors # No interaction, nothing to do.
 
     # In-place muladd, field_vectors.x = S.x * charges * 1 + field_vectors.x * 1, etc:
     mul!(field_vectors.x, S.x, charges, one(T), one(T))
