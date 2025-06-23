@@ -465,20 +465,20 @@ function ChargeInteractionState(
     adj_row_sums = M_adj * onesT
 
     pos_I = similar(pos, adj_nnz)
-    pos_vI = view(pos, adj_I)
+    @inbounds pos_vI = view(pos, adj_I)
     pos_J = similar(pos, adj_nnz)
-    pos_vJ = view(pos, adj_J)
-    Δpos_IJ = pos_I .- pos_J # ToDo: Just allocate, don't calculate yet
+    @inbounds pos_vJ = view(pos, adj_J)
+    Δpos_IJ = StructVector{CartesianVector{T}}(x = similar(pos_I.x), y = similar(pos_I.y), z = similar(pos_I.z))
 
-    charges_J = charges[adj_J]
-    charges_vJ = view(charges, adj_J)
+    charges_J = similar(charges, adj_nnz)
+    @inbounds charges_vJ = view(charges, adj_J)
 
     Tmp_D3_nz = similar(adj_nz)
-    S = (x = similar(M_adj), y = similar(M_adj), z = similar(M_adj))
+    S = (x = _linked_sparsematrix(M_adj), y = _linked_sparsematrix(M_adj), z = _linked_sparsematrix(M_adj))
 
     contr_thresh = similar(charges, n_charges)
     contr_thresh_I = similar(contr_thresh, adj_nnz)
-    contr_thresh_vI = view(contr_thresh, adj_I)
+    @inbounds contr_thresh_vI = view(contr_thresh, adj_I)
 
     return ChargeInteractionState(
         M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
@@ -486,6 +486,19 @@ function ChargeInteractionState(
         Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     )
 end
+
+function _linked_sparsematrix(M::SparseMatrixCSC)
+    m, n = M.m, M.n
+    new_nzval = deepcopy(M.nzval)
+    return SparseMatrixCSC(m, n, M.colptr, M.rowval, new_nzval)
+end
+
+function _linked_resize!!(C::SparseMatrixCSC, M::SparseMatrixCSC)
+    m, n = M.m, M.n
+    new_nzval = resize!(C.nzval, length(M.nzval))
+    return SparseMatrixCSC(m, n, M.colptr, M.rowval, new_nzval)
+end
+
 
 function resize_charge_interaction_state!!(
     ci_state::ChargeInteractionState{T},
@@ -526,9 +539,9 @@ function resize_charge_interaction_state!!(
 
     resize!(Tmp_D3_nz, adj_nnz)
     S = (
-        x = _make_similar!!(S.x, M_adj),
-        y = _make_similar!!(S.y, M_adj),
-        z = _make_similar!!(S.z, M_adj)
+        x = _linked_resize!!(S.x, M_adj),
+        y = _linked_resize!!(S.y, M_adj),
+        z = _linked_resize!!(S.z, M_adj)
     )
 
     resize!(contr_thresh, n_charges)
@@ -540,16 +553,6 @@ function resize_charge_interaction_state!!(
         charges, charges_J, charges_vJ,
         Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
     )::typeof(ci_state)
-end
-
-function _make_similar!!(A::SparseMatrixCSC, B::SparseMatrixCSC)
-    m, n = B.m, B.n
-    resize!(A.colptr, length(B.colptr))
-    parallel_copyto!(A.colptr, B.colptr)
-    resize!(A.rowval, length(B.rowval))
-    parallel_copyto!(A.rowval, B.rowval)
-    resize!(A.nzval, length(B.nzval))
-    return SparseMatrixCSC(m, n, A.colptr, A.rowval, A.nzval::Vector)
 end
 
 
