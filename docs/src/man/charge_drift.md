@@ -176,7 +176,7 @@ The `charge_drift_model` needs:
 
 ### Custom Charge Drift Model
 
-The user can implement and use his own drift model.
+The user can implement and use their own drift model.
 
 The first step is to define a `struct` for the model which is a subtype of `SolidStateDetectors.AbstractChargeDriftModel`:
 
