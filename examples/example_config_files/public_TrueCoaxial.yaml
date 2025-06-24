@@ -41,6 +41,15 @@ detectors:
       neutral_impurity_density:
         name: constant
         value: 5.6769e15cm^-3
+      # # Uncomment the following lines if you want to use different bulk and surface impurity densities in the charge_drift_model section
+      # bulk_impurity_density:
+      #   name: constant
+      #   value: -1e10cm^-3
+      # surface_impurity_density:
+      #   name: li_diffusion
+      #   lithium_annealing_temperature: 623K
+      #   lithium_annealing_time: 18minute
+      #   doped_contact_id: 2
     charge_trapping_model:
       model: ConstantLifetime
       parameters:
