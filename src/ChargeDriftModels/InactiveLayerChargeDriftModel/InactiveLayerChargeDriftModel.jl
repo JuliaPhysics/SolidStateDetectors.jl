@@ -2,18 +2,18 @@
     struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
         
 Charge drift model in which the electrons and holes drift along the electric field.
-There factors are considered in the mobility calculation: ionized impurities, neutral impurities, and acoustic phonon.
+Three factors are considered in the mobility calculation: ionized impurities, neutral impurities, and acoustic phonons.
 
 Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 
 ## Fields
-- `calculate_mobility::Function`: Mobility calculation function.
+- `calculate_mobility::Function`: Mobility function, which is called in the `getVe`, `getVh` and the diffusion coefficient calculation.
 - `neutral_imp_model::AbstractImpurityDensity{T}`: the neutral impurity density model. The default is a constant impurity density of 1e21 m⁻³.
 - `bulk_imp_model::AbstractImpurityDensity{T}`: the bulk impurity density model. The default is the defined (bulk) impurity density if the model is constructed in the config, otherwise the default is a constant impurity density of -1e16 m⁻³.
 - `surface_imp_model::AbstractImpurityDensity{T}`: the surface impurity density model. The default is the defined surface impurity density if the model is constructed in the config, otherwise the default is a constant impurity density of 0 m⁻³.
 
 ## Extra field for constructing the model
-- `temperature::T`: temperature of the crystal (Kelvin).
+- `temperature::T`: the crystal temperature (Kelvin), the default is 90 (Kelvin).
 """
 
 struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
@@ -25,7 +25,7 @@ struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{
 end
 
 function InactiveLayerChargeDriftModel{T}(
-    temperature::T = T(90), # Kelvin
+    temperature::T = T(90),
     neutral_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(1e21)),
     bulk_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(-1e16)),
     surface_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(0)),
