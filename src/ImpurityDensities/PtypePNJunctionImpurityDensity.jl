@@ -6,7 +6,7 @@ The surface lithium density is saturated. Ref: [Dai _et al._ (2023)](https://doi
  
 ## Fields
 * `surface_imp_model::ThermalDiffusionLithiumDensity{T}`: the density profile of lithium (n-type).
-* `bulk_imp_model::AbstractImpurityDensity{T}`: the density of the p-type impurity.
+* `bulk_imp_model::AbstractImpurityDensity{T}`: the density profile of the p-type impurity.
 """
 
 struct PtypePNJunctionImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}

@@ -165,6 +165,12 @@ detectors:
         value: 5.6769e15cm^-3
 ```
 
+The `charge_drift_model` needs:
+- `model`: the name of the charge drift model, which in this case is `InactiveLayerChargeDriftModel`
+- `temperature`: the crystal temperature
+- `bulk_impurity_density`: the density of the p-type impurity in the crystal
+- `surface_impurity_density`: the density profile of lithium (n-type) in the surface layer
+- `neutral_impurity_density`: the density profile of the non-ionized impurity in the crystal
 
 ### Custom Charge Drift Model
 
