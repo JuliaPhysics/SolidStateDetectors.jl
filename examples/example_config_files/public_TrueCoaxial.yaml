@@ -29,8 +29,8 @@ detectors:
     temperature: 90
     impurity_density:
       name: PtypePNjunction
-      Li_annealing_temperature: 623K
-      Li_annealing_time: 18minute
+      lithium_annealing_temperature: 623K
+      lithium_annealing_time: 18minute
       doped_contact_id: 2
       bulk_impurity_density:
         name: constant

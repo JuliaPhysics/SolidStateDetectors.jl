@@ -114,8 +114,8 @@ This density model can be defined in the config file, e.g.
 ```yaml
 impurity_density:
   name: PtypePNjunction
-  Li_annealing_temperature: 623K
-  Li_annealing_time: 18minute
+  lithium_annealing_temperature: 623K
+  lithium_annealing_time: 18minute
   doped_contact_id: 2
   bulk_impurity_density:
     name: constant
@@ -134,12 +134,12 @@ T = Float64
 sim = Simulation{T}(SSD_examples[:TrueCoaxial])
 
 distance_to_contact = pt -> 0.01 - hypot(pt[1], pt[2])
-Li_annealing_temperature::T = 623 # Kelvin
-Li_annealing_time::T = 18*60 # seconds
+lithium_annealing_temperature::T = 623 # Kelvin
+lithium_annealing_time::T = 18*60 # seconds
 p_type_density::T = -1e16 # m^-3
 bulk_imp_model = ConstantImpurityDensity{T}(p_type_density)
 
-pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(Li_annealing_temperature, Li_annealing_time, nothing, bulk_imp_model, distance_to_contact)
+pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(lithium_annealing_temperature, lithium_annealing_time, nothing, bulk_imp_model, distance_to_contact)
 sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density)
 ```
 
