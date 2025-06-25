@@ -1,5 +1,5 @@
 include("gen_test_charges.jl")
-
+include("geant4_test_charges.jl")
 using SolidStateDetectors
 import SolidStateDetectors as SSD
 using .SSD: drift_charges, _drift_charge!, Event, EHDriftPath, to_internal_units, Event, to_internal_units, interpolated_vectorfield, Electron, internal_length_unit, _is_next_point_in_det, nonzeros
@@ -15,9 +15,8 @@ using Unitful
 using BenchmarkTools
 using JLD2
 
-
 (; edep, pos) = mcevents[1]
-pos = CartesianPoint.(ustrip.(pos))
+pos = CartesianPoint.(to_internal_units.(pos))
 charges::Vector{T} = to_internal_units.(edep) ./ to_internal_units(sim.detector.semiconductor.material.E_ionisation)
 
 # For benchmarking _drift_charge!, drift_charges and simulate_waveforms
@@ -26,7 +25,7 @@ max_nsteps = 1000
 diffusion = false
 verbose = true
 
-self_repulsion = false
+# self_repulsion = false
 #=
 self_repulsion = true
 =#
@@ -44,12 +43,14 @@ current_pos = deepcopy(startpos)
 
 # Benchmark _drift_charge!
 
-_drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, startpos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-_drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+_drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+_drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
-@benchmark _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
-@benchmark _drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+@profview @benchmark _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+@profview @benchmark _drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
+# checking wether all(done) is true and turning self_repulsion off -> this way both drift_charge! are at mean: 89μs (new) and 71μs (old)
+# new function only a bit slower because of dummy_ci_state
 
 # Benchmark ChargeInteractionState
 
@@ -109,7 +110,7 @@ end
 
 
 # Profiling on all charge interaction steps:
-@profview let current_pos = current_pos, charges = charges, ϵ_r = ϵ_r, field_vectors = field_vectors, e_field = e_field, ci_state = dummy_ci_state(current_pos, charges), t0 = time()
+@benchmark let current_pos = current_pos, charges = charges, ϵ_r = ϵ_r, field_vectors = field_vectors, e_field = e_field, ci_state = dummy_ci_state(current_pos, charges), t0 = time()
     while time() < t0 + 10
         ci_state = full_ci_state(current_pos, charges, ϵ_r)
         ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
@@ -121,15 +122,17 @@ end
 
 
 # Benchmark old _add_fieldvector_selfrepulsion!:
-
+_current_pos = current_pos
+_charges = charges
+_ϵ_r = ϵ_r
 n_hits, max_nsteps = size(drift_path_e)
-done = fill!(similar(charges, Bool), false)
-field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
-SSD._add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
+_done = fill!(similar(charges, Bool), false)
+_field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
+@benchmark SSD._add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
 
-@benchmark SSD._add_fieldvector_selfrepulsion!($field_vectors, $current_pos, $done, $charges, $ϵ_r)
+@benchmark SSD._add_fieldvector_selfrepulsion!($_field_vectors, $_current_pos, $_done, $_charges, $_ϵ_r)
 
-
+# old function is fast because all of it is done
 
 # benchmarking drift_charges
 n_extra_charges = 1
@@ -185,3 +188,5 @@ Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
 @profview for i in 1:20
     SSD._add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
 end
+
+
