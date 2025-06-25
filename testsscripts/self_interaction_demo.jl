@@ -9,12 +9,13 @@ using .SSD: ⋮, ⋰, adapted_bcast, adapted_bcast!, parallel_copyto!, parallel_
 using .SSD: ϵ0, elementary_charge
 
 using LinearAlgebra, SparseArrays, Random
-using ArraysOfArrays, StructArrays
+using ArraysOfArrays, StructArrays, StaticArrays
 using Unitful
 using BenchmarkTools
 using JLD2
 
-using Plots
+import Plots
+using Makie, WGLMakie, Observables
 
 include("snapshotting.jl")
 
@@ -50,7 +51,7 @@ charge_cloud_scale = 0.1u"mm"
 
 
 unitful_startpos = StructVector(CartesianPoint.(
-    T.(charge_cloud_scale * randn(n_charges)), T.(charge_cloud_scale * randn(n_charges)), T.(charge_cloud_scale * randn(n_charges))
+    T.(charge_cloud_scale/2 * randn(n_charges)), T.(charge_cloud_scale/2 * randn(n_charges)), T.(charge_cloud_scale/2 * randn(n_charges))
 ))
 
 cc_sign = CC == Electron ? -1 : 1
@@ -63,7 +64,7 @@ dt::T = T(to_internal_units(time_step))
 ϵ_r = T(sim.detector.semiconductor.material.ϵ_r)
 cdm = sim.detector.semiconductor.charge_drift_model
 steplen_per_Vm = norm(getVe(SVector{3,T}(0,0,1), cdm) * dt)
-srp_trim_threshold = to_internal_units(self_repulsion_scale) / (max_nsteps / 10) / steplen_per_Vm
+srp_trim_threshold = T(to_internal_units(self_repulsion_scale) / (max_nsteps / 10) / steplen_per_Vm)
 
 field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
 step_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
@@ -78,26 +79,97 @@ timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
 
 ci_state = full_ci_state(current_pos, charges, ϵ_r)
 current_pos = deepcopy(startpos)
-nonzeros(ci_state.M_adj)
+nnz_history = Observable([nnz(ci_state.M_adj)])
+evaltime_history = Observable([NaN * u"μs"])
+
+pos = Observable(current_pos)
+Pos_x, Pos_y, Pos_z = map(p ->p.x, pos), map(p -> p.y, pos), map(p -> p.z, pos)
+M_adj = Observable(ci_state.M_adj)
+
+fig = let fig = Figure(size = (800, 400), fontsize = 16)
+    ax1 = Axis3(fig[1:2, 1], title = "Charge positions")
+    xlims!(ax1, 3 * minimum(startpos.x), 3 * maximum(startpos.x))
+    ylims!(ax1, 3 * minimum(startpos.y), 3 * maximum(startpos.y))
+    zlims!(ax1, 3 * minimum(startpos.z), 3 * maximum(startpos.z))
+    scatter!(ax1, startpos.x, startpos.y, startpos.z, markersize = 4, alpha = 0.5, color = :blue, label = "start")
+    scatter!(ax1, Pos_x, Pos_y, Pos_z, markersize = 4, color = :green, label = "current")
+
+    ax2 = Axis(fig[1:2, 2], aspect = 1, yreversed = true, xaxisposition = :top, title = "Adjacency Matrix")
+    heatmap!(ax2, M_adj)
+
+    ax3 = Axis(fig[3, 1], title = "Connections per charge", xlabel = "charges per point", ylabel = "number of connections")
+    ylims!(ax3, 0, 1.1 * maximum(vec(sum(M_adj[], dims = 1))))
+    scatter!(ax3, -charges, map(M -> vec(sum(M, dims = 1)), M_adj), markersize = 4, color = :red)
+
+    ax3 = Axis(fig[3, 1], title = "Connections per charge", xlabel = "charges per point", ylabel = "number of connections")
+    ylims!(ax3, 0, 1.1 * maximum(vec(sum(M_adj[], dims = 1))))
+    scatter!(ax3, -charges, map(M -> vec(sum(M, dims = 1)), M_adj), markersize = 4, color = :red)
+
+    ax4 = Axis(fig[3, 2], title = "Non-zero elements in adj. matrix", xlabel = "step", ylabel = "NNZ")
+    lines!(ax4, nnz_history)
+    xlims!(ax4, 0, max_nsteps)
+    ylims!(ax4, 0, 1.1 * nnz(M_adj[]))
+
+    # ax5 = Axis(fig[3, 2], yaxisposition = :right, ylabel = "eval. time", dim2_conversion = Makie.UnitfulConversion(u"ms"; units_in_label=true))
+    # xlims!(ax5, 0, max_nsteps)
+    # ylims!(ax5, 0u"ms", 1u"ms")
+    # hidespines!(ax5)
+    # hidexdecorations!(ax5)
+    # lines!(ax5, evaltime_history, alpha = 0.3)
+
+    fig
+end
+display(fig)
+
+for i in 1:max_nsteps
+    t0 = time_ns()
+    fill!(field_vectors, zero(eltype(field_vectors)))
+    ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
+    apply_charge_interaction!(field_vectors, ci_state)
+    ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
+    _get_drift_steps!(step_vectors, field_vectors, done, dt, cdm, CC)
+    evaltime_history[] = push!(evaltime_history[], float(time_ns() - t0)/100 * u"ns")
+
+    current_pos .+= step_vectors
+
+    pos[], M_adj[] = current_pos, ci_state.M_adj
+
+    nnz_history[] = push!(nnz_history[], nnz(M_adj[]))
+    sleep(0.0001)
+end
+
+Plots.plot(nnz_history, xlabel = "drift step", ylabel = "non-zero elements in adjacency matrix", title = "Number of non-zero entries in M_adj over time")
+nnz(ci_state.M_adj) / (n_charges * n_charges - n_charges)
+
+Plots.scatter((x -> x.x).(startpos), (x -> x.y).(startpos))
+Plots.scatter!((x -> x.x).(current_pos), (x -> x.y).(current_pos))
+
+Plots.stephist(norm.(startpos .- Ref(cartesian_zero)) .* 1000, bins = 0:0.01:1, label = "start", xlabel = "distance from origin / mm")
+Plots.stephist!(norm.(current_pos .- Ref(cartesian_zero)) .* 1000, bins = 0:0.01:1, label = "current")
+
+Plots.plot(startpos, markersize = 1, xlabel = "x / mm", ylabel = "y / mm", aspect_ratio = :equal, label = "start")
+Plots.plot!(current_pos, markersize = 1, label = "current")
 
 
-ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-fill!(field_vectors, zero(eltype(field_vectors)))
-apply_charge_interaction!(field_vectors, ci_state)
-ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
-_get_drift_steps!(step_vectors, field_vectors, done, dt, cdm, CC)
-current_pos .+= step_vectors
-length(nonzeros(ci_state.M_adj))
-
-#scatter((x -> x.x).(startpos), (x -> x.y).(startpos)); scatter!((x -> x.x).(current_pos), (x -> x.y).(current_pos))
-#stephist(norm.(startpos .- Ref(cartesian_zero)) .* 1000, bins = 0:0.01:1, label = "start", xlabel = "distance from origin / mm")
-#stephist!(norm.(current_pos .- Ref(cartesian_zero)) .* 1000, bins = 0:0.01:1, label = "current")
-
-plot(startpos); plot!(current_pos)
 
 
+plt.axis.title = "foo"
+
+# Benchmarks:
+
+#=
+@benchmark begin
+    update_charge_interaction!!($ci_state, $current_pos, $charges)
+    apply_charge_interaction!($field_vectors, $ci_state)
+end
+
+@benchmark SSD._add_fieldvector_selfrepulsion!($field_vectors, $current_pos, $done, $charges, $ϵ_r)
+=#
+
+#=
 (;
     M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
     charges, charges_J, charges_vJ,
     Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
 ) = ci_state
+=#
