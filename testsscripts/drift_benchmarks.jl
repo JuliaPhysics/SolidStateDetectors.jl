@@ -5,7 +5,7 @@ import SolidStateDetectors as SSD
 using .SSD: drift_charges, _drift_charge!, Event, EHDriftPath, to_internal_units, Event, to_internal_units, interpolated_vectorfield, Electron, internal_length_unit, _is_next_point_in_det, nonzeros
 using .SSD: _drift_charge_oldsrp!
 using .SSD: ChargeInteractionState, dummy_ci_state, full_ci_state
-using .SSD: update_charge_interaction!!, trim_charge_interaction!!, apply_charge_interaction!, resize_charge_interaction_state!!, calc_tmp_d3
+using .SSD: update_charge_interaction!!, trim_charge_interaction!!, apply_charge_interaction!, resize_charge_interaction_state!!, calc_tmp_d3, _done_field_threshold
 using .SSD: ⋮, ⋰, adapted_bcast, adapted_bcast!, parallel_copyto!, parallel_broadcast, parallel_broadcast!
 using .SSD: ϵ0, elementary_charge
 
@@ -31,6 +31,9 @@ self_repulsion = false
 self_repulsion = true
 =#
 
+srp_trim_threshold = T(20000)
+srp_trim_every = 100
+
 # For benchmarking _drift_charge!
 electric_field = interpolated_vectorfield(sim.electric_field)
 dt::T = T(to_internal_units(time_step))
@@ -40,7 +43,6 @@ timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
 startpos = StructVector(pos)
 ϵ_r = T(sim.detector.semiconductor.material.ϵ_r)
 current_pos = deepcopy(startpos)
-
 
 # Benchmark _drift_charge!
 
@@ -54,7 +56,8 @@ _drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types,
 # Benchmark ChargeInteractionState
 
 field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
-e_field = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
+done = fill!(similar(charges, Bool), false)
+field_threshold = srp_trim_threshold
 
 
 ## Dummy adjacency matrix:
@@ -76,7 +79,7 @@ apply_charge_interaction!(field_vectors, ci_state)
 M_adj_empty = sparse(fill!(similar(charges, (length(charges), length(charges))), 0))
 ci_state = ChargeInteractionState(current_pos, charges, ϵ_r, M_adj_empty)
 ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-ci_state = trim_charge_interaction!!(ci_state, e_field) # DEBUG! Produces NaNs!
+ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold) # DEBUG! Produces NaNs!
 ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
 apply_charge_interaction!(field_vectors, ci_state)
 
@@ -87,7 +90,7 @@ apply_charge_interaction!(field_vectors, ci_state)
 ## Trimmed adjacency matrix:
 ci_state = full_ci_state(current_pos, charges, ϵ_r)
 ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-ci_state = trim_charge_interaction!!(ci_state, e_field)
+ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
 ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
 apply_charge_interaction!(field_vectors, ci_state)
 
@@ -96,24 +99,20 @@ apply_charge_interaction!(field_vectors, ci_state)
 
 ci_state = full_ci_state(current_pos, charges, ϵ_r)
 ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-@benchmark let ci_state = deepcopy($ci_state)
-    trim_charge_interaction!!(ci_state, $e_field)
-end
+@benchmark trim_charge_interaction!!(ci_state, $done, $srp_trim_threshold)
 
 ci_state = full_ci_state(current_pos, charges, ϵ_r)
 ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-ci_state = trim_charge_interaction!!(ci_state, e_field)
-@benchmark let ci_state = deepcopy($ci_state)
-    update_charge_interaction!!(ci_state, $current_pos, $charges)
-end
+ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
+@benchmark update_charge_interaction!!(ci_state, $current_pos, $charges)
 
 
 # Profiling on all charge interaction steps:
-@profview let current_pos = current_pos, charges = charges, ϵ_r = ϵ_r, field_vectors = field_vectors, e_field = e_field, ci_state = dummy_ci_state(current_pos, charges), t0 = time()
+@profview let current_pos = current_pos, charges = charges, ϵ_r = ϵ_r, field_vectors = field_vectors, ci_state = dummy_ci_state(current_pos, charges), done = done, srp_trim_threshold=srp_trim_threshold, t0 = time()
     while time() < t0 + 10
         ci_state = full_ci_state(current_pos, charges, ϵ_r)
         ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-        ci_state = trim_charge_interaction!!(ci_state, e_field)
+        ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
         ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
         apply_charge_interaction!(field_vectors, ci_state)
     end
@@ -123,7 +122,6 @@ end
 # Benchmark old _add_fieldvector_selfrepulsion!:
 
 n_hits, max_nsteps = size(drift_path_e)
-done = fill!(similar(charges, Bool), false)
 field_vectors = fill!(similar(current_pos, CartesianVector{T}), CartesianVector{T}(0, 0, 0))
 SSD._add_fieldvector_selfrepulsion!(field_vectors, current_pos, done, charges, ϵ_r)
 
