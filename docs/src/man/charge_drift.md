@@ -172,7 +172,7 @@ The `charge_drift_model` needs:
 - `surface_impurity_density` (optional): the density profile of lithium (n-type) in the surface layer
 - `neutral_impurity_density`: the density profile of the non-ionized impurity in the crystal
 
-> We could save the `bulk_impurity_density` and `surface_impurity_density` fields, if the `PtypePNJunctionImpurityDensity` is defined as the overall impurity density profile.
+> Note that the fields `bulk_impurity_density` and `surface_impurity_density` do not need to be explicitly defined if `PtypePNJunctionImpurityDensity` is chosen as the overall impurity density profile.
 
 ### Custom Charge Drift Model
 

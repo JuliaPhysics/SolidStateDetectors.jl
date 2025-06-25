@@ -15,7 +15,6 @@ Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 ## Extra field for constructing the model
 - `temperature::T`: the crystal temperature (Kelvin), the default is 90 (Kelvin).
 """
-
 struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
     calculate_mobility::Function
     temperature::T
