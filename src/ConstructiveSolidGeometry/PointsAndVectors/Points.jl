@@ -121,6 +121,8 @@ end
 
 @inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
 
+@inline Base.transpose(pt::CartesianPoint) = CartesianPoint(transpose(pt.x), transpose(pt.y), transpose(pt.z))
+@inline Base.adjoint(pt::CartesianPoint) = CartesianPoint(adjoint(pt.x), adjoint(pt.y), adjoint(pt.z))
 
 # Barycentric combination
 function  Statistics.mean(A::AbstractArray{<:CartesianPoint{T}}; dims = :) where T
@@ -291,6 +293,9 @@ Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 @inline Base.:(-)(pt::CylindricalPoint, v::CartesianVector) = CylindricalPoint(CartesianPoint(pt) - v)
 
 @inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CartesianPoint(a) - CartesianPoint(b)
+
+@inline Base.transpose(pt::CylindricalPoint) = CylindricalPoint(transpose(pt.r), transpose(pt.φ), transpose(pt.z)) 
+@inline Base.adjoint(pt::CylindricalPoint) = CylindricalPoint(adjoint(pt.r), adjoint(pt.φ), adjoint(pt.z))
 
 # Barycentric combination
 function  Statistics.mean(A::AbstractArray{<:CylindricalPoint}; dims = :)
