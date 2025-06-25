@@ -622,11 +622,7 @@ end
 
 
 # Need to call update_charge_interaction!! before and after trim_charge_interaction!!.
-function trim_charge_interaction!!(
-    ci_state::ChargeInteractionState{T},
-    field_vectors::Union{Nothing, AbstractArray{<:CartesianVector{T}}} = nothing;
-    ci_threshold::T = T(0.001)
-) where T
+function trim_charge_interaction!!(ci_state::ChargeInteractionState{T}, done::AbstractVector{Bool}, field_threshold::T) where T
     (;
         M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
         charges, charges_J, charges_vJ,
@@ -636,8 +632,8 @@ function trim_charge_interaction!!(
     isempty(nonzeros(M_adj)) && return ci_state # No interaction, nothing to do.
 
     # Compute thresholds for interaction j -> i:
-    F = ⋮(field_vectors)
-    ⋮(contr_thresh) .= ⋮(ci_threshold) .* sqrt.(F.x.^2 .+ F.y.^2 .+ F.z.^2) ./ ⋮(adj_row_sums)
+    # Note: can't use `⋮` for packed Bool vector `done`.
+    contr_thresh .= field_threshold ./ adj_row_sums .* _done_field_threshold.(T.(done))
     parallel_copyto!(contr_thresh_I, contr_thresh_vI)
     parallel_copyto!(charges_J, charges_vJ)
 
@@ -645,11 +641,16 @@ function trim_charge_interaction!!(
     nz_S_x, nz_S_y, nz_S_z = ⋮(nonzeros(S.x)), ⋮(nonzeros(S.y)), ⋮(nonzeros(S.z))
     adj_nz = ⋮(nonzeros(M_adj))
     adj_nz .*= (nz_S_x.^2 .+ nz_S_y.^2 .+ nz_S_z.^2) .* ⋮(charges_J).^2 .>= ⋮(contr_thresh_I).^2
+
+    # ToDo: Also use `done` to trim self-interaction sources charges (J indices).
+
     dropzeros!(M_adj) # ToDo: dropzeros! is not available for CUDA arrays, find alternative.
 
     return resize_charge_interaction_state!!(ci_state, pos, charges, ϵ_r, M_adj)::typeof(ci_state)
     nothing
 end
+
+_done_field_threshold(float_done::Real) = ifelse(iszero(float_done::Real), oftype(float_done::Real, 1), oftype(float_done::Real, Inf))
 
 function apply_charge_interaction!(field_vectors::StructVector{<:CartesianVector{T}}, ci_state::ChargeInteractionState{T}) where T
     (;S, charges) = ci_state
@@ -679,7 +680,8 @@ function _drift_charge!(
     diffusion::Bool = false,
     self_repulsion::Bool = false,
     verbose::Bool = true,
-    srp_trim_every::Integer = 100
+    srp_trim_threshold::T = T(20000.0), # 20kV/m
+    srp_trim_every::Integer = 100, # trim every 100 steps by default
 )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
     n_hits::Int, max_nsteps::Int = size(drift_path)
     drift_path[:,1] = startpos
@@ -699,7 +701,7 @@ function _drift_charge!(
     if self_repulsion && !all(done)
         ci_state = full_ci_state(current_pos, charges, ϵ_r)
         ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-        ci_state = trim_charge_interaction!!(ci_state, field_vectors)
+        ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
     else
         # Dummy ChargeInteractionState
         ci_state = dummy_ci_state(current_pos, charges)
@@ -716,7 +718,7 @@ function _drift_charge!(
             ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
             apply_charge_interaction!(field_vectors, ci_state)
             if nsteps % srp_trim_every == 0
-                ci_state = trim_charge_interaction!!(ci_state, field_vectors)
+                ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
             end
 
             # Old:
