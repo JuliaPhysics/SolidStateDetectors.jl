@@ -696,7 +696,7 @@ function _drift_charge!(
     done::Vector{Bool} = broadcast(pt -> !_is_next_point_in_det(pt, det, point_types), startpos)
     normal::Vector{Bool} = deepcopy(done)
 
-    if self_repulsion
+    if self_repulsion && !all(done)
         ci_state = full_ci_state(current_pos, charges, ϵ_r)
         ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
         ci_state = trim_charge_interaction!!(ci_state, field_vectors)
@@ -711,7 +711,7 @@ function _drift_charge!(
         last_real_step_index += 1
         fill!(field_vectors, zero(eltype(field_vectors)))
         _add_fieldvector_drift!(field_vectors, current_pos, done, electric_field, det, S)
-        if self_repulsion
+        if self_repulsion && !all(done)
             # New:
             ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
             apply_charge_interaction!(field_vectors, ci_state)
