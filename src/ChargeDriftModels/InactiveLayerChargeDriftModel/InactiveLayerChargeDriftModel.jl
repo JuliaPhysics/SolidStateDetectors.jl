@@ -7,27 +7,23 @@ Three factors are considered in the mobility calculation: ionized impurities, ne
 Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 
 ## Fields
-- `calculate_mobility::Function`: Mobility function, which is called in the `getVe`, `getVh` and the diffusion coefficient calculation.
+- `calculate_mobility::Function`: the mobility function, which is called in the `getVe`, `getVh` and the diffusion coefficient calculation.
+
+## Parameters for constructing the model
+- `temperature::T`: the crystal temperature (Kelvin), the default is 90 (Kelvin).
 - `neutral_imp_model::AbstractImpurityDensity{T}`: the neutral impurity density model. The default is a constant impurity density of 1e21 m⁻³.
 - `bulk_imp_model::AbstractImpurityDensity{T}`: the bulk impurity density model. The default is the defined (bulk) impurity density if the model is constructed in the config, otherwise the default is a constant impurity density of -1e16 m⁻³.
 - `surface_imp_model::AbstractImpurityDensity{T}`: the surface impurity density model. The default is the defined surface impurity density if the model is constructed in the config, otherwise the default is a constant impurity density of 0 m⁻³.
-
-## Extra field for constructing the model
-- `temperature::T`: the crystal temperature (Kelvin), the default is 90 (Kelvin).
 """
 struct InactiveLayerChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
     calculate_mobility::Function
-    temperature::T
-    neutral_imp_model::AbstractImpurityDensity{T}
-    bulk_imp_model::AbstractImpurityDensity{T}
-    surface_imp_model::AbstractImpurityDensity{T}
 end
 
 function InactiveLayerChargeDriftModel{T}(
     temperature::T = T(90),
     neutral_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(1e21)),
     bulk_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(-1e16)),
-    surface_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(0)),
+    surface_imp_model::AbstractImpurityDensity{T} = ConstantImpurityDensity{T}(T(0))
 ) where {T <: SSDFloat}
 
     function calculate_mobility(pt::AbstractCoordinatePoint{T}, CC::Type{CC_type}) where {T <: SSDFloat, CC_type <: ChargeCarrier}
@@ -38,7 +34,7 @@ function InactiveLayerChargeDriftModel{T}(
             temperature, CC)
     end
 
-    InactiveLayerChargeDriftModel{T}(calculate_mobility, temperature, neutral_imp_model, bulk_imp_model, surface_imp_model)
+    InactiveLayerChargeDriftModel{T}(calculate_mobility)
 end
 
 function _calculate_mobility_with_impurities(

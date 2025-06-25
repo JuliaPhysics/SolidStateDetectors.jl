@@ -11,8 +11,17 @@ Lithium impurity density model. Ref: [Dai _et al._ (2023)](https://doi.org/10.10
     2) custom. Custom function might be much faster while the detector has good symmetry.
 * `lithium_density_on_contact::T`: the lithium concentration in the surface (in m^-3)
 * `lithium_diffusivity_in_germanium::T`: the diffusivity of lithium in germanium (in m^2*s^-1)
-"""
 
+## Parameters for constructing the model
+* `lithium_annealing_temperature::T`
+* `lithium_annealing_time::T`
+* `contact_with_lithium_doped::G`: the geometry of the contact with lithium doped, which is used to calculate the distance to the surface.
+    - If you don't pass this parameter, the `distance_to_contact` function should be passed.
+    - If you pass this parameter but don't pass the `distance_to_contact` function, the `distance_to_contact` function will use the default one.
+* `distance_to_contact::Function`: optional, default is `ConstructiveSolidGeometry.distance_to_surface(pt, contact_with_lithium_doped)`
+* `lithium_density_on_contact::T`: optional, default is the saturated lithium density at the given temperature
+* `lithium_diffusivity_in_germanium::T`: optional, default is calculated with the annealing temperature
+"""
 struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     lithium_annealing_temperature::T
     lithium_annealing_time::T

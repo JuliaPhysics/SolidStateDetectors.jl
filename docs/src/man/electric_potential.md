@@ -107,7 +107,7 @@ If no units are given, `init` is parsed in units of `units.length`$^{-3}$ and `g
 
 ### P-type PN junction Impurity Density
 
-A PN junction impurity model based on lithium thermal diffusion and custom bulk impurity density. The surface lithium density is saturated.
+A PN junction impurity model based on lithium thermal diffusion and custom bulk impurity density. The surface lithium density is at the saturation level.
 ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
 
 This density model can be defined in the config file, e.g.
@@ -121,8 +121,15 @@ impurity_density:
     name: constant
     value: -1e10cm^-3
 ```
-which defines a detector with a constant p-type impurity density of
-$10^{10}$cm$^{-3}$ and a highly-doped Lithium contact close to the contact with ID 2, created using a lithium annealing temperature of 623K and an annealing time of 18 minutes.
+The `impurity_density` needs:
+- `name`: the name of the impurity density model, which in this case is `PtypePNjunction`.
+- `lithium_annealing_temperature` (optional): lithium annealing temperature, when the lithium is diffused into the crystal. The default value is 623 K.
+- `lithium_annealing_time` (optional): lithium annealing time. The default value is 18 minutes.
+- `doped_contact_id`:  the doped contact id.
+- `bulk_impurity_density`: the density profile of the p-type impurities.
+
+The example above defines a detector with a constant p-type impurity density of
+$10^{10}$cm$^{-3}$ and a highly-doped Lithium contact close to the contact with ID 2, created using a lithium annealing temperature of 623 K and an annealing time of 18 minutes.
 
 It is based on the internal implementation of `distance_to_surface`, which might not work for all combinations of primitives.
 

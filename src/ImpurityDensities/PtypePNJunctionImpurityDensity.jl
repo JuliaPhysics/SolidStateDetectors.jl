@@ -2,13 +2,12 @@
 struct PtypePNJunctionImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
 A PN junction impurity model based on lithium thermal diffusion and constant bulk impurity density.
-The surface lithium density is saturated. Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
+The surface lithium density is at the saturation level. Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
  
 ## Fields
-* `surface_imp_model::ThermalDiffusionLithiumDensity{T}`: the density profile of lithium (n-type).
-* `bulk_imp_model::AbstractImpurityDensity{T}`: the density profile of the p-type impurity.
+* `surface_imp_model::ThermalDiffusionLithiumDensity{T}`: the density profile of lithium (n-type). Detailed in [`ThermalDiffusionLithiumDensity`](@ref).
+* `bulk_imp_model::AbstractImpurityDensity{T}`: the density profile of the p-type impurities.
 """
-
 struct PtypePNJunctionImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     surface_imp_model::ThermalDiffusionLithiumDensity{T}
     bulk_imp_model::AbstractImpurityDensity{T}

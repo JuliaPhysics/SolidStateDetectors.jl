@@ -1,9 +1,9 @@
-# # Inactive layer simulation Chain: True coaxial detector
+# # Inactive layer simulation: True coaxial detector
 
 # ## Set the physical models for the inactive layer (dead layer) simulation with YAML
-# - drift model for the inactive layer
-# - constant lifetime trapping model
-# - mobility-tied diffusion model
+# - using drift model for the inactive layer
+# - using constant lifetime trapping model
+# - using mobility-tied diffusion model (by calling the `calculate_mobility` function in the drift model struct)
 
 using Plots
 using Unitful
@@ -15,7 +15,7 @@ mm=T(1/1000)
 det_rin=1*mm
 det_z=det_r=10*mm
 z_draw=det_z/2
-pn_r=8.957282*mm # this one was calculated by searching the zero impurity point (displayed in the following section). 
+pn_r=8.957282*mm # this one was calculated by searching the zero impurity point (displayed in the following section)
 
 sim = Simulation{T}(SSD_examples[:TrueCoaxial])
 cfn=SSD_examples[:TrueCoaxial]
@@ -65,7 +65,7 @@ plot!(ylabel = "Mobility [cm\$^2\$/V/s]", xlabel = "Depth to surface [mm]",
 #md savefig("tutorial_mob_dl.svg"); nothing # hide
 #md # [![tutorial_mob_dl](tutorial_mob_dl.svg)](tutorial_mob_dl.pdf)
 
-# ## Calculate electric field
+# ## Calculate the electric field
 # To simulate the inactive layer, we need to calculate the electric field with very fine grid.
 calculate_electric_potential!(sim, max_n_iterations = 10, grid = Grid(sim), verbose = false, depletion_handling = true)
 g = sim.electric_potential.grid
