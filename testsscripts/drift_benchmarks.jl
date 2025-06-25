@@ -48,7 +48,7 @@ current_pos = deepcopy(startpos)
 _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 _drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
-@profview @benchmark _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
+@profview @benchmark _drift_charge!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose, srp_trim_threshold=srp_trim_threshold, srp_trim_every=srp_trim_every)
 @profview @benchmark _drift_charge_oldsrp!(drift_path_e, timestamps_e, sim.detector, sim.point_types, sim.point_types.grid, current_pos, -charges, dt, electric_field, Electron, diffusion=diffusion, self_repulsion=self_repulsion, verbose=verbose)
 
 # checking wether all(done) is true and turning self_repulsion off -> this way both drift_charge! are at mean: 89μs (new) and 71μs (old)
@@ -63,7 +63,7 @@ field_threshold = srp_trim_threshold
 
 ## Dummy adjacency matrix:
 ci_state = dummy_ci_state(current_pos, charges)
-@benchmark dummy_ci_state($current_pos, $charges)
+@profview @benchmark dummy_ci_state($current_pos, $charges)
 
 
 ## Full adjacency matrix:
