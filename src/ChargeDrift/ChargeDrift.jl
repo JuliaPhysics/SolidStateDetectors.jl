@@ -615,8 +615,8 @@ function update_charge_interaction!!(
 end
 
 function calc_tmp_d3(Δx, Δy, Δz, inv_4π_ϵ0_ϵ_r::T) where T
-    #inv_distance_3 = inv(max(sqrt(Δx * Δx + Δy * Δy + Δz * Δz)^3, T(1e-10)))
-    inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(3/2), T(1e-10)))
+    ϵ_3_2 = T(0.00001)^3  # Set 10µm as the minimum distance
+    inv_distance_3 = inv(max((Δx^2 + Δy^2 + Δz^2)^(T(3/2)), ϵ_3_2))
     elementary_charge * inv_4π_ϵ0_ϵ_r * inv_distance_3
 end
 
