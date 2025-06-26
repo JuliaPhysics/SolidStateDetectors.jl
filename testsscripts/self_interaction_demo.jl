@@ -145,6 +145,8 @@ end
 #=
 # CUDA:
 
+using CUDA, Adapt
+
 adapter = CuArray{Float32}
 cu_ci_state = adapt(adapter, ci_state)
 cu_current_pos = adapt(adapter, current_pos)
