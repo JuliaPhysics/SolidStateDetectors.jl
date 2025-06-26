@@ -58,7 +58,7 @@ ci_state_obs = Observable(ci_state)
 nnz_history = Observable([nnz(ci_state_obs[].M_adj)])
 evaltime_history = Observable([NaN * u"μs"])
 
-fig = let fig = Figure(size = (800, 400), fontsize = 16)
+fig = let fig = Figure(size = (1600, 800), fontsize = 16)
     pos_obs = map(x -> x.pos, ci_state_obs)
     Pos_x, Pos_y, Pos_z = map(p ->p.x, pos_obs), map(p -> p.y, pos_obs), map(p -> p.z, pos_obs)
     M_adj_obs = map(x -> x.M_adj, ci_state_obs)
@@ -92,34 +92,37 @@ fig = let fig = Figure(size = (800, 400), fontsize = 16)
     # hidespines!(ax5)
     # hidexdecorations!(ax5)
     # lines!(ax5, evaltime_history, alpha = 0.3)
-
     fig
 end
-display(fig)
 
 
-current_pos .= startpos
-ci_state = full_ci_state(current_pos, charges, ϵ_r)
-ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
-ci_state_obs[] = ci_state
-nnz_history[] = empty!(nnz_history[])
-evaltime_history[] = empty!(evaltime_history[])
-
-for i in 1:max_nsteps
-    t0 = time_ns()
-    fill!(field_vectors, zero(eltype(field_vectors)))
-    update_charge_interaction!!(ci_state, current_pos, charges)
-    apply_charge_interaction!(field_vectors, ci_state)
-    ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
-    _get_drift_steps!(step_vectors, field_vectors, done, dt, cdm, CC)
-    current_pos .+= step_vectors
-    t1 = time_ns()
-
+function run_sim()
+    current_pos .= startpos
+    ci_state = full_ci_state(current_pos, charges, ϵ_r)
+    ci_state = update_charge_interaction!!(ci_state, current_pos, charges)
     ci_state_obs[] = ci_state
-    nnz_history[] = push!(nnz_history[], nnz(ci_state.M_adj))
-    evaltime_history[] = push!(evaltime_history[], float(t1 - t0)/100 * u"ns")
-    sleep(0.0001)
+    nnz_history[] = empty!(nnz_history[])
+    evaltime_history[] = empty!(evaltime_history[])
+
+    for i in 1:max_nsteps
+        t0 = time_ns()
+        fill!(field_vectors, zero(eltype(field_vectors)))
+        update_charge_interaction!!(ci_state, current_pos, charges)
+        apply_charge_interaction!(field_vectors, ci_state)
+        ci_state = trim_charge_interaction!!(ci_state, done, srp_trim_threshold)
+        _get_drift_steps!(step_vectors, field_vectors, done, dt, cdm, CC)
+        current_pos .+= step_vectors
+        t1 = time_ns()
+
+        ci_state_obs[] = ci_state
+        nnz_history[] = push!(nnz_history[], nnz(ci_state.M_adj))
+        evaltime_history[] = push!(evaltime_history[], float(t1 - t0)/100 * u"ns")
+        sleep(0.0001)
+    end
 end
+
+
+display(fig); run_sim()
 
 
 # Benchmarks:
