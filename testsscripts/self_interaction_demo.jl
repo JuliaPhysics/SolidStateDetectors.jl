@@ -138,6 +138,9 @@ for i in 1:max_nsteps
     sleep(0.0001)
 end
 
+
+#=
+
 Plots.plot(nnz_history, xlabel = "drift step", ylabel = "non-zero elements in adjacency matrix", title = "Number of non-zero entries in M_adj over time")
 nnz(ci_state.M_adj) / (n_charges * n_charges - n_charges)
 
@@ -150,10 +153,7 @@ Plots.stephist!(norm.(current_pos .- Ref(cartesian_zero)) .* 1000, bins = 0:0.01
 Plots.plot(startpos, markersize = 1, xlabel = "x / mm", ylabel = "y / mm", aspect_ratio = :equal, label = "start")
 Plots.plot!(current_pos, markersize = 1, label = "current")
 
-
-
-
-plt.axis.title = "foo"
+=#
 
 # Benchmarks:
 
