@@ -10,6 +10,7 @@ using Statistics
 using SparseArrays
 
 import Adapt
+using Adapt: adapt
 using ArraysOfArrays
 using FillArrays
 using Format

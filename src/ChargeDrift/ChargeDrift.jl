@@ -492,6 +492,40 @@ function _linked_resize!!(C::SparseMatrixCSC, M::SparseMatrixCSC)
 end
 
 
+function Adapt.adapt_structure(adapter, ci_state::ChargeInteractionState{T}) where T <: Real
+    M_adj = adapt(adapter, ci_state.M_adj)
+
+    adj_I, adj_J = findnz(M_adj)
+    adj_nz = nonzeros(M_adj)
+    adj_nnz = length(adj_nz)
+    @assert length(adj_I) == length(adj_J) == adj_nnz
+
+    adj_row_sums = adapt(adapter, ci_state.adj_row_sums)
+    pos = adapt(adapter, ci_state.pos)
+    pos_I = adapt(adapter, ci_state.pos_I)
+    pos_J = adapt(adapter, ci_state.pos_J)
+    Δpos_IJ = adapt(adapter, ci_state.Δpos_IJ)
+    charges = adapt(adapter, ci_state.charges)
+    charges_J = adapt(adapter, ci_state.charges_J)
+    Tmp_D3_nz = adapt(adapter, ci_state.Tmp_D3_nz)
+    S = (x = adapt(adapter, ci_state.S.x), y = adapt(adapter, ci_state.S.y), z = adapt(adapter, ci_state.S.z))
+    ϵ_r = adapt(adapter, ci_state.ϵ_r)
+    onesT = adapt(adapter, ci_state.onesT)
+    contr_thresh = adapt(adapter, ci_state.contr_thresh)
+    contr_thresh_I = adapt(adapter, ci_state.contr_thresh_I)
+
+    @inbounds pos_vI = view(pos, adj_I)
+    @inbounds pos_vJ = view(pos, adj_J)
+    @inbounds charges_vJ = view(charges, adj_J)
+    @inbounds contr_thresh_vI = view(contr_thresh, adj_I)
+
+    return ChargeInteractionState(
+        M_adj, adj_row_sums, pos, pos_I, pos_J, pos_vI, pos_vJ, Δpos_IJ,
+        charges, charges_J, charges_vJ,
+        Tmp_D3_nz, S, ϵ_r, onesT, contr_thresh, contr_thresh_I, contr_thresh_vI
+    )
+end
+
 function resize_charge_interaction_state!!(
     ci_state::ChargeInteractionState{T},
     new_pos::StructVector{<:CartesianPoint{T}}, new_charges::AbstractVector{<:T}, new_ϵ_r::T,
