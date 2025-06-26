@@ -184,24 +184,3 @@ Field_X = similar(X); Field_Y = similar(Y); Field_Z = similar(Z)
 @profview for i in 1:20
     SSD._add_fieldvector_selfrepulsion!(step_vectors, XI, YI, ZI, XJ, YJ, ZJ, view_XI, view_YI, view_ZI, view_XJ, view_YJ, view_ZJ, ΔX_nz, ΔY_nz, ΔZ_nz, Tmp_D3_nz, charges, S_X, S_Y, S_Z, Field_X, Field_Y, Field_Z, ϵ_r)
 end
-
-
-
-# CUDA:
-
-adapter = CuArray{Float32}
-cu_ci_state = adapt(adapter, ci_state)
-cu_current_pos = adapt(adapter, current_pos)
-cu_charges = adapt(adapter, charges)
-cu_field_vectors = adapt(adapter, field_vectors);
-
-update_charge_interaction!!(cu_ci_state, cu_current_pos, cu_charges);
-
-@benchmark update_charge_interaction!!($ci_state, $current_pos, $charges)
-@benchmark update_charge_interaction!!($cu_ci_state, $cu_current_pos, $cu_charges)
-
-
-apply_charge_interaction!(cu_field_vectors, cu_ci_state);
-
-@benchmark apply_charge_interaction!($field_vectors, $ci_state)
-@benchmark apply_charge_interaction!($cu_field_vectors, $cu_ci_state)
