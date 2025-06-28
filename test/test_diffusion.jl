@@ -1,5 +1,5 @@
 using SolidStateDetectors
-using SolidStateDetectors: Electron, Hole
+using SolidStateDetectors: Electron, Hole, AbstractChargeDriftModel
 using LinearAlgebra
 using Test
 
@@ -16,24 +16,24 @@ T = Float32
     
     step_vectors = zeros(CartesianVector{T}, N)
 
-    # if calculate_mobility gives a zero mobility, nothing should happen
-    calculate_mobility(pt::CartesianPoint{T}, ::Type{Hole}) where {T} = zero(T)
-    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, calculate_mobility, current_pos, crystal_temperature, Hole)
-    @test all(iszero.(step_vectors))  
-    calculate_mobility(pt::CartesianPoint{T}, ::Type{Electron}) where {T} = zero(T)
-    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, calculate_mobility, current_pos, crystal_temperature, Electron)
+    # Charge Drift model with zero mobility
+    cdm0 = IsotropicChargeDriftModel{T}(0,0)
+    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, cdm0, current_pos, crystal_temperature, Hole)
+    @test all(iszero.(step_vectors))
+    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, cdm0, current_pos, crystal_temperature, Electron)
     @test all(iszero.(step_vectors))
     
     # if the mobility is set to some position-independent value, then we know what the length of the expected step_vectors should be
     μ0 = T(5.0 + rand() * 5.0)
-    calculate_mobility_constant(pt::CartesianPoint{T}, ::Type{Hole}) where {T} = μ0
-    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, calculate_mobility_constant, current_pos, crystal_temperature, Hole)
+    cdmµ = IsotropicChargeDriftModel{T}(µ0, µ0)
+    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, cdmµ, current_pos, crystal_temperature, Hole)
     D0 = μ0 * crystal_temperature * SolidStateDetectors.kB / SolidStateDetectors.elementary_charge
     @test all(isapprox.(norm.(step_vectors), sqrt(6 * D0 * Δt), rtol = 0.01))
     step_vectors = zeros(CartesianVector{T}, N) # reset step vectors
     
-    # use a position-dependent mobility
-    calculate_mobility_pos(pt::CartesianPoint{T}, ::Type{Hole}) where {T} = pt.z
-    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, calculate_mobility_pos, current_pos, crystal_temperature, Hole)
+    # define a new charge drift model with position-dependent mobility
+    struct PositionDependentChargeDriftModel{T} <: AbstractChargeDriftModel{T} end
+    SolidStateDetectors.calculate_mobility(::PositionDependentChargeDriftModel{T}, pt::CartesianPoint{T}, ::Type{Hole}) where {T} = pt.z
+    SolidStateDetectors._add_fieldvector_diffusion!(step_vectors, done, Δt, PositionDependentChargeDriftModel{T}(), current_pos, crystal_temperature, Hole)
     @test all(isapprox.(norm.(step_vectors).^2 ./ (6 * Δt) * SolidStateDetectors.elementary_charge / (crystal_temperature * SolidStateDetectors.kB), zs, rtol = 0.01))
 end

@@ -3,7 +3,7 @@
 # ## Set the physical models for the inactive layer (dead layer) simulation with YAML
 # - using drift model for the inactive layer
 # - using constant lifetime trapping model
-# - using mobility-tied diffusion model (by calling the `calculate_mobility` function in the drift model struct)
+# - using mobility-tied diffusion model (by calling the `calculate_mobility` function with the drift model)
 
 using Plots
 using Unitful
@@ -53,8 +53,8 @@ for depth in depth_list
     r=det_r-depth
     pt = CylindricalPoint{T}([r, 0, z_draw])
     pt = CartesianPoint{T}(pt)
-    push!(hole_mobility_list, cdm.calculate_mobility(pt, Hole))
-    push!(electron_mobility_list, cdm.calculate_mobility(pt, Electron))
+    push!(hole_mobility_list, SolidStateDetectors.calculate_mobility(cdm, pt, Hole))
+    push!(electron_mobility_list, SolidStateDetectors.calculate_mobility(cdm, pt, Electron))
 end
 plot(depth_list/mm, hole_mobility_list, label = "Hole", lw = 4)
 plot!(depth_list/mm, electron_mobility_list, label = "Electron", lw = 4)
