@@ -229,7 +229,17 @@ end
         @test SolidStateDetectors.calculate_mobility(simA.detector.semiconductor.charge_drift_model, CartesianPoint{T}(0,0,0), SolidStateDetectors.Hole) isa T
     end
 
-    # TODO: Add a test that the detector is not fully depleted?
+    @testset "Test if the detector is not depleted" begin
+        mm = 1 / 1000
+        pn_r = 8.957282 * mm
+        ax1, ax2, ax3 = Grid(simA).axes
+        bulk_tick_dis, dl_tick_dis  = 0.05 * mm, 0.01 * mm
+        user_additional_ticks_ax1 = sort(vcat(ax1.interval.left:bulk_tick_dis:pn_r, pn_r:dl_tick_dis:ax1.interval.right))
+        user_ax1 = typeof(ax1)(ax1.interval, user_additional_ticks_ax1)
+        user_g = typeof(g)((user_ax1, ax2, ax3))
+        calculate_electric_potential!(simA, grid=user_g, depletion_handling=true)
+        @test !is_depleted(simA.point_types)
+    end
 end
 
 @timed_testset "Test IsotropicChargeDriftModel" begin
