@@ -232,7 +232,8 @@ end
     @testset "Test if the detector is not depleted" begin
         mm = 1 / 1000
         pn_r = 8.957282 * mm
-        ax1, ax2, ax3 = Grid(simA).axes
+        g = Grid(simA)
+        ax1, ax2, ax3 = g.axes
         bulk_tick_dis, dl_tick_dis  = 0.05 * mm, 0.01 * mm
         user_additional_ticks_ax1 = sort(vcat(ax1.interval.left:bulk_tick_dis:pn_r, pn_r:dl_tick_dis:ax1.interval.right))
         user_ax1 = typeof(ax1)(ax1.interval, user_additional_ticks_ax1)
