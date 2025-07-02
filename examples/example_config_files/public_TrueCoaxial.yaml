@@ -29,8 +29,8 @@ detectors:
     temperature: 90
     impurity_density:
       name: PtypePNjunction
-      Li_annealing_temperature: 623K
-      Li_annealing_time: 18minute
+      lithium_annealing_temperature: 623K
+      lithium_annealing_time: 18minute
       doped_contact_id: 2
       bulk_impurity_density:
         name: constant
@@ -41,6 +41,15 @@ detectors:
       neutral_impurity_density:
         name: constant
         value: 5.6769e15cm^-3
+      # # Uncomment the following lines if you want to use different bulk and surface impurity densities in the charge_drift_model section
+      # bulk_impurity_density:
+      #   name: constant
+      #   value: -1e10cm^-3
+      # surface_impurity_density:
+      #   name: li_diffusion
+      #   lithium_annealing_temperature: 623K
+      #   lithium_annealing_time: 18minute
+      #   doped_contact_id: 2
     charge_trapping_model:
       model: ConstantLifetime
       parameters:
@@ -51,7 +60,7 @@ detectors:
       inactive_layer_geometry:
         tube:
           r:
-            from: 8.957282 # set to the depth of the pn junction boundary when lithium diffusion temperature is 623K, time is 18 minutes
+            from: 8.957282 # set to the depth of the pn junction boundary when lithium diffusion temperature is 623 K, time is 18 minutes
             to: 10.0
           h: 10.0
           origin:

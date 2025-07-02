@@ -135,9 +135,48 @@ If no temperature is given as a parameter, the calculations will be performed at
 It should be noted that the correct model has not yet been identified, and the parameters inside these configuration files -besides the default ADL ones- are just educated guesses.
 
 
+### Inactive Layer Charge Drift Model
+
+The [`InactiveLayerChargeDriftModel`](@ref) describes a system in which electrons and holes move along the electric field lines. The mobilities for electrons and holes are scalar ($+$ for holes, and $-$ for electrons), and thus, the velocity field has the same (or opposite) direction as the electric field.
+
+The mobilities are calculated considering three major scattering process: scattering off ionized impurities, neutral impurities and acoustic phonons. Thus, the mobilities depend on the impurity concentrations and temperature.
+
+The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
+
+The `InactiveLayerChargeDriftModel` can be specified in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
+
+```yaml 
+detectors:
+  semiconductor:
+    # ...
+    charge_drift_model:
+      model: InactiveLayerChargeDriftModel
+      temperature: 90K
+      bulk_impurity_density:
+        name: constant
+        value: -1e10cm^-3
+      surface_impurity_density:
+        name: li_diffusion
+        lithium_annealing_temperature: 623K
+        lithium_annealing_time: 18minute
+        doped_contact_id: 2
+      neutral_impurity_density:
+        name: constant
+        value: 5.6769e15cm^-3
+```
+
+The `charge_drift_model` needs:
+- `model`: the name of the charge drift model, which in this case is `InactiveLayerChargeDriftModel`.
+- `temperature`: the crystal temperature.
+- `bulk_impurity_density` (optional): the density of the p-type impurity in the crystal.
+- `surface_impurity_density` (optional): the density profile of lithium (n-type) in the surface layer.
+- `neutral_impurity_density`: the density profile of the non-ionized impurity in the crystal.
+
+> Note that the fields `bulk_impurity_density` and `surface_impurity_density` do not need to be explicitly defined if `PtypePNJunctionImpurityDensity` is chosen as the overall impurity density profile.
+
 ### Custom Charge Drift Model
 
-The user can implement and use his own drift model.
+The user can implement and use their own drift model.
 
 The first step is to define a `struct` for the model which is a subtype of `SolidStateDetectors.AbstractChargeDriftModel`:
 

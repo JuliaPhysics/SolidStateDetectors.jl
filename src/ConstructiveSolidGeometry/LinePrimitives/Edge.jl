@@ -25,6 +25,8 @@ function Edge{T}(;
     Edge{T}(a, b)
 end
 
+Edge{T}(a::CylindricalPoint{T}, b::CylindricalPoint{T}) where {T} = Edge{T}(CartesianPoint(a), CartesianPoint(b))
+
 direction(e::Edge) = e.b - e.a
 
 Line(e::Edge{T}) where {T} = Line{T}(e.a, direction(e))

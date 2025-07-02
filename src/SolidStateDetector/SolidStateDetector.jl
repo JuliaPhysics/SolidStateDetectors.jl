@@ -131,23 +131,39 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
     end
     
     @assert haskey(config_detector, "semiconductor") "Each detector needs an entry `semiconductor`. Please define the semiconductor."
-    if haskey(config_detector["semiconductor"], "impurity_density") &&
-       haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
-       config_detector["semiconductor"]["impurity_density"]["name"] in ("li_diffusion", "PtypePNjunction")
-        if haskey(config_detector["semiconductor"]["impurity_density"], "doped_contact_id")
-            doped_contact_id::Int = config_detector["semiconductor"]["impurity_density"]["doped_contact_id"]
-            if !in(doped_contact_id, getfield.(contacts, :id))
-                ArgumentError("The doped_contact_id is not defined in the configuration file.")
+    doped_geometry_for_imp = haskey(config_detector["semiconductor"], "impurity_density") &&
+        haskey(config_detector["semiconductor"]["impurity_density"], "name") &&
+        config_detector["semiconductor"]["impurity_density"]["name"] in ("li_diffusion", "PtypePNjunction")
+    doped_geometry_for_drift = haskey(config_detector["semiconductor"], "charge_drift_model") &&
+        haskey(config_detector["semiconductor"]["charge_drift_model"], "surface_impurity_density") &&
+        haskey(config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"], "name") &&
+        config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"]["name"] in ("li_diffusion", "PtypePNjunction")
+    if doped_geometry_for_imp || doped_geometry_for_drift
+        imp_doped_contact_id::Int = drift_doped_contact_id::Int = 1
+        if doped_geometry_for_imp && haskey(config_detector["semiconductor"]["impurity_density"], "doped_contact_id")
+            imp_doped_contact_id = config_detector["semiconductor"]["impurity_density"]["doped_contact_id"]
+            if !in(imp_doped_contact_id, getfield.(contacts, :id))
+                ArgumentError("The imp_doped_contact_id is not defined in the configuration file.")
+            end
+        elseif doped_geometry_for_drift && haskey(config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"], "doped_contact_id")
+            drift_doped_contact_id = config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"]["doped_contact_id"]
+            if !in(drift_doped_contact_id, getfield.(contacts, :id))
+                ArgumentError("The drift_doped_contact_id is not defined in the configuration file.")
             end
         else
             contact_potentials = T[c.potential for c in det.contacts]
             max_potential = maximum(contact_potentials)
             inds = findall(==(max_potential), contact_potentials)
             @assert length(inds) == 1 "Could not determine doped contact (N+) id as multiple contacts' potentials equal the maxima."
-            doped_contact_id = inds[1]
+            imp_doped_contact_id = drift_doped_contact_id = inds[1]
         end
 
-        config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[doped_contact_id].geometry
+        if doped_geometry_for_imp
+            config_detector["semiconductor"]["impurity_density"]["contact_with_lithium_doped"]=contacts[imp_doped_contact_id].geometry
+        end
+        if doped_geometry_for_drift
+            config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"]["contact_with_lithium_doped"]=contacts[drift_doped_contact_id].geometry
+        end
     end
     semiconductor = Semiconductor{T}(config_detector["semiconductor"], input_units, transformations)
     

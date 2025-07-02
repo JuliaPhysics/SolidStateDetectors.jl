@@ -203,10 +203,16 @@ end
 @timed_testset "Test InactiveLayerChargeDriftModel" begin
     @testset "Test constructors of InactiveLayerChargeDriftModel" begin
         cdm0 = InactiveLayerChargeDriftModel{T}()
+        @test cdm0 isa AbstractChargeDriftModel{T}
         @test cdm0.temperature == T(90)
         @test cdm0.neutral_imp_model == ConstantImpurityDensity{T}(1e21)
         @test cdm0.bulk_imp_model == ConstantImpurityDensity{T}(-1e16)
         @test cdm0.surface_imp_model == ConstantImpurityDensity{T}(0)
+        # the charge drift model should define methods for coordinate points and charge carriers:
+        @test hasmethod(SolidStateDetectors.calculate_mobility, Tuple{typeof(cdm0), CartesianPoint{T}, Type{SolidStateDetectors.Electron}})
+        @test hasmethod(SolidStateDetectors.calculate_mobility, Tuple{typeof(cdm0), CartesianPoint{T}, Type{SolidStateDetectors.Hole}})
+        @test SolidStateDetectors.calculate_mobility(cdm0, CartesianPoint{T}(0,0,0), SolidStateDetectors.Electron) isa T
+        @test SolidStateDetectors.calculate_mobility(cdm0, CartesianPoint{T}(0,0,0), SolidStateDetectors.Hole) isa T
     end
 
     simA = @test_nowarn Simulation{T}(SSD_examples[:TrueCoaxial])
@@ -216,8 +222,25 @@ end
         @test simA.detector.semiconductor.charge_drift_model.neutral_imp_model == ConstantImpurityDensity{T}(5.6769e21)
         @test simA.detector.semiconductor.charge_drift_model.bulk_imp_model == simA.detector.semiconductor.impurity_density_model.bulk_imp_model
         @test simA.detector.semiconductor.charge_drift_model.surface_imp_model == simA.detector.semiconductor.impurity_density_model.surface_imp_model
+        # the charge drift model should define methods for coordinate points and charge carriers:
+        @test hasmethod(SolidStateDetectors.calculate_mobility, Tuple{typeof(simA.detector.semiconductor.charge_drift_model), CartesianPoint{T}, Type{SolidStateDetectors.Electron}})
+        @test hasmethod(SolidStateDetectors.calculate_mobility, Tuple{typeof(simA.detector.semiconductor.charge_drift_model), CartesianPoint{T}, Type{SolidStateDetectors.Hole}})
+        @test SolidStateDetectors.calculate_mobility(simA.detector.semiconductor.charge_drift_model, CartesianPoint{T}(0,0,0), SolidStateDetectors.Electron) isa T
+        @test SolidStateDetectors.calculate_mobility(simA.detector.semiconductor.charge_drift_model, CartesianPoint{T}(0,0,0), SolidStateDetectors.Hole) isa T
     end
 
+    @testset "Test if the detector is not depleted" begin
+        mm = 1 / 1000
+        pn_r = 8.957282 * mm
+        g = Grid(simA)
+        ax1, ax2, ax3 = g.axes
+        bulk_tick_dis, dl_tick_dis  = 0.05 * mm, 0.01 * mm
+        user_additional_ticks_ax1 = sort(vcat(ax1.interval.left:bulk_tick_dis:pn_r, pn_r:dl_tick_dis:ax1.interval.right))
+        user_ax1 = typeof(ax1)(ax1.interval, user_additional_ticks_ax1)
+        user_g = typeof(g)((user_ax1, ax2, ax3))
+        calculate_electric_potential!(simA, grid=user_g, depletion_handling=true)
+        @test !is_depleted(simA.point_types)
+    end
 end
 
 @timed_testset "Test IsotropicChargeDriftModel" begin
