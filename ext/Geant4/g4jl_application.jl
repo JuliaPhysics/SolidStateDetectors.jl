@@ -53,7 +53,7 @@ end
 
 
 @with_kw mutable struct GeneratorData <: G4JLGeneratorData
-    gun::Union{Nothing, CxxPtr{G4ParticleGun}} = nothing
+    gun::Union{Nothing, CxxPtr{G4ParticleGun}, CxxPtr{G4SingleParticleSource}} = nothing
     particle::Union{Nothing, CxxPtr{G4ParticleDefinition}} = nothing
     position::G4ThreeVector = G4ThreeVector(0, 0, 0)
     direction::G4ThreeVector = G4ThreeVector(0, 0, 0)
@@ -79,9 +79,7 @@ function SSDGenerator(source::SolidStateDetectors.MonoenergeticSource;  kwargs..
         SetParticleEnergy(gun, ustrip(u"MeV", source.energy))
         SetParticleDefinition(gun, particle)
     end
-
     
-
     function _gen(evt::G4Event, data::GeneratorData)::Nothing
         if !iszero(source.opening_angle)
             d::CartesianVector = normalize(source.direction)
@@ -105,7 +103,7 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource; kwargs...)
 
     data = GeneratorData(;kwargs...)
     function _init(data::GeneratorData, ::Any)
-        gun = data.gun = move!(G4ParticleGun())
+        gun = data.gun = move!(G4SingleParticleSource())
         data.position = G4ThreeVector(
             source.position.x * Geant4.SystemOfUnits.meter,
             source.position.y * Geant4.SystemOfUnits.meter,
@@ -113,7 +111,8 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource; kwargs...)
         )
         SetParticlePosition(gun, data.position)
         data.direction = G4ThreeVector(source.direction.x, source.direction.y, source.direction.z)
-        SetParticleMomentumDirection(gun, data.direction)
+        SetParticleMomentumDirection(GetAngDist(gun), data.direction)
+        SetMonoEnergy(gun |> GetEneDist, 0.0 * Geant4.SystemOfUnits.MeV)
     end
 
     function _gen(evt::G4Event, data::GeneratorData)::Nothing
@@ -130,7 +129,7 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource; kwargs...)
             θ = acos(1 - (1 - cos(source.opening_angle))*rand())
             v = (cos(θ) * d + sin(θ) * (cos(ϕ) * a + sin(ϕ) * b))
             direction = G4ThreeVector(v.x, v.y, v.z)
-            SetParticleMomentumDirection(data.gun, direction)
+            SetParticleMomentumDirection(GetAngDist(data.gun), direction)
         end
         GeneratePrimaryVertex(data.gun, CxxPtr(evt))
     end
