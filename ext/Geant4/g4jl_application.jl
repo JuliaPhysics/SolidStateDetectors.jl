@@ -37,7 +37,7 @@ function _processHits(step::G4Step, ::G4TouchableHistory, data::SDData{T})::Bool
             # detno
             detno = Int32(1), #step |> GetPostStepPoint |> GetPhysicalVolume, # get ID?
             # thit
-            thit = T(0)*u"s", #step |> GetPostStepPoint |> GetGlobalTime,
+            thit = (step |> GetPostStepPoint |> GetGlobalTime) / Geant4.SystemOfUnits.nanosecond * u"ns",
             # edep
             edep = T(edep * 1000u"keV"),
             # pos
