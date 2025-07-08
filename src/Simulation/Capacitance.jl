@@ -58,7 +58,7 @@ function _calculate_mutual_capacitance(grid::Grid{T, 3, CS}, grid_mps, int_ϵ_r,
                 w1, w2, w3 = voxel_widths(grid, i1, i2, i3)
                 dV = voxel_volume(grid, i1, i2, i3, w1, w2, w3)
 
-                pt_voxel_mid = GridPoint(grid_mps, (i1 + 1, i2 + 1, i3 + 1))
+                pt_voxel_mid = getpoint(grid_mps, (i1 + 1, i2 + 1, i3 + 1))
                 ϵ_r_voxel = get_interpolation(int_ϵ_r, pt_voxel_mid, CS)
 
                 efs_1 = _approximate_potential_gradient(int_p1, grid, i1, i2, i3, w1, w2, w3) 
@@ -72,14 +72,14 @@ function _calculate_mutual_capacitance(grid::Grid{T, 3, CS}, grid_mps, int_ϵ_r,
 end
 
 function _approximate_potential_gradient(int_p, grid::Grid{T, 3, CS}, i1, i2, i3, w1, w2, w3) where {T, CS}
-    p000 = get_interpolation(int_p, GridPoint(grid, (i1    , i2    , i3    )), CS)
-    p100 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2    , i3    )), CS)
-    p010 = get_interpolation(int_p, GridPoint(grid, (i1    , i2 + 1, i3    )), CS)
-    p110 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2 + 1, i3    )), CS)
-    p001 = get_interpolation(int_p, GridPoint(grid, (i1    , i2    , i3 + 1)), CS)
-    p101 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2    , i3 + 1)), CS)
-    p011 = get_interpolation(int_p, GridPoint(grid, (i1    , i2 + 1, i3 + 1)), CS)
-    p111 = get_interpolation(int_p, GridPoint(grid, (i1 + 1, i2 + 1, i3 + 1)), CS)
+    p000 = get_interpolation(int_p, getpoint(grid, (i1    , i2    , i3    )), CS)
+    p100 = get_interpolation(int_p, getpoint(grid, (i1 + 1, i2    , i3    )), CS)
+    p010 = get_interpolation(int_p, getpoint(grid, (i1    , i2 + 1, i3    )), CS)
+    p110 = get_interpolation(int_p, getpoint(grid, (i1 + 1, i2 + 1, i3    )), CS)
+    p001 = get_interpolation(int_p, getpoint(grid, (i1    , i2    , i3 + 1)), CS)
+    p101 = get_interpolation(int_p, getpoint(grid, (i1 + 1, i2    , i3 + 1)), CS)
+    p011 = get_interpolation(int_p, getpoint(grid, (i1    , i2 + 1, i3 + 1)), CS)
+    p111 = get_interpolation(int_p, getpoint(grid, (i1 + 1, i2 + 1, i3 + 1)), CS)
     efv1 = ( (p100 - p000) + (p110 - p010) + (p101 - p001) + (p111 - p011) ) / (4 * w1)
     efv2 = if CS == Cylindrical
         _w2 = (grid.axes[2].ticks[i2 + 1] - grid.axes[2].ticks[i2])

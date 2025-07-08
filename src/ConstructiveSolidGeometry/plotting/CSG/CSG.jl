@@ -10,7 +10,8 @@ end
     if st == :samplesurface
         CSG_scale = ismissing(CSG_scale) ? get_scale(csg) : CSG_scale
         spacing = T(CSG_scale/n_samples)
-        filter(p -> in(p,csg), sample(primitive, spacing))
+        pts_nounits = filter(p -> in(p,csg), sample(primitive, spacing))
+        pts_nounits .* internal_length_unit
     elseif st == :slice
         isgr = occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         CSG_scale = ismissing(CSG_scale) ? get_scale(csg) : CSG_scale

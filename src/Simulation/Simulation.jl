@@ -849,7 +849,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         else
             sor_consts = T.(sor_consts)
         end
-        min_tick_distance::NTuple{3, T} = if CS == Cylindrical
+        new_min_tick_distance::NTuple{3, T} = if CS == Cylindrical
             if !ismissing(min_tick_distance)
                 if min_tick_distance isa LengthQuantity
                     world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
@@ -962,7 +962,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 else
                     abs.(ref_limits .* bias_voltage)
                 end
-                refine!(sim, ElectricPotential, max_diffs, min_tick_distance)
+                refine!(sim, ElectricPotential, max_diffs, new_min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
@@ -976,7 +976,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 sor_consts = is_last_ref ? T(1) : sor_consts )
             else
                 max_diffs = abs.(ref_limits)
-                refine!(sim, WeightingPotential, contact_id, max_diffs, min_tick_distance)
+                refine!(sim, WeightingPotential, contact_id, max_diffs, new_min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
