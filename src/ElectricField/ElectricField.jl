@@ -54,7 +54,7 @@ function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes
 end
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}, fieldvector_coordinates=:xyz; use_nthreads::Int = Base.Threads.threadid())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.threadid())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = epot.data
     axr::Vector{T} = collect(epot.grid.axes[1])
     axφ::Vector{T} = collect(epot.grid.axes[2])
@@ -157,9 +157,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
             end
         end
     end
-    if fieldvector_coordinates == :xyz
-        ef = convert_field_vectors_to_xyz(ef, axφ)
-    end
+    ef = convert_field_vectors_to_xyz(ef, axφ)
     return ElectricField(ef, point_types.grid)
 end
 
@@ -175,6 +173,7 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
     end
     return field_xyz
 end
+
 
 
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
@@ -216,9 +215,9 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesi
     axx::Vector{T} = collect(epot.grid.axes[1])
     axy::Vector{T} = collect(epot.grid.axes[2])
     axz::Vector{T} = collect(epot.grid.axes[3])
-    axx_ext::Vector{T} = get_extended_ticks(epot.grid.axes[1])
-    axy_ext::Vector{T} = get_extended_ticks(epot.grid.axes[2])
-    axz_ext::Vector{T} = get_extended_ticks(epot.grid.axes[3])
+    # axx_ext::Vector{T} = get_extended_ticks(epot.grid.axes[1])
+    # axy_ext::Vector{T} = get_extended_ticks(epot.grid.axes[2])
+    # axz_ext::Vector{T} = get_extended_ticks(epot.grid.axes[3])
 
     ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(epot.data))
 
