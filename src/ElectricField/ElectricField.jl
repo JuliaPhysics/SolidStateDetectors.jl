@@ -25,7 +25,7 @@ end
 @inline getindex(ef::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ef.grid, s)
 
 
-function NamedTuple(ef::ElectricField{T, 3}) where {T}
+function Base.NamedTuple(ef::ElectricField{T, 3}) where {T}
     return (
         grid = NamedTuple(ef.grid),
         values = ef.data #* internal_efield_unit,

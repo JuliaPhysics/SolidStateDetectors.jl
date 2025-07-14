@@ -61,7 +61,7 @@ end
 get_precision_type(::Simulation{T}) where {T} = T
 get_coordinate_system(::Simulation{T, CS}) where {T, CS} = CS
 
-function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
+function Base.NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     wpots_strings = ["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts]
     nt = (
         detector_json_string = _namedtuple(sim.config_dict),
