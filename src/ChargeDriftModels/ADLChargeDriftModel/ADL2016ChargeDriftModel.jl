@@ -32,6 +32,9 @@ function _ADL2016ChargeDriftModel(
         e100β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["e100"]["beta"], 
         e100E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["E0"],
         e100μn::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["mun"],
+        η0::Union{Real,String}             = 0.496,
+        b::Union{Real,String}              = 0.0296,
+        Eref::Union{RealQuantity,String}   = 120000.0,
         h100μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h100"]["mu0"], 
         h100β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h100"]["beta"], 
         h100E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h100"]["E0"],
@@ -88,11 +91,12 @@ function _ADL2016ChargeDriftModel(
         inv(ml), inv(mt)
     end
     
-    η0 = 0.496
-    b = 0.0296
-    Eref = 120000.0 # V/m = 1200V/cm
-    parameters = ADLParameters{T}(ml_inv, mt_inv, η0, b, Eref)
-    
+    parameters = ADLParameters{T}(
+        ml_inv, mt_inv, 
+        _parse_value(T, η0, NoUnits), 
+        _parse_value(T, b, NoUnits), 
+        _parse_value(T, Eref, internal_efield_unit)
+    )
 
     crystal_orientation::SMatrix{3,3,T,9} = if ismissing(phi110) 
         if "phi110" in keys(config)
