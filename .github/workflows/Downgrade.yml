@@ -39,7 +39,7 @@ jobs:
       - uses: julia-actions/julia-downgrade-compat@v1
         if: matrix.version == 'pre'
         with:
-          skip: Pkg,TOML,Distributions,FillArrays,StaticArrays,Unitful
+          skip: Pkg,TOML,Distributions,FillArrays,StaticArrays,Unitful,Geant4
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:

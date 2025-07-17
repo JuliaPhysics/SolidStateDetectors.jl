@@ -25,7 +25,7 @@ end
 @inline getindex(epot::ElectricPotential{T, N, S}, s::Symbol) where {T, N, S} = getindex(epot.grid, s)
 
 
-function NamedTuple(epot::ElectricPotential{T, 3}) where {T}
+function Base.NamedTuple(epot::ElectricPotential{T, 3}) where {T}
     return (
         grid = NamedTuple(epot.grid),
         values = epot.data * u"V",
