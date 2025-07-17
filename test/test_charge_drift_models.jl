@@ -325,6 +325,45 @@ end
         @test cdm0.holes == cdmdict.holes
         @test cdm0.crystal_orientation == cdmdict.crystal_orientation
     end
+
+    @testset "Test parsing of ADL2016ChargeDriftModel config files with units" begin
+        cdm0 = ADL2016ChargeDriftModel(T=T) # default charge drift model
+        @test cdm0.electrons.mu0      == 3.7165f0
+        @test cdm0.electrons.beta     == 0.804f0
+        @test cdm0.electrons.E0       == 50770f0
+        @test cdm0.electrons.mun      == -0.0145f0
+        @test cdm0.parameters.Γ0      == 0.496f0  # η0
+        @test cdm0.parameters.Γ1      == 0.0296f0 # b
+        @test cdm0.parameters.Γ2      == 120000f0 # Eref
+        @test cdm0.holes.axis100.mu0  == 6.2934f0
+        @test cdm0.holes.axis100.beta == 0.735f0
+        @test cdm0.holes.axis100.E0   == 18190f0
+        @test cdm0.holes.axis111.mu0  == 6.2383f0
+        @test cdm0.holes.axis111.beta == 0.749f0
+        @test cdm0.holes.axis111.E0   == 14390f0
+    end
+
+    @testset "Test equivalence of longitudinal drift parameter implementation" begin
+    
+        # The function to determine the hole drift for both models is equivalent,
+        # so the hole drift parameters should be stored in the same way
+        cdm2016 = ADL2016ChargeDriftModel(T=T)
+        cdm = ADLChargeDriftModel(T=T,
+            e100μ0 = 37165u"cm^2/(V*s)",
+            e100β  = 0.804,
+            e100E0 = 507.7u"V/cm",
+            e100μn = -145u"cm^2/(V*s)",
+            h100μ0 = 62934u"cm^2/(V*s)",
+            h100β  = 0.735,
+            h100E0 = 181.9u"V/cm",
+            h111μ0 = 62383u"cm^2/(V*s)",
+            h111β  = 0.749,
+            h111E0 = 143.9u"V/cm"
+        )
+        
+        @test cdm2016.electrons == cdm.electrons.axis100
+        @test cdm2016.holes     == cdm.holes
+    end
 end
 
 @timed_testset "Test grouping of charges" begin

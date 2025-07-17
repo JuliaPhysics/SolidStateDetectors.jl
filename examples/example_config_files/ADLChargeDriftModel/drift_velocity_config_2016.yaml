@@ -1,0 +1,24 @@
+model: ADL2016ChargeDriftModel
+phi110: -45°
+material: HPGe
+drift:
+  velocity:
+    model: Bruyneel2016
+    parameters:
+      e100:
+        mu0: 37165cm^2/(V*s)
+        beta: 0.804
+        E0: 507.7V/cm
+        mun: -145cm^2/(V*s)
+      escattering:
+        eta0: 0.496
+        b: 0.0296
+        Eref: 1200V/cm
+      h100:
+        mu0: 62934cm^2/(V*s)
+        beta: 0.735
+        E0: 181.9V/cm
+      h111:
+        mu0: 62383cm^2/(V*s)
+        beta: 0.749
+        E0: 143.9V/cm

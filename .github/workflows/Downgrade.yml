@@ -20,6 +20,7 @@ jobs:
     strategy:
       matrix:
         version: ['1.10', '1', 'pre']
+    continue-on-error: ${{ matrix.version == 'pre' }}
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
