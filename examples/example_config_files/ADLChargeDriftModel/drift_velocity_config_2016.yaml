@@ -1,4 +1,4 @@
-model: ADLChargeDriftModel2016
+model: ADL2016ChargeDriftModel
 phi110: -45°
 material: HPGe
 drift:
@@ -10,6 +10,10 @@ drift:
         beta: 0.804
         E0: 507.7V/cm
         mun: -145cm^2/(V*s)
+      escattering:
+        eta0: 0.496
+        b: 0.0296
+        Eref: 1200V/cm
       h100:
         mu0: 62934cm^2/(V*s)
         beta: 0.735

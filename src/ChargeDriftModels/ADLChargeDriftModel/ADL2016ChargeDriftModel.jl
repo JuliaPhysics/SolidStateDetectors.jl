@@ -32,9 +32,9 @@ function _ADL2016ChargeDriftModel(
         e100β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["e100"]["beta"], 
         e100E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["E0"],
         e100μn::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["e100"]["mun"],
-        η0::Union{Real,String}             = 0.496,
-        b::Union{Real,String}              = 0.0296,
-        Eref::Union{RealQuantity,String}   = 120000.0,
+        η0::Union{Real,String}             = config["drift"]["velocity"]["parameters"]["escattering"]["eta0"],
+        b::Union{Real,String}              = config["drift"]["velocity"]["parameters"]["escattering"]["b"],
+        Eref::Union{RealQuantity,String}   = config["drift"]["velocity"]["parameters"]["escattering"]["Eref"],
         h100μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h100"]["mu0"], 
         h100β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h100"]["beta"], 
         h100E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h100"]["E0"],
@@ -146,11 +146,11 @@ function ADL2016ChargeDriftModel(config::AbstractDict; kwargs...)
         throw(ConfigFileError("ADL2016ChargeDriftModel config file needs entry 'drift/velocity/parameters'."))
     end
 
-    for axis in ("e100", "h100", "h111")
+    for axis in ("e100", "escattering", "h100", "h111")
         if !haskey(config["drift"]["velocity"]["parameters"], axis)
             throw(ConfigFileError("ADLCharge2016DriftModel config file needs entry 'drift/velocity/parameters/$(axis)'."))
         end
-        for param in ("mu0", "beta", "E0", "mun")
+        for param in (axis == "escattering" ? ("eta0", "b", "Eref") : ("mu0", "beta", "E0", "mun"))
             if !haskey(config["drift"]["velocity"]["parameters"][axis], param) && !(axis[1] == 'h' && param == "mun") # holes have no μn
                 throw(ConfigFileError("ADLCharge2016DriftModel config file needs entry 'drift/velocity/parameters/$(axis)/$(param)'."))
             end
