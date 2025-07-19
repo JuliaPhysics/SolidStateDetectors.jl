@@ -58,7 +58,7 @@ Calculates the intersections of a `Line` with a `Plane`.
 """
 function intersection(p::Plane{T}, line::Line{T}) where {T}
     ndir = normalize(line.direction)
-    λ = (p.normal ⋅ p.origin - p.normal ⋅ line.origin) / (p.normal ⋅ ndir)
+    λ = (p.normal ⋅ (p.origin - line.origin)) / (p.normal ⋅ ndir)
     (line.origin + λ * ndir,)
 end
 

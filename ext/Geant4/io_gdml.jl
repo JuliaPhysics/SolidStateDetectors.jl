@@ -26,7 +26,7 @@ using LightXML
 # Add <position> to <define> section, referenced in the geometry definition (in <solids>) via the name
 function create_position(e::AbstractConstructiveGeometry, x_define::XMLElement, name::String, v::Bool)
     # Calculate relative position of the volumes contained in the parent volume
-    x, y, z = parse_origin(e.b) .- parse_origin(e.a)
+    x, y, z = parse_origin(e.b) - parse_origin(e.a)
    
     xpos = new_child(x_define, "position")
     set_attributes(xpos, OrderedDict(
@@ -515,9 +515,10 @@ function add_to_world(x_world::XMLElement, x_define::XMLElement, e::AbstractGeom
     
     x_pos_ref = new_child(x_world, "positionref")
     set_attribute(x_pos_ref, "ref", "pos_" * name)
-        
+    
     x_pos_ref = new_child(x_define, "position")
-    x, y, z = parse_origin(e)
+    parsed_e = parse_origin(e)
+    x, y, z = parsed_e.x, parsed_e.y, parsed_e.z
     set_attributes(x_pos_ref, OrderedDict(
         "name" => "pos_" * name,
         "x" => x,

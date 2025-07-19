@@ -6,6 +6,8 @@ import ..LegendHDF5IO
 
 using ..SolidStateDetectors
 using ..SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
+using ArraysOfArrays
+import Tables
 using TypedTables, Unitful
 using Format
 
@@ -24,7 +26,7 @@ end
 
 
 
-function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T},
+function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:NamedTuple}, sim::Simulation{T},
                              output_dir::AbstractString, 
                              output_base_name::AbstractString = "generated_waveforms";
                              chunk_n_physics_events::Int = 1000, 
@@ -40,19 +42,22 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
     @info "Detector has $(n_contacts) contact(s)"
-    contacts = sim.detector.contacts
     if !ispath(output_dir) mkpath(output_dir) end
     nfmt(i::Int) = format(i, zeropadding = true, width = length(digits(n_total_physics_events)))
     evt_ranges = chunked_ranges(n_total_physics_events, chunk_n_physics_events)
-    @info "-> $(sum(length.(mcevents.edep))) energy depositions to simulate."
+    @info "-> $(length(mcevents)) events to simulate."
 
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
         mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, verbose)
-      
+
+        # LH5 can't handle CartesianPoint, turn positions into CartesianVectors which will be saved as SVectors
+        pos_vec = VectorOfVectors([p .- Ref(cartesian_zero) for p in mcevents_sub.pos])
+        new_mcevents_sub = TypedTables.Table(merge(Tables.columns(mcevents_sub), (pos = pos_vec,)))
+
         LegendHDF5IO.lh5open(ofn, "w") do h5f
-            LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", mcevents_sub)
+            LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", new_mcevents_sub)
         end        
     end    
 end
