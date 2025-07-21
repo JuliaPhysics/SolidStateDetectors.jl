@@ -5,10 +5,11 @@ Stores certain information about a grid point via bit-flags.
 
 Right now, there are:
 
-    const update_bit      = 0x01
-    const undepleted_bit  = 0x02
-    const pn_junction_bit = 0x04
-    const bulk_bit     = 0x08
+    const update_bit         = 0x01
+    const undepleted_bit     = 0x02
+    const pn_junction_bit    = 0x04
+    const bulk_bit           = 0x08
+    const inactive_layer_bit = 0x10
 
 ## Examples
 
@@ -22,26 +23,28 @@ How to get information out of a `PointType` variable `point_type`:
 const PointType       = UInt8
 
 # Point types for electric potential calculation
-const update_bit      = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
-const undepleted_bit  = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
-const pn_junction_bit = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
-const bulk_bit     = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
+const update_bit         = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
+const undepleted_bit     = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
+const pn_junction_bit    = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
+const bulk_bit           = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
+const inactive_layer_bit = 0x10 # parse(UInt8, "00010000", base=2) # 0 -> point is not part of the inactive layer; 1 -> point is part of the inactive layer
 
 is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
 is_undepleted_point_type(p::PointType) = p & undepleted_bit > 0
 is_fixed_point_type(p::PointType) = p & update_bit == 0
+is_in_inactive_layer(p::PointType) = p & inactive_layer_bit != 0
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
-        
+
 Information about the grid points used to calculate the [`ElectricPotential`](@ref)
 stored via bit-flags. Data is stored as [`PointType`](@ref) which is an `UInt8`.
-        
+
 ## Parametric types 
 * `T`: Element type of `grid.axes`.
 * `N`: Dimension of the `grid` and `data` array.  
 * `S`: Coordinate system (`Cartesian` or `Cylindrical`).
 * `AT`: Axes type.  
-        
+
 ## Fields
 * `data::Array{PointType, N}`: Array containing the point type values at the discrete points of the `grid`.
 * `grid::Grid{T, N, S, AT}`: [`Grid`](@ref) defining the discrete points for which the point types are determined.
@@ -228,4 +231,95 @@ end
 
 Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
 
+"""
+    get_inactivelayer_indeces(vec::AbstractVector{UInt8})::Vector{Vector{Int}}
 
+Scans a 1D vector and returns index groups that surround a `0x00` and
+contain both `0x07` and `0x0f`, bounded by `0x0d`.
+"""
+function get_inactivelayer_indeces(vec::AbstractVector{UInt8})
+    pt_indices = Vector{Vector{Int}}()
+    len = length(vec)
+    i = 1
+
+    while i <= len
+        if vec[i] == 0x00
+            zero_start = i
+            while i <= len && vec[i] == 0x00
+                i += 1
+            end
+            zero_end = i - 1
+            zero_count = zero_end - zero_start + 1
+
+            if zero_count ≤ 2
+                start_idx = zero_start
+                while start_idx > 1 && vec[start_idx - 1] != 0x0d
+                    start_idx -= 1
+                end
+
+                end_idx = zero_end
+                while end_idx < len && vec[end_idx + 1] != 0x0d
+                    end_idx += 1
+                end
+
+                has_07 = false
+                has_0f = false
+                matching = Int[]
+                for idx in start_idx:end_idx
+                    v = vec[idx]
+                    if v == 0x07
+                        has_07 = true
+                        push!(matching, idx)
+                    elseif v == 0x0f
+                        has_0f = true
+                        push!(matching, idx)
+                    end
+                end
+
+                if has_07 && has_0f
+                    push!(pt_indices, matching)
+                end
+            end
+        else
+            i += 1
+        end
+    end
+
+    return pt_indices
+end
+"""
+    get_inactivelayer_point_types!(point_types::Array{UInt8, 3})
+
+Applies the bitwise marking rule to slices across all three dimensions of
+a 3D array, modifying it in-place.
+"""
+function get_inactivelayer_point_types!(point_types::Array{UInt8, 3})
+    sz1, sz2, sz3 = size(point_types)
+
+    # dim 1 (vary i, fix j & k)
+    for j in 1:sz2, k in 1:sz3
+        vec = @view point_types[:, j, k]
+        matches = get_inactivelayer_indeces(vec)
+        for match in matches, idx in match
+            vec[idx] |= inactive_layer_bit
+        end
+    end
+
+    # dim 2 (vary j, fix i & k)
+    for i in 1:sz1, k in 1:sz3
+        vec = @view point_types[i, :, k]
+        matches = get_inactivelayer_indeces(vec)
+        for match in matches, idx in match
+            vec[idx] |= inactive_layer_bit
+        end
+    end
+
+    # dim 3 (vary k, fix i & j)
+    for i in 1:sz1, j in 1:sz2
+        vec = @view point_types[i, j, :]
+        matches = get_inactivelayer_indeces(vec)
+        for match in matches, idx in match
+            vec[idx] |= inactive_layer_bit
+        end
+    end
+end

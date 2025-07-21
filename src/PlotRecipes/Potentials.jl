@@ -81,9 +81,12 @@ end
     grid::CylindricalGrid{T} = sp.grid
     data = sp.data
     if eltype(data) == PointType
-        data = data .& 0x07
+        #data = data .& 0x07
+        data = data
     end
+    @info "Data range" extrema(data)
     @series begin
+    	clims := (minimum(data), maximum(data))
         seriestype := :heatmap
         foreground_color_border --> nothing
         tick_direction --> :out
@@ -228,7 +231,8 @@ end
     grid::CartesianGrid3D{T} = sp.grid
     data = sp.data
     if eltype(data) == PointType
-        data = data .& 0x07
+        #data = data .& 0x07
+        data = data
     end
     @series begin
         seriestype := :heatmap
