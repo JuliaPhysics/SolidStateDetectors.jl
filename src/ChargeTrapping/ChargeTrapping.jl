@@ -6,8 +6,9 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType
-    ) where {T <: SSDFloat}
+        S::CoordinateSystemType,
+        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
+    ) where {T <: SSDFloat, N, CS}
     throw("For the chosen charge trapping model, no method for `_calculate_signal` is implemented.")
 end
 
@@ -27,8 +28,9 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType
-    )::Vector{T} where {T <: SSDFloat}
+        S::CoordinateSystemType,
+        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
+    )::Vector{T} where {T <: SSDFloat, N, CS}
 
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
     @inbounds for i in eachindex(tmp_signal)
@@ -68,8 +70,9 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType
-    )::Vector{T} where {T <: SSDFloat}
+        S::CoordinateSystemType,
+        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
+    )::Vector{T} where {T <: SSDFloat, N, CS}
 
     vth::T = sqrt(3 * kB * ctm.temperature / (ifelse(charge > 0, ctm.meffh, ctm.meffe) * me)) # in m/s
     nσ::T = ifelse(charge > 0, ctm.nσh, ctm.nσe)
@@ -128,18 +131,19 @@ end
 This constant-lifetime-based charge trapping model is similar to the Boggs model, which is constant-mean-free-path based.
 
 The model implemented has two sets of parameters for the sensitive (bulk) and inactive (dead layer/surface layer) volume respectively.
-The inactive layer effect will only be considered if the corresponding `inactive_layer_geometry` is defined.
+The inactive layer effect will only be considered if the corresponding `inactive_layer_exist` is true.
 
 ## Fields
 * `τh::T`: Lifetime for holes in bulk volume (sensitive region) (default: `τh = 1ms`).
 * `τe::T`: Lifetime for electrons in bulk volume (default: `τe = 1ms`).
 * `τh_inactive::T`: Lifetime for holes in surface layer (dead layer/inactive layer) (default: `τh_inactive = 1ms`).
 * `τe_inactive::T`: Lifetime for electrons in surface layer (default: `τe_inactive = 1ms`).
-* `inactive_layer_geometry`: The geometry of the inactive layer. When this is defined, the model will consider the inactive effect.
+* `inactive_layer_geometry`: The geometry of the inactive layer. If it's not defined, it uses point_types to get the inactive layer geometry, else it uses the user-defined inactive_layer_geometry.
 > Note: All τ must be much bigger than `Δt`.
 
 See also [Charge Trapping Models](@ref).
 """
+
 struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractChargeTrappingModel{T}
     τh::T
     τe::T
@@ -148,21 +152,33 @@ struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat, G <: Union{<:AbstractG
     inactive_layer_geometry::G
 end
 
+is_inactive_layer(point_types::Array{UInt8, 3}) = any(val -> (val & inactive_layer_bit) != 0, point_types)
+
 function _calculate_signal( 
         ctm::ConstantLifetimeChargeTrappingModel{T}, 
         path::AbstractVector{CartesianPoint{T}}, 
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType
-    )::Vector{T} where {T <: SSDFloat}
-
+        S::CoordinateSystemType,
+        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
+    )::Vector{T} where {T <: SSDFloat, N, CS}
+    
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
 
     running_sum::T = zero(T)
     q::T = charge
 
+    user_defined_inactive_layer_geom = false
     inactive_layer_exist = !isnothing(ctm.inactive_layer_geometry)
+
+    if inactive_layer_exist
+        user_defined_inactive_layer_geom = true
+    else
+        get_inactivelayer_point_types!(point_types.data)
+        inactive_layer_exist = is_inactive_layer(point_types.data)
+    end
+
     τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
     τ_inactive::T = ifelse(charge > 0, ctm.τh_inactive, ctm.τe_inactive)
     Δt_minimum = minimum(diff(pathtimestamps))
@@ -172,7 +188,18 @@ function _calculate_signal(
 
     @inbounds for i in eachindex(tmp_signal)
         Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
-        τi::T = (inactive_layer_exist && in(path[i], ctm.inactive_layer_geometry)) ? τ_inactive : τ
+
+        τi::T = τ
+        
+        if user_defined_inactive_layer_geom
+            τi = (inactive_layer_exist && in(path[i], ctm.inactive_layer_geometry)) ? τ_inactive : τ
+        else
+            path_in_pt_grid = find_closest_gridpoint(path[i], point_types.grid) #returns the grid point where the path is
+            idx1, idx2, idx3 = path_in_pt_grid
+            pt_value = point_types.data[idx1, idx2, idx3] #returns the point type value in the path 
+            τi = (inactive_layer_exist && is_in_inactive_layer(pt_value)) ? τ_inactive : τ
+        end
+        
         Δq::T = q * Δt/τi
         q -= Δq
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
@@ -182,7 +209,6 @@ function _calculate_signal(
 
     tmp_signal
 end
-
 
 ConstantLifetimeChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = ConstantLifetimeChargeTrappingModel{T}(args...; kwargs...)
 function ConstantLifetimeChargeTrappingModel{T}(config_dict::AbstractDict = Dict()) where {T <: SSDFloat}
