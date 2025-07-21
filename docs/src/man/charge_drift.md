@@ -308,7 +308,8 @@ The charge signal is then given by the charge-decreased charge cloud reaching th
 This idea is presented in [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638).
 
 Besides, the model implemented has two sets of parameters for the sensitive (bulk) and inactive (dead layer/surface layer) volume respectively.
-The inactive layer effect will only be considered if the corresponding `inactive_layer_geometry` is defined in the configuration file.
+
+If `inactive_layer_geometry` is passed to the yaml file, this is the region used for the inactive layer charge trapping model, else, the model will use the inactive layer geometry defined by the impurity density model (`PtypePNJunctionImpurityDensity`) using the point types. 
 
 The `ConstantLifetimeChargeTrappingModel` can be applied in the configuration file by adding a field `charge_trapping_model` to the `semiconductor` with `model: ConstantLifetime`, `parameters` defining the constant lifetime and `inactive_layer_geometry`(optional) defining the inactive volume:
 ```yaml 
