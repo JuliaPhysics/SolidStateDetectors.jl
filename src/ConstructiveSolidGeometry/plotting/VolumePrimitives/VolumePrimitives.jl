@@ -53,18 +53,18 @@ end
             v = v[idx]
         end
         proj = filter(x -> x != axis, fieldnames(pointtype))
-        yunit --> internal_length_unit
+        # yunit --> internal_length_unit
         xguide --> string(proj[1])
         yguide --> string(proj[2])
         if linewidth != :auto
             markersize := linewidth
         end
         if projection == :polar && axis == :z
-            xunit --> internal_angle_unit
+            # xunit --> internal_angle_unit
             uconvert.(internal_angle_unit, atan.(v,u)), internal_length_unit*sqrt.(u.^2 + v.^2)
         else
             if isgr aspect_ratio --> 1.0 end
-            xunit --> internal_length_unit
+            # xunit --> internal_length_unit
             internal_length_unit*u, internal_length_unit*v
         end
     else
