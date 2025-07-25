@@ -71,7 +71,7 @@ function _parse_interval_from_to(::Type{T}, dict::AbstractDict, unit::Unitful.Un
 end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
-@inline _parse_radial_interval(::Type{T}, x::Union{Real, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)
+@inline _parse_radial_interval(::Type{T}, x::Union{Real, Quantity, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)
 function _parse_radial_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
@@ -80,13 +80,14 @@ function _parse_radial_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Uni
 end
 
 # parses dictionary entries of type Real, String or {"from": ..., "to": ... } to respective AbstractFloat/Interval
-@inline _parse_linear_interval(::Type{T}, x::Union{Real, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)/2
+@inline _parse_linear_interval(::Type{T}, x::Union{Real, Quantity, String}, unit::Unitful.Units) where {T} = _parse_value(T, x, unit)/2
 function _parse_linear_interval(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
     @assert haskey(dict, "from") && haskey(dict, "to") "Please specify 'from' and 'to' in $(dict)."
     From::T, To::T = _parse_interval_from_to(T, dict, unit)
     To == -From == zero(T) ? To : (From, To) # if != 0 is influences the origin 
 end
 
+@inline _parse_linear_interval(::Type{T}, tuple::Tuple{<:Union{<:Real,<:Quantity,String}, <:Union{<:Real,<:Quantity,String}}, unit::Unitful.Units) where {T} = _parse_linear_interval(T, _parse_value.(T, tuple, unit), unit)
 function _parse_linear_interval(::Type{T}, tuple::Tuple{Real,Real}, unit::Unitful.Units) where {T}
     tuple[2] == -tuple[1] == zero(T) ? tuple[2] : (tuple[1], tuple[2]) # if != 0 is influences the origin 
 end
