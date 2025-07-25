@@ -19,11 +19,11 @@
     label --> nothing
     linecolor --> :black
     xguide --> "x"
-    xunit --> internal_length_unit
+    # xunit --> internal_length_unit
     yguide --> "y"
-    yunit --> internal_length_unit
+    # yunit --> internal_length_unit
     zguide --> "z"
-    zunit --> internal_length_unit
+    # zunit --> internal_length_unit
     unitformat --> :slash
     if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
         aspect_ratio --> 1.0
