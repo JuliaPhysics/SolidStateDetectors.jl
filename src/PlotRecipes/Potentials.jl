@@ -76,17 +76,17 @@ end
     sp, cross_section, idx, value, punit, contours_equal_potential, full_det
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool; all_point_types_bits::Bool = false) where {T <: SSDFloat}
 
     grid::CylindricalGrid{T} = sp.grid
     data = sp.data
     if eltype(data) == PointType
-        #data = data .& 0x07
-        data = data
+        if !all_point_types_bits
+            data = data .& 0x07
+        end
     end
-    @info "Data range" extrema(data)
     @series begin
-    	clims := (minimum(data), maximum(data))
+        clims := (minimum(data), maximum(data))
         seriestype := :heatmap
         foreground_color_border --> nothing
         tick_direction --> :out
@@ -226,15 +226,17 @@ end
     sp, cross_section, idx, value, punit, contours_equal_potential
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool; all_point_types_bits::Bool = false) where {T <: SSDFloat}
 
     grid::CartesianGrid3D{T} = sp.grid
     data = sp.data
     if eltype(data) == PointType
-        #data = data .& 0x07
-        data = data
+        if !all_point_types_bits
+            data = data .& 0x07
+        end
     end
     @series begin
+        clims := (minimum(data), maximum(data))
         seriestype := :heatmap
         foreground_color_border --> nothing
         tick_direction --> :out
