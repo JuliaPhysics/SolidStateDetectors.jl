@@ -67,7 +67,7 @@ end
     grid::CylindricalGrid{T} = sp.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
 
-    if all_point_types_bits && eltype(sp.data) == PointType
+    if all_point_types_bits && eltype(sp.data) == PointType && !haskey(plotattributes, :clims)
          clims = (minimum(sp.data), maximum(sp.data))
     end
     
@@ -219,7 +219,7 @@ end
     grid::CartesianGrid3D{T} = sp.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
 
-    if all_point_types_bits && eltype(sp.data) == PointType
+    if all_point_types_bits && eltype(sp.data) == PointType && !haskey(plotattributes, :clims)
          clims = (minimum(sp.data), maximum(sp.data))
     end
     
