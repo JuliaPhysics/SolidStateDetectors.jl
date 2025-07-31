@@ -44,7 +44,6 @@ _convert_internal_energy_to_external_charge(material) = inv(to_internal_units(ma
 
 unit_conversion = Dict{String, Unitful.Units}(
     "um" => u"μm", # length
-    "deg" => u"°", # angle
     "Kelvin" => u"K", "Celsius" => u"°C", #temperature
     "e" => u"e_au" # elementary charge
 )
