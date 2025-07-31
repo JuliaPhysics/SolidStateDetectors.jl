@@ -232,12 +232,12 @@ end
 Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
 
 """
-    get_inactivelayer_indeces(vec::AbstractVector{UInt8})::Vector{Vector{Int}}
+    get_inactivelayer_indices(vec::AbstractVector{UInt8})::Vector{Vector{Int}}
 
 Scans a 1D vector and returns index groups that surround a `0x00` and
 contain both `0x07` and `0x0f`, bounded by `0x0d`.
 """
-function get_inactivelayer_indeces(vec::AbstractVector{UInt8})
+function get_inactivelayer_indices(vec::AbstractVector{PointType})
     pt_indices = Vector{Vector{Int}}()
     len = length(vec)
     i = 1
@@ -293,13 +293,13 @@ end
 Applies the bitwise marking rule to slices across all three dimensions of
 a 3D array, modifying it in-place.
 """
-function get_inactivelayer_point_types!(point_types::Array{UInt8, 3})
+function get_inactivelayer_point_types!(point_types::Array{PointType, 3})
     sz1, sz2, sz3 = size(point_types)
 
     # dim 1 (vary i, fix j & k)
     for j in 1:sz2, k in 1:sz3
         vec = @view point_types[:, j, k]
-        matches = get_inactivelayer_indeces(vec)
+        matches = get_inactivelayer_indices(vec)
         for match in matches, idx in match
             vec[idx] |= inactive_layer_bit
         end
@@ -308,7 +308,7 @@ function get_inactivelayer_point_types!(point_types::Array{UInt8, 3})
     # dim 2 (vary j, fix i & k)
     for i in 1:sz1, k in 1:sz3
         vec = @view point_types[i, :, k]
-        matches = get_inactivelayer_indeces(vec)
+        matches = get_inactivelayer_indices(vec)
         for match in matches, idx in match
             vec[idx] |= inactive_layer_bit
         end
@@ -317,7 +317,7 @@ function get_inactivelayer_point_types!(point_types::Array{UInt8, 3})
     # dim 3 (vary k, fix i & j)
     for i in 1:sz1, j in 1:sz2
         vec = @view point_types[i, j, :]
-        matches = get_inactivelayer_indeces(vec)
+        matches = get_inactivelayer_indices(vec)
         for match in matches, idx in match
             vec[idx] |= inactive_layer_bit
         end

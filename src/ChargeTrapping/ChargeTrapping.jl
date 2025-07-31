@@ -152,7 +152,7 @@ struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat, G <: Union{<:AbstractG
     inactive_layer_geometry::G
 end
 
-is_inactive_layer(point_types::Array{UInt8, 3}) = any(val -> (val & inactive_layer_bit) != 0, point_types)
+has_inactive_layer(point_types::Array{PointType, 3}) = any(val -> (val & inactive_layer_bit) != 0, point_types)
 
 function _calculate_signal( 
         ctm::ConstantLifetimeChargeTrappingModel{T}, 
@@ -176,7 +176,7 @@ function _calculate_signal(
         user_defined_inactive_layer_geom = true
     else
         get_inactivelayer_point_types!(point_types.data)
-        inactive_layer_exist = is_inactive_layer(point_types.data)
+        inactive_layer_exist = has_inactive_layer(point_types.data)
     end
 
     τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
