@@ -175,7 +175,7 @@ function _calculate_signal(
     if inactive_layer_exist
         user_defined_inactive_layer_geom = true
     else
-        get_inactivelayer_point_types!(point_types.data)
+        mark_inactivelayer_point_types!(point_types.data)
         inactive_layer_exist = has_inactive_layer(point_types.data)
     end
 

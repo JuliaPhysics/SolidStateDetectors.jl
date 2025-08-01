@@ -232,10 +232,12 @@ end
 Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
 
 """
-    get_inactivelayer_indices(vec::AbstractVector{UInt8})::Vector{Vector{Int}}
+    get_inactivelayer_indices(vec::AbstractVector{PointType})::Vector{Vector{Int}}
 
-Scans a 1D vector and returns index groups that surround a `0x00` and
-contain both `0x07` and `0x0f`, bounded by `0x0d`.
+Scans a 1D vector and returns index groups that surround a `0x00` (outside the detector) and
+contain both `0x07`(part of the inactive layer, not only surrounded by pn_junction point types) and `0x0f` (also part of the inactive layer), bounded by `0x0d` (depleted region inside the detector). It finds the inactive layer bounded by 0x00 and 0x0d.
+
+Note: For detectors with undepleted regions touching the inactive layer, this method is not recommended since it won't identify the inactive layer. In this extreme case, define the inactive layer geometry boundaries via inactive_layer_geometry.
 """
 function get_inactivelayer_indices(vec::AbstractVector{PointType})
     pt_indices = Vector{Vector{Int}}()
@@ -243,9 +245,9 @@ function get_inactivelayer_indices(vec::AbstractVector{PointType})
     i = 1
 
     while i <= len
-        if vec[i] == 0x00
+        if (vec[i] & 0x0f) == 0x00
             zero_start = i
-            while i <= len && vec[i] == 0x00
+            while i <= len && (vec[i] & 0x0f) == 0x00
                 i += 1
             end
             zero_end = i - 1
@@ -253,12 +255,12 @@ function get_inactivelayer_indices(vec::AbstractVector{PointType})
 
             if zero_count ≤ 2
                 start_idx = zero_start
-                while start_idx > 1 && vec[start_idx - 1] != 0x0d
+                while start_idx > 1 && (vec[start_idx - 1] & 0x0f) != 0x0d
                     start_idx -= 1
                 end
 
                 end_idx = zero_end
-                while end_idx < len && vec[end_idx + 1] != 0x0d
+                while end_idx < len && (vec[end_idx + 1] & 0x0f) != 0x0d
                     end_idx += 1
                 end
 
@@ -266,7 +268,7 @@ function get_inactivelayer_indices(vec::AbstractVector{PointType})
                 has_0f = false
                 matching = Int[]
                 for idx in start_idx:end_idx
-                    v = vec[idx]
+                    v = vec[idx] & 0x0f
                     if v == 0x07
                         has_07 = true
                         push!(matching, idx)
@@ -284,16 +286,16 @@ function get_inactivelayer_indices(vec::AbstractVector{PointType})
             i += 1
         end
     end
-
+    
     return pt_indices
 end
 """
-    get_inactivelayer_point_types!(point_types::Array{UInt8, 3})
+    mark_inactivelayer_point_types!(point_types::Array{PointType, 3})
 
 Applies the bitwise marking rule to slices across all three dimensions of
 a 3D array, modifying it in-place.
 """
-function get_inactivelayer_point_types!(point_types::Array{PointType, 3})
+function mark_inactivelayer_point_types!(point_types::Array{PointType, 3})
     sz1, sz2, sz3 = size(point_types)
 
     # dim 1 (vary i, fix j & k)
