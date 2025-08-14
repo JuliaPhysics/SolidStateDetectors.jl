@@ -5,8 +5,7 @@
                     φ = missing,
                     z = missing,
                     contours_equal_potential=false,
-                    full_det = false,
-                    all_point_types_bits = false) where {T}
+                    full_det = false ) where {T}
 
     grid::CylindricalGrid{T} = ef.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
@@ -17,15 +16,14 @@
     unitformat --> :slash
 
     ef_magn = norm.(ef)
-    ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential, full_det, all_point_types_bits
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential, full_det
 end
 
 @recipe function f(ef::ElectricField{T, 3, Cartesian};
                     x = missing,
                     y = missing,
                     z = missing,
-                   contours_equal_potential = false,
-                   all_point_types_bits = false) where {T <: SSDFloat}
+                    contours_equal_potential = false) where {T <: SSDFloat}
 
     grid::CartesianGrid3D{T} = ef.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
@@ -36,7 +34,7 @@ end
     unitformat --> :slash
 
     ef_magn = norm.(ef)
-    ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential, all_point_types_bits
+    ElectricPotential(ef_magn, grid), cross_section, idx, value, internal_efield_unit, contours_equal_potential
 end
 
 

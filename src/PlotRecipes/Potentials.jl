@@ -58,7 +58,7 @@ function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r::Union{Real,
     cross_section, idx, value, units
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false, all_point_types_bits = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
 
     gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
@@ -66,10 +66,6 @@ end
 
     grid::CylindricalGrid{T} = sp.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, r, φ, z)
-
-    if all_point_types_bits && eltype(sp.data) == PointType && !haskey(plotattributes, :clims)
-         clims = (minimum(sp.data), maximum(sp.data))
-    end
     
     title --> name * " @ $(cross_section) = $(round(units, Float64(uconvert(units,value*(cross_section == :φ ? u"°" : internal_length_unit))), sigdigits=3))"
     colorbar_title --> name
@@ -77,14 +73,14 @@ end
     clims --> clims
     unitformat --> :slash
 
-    sp, cross_section, idx, value, punit, contours_equal_potential, full_det, all_point_types_bits
+    sp, cross_section, idx, value, punit, contours_equal_potential, full_det
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool, all_point_types_bits::Bool) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool) where {T <: SSDFloat}
 
     grid::CylindricalGrid{T} = sp.grid
     data = sp.data
-    if eltype(data) == PointType && !all_point_types_bits
+    if eltype(data) == PointType
         data = data .& 0x07
     end
     @series begin
@@ -212,30 +208,26 @@ function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x::Union{Real,
     cross_section, idx, value, units
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false, all_point_types_bits= false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
     
     gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
 
     grid::CartesianGrid3D{T} = sp.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
-
-    if all_point_types_bits && eltype(sp.data) == PointType && !haskey(plotattributes, :clims)
-         clims = (minimum(sp.data), maximum(sp.data))
-    end
     
     title --> name * " @ $(cross_section) = $(round(units, Float64(uconvert(units,value*internal_length_unit)), sigdigits=3))"
     colorbar_title --> name
     seriescolor --> gradient
     clims --> clims
 
-    sp, cross_section, idx, value, punit, contours_equal_potential, all_point_types_bits
+    sp, cross_section, idx, value, punit, contours_equal_potential
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, all_point_types_bits::Bool) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool) where {T <: SSDFloat}
 
     grid::CartesianGrid3D{T} = sp.grid
     data = sp.data
-    if eltype(data) == PointType && !all_point_types_bits
+    if eltype(data) == PointType
         data = data .& 0x07
     end
     @series begin
