@@ -131,7 +131,6 @@ end
 This constant-lifetime-based charge trapping model is similar to the Boggs model, which is constant-mean-free-path based.
 
 The model implemented has two sets of parameters for the sensitive (bulk) and inactive (dead layer/surface layer) volume respectively.
-The inactive layer effect will only be considered if the corresponding `inactive_layer_exist` is true.
 
 ## Fields
 * `τh::T`: Lifetime for holes in bulk volume (sensitive region) (default: `τh = 1ms`).
@@ -152,7 +151,27 @@ struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat, G <: Union{<:AbstractG
     inactive_layer_geometry::G
 end
 
-has_inactive_layer(point_types::Array{PointType, 3}) = any(val -> (val & inactive_layer_bit) != 0, point_types)
+has_inactive_layer(point_types::Array{PointType, 3}) = any(is_in_inactive_layer, point_types)
+
+function get_charge_carrier_lifetime(
+    pt::CartesianPoint{T},
+    g::AbstractGeometry{T},
+    point_types::PointTypes{T},
+    τ::T,
+    τ_inactive::T
+    )where {T}
+    in(pt, g) ? τ_inactive : τ 
+end
+
+function get_charge_carrier_lifetime(
+    pt::CartesianPoint{T},
+    ::Nothing,
+    point_types::PointTypes{T},
+    τ::T,
+    τ_inactive::T
+    )where {T}
+    is_in_inactive_layer(point_types[pt]) ? τ_inactive : τ
+end
 
 function _calculate_signal( 
         ctm::ConstantLifetimeChargeTrappingModel{T}, 
@@ -169,13 +188,9 @@ function _calculate_signal(
     running_sum::T = zero(T)
     q::T = charge
 
-    user_defined_inactive_layer_geom = false
-    inactive_layer_exist = !isnothing(ctm.inactive_layer_geometry)
 
-    if inactive_layer_exist
-        user_defined_inactive_layer_geom = true
-    else
-        mark_inactivelayer_point_types!(point_types.data)
+    inactive_layer_exist = !isnothing(ctm.inactive_layer_geometry)
+    if !inactive_layer_exist
         inactive_layer_exist = has_inactive_layer(point_types.data)
     end
 
@@ -190,16 +205,8 @@ function _calculate_signal(
         Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
 
         τi::T = τ
-        
-        if user_defined_inactive_layer_geom
-            τi = (inactive_layer_exist && in(path[i], ctm.inactive_layer_geometry)) ? τ_inactive : τ
-        else
-            path_in_pt_grid = find_closest_gridpoint(path[i], point_types.grid) #returns the grid point where the path is
-            idx1, idx2, idx3 = path_in_pt_grid
-            pt_value = point_types.data[idx1, idx2, idx3] #returns the point type value in the path 
-            τi = (inactive_layer_exist && is_in_inactive_layer(pt_value)) ? τ_inactive : τ
-        end
-        
+        τi = inactive_layer_exist ? get_charge_carrier_lifetime(path[i], ctm.inactive_layer_geometry, point_types, τ, τ_inactive) : τi
+
         Δq::T = q * Δt/τi
         q -= Δq
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
