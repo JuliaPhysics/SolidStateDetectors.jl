@@ -32,7 +32,7 @@ const inactive_layer_bit = 0x10 # parse(UInt8, "00010000", base=2) # 0 -> point 
 is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
 is_undepleted_point_type(p::PointType) = p & undepleted_bit > 0
 is_fixed_point_type(p::PointType) = p & update_bit == 0
-is_in_inactive_layer(p::PointType) = p & inactive_layer_bit != 0
+is_in_inactive_layer(p::PointType) = p & inactive_layer_bit > 0
 """
     struct PointTypes{T, N, S, AT} <: AbstractArray{T, N}
 
