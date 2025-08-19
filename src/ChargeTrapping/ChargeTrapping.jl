@@ -188,11 +188,7 @@ function _calculate_signal(
     running_sum::T = zero(T)
     q::T = charge
 
-
-    inactive_layer_exist = !isnothing(ctm.inactive_layer_geometry)
-    if !inactive_layer_exist
-        inactive_layer_exist = has_inactive_layer(point_types.data)
-    end
+    inactive_layer_exist = !isnothing(ctm.inactive_layer_geometry) || has_inactive_layer(point_types.data)
 
     τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
     τ_inactive::T = ifelse(charge > 0, ctm.τh_inactive, ctm.τe_inactive)
@@ -200,12 +196,11 @@ function _calculate_signal(
     if τ<Δt_minimum || τ_inactive<Δt_minimum 
         throw(ArgumentError("The carrier lifetime should be at least bigger than Δt in the `ConstantLifetimeChargeTrappingModel`"))
     end
-
+    
     @inbounds for i in eachindex(tmp_signal)
         Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
 
-        τi::T = τ
-        τi = inactive_layer_exist ? get_charge_carrier_lifetime(path[i], ctm.inactive_layer_geometry, point_types, τ, τ_inactive) : τi
+        τi::T = inactive_layer_exist ? get_charge_carrier_lifetime(path[i], ctm.inactive_layer_geometry, point_types, τ, τ_inactive) : τ
 
         Δq::T = q * Δt/τi
         q -= Δq
@@ -213,7 +208,7 @@ function _calculate_signal(
         running_sum += w * Δq
         tmp_signal[i] = running_sum + w * q
     end
-
+ 
     tmp_signal
 end
 
