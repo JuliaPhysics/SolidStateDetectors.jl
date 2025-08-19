@@ -80,7 +80,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     @info "Generating waveforms..."
     waveforms = map( 
         wpot ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, unitless_energy_to_charge, sim.point_types, ctm),
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, sim.point_types, unitless_energy_to_charge, ctm),
             TypedTables.Table(dps = drift_paths, edeps = edeps)
         ),
         wpots_interpolated
@@ -147,7 +147,7 @@ end
 
 
 function _generate_waveform( drift_paths::Vector{<:EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
-                             wpot::Interpolations.Extrapolation{T, 3}, unitless_energy_to_charge, point_types::PointTypes{T, N, S},
+                             wpot::Interpolations.Extrapolation{T, 3}, point_types::PointTypes{T, N, S}, unitless_energy_to_charge,
                              ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat, N, S}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
