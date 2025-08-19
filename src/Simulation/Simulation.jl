@@ -1017,7 +1017,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
         
         if isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
-            mark_inactivelayer_point_types!(sim.point_types.data)
+            mark_inactivelayer_bits!(sim.point_types.data)
         end
     end
     
