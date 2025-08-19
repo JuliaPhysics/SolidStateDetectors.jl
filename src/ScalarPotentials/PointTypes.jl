@@ -19,6 +19,7 @@ How to get information out of a `PointType` variable `point_type`:
 3. `point_type & undepleted_bit > 0` -> this point is undepleted
 4. `point_type & pn_junction_bit > 0` -> this point belongs to the solid state detector, meaning that it is in the volume of the n-type or p-type material.
 5. `point_type & bulk_bit > 0` -> this point is only surrounded by points marked as `pn_junction_bit`
+6. `point_type & inactive_layer_bit > 0` -> this point is part of the inactive layer
 """
 const PointType       = UInt8
 
@@ -290,12 +291,12 @@ function get_inactivelayer_indices(vec::AbstractVector{PointType})
     return pt_indices
 end
 """
-    mark_inactivelayer_point_types!(point_types::Array{PointType, 3})
+    mark_inactivelayer_bits!(point_types::Array{PointType, 3})
 
 Applies the bitwise marking rule to slices across all three dimensions of
 a 3D array, modifying it in-place.
 """
-function mark_inactivelayer_point_types!(point_types::Array{PointType, 3})
+function mark_inactivelayer_bits!(point_types::Array{PointType, 3})
     sz1, sz2, sz3 = size(point_types)
 
     # dim 1 (vary i, fix j & k)
