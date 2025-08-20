@@ -6,9 +6,8 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType,
-        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
-    ) where {T <: SSDFloat, N, CS}
+        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+    ) where {T <: SSDFloat, N, S}
     throw("For the chosen charge trapping model, no method for `_calculate_signal` is implemented.")
 end
 
@@ -28,9 +27,8 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType,
-        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
-    )::Vector{T} where {T <: SSDFloat, N, CS}
+        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+    )::Vector{T} where {T <: SSDFloat, N, S}
 
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
     @inbounds for i in eachindex(tmp_signal)
@@ -69,10 +67,9 @@ function _calculate_signal(
         path::AbstractVector{CartesianPoint{T}}, 
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
-        wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType,
-        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
-    )::Vector{T} where {T <: SSDFloat, N, CS}
+        wpot::Interpolations.Extrapolation{T, 3},
+        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+    )::Vector{T} where {T <: SSDFloat, N, S}
 
     vth::T = sqrt(3 * kB * ctm.temperature / (ifelse(charge > 0, ctm.meffh, ctm.meffe) * me)) # in m/s
     nσ::T = ifelse(charge > 0, ctm.nσh, ctm.nσe)
@@ -178,10 +175,9 @@ function _calculate_signal(
         path::AbstractVector{CartesianPoint{T}}, 
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
-        wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType,
-        point_types::Union{PointTypes{T, N, CS}, Nothing} = nothing
-    )::Vector{T} where {T <: SSDFloat, N, CS}
+        wpot::Interpolations.Extrapolation{T, 3},
+        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+    )::Vector{T} where {T <: SSDFloat, N, S}
     
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
 

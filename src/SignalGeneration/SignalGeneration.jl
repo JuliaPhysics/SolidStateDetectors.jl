@@ -25,7 +25,7 @@ function add_signal!(
         ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()
     )::Nothing where {T <: SSDFloat, N, S}
 
-    tmp_signal::Vector{T} = _calculate_signal(ctm, path, pathtimestamps, charge, wpot, S, point_types)
+    tmp_signal::Vector{T} = _calculate_signal(ctm, path, pathtimestamps, charge, wpot, point_types)
     itp = interpolate!( (pathtimestamps,), tmp_signal, Gridded(Linear()))
     t_max::T = last(pathtimestamps)
     i_max::Int = searchsortedlast(timestamps, t_max)
