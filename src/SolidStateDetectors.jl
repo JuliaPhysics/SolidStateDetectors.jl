@@ -79,7 +79,7 @@ export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
-
+    
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
 
@@ -99,10 +99,12 @@ include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
+
+include("ScalarPotentials/ScalarPotential.jl")
+
 include("ChargeTrapping/ChargeTrapping.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
-include("ScalarPotentials/ScalarPotential.jl")
 include("PotentialCalculation/PotentialCalculation.jl")
 
 include("ElectricField/ElectricField.jl")
