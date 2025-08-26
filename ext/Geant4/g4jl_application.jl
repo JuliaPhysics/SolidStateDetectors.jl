@@ -56,8 +56,11 @@ function endeventaction(evt::G4Event, app::G4JLApplication)
 end
 
 
+# We are using G4SingleParticleSource instead of G4ParticleGun for uniformity 
+# across MonoenergeticSource and IsotopeSource, see discussion
+# https://github.com/JuliaPhysics/SolidStateDetectors.jl/pull/526
 @with_kw mutable struct GeneratorData <: G4JLGeneratorData
-    gun::Union{Nothing, CxxPtr{G4ParticleGun}, CxxPtr{G4SingleParticleSource}} = nothing
+    gun::Union{Nothing, CxxPtr{G4SingleParticleSource}} = nothing
     particle::Union{Nothing, CxxPtr{G4ParticleDefinition}} = nothing
     position::G4ThreeVector = G4ThreeVector(0, 0, 0)
     direction::G4ThreeVector = G4ThreeVector(0, 0, 0)
@@ -75,7 +78,7 @@ function SSDGenerator(source::SolidStateDetectors.MonoenergeticSource;  kwargs..
         SetParticleDefinition(data.gun, particle)
 
         # Place the SingleParticleSource as point source
-            data.position = G4ThreeVector(
+        data.position = G4ThreeVector(
             source.position.x * Geant4.SystemOfUnits.meter,
             source.position.y * Geant4.SystemOfUnits.meter,
             source.position.z * Geant4.SystemOfUnits.meter
@@ -140,7 +143,8 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource; kwargs...)
         SetMinTheta(angdist, 0.0)
         SetMaxTheta(angdist, ustrip(NoUnits, source.opening_angle))  # convert to radians
 
-        # SetMonoEnergy(GetEneDist(data.gun), 0.0 * Geant4.SystemOfUnits.MeV)
+        # Set kinetic energy of the decaying isotope to zero ("decay at rest")
+        SetMonoEnergy(GetEneDist(data.gun), 0.0 * Geant4.SystemOfUnits.MeV)
     end
 
     function _gen(evt::G4Event, data::GeneratorData)::Nothing
