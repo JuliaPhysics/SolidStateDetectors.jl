@@ -1067,7 +1067,7 @@ There are several keyword arguments which can be used to tune the calculation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `10000`. If set to `-1` there will be no limit.
+    Default is `50000`. If set to `-1` there will be no limit.
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
@@ -1130,7 +1130,7 @@ There are several keyword arguments which can be used to tune the calculation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `10000`. If set to `-1` there will be no limit.
+    Default is `50000`. If set to `-1` there will be no limit.
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
@@ -1265,7 +1265,7 @@ There are several keyword arguments which can be used to tune the simulation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `10000`. If set to `-1` there will be no limit.
+    If set to `-1` there will be no limit. Default is no limit.
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
