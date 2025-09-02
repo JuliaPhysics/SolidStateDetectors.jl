@@ -313,7 +313,7 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
     new_times = if TV <: AbstractRange
         range( zero(first(wv.time)), step = step(wv.time), length = total_waveform_length )
     else
-        error("Not yet definted for timestamps of type `$(TV)`")
+        error("Not yet defined for timestamps of type `$(TV)`")
     end
     return RDWaveform( new_times, new_signal )
 end
