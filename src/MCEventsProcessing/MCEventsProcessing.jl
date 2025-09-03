@@ -148,11 +148,11 @@ end
 
 function _generate_waveform( drift_paths::Vector{<:EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
                              wpot::Interpolations.Extrapolation{T, 3}, point_types::PointTypes{T, N, S}, unitless_energy_to_charge,
-                             ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat, N, S}
+                             ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}(), ctmil::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat, N, S}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, point_types, ctm)
+    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, point_types, ctm, ctmil)
     RDWaveform( timestamps_with_units, signal * unitless_energy_to_charge)
 end
 
