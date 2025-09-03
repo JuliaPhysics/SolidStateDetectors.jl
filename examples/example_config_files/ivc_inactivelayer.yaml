@@ -40,22 +40,28 @@ detectors:
         name: constant
         value: 5.6769e15cm^-3
     charge_trapping_model:
-      model: ConstantLifetime
+      model: Boggs
       parameters:
-        τh: 1ms
-        τe: 1ms
-        τh_inactive: 1μs
-        τe_inactive: 1μs
-      # inactive_layer_geometry:
+         nσe-1: 1020cm
+         nσh-1: 2040cm
+      #model: ConstantLifetime
+      #parameters:
+      #   τh: 1ms
+      #   τe: 1ms
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+         τh_inactive: 1μs
+         τe_inactive: 1μs
+      #  inactive_layer_geometry:
       #       union:
       #           - tube:
       #               r:
       #                 from: 15
       #                 to: 35
-      #               h: 1
+      #               h: 1 #changed this
       #           - tube:
       #               r:
-      #                 from: 34
+      #                 from: 34 #changed this 1mm inactive layer
       #                 to: 35
       #               h: 20
       #               origin:
@@ -63,10 +69,10 @@ detectors:
       #           - cone:
       #               r:
       #                 bottom:
-      #                   from: 34
+      #                   from: 34 #changed this
       #                   to: 35
       #                 top:
-      #                   from: 23.42
+      #                   from: 23.42 #changed this
       #                   to: 24.42
       #               h: 60
       #               origin:
@@ -75,13 +81,13 @@ detectors:
       #               r:
       #                 from: 5
       #                 to: 24.42
-      #               h: 1
+      #               h: 1  #changed this
       #               origin:
       #                 z: 80
       #           - tube:
       #               r:
       #                   from: 5
-      #                   to: 6
+      #                   to: 6  #changed this
       #               h: 55
       #               origin:
       #                 z: 52.5
@@ -185,4 +191,4 @@ surroundings:
           - -0.05
     charge_density:
       name: constant
-      value: 0C/m^3
+      value: 0C/m^3 # Reasonable density: +2e-11 # => 2*10⁻¹¹ C/m³

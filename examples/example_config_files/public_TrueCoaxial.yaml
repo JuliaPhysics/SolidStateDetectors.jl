@@ -55,6 +55,8 @@ detectors:
       parameters:
         τh: 1ms
         τe: 1ms
+      model_inactive: ConstantLifetime
+      parameters_inactive:
         τh_inactive: 1μs
         τe_inactive: 1μs
       inactive_layer_geometry:
