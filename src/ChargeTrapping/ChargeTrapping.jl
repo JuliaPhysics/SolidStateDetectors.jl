@@ -197,18 +197,18 @@ function _calculate_signal(
         if in_inactive_region && inactive_cct_defined
             # Constant trapping lifetime in inactive layer
             tmp_signal[i] = _constantlifetime_signal!( running_sum, τ_inactive, Δt, q, w )
-            #println("Path: $(path[i]), tau: $(τ_inactive), tmp_signal[i]: $(tmp_signal[i])")
+
         elseif in_inactive_region && (typeof(ctmil) <: NoChargeTrappingModel)
             # No charge trapping in inactive layer
             tmp_signal[i] = _nochargetrapping_signal!(w, charge)
-            #println("No charge trapping in inactive layer")
+
         elseif in_inactive_region
             throw("For the chosen charge trapping model in the bulk, no `_calculate_signal` is implemented for the chosen charge trapping model in the inactive layer.")
-            #println("Not defined")
+
         else
             # Boggs trapping model in bulk
             tmp_signal[i] = _Boggs_signal!( running_sum, nσ, Δl, q, w )
-            #println("Path: $(path[i]), nσ: $(nσ), tmp_signal[i]: $(tmp_signal[i])")
+
         end
     end
 
@@ -328,18 +328,18 @@ function _calculate_signal(
         if in_inactive_region && inactive_cct_defined
             # Constant trapping lifetime in inactive layer
             tmp_signal[i] = _constantlifetime_signal!( running_sum, τ_inactive, Δt, q, w )
-            #println("Path: $(path[i]), tau: $(τ_inactive), tmp_signal[i]: $(tmp_signal[i])")
+
         elseif in_inactive_region && (typeof(ctmil) <: NoChargeTrappingModel)
             # No charge trapping in inactive layer
             tmp_signal[i] = _nochargetrapping_signal!(w, charge)
-            #println("No charge trapping in inactive layer")
+
         elseif in_inactive_region
             throw("For the chosen charge trapping model in the bulk, no `_calculate_signal` is implemented for the chosen charge trapping model in the inactive layer.")
-            #println("Not defined")
+
         else
             # Constant trapping lifetime in bulk
             tmp_signal[i] = _constantlifetime_signal!( running_sum, τ, Δt, q, w )
-            #println("Path: $(path[i]), tau: $(τ), tmp_signal[i]: $(tmp_signal[i])")
+
         end
     end
  
