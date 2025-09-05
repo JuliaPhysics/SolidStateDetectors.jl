@@ -42,16 +42,12 @@ detectors:
     charge_trapping_model:
       model: Boggs
       parameters:
-         nσe-1: 1020cm
-         nσh-1: 2040cm
-      #model: ConstantLifetime
-      #parameters:
-      #   τh: 1ms
-      #   τe: 1ms
+        nσe-1: 1020cm
+        nσh-1: 2040cm
       model_inactive: ConstantLifetime
       parameters_inactive:
-         τh_inactive: 1μs
-         τe_inactive: 1μs
+        τh: 1μs
+        τe: 1μs
       #  inactive_layer_geometry:
       #       union:
       #           - tube:

@@ -367,61 +367,68 @@ parameters = Dict("parameters" => Dict("τh" => τh, "τe" => τe), "inactive_la
 sim.detector = SolidStateDetector(sim.detector, ConstantLifetimeChargeTrappingModel{T}(parameters))
 ```
 
-### `ConstantLifetimeChargeTrappingModelInactiveLayer`
+### `CombinedChargeTrappingModel`
 
-This constant-lifetime-based charge trapping model has the same functionality as `ConstantLifetimeChargeTrappingModel` but applies to the inactive layer if it exists (given by the `PtypePNJunctionImpurityDensity` impurity profile using the `point_types` to define the inactive layer geometry or defined by the `inactive_layer_geometry` entry in the yaml file). If `model_inactive` is not defined in the yaml file and the inactive layer exists in the detector, `NoChargeTrappingModel` will be used by default in the inactive layer. Examples running this model:
+The `CombinedChargeTrappingModel` allow to run a charge trapping model inside the bulk and a different charge trapping model inside the inactive layer using `model_inactive` and `parameters_inactive` entries in the yaml file. If `model_inactive` is present in the yaml file but equals to nothing, `NoChargeTrappingModel` will be used by default in the inactive layer. Combinations supported by this model:
+* Bulk: Boggs CTM, inactive layer: Constant lifetime CTM
 ```yaml
-detectors:
-  - semiconductor:
-      material: #...
-      geometry: #...
-      charge_trapping_model:
-        model: ConstantLifetime
-        parameters:
-          τh: 1ms
-          τe: 1ms
-        model_inactive: ConstantLifetime
-        parameters_inactive:
-          τh_inactive: 1μs
-          τe_inactive: 1μs
-        #optional :
-        inactive_layer_geometry:
-          tube:
-            r:
-              from: 9.0
-              to: 10.0
-            h: 10.0
-            origin:
-              z: 5.0
+charge_trapping_model:
+      model: Boggs
+      parameters:
+        nσe-1: 1020cm
+        nσh-1: 2040cm
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
 ```
-
+* Bulk: Boggs CTM, inactive layer: No CTM
 ```yaml
-detectors:
-  - semiconductor:
-      material: #...
-      geometry: #...
-      charge_trapping_model:
-        model: Boggs
-        parameters:
-          nσe-1: 1020cm
-          nσh-1: 2040cm
-          temperature: 78K
-        model_inactive: ConstantLifetime
-        parameters_inactive:
-          τh_inactive: 1μs
-          τe_inactive: 1μs
-        #optional :
-        inactive_layer_geometry:
-          tube:
-            r:
-              from: 9.0
-              to: 10.0
-            h: 10.0
-            origin:
-              z: 5.0
+charge_trapping_model:
+      model: Boggs
+      parameters:
+        nσe-1: 1020cm
+        nσh-1: 2040cm
+      model_inactive:
 ```
+* Bulk: Constant lifetime CTM, inactive layer: Constant lifetime CTM
+```yaml
+charge_trapping_model:
+      model: ConstantLifetime
+      parameters:
+        τh: 1ms
+        τe: 1ms
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
+```
+* Bulk: Constant lifetime CTM, inactive layer: No CTM
+```yaml
+charge_trapping_model:
+      model: ConstantLifetime
+      parameters:
+        τh: 1ms
+        τe: 1ms
+      model_inactive:
 
+```
+* Bulk: No CTM, inactive layer: Constant lifetime CTM
+```yaml
+charge_trapping_model:
+      model:
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
 
+```
+* Bulk: No CTM, inactive layer: No CTM
+```yaml
+charge_trapping_model:
+      model:
+      model_inactive:
+```
 ## Group Effects
 
 The movement of electrons and holes is not only given by the forces resulting from external electric fields. In addition, diffusion and self-repulsion of the charge carriers can play a significant role when simulating drift paths. To simulate this, electron and holes cannot be described as single point-like charges anymore, but as charge clouds consisting of multiple point-like charges. SolidStateDetectors.jl offers different models for the [Initial Charge Cloud Distribution](@ref). Right now, [Diffusion](@ref) and [Self-Repulsion](@ref) are implemented as experimental features.
