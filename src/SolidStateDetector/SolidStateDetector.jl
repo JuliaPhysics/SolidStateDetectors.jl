@@ -53,12 +53,6 @@ function SolidStateDetector(det::SolidStateDetector{T}, charge_trapping_model::A
         det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes    
     )
 end
-function SolidStateDetector(det::SolidStateDetector{T}, charge_trapping_model::AbstractChargeTrappingModel{T}, charge_trapping_model_inactive::AbstractChargeTrappingModel{T}) where {T <: SSDFloat}
-    sc = Semiconductor(det.semiconductor, charge_trapping_model, charge_trapping_model_inactive)
-    SolidStateDetector{T}(
-        det.name, sc, det.contacts, det.passives, det.virtual_drift_volumes
-    )
-end
 function SolidStateDetector(det::SolidStateDetector{T}; contact_id::Int, contact_potential::RealQuantity) where {T <: SSDFloat}
     oc = det.contacts[contact_id]
     nc = Contact(_parse_value(T, contact_potential, internal_voltage_unit), oc.material, oc.id, oc.name, oc.geometry )
