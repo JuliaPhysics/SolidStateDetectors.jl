@@ -40,13 +40,15 @@ detectors:
         name: constant
         value: 5.6769e15cm^-3
     charge_trapping_model:
-      model: ConstantLifetime
+      model: Boggs
       parameters:
-        τh: 1ms
-        τe: 1ms
-        τh_inactive: 1μs
-        τe_inactive: 1μs
-      # inactive_layer_geometry:
+        nσe-1: 1020cm
+        nσh-1: 2040cm
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
+      #  inactive_layer_geometry:
       #       union:
       #           - tube:
       #               r:
@@ -87,7 +89,7 @@ detectors:
       #                 z: 52.5
       #           - tube:
       #               r: 5
-      #               h: 1 #changed this
+      #               h: 1
       #               origin:
       #                 z: 25
     geometry:

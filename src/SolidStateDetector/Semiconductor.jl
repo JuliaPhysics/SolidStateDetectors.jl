@@ -20,7 +20,7 @@ This is the volume in which electrons and holes will drift during the signal dev
 * `material::MT`: Material of the semiconductor.
 * `impurity_density_model::IDM`: Impurity density model for the points inside the semiconductor.
 * `charge_drift_model::CDM`: Model that describes the drift of electrons and holes inside the semiconductor.
-* `charge_trapping_model::CTM`: Model that describes the trapping of electrons and holes inside the semiconductor.
+* `charge_trapping_model::CTM`: Model that describes the trapping of electrons and holes inside the semiconductor bulk.
 * `geometry::G`: Geometry of the semiconductor, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
@@ -89,18 +89,22 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     transformations = combine_transformations(inner_transformations, outer_transformations)
     geometry = Geometry(T, dict["geometry"], input_units, transformations)
 
-    charge_trapping_model = if haskey(dict, "charge_trapping_model") &&
-                               haskey(dict["charge_trapping_model"], "model") &&
-                               dict["charge_trapping_model"]["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(dict["charge_trapping_model"], temperature = temperature)
-    elseif haskey(dict, "charge_trapping_model") &&
-                               haskey(dict["charge_trapping_model"], "model") &&
-                               dict["charge_trapping_model"]["model"] == "ConstantLifetime"
-        constant_lifetime_ctm_dict = deepcopy(dict["charge_trapping_model"])
-        if haskey(constant_lifetime_ctm_dict, "inactive_layer_geometry")
-            constant_lifetime_ctm_dict["inactive_layer_geometry"] = Geometry(T, dict["charge_trapping_model"]["inactive_layer_geometry"], input_units, transformations)
-        end
+
+    constant_lifetime_ctm_dict = haskey(dict, "charge_trapping_model") ? deepcopy(dict["charge_trapping_model"]) : Dict{String, Any}()
+
+    if haskey(constant_lifetime_ctm_dict, "inactive_layer_geometry")
+        constant_lifetime_ctm_dict["inactive_layer_geometry"] = Geometry(T, constant_lifetime_ctm_dict["inactive_layer_geometry"], input_units, transformations)
+    end
+
+    charge_trapping_model = if haskey(constant_lifetime_ctm_dict, "model") && !haskey(constant_lifetime_ctm_dict, "model_inactive") && constant_lifetime_ctm_dict["model"] == "Boggs"
+        BoggsChargeTrappingModel{T}(constant_lifetime_ctm_dict, temperature = temperature)
+        
+    elseif haskey(constant_lifetime_ctm_dict, "model") && !haskey(constant_lifetime_ctm_dict, "model_inactive") && constant_lifetime_ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(constant_lifetime_ctm_dict)
+        
+    elseif haskey(constant_lifetime_ctm_dict, "model") && haskey(constant_lifetime_ctm_dict, "model_inactive")
+        CombinedChargeTrappingModel{T}(constant_lifetime_ctm_dict, temperature = temperature)
+        
     else
         NoChargeTrappingModel{T}()
     end
@@ -114,7 +118,7 @@ function println(io::IO, d::Semiconductor{T}) where {T <: SSDFloat}
     println("\t-Impurity Density Model: $(typeof(d.impurity_density_model).name.name)")
     println("\t-Charge Drift Model:\t $(typeof(d.charge_drift_model).name.name)")
     if !(d.charge_trapping_model isa NoChargeTrappingModel)
-        println("\t-Charge Trapping Model:\t $(typeof(d.charge_trapping_model).name.name)")
+        println("\t-Charge Trapping Model in bulk:\t $(typeof(d.charge_trapping_model).name.name)")
     end
 end
 

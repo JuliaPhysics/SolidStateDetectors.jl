@@ -78,17 +78,16 @@ end
 
     end
 end
-
 @timed_testset "Charge Trapping: ConstantLifetimeChargeTrappingModel" begin
     # test 1: parse the lifetimes and the inactive layer geometry
     simA = @test_nowarn Simulation{T}(SSD_examples[:TrueCoaxial])
     simA.detector = SolidStateDetector(simA.detector, ConstantImpurityDensity{T}(-1e-10))
     @testset "Parse the TrueCoaxial config file" begin
-        @test simA.detector.semiconductor.charge_trapping_model isa ConstantLifetimeChargeTrappingModel{T}
-        @test simA.detector.semiconductor.charge_trapping_model.τh == T(1e-3)
-        @test simA.detector.semiconductor.charge_trapping_model.τe == T(1e-3)
-        @test simA.detector.semiconductor.charge_trapping_model.τh_inactive == T(1e-6)
-        @test simA.detector.semiconductor.charge_trapping_model.τe_inactive  == T(1e-6)
+        @test simA.detector.semiconductor.charge_trapping_model isa CombinedChargeTrappingModel{T}
+        @test simA.detector.semiconductor.charge_trapping_model.bulk_charge_trapping_model.τh == T(1e-3)
+        @test simA.detector.semiconductor.charge_trapping_model.bulk_charge_trapping_model.τe == T(1e-3)
+        @test simA.detector.semiconductor.charge_trapping_model.inactive_charge_trapping_model.τh == T(1e-6)
+        @test simA.detector.semiconductor.charge_trapping_model.inactive_charge_trapping_model.τe  == T(1e-6)
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.origin == CartesianPoint{T}(0.0, 0.0, 0.005)
         r0, r1 = T.((0.008957282, 0.01))
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.r == tuple((r0, r1), (r0, r1))
@@ -129,9 +128,9 @@ end
     signalsum_list_inactive = T[]
     τ_inactive_list = τ_list/100
     for (τ,τ_inactive) in zip(τ_list, τ_inactive_list)
-        parameters = Dict("parameters" => Dict("τh" => τ, "τe" => τ, "τh_inactive" => τ_inactive, "τe_inactive" => τ_inactive),
+        parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive),
             "inactive_layer_geometry" => simA_inactive_layer_geometry)
-        trapping_model=ConstantLifetimeChargeTrappingModel{T}(parameters)
+        trapping_model=CombinedChargeTrappingModel{T}(parameters)
         simA.detector = SolidStateDetector(simA.detector, trapping_model)
         evt_bulk = Event(pos_bulk , Edep)
         timed_simulate!(evt_bulk, simA)
@@ -159,9 +158,9 @@ end
 
     ## test 3.2: the inactive layer signals while varying the depth
     τ, τ_inactive = 1u"ms", 100u"ns"
-    parameters = Dict("parameters" => Dict("τh" => τ, "τe" => τ, "τh_inactive" => τ_inactive, "τe_inactive" => τ_inactive),
+    parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive),
         "inactive_layer_geometry" => simA_inactive_layer_geometry)
-    trapping_model=ConstantLifetimeChargeTrappingModel{T}(parameters)
+    trapping_model=CombinedChargeTrappingModel{T}(parameters)
     simA.detector = SolidStateDetector(simA.detector, trapping_model)
     signalsum_list_inactive = T[]
     for depth in (0.1:0.1:0.9)/1000
