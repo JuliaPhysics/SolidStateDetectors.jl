@@ -332,17 +332,16 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
     signal_h::Vector{T} = zeros(T, length(maximum(map(p -> p.timestamps_h, evt.drift_paths))))
 
     ctm = sim.detector.semiconductor.charge_trapping_model
-    ctmil = sim.detector.semiconductor.charge_trapping_model_inactive
     for i in eachindex(evt.drift_paths)
         energy = flatview(evt.energies)[i]
         
         dp_e::Vector{CartesianPoint{T}} = evt.drift_paths[i].e_path
         dp_e_t::Vector{T} = evt.drift_paths[i].timestamps_e
-        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, -energy, wp, sim.point_types, ctm, ctmil)
+        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, -energy, wp, sim.point_types, ctm)
         
         dp_h::Vector{CartesianPoint{T}} = evt.drift_paths[i].h_path
         dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
-        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, sim.point_types, ctm, ctmil)
+        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, sim.point_types, ctm)
     end
     unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * unitless_energy_to_charge),
