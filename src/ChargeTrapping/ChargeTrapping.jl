@@ -103,8 +103,7 @@ function _calculate_signal(
     nσ::T = ifelse(charge > 0, ctm.nσh, ctm.nσe)
     
     @inbounds for i in eachindex(tmp_signal)
-        
-        Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
+
         Δldrift::T = (i > 1) ? norm(path[i] .- path[i-1]) : zero(T)
         Δl::T = Δldrift > 0 ? hypot(Δldrift, vth * (pathtimestamps[i] - pathtimestamps[i-1])) : zero(T)
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
@@ -275,9 +274,9 @@ function in_inactive_layer(
     is_in_inactive_layer(point_types[pt])
 end
 
-struct CombinedChargeTrappingModel{T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractChargeTrappingModel{T}
-    bulk_charge_trapping_model::AbstractChargeTrappingModel{T}
-    inactive_charge_trapping_model::AbstractChargeTrappingModel{T}
+struct CombinedChargeTrappingModel{T <: SSDFloat, BCTM <: AbstractChargeTrappingModel{T}, ICTM <: AbstractChargeTrappingModel{T}, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractChargeTrappingModel{T}
+    bulk_charge_trapping_model::BCTM
+    inactive_charge_trapping_model::ICTM
     inactive_layer_geometry::G
 end
 
@@ -406,5 +405,9 @@ function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temp
     
     inactive_layer_geometry = haskey(config_dict, "inactive_layer_geometry") ? config_dict["inactive_layer_geometry"] : nothing
     
-    CombinedChargeTrappingModel{T, typeof(inactive_layer_geometry)}(bulk_charge_trapping_model, inactive_charge_trapping_model, inactive_layer_geometry)
+CombinedChargeTrappingModel{T, typeof(bulk_charge_trapping_model), typeof(inactive_charge_trapping_model), typeof(inactive_layer_geometry)}(
+    bulk_charge_trapping_model,
+    inactive_charge_trapping_model,
+    inactive_layer_geometry
+)
 end
