@@ -90,20 +90,20 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     geometry = Geometry(T, dict["geometry"], input_units, transformations)
 
 
-    constant_lifetime_ctm_dict = haskey(dict, "charge_trapping_model") ? deepcopy(dict["charge_trapping_model"]) : Dict{String, Any}()
+    ctm_dict = haskey(dict, "charge_trapping_model") ? deepcopy(dict["charge_trapping_model"]) : Dict{String, Any}()
 
-    if haskey(constant_lifetime_ctm_dict, "inactive_layer_geometry")
-        constant_lifetime_ctm_dict["inactive_layer_geometry"] = Geometry(T, constant_lifetime_ctm_dict["inactive_layer_geometry"], input_units, transformations)
+    if haskey(ctm_dict, "inactive_layer_geometry")
+        ctm_dict["inactive_layer_geometry"] = Geometry(T, ctm_dict["inactive_layer_geometry"], input_units, transformations)
     end
 
-    charge_trapping_model = if haskey(constant_lifetime_ctm_dict, "model") && !haskey(constant_lifetime_ctm_dict, "model_inactive") && constant_lifetime_ctm_dict["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(constant_lifetime_ctm_dict, temperature = temperature)
+    charge_trapping_model = if haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
+        BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
         
-    elseif haskey(constant_lifetime_ctm_dict, "model") && !haskey(constant_lifetime_ctm_dict, "model_inactive") && constant_lifetime_ctm_dict["model"] == "ConstantLifetime"
-        ConstantLifetimeChargeTrappingModel{T}(constant_lifetime_ctm_dict)
+    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
+        ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
         
-    elseif haskey(constant_lifetime_ctm_dict, "model") && haskey(constant_lifetime_ctm_dict, "model_inactive")
-        CombinedChargeTrappingModel{T}(constant_lifetime_ctm_dict, temperature = temperature)
+    elseif haskey(ctm_dict, "model") && haskey(ctm_dict, "model_inactive")
+        CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
         
     else
         NoChargeTrappingModel{T}()
@@ -118,7 +118,7 @@ function println(io::IO, d::Semiconductor{T}) where {T <: SSDFloat}
     println("\t-Impurity Density Model: $(typeof(d.impurity_density_model).name.name)")
     println("\t-Charge Drift Model:\t $(typeof(d.charge_drift_model).name.name)")
     if !(d.charge_trapping_model isa NoChargeTrappingModel)
-        println("\t-Charge Trapping Model in bulk:\t $(typeof(d.charge_trapping_model).name.name)")
+        println("\t-Charge Trapping Model:\t $(typeof(d.charge_trapping_model).name.name)")
     end
 end
 
