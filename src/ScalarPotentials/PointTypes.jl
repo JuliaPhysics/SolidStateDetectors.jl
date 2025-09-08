@@ -326,3 +326,32 @@ function mark_inactivelayer_bits!(point_types::Array{PointType, 3})
         end
     end
 end
+
+"""
+        in_inactive_layer(pt::CartesianPoint{T},
+           g::AbstractGeometry{T},
+           point_types::PointTypes{T})
+
+Returns if a CartesianPoint belongs to the inactive layer using the geometry of the inactive layer
+
+        in_inactive_layer(pt::CartesianPoint{T},
+           ::Nothing,
+           point_types::PointTypes{T})
+Returns if a CartesianPoint belongs to the inactive layer using point types
+"""
+
+function in_inactive_layer(
+    pt::CartesianPoint{T},
+    g::AbstractGeometry{T},
+    point_types::PointTypes{T}
+    )where {T}
+    in(pt, g)
+end
+
+function in_inactive_layer(
+    pt::CartesianPoint{T},
+    ::Nothing,
+    point_types::PointTypes{T}
+    )where {T}
+    is_in_inactive_layer(point_types[pt])
+end

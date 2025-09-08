@@ -239,14 +239,6 @@ Combined Charge Trapping Model (CTM) for the bulk and inactive layer
 * `inactive_charge_trapping_model::AbstractChargeTrappingModel{T}`: CTM inside the inactive layer.
 * `inactive_layer_geometry::G`: Inactive layer geometry.
 
-Combinations supported: 
-Bulk: Boggs CTM, inactive layer: Constant lifetime CTM
-Bulk: Boggs CTM, inactive layer: No CTM
-Bulk: No CTM, inactive layer: Constant lifetime CTM
-Bulk: No CTM, inactive layer: No CTM
-Bulk: Constant lifetime CTM, inactive layer: Constant lifetime CTM
-Bulk: Constant lifetime CTM, inactive layer: No CTM
-
 See also [Charge Trapping Models](@ref).
 """
 
@@ -257,22 +249,6 @@ _ctmodel_name(::AbstractChargeTrappingModel) = "Unknown"
 
 
 has_inactive_layer(point_types::Array{PointType, 3}) = any(is_in_inactive_layer, point_types)
-
-function in_inactive_layer(
-    pt::CartesianPoint{T},
-    g::AbstractGeometry{T},
-    point_types::PointTypes{T}
-    )where {T}
-    in(pt, g)
-end
-
-function in_inactive_layer(
-    pt::CartesianPoint{T},
-    ::Nothing,
-    point_types::PointTypes{T}
-    )where {T}
-    is_in_inactive_layer(point_types[pt])
-end
 
 struct CombinedChargeTrappingModel{T <: SSDFloat, BCTM <: AbstractChargeTrappingModel{T}, ICTM <: AbstractChargeTrappingModel{T}, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractChargeTrappingModel{T}
     bulk_charge_trapping_model::BCTM
