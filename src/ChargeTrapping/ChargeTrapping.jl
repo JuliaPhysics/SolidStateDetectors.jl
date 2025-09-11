@@ -162,6 +162,15 @@ struct ConstantLifetimeChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrapp
     τe::T
 end
 
+function check_lifetime(model::AbstractChargeTrappingModel{T}, charge::T, pathtimestamps::AbstractVector{T}) where {T <: SSDFloat}
+    τ = ifelse(charge > 0, model.τh, model.τe)
+    Δt_minimum = minimum(diff(pathtimestamps))
+    if τ < Δt_minimum
+        throw(ArgumentError("The carrier lifetime should be at least bigger than Δt"))
+    end
+    return τ
+end
+
 function _constantlifetime_signal!(
     running_sum::Base.RefValue{T},
     τ::T,
@@ -190,12 +199,12 @@ function _calculate_signal(
     q = Ref(charge)
     running_sum = Ref(zero(T))
 
-    τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
-    Δt_minimum = minimum(diff(pathtimestamps))
-    if τ<Δt_minimum
-        throw(ArgumentError("The carrier lifetime should be at least bigger than Δt"))
-    end
-   
+#    τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
+#    Δt_minimum = minimum(diff(pathtimestamps))
+#    if τ<Δt_minimum
+#        throw(ArgumentError("The carrier lifetime should be at least bigger than Δt"))
+#    end
+    τ::T = check_lifetime(ctm, charge, pathtimestamps)
     
     @inbounds for i in eachindex(tmp_signal)
         
@@ -245,8 +254,6 @@ See also [Charge Trapping Models](@ref).
 _ctmodel_name(::BoggsChargeTrappingModel) = "Boggs"
 _ctmodel_name(::ConstantLifetimeChargeTrappingModel) = "ConstantLifetime"
 _ctmodel_name(::NoChargeTrappingModel) = "NoChargeTrapping"
-_ctmodel_name(::AbstractChargeTrappingModel) = "Unknown"
-
 
 has_inactive_layer(point_types::Array{PointType, 3}) = any(is_in_inactive_layer, point_types)
 
@@ -276,36 +283,21 @@ function _calculate_signal(
     bulk_ctmodel = _ctmodel_name(ctm.bulk_charge_trapping_model)
     inactive_layer_ctmodel = _ctmodel_name(ctm.inactive_charge_trapping_model)
 
-    if bulk_ctmodel == "Unknown"
-        throw(ArgumentError("Not supported Charge Trapping Model for bulk")) end
-    
-    if (inactive_layer_ctmodel == "Unknown")||(inactive_layer_ctmodel == "Boggs")
-        throw(ArgumentError("Not supported Charge Trapping Model for inactive layer")) end
-
     τ::T = zero(T)
     τ_inactive::T = zero(T)
-    Δt_minimum::T = zero(T)
     
     vth::T = zero(T)
     nσ::T = zero(T)
-    
+
     if bulk_ctmodel == "ConstantLifetime"
-        τ = ifelse(charge > 0, ctm.bulk_charge_trapping_model.τh, ctm.bulk_charge_trapping_model.τe)
-        Δt_minimum = minimum(diff(pathtimestamps))
-        if τ < Δt_minimum
-            throw(ArgumentError("The carrier lifetime should be at least bigger than Δt"))
-        end
+        τ = check_lifetime(ctm.bulk_charge_trapping_model, charge, pathtimestamps)
     elseif bulk_ctmodel == "Boggs"
         vth = sqrt(3 * kB * ctm.bulk_charge_trapping_model.temperature / (ifelse(charge > 0, ctm.bulk_charge_trapping_model.meffh, ctm.bulk_charge_trapping_model.meffe) * me)) # in m/s
         nσ = ifelse(charge > 0, ctm.bulk_charge_trapping_model.nσh, ctm.bulk_charge_trapping_model.nσe)
     end
 
     if inactive_layer_ctmodel == "ConstantLifetime"
-        τ_inactive = ifelse(charge > 0, ctm.inactive_charge_trapping_model.τh, ctm.inactive_charge_trapping_model.τe)
-        Δt_minimum = minimum(diff(pathtimestamps))
-        if τ_inactive < Δt_minimum
-            throw(ArgumentError("The carrier lifetime should be at least bigger than Δt"))
-        end
+        τ_inactive = check_lifetime(ctm.inactive_charge_trapping_model, charge, pathtimestamps)
     end
 
     
@@ -355,15 +347,22 @@ function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temp
     if haskey(config_dict, "model_inactive") && config_dict["model_inactive"] !== nothing && !(haskey(config_dict, "parameters_inactive"))
         throw(ConfigFileError("`CombinedChargeTrappingModel` does not have `parameters_inactive`"))
     end
-    
-    bulk_charge_trapping_model = if haskey(config_dict, "model") && config_dict["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(config_dict, temperature = temperature)
-    elseif haskey(config_dict, "model") && config_dict["model"] == "ConstantLifetime"
-        ConstantLifetimeChargeTrappingModel{T}(config_dict) 
-    else
-        NoChargeTrappingModel{T}()
+
+    bulk_charge_trapping_model = begin
+        model = get(config_dict, "model", nothing)
+        if model === nothing
+            NoChargeTrappingModel{T}()
+        elseif model == "Boggs"
+            BoggsChargeTrappingModel{T}(config_dict; temperature)
+        elseif model == "ConstantLifetime"
+            ConstantLifetimeChargeTrappingModel{T}(config_dict)
+        elseif model == ""
+            throw(ConfigFileError("`model` is defined but empty in config. Remove it or provide a valid name."))
+        else
+            throw(ConfigFileError("Unknown bulk charge trapping model: $model"))
+        end
     end
-    
+
     # Rename 'parameters_inactive' to be 'parameters'
     tmp = copy(config_dict)
     if haskey(tmp, "parameters_inactive")
