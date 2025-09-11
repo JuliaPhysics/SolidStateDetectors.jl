@@ -340,18 +340,5 @@ Returns if a CartesianPoint belongs to the inactive layer using the geometry of 
 Returns if a CartesianPoint belongs to the inactive layer using point types
 """
 
-function in_inactive_layer(
-    pt::CartesianPoint{T},
-    g::AbstractGeometry{T},
-    point_types::PointTypes{T}
-    )where {T}
-    in(pt, g)
-end
-
-function in_inactive_layer(
-    pt::CartesianPoint{T},
-    ::Nothing,
-    point_types::PointTypes{T}
-    )where {T}
-    is_in_inactive_layer(point_types[pt])
-end
+@inline in_inactive_layer(pt::CartesianPoint{T}, g::AbstractGeometry{T}, ::PointTypes{T}) where {T} = in(pt, g)
+@inline in_inactive_layer(pt::CartesianPoint{T}, ::Nothing, point_types::PointTypes{T}) where {T} = is_in_inactive_layer(point_types[pt])
