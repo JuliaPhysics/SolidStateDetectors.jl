@@ -20,7 +20,7 @@ This is the volume in which electrons and holes will drift during the signal dev
 * `material::MT`: Material of the semiconductor.
 * `impurity_density_model::IDM`: Impurity density model for the points inside the semiconductor.
 * `charge_drift_model::CDM`: Model that describes the drift of electrons and holes inside the semiconductor.
-* `charge_trapping_model::CTM`: Model that describes the trapping of electrons and holes inside the semiconductor bulk.
+* `charge_trapping_model::CTM`: Model that describes the trapping of electrons and holes inside the semiconductor.
 * `geometry::G`: Geometry of the semiconductor, see [Constructive Solid Geometry (CSG)](@ref).
 
 ## Definition in Configuration File
@@ -96,15 +96,15 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
         ctm_dict["inactive_layer_geometry"] = Geometry(T, ctm_dict["inactive_layer_geometry"], input_units, transformations)
     end
 
-    charge_trapping_model = if haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
+    charge_trapping_model = if haskey(ctm_dict, "model_inactive")
+        CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+
+    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
         BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
-        
+
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
-        
-    elseif haskey(ctm_dict, "model") && haskey(ctm_dict, "model_inactive")
-        CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
-        
+
     else
         NoChargeTrappingModel{T}()
     end
