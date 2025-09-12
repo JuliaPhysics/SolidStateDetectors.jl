@@ -95,13 +95,18 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     if haskey(ctm_dict, "inactive_layer_geometry")
         ctm_dict["inactive_layer_geometry"] = Geometry(T, ctm_dict["inactive_layer_geometry"], input_units, transformations)
     end
-
+    
     charge_trapping_model = if haskey(ctm_dict, "model_inactive")
-        CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
-
+        if haskey(ctm_dict, "parameters_inactive") && haskey(ctm_dict, "parameters") &&
+            ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
+            ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
+        else
+            CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+        end
+        
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
         BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
-
+        
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
 
