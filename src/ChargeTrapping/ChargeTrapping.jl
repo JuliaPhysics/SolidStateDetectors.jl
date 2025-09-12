@@ -21,16 +21,22 @@ This model is the default when no charge trapping model is defined in the config
 """
 struct NoChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T} end
 
-function _nochargetrapping_signal!(
-    w::T,
-    charge::T
+function _signal!(
+    ::NoChargeTrappingModel{T},
+    q::Base.RefValue{T},
+    w::T;
+    running_sum::Base.RefValue{T}=Ref(zero(T)),
+    nσ::T=zero(T),
+    Δl::T=zero(T),
+    τ::T=zero(T),
+    Δt::T=zero(T)
 ) where {T <: SSDFloat}
 
-    return w * charge
+    return w * q[]
 end
 
 function _calculate_signal( 
-        ::NoChargeTrappingModel{T},
+        ctm::NoChargeTrappingModel{T},
         path::AbstractVector{CartesianPoint{T}}, 
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
@@ -39,9 +45,12 @@ function _calculate_signal(
     )::Vector{T} where {T <: SSDFloat, N, S}
 
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
+
+    q = Ref(charge)
+    
     @inbounds for i in eachindex(tmp_signal)
         w = get_interpolation(wpot, path[i], S)::T
-        tmp_signal[i] = _nochargetrapping_signal!(w, charge)
+        tmp_signal[i] = _signal!(ctm, q, w)
     end
 
     tmp_signal
@@ -71,12 +80,15 @@ struct BoggsChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T}
     temperature::T # in K
 end
 
-function _Boggs_signal!(
-    running_sum::Base.RefValue{T},
-    nσ::T,
-    Δl::T,
+function _signal!(
+    ::BoggsChargeTrappingModel{T},
     q::Base.RefValue{T},
-    w::T,
+    w::T;
+    running_sum::Base.RefValue{T}=Ref(zero(T)),
+    nσ::T=zero(T),
+    Δl::T=zero(T),
+    τ::T=zero(T),
+    Δt::T=zero(T)
 ) where {T <: SSDFloat}
 
     Δq::T = q[] * nσ * Δl
@@ -108,7 +120,7 @@ function _calculate_signal(
         Δl::T = Δldrift > 0 ? hypot(Δldrift, vth * (pathtimestamps[i] - pathtimestamps[i-1])) : zero(T)
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
 
-        tmp_signal[i] = _Boggs_signal!( running_sum, nσ, Δl, q, w )
+        tmp_signal[i] = _signal!( ctm, q, w; running_sum=running_sum, nσ=nσ, Δl=Δl )
     end
 
     tmp_signal
@@ -171,12 +183,15 @@ function check_lifetime(model::AbstractChargeTrappingModel{T}, charge::T, pathti
     return τ
 end
 
-function _constantlifetime_signal!(
-    running_sum::Base.RefValue{T},
-    τ::T,
-    Δt::T,
+function _signal!(
+    ::ConstantLifetimeChargeTrappingModel{T},
     q::Base.RefValue{T},
-    w::T,
+    w::T;
+    running_sum::Base.RefValue{T}=Ref(zero(T)),
+    nσ::T=zero(T),
+    Δl::T=zero(T),
+    τ::T=zero(T),
+    Δt::T=zero(T)
 ) where {T <: SSDFloat}
 
     Δq::T = q[] * Δt / τ
@@ -199,11 +214,6 @@ function _calculate_signal(
     q = Ref(charge)
     running_sum = Ref(zero(T))
 
-#    τ::T = ifelse(charge > 0, ctm.τh, ctm.τe)
-#    Δt_minimum = minimum(diff(pathtimestamps))
-#    if τ<Δt_minimum
-#        throw(ArgumentError("The carrier lifetime should be at least bigger than Δt"))
-#    end
     τ::T = check_lifetime(ctm, charge, pathtimestamps)
     
     @inbounds for i in eachindex(tmp_signal)
@@ -211,7 +221,7 @@ function _calculate_signal(
         Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
         
-        tmp_signal[i] = _constantlifetime_signal!( running_sum, τ, Δt, q, w )
+        tmp_signal[i] = _signal!( ctm, q, w; running_sum=running_sum, τ=τ, Δt=Δt )
     end
  
     tmp_signal
@@ -314,22 +324,22 @@ function _calculate_signal(
         if in_inactive_region
             if inactive_layer_ctmodel == "ConstantLifetime"
                 # Constant trapping lifetime in inactive layer
-                tmp_signal[i] = _constantlifetime_signal!( running_sum, τ_inactive, Δt, q, w )
+                tmp_signal[i] = _signal!( ctm.inactive_charge_trapping_model, q, w; running_sum=running_sum, τ=τ_inactive, Δt=Δt )
             else
                 # No charge trapping in inactive layer
-                tmp_signal[i] = _nochargetrapping_signal!(w, charge)
+                tmp_signal[i] = _signal!( ctm.inactive_charge_trapping_model, q, w )
             end
 
         else
             if bulk_ctmodel == "ConstantLifetime"
                 # Constant trapping lifetime in bulk
-                tmp_signal[i] = _constantlifetime_signal!( running_sum, τ, Δt, q, w )
+                tmp_signal[i] = _signal!( ctm.bulk_charge_trapping_model, q, w; running_sum=running_sum, τ=τ, Δt=Δt )
             elseif bulk_ctmodel == "Boggs"
                 # Boggs trapping model in bulk
-                tmp_signal[i] = _Boggs_signal!( running_sum, nσ, Δl, q, w )
+                tmp_signal[i] = _signal!( ctm.bulk_charge_trapping_model, q, w; running_sum=running_sum, nσ=nσ, Δl=Δl )
             else
                 # No charge trapping in bulk
-                tmp_signal[i] = _nochargetrapping_signal!(w, charge)
+                tmp_signal[i] = _signal!( ctm.bulk_charge_trapping_model, q, w )
             end
         end
     end
@@ -349,20 +359,22 @@ function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temp
     end
 
     bulk_charge_trapping_model = begin
-        model = get(config_dict, "model", nothing)
-        if model === nothing
+        if !haskey(config_dict, "model")
             NoChargeTrappingModel{T}()
-        elseif model == "Boggs"
-            BoggsChargeTrappingModel{T}(config_dict; temperature)
-        elseif model == "ConstantLifetime"
-            ConstantLifetimeChargeTrappingModel{T}(config_dict)
-        elseif model == ""
-            throw(ConfigFileError("`model` is defined but empty in config. Remove it or provide a valid name."))
         else
-            throw(ConfigFileError("Unknown bulk charge trapping model: $model"))
+            model = config_dict["model"]
+            if isnothing(model)
+                throw(ConfigFileError("`model` is defined but empty in config. Remove it or provide a valid name."))
+        elseif model == "Boggs"
+                BoggsChargeTrappingModel{T}(config_dict; temperature)
+            elseif model == "ConstantLifetime"
+                ConstantLifetimeChargeTrappingModel{T}(config_dict)
+            else
+                throw(ConfigFileError("Unknown bulk charge trapping model: $model"))
+            end
         end
     end
-
+    
     # Rename 'parameters_inactive' to be 'parameters'
     tmp = copy(config_dict)
     if haskey(tmp, "parameters_inactive")
@@ -375,6 +387,7 @@ function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temp
     inactive_charge_trapping_model = if haskey(tmp, "model_inactive") && tmp["model_inactive"] == "ConstantLifetime"     
         ConstantLifetimeChargeTrappingModel{T}(tmp)
     else
+        if !isnothing(config_dict["model_inactive"]) @warn "Unknown inactive charge trapping model, running `NoChargeTrappingModel` inside inactive" end
         NoChargeTrappingModel{T}()
     end
     
