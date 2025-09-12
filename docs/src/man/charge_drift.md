@@ -352,15 +352,7 @@ charge_trapping_model:
         τh: 1μs
         τe: 1μs
 ```
-* Bulk: Boggs CTM, inactive layer: No CTM
-```yaml
-charge_trapping_model:
-      model: Boggs
-      parameters:
-        nσe-1: 1020cm
-        nσh-1: 2040cm
-      model_inactive:
-```
+
 * Bulk: Constant lifetime CTM, inactive layer: Constant lifetime CTM
 ```yaml
 charge_trapping_model:
@@ -373,33 +365,8 @@ charge_trapping_model:
         τh: 1μs
         τe: 1μs
 ```
-* Bulk: Constant lifetime CTM, inactive layer: No CTM
-```yaml
-charge_trapping_model:
-      model: ConstantLifetime
-      parameters:
-        τh: 1ms
-        τe: 1ms
-      model_inactive:
 
-```
-* Bulk: No CTM, inactive layer: Constant lifetime CTM
-```yaml
-charge_trapping_model:
-      model:
-      model_inactive: ConstantLifetime
-      parameters_inactive:
-        τh: 1μs
-        τe: 1μs
-
-```
-* Bulk: No CTM, inactive layer: No CTM
-```yaml
-charge_trapping_model:
-      model:
-      model_inactive:
-```
-
+This model also allows to disable the charge trapping model inside the inactive layer by having `model_inactive:` and the bulk by deleting `model:` from the `charge_trapping_model:` block.
 If `inactive_layer_geometry` is passed to the yaml file, this is the region used for the inactive layer charge trapping model, else, the model will use the inactive layer geometry defined by the impurity density model (`PtypePNJunctionImpurityDensity`) using the point types.
 
 ```julia
