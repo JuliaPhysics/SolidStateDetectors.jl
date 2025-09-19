@@ -25,13 +25,9 @@ function _signal!(
     ::NoChargeTrappingModel{T},
     q::Base.RefValue{T},
     w::T;
-    running_sum::Base.RefValue{T}=Ref(zero(T)),
-    nσ::T=zero(T),
-    Δl::T=zero(T),
-    τ::T=zero(T),
-    Δt::T=zero(T)
+    kwargs...
 ) where {T <: SSDFloat}
-
+    
     return w * q[]
 end
 
@@ -87,8 +83,7 @@ function _signal!(
     running_sum::Base.RefValue{T}=Ref(zero(T)),
     nσ::T=zero(T),
     Δl::T=zero(T),
-    τ::T=zero(T),
-    Δt::T=zero(T)
+    kwargs...
 ) where {T <: SSDFloat}
 
     Δq::T = q[] * nσ * Δl
@@ -188,10 +183,9 @@ function _signal!(
     q::Base.RefValue{T},
     w::T;
     running_sum::Base.RefValue{T}=Ref(zero(T)),
-    nσ::T=zero(T),
-    Δl::T=zero(T),
-    τ::T=zero(T),
-    Δt::T=zero(T)
+    τ::T=T(Inf),
+    Δt::T=zero(T),
+    kwargs...
 ) where {T <: SSDFloat}
 
     Δq::T = q[] * Δt / τ
@@ -322,25 +316,11 @@ function _calculate_signal(
         Δl::T = Δldrift > 0 ? hypot(Δldrift, vth * (pathtimestamps[i] - pathtimestamps[i-1])) : zero(T)
         
         if in_inactive_region
-            if inactive_layer_ctmodel == "ConstantLifetime"
-                # Constant trapping lifetime in inactive layer
-                tmp_signal[i] = _signal!( ctm.inactive_charge_trapping_model, q, w; running_sum=running_sum, τ=τ_inactive, Δt=Δt )
-            else
-                # No charge trapping in inactive layer
-                tmp_signal[i] = _signal!( ctm.inactive_charge_trapping_model, q, w )
-            end
-
+            tmp_signal[i] = _signal!(ctm.inactive_charge_trapping_model, q, w;
+                                     running_sum=running_sum, τ=τ_inactive, Δt=Δt)
         else
-            if bulk_ctmodel == "ConstantLifetime"
-                # Constant trapping lifetime in bulk
-                tmp_signal[i] = _signal!( ctm.bulk_charge_trapping_model, q, w; running_sum=running_sum, τ=τ, Δt=Δt )
-            elseif bulk_ctmodel == "Boggs"
-                # Boggs trapping model in bulk
-                tmp_signal[i] = _signal!( ctm.bulk_charge_trapping_model, q, w; running_sum=running_sum, nσ=nσ, Δl=Δl )
-            else
-                # No charge trapping in bulk
-                tmp_signal[i] = _signal!( ctm.bulk_charge_trapping_model, q, w )
-            end
+            tmp_signal[i] = _signal!(ctm.bulk_charge_trapping_model, q, w;
+                             running_sum=running_sum, nσ=nσ, Δl=Δl, τ=τ, Δt=Δt)
         end
     end
     tmp_signal
