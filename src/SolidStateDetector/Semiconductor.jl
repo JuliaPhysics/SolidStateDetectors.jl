@@ -89,18 +89,27 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     transformations = combine_transformations(inner_transformations, outer_transformations)
     geometry = Geometry(T, dict["geometry"], input_units, transformations)
 
-    charge_trapping_model = if haskey(dict, "charge_trapping_model") &&
-                               haskey(dict["charge_trapping_model"], "model") &&
-                               dict["charge_trapping_model"]["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(dict["charge_trapping_model"], temperature = temperature)
-    elseif haskey(dict, "charge_trapping_model") &&
-                               haskey(dict["charge_trapping_model"], "model") &&
-                               dict["charge_trapping_model"]["model"] == "ConstantLifetime"
-        constant_lifetime_ctm_dict = deepcopy(dict["charge_trapping_model"])
-        if haskey(constant_lifetime_ctm_dict, "inactive_layer_geometry")
-            constant_lifetime_ctm_dict["inactive_layer_geometry"] = Geometry(T, dict["charge_trapping_model"]["inactive_layer_geometry"], input_units, transformations)
+
+    ctm_dict = haskey(dict, "charge_trapping_model") ? deepcopy(dict["charge_trapping_model"]) : Dict{String, Any}()
+
+    if haskey(ctm_dict, "inactive_layer_geometry")
+        ctm_dict["inactive_layer_geometry"] = Geometry(T, ctm_dict["inactive_layer_geometry"], input_units, transformations)
+    end
+    
+    charge_trapping_model = if haskey(ctm_dict, "model_inactive")
+        if haskey(ctm_dict, "parameters_inactive") && haskey(ctm_dict, "parameters") &&
+            ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
+            ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
+        else
+            CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
         end
-        ConstantLifetimeChargeTrappingModel{T}(constant_lifetime_ctm_dict)
+        
+    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
+        BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+        
+    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
+        ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
+
     else
         NoChargeTrappingModel{T}()
     end

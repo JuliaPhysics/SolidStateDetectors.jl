@@ -290,6 +290,18 @@ function get_inactivelayer_indices(vec::AbstractVector{PointType})
     
     return pt_indices
 end
+
+function propagate_inactive!(vec::AbstractVector{PointType})
+    for i in eachindex(vec)
+        if (vec[i] & undepleted_bit) != 0
+            if (i > firstindex(vec) && (vec[i-1] & inactive_layer_bit) != 0) ||
+               (i < lastindex(vec)  && (vec[i+1] & inactive_layer_bit) != 0)
+                vec[i] |= inactive_layer_bit
+            end
+        end
+    end
+end
+
 """
     mark_inactivelayer_bits!(point_types::Array{PointType, 3})
 
@@ -325,4 +337,34 @@ function mark_inactivelayer_bits!(point_types::Array{PointType, 3})
             vec[idx] |= inactive_layer_bit
         end
     end
+
+
+    if any((point_types .& undepleted_bit) .!= 0)
+        for j in 1:sz2, k in 1:sz3
+            propagate_inactive!(@view point_types[:, j, k])
+        end
+        for i in 1:sz1, k in 1:sz3
+            propagate_inactive!(@view point_types[i, :, k])
+        end
+        for i in 1:sz1, j in 1:sz2
+            propagate_inactive!(@view point_types[i, j, :])
+        end
+    end    
 end
+
+
+"""
+        in_inactive_layer(pt::CartesianPoint{T},
+           g::AbstractGeometry{T},
+           point_types::PointTypes{T})
+
+Returns if a CartesianPoint belongs to the inactive layer using the geometry of the inactive layer
+
+        in_inactive_layer(pt::CartesianPoint{T},
+           ::Nothing,
+           point_types::PointTypes{T})
+Returns if a CartesianPoint belongs to the inactive layer using point types
+"""
+
+@inline in_inactive_layer(pt::CartesianPoint{T}, g::AbstractGeometry{T}, ::PointTypes{T}) where {T} = in(pt, g)
+@inline in_inactive_layer(pt::CartesianPoint{T}, ::Nothing, point_types::PointTypes{T}) where {T} = is_in_inactive_layer(point_types[pt])

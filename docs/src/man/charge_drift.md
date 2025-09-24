@@ -235,12 +235,12 @@ The second step would be to define a method for `_calculate_signal`, which retur
 using SolidStateDetectors: CoordinateSystemType, SSDFloat
 using Interpolations
 function SolidStateDetectors._calculate_signal( 
-        ctm::CustomChargeTrappingModel{T}, 
+        ctm::CustomChargeTrappingModel{T},
         path::AbstractVector{CartesianPoint{T}}, 
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        S::CoordinateSystemType
+        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
     )::Vector{T} where {T <: SSDFloat}
 
     # Implement method here
@@ -309,9 +309,7 @@ This idea is presented in [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradi
 
 Besides, the model implemented has two sets of parameters for the sensitive (bulk) and inactive (dead layer/surface layer) volume respectively.
 
-If `inactive_layer_geometry` is passed to the yaml file, this is the region used for the inactive layer charge trapping model, else, the model will use the inactive layer geometry defined by the impurity density model (`PtypePNJunctionImpurityDensity`) using the point types. 
-
-The `ConstantLifetimeChargeTrappingModel` can be applied in the configuration file by adding a field `charge_trapping_model` to the `semiconductor` with `model: ConstantLifetime`, `parameters` defining the constant lifetime and `inactive_layer_geometry`(optional) defining the inactive volume:
+The `ConstantLifetimeChargeTrappingModel` can be applied in the configuration file by adding a field `charge_trapping_model` to the `semiconductor` with `model: ConstantLifetime` and `parameters` defining the constant lifetime:
 ```yaml 
 detectors:
   - semiconductor:
@@ -322,16 +320,6 @@ detectors:
         parameters:
           τh: 1ms
           τe: 1ms
-          τh_inactive: 80ns
-          τe_inactive: 80ns
-        inactive_layer_geometry:
-          tube:
-            r:
-              from: 9.0
-              to: 10.0
-            h: 10.0
-            origin:
-              z: 5.0
 ```
 
 The `ConstantLifetimeChargeTrappingModel` can also be applied to an already read-in `SolidStateDetector`, for example:
@@ -345,9 +333,50 @@ simulate!(sim)
 τh = τe = 1u"ms"
 parameters = Dict("parameters" => Dict("τh" => τh, "τe" => τe))
 
-# or model both the sensitive and inactive volumes based on a user-defined `inactive_layer_geometry`
-τh = τe = 1u"ms"
-τh_inactive = τe_inactive = 80u"ns"
+# pass the trapping model to the `sim.detector`
+sim.detector = SolidStateDetector(sim.detector, ConstantLifetimeChargeTrappingModel{T}(parameters))
+```
+
+### `CombinedChargeTrappingModel`
+
+The `CombinedChargeTrappingModel` allow to run a charge trapping model inside the bulk and a different charge trapping model inside the inactive layer using `model_inactive` and `parameters_inactive` entries in the yaml file. If `model_inactive` is present in the yaml file but equals to nothing, `NoChargeTrappingModel` will be used by default in the inactive layer. Combinations supported by this model:
+* Bulk: Boggs CTM, inactive layer: Constant lifetime CTM
+```yaml
+charge_trapping_model:
+      model: Boggs
+      parameters:
+        nσe-1: 1020cm
+        nσh-1: 2040cm
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
+```
+
+* Bulk: Constant lifetime CTM, inactive layer: Constant lifetime CTM
+```yaml
+charge_trapping_model:
+      model: ConstantLifetime
+      parameters:
+        τh: 1ms
+        τe: 1ms
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
+```
+
+This model also allows to disable the charge trapping model inside the inactive layer by having `model_inactive:` and the bulk by deleting `model:` from the `charge_trapping_model:` block.
+If `inactive_layer_geometry` is passed to the yaml file, this is the region used for the inactive layer charge trapping model, else, the model will use the inactive layer geometry defined by the impurity density model (`PtypePNJunctionImpurityDensity`) using the point types.
+
+```julia
+using SolidStateDetectors, Unitful
+T = Float64
+sim = Simulation{T}(SSD_examples[:TrueCoaxial])
+simulate!(sim)
+
+# model both the sensitive and inactive volumes based on a user-defined `inactive_layer_geometry`
+τ, τ_inactive = 1u"ms", 100u"ns"
 ## define the inactive_layer_geometry, an example:
 inactive_layer_geometry_dict = Dict(
         "tube" => Dict(
@@ -363,12 +392,11 @@ transformations = combine_transformations(inner_transformations, outer_transform
 inactive_layer_geometry = Geometry(T, inactive_layer_geometry_dict, sim.input_units, transformations)
 ## or simply use the already constructed geometry if the `inactive_layer_geometry ` geometry is defined in the configuration file
 # inactive_layer_geometry = sim.detector.semiconductor.charge_trapping_model.inactive_layer_geometry
-parameters = Dict("parameters" => Dict("τh" => τh, "τe" => τe, "τh_inactive" => τh_inactive, "τe_inactive" => τe_inactive), "inactive_layer_geometry" => inactive_layer_geometry)
 
+parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive), "inactive_layer_geometry" => inactive_layer_geometry)
 # pass the trapping model to the `sim.detector`
-sim.detector = SolidStateDetector(sim.detector, ConstantLifetimeChargeTrappingModel{T}(parameters))
+sim.detector = SolidStateDetector(sim.detector, CombinedChargeTrappingModel{T}(parameters))
 ```
-
 
 ## Group Effects
 
