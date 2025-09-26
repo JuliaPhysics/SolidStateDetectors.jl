@@ -22,9 +22,10 @@ Lithium impurity density model. Ref: [Dai _et al._ (2023)](https://doi.org/10.10
 * `lithium_density_on_contact::T`: optional, default is the saturated lithium density at the given temperature
 * `lithium_diffusivity_in_germanium::T`: optional, default is calculated with the annealing temperature
 """
-struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+struct ThermalDiffusionLithiumDensity{T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}} <: AbstractImpurityDensity{T}
     lithium_annealing_temperature::T
     lithium_annealing_time::T
+    contact_with_lithium_doped::G
     distance_to_contact::Function
     lithium_density_on_contact::T
     lithium_diffusivity_in_germanium::T
@@ -48,7 +49,7 @@ function ThermalDiffusionLithiumDensity{T}(
     lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature),
     lithium_diffusivity_in_germanium::T = calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature),
 ) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
-    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, distance_to_contact, lithium_density_on_contact, lithium_diffusivity_in_germanium)
+    ThermalDiffusionLithiumDensity{T,G}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, distance_to_contact, lithium_density_on_contact, lithium_diffusivity_in_germanium)
 end
 
 function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict, input_units::NamedTuple)
