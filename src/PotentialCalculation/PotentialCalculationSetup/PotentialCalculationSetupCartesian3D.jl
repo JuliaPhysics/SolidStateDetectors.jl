@@ -1,5 +1,5 @@
 function set_passive_or_contact_points(point_types::Array{PointType, 3}, potential::Array{T, 3},
-                        grid::CartesianGrid3D{T}, obj, pot::T, use_nthreads::Int = 1) where {T}
+                        grid::CartesianGrid3D{T}, obj, pot::T, det::SolidStateDetector{T}, use_nthreads::Int = 1) where {T}
     if !isnan(pot)
         @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
             @inbounds for iy in axes(potential, 2)
@@ -8,6 +8,13 @@ function set_passive_or_contact_points(point_types::Array{PointType, 3}, potenti
                     if pt in obj
                         potential[ ix, iy, iz ] = pot
                         point_types[ ix, iy, iz ] = zero(PointType)
+                        if isdefined(det.semiconductor.impurity_density_model, :surface_imp_model)
+                            doped_contact_geom = det.semiconductor.impurity_density_model.surface_imp_model.contact_with_lithium_doped
+                            if in_inactive_contact(pt, doped_contact_geom)
+                                point_types[ir, iφ, iz] |= inactive_contact_bit
+                            end
+                        end
+
                     end
                 end
             end
@@ -36,13 +43,13 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     if !ismissing(det.passives)
         for passive in det.passives
             pot::T = ismissing(weighting_potential_contact_id) ? passive.potential : zero(T)
-            set_passive_or_contact_points(point_types, potential, grid, passive.geometry, pot, use_nthreads)                              
+            set_passive_or_contact_points(point_types, potential, grid, passive.geometry, pot, det, use_nthreads)
         end
     end
     if NotOnlyPaintContacts
         for contact in det.contacts
             pot::T = ismissing(weighting_potential_contact_id) ? contact.potential : contact.id == weighting_potential_contact_id
-            set_passive_or_contact_points(point_types, potential, grid, contact.geometry, pot, use_nthreads)
+            set_passive_or_contact_points(point_types, potential, grid, contact.geometry, pot, det, use_nthreads)
         end
     end
     if PaintContacts
@@ -50,7 +57,7 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
             pot::T = ismissing(weighting_potential_contact_id) ? contact.potential : contact.id == weighting_potential_contact_id
             fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
             for face in fs
-                paint!(point_types, potential, face, contact.geometry, pot, grid)
+                paint!(point_types, potential, face, contact.geometry, pot, grid, det)
             end
         end
     end
