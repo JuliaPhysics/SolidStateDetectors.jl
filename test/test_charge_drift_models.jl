@@ -228,7 +228,7 @@ end
         @test SolidStateDetectors.calculate_mobility(simA.detector.semiconductor.charge_drift_model, CartesianPoint{T}(0,0,0), SolidStateDetectors.Hole) isa T
     end
 
-    @testset "Test if the detector is not depleted" begin
+    @testset "Test if the detector is depleted (inactive layer is not taken into account for depletion)" begin
         mm = 1 / 1000
         pn_r = 8.957282 * mm
         g = Grid(simA)
@@ -238,7 +238,7 @@ end
         user_ax1 = typeof(ax1)(ax1.interval, user_additional_ticks_ax1)
         user_g = typeof(g)((user_ax1, ax2, ax3))
         calculate_electric_potential!(simA, grid=user_g, depletion_handling=true)
-        @test !is_depleted(simA.point_types)
+        @test is_depleted(simA.point_types)
     end
 end
 
