@@ -36,7 +36,7 @@ get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, gri
 get_sub_ind_ranges(p::ConstructiveSolidGeometry.AbstractSurfacePrimitive{T}, grid::CylindricalGrid{T}) where {T} = 
     get_sub_ind_ranges((CylindricalPoint.(ConstructiveSolidGeometry.extreme_points(p)), TicksTuple(grid)))
 
-function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid3D{T}, det::SolidStateDetector{T}) where {T}
+function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CartesianGrid3D{T}, is_inactive_layer_contact::Bool) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eX = CartesianVector{T}(1,0,0);
@@ -70,11 +70,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if isdefined(det.semiconductor.impurity_density_model, :surface_imp_model)
-                        doped_contact_geom = det.semiconductor.impurity_density_model.surface_imp_model.contact_with_lithium_doped
-                        if in_inactive_contact(pt, doped_contact_geom)
-                            point_types[i1, i2, i3] |= inactive_contact_bit
-                        end
+                    if is_inactive_layer_contact
+                        point_types[i1, i2, i3] |= inactive_contact_bit
                     end
                 end
             end
@@ -93,11 +90,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if isdefined(det.semiconductor.impurity_density_model, :surface_imp_model)
-                        doped_contact_geom = det.semiconductor.impurity_density_model.surface_imp_model.contact_with_lithium_doped
-                        if in_inactive_contact(pt, doped_contact_geom)
-                            point_types[i1, i2, i3] |= inactive_contact_bit
-                        end
+                    if is_inactive_layer_contact
+                        point_types[i1, i2, i3] |= inactive_contact_bit
                     end
                 end
             end
@@ -116,11 +110,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if isdefined(det.semiconductor.impurity_density_model, :surface_imp_model)
-                        doped_contact_geom = det.semiconductor.impurity_density_model.surface_imp_model.contact_with_lithium_doped
-                        if in_inactive_contact(pt, doped_contact_geom)
-                            point_types[i1, i2, i3] |= inactive_contact_bit
-                        end
+                    if is_inactive_layer_contact
+                        point_types[i1, i2, i3] |= inactive_contact_bit
                     end
                 end
             end
@@ -129,8 +120,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
     nothing
 end
 
-
-function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CylindricalGrid, det::SolidStateDetector{T}) where {T}
+function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geometry, pot_value, grid::CylindricalGrid, is_inactive_layer_contact::Bool) where {T}
     t_idx_r1, t_idx_r2, t_idx_r3 = get_sub_ind_ranges(face, grid)
     ticks = (grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks)
     eZ = CartesianVector{T}(0,0,1);
@@ -162,11 +152,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if isdefined(det.semiconductor.impurity_density_model, :surface_imp_model)
-                        doped_contact_geom = det.semiconductor.impurity_density_model.surface_imp_model.contact_with_lithium_doped
-                        if in_inactive_contact(pt, doped_contact_geom)
-                            point_types[i1, i2, i3] |= inactive_contact_bit
-                        end
+                    if is_inactive_layer_contact
+                        point_types[i1, i2, i3] |= inactive_contact_bit
                     end
                 end
             end
@@ -207,11 +194,8 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt_cyl, grid) && abs(pt_cyl[2] - ticks[2][i2]) < T(0.1) && in(pt_car, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if isdefined(det.semiconductor.impurity_density_model, :surface_imp_model)
-                        doped_contact_geom = det.semiconductor.impurity_density_model.surface_imp_model.contact_with_lithium_doped
-                        if in_inactive_contact(pt_cyl, doped_contact_geom)
+                    if is_inactive_layer_contact
                             point_types[i1, i2, i3] |= inactive_contact_bit
-                        end
                     end
                 end
             end
