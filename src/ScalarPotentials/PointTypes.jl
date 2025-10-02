@@ -5,11 +5,12 @@ Stores certain information about a grid point via bit-flags.
 
 Right now, there are:
 
-    const update_bit         = 0x01
-    const undepleted_bit     = 0x02
-    const pn_junction_bit    = 0x04
-    const bulk_bit           = 0x08
-    const inactive_layer_bit = 0x10
+    const update_bit           = 0x01
+    const undepleted_bit       = 0x02
+    const pn_junction_bit      = 0x04
+    const bulk_bit             = 0x08
+    const inactive_layer_bit   = 0x10
+    const inactive_contact_bit = 0x20
 
 ## Examples
 
@@ -20,15 +21,17 @@ How to get information out of a `PointType` variable `point_type`:
 4. `point_type & pn_junction_bit > 0` -> this point belongs to the solid state detector, meaning that it is in the volume of the n-type or p-type material.
 5. `point_type & bulk_bit > 0` -> this point is only surrounded by points marked as `pn_junction_bit`
 6. `point_type & inactive_layer_bit > 0` -> this point is part of the inactive layer
+7. `point_type & inactive_contact_bit > 0` -> this point is part of the contact next to the inactive layer
 """
 const PointType       = UInt8
 
 # Point types for electric potential calculation
-const update_bit         = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
-const undepleted_bit     = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
-const pn_junction_bit    = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
-const bulk_bit           = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
-const inactive_layer_bit = 0x10 # parse(UInt8, "00010000", base=2) # 0 -> point is not part of the inactive layer; 1 -> point is part of the inactive layer
+const update_bit           = 0x01 # parse(UInt8, "00000001", base=2) # 1 -> do update; 0 -> do not update
+const undepleted_bit       = 0x02 # parse(UInt8, "00000010", base=2) # 0 -> depleted point; 1 -> undepleted point
+const pn_junction_bit      = 0x04 # parse(UInt8, "00000100", base=2) # 0 -> point is not part of pn-junction; 1 -> point is part of the pn-junction
+const bulk_bit             = 0x08 # parse(UInt8, "00001000", base=2) # 0 -> point is surrounded by points that do not belong to the pn-junction; 1 -> point is only surrounded by points in the pn-junction
+const inactive_layer_bit   = 0x10 # parse(UInt8, "00010000", base=2) # 0 -> point is not part of the inactive layer; 1 -> point is part of the inactive layer
+const inactive_contact_bit = 0x20 # parse(UInt8, "00100000", base=2) # 0 -> point is not part of the contact next to the inactive layer; 1 -> point is part of the contact next to the inactive layer 
 
 is_pn_junction_point_type(p::PointType) = p & pn_junction_bit > 0
 is_undepleted_point_type(p::PointType) = p & undepleted_bit > 0
@@ -93,7 +96,8 @@ end
     
 Returns `true` if all [`PointType`](@ref) values of
 the [`PointTypes`](@ref) of a [`Simulation`](@ref) are marked as depleted
-and `false` if any point in the [`PointTypes`](@ref) is marked as undepleted.
+and `false` if any point in the [`PointTypes`](@ref) is marked as undepleted
+excluding the inactive layer.
 
 It can be used to determine whether the [`SolidStateDetector`](@ref) is
 depleted at the provided bias voltage.
@@ -107,8 +111,8 @@ is_depleted(sim.point_types)
 ```
 """
 is_depleted(point_types::PointTypes)::Bool = 
-    !any(b -> bulk_bit & b > 0 && undepleted_bit & b > 0, point_types.data)
-
+    !any(b -> (bulk_bit & b > 0) && (undepleted_bit & b > 0) &&
+    (inactive_layer_bit & b == 0), point_types.data)
 
 """
     get_active_volume(point_types::PointTypes{T}) where {T}
@@ -235,71 +239,42 @@ Base.convert(T::Type{NamedTuple}, x::PointTypes) = T(x)
 """
     get_inactivelayer_indices(vec::AbstractVector{PointType})::Vector{Vector{Int}}
 
-Scans a 1D vector and returns index groups that surround a `0x00` (outside the detector) and
-contain both `0x07`(part of the inactive layer, not only surrounded by pn_junction point types) and `0x0f` (also part of the inactive layer), bounded by `0x0d` (depleted region inside the detector). It finds the inactive layer bounded by 0x00 and 0x0d.
+Scans a 1D vector and returns index groups adjacent to points flagged with `inactive_contact_bit` (points that belongs yo the contact next to the inactive layer). Each group consists of consecutive indices where all of the `required_bits` (`update_bit | undepleted_bit | pn_junction_bit`) are set (undepleted points that belong to the inactive layer).
 
 Note: For detectors with undepleted regions touching the inactive layer, this method is not recommended since it won't identify the inactive layer. In this extreme case, define the inactive layer geometry boundaries via inactive_layer_geometry.
 """
+
 function get_inactivelayer_indices(vec::AbstractVector{PointType})
     pt_indices = Vector{Vector{Int}}()
     len = length(vec)
+    required_bits = update_bit | undepleted_bit | pn_junction_bit
+
     i = 1
-
     while i <= len
-        if (vec[i] & 0x0f) == 0x00
-            zero_start = i
-            while i <= len && (vec[i] & 0x0f) == 0x00
-                i += 1
+        if (vec[i] & inactive_contact_bit) != 0
+            # start checking to the right
+            region = Int[]
+            j = i + 1
+            while j <= len && (vec[j] & required_bits) == required_bits
+                push!(region, j)
+                j += 1
             end
-            zero_end = i - 1
-            zero_count = zero_end - zero_start + 1
 
-            if zero_count ≤ 2
-                start_idx = zero_start
-                while start_idx > 1 && (vec[start_idx - 1] & 0x0f) != 0x0d
-                    start_idx -= 1
-                end
-
-                end_idx = zero_end
-                while end_idx < len && (vec[end_idx + 1] & 0x0f) != 0x0d
-                    end_idx += 1
-                end
-
-                has_07 = false
-                has_0f = false
-                matching = Int[]
-                for idx in start_idx:end_idx
-                    v = vec[idx] & 0x0f
-                    if v == 0x07
-                        has_07 = true
-                        push!(matching, idx)
-                    elseif v == 0x0f
-                        has_0f = true
-                        push!(matching, idx)
-                    end
-                end
-
-                if has_07 && has_0f
-                    push!(pt_indices, matching)
-                end
+            # start checking to the left
+            j = i - 1
+            while j >= 1 && (vec[j] & required_bits) == required_bits
+                push!(region, j)
+                j -= 1
             end
-        else
-            i += 1
+
+            if !isempty(region)
+                push!(pt_indices, sort(region))
+            end
         end
+        i += 1
     end
-    
+
     return pt_indices
-end
-
-function propagate_inactive!(vec::AbstractVector{PointType})
-    for i in eachindex(vec)
-        if (vec[i] & undepleted_bit) != 0
-            if (i > firstindex(vec) && (vec[i-1] & inactive_layer_bit) != 0) ||
-               (i < lastindex(vec)  && (vec[i+1] & inactive_layer_bit) != 0)
-                vec[i] |= inactive_layer_bit
-            end
-        end
-    end
 end
 
 """
@@ -337,19 +312,6 @@ function mark_inactivelayer_bits!(point_types::Array{PointType, 3})
             vec[idx] |= inactive_layer_bit
         end
     end
-
-
-    if any((point_types .& undepleted_bit) .!= 0)
-        for j in 1:sz2, k in 1:sz3
-            propagate_inactive!(@view point_types[:, j, k])
-        end
-        for i in 1:sz1, k in 1:sz3
-            propagate_inactive!(@view point_types[i, :, k])
-        end
-        for i in 1:sz1, j in 1:sz2
-            propagate_inactive!(@view point_types[i, j, :])
-        end
-    end    
 end
 
 
