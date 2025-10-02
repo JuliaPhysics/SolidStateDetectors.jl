@@ -141,6 +141,7 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
     if doped_geometry_for_imp || doped_geometry_for_drift
         imp_doped_contact_id::Int = drift_doped_contact_id::Int = 1
         if doped_geometry_for_imp && haskey(config_detector["semiconductor"]["impurity_density"], "doped_contact_id")
+            if(config_detector["semiconductor"]["impurity_density"]["doped_contact_id"] == nothing) throw(ArgumentError("The imp_doped_contact_id is not defined in the configuration file.")) end 
             imp_doped_contact_id = config_detector["semiconductor"]["impurity_density"]["doped_contact_id"]
             if !in(imp_doped_contact_id, getfield.(contacts, :id))
                 ArgumentError("The imp_doped_contact_id is not defined in the configuration file.")
