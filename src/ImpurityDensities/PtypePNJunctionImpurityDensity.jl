@@ -28,7 +28,8 @@ function ImpurityDensity(T::DataType, t::Val{:PtypePNjunction}, dict::AbstractDi
     lithium_annealing_temperature = _parse_value(T, get(dict, "lithium_annealing_temperature", 623u"K"), input_units.temperature)
     lithium_annealing_time = _parse_value(T, get(dict, "lithium_annealing_time", 18u"minute"), internal_time_unit)
     contact_with_lithium_doped = get(dict, "contact_with_lithium_doped", nothing)
-    inactive_contact_id = get(dict, "doped_contact_id", 1)
+    inactive_contact_id = get(dict, "doped_contact_id", -1)
+    inactive_contact_id < 1 && error("Invalid doped_contact_id: missing or misspelled key")
     bulk_imp_model = haskey(dict, "bulk_imp_model") ? ImpurityDensity(T, dict["bulk_imp_model"], input_units) : ConstantImpurityDensity{T}(-1e16)
     PtypePNJunctionImpurityDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, inactive_contact_id, bulk_imp_model)
 end
