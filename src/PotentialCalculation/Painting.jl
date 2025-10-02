@@ -70,9 +70,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if is_inactive_layer_contact
-                        point_types[i1, i2, i3] |= inactive_contact_bit
-                    end
+                    point_types[i1, i2, i3] |= inactive_contact_bit * is_inactive_layer_contact
                 end
             end
         end
@@ -90,9 +88,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if is_inactive_layer_contact
-                        point_types[i1, i2, i3] |= inactive_contact_bit
-                    end
+                    point_types[i1, i2, i3] |= inactive_contact_bit * is_inactive_layer_contact
                 end
             end
         end
@@ -110,9 +106,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if is_inactive_layer_contact
-                        point_types[i1, i2, i3] |= inactive_contact_bit
-                    end
+                    point_types[i1, i2, i3] |= inactive_contact_bit * is_inactive_layer_contact
                 end
             end
         end
@@ -152,9 +146,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt, grid) && in(pt, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if is_inactive_layer_contact
-                        point_types[i1, i2, i3] |= inactive_contact_bit
-                    end
+                    point_types[i1, i2, i3] |= inactive_contact_bit * is_inactive_layer_contact
                 end
             end
         end
@@ -194,9 +186,7 @@ function paint!(point_types, potential, face::AbstractSurfacePrimitive{T}, geome
                 if in(pt_cyl, grid) && abs(pt_cyl[2] - ticks[2][i2]) < T(0.1) && in(pt_car, geometry, csgtol)
                     point_types[i1, i2, i3] = zero(PointType)
                     potential[i1, i2, i3] = pot_value
-                    if is_inactive_layer_contact
-                            point_types[i1, i2, i3] |= inactive_contact_bit
-                    end
+                    point_types[i1, i2, i3] |= inactive_contact_bit * is_inactive_layer_contact
                 end
             end
         end
