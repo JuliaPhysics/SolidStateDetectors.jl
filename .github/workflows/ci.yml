@@ -68,7 +68,7 @@ jobs:
         env:
           PYTHON: 'Conda'
       - name: Remove Geant4 and downgrade JSON on x86
-        run: julia --project="test" -e 'using Pkg; Pkg.resolve(); Pkg.rm("Geant4"); Pkg.add(name = "JSON", version = "0"); Pkg.compat("JSON", "0.21.2")'
+        run: julia --project="test" -e 'using Pkg; Pkg.resolve(); Pkg.rm("Geant4"); Pkg.add(name = "JSON", version = "0"); Pkg.compat("JSON", "0.21.2"); Pkg.develop(path = pwd())'
         shell: bash
         if: matrix.arch == 'x86'
       - uses: julia-actions/julia-runtest@v1
