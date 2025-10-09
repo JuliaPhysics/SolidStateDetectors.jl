@@ -185,6 +185,7 @@ Calculates the electron and hole drift paths for the given [`Event`](@ref) and [
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
 * `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
+* `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -195,9 +196,9 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
-function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector, verbose = verbose)
-    evt.drift_paths = drift_charges(sim, evt.locations, evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
+function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector; verbose)
+    evt.drift_paths = drift_charges(sim, evt.locations, evt.energies; Δt, max_nsteps, diffusion, self_repulsion, geometry_check, verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
@@ -267,6 +268,7 @@ The output is stored in `evt.drift_paths` and `evt.waveforms`.
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
 * `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
+* `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -276,9 +278,9 @@ simulate!(evt, sim, Δt = 1u"ns", verbose = false)
 
 See also [`drift_charges!`](@ref) and [`get_signals!`](@ref).
 """
-function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
-    get_signals!(evt, sim, Δt = Δt)
+function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt, sim; max_nsteps, Δt, diffusion, self_repulsion, geometry_check, verbose)
+    get_signals!(evt, sim; Δt)
     nothing
 end
 
