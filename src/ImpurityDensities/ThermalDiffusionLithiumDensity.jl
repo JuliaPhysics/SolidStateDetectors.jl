@@ -67,3 +67,7 @@ function get_impurity_density(li_diffusion::ThermalDiffusionLithiumDensity{T}, p
     depth = li_diffusion.distance_to_contact(pt)
     li_diffusion.lithium_density_on_contact * SpecialFunctions.erfc(depth/2/sqrt(li_diffusion.lithium_diffusivity_in_germanium*li_diffusion.lithium_annealing_time))
 end
+
+(*)(scale::Real, tidm::ThermalDiffusionLithiumDensity{T}) where {T} = ThermalDiffusionLithiumDensity{T}(tidm.lithium_annealing_temperature, tidm.lithium_annealing_time, tidm.inactive_contact_id, tidm.distance_to_contact, T(scale * tidm.lithium_density_on_contact), tidm.lithium_diffusivity_in_germanium)
+
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, tidm::ThermalDiffusionLithiumDensity{T}) where {T} = ThermalDiffusionLithiumDensity{T}(tidm.lithium_annealing_temperature, tidm.lithium_annealing_time, tidm.inactive_contact_id, tidm.distance_to_contact, T(to_internal_units(offset) + tidm.lithium_density_on_contact), tidm.lithium_diffusivity_in_germanium)

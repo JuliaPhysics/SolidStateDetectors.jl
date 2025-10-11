@@ -27,9 +27,11 @@ If [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) is loaded, t
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
 * `number_of_carriers::Int = 1`: Number of charge carriers to be used in the N-Body simulation of an energy deposition. 
 * `number_of_shells::Int = 1`: Number of shells around the `center` point of the energy deposition.
+* `max_interaction_distance = NaN`: Maximum distance for which charge clouds will interact with each other (if `NaN`, then all charge clouds drift independently).
+* `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
+* `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = false`: Activate or deactivate additional info output.
 * `chunk_n_physics_events::Int = 1000` (`LegendHDF5IO` only): Number of events that should be saved in a single HDF5 output file.
-* `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
 
 ## Examples
 ```julia 
@@ -54,8 +56,10 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              self_repulsion::Bool = false,
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
-                             verbose::Bool = false,
-                             end_drift_when_no_field::Bool = true ) where {T <: SSDFloat}
+                             max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
+                             end_drift_when_no_field::Bool = true,
+                             geometry_check::Bool = false,
+                             verbose::Bool = false ) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -73,7 +77,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
 
     # First simulate drift paths
     drift_paths_and_edeps = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, 
-        diffusion, self_repulsion, number_of_carriers, number_of_shells, verbose, end_drift_when_no_field)
+        diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
     drift_paths = map(x -> vcat([vcat(ed...) for ed in x[1]]...), drift_paths_and_edeps)
     edeps = map(x -> vcat([vcat(ed...) for ed in x[2]]...), drift_paths_and_edeps)
     # now iterate over contacts and generate the waveform for each contact
@@ -96,19 +100,40 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     return vcat(mcevents_chns...)  
 end
 
-_convertEnergyDepsToChargeDeps(pos::AbstractVector{<:SVector{3}}, edep::AbstractVector{<:Quantity}, det::SolidStateDetector; kwargs...) = 
-    _convertEnergyDepsToChargeDeps([[p] for p in pos], [[e] for e in edep], det; kwargs...)
+function _convertEnergyDepsToChargeDeps(
+        pos::AbstractVector{<:SVector{3}}, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
+        particle_type::Type{PT} = Gamma, 
+        radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(edep)), particle_type),
+        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
+        kwargs...
+    ) where {T <: SSDFloat, PT <: ParticleType} 
 
-function _convertEnergyDepsToChargeDeps(pos::AbstractVector{<:AbstractVector}, edep::AbstractVector{<:AbstractVector}, det::SolidStateDetector; 
-        number_of_carriers::Int = 1, number_of_shells::Int = 1)
+    @assert eachindex(pos) == eachindex(edep) == eachindex(radius)
+
+    d::T = T(to_internal_units(max_interaction_distance))
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
+
+    loc, ene, rad = group_points_by_distance(CartesianPoint.(map(x -> to_internal_units.(x), pos)), T.(to_internal_units.(edep)), T.(to_internal_units.(radius)), d)
+    _convertEnergyDepsToChargeDeps(loc, ene, det; radius = rad, kwargs...)
+end
+
+function _convertEnergyDepsToChargeDeps(
+        pos::AbstractVector{<:AbstractVector}, edep::AbstractVector{<:AbstractVector}, det::SolidStateDetector{T}; 
+        particle_type::Type{PT} = Gamma,
+        radius::AbstractVector{<:AbstractVector{<:Union{<:Real, <:LengthQuantity}}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), edep),
+        number_of_carriers::Int = 1, number_of_shells::Int = 1, 
+        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN # is ignored here
+    ) where {T <: SSDFloat, PT <: ParticleType}
+
     charge_clouds = broadcast(
         iEdep_indep -> broadcast(
             i_together -> begin 
                 nbcc = NBodyChargeCloud(
-                    CartesianPoint(to_internal_units.((pos[iEdep_indep][i_together]))), 
-                    edep[iEdep_indep][i_together],
+                    CartesianPoint(T.(to_internal_units.(pos[iEdep_indep][i_together]))), 
+                    T.(to_internal_units(edep[iEdep_indep][i_together])),
                     number_of_carriers,
-                    number_of_shells = number_of_shells
+                    number_of_shells = number_of_shells,
+                    radius = T(to_internal_units(radius[iEdep_indep][i_together]))
                 )
                 move_charges_inside_semiconductor!([nbcc.locations], [nbcc.energies], det)
                 nbcc
@@ -117,8 +142,8 @@ function _convertEnergyDepsToChargeDeps(pos::AbstractVector{<:AbstractVector}, e
         ), 
         eachindex(edep)
     )
-    locations = [map(cc -> cc.locations, ccs) for ccs in charge_clouds]
-    edeps = [map(cc -> cc.energies, ccs) for ccs in charge_clouds]
+    locations = map.(cc -> cc.locations, charge_clouds)
+    edeps = map.(cc -> cc.energies, charge_clouds)
     locations, edeps
 end
 
@@ -129,16 +154,17 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   self_repulsion::Bool,
                                   number_of_carriers::Int, 
                                   number_of_shells::Int,
-                                  verbose::Bool,
-                                  end_drift_when_no_field::Bool ) where {T <: SSDFloat}
+                                  max_interaction_distance::Union{<:Real, <:LengthQuantity},
+                                  end_drift_when_no_field::Bool,
+                                  geometry_check::Bool,
+                                  verbose::Bool ) where {T <: SSDFloat}
     @showprogress map(mcevents) do phyevt
-        locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells)
+        locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
-                VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]),
-                electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, 
-                diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field
+                VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, T(Δt.val) * unit(Δt);
+                max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose
             ),
-            eachindex(edeps)            
+            eachindex(edeps)
         )
         drift_paths, edeps
     end

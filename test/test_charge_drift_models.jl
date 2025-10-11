@@ -3,7 +3,8 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared
+using ArraysOfArrays
 using InteractiveUtils
 using StaticArrays
 using LinearAlgebra
@@ -463,5 +464,83 @@ end
         @test cdm0.electrons == cdmdict.electrons
         @test cdm0.holes == cdmdict.holes
         @test cdm0.crystal_orientation == cdmdict.crystal_orientation
+    end
+
+    @testset "Test parsing of ADL2016ChargeDriftModel config files with units" begin
+        cdm0 = ADL2016ChargeDriftModel(T=T) # default charge drift model
+        @test cdm0.electrons.mu0      == 3.7165f0
+        @test cdm0.electrons.beta     == 0.804f0
+        @test cdm0.electrons.E0       == 50770f0
+        @test cdm0.electrons.mun      == -0.0145f0
+        @test cdm0.parameters.Γ0      == 0.496f0  # η0
+        @test cdm0.parameters.Γ1      == 0.0296f0 # b
+        @test cdm0.parameters.Γ2      == 120000f0 # Eref
+        @test cdm0.holes.axis100.mu0  == 6.2934f0
+        @test cdm0.holes.axis100.beta == 0.735f0
+        @test cdm0.holes.axis100.E0   == 18190f0
+        @test cdm0.holes.axis111.mu0  == 6.2383f0
+        @test cdm0.holes.axis111.beta == 0.749f0
+        @test cdm0.holes.axis111.E0   == 14390f0
+    end
+
+    @testset "Test equivalence of longitudinal drift parameter implementation" begin
+    
+        # The function to determine the hole drift for both models is equivalent,
+        # so the hole drift parameters should be stored in the same way
+        cdm2016 = ADL2016ChargeDriftModel(T=T)
+        cdm = ADLChargeDriftModel(T=T,
+            e100μ0 = 37165u"cm^2/(V*s)",
+            e100β  = 0.804,
+            e100E0 = 507.7u"V/cm",
+            e100μn = -145u"cm^2/(V*s)",
+            h100μ0 = 62934u"cm^2/(V*s)",
+            h100β  = 0.735,
+            h100E0 = 181.9u"V/cm",
+            h111μ0 = 62383u"cm^2/(V*s)",
+            h111β  = 0.749,
+            h111E0 = 143.9u"V/cm"
+        )
+        
+        @test cdm2016.electrons == cdm.electrons.axis100
+        @test cdm2016.holes     == cdm.holes
+    end
+end
+
+@timed_testset "Test grouping of charges" begin
+    for N in 1:100
+        @timed_testset "Test for length $(N)" begin
+            
+            # Generate random data
+            pts = [CartesianPoint{T}(rand(3)...) for _ in Base.OneTo(N)]
+            E = rand(T, N)
+            d = rand(T)
+            
+            # Evaluate method
+            ptsg, Eg = group_points_by_distance(pts, E, d)
+            
+            # Test correctness
+            s0 = Set(pts)
+
+            # result should be a VectorOfVectors
+            @test ptsg isa VectorOfVectors{<:CartesianPoint{T}}
+
+            # all points should appear in the result
+            @test Set(flatview(ptsg))    == Set(pts)
+            @test length(flatview(ptsg)) == length(pts)
+            @test Set(flatview(Eg))      == Set(E)
+            @test length(flatview(Eg))   == length(E)
+        
+            for (i,group) in enumerate(ptsg)
+                @testset "Length $(N), subgroup $(i)" begin
+                    sg = Set(group)
+                    sc = setdiff(s0, group)
+                    for pt in group
+                        swo = setdiff(sg, Set([pt]))
+                        @test isempty(swo) || any(distance_squared.(Ref(pt), swo) .<= d^2)
+                        @test all(distance_squared.(Ref(pt), sc) .> d^2)
+                    end
+                end
+            end
+        end
     end
 end

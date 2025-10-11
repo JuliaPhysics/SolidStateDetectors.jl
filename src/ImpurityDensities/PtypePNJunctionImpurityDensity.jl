@@ -37,3 +37,7 @@ end
 function get_impurity_density(PtypePNjunction::PtypePNJunctionImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
     get_impurity_density(PtypePNjunction.bulk_imp_model, pt)+get_impurity_density(PtypePNjunction.surface_imp_model, pt)
 end
+
+(*)(scale::Real, pidm::PtypePNJunctionImpurityDensity{T}) where {T} = PtypePNJunctionImpurityDensity{T}(scale * pidm.surface_imp_model, scale * pidm.bulk_imp_model)
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, pidm::PtypePNJunctionImpurityDensity{T}) where {T} = PtypePNJunctionImpurityDensity{T}(offset + pidm.surface_imp_model, offset + pidm.bulk_imp_model)
+

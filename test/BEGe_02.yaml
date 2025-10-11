@@ -28,11 +28,10 @@ detectors:
 - semiconductor:
     material: HPGe
     impurity_density:
-      name: constant
-      value: -5e9cm^-3
-      corrections:
-        scale: 0.8
-        offset: -5e8cm^-3
+      name: linear_boule
+      a: -1e7
+      b: -1e5
+      det_z0: 120
     geometry:
       translate:
         tube:

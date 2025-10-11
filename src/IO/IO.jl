@@ -3,7 +3,7 @@ include("ParseConfigFiles.jl")
 
 _namedtuple(x) = NamedTuple(x)
 _namedtuple(::Missing) = (object = "missing",)
-_namedtuple(d::AbstractDict) = (dict_json_string = json(d),)
+_namedtuple(d::AbstractDict) = (dict_json_string = JSON.json(d),)
 # Base.convert(::Type{NamedTuple}, x::AbstractDict) = _namedtuple(x)
 _dict(nt::NamedTuple) = JSON.parse(nt.dict_json_string)
 
@@ -30,10 +30,6 @@ ssd_write("example_sim.h5", sim)
 !!! warn
     If a file with `filename` already exists, it will be overwritten by this method.
 
-!!! note 
-    In order to use this method, the package [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) 
-    has to be loaded after loading SolidStateDetectors.jl.
-
 See also [`ssd_read`](@ref).
 """
 function ssd_write end
@@ -55,10 +51,6 @@ using SolidStateDetectors
 using LegendHDF5IO
 sim = ssd_read("example_sim.h5", Simulation)
 ```
-
-!!! note 
-    In order to use this method, the package [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) 
-    has to be loaded after loading SolidStateDetectors.jl.
 
 See also [`ssd_write`](@ref).
 """

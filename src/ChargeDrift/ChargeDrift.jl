@@ -32,7 +32,8 @@ end
 function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_types::PointTypes{T, 3},
                         starting_points::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T},
                         electric_field::Interpolations.Extrapolation{<:SVector{3}, 3},
-                        Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true, end_drift_when_no_field::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
+                        Δt::RQ; max_nsteps::Int = 2000, diffusion::Bool = false, self_repulsion::Bool = false, 
+                        end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Vector{EHDriftPath{T}} where {T <: SSDFloat, RQ <: RealQuantity}
 
     drift_paths::Vector{EHDriftPath{T}} = Vector{EHDriftPath{T}}(undef, length(flatview(starting_points)))
     dt::T = T(to_internal_units(Δt))
@@ -49,9 +50,9 @@ function _drift_charges(det::SolidStateDetector{T}, grid::Grid{T, 3}, point_type
         timestamps_e::Vector{T} = Vector{T}(undef, max_nsteps)
         timestamps_h::Vector{T} = Vector{T}(undef, max_nsteps)
         
-        n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field )
-        n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field )
-    
+        n_e::Int = _drift_charge!( drift_path_e, timestamps_e, det, point_types, grid, start_points, -charges, dt, electric_field, Electron; diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose )
+        n_h::Int = _drift_charge!( drift_path_h, timestamps_h, det, point_types, grid, start_points,  charges, dt, electric_field, Hole; diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose )
+        
         for i in eachindex(start_points)
             drift_paths[drift_path_counter + i] = EHDriftPath{T}( drift_path_e[i,1:n_e], drift_path_h[i,1:n_h], timestamps_e[1:n_e], timestamps_h[1:n_h] )
         end
@@ -140,7 +141,7 @@ function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}
                 if iszero(direction) # if the two charges are at the exact same position
                     continue         # don't let them self-repel each other but treat them as same change
                 end                  # if diffusion is simulated, they will very likely be separated in the next step
-                tmp::T = elementary_charge * inv(4 * pi * ϵ0 * ϵ_r * max(sum(direction.^2), T(1e-10))) # minimum distance is 10µm 
+                tmp::T = elementary_charge * inv(4π * ϵ0 * ϵ_r * max(distance_squared(direction), T(1e-10))) # minimum distance is 10µm 
                 step_vectors[n] += charges[m] * tmp * normalize(direction)
                 step_vectors[m] -= charges[n] * tmp * normalize(direction)
             end
@@ -188,6 +189,7 @@ function _check_and_update_position!(
             point_types::PointTypes{T, 3, S},
             startpos::AbstractVector{CartesianPoint{T}},
             Δt::T,
+            geometry_check::Bool,
             verbose::Bool
         )::Nothing where {T <: SSDFloat, S}
         
@@ -206,10 +208,15 @@ function _check_and_update_position!(
             crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = 
                 get_crossing_pos(det, point_types, copy(current_pos[n]), current_pos[n] + step_vectors[n])
             if cd_point_type == CD_ELECTRODE
-                done[n] = true
-                drift_path[n,istep] = crossing_pos
-                current_pos[n] = crossing_pos
-            elseif cd_point_type == CD_FLOATING_BOUNDARY
+                if !geometry_check || crossing_pos in det.contacts
+                    done[n] = true
+                    drift_path[n,istep] = crossing_pos
+                    current_pos[n] = crossing_pos
+                else
+                    cd_point_type = CD_FLOATING_BOUNDARY
+                end
+            end
+            if cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
                 next_pos::CartesianPoint{T} = current_pos[n] + projected_vector
@@ -229,7 +236,7 @@ function _check_and_update_position!(
                 Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
-            else # if cd_point_type == CD_BULK or CD_OUTSIDE
+            elseif cd_point_type!= CD_ELECTRODE # if cd_point_type == CD_BULK or CD_OUTSIDE
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
@@ -259,8 +266,9 @@ function _drift_charge!(
                             ::Type{CC};
                             diffusion::Bool = false,
                             self_repulsion::Bool = false,
-                            verbose::Bool = true,
-                            end_drift_when_no_field::Bool = true
+                            end_drift_when_no_field::Bool = true,
+                            geometry_check::Bool = false,
+                            verbose::Bool = true
                         )::Int where {T <: SSDFloat, S, CC <: ChargeCarrier}
                         
     n_hits::Int, max_nsteps::Int = size(drift_path)
@@ -319,7 +327,7 @@ function _drift_charge!(
         _get_driftvectors!(step_vectors, done, Δt, cdm, current_pos, CC)
         diffusion && (use_mobility_tied_diffusion ? _add_fieldvector_diffusion!(step_vectors, done, Δt, cdm, current_pos, crystal_temperature, CC) : _add_fieldvector_diffusion!(step_vectors, done, diffusion_length))
         _modulate_driftvectors!(step_vectors, current_pos, det.virtual_drift_volumes)
-        _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, verbose)
+        _check_and_update_position!(step_vectors, current_pos, done, normal, drift_path, timestamps, istep, det, grid, point_types, startpos, Δt, geometry_check, verbose)
         if all(done) break end
     end
 

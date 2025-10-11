@@ -48,6 +48,3 @@ using SolidStateDetectors
 using LegendHDF5IO
 ssd_read("<name-of-simulation-file>.h5", Simulation)
 ```
-
-!!! note
-    `LegendHDF5IO` must be loaded **after** loading `SolidStateDetectors`!

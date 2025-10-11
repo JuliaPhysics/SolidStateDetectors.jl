@@ -61,7 +61,7 @@ end
 get_precision_type(::Simulation{T}) where {T} = T
 get_coordinate_system(::Simulation{T, CS}) where {T, CS} = CS
 
-function NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
+function Base.NamedTuple(sim::Simulation{T}) where {T <: SSDFloat}
     wpots_strings = ["WeightingPotential_$(contact.id)" for contact in sim.detector.contacts]
     nt = (
         detector_json_string = _namedtuple(sim.config_dict),
@@ -1071,7 +1071,7 @@ There are several keyword arguments which can be used to tune the calculation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `10000`. If set to `-1` there will be no limit.
+    Default is `50000`. If set to `-1` there will be no limit.
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
@@ -1134,7 +1134,7 @@ There are several keyword arguments which can be used to tune the calculation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `10000`. If set to `-1` there will be no limit.
+    Default is `50000`. If set to `-1` there will be no limit.
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
@@ -1171,7 +1171,7 @@ Calculates the [`ElectricField`](@ref) from the [`ElectricPotential`](@ref) stor
 !!! note 
     This method only works if `sim.electric_potential` has already been calculated and is not `missing`.
 """
-function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union{Missing, Int} = missing)::Nothing where {T <: SSDFloat, CS}
+function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union{Missing, Int} = missing, use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat, CS}
     @assert !ismissing(sim.electric_potential) "Electric potential has not been calculated yet. Please run `calculate_electric_potential!(sim)` first."
     periodicity::T = width(sim.world.intervals[2])
     e_pot, point_types = if CS == Cylindrical && periodicity == T(0) # 2D, only one point in φ
@@ -1185,7 +1185,7 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
             end
         end
         get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
-        get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ);
+        get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ)
     elseif CS == Cylindrical
         get_2π_potential(sim.electric_potential),
         get_2π_potential(sim.point_types)
@@ -1193,7 +1193,7 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
         sim.electric_potential,
         sim.point_types
     end
-    sim.electric_field = get_electric_field_from_potential(e_pot, point_types);
+    sim.electric_field = get_electric_field_from_potential(e_pot, point_types; use_nthreads)
     nothing
 end
 
@@ -1205,10 +1205,11 @@ end
 @deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
 
 function drift_charges( sim::Simulation{T}, starting_positions::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T};
-                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true, end_drift_when_no_field::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
+                        Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, 
+                        end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions, energies, 
-                             interpolated_vectorfield(sim.electric_field), Δt, 
-                             max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose, end_drift_when_no_field = end_drift_when_no_field)
+                             interpolated_vectorfield(sim.electric_field), Δt;
+                             max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
 end
 
 function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
@@ -1269,7 +1270,7 @@ There are several keyword arguments which can be used to tune the simulation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
-    Default is `10000`. If set to `-1` there will be no limit.
+    If set to `-1` there will be no limit. Default is no limit.
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    

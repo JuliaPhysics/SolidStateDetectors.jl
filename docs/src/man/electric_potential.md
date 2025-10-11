@@ -150,6 +150,47 @@ pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(lithium_anneali
 sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density)
 ```
 
+### Boule Impurity Densities
+
+Boule impurity densities are meant to be used when the impurity density is defined in the boule coordinates, where the z-axis is aligned with the boule growth direction. 
+Different models are provided. In each the field `det_z0` is the z-coordinate of the detector origin in boule coordinates. 
+The z-direction of the detector is opposite to the z-direction of the boule coordinates.
+In this matter the detector impurities are automatically determined from those of the boule, depending on `det_z0`.
+```yaml 
+impurity_density:
+  name: linear_exponential_boule
+  a: -1e10cm^-3
+  b: -1e9cm^-4
+  n: -2e9cm^-3
+  l: 5cm
+  m: 3cm
+  det_z0: 120cm
+```
+In this example, the impurity density is modeled along the boule as a linear plus an exponential term: $a + b*z + n*e^{(z - l)/m}$ with $z$ in boule coordinates. 
+The impurity density of the detector will in turn be modeled by: $a + b*(z_0 - z) + n*e^{(z_0 - z - l)/m}$ with $z$ in detector coordinates.
+If no units are given, `a` and `n` are parsed in units of `units.length`$^{-3}$, `b` in units of `units.length`$^{-4}$ and `l`, `m` and `det_z0` in units of `units.length`.
+
+### Correcting Impurity Densities
+
+When simulating real detectors, the simulated depletion voltage often differs from the measured value. This discrepancy arises primarily from the high uncertainty in impurity density measurements. A straightforward approach to improve the agreement is to apply a scaling factor and an offset to the impurity density. 
+The scaling factor accounts for potential systematic errors in impurity density measurements. 
+The offset is motivated by the thermal release of impurities from deep hole traps, which leads to a shift in the effective impurity density throughout the detector after biasing. In steady-state operation, this effect can be approximated as a uniform offset
+These terms can be added to the configuration file under `corrections`. 
+```yaml 
+impurity_density:
+  name: linear_exponential_boule
+  a: -1e10cm^-3
+  b: -1e9cm^-4
+  n: -2e9cm^-3
+  l: 5cm
+  m: 3cm
+  det_z0: 120cm
+  corrections:
+    scale: 0.9
+    offset: -1e9cm^-3
+```
+If no units are given, `offset` is parsed in units of `units.length`$^{-3}$.
+Corrections can be applied to any impurity density model. Given an originally calculated impurity density $\rho$, the corrected impurity density used in the simulation is $f*\rho+t$ where $f$ and $t$ are the scale and offset respectively.
 
 ### Custom Impurity Density
 

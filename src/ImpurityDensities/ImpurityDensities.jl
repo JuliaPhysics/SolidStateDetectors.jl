@@ -27,6 +27,9 @@ abstract type AbstractImpurityDensity{T <: SSDFloat} end
     return ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
 end
 
+(*)(idm::AbstractImpurityDensity, scale::Real) = (*)(scale, idm)
+(+)(idm::AbstractImpurityDensity, offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}) = (+)(offset, idm)
+
 """
     get_impurity_density(id::AbstractImpurityDensity, pt::AbstractCoordinatePoint)
     

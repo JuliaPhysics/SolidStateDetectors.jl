@@ -227,7 +227,7 @@ end
 
 Base.convert(T::Type{PointTypes}, x::NamedTuple) = T(x)
 
-function NamedTuple(point_types::PointTypes{T, 3}) where {T}
+function Base.NamedTuple(point_types::PointTypes{T, 3}) where {T}
     return (
         grid = NamedTuple(point_types.grid),
         values = point_types.data,

@@ -457,7 +457,7 @@ For an initial charge cloud of `1000` point charges, all located at the origin o
 
 
 The diffusion constants for electrons and holes are stored in `SolidStateDetectors.material_properties` as `De` and `Dh`, respectively.
-For high-purity germanium, the diffusion constants for electrons and holes are [reported](https://www.ecse.rpi.edu/~schubert/Educational-resources/Materials-Semiconductors-Si-and-Ge.pdf) to be $D_e = 101\,\text{cm}^2\text{/s}$ and $D_h = 49\,\text{cm}^2\text{/s}$. These values are the default values in `SolidStateDetectors.material_properties`:
+For high-purity germanium at $T=77\,\text{K}$, the diffusion constants for electrons and holes are [reported](https://github.com/JuliaPhysics/SolidStateDetectors.jl/pull/498#issuecomment-2961465311) to be $D_e = 239\,\text{cm}^2\text{/s}$ and $D_h = 279\,\text{cm}^2\text{/s}$. These values are the default values in `SolidStateDetectors.material_properties`:
 ````@example NBodyChargeCloud
 SolidStateDetectors.material_properties[:HPGe]
 println("Electrons: $(SolidStateDetectors.material_properties[:HPGe].De)") #hide

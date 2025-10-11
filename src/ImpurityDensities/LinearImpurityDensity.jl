@@ -16,7 +16,7 @@ that can each contain `init` for initial values at 0 and `gradient` for gradient
 An example definition of a linear impurity density looks like this:
 ```yaml 
 impurity_density:
-  name: cylindrical
+  name: linear
   x:  # impurity profile with linear gradient in x
     init: 1.0e10     # 1/m³
     gradient: 1.0e11 # 1/m⁴
@@ -55,3 +55,7 @@ function get_impurity_density(lcdm::LinearImpurityDensity{T}, pt::AbstractCoordi
     end
     return ρ
 end
+
+(*)(scale::Real, lcdm::LinearImpurityDensity{T}) where {T} = LinearImpurityDensity{T}(T.(scale .* lcdm.offsets), T.(scale .* lcdm.gradients))
+
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, lcdm::LinearImpurityDensity{T}) where {T} = LinearImpurityDensity{T}(T.(to_internal_units(offset) .+ lcdm.offsets), lcdm.gradients)

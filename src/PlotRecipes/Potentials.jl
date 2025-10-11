@@ -93,10 +93,10 @@ end
         if cross_section == :φ
             aspect_ratio --> 1
             xguide --> "r"
-            xunit --> internal_length_unit
+            # xunit --> internal_length_unit
             xlims --> extrema(grid.r).*internal_length_unit
             yguide --> "z"
-            yunit --> internal_length_unit
+            # yunit --> internal_length_unit
             ylims --> extrema(grid.z).*internal_length_unit
             gr_ext::Array{T,1} = midpoints(get_extended_ticks(grid.r))
             gz_ext::Array{T,1} = midpoints(get_extended_ticks(grid.z))
@@ -110,9 +110,9 @@ end
             end
         elseif cross_section == :r
             xguide --> "φ"
-            xunit --> internal_angle_unit
+            # xunit --> internal_angle_unit
             yguide --> "z"
-            yunit --> internal_length_unit
+            # yunit --> internal_length_unit
             ylims --> extrema(grid.z)*internal_length_unit
             grid.φ*internal_angle_unit, grid.z*internal_length_unit, data[idx,:,:]'*punit
         elseif cross_section == :z
@@ -169,17 +169,17 @@ end
         if cross_section == :φ
             aspect_ratio --> 1
             xguide --> "r"
-            xunit --> internal_length_unit
+            # xunit --> internal_length_unit
             yguide --> "z"
-            yunit --> internal_length_unit
+            # yunit --> internal_length_unit
             xlims --> (grid.r[2],grid.r[end-1]).*internal_length_unit
             ylims --> (grid.z[2],grid.z[end-1]).*internal_length_unit
             gr_ext*internal_length_unit, gz_ext*internal_length_unit, ϵ.data[:,idx,:]'
         elseif cross_section == :r
             xguide --> "φ"
-            xunit --> internal_angle_unit
+            # xunit --> internal_angle_unit
             yguide --> "z"
-            yunit --> internal_length_unit
+            # yunit --> internal_length_unit
             ylims --> (grid.z[2],grid.z[end-1]).*internal_length_unit
             gφ_ext*internal_angle_unit, gz_ext*internal_length_unit, ϵ.data[idx,:,:]'
         elseif cross_section == :z
@@ -237,8 +237,8 @@ end
         foreground_color_border --> nothing
         tick_direction --> :out
         unitformat --> :slash
-        xunit --> internal_length_unit
-        yunit --> internal_length_unit
+        # xunit --> internal_length_unit
+        # yunit --> internal_length_unit
         if cross_section == :x
             aspect_ratio --> 1
             xguide --> "y"
@@ -310,8 +310,8 @@ end
 
     @series begin
         unitformat --> :slash
-        xunit --> internal_length_unit
-        yunit --> internal_length_unit
+        # xunit --> internal_length_unit
+        # yunit --> internal_length_unit
         if cross_section == :x
             aspect_ratio --> 1
             xguide --> "y"

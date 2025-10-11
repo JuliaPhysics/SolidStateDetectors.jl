@@ -35,25 +35,26 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
             end
         end
     end
-
+    
+    isEP = ismissing(weighting_potential_contact_id)
     is_inactive_layer_contact::Bool = false
     
     if !ismissing(det.passives)
         for passive in det.passives
-            pot::T = ismissing(weighting_potential_contact_id) ? passive.potential : zero(T)
+            pot::T = isEP ? passive.potential : (isnan(passive.potential) ? passive.potential : zero(T))
             set_passive_or_contact_points(point_types, potential, grid, passive.geometry, pot, is_inactive_layer_contact, use_nthreads)
         end
     end
     if NotOnlyPaintContacts
         for contact in det.contacts
-            pot::T = ismissing(weighting_potential_contact_id) ? contact.potential : contact.id == weighting_potential_contact_id
+            pot::T = isEP ? contact.potential : contact.id == weighting_potential_contact_id
             is_inactive_layer_contact = isdefined(det.semiconductor.impurity_density_model, :surface_imp_model) && det.semiconductor.impurity_density_model.surface_imp_model.inactive_contact_id == contact.id
             set_passive_or_contact_points(point_types, potential, grid, contact.geometry, pot, is_inactive_layer_contact, use_nthreads)
         end
     end
     if PaintContacts
         for contact in det.contacts
-            pot::T = ismissing(weighting_potential_contact_id) ? contact.potential : contact.id == weighting_potential_contact_id
+            pot::T = isEP ? contact.potential : contact.id == weighting_potential_contact_id
             is_inactive_layer_contact = isdefined(det.semiconductor.impurity_density_model, :surface_imp_model) && det.semiconductor.impurity_density_model.surface_imp_model.inactive_contact_id == contact.id
             fs = ConstructiveSolidGeometry.surfaces(contact.geometry)
             for face in fs
