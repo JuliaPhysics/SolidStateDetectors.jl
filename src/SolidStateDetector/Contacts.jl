@@ -56,7 +56,7 @@ function Contact{T}(dict::AbstractDict, input_units::NamedTuple, outer_transform
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)
     geometry = Geometry(T, dict["geometry"], input_units, transformations)
-    return Contact( T(dict["potential"]), material, id, name, geometry )
+    return Contact( _parse_value(T, dict["potential"], input_units.potential), material, id, name, geometry )
 end
 
 function println(io::IO, d::Contact) 

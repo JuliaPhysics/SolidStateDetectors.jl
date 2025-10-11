@@ -59,11 +59,11 @@ end
 const POTENTIAL_FLOATING = NaN
 
 function Passive{T}(dict::AbstractDict, input_units::NamedTuple, outer_transformations) where {T <: SSDFloat}
-    name = haskey(dict, "name") ? dict["name"] : "External part"
-    id::Int = haskey(dict, "id") ? dict["id"] : -1
-    potential = haskey(dict, "potential") ? T(dict["potential"]) : T(POTENTIAL_FLOATING)
+    name::String = get(dict, "name", "External part")
+    id::Int = get(dict, "id", -1)
+    potential::T = _parse_value(T, get(dict, "potential", POTENTIAL_FLOATING), input_units.potential)
     material = material_properties[materials[dict["material"]]]
-    temperature = haskey(dict, "temperature") ? T(dict["temperature"]) : T(293)
+    temperature::T = _parse_value(T, get(dict, "temperature", 293u"K"), input_units.temperature)
     charge_density_model = if haskey(dict, "charge_density") 
         ChargeDensity(T, dict["charge_density"], input_units)
     elseif haskey(dict, "charge_density_model") 

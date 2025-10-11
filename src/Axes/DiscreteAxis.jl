@@ -257,7 +257,7 @@ end
 
 Base.convert(T::Type{DiscreteAxis}, x::NamedTuple; unit = Unitful.NoUnits) = T(x, unit = unit)
 
-function NamedTuple(ax::DiscreteAxis{T, BL, BR}; unit = Unitful.NoUnits) where {T, BL, BR}
+function Base.NamedTuple(ax::DiscreteAxis{T, BL, BR}; unit = Unitful.NoUnits) where {T, BL, BR}
     int::Interval = ax.interval
     int_types::Tuple{Symbol, Symbol} = get_boundary_types(int)
     return (

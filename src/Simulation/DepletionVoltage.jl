@@ -94,9 +94,10 @@ function estimate_depletion_voltage(sim::Simulation{T},
     ϕρ = simDV.electric_potential.data
     ϕV = simDV.weighting_potentials[contact_id].data   
 
-    ϕρ .-= simDV.detector.contacts[contact_id].potential .* ϕV
+    ϕρ .-= simDV.detector.contacts[contact_id].potential .* ϕV    
     Urng = Umin..Umax
-    inside = findall(simDV.point_types .& 4 .> 0)
+    inside = findall((simDV.point_types .& 4 .> 0) .&
+        (simDV.point_types .& inactive_layer_bit .== 0))
     U::T = NaN
     ϕ̃ = similar(ϕV)
     while Umax-Umin>tolerance
@@ -110,7 +111,8 @@ function estimate_depletion_voltage(sim::Simulation{T},
             ϕmax - ϕmin < abs(U) ? Umin = U : Umax = U
         end        
     end
-    bulk = findall(sim.point_types.data .& bulk_bit .> 0)
+    bulk = findall((sim.point_types.data .& bulk_bit .> 0) .&
+        (sim.point_types.data .& inactive_layer_bit .== 0))
     U_min_max = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
     U2 = isempty(U_min_max) ? U : only(U_min_max)    
     U = U > 0 ? max(U, U2) : min(U, U2)

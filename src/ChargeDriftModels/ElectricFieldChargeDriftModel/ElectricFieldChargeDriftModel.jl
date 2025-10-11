@@ -10,5 +10,5 @@ struct ElectricFieldChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{
 end
 
 ElectricFieldChargeDriftModel(T::Type{<:SSDFloat}) = ElectricFieldChargeDriftModel{T}()
-getVe(fv::SVector{3, T}, cdm::ElectricFieldChargeDriftModel) where {T <: SSDFloat} = -fv
-getVh(fv::SVector{3, T}, cdm::ElectricFieldChargeDriftModel) where {T <: SSDFloat} = fv
+getVe(fv::SVector{3, T}, cdm::ElectricFieldChargeDriftModel, current_pos::CartesianPoint{T} = zero(CartesianPoint{T})) where {T <: SSDFloat} = -fv
+getVh(fv::SVector{3, T}, cdm::ElectricFieldChargeDriftModel, current_pos::CartesianPoint{T} = zero(CartesianPoint{T})) where {T <: SSDFloat} = fv

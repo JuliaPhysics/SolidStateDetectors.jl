@@ -18,7 +18,7 @@ An example definition of a cylindrical charge density looks like this:
 ```yaml 
 charge_density:
   name: cylindrical
-  r:  # impurity profile with linear gradient in r
+  r:  # charge density with linear gradient in r
     init: 1.0e-10     # C/m³
     gradient: 1.0e-11 # C/m⁴
 ```

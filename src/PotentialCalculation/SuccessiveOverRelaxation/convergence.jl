@@ -42,7 +42,7 @@ function _update_till_convergence!( pcs::PotentialCalculationSetup{T, S, 3},
                 break
             end
         end
-        if n_performed_iterations >= max_n_iterations break end
+        if max_n_iterations != -1 && n_performed_iterations >= max_n_iterations break end
     end
     if verbose ProgressMeter.finish!(prog) end
     return c

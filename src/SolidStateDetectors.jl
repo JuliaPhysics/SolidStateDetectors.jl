@@ -52,6 +52,7 @@ export CartesianPoint, CartesianVector, CartesianZero, cartesian_zero, Cylindric
 import Clustering
 import DataStructures
 import Distributions
+import SpecialFunctions
 import GPUArrays
 import IntervalSets
 import OrderedCollections
@@ -70,8 +71,10 @@ export Grid
 export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!, calculate_drift_fields!
-export ElectricFieldChargeDriftModel, ADLChargeDriftModel, IsotropicChargeDriftModel
-export NoChargeTrappingModel, BoggsChargeTrappingModel
+export ElectricFieldChargeDriftModel, ADLChargeDriftModel, ADL2016ChargeDriftModel, IsotropicChargeDriftModel, InactiveLayerChargeDriftModel
+export LinearImpurityDensity, ThermalDiffusionLithiumDensity, PtypePNJunctionImpurityDensity
+export LinBouleImpurityDensity, ParBouleImpurityDensity, LinExpBouleImpurityDensity, ParExpBouleImpurityDensity
+export NoChargeTrappingModel, BoggsChargeTrappingModel, ConstantLifetimeChargeTrappingModel, CombinedChargeTrappingModel
 export get_active_volume, is_depleted, estimate_depletion_voltage
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
@@ -80,10 +83,13 @@ export Simulation, simulate!
 export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
-export LinBouleImpurityDensity, ParBouleImpurityDensity, LinExpBouleImpurityDensity, ParExpBouleImpurityDensity
 
 using Unitful: RealOrRealQuantity as RealQuantity
 const SSDFloat = Union{Float16, Float32, Float64}
+
+abstract type ChargeCarrier end
+abstract type Electron <: ChargeCarrier end 
+abstract type Hole <: ChargeCarrier end
 
 include("examples.jl")
 
@@ -97,10 +103,12 @@ include("Config/Config.jl")
 include("ChargeDensities/ChargeDensities.jl")
 include("ImpurityDensities/ImpurityDensities.jl")
 include("ChargeDriftModels/ChargeDriftModels.jl")
+
+include("ScalarPotentials/ScalarPotential.jl")
+
 include("ChargeTrapping/ChargeTrapping.jl")
 include("SolidStateDetector/DetectorGeometries.jl")
 
-include("ScalarPotentials/ScalarPotential.jl")
 include("PotentialCalculation/PotentialCalculation.jl")
 
 include("ElectricField/ElectricField.jl")

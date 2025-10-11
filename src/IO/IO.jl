@@ -3,7 +3,7 @@ include("ParseConfigFiles.jl")
 
 _namedtuple(x) = NamedTuple(x)
 _namedtuple(::Missing) = (object = "missing",)
-_namedtuple(d::AbstractDict) = (dict_json_string = json(d),)
+_namedtuple(d::AbstractDict) = (dict_json_string = JSON.json(d),)
 # Base.convert(::Type{NamedTuple}, x::AbstractDict) = _namedtuple(x)
 _dict(nt::NamedTuple) = JSON.parse(nt.dict_json_string)
 

@@ -187,6 +187,8 @@ Calculates the electron and hole drift paths for the given [`Event`](@ref) and [
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
 * `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
+* `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
+* `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -197,9 +199,9 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
-function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector, verbose = verbose)
-    evt.drift_paths = drift_charges(sim, evt.locations, evt.energies, Δt = Δt, max_nsteps = max_nsteps, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
+function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector; verbose)
+    evt.drift_paths = drift_charges(sim, evt.locations, evt.energies; Δt, max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
@@ -269,6 +271,8 @@ The output is stored in `evt.drift_paths` and `evt.waveforms`.
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
 * `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
+* `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
+* `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = true`: Activate or deactivate additional info output.
 
 ## Example 
@@ -278,9 +282,9 @@ simulate!(evt, sim, Δt = 1u"ns", verbose = false)
 
 See also [`drift_charges!`](@ref) and [`get_signals!`](@ref).
 """
-function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    drift_charges!(evt, sim, max_nsteps = max_nsteps, Δt = Δt, diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose)
-    get_signals!(evt, sim, Δt = Δt)
+function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+    drift_charges!(evt, sim; max_nsteps, Δt, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
+    get_signals!(evt, sim; Δt)
     nothing
 end
 
@@ -315,7 +319,7 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
     new_times = if TV <: AbstractRange
         range( zero(first(wv.time)), step = step(wv.time), length = total_waveform_length )
     else
-        error("Not yet definted for timestamps of type `$(TV)`")
+        error("Not yet defined for timestamps of type `$(TV)`")
     end
     return RDWaveform( new_times, new_signal )
 end
@@ -369,11 +373,11 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
         
         dp_e::Vector{CartesianPoint{T}} = evt.drift_paths[i].e_path
         dp_e_t::Vector{T} = evt.drift_paths[i].timestamps_e
-        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, -energy, wp, S, ctm)
+        add_signal!(signal_e, dp_e_t, dp_e, dp_e_t, -energy, wp, sim.point_types, ctm)
         
         dp_h::Vector{CartesianPoint{T}} = evt.drift_paths[i].h_path
         dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
-        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, S, ctm)
+        add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, sim.point_types, ctm)
     end
     unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * unitless_energy_to_charge),

@@ -16,8 +16,8 @@ that can each contain `init` for initial values at 0 and `gradient` for gradient
 An example definition of a linear charge density looks like this:
 ```yaml 
 charge_density:
-  name: cylindrical
-  x:  # impurity profile with linear gradient in x
+  name: linear
+  x:  # charge density with linear gradient in x
     init: 1.0e-10     # C/m³
     gradient: 1.0e-11 # C/m⁴
 ```

@@ -37,6 +37,8 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
                              max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
+                             end_drift_when_no_field::Bool = true,
+                             geometry_check::Bool = false,
                              verbose = false) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
@@ -50,7 +52,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
-        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, verbose)
+        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
 
         # LH5 can't handle CartesianPoint, turn positions into CartesianVectors which will be saved as SVectors
         pos_vec = VectorOfVectors([[CartesianPoint(p...) - cartesian_zero for p in ps] for ps in mcevents_sub.pos])

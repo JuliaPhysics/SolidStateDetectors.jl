@@ -132,7 +132,7 @@ end
 
 Base.convert(T::Type{Grid}, x::NamedTuple) = T(x)
 
-function NamedTuple(grid::CylindricalGrid{T}) where {T}
+function Base.NamedTuple(grid::CylindricalGrid{T}) where {T}
     axr::DiscreteAxis{T} = grid.axes[1]
     axφ::DiscreteAxis{T} = grid.axes[2]
     axz::DiscreteAxis{T} = grid.axes[3]
@@ -146,7 +146,7 @@ function NamedTuple(grid::CylindricalGrid{T}) where {T}
         )
     )
 end
-function NamedTuple(grid::CartesianGrid3D{T}) where {T}
+function Base.NamedTuple(grid::CartesianGrid3D{T}) where {T}
     axx::DiscreteAxis{T} = grid.axes[1]
     axy::DiscreteAxis{T} = grid.axes[2]
     axz::DiscreteAxis{T} = grid.axes[3]

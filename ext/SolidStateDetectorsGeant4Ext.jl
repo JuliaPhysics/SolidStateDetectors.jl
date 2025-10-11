@@ -174,6 +174,10 @@ function Geant4.G4JLApplication(
 
     configure(app)
     initialize(app)
+
+    # See also https://geant4-forum.web.cern.ch/t/radioactive-decay-completely-not-working/11798/4
+    ui`/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year`
+
     app
 
     # ToDo:

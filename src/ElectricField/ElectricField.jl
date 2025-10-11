@@ -25,7 +25,7 @@ end
 @inline getindex(ef::ElectricField{T, N, S}, s::Symbol) where {T, N, S} = getindex(ef.grid, s)
 
 
-function NamedTuple(ef::ElectricField{T, 3}) where {T}
+function Base.NamedTuple(ef::ElectricField{T, 3}) where {T}
     return (
         grid = NamedTuple(ef.grid),
         values = ef.data #* internal_efield_unit,
@@ -49,12 +49,12 @@ Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 
 
-function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes{T}) where {T, S}
-    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( epot, point_types ), epot.grid)
+function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.nthreads()) where {T, S}
+    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( epot, point_types; use_nthreads ), epot.grid)
 end
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}, fieldvector_coordinates=:xyz)::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.threadid())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = epot.data
     axr::Vector{T} = collect(epot.grid.axes[1])
     axφ::Vector{T} = collect(epot.grid.axes[2])
@@ -62,7 +62,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
 
     cyclic::T = epot.grid.axes[2].interval.right
     ef = Array{SVector{3, T}}(undef, size(p)...)
-    for iz in 1:size(ef, 3)
+    @onthreads 1:use_nthreads for iz in workpart(1:size(ef, 3), 1:use_nthreads, Base.Threads.threadid())
         for iφ in 1:size(ef, 2)
             for ir in 1:size(ef, 1)
                 ### r ###
@@ -157,9 +157,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
             end
         end
     end
-    if fieldvector_coordinates == :xyz
-        ef = convert_field_vectors_to_xyz(ef, axφ)
-    end
+    ef = convert_field_vectors_to_xyz(ef, axφ)
     return ElectricField(ef, point_types.grid)
 end
 
@@ -175,6 +173,7 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
     end
     return field_xyz
 end
+
 
 
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
@@ -212,17 +211,17 @@ end
 
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, point_types::PointTypes{T})::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cartesian}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.nthreads())::ElectricField{T, 3, Cartesian} where {T <: SSDFloat}
     axx::Vector{T} = collect(epot.grid.axes[1])
     axy::Vector{T} = collect(epot.grid.axes[2])
     axz::Vector{T} = collect(epot.grid.axes[3])
-    axx_ext::Vector{T} = get_extended_ticks(epot.grid.axes[1])
-    axy_ext::Vector{T} = get_extended_ticks(epot.grid.axes[2])
-    axz_ext::Vector{T} = get_extended_ticks(epot.grid.axes[3])
+    # axx_ext::Vector{T} = get_extended_ticks(epot.grid.axes[1])
+    # axy_ext::Vector{T} = get_extended_ticks(epot.grid.axes[2])
+    # axz_ext::Vector{T} = get_extended_ticks(epot.grid.axes[3])
 
     ef::Array{SVector{3, T}} = Array{SVector{3, T}}(undef, size(epot.data))
 
-    for ix in eachindex(axx)
+    @onthreads 1:use_nthreads for ix in workpart(eachindex(axx), 1:use_nthreads, Base.Threads.threadid())
         for iy in eachindex(axy)
             for iz in eachindex(axz)
                 if ix - 1 < 1

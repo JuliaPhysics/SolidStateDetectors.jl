@@ -55,7 +55,7 @@ jobs:
             arch: x86
             threads: 4
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
@@ -68,7 +68,7 @@ jobs:
         env:
           PYTHON: 'Conda'
       - name: Remove Geant4 on x86
-        run: julia --project="test" -e 'using Pkg; Pkg.rm("Geant4")'
+        run: julia --project="test" -e 'using Pkg; Pkg.resolve(); Pkg.rm("Geant4"); Pkg.develop(path = pwd())'
         shell: bash
         if: matrix.arch == 'x86'
       - uses: julia-actions/julia-runtest@v1
@@ -86,7 +86,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.10'

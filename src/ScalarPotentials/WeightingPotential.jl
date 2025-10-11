@@ -34,7 +34,7 @@ function WeightingPotential(nt::NamedTuple)
 end
 Base.convert(T::Type{WeightingPotential}, x::NamedTuple) = T(x)
 
-function NamedTuple(wpot::WeightingPotential{T, 3}) where {T}
+function Base.NamedTuple(wpot::WeightingPotential{T, 3}) where {T}
     return (
         grid = NamedTuple(wpot.grid),
         values = wpot.data,
