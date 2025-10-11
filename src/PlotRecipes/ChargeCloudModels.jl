@@ -290,7 +290,6 @@ end
 end
 
 @recipe function f(m::AbstractParticleSource; length = 0.01)
-    
     if hasproperty(m, :opening_angle)
         if iszero(m.opening_angle)
             v = m.position
@@ -307,7 +306,7 @@ end
             b = normalize(a × d)
             rot = hcat(a,b,d)
             cone = SolidStateDetectors.ConstructiveSolidGeometry.Cone(r = ((0,0),(0,length*sin(m.opening_angle))), hZ = length*cos(m.opening_angle)/2, 
-            origin = rot * [0,0,length*cos(m.opening_angle)/2] + m.position, 
+            origin = m.position + rot * CartesianVector(0,0,length*cos(m.opening_angle)/2), 
             rotation = rot)
 
             @series begin
@@ -318,7 +317,7 @@ end
             end
         end
     end
-    
+ 
     @series begin
         seriescolor := :gray
         markersize --> 5

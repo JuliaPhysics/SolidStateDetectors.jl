@@ -70,7 +70,7 @@ const Annulus{T} = EllipticalSurface{T,Tuple{T,T},Nothing}
 const PartialAnnulus{T} = EllipticalSurface{T,Tuple{T,T},T}
 
 Plane(es::EllipticalSurface{T}) where {T} = Plane{T}(es.origin, normal(es))
-
+# TODO is this correct?
 normal(es::EllipticalSurface{T}, ::CartesianPoint{T} = zero(CartesianPoint{T})) where {T} = 
     _transform_into_global_coordinate_system(CartesianVector{T}(zero(T), zero(T), one(T)), es)
 

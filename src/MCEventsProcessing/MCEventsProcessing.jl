@@ -1,8 +1,8 @@
 include("table_utils.jl")
 
 """
-    simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T}; kwargs...)
-    simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T}, output_dir::AbstractString, output_base_name::AbstractString; kwargs...)
+    simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T}; kwargs...)
+    simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T}, output_dir::AbstractString, output_base_name::AbstractString; kwargs...)
 
 Simulates the waveforms for all events defined in `mcevents` for a given [`Simulation`](@ref) by
 
@@ -49,7 +49,7 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
-function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
+function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
                              diffusion::Bool = false,
@@ -60,6 +60,7 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
                              end_drift_when_no_field::Bool = true,
                              geometry_check::Bool = false,
                              verbose::Bool = false ) where {T <: SSDFloat}
+    mcevents = TypedTables.Table(mcevents_table)
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -100,25 +101,37 @@ function simulate_waveforms( mcevents::TypedTables.Table, sim::Simulation{T};
     return vcat(mcevents_chns...)  
 end
 
+
+# Support detectors hits with positions given as vectors:
+function _get_unitless_positions(point_vectors::AbstractVector{<:StaticVector{3}})
+    Ref(cartesian_zero) .+ to_internal_units.(point_vectors)
+end
+
+# Support detectors hits with positions given as points:
+_get_unitless_positions(points::AbstractVector{<:CartesianPoint}) = to_internal_units.(points)
+
 function _convertEnergyDepsToChargeDeps(
-        pos::AbstractVector{<:SVector{3}}, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
+        positions::AbstractVector, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
         particle_type::Type{PT} = Gamma, 
         radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(edep)), particle_type),
         max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
         kwargs...
-    ) where {T <: SSDFloat, PT <: ParticleType} 
+    ) where {T <: SSDFloat, PT <: ParticleType}
 
-    @assert eachindex(pos) == eachindex(edep) == eachindex(radius)
+    @assert eachindex(positions) == eachindex(edep) == eachindex(radius)
 
     d::T = T(to_internal_units(max_interaction_distance))
     @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
 
-    loc, ene, rad = group_points_by_distance(CartesianPoint.(map(x -> to_internal_units.(x), pos)), T.(to_internal_units.(edep)), T.(to_internal_units.(radius)), d)
+    unitless_pos =_get_unitless_positions(positions)
+    unitless_edep = T.(to_internal_units.(edep))
+    unitless_radius = T.(to_internal_units.(radius))
+    loc, ene, rad = group_points_by_distance(unitless_pos, unitless_edep, unitless_radius, d)
     _convertEnergyDepsToChargeDeps(loc, ene, det; radius = rad, kwargs...)
 end
 
 function _convertEnergyDepsToChargeDeps(
-        pos::AbstractVector{<:AbstractVector}, edep::AbstractVector{<:AbstractVector}, det::SolidStateDetector{T}; 
+        pos::AbstractVector{<:AbstractVector{<:CartesianPoint}}, edep::AbstractVector{<:AbstractVector}, det::SolidStateDetector{T}; 
         particle_type::Type{PT} = Gamma,
         radius::AbstractVector{<:AbstractVector{<:Union{<:Real, <:LengthQuantity}}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), edep),
         number_of_carriers::Int = 1, number_of_shells::Int = 1, 
@@ -129,7 +142,7 @@ function _convertEnergyDepsToChargeDeps(
         iEdep_indep -> broadcast(
             i_together -> begin 
                 nbcc = NBodyChargeCloud(
-                    CartesianPoint(T.(to_internal_units.(pos[iEdep_indep][i_together]))), 
+                    CartesianPoint{T}(to_internal_units(pos[iEdep_indep][i_together])), 
                     T.(to_internal_units(edep[iEdep_indep][i_together])),
                     number_of_carriers,
                     number_of_shells = number_of_shells,
