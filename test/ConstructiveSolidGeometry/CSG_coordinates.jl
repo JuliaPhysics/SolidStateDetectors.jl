@@ -1,11 +1,9 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
 using Test
-# test 
 
-using SolidStateDetectors: ConstructiveSolidGeometry
-using .ConstructiveSolidGeometry: CartesianPoint, CartesianVector, CartesianZero, cartesian_zero, CylindricalPoint
-using .ConstructiveSolidGeometry: LocalAffineFrame, global_frame, frame_transformation
+using SolidStateDetectors.ConstructiveSolidGeometry: CartesianPoint, CartesianVector, 
+    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
 import Unitful

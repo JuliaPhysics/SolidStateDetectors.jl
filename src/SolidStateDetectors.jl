@@ -43,7 +43,8 @@ using .ConstructiveSolidGeometry:
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations,
             ConfigFileError, _parse_value,
-            LengthQuantity, AngleQuantity, get_scale
+            LengthQuantity, AngleQuantity, get_scale,
+            LocalAffineFrame, cartesian_zero, global_frame, frame_transformation
         
 import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_units
 export CartesianPoint, CartesianVector, CartesianZero, cartesian_zero, CylindricalPoint
