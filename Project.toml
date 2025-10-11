@@ -42,10 +42,9 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [weakdeps]
 Geant4 = "559df036-b7a0-42fd-85df-7d5dd9d70f44"
-Geant4_julia_jll = "e202cb52-5471-567a-9cb0-0ca301e27810"
 
 [extensions]
-SolidStateDetectorsGeant4Ext = ["Geant4", "Geant4_julia_jll"]
+SolidStateDetectorsGeant4Ext = "Geant4"
 
 [compat]
 Adapt = "3, 4"
@@ -57,7 +56,6 @@ FillArrays = "0.9, 0.10, 0.11, 0.12, 0.13, 1"
 Format = "1.2"
 GPUArrays = "8, 9, 10, 11"
 Geant4 = "0.1.13, 0.2"
-Geant4_julia_jll = "0.1.15, 0.2.0 - 0.2.2"
 Interpolations = "0.14, 0.15, 0.16"
 IntervalSets = "0.6, 0.7"
 InverseFunctions = "0.1"
