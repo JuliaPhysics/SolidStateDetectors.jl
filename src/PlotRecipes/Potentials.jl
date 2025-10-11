@@ -1,3 +1,5 @@
+_get_potential_plot_information(sp::ScalarPotential, ::Bool) = _get_potential_plot_information(sp) # ignore point type bool for all other potentials
+
 function _get_potential_plot_information(p::ElectricPotential)::Tuple{Symbol, Tuple{Quantity, Quantity}, String, Unitful.Units}
     return (:viridis, extrema(p.data).*internal_voltage_unit, "Electric Potential", internal_voltage_unit)
 end
@@ -10,8 +12,8 @@ function _get_potential_plot_information(ecd::EffectiveChargeDensity)::Tuple{Sym
     return (:inferno, extrema(ecd.data).*u"V/m^2", "Effective Charge Density", u"V/m^2")
 end
 
-function _get_potential_plot_information(::PointTypes{T})::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}
-    return (:viridis, (zero(0), 7*one(T)), "Point Type Map", Unitful.NoUnits)
+function _get_potential_plot_information(::PointTypes{T}, all_point_types::Bool)::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}
+    return (:viridis, (zero(0), (all_point_types ? 31 : 7)*one(T)), "Point Type Map", Unitful.NoUnits)
 end
 
 function _get_potential_plot_information(::ImpurityScale{T})::Tuple{Symbol, Tuple{T,T}, String, Unitful.Units} where {T}
@@ -58,9 +60,9 @@ function get_crosssection_idx_and_value(grid::CylindricalGrid{T}, r::Union{Real,
     cross_section, idx, value, units
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}; r = missing, φ = missing, z = missing, contours_equal_potential = false, full_det = false, all_point_types = false) where {T <: SSDFloat}
 
-    gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
+    gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp, all_point_types)
 
     if !(sp.grid[2][end] - sp.grid[2][1] ≈ 2π) sp = get_2π_potential(sp, n_points_in_φ = 72) end
 
@@ -73,14 +75,14 @@ end
     clims --> clims
     unitformat --> :slash
 
-    sp, cross_section, idx, value, punit, contours_equal_potential, full_det
+    sp, cross_section, idx, value, punit, contours_equal_potential, full_det, all_point_types
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cylindrical}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, full_det::Bool, all_point_types::Bool = false) where {T <: SSDFloat}
 
     grid::CylindricalGrid{T} = sp.grid
     data = sp.data
-    if eltype(data) == PointType
+    if eltype(data) == PointType && !all_point_types
         data = data .& 0x07
     end
     @series begin
@@ -208,9 +210,9 @@ function get_crosssection_idx_and_value(grid::CartesianGrid3D{T}, x::Union{Real,
     cross_section, idx, value, units
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}; x = missing, y = missing, z = missing, contours_equal_potential = false, all_point_types = false) where {T <: SSDFloat}
     
-    gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp)
+    gradient::Symbol, clims::Tuple{RealQuantity, RealQuantity}, name::String, punit::Unitful.Units = _get_potential_plot_information(sp, all_point_types)
 
     grid::CartesianGrid3D{T} = sp.grid
     cross_section::Symbol, idx::Int, value::T, units::Unitful.Units = get_crosssection_idx_and_value(grid, x, y, z)
@@ -220,14 +222,14 @@ end
     seriescolor --> gradient
     clims --> clims
 
-    sp, cross_section, idx, value, punit, contours_equal_potential
+    sp, cross_section, idx, value, punit, contours_equal_potential, all_point_types
 end
 
-@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool) where {T <: SSDFloat}
+@recipe function f(sp::ScalarPotential{T,3,Cartesian}, cross_section::Symbol, idx::Int, value::T, punit::Unitful.Units, contours_equal_potential::Bool, all_point_types::Bool = false) where {T <: SSDFloat}
 
     grid::CartesianGrid3D{T} = sp.grid
     data = sp.data
-    if eltype(data) == PointType
+    if eltype(data) == PointType && !all_point_types
         data = data .& 0x07
     end
     @series begin

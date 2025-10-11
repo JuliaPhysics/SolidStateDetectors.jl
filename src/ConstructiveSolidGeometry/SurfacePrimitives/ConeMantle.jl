@@ -321,3 +321,44 @@ end
 #         return distance_to_line(CartesianPoint(pt), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
 #     end
 # end
+
+
+function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T where {T}
+    point = CartesianPoint(point)
+    v12 = normalize(CartesianVector{T}(edge.b - edge.a))
+    v_point_1 = CartesianVector{T}(point - edge.a)
+    proj_on_v12 = dot(v12,v_point_1)
+    if geom_round(proj_on_v12) ≤ T(0)
+        return norm(edge.a - point)
+    else
+        v_point_2 = CartesianVector{T}(point - edge.b)
+        if geom_round(dot(v12,v_point_2)) ≥ T(0)
+            return norm(edge.b - point)
+        else
+            return sqrt(abs(dot(v_point_1,v_point_1) - proj_on_v12^2))
+        end
+    end
+end
+
+get_r_limits(c::ConeMantle) = _radial_endpoints(c.r)
+get_z_limits(c::ConeMantle) = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    distance_to_line(CartesianPoint{T}(pcy.r,0,pcy.z), Edge{T}(CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+end
+
+function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
+    pcy = CylindricalPoint(point)
+    φMin::T, φMax::T = get_φ_limits(c)
+    rbot::T, rtop::T = get_r_limits(c)
+    zMin::T, zMax::T = get_z_limits(c)
+    if _in_φ(pcy, c.φ)
+        return distance_to_line(CartesianPoint{T}(pcy.r,0,pcy.z), Edge{T}(CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+    else
+        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
+        return distance_to_line(point, Edge{T}(CylindricalPoint{T}(rbot,φNear,zMin), CylindricalPoint{T}(rtop,φNear,zMax)))
+    end
+end

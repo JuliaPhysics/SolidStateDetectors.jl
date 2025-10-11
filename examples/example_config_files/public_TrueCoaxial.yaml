@@ -1,0 +1,102 @@
+name: TrueCoaxial
+units:
+  length: mm
+  angle: deg
+  potential: V
+  temperature: K
+grid:
+  coordinates: cylindrical
+  axes:
+    r:
+      to: 10.01
+      boundaries: inf
+    phi:
+      from: 0
+      to: 0
+      boundaries:
+        left: periodic
+        right: periodic
+    z:
+      from: -0.01
+      to: 10.01
+      boundaries:
+        left: inf
+        right: inf
+medium: vacuum
+detectors:
+- semiconductor:
+    material: HPGe
+    temperature: 90
+    impurity_density:
+      name: PtypePNjunction
+      lithium_annealing_temperature: 623K
+      lithium_annealing_time: 18minute
+      doped_contact_id: 2
+      bulk_impurity_density:
+        name: constant
+        value: -1e10cm^-3
+    charge_drift_model:
+      model: InactiveLayerChargeDriftModel
+      temperature: 90K
+      neutral_impurity_density:
+        name: constant
+        value: 5.6769e15cm^-3
+      # # Uncomment the following lines if you want to use different bulk and surface impurity densities in the charge_drift_model section
+      # bulk_impurity_density:
+      #   name: constant
+      #   value: -1e10cm^-3
+      # surface_impurity_density:
+      #   name: li_diffusion
+      #   lithium_annealing_temperature: 623K
+      #   lithium_annealing_time: 18minute
+      #   doped_contact_id: 2
+    charge_trapping_model:
+      model: ConstantLifetime
+      parameters:
+        τh: 1ms
+        τe: 1ms
+      model_inactive: ConstantLifetime
+      parameters_inactive:
+        τh: 1μs
+        τe: 1μs
+      inactive_layer_geometry:
+        tube:
+          r:
+            from: 8.957282 # set to the depth of the pn junction boundary when lithium diffusion temperature is 623 K, time is 18 minutes
+            to: 10.0
+          h: 10.0
+          origin:
+            z: 5.0
+    geometry:
+      tube:
+        r:
+          from: 1.0
+          to: 10.0
+        h: 10.0
+        origin:
+          z: 5.0
+  contacts:
+    - name: "P⁺"
+      id: 1
+      material: HPGe
+      potential: -500
+      geometry:
+        tube:
+          r:
+            from: 1.0
+            to: 1.0
+          h: 10.0
+          origin:
+            z: 5.0
+    - name: "N⁺"
+      id: 2
+      material: HPGe
+      potential: 0
+      geometry:
+        tube:
+          r:
+            from: 10.0
+            to: 10.0
+          h: 10.0
+          origin:
+            z: 5.0

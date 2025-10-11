@@ -35,6 +35,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
                              max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
+                             end_drift_when_no_field::Bool = true,
                              geometry_check::Bool = false,
                              verbose = false) where {T <: SSDFloat}
     n_total_physics_events = length(mcevents)
@@ -50,8 +51,8 @@ function SolidStateDetectors.simulate_waveforms( mcevents::TypedTables.Table, si
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
-        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, geometry_check, verbose)
-      
+        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
+
         LegendHDF5IO.lh5open(ofn, "w") do h5f
             LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", mcevents_sub)
         end        

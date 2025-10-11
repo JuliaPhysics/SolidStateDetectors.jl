@@ -1015,6 +1015,10 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     if isEP mark_bulk_bits!(sim.point_types.data) end
     if depletion_handling && isEP
         mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
+        
+        if isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
+            mark_inactivelayer_bits!(sim.point_types.data)
+        end
     end
     
     nothing
@@ -1202,10 +1206,10 @@ end
 
 function drift_charges( sim::Simulation{T}, starting_positions::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T};
                         Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, 
-                        geometry_check::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
+                        end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
     return _drift_charges(   sim.detector, sim.point_types.grid, sim.point_types, starting_positions, energies, 
                              interpolated_vectorfield(sim.electric_field), Δt;
-                             max_nsteps, diffusion, self_repulsion, geometry_check, verbose)
+                             max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
 end
 
 function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
@@ -1213,7 +1217,7 @@ function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}},
     wpot::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, CS, sim.detector.semiconductor.charge_trapping_model)
+    add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, sim.point_types, sim.detector.semiconductor.charge_trapping_model)
     unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
     return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * unitless_energy_to_charge)
 end
