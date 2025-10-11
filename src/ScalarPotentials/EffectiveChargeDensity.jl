@@ -28,7 +28,7 @@ end
 
 
 
-function NamedTuple(ρ::EffectiveChargeDensity{T}) where {T <: SSDFloat}
+function Base.NamedTuple(ρ::EffectiveChargeDensity{T}) where {T <: SSDFloat}
     return (
         grid = NamedTuple(ρ.grid),
         values = ρ.data * internal_voltage_unit,

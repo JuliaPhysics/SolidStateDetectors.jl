@@ -28,6 +28,8 @@ If [LegendHDF5IO.jl](https://github.com/legend-exp/LegendHDF5IO.jl) is loaded, t
 * `number_of_carriers::Int = 1`: Number of charge carriers to be used in the N-Body simulation of an energy deposition. 
 * `number_of_shells::Int = 1`: Number of shells around the `center` point of the energy deposition.
 * `max_interaction_distance = NaN`: Maximum distance for which charge clouds will interact with each other (if `NaN`, then all charge clouds drift independently).
+* `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
+* `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = false`: Activate or deactivate additional info output.
 * `chunk_n_physics_events::Int = 1000` (`LegendHDF5IO` only): Number of events that should be saved in a single HDF5 output file.
 
@@ -55,6 +57,8 @@ function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
                              max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
+                             end_drift_when_no_field::Bool = true,
+                             geometry_check::Bool = false,
                              verbose::Bool = false ) where {T <: SSDFloat}
     mcevents = TypedTables.Table(mcevents_table)
     n_total_physics_events = length(mcevents)
@@ -74,14 +78,14 @@ function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::
 
     # First simulate drift paths
     drift_paths_and_edeps = _simulate_charge_drifts(mcevents, sim, Δt, max_nsteps, electric_field, 
-        diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, verbose)
+        diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
     drift_paths = map(x -> vcat([vcat(ed...) for ed in x[1]]...), drift_paths_and_edeps)
     edeps = map(x -> vcat([vcat(ed...) for ed in x[2]]...), drift_paths_and_edeps)
     # now iterate over contacts and generate the waveform for each contact
     @info "Generating waveforms..."
     waveforms = map( 
         wpot ->  map( 
-            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, S, unitless_energy_to_charge, ctm),
+            x -> _generate_waveform(x.dps, to_internal_units.(x.edeps), Δt, Δtime, wpot, sim.point_types, unitless_energy_to_charge, ctm),
             TypedTables.Table(dps = drift_paths, edeps = edeps)
         ),
         wpots_interpolated
@@ -164,15 +168,16 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   number_of_carriers::Int, 
                                   number_of_shells::Int,
                                   max_interaction_distance::Union{<:Real, <:LengthQuantity},
+                                  end_drift_when_no_field::Bool,
+                                  geometry_check::Bool,
                                   verbose::Bool ) where {T <: SSDFloat}
     @showprogress map(mcevents) do phyevt
         locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
-                VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]),
-                electric_field, T(Δt.val) * unit(Δt), max_nsteps = max_nsteps, 
-                diffusion = diffusion, self_repulsion = self_repulsion, verbose = verbose
+                VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, T(Δt.val) * unit(Δt);
+                max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose
             ),
-            eachindex(edeps)            
+            eachindex(edeps)
         )
         drift_paths, edeps
     end
@@ -181,12 +186,12 @@ end
 
 
 function _generate_waveform( drift_paths::Vector{<:EHDriftPath{T}}, charges::Vector{<:SSDFloat}, Δt::RealQuantity, dt::T,
-                             wpot::Interpolations.Extrapolation{T, 3}, S::CoordinateSystemType, unitless_energy_to_charge, 
-                             ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat}
+                             wpot::Interpolations.Extrapolation{T, 3}, point_types::PointTypes{T, N, S}, unitless_energy_to_charge,
+                             ctm::AbstractChargeTrappingModel{T} = NoChargeTrappingModel{T}()) where {T <: SSDFloat, N, S}
     timestamps = _common_timestamps( drift_paths, dt )
     timestamps_with_units = range(zero(Δt), step = Δt, length = length(timestamps))
     signal = zeros(T, length(timestamps))
-    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, S, ctm)
+    add_signal!(signal, timestamps, drift_paths, T.(charges), wpot, point_types, ctm)
     RDWaveform( timestamps_with_units, signal * unitless_energy_to_charge)
 end
 

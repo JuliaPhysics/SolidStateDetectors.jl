@@ -79,6 +79,7 @@ end
             Δt = 1u"ns", 
             number_of_carriers = 20,
             number_of_shells = 2,
+            geometry_check = true,
             verbose = false);
     
     @timed_testset "Regular simulate_waveforms" begin
@@ -100,6 +101,7 @@ end
             Δt = 1u"ns", 
             number_of_carriers = 20,
             number_of_shells = 2,
+            geometry_check = true,
             verbose = false
         )
         @info isfile("generated_waveforms_evts_1-1.h5")

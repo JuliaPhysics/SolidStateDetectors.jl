@@ -33,7 +33,7 @@ end
 
 
 
-function NamedTuple(ϵ::DielectricDistribution{T}) where {T <: SSDFloat}
+function Base.NamedTuple(ϵ::DielectricDistribution{T}) where {T <: SSDFloat}
     return (
         grid = NamedTuple(ϵ.grid),
         values = ϵ.data,

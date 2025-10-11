@@ -130,6 +130,7 @@ module ConstructiveSolidGeometry
     include("Intervals.jl")
     include("CSG.jl")
     include("IO.jl")
+    include("DistanceToSurface.jl")
 
     # Plotting
     include("plotting/plotting.jl")

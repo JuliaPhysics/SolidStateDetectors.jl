@@ -31,7 +31,7 @@ end
 @inline getindex(impscale::ImpurityScale{T, N, S}, s::Symbol) where {T, N, S} = getindex(impscale.grid, s)
 
 
-function NamedTuple(impscale::ImpurityScale{T, 3}) where {T}
+function Base.NamedTuple(impscale::ImpurityScale{T, 3}) where {T}
     return (
         grid = NamedTuple(impscale.grid),
         values = impscale.data,

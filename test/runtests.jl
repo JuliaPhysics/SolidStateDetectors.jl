@@ -54,6 +54,10 @@ end
     include("test_boule_impurity_densities.jl")
 end
 
+@timed_testset "Test position-dependent diffusion" begin
+    include("test_diffusion.jl")
+end
+
 @timed_testset "Geant4 extension" begin
     if Sys.WORD_SIZE == 64 include("test_geant4.jl") end
 end

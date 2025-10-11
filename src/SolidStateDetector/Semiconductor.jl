@@ -67,7 +67,11 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
-            getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"])
+            if model == :InactiveLayerChargeDriftModel
+                InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units)
+            else
+                getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"])
+            end
         else
             throw(ConfigFileError("There is no charge drift model called `$(dict["charge_drift_model"]["model"])`."))
         end
@@ -84,17 +88,35 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
         T(293)
     end
 
-    charge_trapping_model = if haskey(dict, "charge_trapping_model") &&
-                               haskey(dict["charge_trapping_model"], "model") &&
-                               dict["charge_trapping_model"]["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(dict["charge_trapping_model"], temperature = temperature)
+    inner_transformations = parse_CSG_transformation(T, dict, input_units)
+    transformations = combine_transformations(inner_transformations, outer_transformations)
+    geometry = Geometry(T, dict["geometry"], input_units, transformations)
+
+
+    ctm_dict = haskey(dict, "charge_trapping_model") ? deepcopy(dict["charge_trapping_model"]) : Dict{String, Any}()
+
+    if haskey(ctm_dict, "inactive_layer_geometry")
+        ctm_dict["inactive_layer_geometry"] = Geometry(T, ctm_dict["inactive_layer_geometry"], input_units, transformations)
+    end
+    
+    charge_trapping_model = if haskey(ctm_dict, "model_inactive")
+        if haskey(ctm_dict, "parameters_inactive") && haskey(ctm_dict, "parameters") &&
+            ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
+            ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
+        else
+            CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+        end
+        
+    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
+        BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+        
+    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
+        ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
+
     else
         NoChargeTrappingModel{T}()
     end
     
-    inner_transformations = parse_CSG_transformation(T, dict, input_units)
-    transformations = combine_transformations(inner_transformations, outer_transformations)
-    geometry = Geometry(T, dict["geometry"], input_units, transformations)
     return Semiconductor(temperature, material, impurity_density_model, charge_drift_model, charge_trapping_model, geometry)
 end
 

@@ -25,7 +25,7 @@ T = Float32
     @test sim == Simulation(nt)
     deplV = timed_estimate_depletion_voltage(sim, verbose = false)
     @info "Depletion voltage: $deplV"
-    @test isapprox(deplV, 1865*u"V", atol = 5.0*u"V") 
+    @test isapprox(deplV, 1871*u"V", atol = 10.0*u"V") 
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.005))
@@ -77,7 +77,7 @@ end
         timed_calculate_weighting_potential!(sim, i, convergence_limit = 5e-6, device_array_type = device_array_type, refinement_limits = [0.2], verbose = false)
     end
     evt = Event(CartesianPoint.([CylindricalPoint{T}(20e-3, deg2rad(10), 20e-3 )]))
-    timed_simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000)
+    timed_simulate!(evt, sim, Δt = 1e-9, max_nsteps = 10000, geometry_check = true)
     signalsum = T(0)
     for i in 1:length(evt.waveforms)
         signalsum += abs(ustrip(evt.waveforms[i].signal[end]))

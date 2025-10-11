@@ -5,6 +5,7 @@ const elementary_charge = Float64(ustrip(u"C", Unitful.q))
 const ϵ0 = Float64(ustrip(u"F/m", Unitful.ϵ0))
 const kB = Float64(ustrip(u"J/K", Unitful.k))
 const me = Float64(ustrip(u"kg", Unitful.me))
+const R_gas = Float64(ustrip(u"cal/K/mol", Unitful.R))
 
 const material_properties = Dict{Symbol, NamedTuple}()
 
@@ -21,7 +22,7 @@ material_properties[:Vacuum] = (
 )
 
 abstract type HPGe <: AbstractDriftMaterial end 
-Symbol(::Type{HPGe}) = :HPGe
+Base.Symbol(::Type{HPGe}) = :HPGe
 material_properties[:HPGe] = (
     E_ionisation = 2.95u"eV",
     f_fano = 0.129, # https://doi.org/10.1103/PhysRev.163.238
@@ -36,7 +37,7 @@ material_properties[:HPGe] = (
 
 # These values might just be approximations
 abstract type Si <: AbstractDriftMaterial end
-Symbol(::Type{Si}) = :Si
+Base.Symbol(::Type{Si}) = :Si
 material_properties[:Si] = (
     E_ionisation = 3.62u"eV",
     f_fano = 0.11,
@@ -50,7 +51,7 @@ material_properties[:Si] = (
 )
 
 abstract type CsPbBr3 <: AbstractDriftMaterial end
-Symbol(::Type{CsPbBr3}) = :CsPbBr3
+Base.Symbol(::Type{CsPbBr3}) = :CsPbBr3
 material_properties[:CsPbBr3] = (
     name = "CsPbBr3",
     f_fano = 0.1, # https://doi.org/10.1038/s41566-020-00727-1

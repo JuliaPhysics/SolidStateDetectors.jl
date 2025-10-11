@@ -27,7 +27,7 @@ function get_impurity_density(cdm::ConstantImpurityDensity{T}, pt::AbstractCoord
 end
 
 function ImpurityDensity(T::DataType, t::Val{:constant}, dict::AbstractDict, input_units::NamedTuple)
-    ρ::T = haskey(dict, "value") ? _parse_value(T, dict["value"], input_units.length^(-3)) : T(0)
+    ρ::T = _parse_value(T, get(dict, "value", 0), input_units.length^(-3))
     ConstantImpurityDensity{T}( ρ )
 end
 
