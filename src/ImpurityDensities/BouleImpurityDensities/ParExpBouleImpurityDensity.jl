@@ -24,7 +24,7 @@ struct ParExpBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     det_z0::T
 end
 
-function ParExpBouleImpurityDensity{T}(pars::Vector{Number}, det_z0::Number) where {T}
+function ParExpBouleImpurityDensity{T}(pars::Vector{<:Number}, det_z0::Number) where {T}
     ParExpBouleImpurityDensity{T}(
         T.(to_internal_units(pars))..., 
         T(to_internal_units(det_z0))
