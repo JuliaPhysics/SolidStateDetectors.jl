@@ -137,7 +137,7 @@ function _add_fieldvector_selfrepulsion!(step_vectors::Vector{CartesianVector{T}
         for m in eachindex(step_vectors)
             if done[m] continue end
             if m > n
-                direction::CartesianVector{T} = current_pos[n] .- current_pos[m]
+                direction::CartesianVector{T} = current_pos[n] - current_pos[m]
                 if iszero(direction) # if the two charges are at the exact same position
                     continue         # don't let them self-repel each other but treat them as same change
                 end                  # if diffusion is simulated, they will very likely be separated in the next step

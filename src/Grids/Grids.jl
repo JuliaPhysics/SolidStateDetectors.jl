@@ -36,8 +36,12 @@ CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 @inline size(grid::Grid{T, N, S}) where {T, N, S} = size.(grid.axes, 1)
 @inline length(grid::Grid{T, N, S}) where {T, N, S} = prod(size(grid))
 @inline getindex(grid::Grid{T, N, S}, I::Vararg{Int, N}) where {T, N, S} = broadcast(getindex, grid.axes, I)
+# @inline getindex(grid::Grid{T, N, S}, I::NTuple{N, Int}) where {T, N, S} = ntuple(i -> grid.axes[i].ticks[inds[i]], Val(N))
 @inline getindex(grid::Grid{T, N, S}, i::Int) where {T, N, S} = getproperty(grid, :axes)[i]
 @inline getindex(grid::Grid{T, N, S}, s::Symbol) where {T, N, S} = getindex(grid, Val{s}())
+
+@inline getpoint(grid::Grid{T, N, S}, idxs::Vararg{Int, N}) where {T, N, S} = AbstractCoordinatePoint{T, S}(grid[idxs...]...)
+@inline getpoint(grid::Grid{T, N, S}, idxs::NTuple{N, Int}) where {T, N, S} = getpoint(grid, idxs...)
 
 @inline getproperty(grid::Grid{T, N, S}, s::Symbol) where {T, N, S} = getproperty(grid, Val{s}())
 @inline getproperty(grid::Grid{T}, ::Val{:axes}) where {T} = getfield(grid, :axes)
@@ -57,10 +61,6 @@ CartesianGrid3D{T}(a) where {T} = Grid{T, 3, Cartesian, typeof(a)}(a)
 @inline getindex(grid::CartesianGrid3D{T}, ::Val{:y}) where {T} = @inbounds grid.axes[2]
 @inline getindex(grid::CartesianGrid3D{T}, ::Val{:z}) where {T} = @inbounds grid.axes[3]
 
-@inline GridPoint(grid::Grid{T, 3, Cylindrical}, inds::NTuple{3, Int}) where {T} = 
-    CylindricalPoint{T}(broadcast(i -> grid.axes[i].ticks[inds[i]], (1, 2, 3)))
-@inline GridPoint(grid::Grid{T, 3, Cartesian}, inds::NTuple{3, Int}) where {T} = 
-    CartesianPoint{T}(broadcast(i -> grid.axes[i].ticks[inds[i]], (1, 2, 3)))
 
 function sizeof(grid::Grid{T, N, S}) where {T, N, S}
     return sum( sizeof.(grid.axes) )

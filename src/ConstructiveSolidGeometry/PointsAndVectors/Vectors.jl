@@ -13,7 +13,10 @@ Describes a three-dimensional vector in Cartesian coordinates.
 * `y`: y-coordinate (in m).
 * `z`: z-coordinate (in m).
 
-See also [`CylindricalVector`](@ref).
+Given a vector `v = CartesianPoint(Δx, Δy, Δz)`, use `cartesian_zero + v` to
+get the `CartesianPoint(0 + Δx, 0 + Δy, 0 + Δz)`.
+
+See also [`CartesianPoint`](@ref) .
 """
 struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     x::T
@@ -23,28 +26,30 @@ end
 
 #Type promotion happens here
 function CartesianVector(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
+    # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
     CartesianVector{T}(T(x),T(y),T(z))
 end
 
-function CartesianVector(;
-    x = 0,
-    y = 0,
-    z = 0
-)
-    CartesianVector(x,y,z)
-end
+CartesianVector(; x = 0, y = 0, z = 0) = CartesianVector(x,y,z)
 
-function CartesianVector{T}(;
-    x = 0,
-    y = 0,
-    z = 0
-) where {T}
-    CartesianVector{T}(T(x),T(y),T(z))
-end
+CartesianVector{T}(; x = 0, y = 0, z = 0) where {T} = CartesianVector{T}(T(x),T(y),T(z))
 
-zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zero(T))
+@inline Base.zero(::CartesianVector{T}) where {T} = CartesianVector{T}(zero(T),zero(T),zero(T))
+@inline Base.iszero(v::CartesianVector) = iszero(v.x) && iszero(v.y) && iszero(v.z)
+
+# Need to specialize multiplication and division with units for CartesianVector, otherwise result would just be an SVector:
+Base.:(*)(v::CartesianVector{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianVector(v.x * u, v.y * u, v.z * u)
+Base.:(/)(v::CartesianVector{<:Quantity{<:Real, Unitful.𝐋}}, u::Unitful.Units) = CartesianVector(v.x / u, v.y / u, v.z / u)
+
+# For user convenience, to enable constructs like `ustrip(u"mm", v)` and `NoUnits(v / u"mm")`, we'll support uconvert/ustrip
+# for CartesianVector. Unitful doesn't encourage defining those for collections, but we'll view cartesian vectors as single
+# mathematical objects in regard to units:
+Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.𝐋}, v::CartesianVector{<:Quantity{<:Real, Unitful.𝐋}}) = CartesianVector(uconvert(u, v.x), uconvert(u, v.y), uconvert(u, v.z))
+Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.NoDims}, v::CartesianVector{<:Quantity{<:Real, Unitful.NoDims}}) = CartesianVector(uconvert(u, v.x), uconvert(u, v.y), uconvert(u, v.z))
+Unitful.ustrip(v::CartesianVector) = CartesianVector(ustrip(v.x), ustrip(v.y), ustrip(v.z))
+
 
 # @inline rotate(pt::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * pt
 # @inline rotate(pt::CylindricalPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = CylindricalPoint(rotate(CartesianPoint(pt), r))
@@ -60,48 +65,3 @@ zero(VT::Type{<:AbstractCoordinateVector{T}}) where {T} = VT(zero(T),zero(T),zer
 # @inline translate(pt::CylindricalPoint{T}, v::CartesianVector{T}) where {T} = CylindricalPoint(translate(CartesianPoint(pt), v))
 # @inline translate!(vpt::Vector{<:AbstractCoordinatePoint{T}}, v::CartesianVector{T}) where {T} = begin for i in eachindex(vpt) vpt[i] = translate(vpt[i], v) end; vpt end
 # @inline translate!(vvpt::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, v::CartesianVector{T}) where {T} =  begin for i in eachindex(vvpt) translate!(vvpt[i], v) end; vvpt end
-
-
-"""
-    struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
-
-Describes a three-dimensional vector in cylindrical coordinates. 
-
-## Fields
-* `r`: Radius (in m).
-* `φ`: Polar angle (in rad).
-* `z`: `z`-coordinate (in m).
-
-!!! note 
-    `φ == 0` corresponds to the `x`-axis in the Cartesian coordinate system.
-    
-See also [`CartesianVector`](@ref).
-"""
-struct CylindricalVector{T} <: AbstractCoordinateVector{T, Cylindrical}
-    r::T
-    φ::T
-    z::T
-end
-
-#Type promotion happens here
-function CylindricalVector(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
-    eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
-    T = float(promote_type(eltypes...))
-    CylindricalVector{T}(T(r),T(φ),T(z))
-end
-
-function CylindricalVector(;
-    r = 0,
-    φ = 0,
-    z = 0
-)
-    CylindricalVector(r,φ,z)
-end
-
-function CylindricalVector{T}(;
-    r = 0,
-    φ = 0,
-    z = 0
-) where {T}
-    CylindricalVector{T}(T(r),T(φ),T(z))
-end

@@ -11,6 +11,13 @@ struct Line{T} <: AbstractLinePrimitive{T}
     end
 end
 
+# function Line(origin::CartesianPoint{T}, direction::CartesianVector{U}) where {T,U}
+#     R = promote_type(T,U)
+#     return Line(convert(CartesianPoint{R}, origin), convert(CartesianVector{R}, direction))
+# end
+
+Line(a::CartesianPoint, b::CartesianPoint) = Line(a, normalize(b - a))
+
 function Line(;
     origin = zero(CartesianPoint{Int}), 
     direction = CartesianVector{Int}(0,0,1)

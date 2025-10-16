@@ -112,8 +112,7 @@ function _calculate_signal(
     nσ::T = ifelse(charge > 0, ctm.nσh, ctm.nσe)
     
     @inbounds for i in eachindex(tmp_signal)
-
-        Δldrift::T = (i > 1) ? norm(path[i] .- path[i-1]) : zero(T)
+        Δldrift::T = (i > 1) ? norm(path[i] - path[i-1]) : zero(T)
         Δl::T = Δldrift > 0 ? hypot(Δldrift, vth * (pathtimestamps[i] - pathtimestamps[i-1])) : zero(T)
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
 
@@ -314,7 +313,7 @@ function _calculate_signal(
         Δt::T = (i > 1) ? (pathtimestamps[i] - pathtimestamps[i-1]) : zero(T)
         w::T = i > 1 ? get_interpolation(wpot, path[i], S) : zero(T)
 
-        Δldrift::T = (i > 1) ? norm(path[i] .- path[i-1]) : zero(T)
+        Δldrift::T = (i > 1) ? norm(path[i] - path[i-1]) : zero(T)
         Δl::T = Δldrift > 0 ? hypot(Δldrift, vth * (pathtimestamps[i] - pathtimestamps[i-1])) : zero(T)
         
         if in_inactive_region

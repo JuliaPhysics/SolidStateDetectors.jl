@@ -219,7 +219,10 @@ function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_
         next!(p)
         evtno += 1
     end
-    return RadiationDetectorSignals.group_by_evtno(Table(evts))
+
+    evts_with_points = map(evt -> merge(evt, (pos = cartesian_zero + evt.pos,)), evts)
+
+    return RadiationDetectorSignals.group_by_evtno(Table(evts_with_points))
 end 
 
 

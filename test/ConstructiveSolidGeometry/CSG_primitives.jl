@@ -23,7 +23,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
                     "h"       => 1.0))
                 for i in 1:2
             ])
-    
+            
             c = Geometry(T, dict, default_units, no_translations)
     
             # Conversion from Geometry -> Dict and Dict -> Geometry should result in the same geometry
@@ -195,8 +195,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test in(CartesianPoint{Float32}(1,0,0),ellip1)
         @test !in(CartesianPoint{Float32}(1,0,0),ellip_open)
     
-        ellip_closed_trafo = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1.0, origin=1/sqrt(3)*CartesianPoint{Float32}(1,1,1),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
-        ellip_open_trafo = @inferred CSG.Ellipsoid(CSG.OpenPrimitive,r=1.0, origin=1/sqrt(3)*CartesianPoint{Float32}(1,1,1),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
+        ellip_closed_trafo = @inferred CSG.Ellipsoid(CSG.ClosedPrimitive,r=1.0, origin=CartesianPoint{Float64}(1/sqrt(3),1/sqrt(3),1/sqrt(3)),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
+        ellip_open_trafo = @inferred CSG.Ellipsoid(CSG.OpenPrimitive,r=1.0, origin=CartesianPoint{Float64}(1/sqrt(3),1/sqrt(3),1/sqrt(3)),rotation=SMatrix{3}(0.5,sqrt(3)/2,0,-sqrt(3)/2,0.5,0,0,0,1))
         @test !in(CartesianPoint{Float64}(-1e-8,0,0),ellip_closed_trafo)
         @test in(CartesianPoint{Float64}(1e-8,0,0),ellip_open_trafo)
     end
@@ -298,22 +298,6 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         edge1 = @inferred CSG.Edge{Float32}()
         edge2 = @inferred CSG.Edge(a = CartesianPoint{Float32}(0,0,0), b = CartesianPoint{Float16}(0,0,1)) 
         @test edge1 == edge2
-    end
-    @testset "Vector" begin
-        cart = @inferred CSG.CartesianVector(x=2f0,z=1f0)
-        @inferred CSG.CartesianVector{Float32}(x=2)
-        cyl = @inferred CSG.CylindricalVector{Float32}(r=2.,z=1.)
-        cyl2 = @inferred CSG.CylindricalVector(φ=3π)
-        @test CartesianVector(cyl) == cart
-        @test cart.x == Float32(2)
-    end
-    @testset "Point" begin
-        cart = @inferred CSG.CartesianPoint(x=2f0,z=1f0)
-        @inferred CSG.CartesianPoint{Float32}(x=2)
-        cyl = @inferred CSG.CylindricalPoint{Float32}(r=2.,z=1.)
-        cyl2 = @inferred CSG.CylindricalPoint(φ=3π)
-        @test CartesianPoint(cyl) == cart
-        @test cyl2.φ == T(π)
     end
 end
 
