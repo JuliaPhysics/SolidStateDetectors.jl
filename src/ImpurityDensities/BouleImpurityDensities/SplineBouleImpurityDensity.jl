@@ -1,12 +1,12 @@
 """
-    struct LinBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+    struct SplineBouleImpurityDensity{N, T <: SSDFloat} <: AbstractImpurityDensity{T}
 
-a + b*z
-Impurity density model which assumes a linear gradient in impurity density in z.
- 
+Impurity density model which assumes an arbitrary impurity density in z (boule coordinates) defined by cubic spline interpolation between given points.
+
 ## Fields
-* `a:T`: impurity density values at the boule origin.
-* `b::T`: linear slope in `z` direction.
+* `z::SVector{N, T}`: z coordinates (in boule coordinates) where the impurity density is defined.
+* `ρ::SVector{N, T}`: impurity density values at the given z coordinates.
+* `spline::Interpolations.Extrapolation{T}`: cubic spline interpolation of the impurity density values.
 * `det_z0::T`: z coordinate of the detector origin in boule coordinates. The z-direction of the detector is opposite to the z-direction of the boule coordinates.
 """
 struct SplineBouleImpurityDensity{N, T <: SSDFloat} <: AbstractImpurityDensity{T}
