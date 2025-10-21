@@ -31,26 +31,6 @@ function get_impurity_density(idm::SplineBouleImpurityDensity, pt::AbstractCoord
     idm.spline(idm.det_z0 - z)
 end
 
-function resample_with_min_step(x::AbstractVector{<:Real}, y::AbstractVector{<:Real})
-    @assert length(x) == length(y) "x and y must have the same length"
-    @assert issorted(x) "x must be sorted in increasing order"
-
-    # Compute the minimum step
-    dxs = diff(x)
-    min_step = minimum(dxs)
-
-    # Construct StepRangeLen from min step
-    x_min, x_max = first(x), last(x)
-    n = Int(cld(x_max - x_min, min_step)) + 1  # cld = ceil division
-    new_x = StepRangeLen(x_min, min_step, n)
-
-    # Interpolate with flat extrapolation
-    itp = LinearInterpolation(x, y, extrapolation_bc=Flat())
-    new_y = SVector{n}(itp.(new_x))
-
-    new_x, new_y
-end
-
 (*)(scale::Real, idm::SplineBouleImpurityDensity{N, T}) where {N, T} = SplineBouleImpurityDensity{T}(Vector(idm.z), Vector(scale*idm.ρ), idm.det_z0)
 
 (+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, idm::SplineBouleImpurityDensity{N, T}) where {N, T} = SplineBouleImpurityDensity{T}(Vector(idm.z), Vector(idm.ρ .+ to_internal_units(offset)), idm.det_z0)
