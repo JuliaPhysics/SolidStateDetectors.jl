@@ -20,7 +20,6 @@ function SplineBouleImpurityDensity{T}(z::Vector{<:Number}, ρ::Vector{<:Number}
     N = length(z)
     @assert N == length(ρ) > 1 "Vectors must be the same length, and at least 2 points are required for cubic spline interpolation."
     z = to_internal_units.(z)
-    step = z[2] - z[1]
     ρ = SVector{N, T}(to_internal_units.(ρ))
     spline = cubic_spline_interpolation(range(z[1], stop = z[end], length = N), ρ)
     SplineBouleImpurityDensity{N, T}(SVector{N, T}(z), ρ, spline, T(to_internal_units(det_z0)))

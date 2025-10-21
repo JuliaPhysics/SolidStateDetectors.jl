@@ -22,13 +22,30 @@ T = Float32
 
     @test sim.detector.semiconductor.impurity_density_model == sim2.detector.semiconductor.impurity_density_model
 
+    det_z0 = T(0.05)
+    boule_ρ0 = T(-3e15)
+    boule_gradient = T(-1e16)
     boule_n = T(-2e15)
     boule_l = T(0.05)
-    boule_m = T(0.03)
+    boule_m = T(0.01)
+
+    zimp = T.(collect(0:0.01:0.06))
+    yimp = T.([ -3.013e15, -3.137e15, -3.3e15, -3.571e15, -4.136e15, -5.5e15, -9.037e15])
+
     idm = LinExpBouleImpurityDensity{T}(boule_ρ0, boule_gradient, boule_n, boule_l, boule_m, det_z0)
     sim.detector = SolidStateDetector(sim.detector, idm)
-
+    
     det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0))
     
     @test det_ρ0 == boule_ρ0 + boule_gradient * det_z0 + boule_n * exp((det_z0 - boule_l)/boule_m)
+
+    calculate_electric_potential!(sim, refinement_limits=0.01)
+    U_est = estimate_depletion_voltage(sim)
+
+    idm_spline = SplineBouleImpurityDensity{T}(zimp, yimp, det_z0)
+    sim.detector = SolidStateDetector(sim.detector, idm_spline)
+    calculate_electric_potential!(sim, refinement_limits=0.01)
+    U_est_spline = estimate_depletion_voltage(sim)
+
+    @test isapprox(U_est, U_est_spline; atol=10u"V")
 end
