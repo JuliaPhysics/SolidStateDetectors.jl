@@ -22,7 +22,7 @@ struct LinExpBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     det_z0::T
 end
 
-function LinExpBouleImpurityDensity{T}(pars::Vector{<:Number}, det_z0::Number) where {T}
+function LinExpBouleImpurityDensity{T}(pars::AbstractVector{<:Number}, det_z0::Number) where {T}
     LinExpBouleImpurityDensity{T}(
         T.(to_internal_units(pars))..., 
         T(to_internal_units(det_z0))
