@@ -25,15 +25,17 @@ function SplineBouleImpurityDensity{T}(z::AbstractVector{<:RealQuantity}, ρ::Ab
     ρ = SVector{N, T}(to_internal_units.(ρ[idx]))
 
     dxs = diff(z)
-    z_range, resampled_ρ = if all(x -> isapprox(x, dxs[1]; atol=1e-6), dxs)
+    z_range, resampled_ρ = if all(x -> isapprox(x, dxs[1]), dxs)
         range(first(z), stop = last(z), length = length(z)), ρ
     else
         @info "Resampling impurity density to uniform steps in z"
         min_step = minimum(dxs)
         z_min, z_max = first(z), last(z)
-        n = Int(cld(z_max - z_min, min_step))
+        steps = (z_max - z_min)/min_step
+        n = isapprox(ceil(steps) - steps, 1) ? Int(ceil(steps)) : Int(ceil(steps)) + 1
         z_r = range(z_min, stop = z_max, length = n)
         itp = Interpolations.LinearInterpolation(z, ρ, extrapolation_bc=Flat())
+        @info steps, n, z_r
         z_r, itp.(z_r)
     end
 
