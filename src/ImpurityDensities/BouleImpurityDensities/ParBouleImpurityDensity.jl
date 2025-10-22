@@ -34,9 +34,7 @@ function ImpurityDensity(T::DataType, t::Val{:parabolic_boule}, dict::AbstractDi
 end
 
 function get_impurity_density(idm::ParBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}
-    cpt = CartesianPoint(pt)
-    z = cpt[3]
-    idm.a + idm.b * (idm.det_z0 - z) + idm.c * (idm.det_z0 - z)^2
+    idm.a + idm.b * (idm.det_z0 - pt.z) + idm.c * (idm.det_z0 - pt.z)^2
 end
 
 (*)(scale::Real, idm::ParBouleImpurityDensity{T}) where {T} = ParBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.c), idm.det_z0)

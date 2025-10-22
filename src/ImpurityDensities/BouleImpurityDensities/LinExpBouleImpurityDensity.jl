@@ -40,9 +40,7 @@ function ImpurityDensity(T::DataType, t::Val{:linear_exponential_boule}, dict::A
 end
 
 function get_impurity_density(idm::LinExpBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}
-    cpt = CartesianPoint(pt)
-    z = cpt[3]
-    idm.a + idm.b * (idm.det_z0 - z) + idm.n * exp((idm.det_z0 - z - idm.l)/idm.m)
+    idm.a + idm.b * (idm.det_z0 - pt.z) + idm.n * exp((idm.det_z0 - pt.z - idm.l)/idm.m)
 end
 
 (*)(scale::Real, idm::LinExpBouleImpurityDensity{T}) where {T} = LinExpBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.n), idm.l, idm.m, idm.det_z0)

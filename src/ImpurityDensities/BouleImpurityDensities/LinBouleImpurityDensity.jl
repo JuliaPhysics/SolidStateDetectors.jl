@@ -31,9 +31,7 @@ function ImpurityDensity(T::DataType, t::Val{:linear_boule}, dict::AbstractDict,
 end
 
 function get_impurity_density(idm::LinBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}
-    cpt = CartesianPoint(pt)
-    z = cpt[3]
-    idm.a + idm.b * (idm.det_z0 - z)
+    idm.a + idm.b * (idm.det_z0 - pt.z)
 end
 
 (*)(scale::Real, idm::LinBouleImpurityDensity{T}) where {T} = LinBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), idm.det_z0)

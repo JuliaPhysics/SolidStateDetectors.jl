@@ -16,21 +16,35 @@ struct SplineBouleImpurityDensity{N, T <: SSDFloat} <: AbstractImpurityDensity{T
     det_z0::T
 end
 
-function SplineBouleImpurityDensity{T}(z::Vector{<:Number}, ρ::Vector{<:Number}, det_z0::Number) where {T}
+function SplineBouleImpurityDensity{T}(z::AbstractVector{<:RealQuantity}, ρ::AbstractVector{<:RealQuantity}, det_z0::RealQuantity) where {T}
     N = length(z)
     @assert N == length(ρ) > 1 "Vectors must be the same length, and at least 2 points are required for cubic spline interpolation."
-    z = to_internal_units.(z)
-    ρ = SVector{N, T}(to_internal_units.(ρ))
-    spline = cubic_spline_interpolation(range(z[1], stop = z[end], length = N), ρ)
-    SplineBouleImpurityDensity{N, T}(SVector{N, T}(z), ρ, spline, T(to_internal_units(det_z0)))
+    
+    idx = sortperm(z)
+    z = SVector{N, T}(to_internal_units.(z[idx]))
+    ρ = SVector{N, T}(to_internal_units.(ρ[idx]))
+
+    dxs = diff(z)
+    z_range, resampled_ρ = if all(x -> isapprox(x, dxs[1]; atol=1e-6), dxs)
+        range(first(z), stop = last(z), length = length(z)), ρ
+    else
+        @info "Resampling impurity density to uniform steps in z"
+        min_step = minimum(dxs)
+        z_min, z_max = first(z), last(z)
+        n = Int(cld(z_max - z_min, min_step))
+        z_r = range(z_min, stop = z_max, length = n)
+        itp = Interpolations.LinearInterpolation(z, ρ, extrapolation_bc=Flat())
+        z_r, itp.(z_r)
+    end
+
+    spline = Interpolations.cubic_spline_interpolation(z_range, resampled_ρ)
+    SplineBouleImpurityDensity{N, T}(z, ρ, spline, T(to_internal_units(det_z0)))
 end
 
 function get_impurity_density(idm::SplineBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}
-    cpt = CartesianPoint(pt)
-    z = cpt[3]
-    idm.spline(idm.det_z0 - z)
+    idm.spline(idm.det_z0 - pt.z)
 end
 
-(*)(scale::Real, idm::SplineBouleImpurityDensity{N, T}) where {N, T} = SplineBouleImpurityDensity{T}(Vector(idm.z), Vector(scale*idm.ρ), idm.det_z0)
+(*)(scale::Real, idm::SplineBouleImpurityDensity{N, T}) where {N, T} = SplineBouleImpurityDensity{T}(idm.z, scale*idm.ρ, idm.det_z0)
 
-(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, idm::SplineBouleImpurityDensity{N, T}) where {N, T} = SplineBouleImpurityDensity{T}(Vector(idm.z), Vector(idm.ρ .+ to_internal_units(offset)), idm.det_z0)
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, idm::SplineBouleImpurityDensity{N, T}) where {N, T} = SplineBouleImpurityDensity{T}(idm.z, idm.ρ .+ to_internal_units(offset), idm.det_z0)
