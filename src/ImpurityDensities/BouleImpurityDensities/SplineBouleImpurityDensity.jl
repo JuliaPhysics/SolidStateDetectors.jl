@@ -35,7 +35,6 @@ function SplineBouleImpurityDensity{T}(z::AbstractVector{<:RealQuantity}, ρ::Ab
         n = isapprox(ceil(steps) - steps, 1) ? Int(ceil(steps)) : Int(ceil(steps)) + 1
         z_r = range(z_min, stop = z_max, length = n)
         itp = Interpolations.LinearInterpolation(z, ρ, extrapolation_bc=Flat())
-        @info steps, n, z_r
         z_r, itp.(z_r)
     end
 
