@@ -18,7 +18,7 @@ struct ParBouleImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
     det_z0::T
 end
 
-function ParBouleImpurityDensity{T}(pars::Vector{<:Number}, det_z0::Number) where {T}
+function ParBouleImpurityDensity{T}(pars::AbstractVector{<:Number}, det_z0::Number) where {T}
     ParBouleImpurityDensity{T}(
         T.(to_internal_units(pars))..., 
         T(to_internal_units(det_z0))
@@ -34,9 +34,7 @@ function ImpurityDensity(T::DataType, t::Val{:parabolic_boule}, dict::AbstractDi
 end
 
 function get_impurity_density(idm::ParBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}
-    cpt = CartesianPoint(pt)
-    z = cpt[3]
-    idm.a + idm.b * (idm.det_z0 - z) + idm.c * (idm.det_z0 - z)^2
+    idm.a + idm.b * (idm.det_z0 - pt.z) + idm.c * (idm.det_z0 - pt.z)^2
 end
 
 (*)(scale::Real, idm::ParBouleImpurityDensity{T}) where {T} = ParBouleImpurityDensity{T}(T(scale*idm.a), T(scale*idm.b), T(scale*idm.c), idm.det_z0)
