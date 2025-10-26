@@ -1,6 +1,8 @@
 using SolidStateDetectors
 using Test
 
+using Unitful
+
 T = Float32
 
 @timed_testset "Test boule impurity densities and corrections" begin
@@ -14,7 +16,7 @@ T = Float32
     idm = LinBouleImpurityDensity{T}(boule_ρ0, boule_gradient, det_z0)
     sim.detector = SolidStateDetector(sim.detector, idm)
 
-    det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0))
+    det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CartesianPoint{T}(0,0,0))
 
     @test det_ρ0 == boule_ρ0 + boule_gradient * det_z0
 
@@ -35,17 +37,17 @@ T = Float32
     idm = LinExpBouleImpurityDensity{T}(boule_ρ0, boule_gradient, boule_n, boule_l, boule_m, det_z0)
     sim.detector = SolidStateDetector(sim.detector, idm)
     
-    det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0))
+    det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CartesianPoint{T}(0,0,0))
     
     @test det_ρ0 == boule_ρ0 + boule_gradient * det_z0 + boule_n * exp((det_z0 - boule_l)/boule_m)
 
-    calculate_electric_potential!(sim, refinement_limits=0.01)
-    U_est = estimate_depletion_voltage(sim)
+    timed_calculate_electric_potential!(sim, refinement_limits=0.01)
+    U_est = timed_estimate_depletion_voltage(sim)
 
     idm_spline = SplineBouleImpurityDensity{T}(zimp, yimp, det_z0)
     sim.detector = SolidStateDetector(sim.detector, idm_spline)
-    calculate_electric_potential!(sim, refinement_limits=0.01)
-    U_est_spline = estimate_depletion_voltage(sim)
+    timed_calculate_electric_potential!(sim, refinement_limits=0.01)
+    U_est_spline = timed_estimate_depletion_voltage(sim)
 
     @test isapprox(U_est, U_est_spline; atol=10u"V")
 end
