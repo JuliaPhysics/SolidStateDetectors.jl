@@ -24,11 +24,23 @@ In this matter the detector impurities are automatically determined from those o
 abstract type AbstractImpurityDensity{T <: SSDFloat} end
 
 @inline function ImpurityDensity(T::DataType, dict::AbstractDict, input_units::NamedTuple)
-    return ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
+    imp = ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
+    if !haskey(dict, "corrections")
+        imp
+    else
+        scale = _parse_value(T, get(dict["corrections"], "scale", 1), NoUnits)
+        offset =  _parse_value(T, get(dict["corrections"], "offset", 0), input_units.length^(-3))
+        (scale * imp) + offset
+    end
 end
 
 (*)(idm::AbstractImpurityDensity, scale::Real) = (*)(scale, idm)
 (+)(idm::AbstractImpurityDensity, offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}) = (+)(offset, idm)
+
+# Throw ConfigFileError for impurity densities that do not support corrections
+(*)(scale::Real, ::I) where {I <: AbstractImpurityDensity} = throw(ConfigFileError("Impurity density $(I.name.name) does not support corrections"))
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, ::I) where {I <: AbstractImpurityDensity} = throw(ConfigFileError("Impurity density $(I.name.name) does not support corrections"))
+
 
 """
     get_impurity_density(id::AbstractImpurityDensity, pt::AbstractCoordinatePoint)
