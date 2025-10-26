@@ -29,7 +29,7 @@ function SplineBouleImpurityDensity{T}(z::AbstractVector{<:RealQuantity}, ρ::Ab
 end
 
 function get_impurity_density(idm::SplineBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}
-    @assert idm.z[begin] <= idm.det_z0 - pt.z <= idm.z[end] "Point must be within the boule's z-range."
+    @assert idm.z[begin] <= idm.det_z0 - pt.z <= idm.z[end] "SplineBouleImpurityDensity det_z0 - point.z must be within the boule's z-range."
     idm.spline(idm.det_z0 - pt.z)
 end
 
