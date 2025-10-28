@@ -204,13 +204,13 @@ function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 100
     evt.drift_paths = drift_charges(sim, evt.locations, evt.energies; Δt, max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
     nothing
 end
-function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
+function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns", signal_unit::Unitful.Units = u"e_au")::Nothing where {T <: SSDFloat}
     @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
     @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
     if ismissing(evt.waveforms)
         evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
-    evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact_id, Δt = Δt)
+    evt.waveforms[contact_id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact_id; Δt, signal_unit)
     nothing
 end
 
@@ -229,6 +229,7 @@ The output is stored in `evt.waveforms`.
 
 ## Keywords
 * `Δt::RealQuantity = 5u"ns"`: Time steps with which the drift paths were calculated.
+* `signal_unit::Unitful.Units = u"e_au"`: Unit of the returned waveform (charge or energy).
 
 ## Example 
 ```julia
@@ -238,7 +239,7 @@ SolidStateDetectors.get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths we
 !!! note 
     This method only works if `evt.drift_paths` has already been calculated and is not `missing`.
 """
-function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns")::Nothing where {T <: SSDFloat}
+function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns", signal_unit::Unitful.Units = u"e_au")::Nothing where {T <: SSDFloat}
     @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges!(evt::Event, sim::Simulation)` first."
     if ismissing(evt.waveforms)
         evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
@@ -246,7 +247,7 @@ function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"
     for contact in sim.detector.contacts
         if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
         if !ismissing(sim.weighting_potentials[contact.id])
-            evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact.id, Δt = Δt)
+            evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact.id; Δt, signal_unit)
         end
     end
     nothing
@@ -271,6 +272,7 @@ The output is stored in `evt.drift_paths` and `evt.waveforms`.
 * `Δt::RealQuantity = 5u"ns"`: Time step used for the drift.
 * `diffusion::Bool = false`: Activate or deactive diffusion of charge carriers via random walk.
 * `self_repulsion::Bool = false`: Activate or deactive self-repulsion of charge carriers of the same type.
+* `signal_unit::Unitful.Units = u"e_au"`: Unit of the returned waveform (charge or energy).
 * `end_drift_when_no_field::Bool = true`: Activate or deactive drifting termination when the electric field is exactly zero.
 * `geometry_check::Bool = false`: Perform extra geometry checks when determining if charge carriers have reached a contact.
 * `verbose = true`: Activate or deactivate additional info output.
@@ -282,9 +284,9 @@ simulate!(evt, sim, Δt = 1u"ns", verbose = false)
 
 See also [`drift_charges!`](@ref) and [`get_signals!`](@ref).
 """
-function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
+function simulate!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, signal_unit::Unitful.Units = u"e_au", end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
     drift_charges!(evt, sim; max_nsteps, Δt, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
-    get_signals!(evt, sim; Δt)
+    get_signals!(evt, sim; Δt, signal_unit)
     nothing
 end
 
@@ -357,7 +359,7 @@ wf = get_electron_and_hole_contribution(evt, sim, contact_id)
     
 See also [`plot_electron_and_hole_contribution`](@ref).
 """
-function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}, contact_id::Int
+function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}, contact_id::Int; signal_unit::Unitful.Units = u"e_au",
             )::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} where {T <: SSDFloat, S}
     
     @assert !ismissing(evt.drift_paths) "The charge drift is not yet simulated. Please use `drift_charges!(evt, sim)`!"
@@ -379,9 +381,9 @@ function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}
         dp_h_t::Vector{T} = evt.drift_paths[i].timestamps_h
         add_signal!(signal_h, dp_h_t, dp_h, dp_h_t, energy, wp, sim.point_types, ctm)
     end
-    unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
-    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * unitless_energy_to_charge),
-            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h * unitless_energy_to_charge))
+    calibration_factor::Quantity{T, dimension(signal_unit)} = _convert_internal_energy_to_external_unit(signal_unit, sim.detector.semiconductor.material)
+    return (electron_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_e)), signal_e * calibration_factor),
+            hole_contribution = RDWaveform(range(zero(T) * u"ns", step = dt * u"ns", length = length(signal_h)), signal_h * calibration_factor))
 end
 
 export get_electron_and_hole_contribution
@@ -435,11 +437,13 @@ function plot_electron_and_hole_contribution end
     contact_id::Int = gdd.args[3]
     
     ismissing(n_samples) ? n_samples = length(evt.waveforms[contact_id].signal) : nothing
-    
-    wf::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} = get_electron_and_hole_contribution(evt, sim, contact_id)
+
+    # check in which units the waveforms are calibrated
+    signal_unit::Unitful.Units = unit(evt.waveforms[contact_id])
+    wf::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} = get_electron_and_hole_contribution(evt, sim, contact_id; signal_unit)
     
     unitformat --> :slash
-    yguide --> "Charge"
+    yguide --> signal_unit isa Unitful.Units{<:Any, Unitful.Charge} ? "Charge" : "Energy"
 
     @series begin
         linecolor := :red 

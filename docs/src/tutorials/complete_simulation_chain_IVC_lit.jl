@@ -200,8 +200,10 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 # SolidStateDetectors.jl also allows to separate the observed charge signal into the charge induced by the electrons and the charge induced by the holes.
 
 contact_id = 1
-plot_electron_and_hole_contribution(evt, sim, contact_id, xlims = (0, 1100), xlabel = "Time",
-                    legend = :topleft, tickfontsize = 12, ylabel = "Charge", guidefontsize = 14)
+simulate!(evt, sim, signal_unit = u"keV")
+plot_electron_and_hole_contribution(evt, sim, contact_id, 
+    xlims = (0, 1100), xlabel = "Time", ylabel = "Energy", 
+    legend = :topleft, tickfontsize = 12, guidefontsize = 14)
 #jl savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.pdf") # hide
 #md savefig("tutorial_waveform_contributions.svg"); nothing # hide

@@ -134,7 +134,7 @@ calculate_weighting_potential!(sim, 1, refinement_limits = [0.4,0.2,0.1,0.06], v
 
 # The previously generated events from the Geant4 simulation can now be used as input for the `simulate_waveforms` function:
 
-wf = simulate_waveforms(events[1:100], sim, Δt = 1u"ns", max_nsteps = 2000)
+wf = simulate_waveforms(events[1:100], sim, Δt = 1u"ns", signal_unit = u"keV", max_nsteps = 2000)
 plot(wf[1:20].waveform, label = "")
 #jl savefig("waveforms.pdf") # hide
 #md savefig("waveforms.pdf") # hide
