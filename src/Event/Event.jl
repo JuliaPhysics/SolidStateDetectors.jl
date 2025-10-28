@@ -156,7 +156,7 @@ function move_charges_inside_semiconductor!(
                         proj::T = (i - charge_center) ⋅ (l - charge_center) / sum((l - charge_center).^2)
                         if 0 ≤ proj ≤ 1
                             if i in det.semiconductor
-                                locations[n][m] = (1 - fraction * proj) * i + fraction * proj * charge_center
+                                locations[n][m] = cartesian_zero + (1 - fraction * proj) * (i - cartesian_zero) + fraction * proj * (charge_center - cartesian_zero)
                             end
                         end
                     end
@@ -164,8 +164,8 @@ function move_charges_inside_semiconductor!(
             end
             charge_center_new = mean(locations[n], Weights(edep_weights))
             if verbose
-                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center, digits = (T == Float64 ? 12 : 6)))"*
-                " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new, digits = (T == Float64 ? 12 : 6))).\n"
+                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center - cartesian_zero, digits = (T == Float64 ? 12 : 6)))"*
+                " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new - cartesian_zero, digits = (T == Float64 ? 12 : 6))).\n"
             end
         end
     end

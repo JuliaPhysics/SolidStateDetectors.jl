@@ -135,7 +135,8 @@ function _convertEnergyDepsToChargeDeps(
         particle_type::Type{PT} = Gamma,
         radius::AbstractVector{<:AbstractVector{<:Union{<:Real, <:LengthQuantity}}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), edep),
         number_of_carriers::Int = 1, number_of_shells::Int = 1, 
-        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN # is ignored here
+        max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN, # is ignored here
+        kwargs...
     ) where {T <: SSDFloat, PT <: ParticleType}
 
     charge_clouds = broadcast(
@@ -148,7 +149,7 @@ function _convertEnergyDepsToChargeDeps(
                     number_of_shells = number_of_shells,
                     radius = T(to_internal_units(radius[iEdep_indep][i_together]))
                 )
-                move_charges_inside_semiconductor!([nbcc.locations], [nbcc.energies], det)
+                move_charges_inside_semiconductor!([nbcc.locations], [nbcc.energies], det; kwargs...)
                 nbcc
             end,
             eachindex(edep[iEdep_indep])
@@ -172,7 +173,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   geometry_check::Bool,
                                   verbose::Bool ) where {T <: SSDFloat}
     @showprogress map(mcevents) do phyevt
-        locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance)
+        locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
                 VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, T(Δt.val) * unit(Δt);
                 max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose
