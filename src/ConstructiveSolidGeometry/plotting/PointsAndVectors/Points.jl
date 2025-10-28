@@ -7,7 +7,9 @@
     end
     @series begin
         seriestype --> :scatter
-        [pt.x], [pt.y], [pt.z]
+        [to_internal_units(pt.x) * internal_length_unit], 
+        [to_internal_units(pt.y) * internal_length_unit], 
+        [to_internal_units(pt.z) * internal_length_unit]
     end
 end
 
@@ -35,7 +37,9 @@ end
     end 
     @series begin
         if !isempty(v) seriestype --> :scatter end
-        [v[i].x for i in eachindex(v)], [v[i].y for i in eachindex(v)], [v[i].z for i in eachindex(v)]
+        [to_internal_units(v[i].x) * internal_length_unit for i in eachindex(v)],
+        [to_internal_units(v[i].y) * internal_length_unit for i in eachindex(v)],
+        [to_internal_units(v[i].z) * internal_length_unit for i in eachindex(v)]
     end
 end
 
