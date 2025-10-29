@@ -44,7 +44,7 @@ given by a center charge surrounded by shells consisting of platonic solids.
 
 ## Example
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 NBodyChargeCloud(center, energy, number_of_shells = 3, shell_structure = SolidStateDetectors.Icosahedron)
 ```
@@ -119,7 +119,7 @@ Find the algorithm to create the shells [here](https://www.cmu.edu/biolphys/dese
 
 ## Example
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
 ```

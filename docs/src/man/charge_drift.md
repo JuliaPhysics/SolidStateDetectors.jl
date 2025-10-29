@@ -514,7 +514,7 @@ center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
-simulate!(evt, sim, diffusion = true)
+simulate!(evt, sim, diffusion = true, end_drift_when_no_field = true)
 ```
 ![Diffusion](../assets/diffusion.gif)
 
@@ -551,7 +551,7 @@ center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
-simulate!(evt, sim, self_repulsion = true)
+simulate!(evt, sim, self_repulsion = true, end_drift_when_no_field = true)
 ```
 ![SelfRepulsion](../assets/self_repulsion.gif)
 
@@ -564,7 +564,7 @@ center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
-simulate!(evt, sim, diffusion = true, self_repulsion = true)
+simulate!(evt, sim, diffusion = true, self_repulsion = true, end_drift_when_no_field = true)
 ```
 ![GroupEffects](../assets/group_effects.gif)
 
