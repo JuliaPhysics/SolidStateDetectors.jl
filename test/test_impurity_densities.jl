@@ -31,7 +31,7 @@ T = Float32
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa LinearImpurityDensity{T}
-        @test cd.offsets[1] == 1f-10
+        @test cd.offset == 1f-10
         @test cd.gradients[1] == 1f-11
     end
     @testset "Cylindrical impurity density" begin 
@@ -45,7 +45,7 @@ T = Float32
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.CylindricalImpurityDensity{T}
-        @test cd.offsets[1] == 1f-10
+        @test cd.offset == 1f-10
         @test cd.gradients[1] == 1f-11
     end
 end
@@ -62,7 +62,7 @@ end
         )
         cd = SolidStateDetectors.ChargeDensity(T, d["charge_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.LinearChargeDensity{T}
-        @test cd.offsets[1] == 1f-10
+        @test cd.offset == 1f-10
         @test cd.gradients[1] == 1f-11
 
         pt = CartesianPoint{T}(1.0, 0.0, 0.0)  
@@ -81,7 +81,7 @@ end
         )
         cd = SolidStateDetectors.ChargeDensity(T, d["charge_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.CylindricalChargeDensity{T}
-        @test cd.offsets[1] == 1f-10
+        @test cd.offset == 1f-10
         @test cd.gradients[1] == 1f-11
     end
 end
