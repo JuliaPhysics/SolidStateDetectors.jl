@@ -66,14 +66,6 @@ function Passive{T}(dict::AbstractDict, input_units::NamedTuple, outer_transform
     temperature::T = _parse_value(T, get(dict, "temperature", 293u"K"), input_units.temperature)
     charge_density_model = if haskey(dict, "charge_density") 
         ChargeDensity(T, dict["charge_density"], input_units)
-    elseif haskey(dict, "charge_density_model") 
-        @warn "Configuration file deprecation: There was an internal change from v0.5.3 to v0.6.0 regarding the 
-            charge density of `Passive` objects. 
-            Since v0.6.0, the elementary charge is not automatically multiplied to the distribution as it
-            is a charge density and not an impurity density. The values in the config files should be adapted
-            and the name of the field should be changed from \"charge_density_model\" into \"charge_density\".
-            This warning will result in an error in later versions."
-        ChargeDensity(T, dict["charge_density_model"], input_units)
     else
         ConstantChargeDensity{T}(0)
     end

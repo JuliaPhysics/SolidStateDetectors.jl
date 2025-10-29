@@ -1197,13 +1197,6 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
     nothing
 end
 
-function calculate_drift_fields!(sim::Simulation{T};
-    use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat}
-    @warn "Since v0.7.0, drift fields do not need to be calculated anymore.\n`calculate_drift_fields!(sim)` can be removed."
-    nothing
-end
-@deprecate apply_charge_drift_model!(args...; kwargs...) calculate_drift_fields!(args...; kwargs...)
-
 function drift_charges( sim::Simulation{T}, starting_positions::VectorOfArrays{CartesianPoint{T}}, energies::VectorOfArrays{T};
                         Δt::RealQuantity = 5u"ns", max_nsteps::Int = 1000, diffusion::Bool = false, self_repulsion::Bool = false, 
                         end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true )::Vector{EHDriftPath{T}} where {T <: SSDFloat}
