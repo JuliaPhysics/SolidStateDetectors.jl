@@ -5,6 +5,37 @@ using Unitful
 
 T = Float32
 
+@timed_testset "Test charge densities" begin
+    @testset "Linear charge density" begin 
+        d = Dict("charge_density" => Dict(
+                "name" => "linear",
+                    "x" => Dict(
+                        "init" => 1e-10,
+                        "gradient" => 1.0e-11
+                )
+            )
+        )
+        cd = SolidStateDetectors.ChargeDensity(T, d["charge_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd isa SolidStateDetectors.LinearChargeDensity{T}
+        @test cd.offsets[1] == 1f-10
+        @test cd.gradients[1] == 1f-11
+    end
+    @testset "Cylindrical charge density" begin 
+        d = Dict("charge_density" => Dict(
+                "name" => "cylindrical",
+                    "r" => Dict(
+                        "init" => 1e-10,
+                        "gradient" => 1.0e-11
+                )
+            )
+        )
+        cd = SolidStateDetectors.ChargeDensity(T, d["charge_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd isa SolidStateDetectors.CylindricalChargeDensity{T}
+        @test cd.offsets[1] == 1f-10
+        @test cd.gradients[1] == 1f-11
+    end
+end
+
 @timed_testset "Test boule impurity densities and corrections" begin
     sim = Simulation{T}("BEGe_01.yaml")
 

@@ -30,8 +30,8 @@ end
 
 function ChargeDensity(T::DataType, t::Val{:cylindrical}, dict::AbstractDict, input_units::NamedTuple)
     offsets, gradients = zeros(T,3), zeros(T,3)
-    density_unit = internal_charge_density * input_units.length^(-3)
-    density_gradient_unit = internal_charge_density * input_units.length^(-4)
+    density_unit = internal_charge_unit * input_units.length^(-3)
+    density_gradient_unit = internal_charge_unit * input_units.length^(-4)
     if prod(map(k -> k in ["r","z"], collect(keys(dict)))) @warn "Only r and z are supported in the cylindrical charge density model.\nChange the charge density model in the config file or remove all other entries." end
     if haskey(dict, "r")     
         if haskey(dict["r"], "init")     offsets[1]   = _parse_value(T, dict["r"]["init"], density_unit) end
