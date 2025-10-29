@@ -29,6 +29,7 @@ ev = Event(spawn_positions[in_idx]);
 time_step = T(2)u"ns"
 max_nsteps = 10000
 drift_charges!(ev, sim, Δt = time_step, max_nsteps = max_nsteps, verbose = false)
+SolidStateDetectors.get_signal!(ev, sim, 1, signal_unit = u"keV", Δt = time_step)
 
 DT_h = Array{typeof(time_step),2}(fill(typeof(time_step)(NaN),length(x_axis),length(z_axis)))
 DT_e = Array{typeof(time_step),2}(fill(typeof(time_step)(NaN),length(x_axis),length(z_axis)))

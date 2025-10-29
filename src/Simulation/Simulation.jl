@@ -1205,14 +1205,14 @@ function drift_charges( sim::Simulation{T}, starting_positions::VectorOfArrays{C
                              max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
 end
 
-function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns") where {T <: SSDFloat, CS, TT}
+function get_signal(sim::Simulation{T, CS}, drift_paths::Vector{EHDriftPath{T}}, energy_depositions::Vector{T}, contact_id::Int; Δt::TT = T(5) * u"ns", signal_unit::Unitful.Units = u"e_au") where {T <: SSDFloat, CS, TT}
     dt::T = to_internal_units(Δt)
     wpot::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])
     timestamps = _common_timestamps( drift_paths, dt )
     signal::Vector{T} = zeros(T, length(timestamps))
     add_signal!(signal, timestamps, drift_paths, energy_depositions, wpot, sim.point_types, sim.detector.semiconductor.charge_trapping_model)
-    unitless_energy_to_charge = _convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)
-    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * unitless_energy_to_charge)
+    calibration_factor::Quantity{T, dimension(signal_unit)} = _convert_internal_energy_to_external_unit(signal_unit, sim.detector.semiconductor.material)
+    return RDWaveform( range(zero(T) * unit(Δt), step = T(ustrip(Δt)) * unit(Δt), length = length(signal)), signal * calibration_factor)
 end
 
 """

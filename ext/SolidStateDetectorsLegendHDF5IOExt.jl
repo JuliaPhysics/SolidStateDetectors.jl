@@ -8,7 +8,7 @@ using ..SolidStateDetectors
 using ..SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
 using ArraysOfArrays
 import Tables
-using TypedTables, Unitful
+using TypedTables, Unitful, UnitfulAtomic
 using Format
 
 function SolidStateDetectors.ssd_write(filename::AbstractString, sim::Simulation)
@@ -36,6 +36,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
                              self_repulsion::Bool = false,
                              number_of_carriers::Int = 1,
                              number_of_shells::Int = 1,
+                             signal_unit::Unitful.Units = u"e_au",
                              max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
                              end_drift_when_no_field::Bool = true,
                              geometry_check::Bool = false,
@@ -52,7 +53,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
     for evtrange in evt_ranges
         ofn = joinpath(output_dir, "$(output_base_name)_evts_$(nfmt(first(evtrange)))-$(nfmt(last(evtrange))).h5")
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
-        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
+        mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, signal_unit, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
 
         # LH5 can't handle CartesianPoint, turn positions into CartesianVectors which will be saved as SVectors
         pos_vec = VectorOfVectors([[CartesianPoint(p...) - cartesian_zero for p in ps] for ps in mcevents_sub.pos])

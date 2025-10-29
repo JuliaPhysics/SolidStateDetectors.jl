@@ -41,6 +41,9 @@ from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_tempe
 
 # Internal function for now: We should also fano noise here (optionally)
 _convert_internal_energy_to_external_charge(material) = inv(to_internal_units(material.E_ionisation)) * external_charge_unit
+_convert_internal_energy_to_external_unit(unit::Unitful.Units{<:Any, dimension(internal_charge_unit)}, material) = uconvert(unit, _convert_internal_energy_to_external_charge(material))
+_convert_internal_energy_to_external_unit(unit::Unitful.Units{<:Any, dimension(internal_energy_unit)}, material) = uconvert(unit, 1*internal_energy_unit)
+_convert_internal_energy_to_external_unit(unit::Unitful.Units, material) = throw(ArgumentError("The unit $(unit) is neither charge nor energy."))
 
 unit_conversion = Dict{String, Unitful.Units}(
     "um" => u"μm", # length
