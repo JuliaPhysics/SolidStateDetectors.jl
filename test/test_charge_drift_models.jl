@@ -31,6 +31,27 @@ nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
 
+@timed_testset "Move charges inside semiconductor" begin
+
+    # define a charge cloud very outside of the detector => should throw an AssertionError
+    nbcc_top = NBodyChargeCloud(CartesianPoint{T}(0.01,0,0.081), Edep, 10, radius = T(0.002), number_of_shells = 1)
+    evt = Event(nbcc_top)
+    @test_throws AssertionError timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
+
+    # define a charge cloud very close to the top surface of the example inverted coax detector (top = 80mm) => should throw a warning
+    nbcc_top = NBodyChargeCloud(CartesianPoint{T}(0.01,0,0.079), Edep, 10, radius = T(0.002), number_of_shells = 1)
+    evt = Event(nbcc_top)
+    @test_logs (:warn, r".*Moving them inside.*") timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
+
+    signalsum = T(0)
+    for i in 1:length(evt.waveforms)
+        signalsum += abs(ustrip(evt.waveforms[i].signal[end]))
+    end
+    signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+    @test isapprox( signalsum, T(2), atol = 5e-3 )
+end
+
+
 @timed_testset "Charge Trapping: BoggsChargeTrappingModel" begin
     sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}())
     evt = Event(pos, Edep)
