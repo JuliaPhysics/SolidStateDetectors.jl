@@ -49,8 +49,8 @@ end
     include("test_refine_existing_potential.jl")
 end
 
-@timed_testset "Test boule impurity densities" begin
-    include("test_boule_impurity_densities.jl")
+@timed_testset "Test impurity densities" begin
+    include("test_impurity_densities.jl")
 end
 
 @timed_testset "Geant4 extension" begin
