@@ -131,6 +131,7 @@ end
 end
 @timed_testset "Spherical" begin
     sim = Simulation{T}(SSD_examples[:Spherical])
+    sim.detector = SolidStateDetector(sim.detector, ADL2016ChargeDriftModel())
     timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     evt = Event([CartesianPoint{T}(0,0,0)])
     timed_simulate!(evt, sim)

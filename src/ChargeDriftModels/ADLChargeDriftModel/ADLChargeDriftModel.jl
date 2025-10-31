@@ -171,6 +171,7 @@ end
 ν(E::T, params::ADLParameters{T}) where {T <: SSDFloat} = E ^ (params.Γ0 + params.Γ1 * log(E / params.Γ2))
 ν(E::SVector{3,T}, params::ADLParameters{T}) where {T <: SSDFloat} = ν(norm(E), params)
 
+getVe(fv::SVector{3, T}, cdm::ADL2016ChargeDriftModel{T}, ::CartesianPoint{T}, Emag_threshold::T = T(1e-5)) where {T} = getVe(fv, cdm, Emag_threshold)
 @fastmath function SolidStateDetectors.getVe(fv::SVector{3,T}, cdm::ADL2016ChargeDriftModel{T,M}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, M}
     @inbounds begin
         Γ0::T = sqrt((2 * cdm.parameters.mt_inv + cdm.parameters.ml_inv)/3)
