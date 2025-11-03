@@ -20,7 +20,9 @@ impurity_density:
 """
 struct ConstantImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T} 
     ρ::T
+    ConstantImpurityDensity{T}(ρ::RealQuantity) where {T <: SSDFloat} = new{T}(_parse_value(T, ρ, internal_length_unit^(-3)))
 end
+ConstantImpurityDensity(ρ::Union{T, <:Quantity{T, Unitful.𝐋^(-3)}}) where {T <: Real} = ConstantImpurityDensity{float(T)}(ρ)
 
 function get_impurity_density(cdm::ConstantImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
     return cdm.ρ
@@ -32,5 +34,4 @@ function ImpurityDensity(T::DataType, t::Val{:constant}, dict::AbstractDict, inp
 end
 
 (*)(scale::Real, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(scale * lcdm.ρ))
-
 (+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, lcdm::ConstantImpurityDensity{T}) where {T} = ConstantImpurityDensity{T}(T(to_internal_units(offset) + lcdm.ρ))
