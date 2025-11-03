@@ -5,6 +5,51 @@ using Unitful
 
 T = Float32
 
+@timed_testset "Test impurity densities" begin
+    @testset "Constant impurity density" begin
+        d = Dict("impurity_density" => Dict(
+                "name" => "constant",
+                "value" => -5e9u"cm^-3"
+            )
+        )
+        cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd isa ConstantImpurityDensity{T}
+        @test cd.ρ == -5f15
+        @test cd == ConstantImpurityDensity(-5f9u"cm^-3")
+
+        # passing an incompatible unit will throw a ConfigFileError
+        @test_throws SolidStateDetectors.ConfigFileError ConstantImpurityDensity{T}(-5u"K")
+    end 
+    @testset "Linear impurity density" begin 
+        d = Dict("impurity_density" => Dict(
+                "name" => "linear",
+                    "x" => Dict(
+                        "init" => 1e-10,
+                        "gradient" => 1.0e-11
+                )
+            )
+        )
+        cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd isa LinearImpurityDensity{T}
+        @test cd.offsets[1] == 1f-10
+        @test cd.gradients[1] == 1f-11
+    end
+    @testset "Cylindrical impurity density" begin 
+        d = Dict("impurity_density" => Dict(
+                "name" => "cylindrical",
+                    "r" => Dict(
+                        "init" => 1e-10,
+                        "gradient" => 1.0e-11
+                )
+            )
+        )
+        cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd isa SolidStateDetectors.CylindricalImpurityDensity{T}
+        @test cd.offsets[1] == 1f-10
+        @test cd.gradients[1] == 1f-11
+    end
+end
+
 @timed_testset "Test charge densities" begin
     @testset "Linear charge density" begin 
         d = Dict("charge_density" => Dict(
