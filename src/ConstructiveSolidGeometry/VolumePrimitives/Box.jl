@@ -145,12 +145,12 @@ function vertices(b::Box{T}) where {T}
     return _transform_into_global_coordinate_system.((
         CartesianPoint{T}(-b.hX, -b.hY, -b.hZ),
         CartesianPoint{T}(+b.hX, -b.hY, -b.hZ),
-        CartesianPoint{T}(-b.hX, +b.hY, -b.hZ),
         CartesianPoint{T}(+b.hX, +b.hY, -b.hZ),
+        CartesianPoint{T}(-b.hX, +b.hY, -b.hZ),
         CartesianPoint{T}(-b.hX, -b.hY, +b.hZ),
         CartesianPoint{T}(+b.hX, -b.hY, +b.hZ),
-        CartesianPoint{T}(-b.hX, +b.hY, +b.hZ),
-        CartesianPoint{T}(+b.hX, +b.hY, +b.hZ)
+        CartesianPoint{T}(+b.hX, +b.hY, +b.hZ),
+        CartesianPoint{T}(-b.hX, +b.hY, +b.hZ)
     ), Ref(b))
 end
 
