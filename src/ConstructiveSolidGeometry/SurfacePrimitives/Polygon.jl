@@ -55,7 +55,7 @@ function sample(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N
 end
 
 function extremum(p::Polygon{N,T})::T where {N,T}
-    c = sum(p.points)/N
+    c = barycenter(p.points)
     m = maximum([norm(point - c) for point in p.points])
 end
 
