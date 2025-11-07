@@ -124,25 +124,21 @@ end
 @inline Base.transpose(pt::CartesianPoint) = CartesianPoint(transpose(pt.x), transpose(pt.y), transpose(pt.z))
 @inline Base.adjoint(pt::CartesianPoint) = CartesianPoint(adjoint(pt.x), adjoint(pt.y), adjoint(pt.z))
 
-# Barycentric combination
-function Statistics.mean(A::AbstractArray{<:CartesianPoint}; dims = :)
-    barycenter(A; dims)
-end
-
-function Statistics.mean(A::AbstractArray{<:CartesianPoint{T}}, weights::StatsBase.AbstractWeights; dims = :) where T
-    # Equivalent to A .- Ref(cartesian_zero), but allocation-free:
-    B = reinterpret(CartesianVector{T}, A) # ToDo: Avoid this memory allocation.
-    return cartesian_zero + mean(B, weights; dims = dims)
-end
-
-barycenter(X; kwargs...) = _barycenter_impl(eltype(X), X; kwargs...)
+barycenter(X, args...; kwargs...) = _barycenter_impl(eltype(X), X, args...; kwargs...)
 function _barycenter_impl(::Type{T}, points; kwargs...) where {T<:AbstractCoordinatePoint}
     mean_vector = mean(Base.Fix2(-, cartesian_zero), CartesianPoint.(points); kwargs...)
     return convert(T, cartesian_zero + mean_vector)::T
 end
 
-# Base.broadcastable(p::CartesianPoint) = (p.x, p.y, p.z)
+function _barycenter_impl(::Type{T}, points, weights::StatsBase.AbstractWeights; kwargs...) where {T<:AbstractCoordinatePoint}
+    mean_vector = mean(CartesianPoint.(points) .- Ref(cartesian_zero), weights; kwargs...)
+    return convert(T, cartesian_zero + mean_vector)::T
+end
 
+# Fallback if a Vector of Vectors (e.g. StaticVectors) is passed to barycenter
+function _barycenter_impl(::Type{T}, args...; kwargs...) where {T <: AbstractVector}
+    convert(T, mean(args...; kwargs...))
+end
 
 
 """
@@ -308,14 +304,3 @@ Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 
 @inline Base.transpose(pt::CylindricalPoint) = CylindricalPoint(transpose(pt.r), transpose(pt.φ), transpose(pt.z)) 
 @inline Base.adjoint(pt::CylindricalPoint) = CylindricalPoint(adjoint(pt.r), adjoint(pt.φ), adjoint(pt.z))
-
-# Barycentric combination
-function Statistics.mean(A::AbstractArray{<:CylindricalPoint}; dims = :)
-    B = CartesianPoint.(A)
-    CylindricalPoint(mean(B; dims = dims))
-end
-
-function  Statistics.mean(A::AbstractArray{<:CylindricalPoint}, weights::StatsBase.AbstractWeights; dims = :)
-    B = CartesianPoint.(A)
-    CylindricalPoint(mean(B, weights; dims = dims))
-end

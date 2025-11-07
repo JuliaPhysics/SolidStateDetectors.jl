@@ -19,7 +19,7 @@
         @series begin
             label := nothing
             seriestype := :vector
-            mean(p.points), Plane(p).normal / 5
+            barycenter(p.points), Plane(p).normal / 5
         end
     end
 end

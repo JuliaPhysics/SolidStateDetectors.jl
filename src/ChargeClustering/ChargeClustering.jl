@@ -39,10 +39,10 @@ function cluster_detector_hits(
                 push!(r_edep, esum_u)
                 esum = ustrip(esum_u)
                 if esum ≈ 0
-                    push!(r_pos, mean(c_hits.pos))
+                    push!(r_pos, barycenter(c_hits.pos))
                 else
                     weights = ustrip.(c_hits.edep) .* inv(esum)
-                    push!(r_pos, sum(c_hits.pos .* weights))
+                    push!(r_pos, barycenter(c_hits.pos, weights))
                 end
             end
         else

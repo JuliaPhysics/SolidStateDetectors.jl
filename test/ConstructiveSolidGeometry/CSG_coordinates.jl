@@ -6,7 +6,6 @@ using SolidStateDetectors.ConstructiveSolidGeometry: CartesianPoint, CartesianVe
     CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, barycenter
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
-using Statistics: mean
 
 import Unitful
 
@@ -48,13 +47,10 @@ import Unitful
         @test @inferred(CartesianZero{Float32}() * Unitful.u"mm") === CartesianZero{typeof(zero(Float32) * Unitful.u"mm")}()
 
         A = [CartesianPoint{Float32}(x,0,0) for x in -2:2]
-        @test isapprox(mean(A), CartesianPoint{Float32}(0,0,0))
         @test isapprox(barycenter(A), CartesianPoint{Float32}(0,0,0))
 
         S = SVector{length(A)}(A)
-        @test_broken isapprox(mean(S), CartesianPoint{Float32}(0,0,0))
         @test isapprox(barycenter(S), CartesianPoint{Float32}(0,0,0))
-        # ToDo: Add more tests!
     end
 
     @testset "cylindrical" begin
@@ -80,11 +76,9 @@ import Unitful
         @test  @inferred(CylindricalPoint(a[1], a[2], a[3])) ≈ a
 
         A = [CylindricalPoint{Float32}(x,0,0) for x in -2:2]
-        @test isapprox(mean(A), CylindricalPoint{Float32}(0,0,0))
         @test isapprox(barycenter(A), CylindricalPoint{Float32}(0,0,0))
 
         S = SVector{length(A)}(A)
-        @test_broken isapprox(mean(S), CylindricalPoint{Float32}(0,0,0))
         @test isapprox(barycenter(S), CylindricalPoint{Float32}(0,0,0))
     end
 end
