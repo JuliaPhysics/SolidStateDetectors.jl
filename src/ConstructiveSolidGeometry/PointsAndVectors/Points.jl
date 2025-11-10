@@ -244,6 +244,17 @@ struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
 end
 
+# Handles Unitful quantities or plain numbers 
+function CylindricalPoint(r, φ, z)
+    r_val = isa(r, Unitful.Quantity) ? float(ustrip(uconvert(u"m", r))) : float(r)
+    φ_val = isa(φ, Unitful.Quantity) ? float(ustrip(uconvert(u"rad", φ))) : float(φ)
+    z_val = isa(z, Unitful.Quantity) ? float(ustrip(uconvert(u"m", z))) : float(z)
+
+    T = promote_type(typeof(r_val), typeof(φ_val), typeof(z_val))
+    CylindricalPoint{T}(T(r_val), T(φ_val), T(z_val))
+
+end
+
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
     # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
