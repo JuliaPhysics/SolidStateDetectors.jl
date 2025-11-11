@@ -28,6 +28,10 @@ jobs:
       - name: Add LegendJuliaRegistry
         run: julia -e 'using Pkg; Pkg.Registry.add("General"); Pkg.Registry.add(Pkg.RegistrySpec(url = "https://github.com/legend-exp/LegendJuliaRegistry"))'
         shell: bash
+      - name: Downgrade NearestNeighbors # Temporary fix: this is needed to work with older versions of StaticArrays
+        run: julia --project=. -e 'using Pkg; Pkg.add(name = "NearestNeighbors", version = "0.4.13"); Pkg.compat("NearestNeighbors", "0.4.13")'
+        shell: bash
+        if: matrix.version == '1.10'
       - uses: julia-actions/julia-downgrade-compat@v2
         with:
           julia_version: ${{ matrix.version }}

@@ -69,7 +69,7 @@ end
     @test length(evts) == 100
 
     # Cluster events by radius
-    clustered_evts = @test_nowarn SolidStateDetectors.cluster_detector_hits(evts, 10u"µm")
+    clustered_evts = SolidStateDetectors.cluster_detector_hits(evts, 10u"µm")
     @test length(clustered_evts) == length(evts)
     @test length(flatview(clustered_evts.pos)) <= length(flatview(evts.pos))
     @test eltype(first(clustered_evts.pos)) <: CartesianPoint
@@ -83,7 +83,7 @@ end
 
     # Try the same method using StaticVectors as eltype of pos
     evts_static = Table(evts; pos = VectorOfVectors(broadcast.(p -> SVector{3}(p.x, p.y, p.z), evts.pos)))
-    clustered_evts_static = @test_nowarn SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm")
+    clustered_evts_static = SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm")
     @test length(clustered_evts_static) == length(evts_static)
     @test length(flatview(clustered_evts_static.pos)) <= length(flatview(evts_static.pos))
     @test eltype(first(clustered_evts_static.pos)) <: StaticVector{3}
