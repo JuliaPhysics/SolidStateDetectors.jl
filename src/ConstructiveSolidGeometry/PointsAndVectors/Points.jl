@@ -246,9 +246,9 @@ end
 
 # Handles Unitful quantities or plain numbers 
 function CylindricalPoint(r, φ, z)
-    r_val = isa(r, Unitful.Quantity) ? float(ustrip(uconvert(u"m", r))) : float(r)
-    φ_val = isa(φ, Unitful.Quantity) ? float(ustrip(uconvert(u"rad", φ))) : float(φ)
-    z_val = isa(z, Unitful.Quantity) ? float(ustrip(uconvert(u"m", z))) : float(z)
+    r_val = isa(r, Unitful.Length) ? float(ustrip(internal_length_unit, r)) : float(r)
+    φ_val = isa(φ, Unitful.Quantity) ? float(ustrip(internal_angle_unit, φ)) : float(φ)
+    z_val = isa(z, Unitful.Length) ? float(ustrip(internal_length_unit, z)) : float(z)
 
     T = promote_type(typeof(r_val), typeof(φ_val), typeof(z_val))
     CylindricalPoint{T}(T(r_val), T(φ_val), T(z_val))
