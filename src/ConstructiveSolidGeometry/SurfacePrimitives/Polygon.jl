@@ -35,7 +35,7 @@ function _sample_excluding_border(t::Triangle{T}, spacing::T)::Vector{CartesianP
     p2 = t.points[2] + (push/sφ)*(-u/nu + w/nw)
     if (p2-p1) ⋅ u > 0 
         su = norm(p2-p1)/nu
-        [(su*a*u + su*b*v) + p1 
+        [p1 + (su*a*u + su*b*v)
             for a in range(0, stop = 1,     length = max(2, 1 + Int(ceil(su*nu*sθ/spacing)))) 
             for b in range(0, stop = 1 - a, length = max(2, 1 + Int(ceil(su*nv*(1 - a)/spacing))))]
     else
@@ -55,7 +55,7 @@ function sample(p::Polygon{N,T}, spacing::T)::Vector{CartesianPoint{T}} where {N
 end
 
 function extremum(p::Polygon{N,T})::T where {N,T}
-    c = sum(p.points)/N
+    c = barycenter(p.points)
     m = maximum([norm(point - c) for point in p.points])
 end
 

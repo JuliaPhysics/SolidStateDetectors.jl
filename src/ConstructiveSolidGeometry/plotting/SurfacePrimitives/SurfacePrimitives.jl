@@ -39,7 +39,14 @@ end
         mesh(s, n_arc, n_vert_lines)
     elseif st == :samplesurface
         label --> l
-        seriesalpha --> 0.4
+        seriesalpha --> 0.2
+        seriescolor --> 1
+        markerstrokewidth --> 0
+        markersize --> 3
+        if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+            aspect_ratio --> 1.0
+        end 
+        seriestype := :scatter
         sample(s, extremum(s)/n_samples)
     elseif st == :slice
         @warn ":slice is not supported for AbstractSurfacePrimitive. Use :csg, :wireframe, :mesh3d, or :samplesurface."

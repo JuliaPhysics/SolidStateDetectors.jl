@@ -8,6 +8,15 @@ end
 
 @recipe function f(csg::AbstractConstructiveGeometry{T}, primitive::AbstractPrimitive{T}, axis::Symbol, slice::T, st::Symbol; n_samples = 40, CSG_scale = missing, projection = :none, full_det = false, linewidth = :auto) where {T}
     if st == :samplesurface
+        label --> l
+        seriesalpha --> 0.2
+        seriescolor --> 1
+        markerstrokewidth --> 0
+        markersize --> 3
+        if occursin("GRBackend", string(typeof(plotattributes[:plot_object].backend)))
+            aspect_ratio --> 1.0
+        end 
+        seriestype := :scatter
         CSG_scale = ismissing(CSG_scale) ? get_scale(csg) : CSG_scale
         spacing = T(CSG_scale/n_samples)
         pts_nounits = filter(p -> in(p,csg), sample(primitive, spacing))

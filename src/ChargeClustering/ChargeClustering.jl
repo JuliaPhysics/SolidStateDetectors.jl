@@ -1,20 +1,16 @@
 # # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
-# breaking changes in Clustering v0.14 -> v0.15
-@inline _get_clusters(clusters::Clustering.DbscanResult) = clusters.clusters
-@inline _get_clusters(clusters::Vector{Clustering.DbscanCluster}) = clusters
-
 function cluster_detector_hits(
-    detno::AbstractVector{<:Integer},
-    edep::AbstractVector{TT},
-    pos::AbstractVector{<:StaticVector{3,PT}},
-    cluster_radius::RealQuantity
-) where {TT<:RealQuantity, PT <: RealQuantity}
-    Table = TypedTables.Table
-    unsorted = Table(detno = detno, edep = edep, pos = pos)
+        detno::AbstractVector{<:Integer},
+        edep::AbstractVector{TT},
+        pos::AbstractVector{<:Union{<:StaticVector{3,PT}, <:CartesianPoint{PT}}},
+        cluster_radius::RealQuantity
+    ) where {TT <: RealQuantity, PT <: RealQuantity}
+
+    unsorted = TypedTables.Table(detno = detno, edep = edep, pos = pos)
     sorting_idxs = sortperm(unsorted.detno)
     sorted = unsorted[sorting_idxs]
-    grouped = Table(consgroupedview(sorted.detno, TypedTables.columns(sorted)))
+    grouped = TypedTables.Table(consgroupedview(sorted.detno, TypedTables.columns(sorted)))
 
     r_detno = similar(detno, 0)
     r_edep = similar(edep, 0)
@@ -24,25 +20,26 @@ function cluster_detector_hits(
     ustripped_cradius = ustrip(posunit, cluster_radius)
     
     for d_hits_nt in grouped
-        d_hits = Table(d_hits_nt)
+        d_hits = TypedTables.Table(d_hits_nt)
         d_detno = first(d_hits.detno)
         @assert all(isequal(d_detno), d_hits.detno)
         if length(d_hits) > 3
-            clusters = Clustering.dbscan(ustrip.(flatview(d_hits.pos)), ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1)
-            for c in _get_clusters(clusters)
+            
+            clusters = Clustering.dbscan(hcat((ustrip.(getindex.(d_hits.pos,i)) for i in 1:3)...)', 
+                ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
+            for c in clusters
                 idxs = vcat(c.boundary_indices, c.core_indices)
                 @assert length(idxs) == c.size
                 c_hits = view(d_hits, idxs)
                 
                 push!(r_detno, d_detno)
-                esum_u = sum(c_hits.edep)
-                push!(r_edep, esum_u)
-                esum = ustrip(esum_u)
-                if esum ≈ 0
-                    push!(r_pos, mean(c_hits.pos))
+                esum = sum(c_hits.edep)
+                push!(r_edep, esum)
+                if esum ≈ zero(TT)
+                    push!(r_pos, barycenter(c_hits.pos))
                 else
-                    weights = ustrip.(c_hits.edep) .* inv(esum)
-                    push!(r_pos, sum(c_hits.pos .* weights))
+                    weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
+                    push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
                 end
             end
         else

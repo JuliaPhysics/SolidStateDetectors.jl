@@ -144,7 +144,7 @@ function move_charges_inside_semiconductor!(
         idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
             edep_weights = ustrip.(energies[n])
-            charge_center = mean(locations[n], Weights(edep_weights))
+            charge_center = barycenter(locations[n], Weights(edep_weights))
             @assert charge_center in det.semiconductor "The center of the charge cloud ($(charge_center)) is not inside the semiconductor."
             surf = ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)
             for (k,m) in enumerate(findall(.!idx_in))
@@ -162,7 +162,7 @@ function move_charges_inside_semiconductor!(
                     end
                 end
             end
-            charge_center_new = mean(locations[n], Weights(edep_weights))
+            charge_center_new = barycenter(locations[n], Weights(edep_weights))
             if verbose
                 @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center - cartesian_zero, digits = (T == Float64 ? 12 : 6)))"*
                 " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new - cartesian_zero, digits = (T == Float64 ? 12 : 6))).\n"

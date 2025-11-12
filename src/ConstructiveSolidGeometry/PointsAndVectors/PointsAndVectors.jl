@@ -18,4 +18,3 @@ include("AffineFrames.jl")
 
 @inline distance_squared(v::CartesianVector) = v.x * v.x + v.y * v.y + v.z * v.z
 @inline distance_squared(p1::CartesianPoint{T}, p2::CartesianPoint{T}) where {T <: Real} = distance_squared(p1 - p2)
-export distance_squared

@@ -124,21 +124,21 @@ end
 @inline Base.transpose(pt::CartesianPoint) = CartesianPoint(transpose(pt.x), transpose(pt.y), transpose(pt.z))
 @inline Base.adjoint(pt::CartesianPoint) = CartesianPoint(adjoint(pt.x), adjoint(pt.y), adjoint(pt.z))
 
-# Barycentric combination
-function  Statistics.mean(A::AbstractArray{<:CartesianPoint{T}}; dims = :) where T
-    # Equivalent to A .- Ref(cartesian_zero), but allocation-free:
-    B = reinterpret(CartesianVector{T}, A) # ToDo: Avoid this memory allocation.
-    return cartesian_zero + mean(B; dims = dims)
+barycenter(X, args...; kwargs...) = _barycenter_impl(eltype(X), X, args...; kwargs...)
+function _barycenter_impl(::Type{T}, points; kwargs...) where {T<:AbstractCoordinatePoint}
+    mean_vector = mean(Base.Fix2(-, cartesian_zero), CartesianPoint.(points); kwargs...)
+    return convert(T, cartesian_zero + mean_vector)::T
 end
 
-function Statistics.mean(A::AbstractArray{<:CartesianPoint{T}}, weights::StatsBase.AbstractWeights; dims = :) where T
-    # Equivalent to A .- Ref(cartesian_zero), but allocation-free:
-    B = reinterpret(CartesianVector{T}, A) # ToDo: Avoid this memory allocation.
-    return cartesian_zero + mean(B, weights; dims = dims)
+function _barycenter_impl(::Type{T}, points, weights::StatsBase.AbstractWeights; kwargs...) where {T<:AbstractCoordinatePoint}
+    mean_vector = mean(CartesianPoint.(points) .- Ref(cartesian_zero), weights; kwargs...)
+    return convert(T, cartesian_zero + mean_vector)::T
 end
 
-# Base.broadcastable(p::CartesianPoint) = (p.x, p.y, p.z)
-
+# Fallback if a Vector of Vectors (e.g. StaticVectors) is passed to barycenter
+function _barycenter_impl(::Type{T}, args...; kwargs...) where {T <: AbstractVector}
+    convert(T, mean(args...; kwargs...))
+end
 
 
 """
@@ -275,6 +275,14 @@ function Base.convert(::Type{CylindricalPoint{T}}, pt::CylindricalPoint{U}) wher
     return CylindricalPoint{T}(convert(T, pt.r), convert(T, pt.φ), convert(T, pt.z))
 end
 
+function Base.convert(::Type{CylindricalPoint{T}}, pt::AbstractCoordinatePoint)::CylindricalPoint{T} where {T}
+    return CylindricalPoint(pt)
+end
+
+function Base.convert(::Type{CartesianPoint{T}}, pt::AbstractCoordinatePoint)::CartesianPoint{T} where {T}
+    return CartesianPoint(pt)
+end
+
 AbstractCoordinatePoint{T, Cylindrical}(r::Real, φ::Real, z::Real) where T = CylindricalPoint{T}(r, φ, z)
 
 Base.:(==)(a::CylindricalPoint, b::CylindricalPoint) = a.r == b.r && a.φ == b.φ && a.z == b.z
@@ -296,21 +304,3 @@ Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 
 @inline Base.transpose(pt::CylindricalPoint) = CylindricalPoint(transpose(pt.r), transpose(pt.φ), transpose(pt.z)) 
 @inline Base.adjoint(pt::CylindricalPoint) = CylindricalPoint(adjoint(pt.r), adjoint(pt.φ), adjoint(pt.z))
-
-# Barycentric combination
-function  Statistics.mean(A::AbstractArray{<:CylindricalPoint}; dims = :)
-    CylindricalPoint(mean(CartesianPoint, A; dims = dims))
-end
-
-function  Statistics.mean(A::AbstractArray{<:CylindricalPoint}, weights::StatsBase.AbstractWeights; dims = :)
-    B = CartesianPoint.(A)
-    CylindricalPoint(mean(B, weights; dims = dims))
-end
-
-
-# function _Δφ(φ1::T, φ2::T)::T where {T}
-#     δφ = mod(φ2 - φ1, T(2π))
-#     min(δφ, T(2π) - δφ)
-# end
-# 
-# _φNear(φ::Real, φMin::T, φMax::T) where {T} = _Δφ(T(φ),φMin) ≤ _Δφ(T(φ),φMax) ? φMin : φMax
