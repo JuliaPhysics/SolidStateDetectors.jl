@@ -220,9 +220,12 @@ function SolidStateDetectors.run_geant4_simulation(app::G4JLApplication, number_
         evtno += 1
     end
 
-    evts_with_points = map(evt -> merge(evt, (pos = cartesian_zero + evt.pos,)), evts)
+    evts_with_points = map(evts) do evt
+        merge(evt, (pos = SolidStateDetectors.to_internal_point(evt.pos),))
+    end
 
-    return RadiationDetectorSignals.group_by_evtno(Table(evts_with_points))
+    tbl = Table(evts_with_points)
+    return RadiationDetectorSignals.group_by_evtno(tbl)
 end 
 
 
