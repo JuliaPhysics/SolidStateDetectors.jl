@@ -565,3 +565,48 @@ end
         end
     end
 end
+
+@timed_testset "NBodyChargeCloud Units" begin
+
+    cartesian_unit = CartesianPoint(0.01u"m", 0.0u"m", 0.05u"m")
+    cartesian_float = CartesianPoint(0.01, 0.0, 0.05)
+    cylindrical_unit = CylindricalPoint(0.01u"m", π/4u"rad", 0.05u"m")
+    cylindrical_float = CylindricalPoint(0.01, π/4, 0.05)
+    Edep = 1u"MeV"
+    
+    # Variant 1: CartesianPoint with Units, energy
+    nb1 = NBodyChargeCloud(cartesian_unit, Edep)
+    @test all(x -> x isa CartesianPoint, nb1.locations)
+    @test isapprox(sum(nb1.energies), ustrip.(uconvert.(u"eV", Edep)))
+
+    # Variant 2: CylindricalPoint with Units, energy
+    nb2 = NBodyChargeCloud(cylindrical_unit, Edep)
+    @test all(x -> x isa CartesianPoint, nb2.locations)
+    @test isapprox(sum(nb2.energies), ustrip.(uconvert.(u"eV", Edep)))
+
+    # Variant 3: CartesianPoint with Units, energy, N
+    nb3 = NBodyChargeCloud(cartesian_unit, Edep, 10, radius = 0.001, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb3.locations)
+    @test length(nb3.locations) >= 10
+    @test isapprox(sum(nb3.energies), ustrip.(uconvert.(u"eV", Edep)))
+
+    # Variant 4: CylindricalPoint with Units, energy, N
+    nb4 = NBodyChargeCloud(cylindrical_unit, Edep, 10, radius = 0.001, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb4.locations)
+    @test length(nb4.locations) >= 10
+    @test isapprox(sum(nb4.energies), ustrip.(uconvert.(u"eV", Edep)))
+
+    # Edge case, zero radius
+    nb_zero = NBodyChargeCloud(cartesian_float, Edep, 5, radius = 0.0, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb_zero.locations)
+    @test all(x -> x == nb_zero.locations[1], nb_zero.locations)  # all points coincide at the center
+    @test isapprox(sum(nb_zero.energies), ustrip.(uconvert.(u"eV", Edep)))
+    @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero.locations)
+
+    nb_zero_cyl = NBodyChargeCloud(cylindrical_float, Edep, 5, radius = 0.0, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb_zero_cyl.locations)
+    @test all(x -> x == nb_zero_cyl.locations[1], nb_zero_cyl.locations) 
+    @test isapprox(sum(nb_zero_cyl.energies), ustrip.(uconvert.(u"eV", Edep)))
+    @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero_cyl.locations)
+
+end
