@@ -2,26 +2,32 @@
   to_internal_point(pt::AbstractCoordinatePoint)
         
 Converts any `AbstractCoordinatePoint` (Cartesian or Cylindrical, with or without units) to a `CartesianPoint`.
- """
-function to_internal_point(pt::AbstractCoordinatePoint)
-    if pt isa CartesianPoint
-        T = pt.x isa Unitful.Quantity ? float(typeof(ustrip(pt.x))) : typeof(pt.x)
-        x = pt.x isa Unitful.Quantity ? float(to_internal_units(pt.x)) : pt.x
-        y = pt.y isa Unitful.Quantity ? float(to_internal_units(pt.y)) : pt.y
-        z = pt.z isa Unitful.Quantity ? float(to_internal_units(pt.z)) : pt.z
-        return CartesianPoint{T}(x, y, z)
-        
-    elseif pt isa CylindricalPoint
-        T = pt.r isa Unitful.Quantity ? float(typeof(ustrip(pt.r))) : float(typeof(pt.r))
-        r = pt.r isa Unitful.Quantity ? float(to_internal_units(pt.r)) : float(pt.r)
-        φ = pt.φ isa Unitful.Quantity ? float(ustrip(uconvert(u"rad", pt.φ))) : float(pt.φ)
-        z = pt.z isa Unitful.Quantity ? float(to_internal_units(pt.z)) : float(pt.z)
-        return CartesianPoint{T}(r * cos(φ), r * sin(φ), z)
-        
-     else
-        error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
-     end
+"""
+function to_internal_point(pt::CartesianPoint)
+    T = pt.x isa Unitful.Quantity ? float(typeof(ustrip(pt.x))) : typeof(pt.x)
+    x = pt.x isa Unitful.Quantity ? float(to_internal_units(pt.x)) : pt.x
+    y = pt.y isa Unitful.Quantity ? float(to_internal_units(pt.y)) : pt.y
+    z = pt.z isa Unitful.Quantity ? float(to_internal_units(pt.z)) : pt.z
+    return CartesianPoint{T}(x, y, z)
 end
+
+function to_internal_point(pt::CylindricalPoint)
+    T = pt.r isa Unitful.Quantity ? float(typeof(ustrip(pt.r))) : float(typeof(pt.r))
+    r = pt.r isa Unitful.Quantity ? float(to_internal_units(pt.r)) : float(pt.r)
+    φ = pt.φ isa Unitful.Quantity ? float(ustrip(uconvert(u"rad", pt.φ))) : float(pt.φ)
+    z = pt.z isa Unitful.Quantity ? float(to_internal_units(pt.z)) : float(pt.z)
+    return CartesianPoint{T}(r * cos(φ), r * sin(φ), z)
+end
+
+function to_internal_point(pt::AbstractCoordinatePoint)
+    error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
+end
+
+function to_internal_point(p::SVector{3, <:Unitful.Quantity})
+    vals = ustrip.(uconvert.(u"m", p))   # convert to meters and strip units
+    return SVector{3, typeof(vals[1])}(vals)  # preserves type
+end
+
 """
   mutable struct Event{T <: SSDFloat}
          
@@ -43,41 +49,42 @@ mutable struct Event{T <: SSDFloat}
     Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
 end
 
-function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = 1.0) where {T <: RealQuantity}
+function Event(location::AbstractCoordinatePoint, energy::RealQuantity = 1.0)
     pt_internal = to_internal_point(location)
-    T_ = typeof(pt_internal.x)
-    evt = Event{T_}()
+    T = eltype(pt_internal)
+    evt = Event{T}()
     evt.locations = VectorOfArrays([[pt_internal]])
-    evt.energies  = VectorOfArrays([[T_(to_internal_units(energy))]])
+    evt.energies  = VectorOfArrays([[T(to_internal_units(energy))]])
     return evt
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = fill(1.0, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN) where {T <: RealQuantity}
-    pts_internal = [to_internal_point(pt) for pt in locations]
-    T_ = typeof(first(pts_internal).x)
-    d::T_ = T_(to_internal_units(max_interaction_distance))
+function Event(locations::Vector{<:AbstractCoordinatePoint}, energies::Vector{<:RealQuantity} = fill(1.0, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)
+    pts_internal = to_internal_point.(locations)
+    T = eltype(first(pts_internal))
+    d::T = T(to_internal_units(max_interaction_distance))
     @assert isnan(d) || d >= 0
-
-    evt = Event{T_}()
+    evt = Event{T}()
     
     if isnan(d)
         evt.locations = VectorOfArrays(broadcast(pt -> [pt], pts_internal))
-        evt.energies  = VectorOfArrays(broadcast(E -> [T_(to_internal_units(E))], energies))
+        evt.energies  = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
     else
-        evt.locations, evt.energies = group_points_by_distance(pts_internal, T_.(to_internal_units.(energies)), d)
+        evt.locations, evt.energies = group_points_by_distance(pts_internal, T.(to_internal_units.(energies)), d)
     end
     return evt
 end
 
-function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, energies::Vector{<:Vector{<:RealQuantity}} = [[1.0 for _ in group] for group in locations]) where {T <: RealQuantity}
+function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint}}, energies::Vector{<:Vector{<:RealQuantity}} = [[1.0 for _ in group] for group in locations])
+
     locs_internal = [[to_internal_point(pt) for pt in group] for group in locations]
     ens_internal  = [[to_internal_units(E) for E in group] for group in energies]
-    T_ = typeof(first(first(locs_internal)).x)
-    
-    locs_T = [[convert(CartesianPoint{T_}, pt) for pt in group] for group in locs_internal]
-    ens_T  = [[T_(E) for E in group] for group in ens_internal]
 
-    evt = Event{T_}()
+    T = eltype(first(first(locs_internal)))
+    
+    locs_T = [[convert(CartesianPoint{T}, pt) for pt in group] for group in locs_internal]
+    ens_T  = [[T(E) for E in group] for group in ens_internal]
+
+    evt = Event{T}()
     evt.locations = VectorOfArrays(locs_T)
     evt.energies  = VectorOfArrays(ens_T)
     return evt
@@ -135,17 +142,16 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
 end
 
 function Event(
-        locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, 
-        energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
-        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
-        radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(T.(to_internal_units.(e)), particle_type), energies)
-    ) where {T <: RealQuantity, PT <: ParticleType}
-
+    locations::Vector{<:Vector{<:AbstractCoordinatePoint}},
+    energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
+    particle_type::Type = Gamma, number_of_shells::Int = 2,
+    radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), energies)
+)
     locs_internal = [to_internal_point.(loc) for loc in locations]
-    
+
     @assert eachindex(locs_internal) == eachindex(energies) == eachindex(radius)
     events = map(i -> Event(locs_internal[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
-    
+
     Event(flatview.(getfield.(events, :locations)), flatview.(getfield.(events, :energies)))
 end
 
