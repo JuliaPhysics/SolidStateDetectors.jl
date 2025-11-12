@@ -58,14 +58,7 @@ function NBodyChargeCloud(center::CartesianPoint{<:Unitful.Quantity}, energy::Re
     return NBodyChargeCloud(internal_center, energy; kwargs...)
 end
 
-function NBodyChargeCloud(center::CylindricalPoint{<:Unitful.Quantity}, energy::RealQuantity;
-                          kwargs...)
-    internal_center = to_internal_point(center)
-    return NBodyChargeCloud(internal_center, energy; kwargs...)
-end
-
-function NBodyChargeCloud(center::CylindricalPoint{<:SSDFloat}, energy::RealQuantity;
-                          kwargs...)
+function NBodyChargeCloud(center::CylindricalPoint{T}, energy::RealQuantity; kwargs...) where T<:Union{SSDFloat, Unitful.Quantity}
     internal_center = to_internal_point(center)
     return NBodyChargeCloud(internal_center, energy; kwargs...)
 end
@@ -142,19 +135,12 @@ NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
 function NBodyChargeCloud(center::CartesianPoint{<:Unitful.Quantity}, energy::RealQuantity, N::Integer;
                           kwargs...)
     internal_center = to_internal_point(center)
-    return NBodyChargeCloud(internal_center, energy; kwargs...)
+    return NBodyChargeCloud(internal_center, energy, N; kwargs...)
 end
 
-function NBodyChargeCloud(center::CylindricalPoint{<:Unitful.Quantity}, energy::RealQuantity, N::Integer;
-                          kwargs...)
+function NBodyChargeCloud(center::CylindricalPoint{T}, energy::RealQuantity, N::Integer; kwargs...) where T<:Union{SSDFloat, Unitful.Quantity}
     internal_center = to_internal_point(center)
-    return NBodyChargeCloud(internal_center, energy; kwargs...)
-end
-
-function NBodyChargeCloud(center::CylindricalPoint{<:SSDFloat}, energy::RealQuantity, N::Integer;
-                          kwargs...)
-    internal_center = to_internal_point(center)
-    return NBodyChargeCloud(internal_center, energy; kwargs...)
+    return NBodyChargeCloud(internal_center, energy, N; kwargs...)
 end
 
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
