@@ -8,6 +8,7 @@ using RadiationDetectorSignals
 using StaticArrays
 using TypedTables
 using Unitful
+using LegendHDF5IO
 
 import Geant4
 
@@ -82,6 +83,14 @@ end
     @test length(flatview(clustered_evts.pos)) <= length(flatview(evts.pos))
     @test eltype(first(clustered_evts.pos)) <: CartesianPoint
 
+    # Temporary HDF5 file
+    mktemp() do tmpfile, io
+        LegendHDF5IO.lh5open(tmpfile, "w") do h5
+            LegendHDF5IO.writedata(h5, "geant4", evts)
+        end
+        @test isfile(tmpfile)
+    end
+    
     # Generate waveforms
     simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
     wf = simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
