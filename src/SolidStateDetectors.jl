@@ -81,7 +81,7 @@ export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacita
 export simulate_waveforms
 export run_geant4_simulation
 export Simulation, simulate!
-export Event, drift_charges!, to_internal_point
+export Event, drift_charges!
 export add_baseline_and_extend_tail
 export NBodyChargeCloud
 
