@@ -51,14 +51,14 @@ function PowerLawModel{T}(config_file::AbstractDict)::PowerLawModel where {T <: 
     config_file["temperature_dependence"]["model"] != "PowerLaw" ? error() : nothing
     m = PowerLawModel{T}(
         _parse_value(T, config_file["temperature_dependence"]["reference_temperature"], u"K"),
-        config_file["temperature_dependence"]["parameters"]["e100"]["p"],
-        config_file["temperature_dependence"]["parameters"]["e100"]["theta"],
-        config_file["temperature_dependence"]["parameters"]["h100"]["p"],
-        config_file["temperature_dependence"]["parameters"]["h100"]["theta"]
+        _parse_value(T, config_file["temperature_dependence"]["parameters"]["e100"]["p"], NoUnits),
+        _parse_value(T, config_file["temperature_dependence"]["parameters"]["e100"]["theta"], u"K"),
+        _parse_value(T, config_file["temperature_dependence"]["parameters"]["h100"]["p"], NoUnits),
+        _parse_value(T, config_file["temperature_dependence"]["parameters"]["h100"]["theta"], u"K")
     )
 end
 
-function scale_to_temperature(cdm::ADL2016ChargeDriftModel{T,M,PowerLawModel{T}}, Temp::RealQuantity) where {T,M}
+function scale_to_temperature(cdm::ADL2016ChargeDriftModel{T,M,N,PowerLawModel{T}}, Temp::RealQuantity) where {T,M,N}
     Temp = _parse_value(T, Temp, u"K")
     reftemp = cdm.temperaturemodel.reference_temperature
     theta_e = cdm.temperaturemodel.theta_e100
@@ -78,14 +78,11 @@ function scale_to_temperature(cdm::ADL2016ChargeDriftModel{T,M,PowerLawModel{T}}
     βh::T = cdm.holes.axis100.beta
     Eh::T = cdm.holes.axis100.E0 * sqrt(tanh(theta_h / (2*Temp)) / tanh(theta_h / (2 * reftemp))) * cdm.holes.axis100.mu0 / μh
     h100 = SolidStateDetectors.VelocityParameters{T}(μh, βh, Eh, zero(T))
-    μh = cdm.holes.axis111.mu0 * (Temp / reftemp) ^ -2.40
+    μh = cdm.holes.axis111.mu0 * (Temp / reftemp) ^ -p_h
     βh = cdm.holes.axis111.beta
-    Eh = cdm.holes.axis111.E0 * sqrt(tanh(200 / (2*Temp)) / tanh(200 / (2 * reftemp))) * cdm.holes.axis111.mu0 / μh
+    Eh = cdm.holes.axis111.E0 * sqrt(tanh(theta_h / (2*Temp)) / tanh(theta_h / (2 * reftemp))) * cdm.holes.axis111.mu0 / μh
     h111 = SolidStateDetectors.VelocityParameters{T}(μh, βh, Eh, zero(T))
     holes = SolidStateDetectors.CarrierParameters(h100, h111)
-
-    # apply no further temperature dependence (and also remove this from SSD at some point)
-    temperaturemodel = SolidStateDetectors.VacuumModel{T}()
     
-    ADL2016ChargeDriftModel{T,M,N,SolidStateDetectors.VacuumModel{T}}(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, temperaturemodel) 
+    ADL2016ChargeDriftModel{T,M,N,PowerLawModel{T}}(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, cdm.temperaturemodel) 
 end  

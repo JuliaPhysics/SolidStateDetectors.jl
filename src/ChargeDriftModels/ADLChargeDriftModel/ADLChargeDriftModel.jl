@@ -65,10 +65,11 @@ struct ADLParameters{T <: SSDFloat}
     Γ2::T
 end
 
-# Temperature models
-include("TemperatureModels/TemperatureModels.jl")
 include("ADL2006ChargeDriftModel.jl")
 include("ADL2016ChargeDriftModel.jl")
+
+# Temperature models
+include("TemperatureModels/TemperatureModels.jl")
 
 
 # Electron model parametrization from Mihailescu (2000)
