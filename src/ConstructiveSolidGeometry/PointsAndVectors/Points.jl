@@ -13,12 +13,6 @@ function Base.isapprox(a::AbstractCartesianPoint, b::AbstractCartesianPoint; kwa
            isapprox(get_z(a), get_z(b); kwargs...)
 end
 
-function to_internal_units(x::AbstractCartesianPoint)
-    CartesianPoint(to_internal_units(get_x(x)), to_internal_units(get_y(x)), to_internal_units(get_z(x)))
-end
-
-
-
 # Unitful uses the `*` and `/` operators to combine values with units. But mathematically that's really not an algebraic
 # product (not defined for affine points), but a cartesian product, so supporting this should be fine:
 Base.:(*)(pt::AbstractCartesianPoint{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) * u, get_y(pt) * u, get_z(pt) * u)
@@ -246,9 +240,9 @@ end
 
 # Handles Unitful quantities or plain numbers 
 function CylindricalPoint(r, φ, z)
-    r_val = isa(r, Unitful.Length) ? float(ustrip(internal_length_unit, r)) : float(r)
-    φ_val = isa(φ, Unitful.Quantity) ? float(ustrip(internal_angle_unit, φ)) : float(φ)
-    z_val = isa(z, Unitful.Length) ? float(ustrip(internal_length_unit, z)) : float(z)
+    r_val = isa(r, Unitful.Length) ? float(to_internal_units(r)) : float(r)
+    φ_val = isa(φ, Unitful.Quantity) ? float(to_internal_units(φ)) : float(φ)
+    z_val = isa(z, Unitful.Length) ? float(to_internal_units(z)) : float(z)
 
     T = promote_type(typeof(r_val), typeof(φ_val), typeof(z_val))
     CylindricalPoint{T}(T(r_val), T(φ_val), T(z_val))
@@ -314,4 +308,27 @@ Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 @inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CartesianPoint(a) - CartesianPoint(b)
 
 @inline Base.transpose(pt::CylindricalPoint) = CylindricalPoint(transpose(pt.r), transpose(pt.φ), transpose(pt.z)) 
+
 @inline Base.adjoint(pt::CylindricalPoint) = CylindricalPoint(adjoint(pt.r), adjoint(pt.φ), adjoint(pt.z))
+
+function to_internal_units(pt::CartesianPoint)
+    CartesianPoint(to_internal_units(pt.x), to_internal_units(pt.y), to_internal_units(pt.z))
+end
+
+function to_internal_units(pt::CylindricalPoint)
+    _r = to_internal_units(pt.r)
+    _φ = to_internal_units(pt.φ)
+    _z = to_internal_units(pt.z)
+
+    return CartesianPoint(_r * cos(_φ), _r * sin(_φ), _z)
+end
+
+function to_internal_units(pt::AbstractCoordinatePoint)
+    error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
+end
+
+function to_internal_units(p::SVector{3, <:Unitful.Quantity})
+    vals = ustrip.(internal_length_unit, p)
+    return SVector{3, typeof(vals[1])}(vals)
+end
+
