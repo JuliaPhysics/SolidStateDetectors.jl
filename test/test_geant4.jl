@@ -89,6 +89,10 @@ end
             LegendHDF5IO.writedata(h5, "geant4", evts)
         end
         @test isfile(tmpfile)
+        
+        evts == LegendHDF5IO.lh5open(tmpfile) do h5
+            LegendHDF5IO.readdata(h5, "geant4")
+        end
     end
     
     # Generate waveforms
