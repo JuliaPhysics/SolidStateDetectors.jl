@@ -52,14 +52,9 @@ NBodyChargeCloud(center, energy, number_of_shells = 3, shell_structure = SolidSt
 !!! note
     Using values with units for `energy` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
-function NBodyChargeCloud(center::CartesianPoint{<:Unitful.Quantity}, energy::RealQuantity;
-                          kwargs...)
-    internal_center = to_internal_point(center)
-    return NBodyChargeCloud(internal_center, energy; kwargs...)
-end
-
-function NBodyChargeCloud(center::CylindricalPoint{T}, energy::RealQuantity; kwargs...) where T<:Union{SSDFloat, Unitful.Quantity}
-    internal_center = to_internal_point(center)
+function NBodyChargeCloud(center::Union{<:CartesianPoint{<:Unitful.Quantity},<:CylindricalPoint{<:Union{SSDFloat, Unitful.Quantity}}},
+    energy::RealQuantity; kwargs...)
+    internal_center = to_internal_units(center)
     return NBodyChargeCloud(internal_center, energy; kwargs...)
 end
 
@@ -132,14 +127,9 @@ NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
 !!! note
     Using values with units for `energy` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
-function NBodyChargeCloud(center::CartesianPoint{<:Unitful.Quantity}, energy::RealQuantity, N::Integer;
-                          kwargs...)
-    internal_center = to_internal_point(center)
-    return NBodyChargeCloud(internal_center, energy, N; kwargs...)
-end
-
-function NBodyChargeCloud(center::CylindricalPoint{T}, energy::RealQuantity, N::Integer; kwargs...) where T<:Union{SSDFloat, Unitful.Quantity}
-    internal_center = to_internal_point(center)
+function NBodyChargeCloud(center::Union{<:CartesianPoint{<:Unitful.Quantity},<:CylindricalPoint{<:Union{SSDFloat, Unitful.Quantity}}},
+    energy::RealQuantity, N::Integer; kwargs...)
+    internal_center = to_internal_units(center)
     return NBodyChargeCloud(internal_center, energy, N; kwargs...)
 end
 
