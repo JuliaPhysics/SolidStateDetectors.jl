@@ -1,34 +1,4 @@
 """
-  to_internal_point(pt::AbstractCoordinatePoint)
-        
-Converts any `AbstractCoordinatePoint` (Cartesian or Cylindrical, with or without units) to a `CartesianPoint`.
-"""
-function to_internal_point(pt::CartesianPoint)
-    T = pt.x isa Unitful.Quantity ? float(typeof(ustrip(pt.x))) : typeof(pt.x)
-    x = pt.x isa Unitful.Quantity ? float(to_internal_units(pt.x)) : pt.x
-    y = pt.y isa Unitful.Quantity ? float(to_internal_units(pt.y)) : pt.y
-    z = pt.z isa Unitful.Quantity ? float(to_internal_units(pt.z)) : pt.z
-    return CartesianPoint{T}(x, y, z)
-end
-
-function to_internal_point(pt::CylindricalPoint)
-    T = pt.r isa Unitful.Quantity ? float(typeof(ustrip(pt.r))) : float(typeof(pt.r))
-    r = pt.r isa Unitful.Quantity ? float(to_internal_units(pt.r)) : float(pt.r)
-    φ = pt.φ isa Unitful.Quantity ? float(ustrip(uconvert(u"rad", pt.φ))) : float(pt.φ)
-    z = pt.z isa Unitful.Quantity ? float(to_internal_units(pt.z)) : float(pt.z)
-    return CartesianPoint{T}(r * cos(φ), r * sin(φ), z)
-end
-
-function to_internal_point(pt::AbstractCoordinatePoint)
-    error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
-end
-
-function to_internal_point(p::SVector{3, <:Unitful.Quantity})
-    vals = ustrip.(uconvert.(u"m", p))   # convert to meters and strip units
-    return SVector{3, typeof(vals[1])}(vals)  # preserves type
-end
-
-"""
   mutable struct Event{T <: SSDFloat}
          
 Collection struct for individual events. 
@@ -49,8 +19,8 @@ mutable struct Event{T <: SSDFloat}
     Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
 end
 
-function Event(location::AbstractCoordinatePoint, energy::RealQuantity = 1.0)
-    pt_internal = to_internal_point(location)
+function Event(location::AbstractCoordinatePoint, energy::RealQuantity = 1)
+    pt_internal = to_internal_units(location)
     T = eltype(pt_internal)
     evt = Event{T}()
     evt.locations = VectorOfArrays([[pt_internal]])
@@ -58,14 +28,14 @@ function Event(location::AbstractCoordinatePoint, energy::RealQuantity = 1.0)
     return evt
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint}, energies::Vector{<:RealQuantity} = fill(1.0, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)
-    pts_internal = to_internal_point.(locations)
+function Event(locations::Vector{<:AbstractCoordinatePoint}, energies::Vector{<:RealQuantity} = fill(1, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)
+    pts_internal = to_internal_units.(locations)
     T = eltype(first(pts_internal))
     d::T = T(to_internal_units(max_interaction_distance))
-    @assert isnan(d) || d >= 0
+    @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
     evt = Event{T}()
     
-    if isnan(d)
+    if isnan(d) # default: no grouping, the charges from different hits drift independently
         evt.locations = VectorOfArrays(broadcast(pt -> [pt], pts_internal))
         evt.energies  = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
     else
@@ -74,19 +44,15 @@ function Event(locations::Vector{<:AbstractCoordinatePoint}, energies::Vector{<:
     return evt
 end
 
-function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint}}, energies::Vector{<:Vector{<:RealQuantity}} = [[1.0 for _ in group] for group in locations])
+function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint}}, energies::Vector{<:Vector{<:RealQuantity}} = [[1 for _ in group] for group in locations])
 
-    locs_internal = [[to_internal_point(pt) for pt in group] for group in locations]
-    ens_internal  = [[to_internal_units(E) for E in group] for group in energies]
-
-    T = eltype(first(first(locs_internal)))
+    T = eltype(to_internal_units(first(first(locations))))
+    locs = [[convert(CartesianPoint{T}, to_internal_units(pt)) for pt in group] for group in locations]
+    ens  = [[T(to_internal_units(E)) for E in group] for group in energies]
     
-    locs_T = [[convert(CartesianPoint{T}, pt) for pt in group] for group in locs_internal]
-    ens_T  = [[T(E) for E in group] for group in ens_internal]
-
     evt = Event{T}()
-    evt.locations = VectorOfArrays(locs_T)
-    evt.energies  = VectorOfArrays(ens_T)
+    evt.locations = VectorOfArrays(locs)
+    evt.energies  = VectorOfArrays(ens)
     return evt
 end
 
@@ -147,7 +113,7 @@ function Event(
     particle_type::Type = Gamma, number_of_shells::Int = 2,
     radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), energies)
 )
-    locs_internal = [to_internal_point.(loc) for loc in locations]
+    locs_internal = [to_internal_units.(loc) for loc in locations]
 
     @assert eachindex(locs_internal) == eachindex(energies) == eachindex(radius)
     events = map(i -> Event(locs_internal[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
