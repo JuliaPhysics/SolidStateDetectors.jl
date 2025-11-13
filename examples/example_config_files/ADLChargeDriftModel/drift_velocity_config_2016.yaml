@@ -22,3 +22,13 @@ drift:
         mu0: 62383cm^2/(V*s)
         beta: 0.749
         E0: 143.9V/cm
+temperature_dependence:
+  reference_temperature: 77K
+  model: PowerLaw
+  parameters:
+    e100:
+      p: 1.68
+      theta: 200K
+    h100:
+      p: 2.4
+      theta: 200K

@@ -41,8 +41,8 @@ function _ADL2016ChargeDriftModel(
         h111μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["mu0"], 
         h111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h111"]["beta"], 
         h111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["E0"],
-        material::Type{<:AbstractDriftMaterial} = HPGe,
-        temperature::Union{Missing, Real} = missing, 
+        material::Type{<:AbstractDriftMaterial} = HPGe, 
+        temperature::Union{Missing, RealQuantity} = missing, 
         phi110::Union{Missing, Real, AngleQuantity} = missing
     )::ADL2016ChargeDriftModel{T}
     
@@ -108,32 +108,31 @@ function _ADL2016ChargeDriftModel(
         RotZ{T}(- π/4 - _parse_value(T, phi110, u"rad"))
     end
 
-    γ = setup_γj(crystal_orientation, parameters, material)
-
-    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file                         
+    γ = setup_γj(crystal_orientation, parameters, material)       
 
     if "temperature_dependence" in keys(config)
         if "model" in keys(config["temperature_dependence"])
             model::String = config["temperature_dependence"]["model"]
-            if model == "Linear"
-                temperaturemodel = LinearModel{T}(config, temperature = temperature)
-            elseif model == "PowerLaw"
-                temperaturemodel = PowerLawModel{T}(config, temperature = temperature)
-            elseif model == "Boltzmann"
-                temperaturemodel = BoltzmannModel{T}(config, temperature = temperature)
+            if model == "PowerLaw"
+                temperaturemodel = PowerLawModel{T}(config)
             else
                 temperaturemodel = VacuumModel{T}(config)
-                println("Config File does not suit any of the predefined temperature models. The drift velocity will not be rescaled.")
+                println("Config File does not suit any of the predefined temperature models. The drift parameters will not be rescaled.")
             end
         else
             temperaturemodel = VacuumModel{T}(config)
-            println("No temperature model specified. The drift velocity will not be rescaled.")
+            println("No temperature model specified. The drift parameters will not be rescaled.")
         end
     else
         temperaturemodel = VacuumModel{T}(config)
-        # println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
     end
-    return ADL2016ChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
+    cdm = ADL2016ChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
+
+    if ismissing(temperature)
+        cdm
+    else
+        scale_to_temperature(cdm, temperature)
+    end
 end
 
 # Check the syntax of the ADL2016ChargeDriftModel config file before parsing

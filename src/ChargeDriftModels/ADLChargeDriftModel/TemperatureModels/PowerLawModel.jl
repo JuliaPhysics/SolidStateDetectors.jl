@@ -1,57 +1,91 @@
+@doc raw"""
+
+    struct PowerLawModel{T <: SSDFloat}
+
+Values needed to parametrize the temperature dependence of the longitudinal drift velocity 
+of electrons or holes along a crystal axis as a function of the electric field strength.
+This model assumes a power law dependence of the mobility with temperature.
+
+## Background information 
+
+The parameterization for the temperature dependence of drift velocity, as a function of the electric 
+field strength, ``E``, was proposed by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633):
+```math
+\quad\mu_0(T) = A/T^P~, \quad V_s(T) = B\tanh^{1/2}(\theta/2T) 
+```
+Note that the saturation velocity, ``V_s``, is related to ``E_0`` via
+```math
+E_0(T) = V_s(T)/\mu_0(T)
+```
+The four parameters, ``A``, ``P``, ``B``, ``\theta``, are different for electrons and holes. 
+This model can be used to scale the ``\mu_0`` and ``E_0`` parameters of the [`VelocityParameters`](@ref) struct directly (assuming these where measured at a reference temperature of 77K) as follows:
+```math
+\mu_0(T) = \mu_0(77K) \left(\frac{T}{77K}\right)^{-P}~, \quad E_0(T) = E_0(77K) \sqrt{\frac{\tanh(\theta/2T)}{\tanh(\theta/2 \cdot 77K)}} \frac{\mu_0(77K)}{\mu_0(T)}
+```
+
+!!! note
+    The work was confined to the fields along the <100> axis. 
+    Here the same values are assumed for the <111> axis. 
+    
+## Fields
+* `p_e100::T`: Exponent ``P`` for electrons along the <100> axis.
+* `theta_e100::T`: Characteristic temperature ``\theta`` for electrons along the <100> axis.
+* `p_h100::T`: Exponent ``P`` for holes along the <100> axis.
+* `theta_h100::T`: Characteristic temperature ``\theta`` for holes along the <100> axis.
+
+"""
+
 mutable struct PowerLawModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
-
-    #temperatures needed for the drift velocity rescaling
-    temperature::T      # actual temperature of the crystal
-    reftemperature::T   # temperature at which the reference values were measured
-
-    #fit parameters for electrons (e) and holes (h) for <100> and <111> axes
-    p1e100::T
-    p1e111::T
-    p1h100::T
-    p1h111::T
+    reference_temperature::T
+    p_e100::T
+    theta_e100::T
+    p_h100::T
+    theta_h100::T
 end
 
 function PowerLawModel(config_file::AbstractDict; T::Type{<:AbstractFloat} = Float32)::PowerLawModel
     return PowerLawModel{T}(config_file::AbstractDict)
 end
 
-function PowerLawModel{T}(config_file::AbstractDict; temperature::Union{Missing, T} = missing)::PowerLawModel where {T <: SSDFloat}
+function PowerLawModel{T}(config_file::AbstractDict)::PowerLawModel where {T <: SSDFloat}
     config_file["temperature_dependence"]["model"] != "PowerLaw" ? error() : nothing
-    ismissing(temperature) ? temperature = config_file["temperature_dependence"]["temperature"] : nothing
     m = PowerLawModel{T}(
-        temperature, #temperature = config_file["temperature_dependence"]["temperature"]
-        config_file["drift"]["velocity"]["temperature"],
-        config_file["temperature_dependence"]["parameters"]["e100"]["p1"],
-        config_file["temperature_dependence"]["parameters"]["e111"]["p1"],
-        config_file["temperature_dependence"]["parameters"]["h100"]["p1"],
-        config_file["temperature_dependence"]["parameters"]["h111"]["p1"]
+        _parse_value(T, config_file["temperature_dependence"]["reference_temperature"], u"K"),
+        config_file["temperature_dependence"]["parameters"]["e100"]["p"],
+        config_file["temperature_dependence"]["parameters"]["e100"]["theta"],
+        config_file["temperature_dependence"]["parameters"]["h100"]["p"],
+        config_file["temperature_dependence"]["parameters"]["h100"]["theta"]
     )
 end
 
-function scale_to_given_temperature(m::PowerLawModel{T})::NTuple{4,T} where {T <: SSDFloat}
+function scale_to_temperature(cdm::ADL2016ChargeDriftModel{T,M,PowerLawModel{T}}, Temp::RealQuantity) where {T,M}
+    Temp = _parse_value(T, Temp, u"K")
+    reftemp = cdm.temperaturemodel.reference_temperature
+    theta_e = cdm.temperaturemodel.theta_e100
+    theta_h = cdm.temperaturemodel.theta_h100
+    p_e = cdm.temperaturemodel.p_e100
+    p_h = cdm.temperaturemodel.p_h100
 
-    function f(p1::T = 0.0)::T where {T <: SSDFloat}
-        return (m.reftemperature/m.temperature)^1.5
-    end
+    # scale electron parameters
+    μe::T = cdm.electrons.mu0 * (Temp / reftemp) ^ -p_e
+    βe::T = cdm.electrons.beta
+    Ee::T = cdm.electrons.E0 * sqrt(tanh(theta_e / (2*Temp)) / tanh(theta_e/ (2 * reftemp))) * cdm.electrons.mu0 / μe
+    μn::T = μe / cdm.electrons.mu0 * cdm.electrons.mun
+    electrons = SolidStateDetectors.VelocityParameters{T}(μe, βe, Ee, μn)
+    
+    # scale hole parameters (take <100> values and assume no anisotropy for now)
+    μh::T = cdm.holes.axis100.mu0 * (Temp / reftemp) ^ -p_h
+    βh::T = cdm.holes.axis100.beta
+    Eh::T = cdm.holes.axis100.E0 * sqrt(tanh(theta_h / (2*Temp)) / tanh(theta_h / (2 * reftemp))) * cdm.holes.axis100.mu0 / μh
+    h100 = SolidStateDetectors.VelocityParameters{T}(μh, βh, Eh, zero(T))
+    μh = cdm.holes.axis111.mu0 * (Temp / reftemp) ^ -2.40
+    βh = cdm.holes.axis111.beta
+    Eh = cdm.holes.axis111.E0 * sqrt(tanh(200 / (2*Temp)) / tanh(200 / (2 * reftemp))) * cdm.holes.axis111.mu0 / μh
+    h111 = SolidStateDetectors.VelocityParameters{T}(μh, βh, Eh, zero(T))
+    holes = SolidStateDetectors.CarrierParameters(h100, h111)
 
-    scale_e100 = f(m.p1e100)
-    scale_e111 = f(m.p1e111)
-    scale_h100 = f(m.p1h100)
-    scale_h111 = f(m.p1h111)
-
-    return scale_e100, scale_e111, scale_h100, scale_h111
-end
-
-print(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat} = print(io, "PowerLawModel{$T}")
-function println(io::IO, tm::PowerLawModel{T}) where {T <: SSDFloat}
-    println("\n________PowerLawModel________")
-    println("Fit function: p1 * T^(3/2)\n")
-    println("---Temperature settings---")
-    println("Crystal temperature:   \t $(tm.temperature)")
-    println("Reference temperature: \t $(tm.reftemperature)\n")
-
-    println("---Fitting parameters---")
-    println("   \te100      \te111      \th100      \th111")
-    println("p1 \t$(tm.p1e100)   \t$(tm.p1e111)   \t$(tm.p1h100)   \t$(tm.p1h111)")
-end
-
+    # apply no further temperature dependence (and also remove this from SSD at some point)
+    temperaturemodel = SolidStateDetectors.VacuumModel{T}()
+    
+    ADL2016ChargeDriftModel{T,M,N,SolidStateDetectors.VacuumModel{T}}(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, temperaturemodel) 
+end  
