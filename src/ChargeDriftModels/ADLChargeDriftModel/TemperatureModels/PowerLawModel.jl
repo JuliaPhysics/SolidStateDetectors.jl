@@ -8,7 +8,7 @@ This model assumes a power law dependence of the mobility with temperature.
 
 ## Background information 
 
-The parameterization for the temperature dependence of drift velocity, as a function of the electric 
+The parametrization for the temperature dependence of drift velocity, as a function of the electric 
 field strength, ``E``, was proposed by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633):
 ```math
 \quad\mu_0(T) = A/T^P~, \quad V_s(T) = B\tanh^{1/2}(\theta/2T) 
