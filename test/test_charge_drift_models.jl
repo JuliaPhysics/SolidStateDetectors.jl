@@ -570,8 +570,7 @@ end
 
     cartesian_unit = CartesianPoint(0.01u"m", 0.0u"m", 0.05u"m")
     cartesian_float = CartesianPoint(0.01, 0.0, 0.05)
-    #cylindrical_unit = CylindricalPoint(0.01u"m", π/4u"rad", 0.05u"m")
-    cylindrical_unit = CylindricalPoint(0.01, π/4, 0.05)
+    cylindrical_unit = CylindricalPoint(0.01u"m", (π/4)u"rad", 0.05u"m")
     cylindrical_float = CylindricalPoint(0.01, π/4, 0.05)
     Edep = 1u"MeV"
     
