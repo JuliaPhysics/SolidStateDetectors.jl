@@ -9,16 +9,16 @@ This model assumes a power law dependence of the mobility with temperature.
 ## Background information 
 
 The parametrization for the temperature dependence of drift velocity, as a function of the electric 
-field strength, ``E``, was proposed by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633):
+field strength, $E$, was proposed by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633):
 ```math
 \quad\mu_0(T) = A/T^P~, \quad V_s(T) = B\tanh^{1/2}(\theta/2T) 
 ```
-Note that the saturation velocity, ``V_s``, is related to ``E_0`` via
+Note that the saturation velocity, $V_s$, is related to $E_0$ via
 ```math
 E_0(T) = V_s(T)/\mu_0(T)
 ```
-The four parameters, ``A``, ``P``, ``B``, ``\theta``, are different for electrons and holes. 
-This model can be used to scale the ``\mu_0`` and ``E_0`` parameters of the [`VelocityParameters`](@ref) struct directly (assuming these where measured at a reference temperature of 77K) as follows:
+The four parameters, $A$, $P$, $B$, $\theta$, are different for electrons and holes. 
+This model can be used to scale the $\mu_0$ and $E_0$ parameters of the [`VelocityParameters`](@ref) struct directly (assuming these where measured at a reference temperature of 77K) as follows:
 ```math
 \mu_0(T) = \mu_0(77K) \left(\frac{T}{77K}\right)^{-P}~, \quad E_0(T) = E_0(77K) \sqrt{\frac{\tanh(\theta/2T)}{\tanh(\theta/2 \cdot 77K)}} \frac{\mu_0(77K)}{\mu_0(T)}
 ```
@@ -28,10 +28,10 @@ This model can be used to scale the ``\mu_0`` and ``E_0`` parameters of the [`Ve
     Here the same values are assumed for the <111> axis. 
     
 ## Fields
-* `p_e100::T`: Exponent ``P`` for electrons along the <100> axis.
-* `theta_e100::T`: Characteristic temperature ``\theta`` for electrons along the <100> axis.
-* `p_h100::T`: Exponent ``P`` for holes along the <100> axis.
-* `theta_h100::T`: Characteristic temperature ``\theta`` for holes along the <100> axis.
+* `p_e100::T`: Exponent $P$ for electrons along the <100> axis.
+* `theta_e100::T`: Characteristic temperature $\theta$ for electrons along the <100> axis.
+* `p_h100::T`: Exponent $P$ for holes along the <100> axis.
+* `theta_h100::T`: Characteristic temperature $\theta$ for holes along the <100> axis.
 
 """
 
