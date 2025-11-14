@@ -525,6 +525,18 @@ end
         @test cdm2016.electrons == cdm.electrons.axis100
         @test cdm2016.holes     == cdm.holes
     end
+
+    @testset "Test equivalence of longitudinal drift parameter implementation" begin
+    
+        # If a temperature is given to the ADL2016 model, the ChargeDriftModel is scaled. But at 77K (the reference temperature),
+        # the parameters should be identical to the unscaled ADL2016 model
+        
+        cdm_scaled = ADL2016ChargeDriftModel(temperature = 77u"K")
+        cdm = ADL2016ChargeDriftModel()
+        
+        @test cdm_scaled.electrons == cdm.electrons
+        @test cdm_scaled.holes     == cdm.holes
+    end
 end
 
 @timed_testset "Test grouping of charges" begin
