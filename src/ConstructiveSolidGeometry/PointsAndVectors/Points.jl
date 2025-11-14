@@ -238,17 +238,34 @@ struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
 end
 
-# Handles Unitful quantities or plain numbers 
 function CylindricalPoint(r, φ, z)
-    r_val = isa(r, Unitful.Length) ? float(to_internal_units(r)) : float(r)
-    φ_val = isa(φ, Unitful.Quantity) ? float(to_internal_units(φ)) : float(φ)
-    z_val = isa(z, Unitful.Length) ? float(to_internal_units(z)) : float(z)
+    if !(r isa Real || r isa Unitful.Length)
+        throw(ArgumentError("Expected `r` to be a length or Real, got unit $(Unitful.unit(r))"))
+    end
 
-    T = promote_type(typeof(r_val), typeof(φ_val), typeof(z_val))
-    CylindricalPoint{T}(T(r_val), T(φ_val), T(z_val))
+    if !(φ isa Real || φ isa Unitful.Quantity)
+        throw(ArgumentError("Expected `φ` to be an angle or Real, got unit $(Unitful.unit(φ))"))
+    end
 
+    if !(z isa Real || z isa Unitful.Length)
+        throw(ArgumentError("Expected `z` to be a length or Real, got unit $(Unitful.unit(z))"))
+    end
+
+    r_val = to_internal_units(r)
+    φ_val = to_internal_units(φ)
+    z_val = to_internal_units(z)
+
+    vals = (r_val, φ_val, z_val)
+    has_int   = any(v -> v isa Integer, vals)
+    has_float = any(v -> v isa AbstractFloat, vals)
+
+    if has_int && has_float
+        throw(ArgumentError("Mixed integer and float inputs, use all integers or all floats."))
+    end
+    
+    return CylindricalPoint(r_val, φ_val, z_val)
 end
-
+                                                     
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
     # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
@@ -326,9 +343,3 @@ end
 function to_internal_units(pt::AbstractCoordinatePoint)
     error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
 end
-
-function to_internal_units(p::SVector{3, <:Unitful.Quantity})
-    vals = ustrip.(internal_length_unit, p)
-    return SVector{3, typeof(vals[1])}(vals)
-end
-
