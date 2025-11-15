@@ -13,12 +13,6 @@ function Base.isapprox(a::AbstractCartesianPoint, b::AbstractCartesianPoint; kwa
            isapprox(get_z(a), get_z(b); kwargs...)
 end
 
-function to_internal_units(x::AbstractCartesianPoint)
-    CartesianPoint(to_internal_units(get_x(x)), to_internal_units(get_y(x)), to_internal_units(get_z(x)))
-end
-
-
-
 # Unitful uses the `*` and `/` operators to combine values with units. But mathematically that's really not an algebraic
 # product (not defined for affine points), but a cartesian product, so supporting this should be fine:
 Base.:(*)(pt::AbstractCartesianPoint{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) * u, get_y(pt) * u, get_z(pt) * u)
@@ -244,6 +238,26 @@ struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
 end
 
+function CylindricalPoint(r, φ, z)
+    if !(r isa Real || r isa Unitful.Length)
+        throw(ArgumentError("Expected `r` to be a length or Real, got unit $(Unitful.unit(r))"))
+    end
+
+    if !(φ isa Real || φ isa Unitful.Quantity{<:Real, NoDims})
+        throw(ArgumentError("Expected `φ` to be an angle or Real, got unit $(Unitful.unit(φ))"))
+    end
+
+    if !(z isa Real || z isa Unitful.Length)
+        throw(ArgumentError("Expected `z` to be a length or Real, got unit $(Unitful.unit(z))"))
+    end
+
+    r_val = to_internal_units(r)
+    φ_val = to_internal_units(φ)
+    z_val = to_internal_units(z)
+
+    return CylindricalPoint(r_val, φ_val, z_val)
+end
+                                                     
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
     # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
@@ -303,4 +317,21 @@ Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 @inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CartesianPoint(a) - CartesianPoint(b)
 
 @inline Base.transpose(pt::CylindricalPoint) = CylindricalPoint(transpose(pt.r), transpose(pt.φ), transpose(pt.z)) 
+
 @inline Base.adjoint(pt::CylindricalPoint) = CylindricalPoint(adjoint(pt.r), adjoint(pt.φ), adjoint(pt.z))
+
+function to_internal_units(pt::CartesianPoint)
+    CartesianPoint(to_internal_units(pt.x), to_internal_units(pt.y), to_internal_units(pt.z))
+end
+
+function to_internal_units(pt::CylindricalPoint)
+    _r = to_internal_units(pt.r)
+    _φ = to_internal_units(pt.φ)
+    _z = to_internal_units(pt.z)
+
+    return CartesianPoint(_r * cos(_φ), _r * sin(_φ), _z)
+end
+
+function to_internal_units(pt::AbstractCoordinatePoint)
+    error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
+end
