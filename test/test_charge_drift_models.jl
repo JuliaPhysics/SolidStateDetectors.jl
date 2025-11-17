@@ -271,7 +271,7 @@ end
         @test cdm0.μ_e  == 0.1f0
         @test cdm0.μ_h == 0.1f0
 
-        cdm1 = IsotropicChargeDriftModel{T}(1000u"cm^2/(V*s)", 1000u"cm^2/(V*s)")
+        cdm1 = IsotropicChargeDriftModel{T}(μ_e = 1000u"cm^2/(V*s)", μ_h = 1000u"cm^2/(V*s)")
         @test cdm1 == cdm0
 
         cdm2 = IsotropicChargeDriftModel{T}(0.1, 0.1)
