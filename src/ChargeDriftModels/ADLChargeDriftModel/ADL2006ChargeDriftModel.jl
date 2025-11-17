@@ -138,7 +138,6 @@ function _ADLChargeDriftModel(
     if ismissing(temperature)
         cdm
     else
-        @info "scaling"
         scale_to_temperature(cdm, temperature)
     end
 end
