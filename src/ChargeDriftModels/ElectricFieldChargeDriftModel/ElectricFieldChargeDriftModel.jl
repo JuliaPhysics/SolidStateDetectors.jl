@@ -8,7 +8,8 @@ This model is the default when no charge drift model is defined in the configura
 struct ElectricFieldChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T} 
 end
 
-function ElectricFieldChargeDriftModel(; 
+function ElectricFieldChargeDriftModel(
+        config::AbstractDict = Dict(); 
         T::Type=Float32,
         temperature::Union{Missing, Real, Unitful.Temperature} = missing
     )::ElectricFieldChargeDriftModel{T}
