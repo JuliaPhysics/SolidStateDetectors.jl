@@ -56,13 +56,21 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
         ConstantImpurityDensity{T}(0)
     end
 
+    temperature = if haskey(dict, "temperature") 
+        _parse_value(T, dict["temperature"], input_units.temperature)
+    elseif material.name == "High Purity Germanium"
+        T(77)
+    else
+        T(293)
+    end
+
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
             if model == :InactiveLayerChargeDriftModel
                 InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units)
             else
-                getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"])
+                getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"], temperature = temperature)
             end
         else
             throw(ConfigFileError("There is no charge drift model called `$(dict["charge_drift_model"]["model"])`."))
@@ -72,13 +80,6 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     end
 
     material = material_properties[materials[dict["material"]]]
-    temperature = if haskey(dict, "temperature") 
-        _parse_value(T, dict["temperature"], input_units.temperature)
-    elseif material.name == "High Purity Germanium"
-        T(78)
-    else
-        T(293)
-    end
 
     inner_transformations = parse_CSG_transformation(T, dict, input_units)
     transformations = combine_transformations(inner_transformations, outer_transformations)

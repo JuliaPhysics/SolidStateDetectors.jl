@@ -42,7 +42,7 @@ function _ADL2016ChargeDriftModel(
         h111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h111"]["beta"], 
         h111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["E0"],
         material::Type{<:AbstractDriftMaterial} = HPGe, 
-        temperature::Union{Missing, RealQuantity} = missing, 
+        temperature::Union{Missing, Real, Unitful.Temperature} = missing, 
         phi110::Union{Missing, Real, AngleQuantity} = missing
     )::ADL2016ChargeDriftModel{T}
     
@@ -114,17 +114,17 @@ function _ADL2016ChargeDriftModel(
         if "model" in keys(config["temperature_dependence"])
             model::String = config["temperature_dependence"]["model"]
             if model == "PowerLaw"
-                temperaturemodel = PowerLawModel{T}(config)
+                temperaturemodel = PowerLawTemperatureModel{T}(config)
             else
-                temperaturemodel = VacuumModel{T}(config)
-                println("Config File does not suit any of the predefined temperature models. The drift parameters will not be rescaled.")
+                temperaturemodel = VacuumTemperatureModel{T}(config)
+                @info "Config File does not suit any of the predefined temperature models. The drift parameters will not be rescaled."
             end
         else
-            temperaturemodel = VacuumModel{T}(config)
-            println("No temperature model specified. The drift parameters will not be rescaled.")
+            temperaturemodel = VacuumTemperatureModel{T}(config)
+            @info "No temperature model specified. The drift parameters will not be rescaled."
         end
     else
-        temperaturemodel = VacuumModel{T}(config)
+        temperaturemodel = VacuumTemperatureModel{T}(config)
     end
     cdm = ADL2016ChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
 

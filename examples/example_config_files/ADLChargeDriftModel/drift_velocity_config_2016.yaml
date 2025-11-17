@@ -26,9 +26,9 @@ temperature_dependence:
   reference_temperature: 77K
   model: PowerLaw
   parameters:
-    e100:
+    e:
       p: 1.68
       theta: 200K
-    h100:
+    h:
       p: 2.4
       theta: 200K

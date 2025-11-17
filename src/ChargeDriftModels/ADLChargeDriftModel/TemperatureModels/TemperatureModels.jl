@@ -1,2 +1,2 @@
-include("PowerLawModel.jl")
-include("VacuumModel.jl")
+include("PowerLawTemperatureModel.jl")
+include("VacuumTemperatureModel.jl")
