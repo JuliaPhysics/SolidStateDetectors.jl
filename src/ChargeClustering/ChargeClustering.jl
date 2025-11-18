@@ -33,7 +33,7 @@ function cluster_detector_hits(
     thitunit = unit(TTT)
     ustripped_ctime = ustrip(thitunit, cluster_time)
 
-     for d_hits_nt in grouped
+    for d_hits_nt in grouped
         d_hits = TypedTables.Table(d_hits_nt)
         d_detno = first(d_hits.detno)
         @assert all(isequal(d_detno), d_hits.detno)
@@ -61,20 +61,20 @@ function cluster_detector_hits(
         for tg in time_groups
             t_hits = view(d_hits, tg)
             if length(t_hits) > 3
-                clusters = Clustering.dbscan(hcat((ustrip.(getindex.(d_hits.pos,i)) for i in 1:3)...)', 
+                clusters = Clustering.dbscan(hcat((ustrip.(getindex.(t_hits.pos,i)) for i in 1:3)...)', 
                 ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
                 
                 for c in clusters
                     idxs = vcat(c.boundary_indices, c.core_indices)
                     @assert length(idxs) == c.size
-                    c_hits = view(d_hits, idxs)
+                    c_hits = view(t_hits, idxs)
 
                     push!(r_detno, d_detno)
                     esum = sum(c_hits.edep)
                     push!(r_edep, esum)
                     if esum ≈ zero(TT)
                         push!(r_pos, barycenter(c_hits.pos))
-                        push!(r_thit, barycenter(c_hits.thit))
+                        push!(r_thit, mean(c_hits.thit))
                     else
                         weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
                         push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
