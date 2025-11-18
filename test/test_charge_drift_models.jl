@@ -531,11 +531,15 @@ end
         # If a temperature is given to the ADL2016 model, the ChargeDriftModel is scaled. But at 77K (the reference temperature),
         # the parameters should be identical to the unscaled ADL2016 model
         
-        cdm_scaled = ADL2016ChargeDriftModel(temperature = 77u"K")
+        cdm_77 = ADL2016ChargeDriftModel(temperature = 77u"K")
+        cdm_100 = ADL2016ChargeDriftModel(temperature = 100u"K")
         cdm = ADL2016ChargeDriftModel()
         
-        @test cdm_scaled.electrons == cdm.electrons
-        @test cdm_scaled.holes     == cdm.holes
+        @test cdm_77.electrons == cdm.electrons
+        @test cdm_77.holes     == cdm.holes
+        @test cdm_100.electrons.mu0 < cdm.electrons.mu0
+        @test cdm_100.holes.axis100.mu0 < cdm.holes.axis100.mu0
+        @test cdm_100.holes.axis111.mu0 < cdm.holes.axis111.mu0
     end
 end
 
