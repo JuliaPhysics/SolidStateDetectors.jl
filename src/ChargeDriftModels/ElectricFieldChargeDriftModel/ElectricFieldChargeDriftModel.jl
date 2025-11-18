@@ -5,8 +5,7 @@ Charge drift model in which the electrons and holes drift along the electric fie
 
 This model is the default when no charge drift model is defined in the configuration file.
 """
-struct ElectricFieldChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T} 
-end
+struct ElectricFieldChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T} end
 
 function ElectricFieldChargeDriftModel(
         config::AbstractDict = Dict(); 

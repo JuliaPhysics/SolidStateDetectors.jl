@@ -57,7 +57,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     end
 
     material = material_properties[materials[dict["material"]]]
-    
+
     temperature = if haskey(dict, "temperature") 
         _parse_value(T, dict["temperature"], input_units.temperature)
     elseif material.name == "High Purity Germanium"
@@ -65,7 +65,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     else
         T(293)
     end
-
+    
     charge_drift_model = if haskey(dict, "charge_drift_model") && haskey(dict["charge_drift_model"], "model")
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel

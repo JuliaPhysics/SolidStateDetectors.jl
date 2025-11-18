@@ -64,9 +64,7 @@ end
 
 # Check the syntax of the DriftModel temperature dependence config file before parsing
 function PowerLawTemperatureModel(config::AbstractDict; kwargs...)
-    if !haskey(config, "temperature_dependence") 
-         throw(ConfigFileError("PowerLawTemperatureModel config file needs entry 'temperature_dependence'."))
-    elseif !haskey(config["temperature_dependence"], "reference_temperature") 
+    if !haskey(config["temperature_dependence"], "reference_temperature") 
         throw(ConfigFileError("PowerLawTemperatureModel config file needs entry 'temperature_dependence/reference_temperature'.")) 
     elseif !haskey(config["temperature_dependence"], "parameters")
         throw(ConfigFileError("PowerLawTemperatureModel config file needs entry 'temperature_dependence/parameters'."))
@@ -91,6 +89,10 @@ function PowerLawTemperatureModel(config_filename::AbstractString = default_ADL2
 end
 
 PowerLawTemperatureModel{T}(args...; kwargs...) where {T <: SSDFloat} = PowerLawTemperatureModel(args...; T=T, kwargs...)
+
+function TemperatureModel(T::DataType, ::Val{:Omar1987}, config::AbstractDict)
+    PowerLawTemperatureModel{T}(config)
+end
 
 # scale velocity parameters given PowerLawTemperatureModel parameters
 function scale_to_temperature_powerlaw(v::VelocityParameters{T}, Temp::T, reftemp::T, p::T, theta::T) where {T <: SSDFloat}
