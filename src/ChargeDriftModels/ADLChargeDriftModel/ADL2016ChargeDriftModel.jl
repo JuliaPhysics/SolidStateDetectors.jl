@@ -113,7 +113,7 @@ function _ADL2016ChargeDriftModel(
     if "temperature_dependence" in keys(config)
         if "model" in keys(config["temperature_dependence"])
             model::String = config["temperature_dependence"]["model"]
-            if model == "PowerLaw"
+            if model == "Omar1987"
                 temperaturemodel = PowerLawTemperatureModel{T}(config)
             else
                 temperaturemodel = VacuumTemperatureModel{T}(config)
@@ -121,18 +121,18 @@ function _ADL2016ChargeDriftModel(
             end
         else
             temperaturemodel = VacuumTemperatureModel{T}(config)
-            @info "No temperature model specified. The drift parameters will not be rescaled."
+            if model in ("Linear", "Boltzmann", "PowerLaw")
+                @warn "Since v0.11.0, temperature scaling is only supported at the drift parameter level. The now depricated models, \"Linear\", \"Boltzmann\" and \"PowerLaw\", relied on the scaling of longitudinal drift velocity at every step of charge carrier drift. This scaling is no longer supported. Please use \"Omar1987\" for the `PowerLawTemperatureModel`, which directly scales charge drift parameters."
+            else 
+                @info "Config File does not suit any of the predefined temperature models. The drift parameters will not be rescaled."
+            end
         end
     else
         temperaturemodel = VacuumTemperatureModel{T}(config)
     end
     cdm = ADL2016ChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
 
-    if ismissing(temperature)
-        cdm
-    else
-        scale_to_temperature(cdm, temperature)
-    end
+    scale_to_temperature(cdm, temperature)
 end
 
 # Check the syntax of the ADL2016ChargeDriftModel config file before parsing

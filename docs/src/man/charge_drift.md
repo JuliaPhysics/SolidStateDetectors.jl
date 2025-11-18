@@ -184,12 +184,12 @@ sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 ```
 
 
-If no temperature is given as a parameter, the calculations will be performed at a default temperature of 77 K. If no configuration file is given, the default config file `<package_directory>/example/example_config_files/ADLChargeDriftModel/drift_velocity_config_2016.yaml` is loaded. In charge drift configuration files the M.A. Omar and L. Reggiani parametrization can be used by adding the following `temperature_dependence` field like so:
+If no temperature is given as a parameter, the calculations will be performed at a default temperature of 77 K. If no configuration file is given, the default config file `<package_directory>/example/example_config_files/ADLChargeDriftModel/drift_velocity_config_2016.yaml` is loaded. In charge drift configuration files, the M.A. Omar and L. Reggiani parametrization can be used by adding the following `temperature_dependence` field like this:
 
 ```yaml
 temperature_dependence:
   reference_temperature: 77K
-  model: PowerLaw
+  model: Omar1987
   parameters:
     e:
       p: 1.68
@@ -202,7 +202,7 @@ temperature_dependence:
 For convenience, this model can already be found in the `drift_velocity_config.yaml` and `drift_velocity_config_2016.yaml` example config files. 
 
 !!! note
-    The default parameters used in this model were calculated by M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633) before the publication of the `ADLChargeDriftModel` parameters, with $\beta = 2$. Thus, the use of this model to scale the drift parameters in `ADLChargeDriftModel` or `ADL2016ChargeDriftModel` is considered experimental. 
+    The default parameters used in this model were calculated by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633) before the publication of the `ADLChargeDriftModel` parameters, with $\beta = 2$. Thus, the use of this model to scale the drift parameters in `ADLChargeDriftModel` or `ADL2016ChargeDriftModel` is considered experimental. 
 
 ### Inactive Layer Charge Drift Model
 
@@ -210,7 +210,7 @@ The [`InactiveLayerChargeDriftModel`](@ref) describes a system in which electron
 
 The mobilities are calculated considering three major scattering process: scattering off ionized impurities, neutral impurities and acoustic phonons. Thus, the mobilities depend on the impurity concentrations and temperature.
 
-The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
+The precision of the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
 
 The `InactiveLayerChargeDriftModel` can be specified in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
 

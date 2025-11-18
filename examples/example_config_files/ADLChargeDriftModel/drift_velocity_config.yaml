@@ -24,8 +24,8 @@ drift:
         beta: 0.662
         E0: 182V/cm
 temperature_dependence:
-  reference_temperature: 77K
-  model: PowerLaw
+  reference_temperature: 78K
+  model: Omar1987
   parameters:
     e:
       p: 1.68
