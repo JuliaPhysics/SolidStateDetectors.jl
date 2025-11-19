@@ -65,10 +65,11 @@ struct ADLParameters{T <: SSDFloat}
     Γ2::T
 end
 
-# Temperature models
-include("TemperatureModels/TemperatureModels.jl")
 include("ADL2006ChargeDriftModel.jl")
 include("ADL2016ChargeDriftModel.jl")
+
+# Temperature models
+include("TemperatureModels/TemperatureModels.jl")
 
 
 # Electron model parametrization from Mihailescu (2000)
@@ -144,11 +145,8 @@ getVe(fv::SVector{3, T}, cdm::ADLChargeDriftModel{T}, ::CartesianPoint{T}, Emag_
 
         if Emag < Emag_threshold return SVector{3,T}(0, 0, 0) end
 
-        f::NTuple{4,T} = scale_to_given_temperature(cdm.temperaturemodel)
-        f100e::T = f[1]
-        f111e::T = f[2]
-        V100e::T = Vl(Emag, cdm.electrons.axis100) * f100e
-        V111e::T = Vl(Emag, cdm.electrons.axis111) * f111e
+        V100e::T = Vl(Emag, cdm.electrons.axis100)
+        V111e::T = Vl(Emag, cdm.electrons.axis111)
         
         AE::T, RE::T = _get_AE_and_RE(cdm, V100e, V111e)
 
@@ -220,12 +218,8 @@ getVh(fv::SVector{3,T}, cdm::Union{ADLChargeDriftModel{T}, ADL2016ChargeDriftMod
 
         if Emag < Emag_threshold return SVector{3,T}(0, 0, 0) end
 
-        f::NTuple{4,T} = scale_to_given_temperature(cdm.temperaturemodel)
-        f100h::T = f[3]
-        f111h::T = f[4]
-
-        V100h::T = Vl(Emag, cdm.holes.axis100) * f100h
-        V111h::T = Vl(Emag, cdm.holes.axis111) * f111h
+        V100h::T = Vl(Emag, cdm.holes.axis100)
+        V111h::T = Vl(Emag, cdm.holes.axis111)
         
         tmp::SVector{3,T} = cdm.crystal_orientation * fv
 

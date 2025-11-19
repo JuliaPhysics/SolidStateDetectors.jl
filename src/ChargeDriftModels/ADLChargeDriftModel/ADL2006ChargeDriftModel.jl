@@ -27,54 +27,6 @@ struct ADLChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: A
     temperaturemodel::TM
 end
 
-function ADLChargeDriftModel{T,M,N,TM}(chargedriftmodel::ADLChargeDriftModel{<:Any,M,N,TM})::ADLChargeDriftModel{T,M,N,TM} where {T <: SSDFloat, M, N, TM}
-    cdmf64 = chargedriftmodel
-    e100 = VelocityParameters{T}(cdmf64.electrons.axis100.mu0, cdmf64.electrons.axis100.beta, cdmf64.electrons.axis100.E0, cdmf64.electrons.axis100.mun)
-    e111 = VelocityParameters{T}(cdmf64.electrons.axis111.mu0, cdmf64.electrons.axis111.beta, cdmf64.electrons.axis111.E0, cdmf64.electrons.axis111.mun)
-    h100 = VelocityParameters{T}(cdmf64.holes.axis100.mu0, cdmf64.holes.axis100.beta, cdmf64.holes.axis100.E0, cdmf64.holes.axis100.mun)
-    h111 = VelocityParameters{T}(cdmf64.holes.axis111.mu0, cdmf64.holes.axis111.beta, cdmf64.holes.axis111.E0, cdmf64.holes.axis111.mun)
-    electrons = CarrierParameters{T}(e100, e111)
-    holes     = CarrierParameters{T}(h100, h111)
-    crystal_orientation = SMatrix{3,3,T,9}(cdmf64.crystal_orientation)
-    γ = Vector{SMatrix{3,3,T,9}}( cdmf64.γ )
-    parameters = ADLParameters{T}(cdmf64.parameters.ml_inv, cdmf64.parameters.mt_inv, cdmf64.parameters.Γ0_inv, cdmf64.parameters.Γ1, cdmf64.parameters.Γ2)
-    temperaturemodel::AbstractTemperatureModel{T} = cdmf64.temperaturemodel
-    ADLChargeDriftModel{T,M,N,TM}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
-end
-
-
-
-ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDriftModel(args...; T=T, kwargs...)
-
-const default_ADL_config_file = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml")
-function ADLChargeDriftModel(config_filename::AbstractString = default_ADL_config_file; kwargs...)
-    ADLChargeDriftModel(parse_config_file(config_filename); kwargs...)
-end
-
-# Check the syntax of the ADLChargeDriftModel config file before parsing
-function ADLChargeDriftModel(config::AbstractDict; kwargs...)
-    if !haskey(config, "drift") 
-        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift'.")) 
-    elseif !haskey(config["drift"], "velocity") 
-        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity'.")) 
-    elseif !haskey(config["drift"]["velocity"], "parameters")
-        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters'."))
-    end
-
-    for axis in ("e100", "e111", "h100", "h111")
-        if !haskey(config["drift"]["velocity"]["parameters"], axis)
-            throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)'."))
-        end
-        for param in ("mu0", "beta", "E0", "mun")
-            if !haskey(config["drift"]["velocity"]["parameters"][axis], param) && !(axis[1] == 'h' && param == "mun") # holes have no μn
-                throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)/$(param)'."))
-            end
-        end
-    end
-    _ADLChargeDriftModel(config; kwargs...)
-end
-
-
 function _ADLChargeDriftModel(
         config::AbstractDict; 
         T::Type=Float32,
@@ -92,36 +44,45 @@ function _ADLChargeDriftModel(
         h111μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["mu0"], 
         h111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h111"]["beta"], 
         h111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["E0"],
+        input_units::Union{Missing, NamedTuple} = missing, 
         material::Type{<:AbstractDriftMaterial} = HPGe,
-        temperature::Union{Missing, Real}= missing, 
-        phi110::Union{Missing, Real, AngleQuantity} = missing
+        temperature::Union{Missing, Real, Unitful.Temperature} = missing,
+        phi110::Union{Missing, Real, AngleQuantity} = missing,
     )::ADLChargeDriftModel{T}
     
+    mobility_unit, efield_unit = if ismissing(input_units)
+        internal_mobility_unit, internal_efield_unit
+    else
+        input_units.length^2/(input_units.potential*internal_time_unit), 
+        input_units.potential/input_units.length
+    end
+    # Temperature is not parsed from charge drift config file. It is set by the user or parsed during Semiconductor construction.
+
     e100 = VelocityParameters{T}(
-        _parse_value(T, e100μ0, internal_mobility_unit), 
+        _parse_value(T, e100μ0, mobility_unit), 
         _parse_value(T, e100β,  NoUnits), 
-        _parse_value(T, e100E0, internal_efield_unit),
-        _parse_value(T, e100μn, internal_mobility_unit)
+        _parse_value(T, e100E0, efield_unit),
+        _parse_value(T, e100μn, mobility_unit)
     )
     
     e111 = VelocityParameters{T}(
-        _parse_value(T, e111μ0, internal_mobility_unit), 
+        _parse_value(T, e111μ0, mobility_unit), 
         _parse_value(T, e111β,  NoUnits), 
-        _parse_value(T, e111E0, internal_efield_unit),
-        _parse_value(T, e111μn, internal_mobility_unit)
+        _parse_value(T, e111E0, efield_unit),
+        _parse_value(T, e111μn, mobility_unit)
     )
     
     h100 = VelocityParameters{T}(
-        _parse_value(T, h100μ0, internal_mobility_unit), 
+        _parse_value(T, h100μ0, mobility_unit), 
         _parse_value(T, h100β,  NoUnits), 
-        _parse_value(T, h100E0, internal_efield_unit),
+        _parse_value(T, h100E0, efield_unit),
         0
     )
     
     h111 = VelocityParameters{T}(
-        _parse_value(T, h111μ0, internal_mobility_unit), 
+        _parse_value(T, h111μ0, mobility_unit), 
         _parse_value(T, h111β,  NoUnits), 
-        _parse_value(T, h111E0, internal_efield_unit),
+        _parse_value(T, h111E0, efield_unit),
         0
     )
 
@@ -160,30 +121,41 @@ function _ADLChargeDriftModel(
         RotZ{T}(- π/4 - _parse_value(T, phi110, u"rad"))
     end
 
-    γ = setup_γj(crystal_orientation, parameters, material)
+    γ = setup_γj(crystal_orientation, parameters, material)                      
 
-    if !ismissing(temperature) temperature = T(temperature) end  #if you give the temperature it will be used, otherwise read from config file                         
+    temperaturemodel = TemperatureModel(T, config)
 
-    if "temperature_dependence" in keys(config)
-        if "model" in keys(config["temperature_dependence"])
-            model::String = config["temperature_dependence"]["model"]
-            if model == "Linear"
-                temperaturemodel = LinearModel{T}(config, temperature = temperature)
-            elseif model == "PowerLaw"
-                temperaturemodel = PowerLawModel{T}(config, temperature = temperature)
-            elseif model == "Boltzmann"
-                temperaturemodel = BoltzmannModel{T}(config, temperature = temperature)
-            else
-                temperaturemodel = VacuumModel{T}(config)
-                println("Config File does not suit any of the predefined temperature models. The drift velocity will not be rescaled.")
-            end
-        else
-            temperaturemodel = VacuumModel{T}(config)
-            println("No temperature model specified. The drift velocity will not be rescaled.")
-        end
-    else
-        temperaturemodel = VacuumModel{T}(config)
-        # println("No temperature dependence found in Config File. The drift velocity will not be rescaled.")
-    end
-    return ADLChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
+    cdm = ADLChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
+
+    scale_to_temperature(cdm, temperature)
 end
+
+# Check the syntax of the ADLChargeDriftModel config file before parsing
+function ADLChargeDriftModel(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
+    if !haskey(config, "drift") 
+        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift'.")) 
+    elseif !haskey(config["drift"], "velocity") 
+        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity'.")) 
+    elseif !haskey(config["drift"]["velocity"], "parameters")
+        throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters'."))
+    end
+
+    for axis in ("e100", "e111", "h100", "h111")
+        if !haskey(config["drift"]["velocity"]["parameters"], axis)
+            throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)'."))
+        end
+        for param in ("mu0", "beta", "E0", "mun")
+            if !haskey(config["drift"]["velocity"]["parameters"][axis], param) && !(axis[1] == 'h' && param == "mun") # holes have no μn
+                throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)/$(param)'."))
+            end
+        end
+    end
+    _ADLChargeDriftModel(config; input_units = input_units, kwargs...)
+end
+
+const default_ADL_config_file = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml")
+function ADLChargeDriftModel(config_filename::AbstractString = default_ADL_config_file, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
+    ADLChargeDriftModel(parse_config_file(config_filename), input_units; kwargs...)
+end
+
+ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDriftModel(args...; T=T, kwargs...)
