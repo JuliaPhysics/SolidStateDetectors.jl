@@ -18,14 +18,16 @@ function _IsotropicChargeDriftModel(
         T::Type=Float32,
         μ_e::Union{RealQuantity, AbstractString} = config["mobilities"]["e"], 
         μ_h::Union{RealQuantity, AbstractString} = config["mobilities"]["h"],
+        input_units::Union{Missing, NamedTuple} = missing,
         temperature::Union{Missing, Real, Unitful.Temperature} = missing
     )::IsotropicChargeDriftModel{T}
-   IsotropicChargeDriftModel{T}(_parse_value.(T, (μ_e, μ_h), internal_mobility_unit)...)
+    mobility_unit = ismissing(input_units) ? internal_mobility_unit : input_units.length^2/(input_units.potential*internal_time_unit)
+   IsotropicChargeDriftModel{T}(_parse_value.(T, (μ_e, μ_h), mobility_unit)...)
 end
 
 
 # Check the syntax of the IsotropicChargeDriftModel config file before parsing
-function IsotropicChargeDriftModel(config::AbstractDict; kwargs...)
+function IsotropicChargeDriftModel(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
     if !haskey(config, "mobilities")
         throw(ConfigFileError("IsotropicChargeDriftModel config file needs entry 'mobilities'."))
     end
@@ -34,12 +36,12 @@ function IsotropicChargeDriftModel(config::AbstractDict; kwargs...)
             throw(ConfigFileError("IsotropicChargeDriftModel config file needs entry 'mobilities/$axis'."))
         end
     end
-    _IsotropicChargeDriftModel(config; kwargs...)
+    _IsotropicChargeDriftModel(config; input_units = input_units, kwargs...)
 end
 
 const default_icd_config_file = joinpath(get_path_to_example_config_files(), "IsotropicChargeDriftModel/mobilities.yaml")
-function IsotropicChargeDriftModel(config_filename::AbstractString = default_icd_config_file; kwargs...)
-    IsotropicChargeDriftModel(parse_config_file(config_filename); kwargs...)
+function IsotropicChargeDriftModel(config_filename::AbstractString = default_icd_config_file, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
+    IsotropicChargeDriftModel(parse_config_file(config_filename), input_units; kwargs...)
 end
 
 IsotropicChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = IsotropicChargeDriftModel(args...; T=T, kwargs...)

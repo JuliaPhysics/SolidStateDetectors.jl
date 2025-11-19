@@ -44,36 +44,45 @@ function _ADLChargeDriftModel(
         h111μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["mu0"], 
         h111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h111"]["beta"], 
         h111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["E0"],
+        input_units::Union{Missing, NamedTuple} = missing, 
         material::Type{<:AbstractDriftMaterial} = HPGe,
         temperature::Union{Missing, Real, Unitful.Temperature} = missing,
-        phi110::Union{Missing, Real, AngleQuantity} = missing
+        phi110::Union{Missing, Real, AngleQuantity} = missing,
     )::ADLChargeDriftModel{T}
     
+    mobility_unit, efield_unit = if ismissing(input_units)
+        internal_mobility_unit, internal_efield_unit
+    else
+        input_units.length^2/(input_units.potential*internal_time_unit), 
+        input_units.potential/input_units.length
+    end
+    # Temperature is not parsed from charge drift config file. It is set by the user or parsed during Semiconductor construction.
+
     e100 = VelocityParameters{T}(
-        _parse_value(T, e100μ0, internal_mobility_unit), 
+        _parse_value(T, e100μ0, mobility_unit), 
         _parse_value(T, e100β,  NoUnits), 
-        _parse_value(T, e100E0, internal_efield_unit),
-        _parse_value(T, e100μn, internal_mobility_unit)
+        _parse_value(T, e100E0, efield_unit),
+        _parse_value(T, e100μn, mobility_unit)
     )
     
     e111 = VelocityParameters{T}(
-        _parse_value(T, e111μ0, internal_mobility_unit), 
+        _parse_value(T, e111μ0, mobility_unit), 
         _parse_value(T, e111β,  NoUnits), 
-        _parse_value(T, e111E0, internal_efield_unit),
-        _parse_value(T, e111μn, internal_mobility_unit)
+        _parse_value(T, e111E0, efield_unit),
+        _parse_value(T, e111μn, mobility_unit)
     )
     
     h100 = VelocityParameters{T}(
-        _parse_value(T, h100μ0, internal_mobility_unit), 
+        _parse_value(T, h100μ0, mobility_unit), 
         _parse_value(T, h100β,  NoUnits), 
-        _parse_value(T, h100E0, internal_efield_unit),
+        _parse_value(T, h100E0, efield_unit),
         0
     )
     
     h111 = VelocityParameters{T}(
-        _parse_value(T, h111μ0, internal_mobility_unit), 
+        _parse_value(T, h111μ0, mobility_unit), 
         _parse_value(T, h111β,  NoUnits), 
-        _parse_value(T, h111E0, internal_efield_unit),
+        _parse_value(T, h111E0, efield_unit),
         0
     )
 
@@ -122,7 +131,7 @@ function _ADLChargeDriftModel(
 end
 
 # Check the syntax of the ADLChargeDriftModel config file before parsing
-function ADLChargeDriftModel(config::AbstractDict; kwargs...)
+function ADLChargeDriftModel(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
     if !haskey(config, "drift") 
         throw(ConfigFileError("ADLChargeDriftModel config file needs entry 'drift'.")) 
     elseif !haskey(config["drift"], "velocity") 
@@ -141,12 +150,12 @@ function ADLChargeDriftModel(config::AbstractDict; kwargs...)
             end
         end
     end
-    _ADLChargeDriftModel(config; kwargs...)
+    _ADLChargeDriftModel(config; input_units = input_units, kwargs...)
 end
 
 const default_ADL_config_file = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml")
-function ADLChargeDriftModel(config_filename::AbstractString = default_ADL_config_file; kwargs...)
-    ADLChargeDriftModel(parse_config_file(config_filename); kwargs...)
+function ADLChargeDriftModel(config_filename::AbstractString = default_ADL_config_file, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
+    ADLChargeDriftModel(parse_config_file(config_filename), input_units; kwargs...)
 end
 
 ADLChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADLChargeDriftModel(args...; T=T, kwargs...)

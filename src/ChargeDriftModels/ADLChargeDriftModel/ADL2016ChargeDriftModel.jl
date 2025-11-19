@@ -41,33 +41,42 @@ function _ADL2016ChargeDriftModel(
         h111μ0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["mu0"], 
         h111β::Union{RealQuantity,String}  = config["drift"]["velocity"]["parameters"]["h111"]["beta"], 
         h111E0::Union{RealQuantity,String} = config["drift"]["velocity"]["parameters"]["h111"]["E0"],
+        input_units::Union{Missing, NamedTuple} = missing, 
         material::Type{<:AbstractDriftMaterial} = HPGe, 
         temperature::Union{Missing, Real, Unitful.Temperature} = missing, 
         phi110::Union{Missing, Real, AngleQuantity} = missing
     )::ADL2016ChargeDriftModel{T}
     
+    mobility_unit, efield_unit = if !ismissing(input_units)
+        input_units.length^2/(input_units.potential*internal_time_unit), 
+        input_units.potential/input_units.length
+    else
+        internal_mobility_unit, internal_efield_unit
+    end
+    # Temperature is not parsed from charge drift config file. It is set by the user or parsed during Semiconductor construction.
+
     electrons = VelocityParameters{T}(
-        _parse_value(T, e100μ0, internal_mobility_unit), 
+        _parse_value(T, e100μ0, mobility_unit), 
         _parse_value(T, e100β,  NoUnits), 
-        _parse_value(T, e100E0, internal_efield_unit),
-        _parse_value(T, e100μn, internal_mobility_unit)
+        _parse_value(T, e100E0, efield_unit),
+        _parse_value(T, e100μn, mobility_unit)
     )
     
     h100 = VelocityParameters{T}(
-        _parse_value(T, h100μ0, internal_mobility_unit), 
+        _parse_value(T, h100μ0, mobility_unit), 
         _parse_value(T, h100β,  NoUnits), 
-        _parse_value(T, h100E0, internal_efield_unit),
+        _parse_value(T, h100E0, efield_unit),
         0
     )
     
     h111 = VelocityParameters{T}(
-        _parse_value(T, h111μ0, internal_mobility_unit), 
+        _parse_value(T, h111μ0, mobility_unit), 
         _parse_value(T, h111β,  NoUnits), 
-        _parse_value(T, h111E0, internal_efield_unit),
+        _parse_value(T, h111E0, efield_unit),
         0
     )
 
-    holes     = CarrierParameters{T}(h100, h111)
+    holes = CarrierParameters{T}(h100, h111)
     
     
     if "material" in keys(config)
@@ -95,7 +104,7 @@ function _ADL2016ChargeDriftModel(
         ml_inv, mt_inv, 
         _parse_value(T, η0, NoUnits), 
         _parse_value(T, b, NoUnits), 
-        _parse_value(T, Eref, internal_efield_unit)
+        _parse_value(T, Eref, efield_unit)
     )
 
     crystal_orientation::SMatrix{3,3,T,9} = if ismissing(phi110) 
@@ -109,7 +118,7 @@ function _ADL2016ChargeDriftModel(
     end
 
     γ = setup_γj(crystal_orientation, parameters, material)
-           
+
     temperaturemodel = TemperatureModel(T, config)
     
     cdm = ADL2016ChargeDriftModel{T,material,length(γ),typeof(temperaturemodel)}(electrons, holes, crystal_orientation, γ, parameters, temperaturemodel)
@@ -118,7 +127,7 @@ function _ADL2016ChargeDriftModel(
 end
 
 # Check the syntax of the ADL2016ChargeDriftModel config file before parsing
-function ADL2016ChargeDriftModel(config::AbstractDict; kwargs...)
+function ADL2016ChargeDriftModel(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
     if !haskey(config, "drift") 
         throw(ConfigFileError("ADL2016ChargeDriftModel config file needs entry 'drift'.")) 
     elseif !haskey(config["drift"], "velocity") 
@@ -137,12 +146,12 @@ function ADL2016ChargeDriftModel(config::AbstractDict; kwargs...)
             end
         end
     end
-    _ADL2016ChargeDriftModel(config; kwargs...)
+    _ADL2016ChargeDriftModel(config; input_units = input_units, kwargs...)
 end
 
 const default_ADL2016_config_file = joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_2016.yaml")
-function ADL2016ChargeDriftModel(config_filename::AbstractString = default_ADL2016_config_file; kwargs...)
-    ADL2016ChargeDriftModel(parse_config_file(config_filename); kwargs...)
+function ADL2016ChargeDriftModel(config_filename::AbstractString = default_ADL2016_config_file, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
+    ADL2016ChargeDriftModel(parse_config_file(config_filename), input_units; kwargs...)
 end
 
 ADL2016ChargeDriftModel{T}(args...; kwargs...) where {T <: SSDFloat} = ADL2016ChargeDriftModel(args...; T=T, kwargs...)

@@ -414,7 +414,7 @@ end
     end
 
     @testset "Test parsing of ADLChargeDriftModel config files with units" begin
-        cdm0 = ADLChargeDriftModel() # default charge drift model
+        cdm0 = ADLChargeDriftModel() # default charge drift model with units
         @test cdm0.electrons.axis100.mu0  == 3.8609f0
         @test cdm0.electrons.axis100.beta == 0.805f0
         @test cdm0.electrons.axis100.E0   == 51100f0
@@ -429,12 +429,24 @@ end
         @test cdm0.holes.axis111.mu0  == 6.1215f0
         @test cdm0.holes.axis111.beta == 0.662f0
         @test cdm0.holes.axis111.E0   == 18200f0
+        
+        # default charge drift model config has units, input units should be ignored
+        input_units = SolidStateDetectors.construct_units(Dict("units" => Dict("length" => "mm", "potential" => "V", "angle" => "deg", "temperature" => "K")))
 
+        cdm0_inputunits = ADLChargeDriftModel(SolidStateDetectors.default_ADL_config_file, input_units)
+        @test cdm0.electrons == cdm0_inputunits.electrons
+        @test cdm0.holes == cdm0_inputunits.holes
+
+        # charge drift model config has no units, internal units are assumed
         cdm_nounits = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_nounits.yaml"))
         @test cdm0.electrons == cdm_nounits.electrons
         @test cdm0.holes == cdm_nounits.holes
         @test cdm0.crystal_orientation ≈ cdm_nounits.crystal_orientation
 
+        # charge drift model config has no units, input units will be applied
+        cdm_nounits_inputunits = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_nounits.yaml"), input_units)
+        @test cdm_nounits.electrons != cdm_nounits_inputunits.electrons
+        @test cdm_nounits.holes != cdm_nounits_inputunits.holes
     end
 
     @testset "Modify mobility parameters using keyword arguments" begin
@@ -526,7 +538,7 @@ end
         @test cdm2016.holes     == cdm.holes
     end
 
-    @testset "Test equivalence of longitudinal drift parameter implementation" begin
+    @testset "Test temperature scaling of drift parameters" begin
     
         # If a temperature is given to the ADL2016 model, the ChargeDriftModel is scaled. But at 77K (the reference temperature),
         # the parameters should be identical to the unscaled ADL2016 model

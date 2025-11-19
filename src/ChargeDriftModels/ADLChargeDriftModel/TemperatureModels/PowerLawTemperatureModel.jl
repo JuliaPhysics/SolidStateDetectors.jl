@@ -50,20 +50,23 @@ function _PowerLawTemperatureModel(
     p_e::Union{Real,String} = config["temperature_dependence"]["parameters"]["e"]["p"],
     theta_e::Union{RealQuantity,String} = config["temperature_dependence"]["parameters"]["e"]["theta"],
     p_h::Union{Real,String} = config["temperature_dependence"]["parameters"]["h"]["p"],
-    theta_h::Union{RealQuantity,String} = config["temperature_dependence"]["parameters"]["h"]["theta"]
+    theta_h::Union{RealQuantity,String} = config["temperature_dependence"]["parameters"]["h"]["theta"],
+    input_units::Union{Missing, NamedTuple} = missing
     )::PowerLawTemperatureModel{T}
 
-    reftemp = _parse_value(T, reference_temperature, u"K")
+    temperature_unit = ismissing(input_units) ? internal_temperature_unit : input_units.temperature
+    
+    reftemp = _parse_value(T, reference_temperature, temperature_unit)
     p_e = _parse_value(T, p_e, NoUnits)
-    theta_e = _parse_value(T, theta_e, u"K")
+    theta_e = _parse_value(T, theta_e, temperature_unit)
     p_h = _parse_value(T, p_h, NoUnits)
-    theta_h = _parse_value(T, theta_h, u"K")
+    theta_h = _parse_value(T, theta_h, temperature_unit)
 
     return PowerLawTemperatureModel{T}(reftemp, p_e, theta_e, p_h, theta_h)
 end
 
 # Check the syntax of the DriftModel temperature dependence config file before parsing
-function PowerLawTemperatureModel(config::AbstractDict; kwargs...)
+function PowerLawTemperatureModel(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
     if !haskey(config["temperature_dependence"], "reference_temperature") 
         throw(ConfigFileError("PowerLawTemperatureModel config file needs entry 'temperature_dependence/reference_temperature'.")) 
     elseif !haskey(config["temperature_dependence"], "parameters")
@@ -81,17 +84,17 @@ function PowerLawTemperatureModel(config::AbstractDict; kwargs...)
             end
         end
     end
-     _PowerLawTemperatureModel(config; kwargs...)
+     _PowerLawTemperatureModel(config; input_units=input_units, kwargs...)
 end
 
-function PowerLawTemperatureModel(config_filename::AbstractString = default_ADL2016_config_file; kwargs...)
-    PowerLawTemperatureModel(parse_config_file(config_filename); kwargs...)
+function PowerLawTemperatureModel(config_filename::AbstractString = default_ADL2016_config_file, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
+    PowerLawTemperatureModel(parse_config_file(config_filename), input_units; kwargs...)
 end
 
 PowerLawTemperatureModel{T}(args...; kwargs...) where {T <: SSDFloat} = PowerLawTemperatureModel(args...; T=T, kwargs...)
 
-function TemperatureModel(T::DataType, ::Val{:Omar1987}, config::AbstractDict)
-    PowerLawTemperatureModel{T}(config)
+function TemperatureModel(T::DataType, ::Val{:Omar1987}, config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing)
+    PowerLawTemperatureModel{T}(config, input_units)
 end
 
 # scale velocity parameters given PowerLawTemperatureModel parameters
