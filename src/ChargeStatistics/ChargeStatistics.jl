@@ -2,14 +2,14 @@
 
 
 """
-    add_fano_noise(E_dep::RealQuantity, E_ionisation::RealQuantity, f_fano::Real)::RealQuantity
+    add_fano_noise(E_dep::Unitful.Energy, E_ionisation::Unitful.Energy, f_fano::Real)
 
 Adds Fano noise to an energy deposition `E_dep`, assuming a detector material
 ionisation energy `E_ionisation` and a Fano factor `f_fano`.
 
 ## Arguments
-* `E_dep::RealQuantity`: Energy deposited in a semiconductor material.
-* `E_ionisation`: Energy needed to create one electron-hole-pair in the semiconductor material.
+* `E_dep::Unitful.Energy`: Energy deposited in a semiconductor material.
+* `E_ionisation::Unitful.Energy`: Energy needed to create one electron-hole-pair in the semiconductor material.
 * `f_fano`: Fano factor of the material.
 
 ## Example 
@@ -22,15 +22,12 @@ Some material properties are stored in `SolidStateDetectors.material_properties`
 material = SolidStateDetectors.material_properties[:HPGe]
 add_fano_noise(100u"keV", material.E_ionisation, material.f_fano)
 ```
-
-!!! note
-    Using values with units for `E_dep` or `E_ionisation` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
 """
 function add_fano_noise end
 export add_fano_noise
 
-function add_fano_noise(rng::AbstractRNG, E_dep::RealQuantity, E_ionisation::RealQuantity, f_fano::Real)
-    target_unit = unit(E_dep)
+function add_fano_noise(rng::AbstractRNG, E_dep::E, E_ionisation::Unitful.Energy, f_fano::Real) where {E <: Unitful.Energy}
+
     n_expected = uconvert(Unitful.NoUnits, E_dep/E_ionisation)
 
     # dist = Distributions.Poisson(n_expected)
@@ -42,19 +39,17 @@ function add_fano_noise(rng::AbstractRNG, E_dep::RealQuantity, E_ionisation::Rea
     n_observed = n_expected + σ * randn(rng)
     n_observed_pos = max(0, n_observed)
 
-    uconvert(target_unit, E_ionisation * n_observed_pos)
+    E(E_ionisation * n_observed_pos)
 end
 
 
-function add_fano_noise(rng::AbstractRNG, evts::DetectorHitEvents, E_ionisation::RealQuantity, f_fano::Real)
-    noisy_edep = deepmap(x -> add_fano_noise(x, E_ionisation, f_fano), evts.edep)
-
+function add_fano_noise(rng::AbstractRNG, evts::DetectorHitEvents, E_ionisation::Unitful.Energy, f_fano::Real)
+    hasproperty(evts, :edep) || throw(ArgumentError("Expected table to have column named `edep`"))
     TypedTables.Table(merge(
         TypedTables.columns(evts),
-        (edep = noisy_edep,)
+        (edep = deepmap(x -> add_fano_noise(rng, x, E_ionisation, f_fano), evts.edep),)
     ))
 end
 
-
-add_fano_noise(x, E_ionisation::RealQuantity, f_fano::Real) =
+add_fano_noise(x, E_ionisation::Unitful.Energy, f_fano::Real) =
     add_fano_noise(Random.GLOBAL_RNG, x, E_ionisation, f_fano)

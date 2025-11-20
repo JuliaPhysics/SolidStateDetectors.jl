@@ -174,6 +174,8 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   end_drift_when_no_field::Bool,
                                   geometry_check::Bool,
                                   verbose::Bool ) where {T <: SSDFloat}
+
+    @assert is_detector_hits_table(mcevents) "Table does not have the correct format"
     @showprogress map(mcevents) do phyevt
         locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
