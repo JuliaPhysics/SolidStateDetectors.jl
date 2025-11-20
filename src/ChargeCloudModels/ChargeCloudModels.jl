@@ -50,7 +50,7 @@ NBodyChargeCloud(center, energy, number_of_shells = 3, shell_structure = SolidSt
 ```
 
 !!! note
-    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2, shell_structure = Dodecahedron
@@ -119,7 +119,7 @@ NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
 ```
 
 !!! note
-    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2,

@@ -110,22 +110,11 @@ function Event(
     Event(flatview.(getfield.(events, :locations)), flatview.(getfield.(events, :energies)))
 end
 
-function Event(evt::NamedTuple{(:evtno, :detno, :thit, :edep, :pos),
-         <:Tuple{
-            Union{Integer, AbstractVector{<:Integer}},
-            Union{Integer, AbstractVector{<:Integer}},
-            AbstractVector{<:RealQuantity},
-            AbstractVector{<:RealQuantity},
-            AbstractVector{<:AbstractVector{<:RealQuantity}}
-        }}, T = missing)
-    if ismissing(T) T = eltype(to_internal_units(evt[:edep][:])) end
-
-    evt = Event(
-        [CartesianPoint{T}.(to_internal_units.(evt[:pos][:]))],
-        [T.(to_internal_units.(evt[:edep][:]))]
+function Event(evt::NamedTuple{DHE_column_names, <:Tuple{DHE_column_types...}}, T = eltype(to_internal_units(evt.edep[:])))::Event{T}
+    return Event(
+        [CartesianPoint{T}.(to_internal_units.(evt.pos[:]))],
+        [T.(to_internal_units.(evt.edep[:]))]
     )
-
-    return evt
 end
 
 in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.locations))
@@ -197,7 +186,7 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
 ```
 
 !!! note
-    Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
     !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector; verbose)

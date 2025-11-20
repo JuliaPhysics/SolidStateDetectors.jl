@@ -66,7 +66,15 @@ end
     # Simulate 100 events
     evts = run_geant4_simulation(app, 100)
     @test evts isa Table
+    @test SolidStateDetectors.is_detector_hits_table(evts)
     @test length(evts) == 100
+
+    # Add fano noise
+    material = SolidStateDetectors.material_properties[:HPGe]
+    evts_fano = add_fano_noise(evts, material.E_ionisation, material.f_fano)
+    @test evts_fano isa Table
+    @test SolidStateDetectors.is_detector_hits_table(evts_fano)
+    @test length(evts_fano) == 100
 
     # Cluster events by radius
     clustered_evts = SolidStateDetectors.cluster_detector_hits(evts, 10u"µm")
@@ -80,6 +88,12 @@ end
     @test wf isa Table
     @test :waveform in columnnames(wf)
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
+
+    # Use the table with added Fano noise
+    wf = simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
+    @test wf isa Table
+    @test :waveform in columnnames(wf)
+    @test length(wf) == length(evts_fano) * sum(.!ismissing.(sim.weighting_potentials))
 
     # Try the same method using StaticVectors as eltype of pos
     evts_static = Table(evts; pos = VectorOfVectors(broadcast.(p -> SVector{3}(p.x, p.y, p.z), evts.pos)))
