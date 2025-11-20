@@ -29,11 +29,6 @@ end
     include("test_charge_drift_models.jl")
 end
 
-@timed_testset "Fano factor" begin
-    
-
-end
-
 @timed_testset "Isochrone" begin
     include("test_isochrone.jl")
 end
