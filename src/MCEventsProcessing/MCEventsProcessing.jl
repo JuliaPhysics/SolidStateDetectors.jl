@@ -61,7 +61,7 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
     The drift paths are just calculated temporarily and not returned.
 
 !!! note
-    Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
 function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
