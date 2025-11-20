@@ -10,6 +10,19 @@ Simulates the waveforms for all events defined in `mcevents` for a given [`Simul
 2. determining the signal (waveforms) for each [`Contact`](@ref), 
     for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
+Each row of the input table `mcevents_table` should have (at least) the following columns with the following fields (columns):
+* `evtno::Union{<:Integer, <:AbstractVector{<:Integer}}`: Event number (either one number for the whole event, or a `Vector` with event numbers for each hit).
+* `detno::Union{<:Integer, <:AbstractVector{<:Integer}}`: Detector ID (either one detector ID for the whole event, or a `Vector` with detector IDs for each hit).
+* `thit::AbstractVector{<:Union{<:Real, Unitful.Time}}`: `Vector` with times of each hit.
+* `edep::AbstractVector{<:Union{<:Real, Unitful.Energy}}`: `Vector` with energies of each hit.
+* `pos::AbstractVector{<:Union{<:AbstractVector{<:RealQuantity}, <:AbstractCoordinatePoint}}`: `Vector` with positions of each hit.
+
+To check if a table `mcevents_table` has the correct format, run
+```julia
+SolidStateDetectors.is_detector_hits_table(mcevents_table)
+# => returns true if has correct format, throws an error if not
+```
+
 ## Arguments
 * `mcevents::TypedTables.Table`: Table with information about events in the simulated setup.
 * `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `mcevents` should drift.
