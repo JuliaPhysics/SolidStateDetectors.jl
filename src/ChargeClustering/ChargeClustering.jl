@@ -1,11 +1,6 @@
 # # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
 
-@inline function finalize_group!(time_groups, current_group, new_index)
-    push!(time_groups, current_group)
-    return [new_index]
-end
-
 function cluster_detector_hits(
     detno::AbstractVector{<:Integer},
     edep::AbstractVector{TT},
@@ -28,9 +23,6 @@ function cluster_detector_hits(
     posunit = unit(PT)
     ustripped_cradius = ustrip(posunit, cluster_radius)
 
-    thitunit = unit(TTT)
-    ustripped_ctime = ustrip(thitunit, cluster_time)
-
     for d_hits_nt in grouped
         d_hits = TypedTables.Table(d_hits_nt)
         d_detno = first(d_hits.detno)
@@ -39,51 +31,41 @@ function cluster_detector_hits(
         # sort hits by time
         t_sort_idx = sortperm(d_hits.thit)
         d_hits = d_hits[t_sort_idx]
-        t_vals = ustrip.(d_hits.thit)
+        t_vals = d_hits.thit
 
-        time_groups = Vector{Vector{Int}}()
-        current_group = [1]
-        start_time = t_vals[1]
-        for i in 2:length(t_vals)
-            if t_vals[i] - start_time ≤ ustripped_ctime
-                push!(current_group, i)
-            else
-                current_group = finalize_group!(time_groups, current_group, i)
-                start_time = t_vals[i]
-            end
-        end
-        current_group = finalize_group!(time_groups, current_group, nothing)
-
-
-        # spatial clustering within each temporal cluster
-        for tg in time_groups
-            t_hits = view(d_hits, tg)
-            if length(t_hits) > 3
-                clusters = Clustering.dbscan(hcat((ustrip.(getindex.(t_hits.pos,i)) for i in 1:3)...)', 
-                ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
-                
-                for c in clusters
-                    idxs = vcat(c.boundary_indices, c.core_indices)
-                    @assert length(idxs) == c.size
-                    c_hits = view(t_hits, idxs)
-
-                    push!(r_detno, d_detno)
-                    esum = sum(c_hits.edep)
-                    push!(r_edep, esum)
-                    if esum ≈ zero(TT)
-                        push!(r_pos, barycenter(c_hits.pos))
-                        push!(r_thit, mean(c_hits.thit))
-                    else
-                        weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
-                        push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
-                        push!(r_thit, sum(c_hits.thit .* weights))
+        current_group = 1
+        @inbounds for i in eachindex(t_vals) .+ 1
+            if i > lastindex(t_vals) || t_vals[i] - t_vals[current_group] > cluster_time
+                t_hits = view(d_hits, current_group:i-1)
+                if length(t_hits) > 3
+                    d_detno = first(t_hits.detno)
+                    @assert all(isequal(d_detno), t_hits.detno)
+                    clusters = Clustering.dbscan(hcat((ustrip.(posunit, getindex.(t_hits.pos,i)) for i in 1:3)...)', 
+                        ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
+                    
+                    for c in clusters
+                        idxs = vcat(c.boundary_indices, c.core_indices)
+                        @assert length(idxs) == c.size
+                        c_hits = view(t_hits, idxs)
+                        esum = sum(c_hits.edep)
+                        push!(r_detno, d_detno)
+                        push!(r_edep, esum)
+                        if esum ≈ zero(TT)
+                            push!(r_pos, barycenter(c_hits.pos))
+                            push!(r_thit, mean(c_hits.thit))
+                        else
+                            weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
+                            push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
+                            push!(r_thit, sum(c_hits.thit .* weights))
+                        end
                     end
+                else
+                    append!(r_detno, t_hits.detno)
+                    append!(r_edep, t_hits.edep)
+                    append!(r_pos, t_hits.pos)
+                    append!(r_thit, t_hits.thit)
                 end
-            else
-                append!(r_detno, t_hits.detno)
-                append!(r_edep, t_hits.edep)
-                append!(r_pos, t_hits.pos)
-                append!(r_thit, t_hits.thit)
+                current_group = i
             end
         end
     end
