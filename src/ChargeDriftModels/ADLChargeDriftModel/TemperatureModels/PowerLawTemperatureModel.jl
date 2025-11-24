@@ -35,12 +35,16 @@ This model can be used to scale the $\mu_0$ and $E_0$ parameters of the [`Veloci
 
 """
 
-mutable struct PowerLawTemperatureModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
+struct PowerLawTemperatureModel{T <: SSDFloat} <: AbstractTemperatureModel{T}
     reference_temperature::T
     p_e::T
     theta_e::T
     p_h::T
     theta_h::T
+end
+
+function PowerLawTemperatureModel(tm::PowerLawTemperatureModel{T}, reference_temperature::T) where {T <: SSDFloat}
+    PowerLawTemperatureModel{T}(reference_temperature, tm.p_e, tm.theta_e, tm.p_h, tm.theta_h)
 end
 
 function _PowerLawTemperatureModel(
@@ -109,33 +113,45 @@ end
 function scale_to_temperature(cdm::CDM, Temp::Union{<:Real,Unitful.Temperature}) where {T,M,N,CDM<:ADL2016ChargeDriftModel{T,M,N,PowerLawTemperatureModel{T}}}
     Temp = _parse_value(T, Temp, u"K")
     reftemp = cdm.temperaturemodel.reference_temperature
-    theta_e = cdm.temperaturemodel.theta_e
-    theta_h = cdm.temperaturemodel.theta_h
-    p_e = cdm.temperaturemodel.p_e
-    p_h = cdm.temperaturemodel.p_h
-    # scale electron parameters
-    electrons = scale_to_temperature_powerlaw(cdm.electrons, Temp, reftemp, p_e, theta_e)
-    # scale hole parameters (take <100> values and assume no anisotropy)
-    h100 = scale_to_temperature_powerlaw(cdm.holes.axis100, Temp, reftemp, p_h, theta_h)
-    h111 = scale_to_temperature_powerlaw(cdm.holes.axis111, Temp, reftemp, p_h, theta_h)
-    holes = CarrierParameters(h100, h111)
-    CDM(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, cdm.temperaturemodel)
+    if Temp != reftemp
+        theta_e = cdm.temperaturemodel.theta_e
+        theta_h = cdm.temperaturemodel.theta_h
+        p_e = cdm.temperaturemodel.p_e
+        p_h = cdm.temperaturemodel.p_h
+        # scale electron parameters
+        electrons = scale_to_temperature_powerlaw(cdm.electrons, Temp, reftemp, p_e, theta_e)
+        # scale hole parameters (take <100> values and assume no anisotropy)
+        h100 = scale_to_temperature_powerlaw(cdm.holes.axis100, Temp, reftemp, p_h, theta_h)
+        h111 = scale_to_temperature_powerlaw(cdm.holes.axis111, Temp, reftemp, p_h, theta_h)
+        holes = CarrierParameters(h100, h111)
+        # update reference temperature since the model has changed. In this manner subsecuent calls to scale_to_temperature will work correctly
+        ptm = PowerLawTemperatureModel(cdm.temperaturemodel, Temp)
+        CDM(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, ptm)
+    else
+        cdm
+    end
 end
 
 function scale_to_temperature(cdm::CDM, Temp::Union{<:Real,Unitful.Temperature}) where {T,M,N,CDM<:ADLChargeDriftModel{T,M,N,PowerLawTemperatureModel{T}}}
     Temp = _parse_value(T, Temp, u"K")
     reftemp = cdm.temperaturemodel.reference_temperature
-    theta_e = cdm.temperaturemodel.theta_e
-    theta_h = cdm.temperaturemodel.theta_h
-    p_e = cdm.temperaturemodel.p_e
-    p_h = cdm.temperaturemodel.p_h
-    # scale electron parameters (take <100> values and assume no anisotropy)
-    e100 = scale_to_temperature_powerlaw(cdm.electrons.axis100, Temp, reftemp, p_e, theta_e)
-    e111 = scale_to_temperature_powerlaw(cdm.electrons.axis111, Temp, reftemp, p_e, theta_e)
-    electrons = CarrierParameters(e100, e111)
-    # scale hole parameters (take <100> values and assume no anisotropy)
-    h100 = scale_to_temperature_powerlaw(cdm.holes.axis100, Temp, reftemp, p_h, theta_h)
-    h111 = scale_to_temperature_powerlaw(cdm.holes.axis111, Temp, reftemp, p_h, theta_h)
-    holes = CarrierParameters(h100, h111)
-    CDM(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, cdm.temperaturemodel)
+    if Temp != reftemp
+        theta_e = cdm.temperaturemodel.theta_e
+        theta_h = cdm.temperaturemodel.theta_h
+        p_e = cdm.temperaturemodel.p_e
+        p_h = cdm.temperaturemodel.p_h
+        # scale electron parameters (take <100> values and assume no anisotropy)
+        e100 = scale_to_temperature_powerlaw(cdm.electrons.axis100, Temp, reftemp, p_e, theta_e)
+        e111 = scale_to_temperature_powerlaw(cdm.electrons.axis111, Temp, reftemp, p_e, theta_e)
+        electrons = CarrierParameters(e100, e111)
+        # scale hole parameters (take <100> values and assume no anisotropy)
+        h100 = scale_to_temperature_powerlaw(cdm.holes.axis100, Temp, reftemp, p_h, theta_h)
+        h111 = scale_to_temperature_powerlaw(cdm.holes.axis111, Temp, reftemp, p_h, theta_h)
+        holes = CarrierParameters(h100, h111)
+        # update reference temperature since the model has changed. In this manner subsecuent calls to scale_to_temperature will work correctly
+        ptm = PowerLawTemperatureModel(cdm.temperaturemodel, Temp)
+        CDM(electrons, holes, cdm.crystal_orientation, cdm.γ, cdm.parameters, ptm)
+    else
+        cdm
+    end
 end

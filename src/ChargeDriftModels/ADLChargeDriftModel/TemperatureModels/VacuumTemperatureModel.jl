@@ -1,4 +1,4 @@
-mutable struct VacuumTemperatureModel{T <: SSDFloat} <: AbstractTemperatureModel{T} end
+struct VacuumTemperatureModel{T <: SSDFloat} <: AbstractTemperatureModel{T} end
 
 function VacuumTemperatureModel(::AbstractDict = Dict(), ::Union{Missing, NamedTuple} = missing; T::Type{<:AbstractFloat} = Float32)
     VacuumTemperatureModel{T}()

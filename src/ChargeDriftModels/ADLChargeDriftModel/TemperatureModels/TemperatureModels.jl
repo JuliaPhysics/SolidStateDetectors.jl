@@ -12,7 +12,7 @@ scale_to_temperature(cdm::AbstractChargeDriftModel, ::Missing) = cdm
             @warn "Since v0.11.0, temperature scaling is only supported at the drift parameter level. The now deprecated models, \"Linear\", \"Boltzmann\" and \"PowerLaw\", relied on the scaling of longitudinal drift velocity at every step of charge carrier drift. This scaling is no longer supported. Please use \"Omar1987\" for the `PowerLawTemperatureModel`, which directly scales charge drift parameters. \nThe drift parameters will not be rescaled."
             "Vacuum"
         else
-            @info "Config File does not suit any of the predefined temperature models. The drift parameters will not be rescaled."
+            @info "Config File does not suit any of the predefined temperature models: \"Vacuum\", \"Omar1987\". The drift parameters will not be rescaled."
             "Vacuum"
         end
     else

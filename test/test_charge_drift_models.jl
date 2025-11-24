@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared, scale_to_temperature
 using ArraysOfArrays
 using InteractiveUtils
 using StaticArrays
@@ -552,6 +552,11 @@ end
         @test cdm_100.electrons.mu0 < cdm.electrons.mu0
         @test cdm_100.holes.axis100.mu0 < cdm.holes.axis100.mu0
         @test cdm_100.holes.axis111.mu0 < cdm.holes.axis111.mu0
+
+        cdm_2scalings = scale_to_temperature(scale_to_temperature(cdm, 87u"K"), 100u"K")
+        @test cdm_2scalings.temperaturemodel.reference_temperature == cdm_100.temperaturemodel.reference_temperature
+        @test isapprox(cdm_2scalings.electrons.E0, cdm_100.electrons.E0, atol = 5e-2)
+        @test isapprox(cdm_2scalings.electrons.mu0, cdm_100.electrons.mu0, atol = 5e-2)
     end
 end
 
