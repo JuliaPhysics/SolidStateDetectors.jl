@@ -98,15 +98,24 @@ function construct_units(config_file_dict::AbstractDict)::UnitTuple
     return UnitTuple(dunits)
 end
 
-DetectorHitEvents = TypedTables.Table{
-    <:NamedTuple{
-        (:evtno, :detno, :thit, :edep, :pos),
-        <:Tuple{
-            Union{Integer, AbstractVector{<:Integer}},
-            Union{Integer, AbstractVector{<:Integer}},
-            AbstractVector{<:RealQuantity},
-            AbstractVector{<:RealQuantity},
-            AbstractVector{<:AbstractVector{<:RealQuantity}}
-        }
-    }
-}
+# If this is modified --> update the docstring of `simulate_waveforms`
+const DHE_column_names = (:evtno, :detno, :thit, :edep, :pos)
+const DHE_column_types = (
+    Union{<:Integer, <:AbstractVector{<:Integer}},
+    Union{<:Integer, <:AbstractVector{<:Integer}},
+    AbstractVector{<:Union{<:Real, Unitful.Time}},
+    AbstractVector{<:Union{<:Real, Unitful.Energy}},
+    AbstractVector{<:Union{<:AbstractVector{<:RealQuantity}, <:AbstractCoordinatePoint}}
+)
+DetectorHitEvents = TypedTables.Table{<:NamedTuple{DHE_column_names, <:Tuple{DHE_column_types...}}}
+
+@inline get_detector_hits_table(t::DetectorHitEvents) = t
+@inline get_detector_hits_table(t::TypedTables.Table) = TypedTables.getproperties(t, DHE_column_names)
+
+@inline is_detector_hits_table(t::TypedTables.Table) = begin
+    for (name, type) in zip(DHE_column_names, DHE_column_types)
+        hasproperty(t, name) || throw(ArgumentError("Expected detector hit events table to have column named `$(name)`"))
+        eltype(getproperty(t, name)) <: type || throw(ArgumentError("Expected detector hit events table column `$(name)` entries to be of type `$(type)`"))
+    end
+    true
+end

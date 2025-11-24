@@ -57,9 +57,7 @@ end
 
 
 function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQuantity)
-    @assert :pos in TypedTables.columnnames(table) "Table has no column `pos`"
-    @assert :edep in TypedTables.columnnames(table) "Table has no column `edep`"
-    @assert :detno in TypedTables.columnnames(table) "Table has no column `detno`"
+    @assert is_detector_hits_table(table) "Table does not have the correct format"
     clustered_nt = map(
         evt -> cluster_detector_hits(evt.detno, evt.edep, evt.pos, cluster_radius),
         table
