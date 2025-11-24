@@ -1,0 +1,19 @@
+# Example configuration file for InactiveLayerChargeDriftModel
+# This demonstrates the default hardcoded values that were previously embedded in the source code
+# Reference: src/ChargeDriftModels/InactiveLayerChargeDriftModel/InactiveLayerChargeDriftModel.jl
+
+name: Example Inactive Layer Charge Drift Model
+
+charge_drift_model:
+  model: InactiveLayerChargeDriftModel
+  temperature: 90  # Kelvin - default crystal temperature
+  # Optional parameters with default values:
+  # neutral_impurity_density:
+  #   model: constant
+  #   value: 1e21  # m^-3 - default neutral impurity density
+  # bulk_impurity_density:
+  #   model: constant
+  #   value: -1e16  # m^-3 - default bulk impurity density
+  # surface_impurity_density:
+  #   model: constant
+  #   value: 0  # m^-3 - default surface impurity density
