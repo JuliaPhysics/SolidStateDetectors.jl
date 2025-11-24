@@ -1,0 +1,14 @@
+# Example configuration file for ThermalDiffusionLithiumDensity
+# This demonstrates the default hardcoded values that were previously embedded in the source code
+# Reference: src/ImpurityDensities/ThermalDiffusionLithiumDensity.jl
+
+name: Example Lithium Diffusion Profile
+
+impurity_density:
+  model: li_diffusion
+  lithium_annealing_temperature: 623  # Kelvin - default annealing temperature when lithium is diffused
+  lithium_annealing_time: 18  # minutes - default annealing time
+  doped_contact_id: 1  # ID of the contact with lithium doping
+  # Optional parameters (if not specified, they will be calculated):
+  # lithium_density_on_contact: calculated as saturated density at given temperature
+  # lithium_diffusivity_in_germanium: calculated based on annealing temperature
