@@ -10,6 +10,19 @@ Simulates the waveforms for all events defined in `mcevents` for a given [`Simul
 2. determining the signal (waveforms) for each [`Contact`](@ref), 
     for which a [`WeightingPotential`](@ref) is specified in `sim.weighting_potentials`.
 
+Each row of the input table `mcevents_table` should have (at least) the following columns with the following fields (columns):
+* `evtno::Union{<:Integer, <:AbstractVector{<:Integer}}`: Event number (either one number for the whole event, or a `Vector` with event numbers for each hit).
+* `detno::Union{<:Integer, <:AbstractVector{<:Integer}}`: Detector ID (either one detector ID for the whole event, or a `Vector` with detector IDs for each hit).
+* `thit::AbstractVector{<:Union{<:Real, Unitful.Time}}`: `Vector` with times of each hit.
+* `edep::AbstractVector{<:Union{<:Real, Unitful.Energy}}`: `Vector` with energies of each hit.
+* `pos::AbstractVector{<:Union{<:AbstractVector{<:RealQuantity}, <:AbstractCoordinatePoint}}`: `Vector` with positions of each hit.
+
+To check if a table `mcevents_table` has the correct format, run
+```julia
+SolidStateDetectors.is_detector_hits_table(mcevents_table)
+# => returns true if has correct format, throws an error if not
+```
+
 ## Arguments
 * `mcevents::TypedTables.Table`: Table with information about events in the simulated setup.
 * `sim::Simulation{T}`: [`Simulation`](@ref) which defines the setup in which the charges in `mcevents` should drift.
@@ -48,7 +61,7 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
     The drift paths are just calculated temporarily and not returned.
 
 !!! note
-    Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
 function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
@@ -174,6 +187,8 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
                                   end_drift_when_no_field::Bool,
                                   geometry_check::Bool,
                                   verbose::Bool ) where {T <: SSDFloat}
+
+    @assert is_detector_hits_table(mcevents) "Table does not have the correct format"
     @showprogress map(mcevents) do phyevt
         locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
