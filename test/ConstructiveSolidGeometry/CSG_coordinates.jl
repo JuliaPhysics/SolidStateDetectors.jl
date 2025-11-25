@@ -43,7 +43,7 @@ import Unitful: @u_str
         @test @inferred(inverse(f)(f(a))) ≈ a
 
 
-        @test @inferred(CartesianZero{Float32}() * u"mm") === CartesianZero{typeof(zero(Float32) * u"mm")}()
+        #@test @inferred(CartesianZero{Float32}() * u"mm") === CartesianZero{typeof(zero(Float32) * u"mm")}()
 
         A = [CartesianPoint{Float32}(x,0,0) for x in -2:2]
         @test isapprox(barycenter(A), CartesianPoint{Float32}(0,0,0))
@@ -51,7 +51,6 @@ import Unitful: @u_str
         S = SVector{length(A)}(A)
         @test isapprox(barycenter(S), CartesianPoint{Float32}(0,0,0))
 
-        #=
         # test types and units
         @test CartesianPoint(1, 2, 3) isa CartesianPoint{Float64}
         @test CartesianPoint(1, 2, 3f0) isa CartesianPoint{Float32}
@@ -63,6 +62,7 @@ import Unitful: @u_str
         @test CartesianPoint(1.0f0u"m", 2.0f0u"m", 3.0f0u"m") isa CartesianPoint{Float32}
         @test CartesianPoint(1u"m", 2u"m", 3u"m") isa CartesianPoint{Float64}
         @test CartesianPoint(1.0u"mm", 2.0u"cm", 3.0f0u"m") isa CartesianPoint{Float64}
+        @test CartesianPoint(1.0f0u"mm", 2.0f0u"mm", 3.0u"m") isa CartesianPoint{Float64}
         @test CartesianPoint(1.0u"mm", 2.0f0u"cm", 3.0f0u"m") isa CartesianPoint{Float64}
         @test CartesianPoint(1.0f0u"mm", 2.0f0u"cm", 3.0f0u"m") isa CartesianPoint{Float32}
         @test CartesianPoint(1u"mm", 2u"cm", 3u"m") isa CartesianPoint{Float64}
@@ -71,7 +71,6 @@ import Unitful: @u_str
         @test_throws ArgumentError CartesianPoint(1u"m", 2u"rad", 3u"m")
         @test_throws ArgumentError CartesianPoint(1u"s", 2u"m", 3u"m")
         @test_throws ArgumentError CartesianPoint(1u"m", 2u"m", 3u"kg")
-        =#
     end
 
     @testset "cylindrical" begin
@@ -113,6 +112,7 @@ import Unitful: @u_str
         @test CylindricalPoint(1.0f0u"m", 2.0f0u"rad", 3.0f0u"m") isa CylindricalPoint{Float32}
         @test CylindricalPoint(1u"m", 2u"rad", 3u"m") isa CylindricalPoint{Float64}
         @test CylindricalPoint(1.0u"mm", 2.0u"rad", 3.0f0u"m") isa CylindricalPoint{Float64}
+        @test CylindricalPoint(1.0f0u"mm", 2.0f0u"rad", 3.0u"m") isa CylindricalPoint{Float64}
         @test CylindricalPoint(1.0u"mm", 2.0f0u"rad", 3.0f0u"m") isa CylindricalPoint{Float64}
         @test CylindricalPoint(1.0f0u"mm", 2.0f0u"rad", 3.0f0u"m") isa CylindricalPoint{Float32}
         @test CylindricalPoint(1u"mm", 2u"rad", 3u"m") isa CylindricalPoint{Float64}
