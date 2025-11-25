@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared, scale_to_temperature
 using ArraysOfArrays
 using InteractiveUtils
 using StaticArrays
@@ -271,7 +271,7 @@ end
         @test cdm0.μ_e  == 0.1f0
         @test cdm0.μ_h == 0.1f0
 
-        cdm1 = IsotropicChargeDriftModel{T}(1000u"cm^2/(V*s)", 1000u"cm^2/(V*s)")
+        cdm1 = IsotropicChargeDriftModel{T}(μ_e = 1000u"cm^2/(V*s)", μ_h = 1000u"cm^2/(V*s)")
         @test cdm1 == cdm0
 
         cdm2 = IsotropicChargeDriftModel{T}(0.1, 0.1)
@@ -376,7 +376,7 @@ end
                 end
             end
         
-            config = joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config_axes.yaml")
+            config = "test_config_files/drift_velocity_config_axes.yaml"
 
             @testset "All axes in one plane" begin
 
@@ -414,7 +414,7 @@ end
     end
 
     @testset "Test parsing of ADLChargeDriftModel config files with units" begin
-        cdm0 = ADLChargeDriftModel() # default charge drift model
+        cdm0 = ADLChargeDriftModel() # default charge drift model with units
         @test cdm0.electrons.axis100.mu0  == 3.8609f0
         @test cdm0.electrons.axis100.beta == 0.805f0
         @test cdm0.electrons.axis100.E0   == 51100f0
@@ -429,12 +429,24 @@ end
         @test cdm0.holes.axis111.mu0  == 6.1215f0
         @test cdm0.holes.axis111.beta == 0.662f0
         @test cdm0.holes.axis111.E0   == 18200f0
+        
+        # default charge drift model config has units, input units should be ignored
+        input_units = SolidStateDetectors.construct_units(Dict("units" => Dict("length" => "mm", "potential" => "V", "angle" => "deg", "temperature" => "K")))
 
-        cdm_nounits = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_nounits.yaml"))
+        cdm0_inputunits = ADLChargeDriftModel(SolidStateDetectors.default_ADL_config_file, input_units)
+        @test cdm0.electrons == cdm0_inputunits.electrons
+        @test cdm0.holes == cdm0_inputunits.holes
+
+        # charge drift model config has no units, internal units are assumed
+        cdm_nounits = ADLChargeDriftModel("test_config_files/drift_velocity_config_nounits.yaml")
         @test cdm0.electrons == cdm_nounits.electrons
         @test cdm0.holes == cdm_nounits.holes
         @test cdm0.crystal_orientation ≈ cdm_nounits.crystal_orientation
 
+        # charge drift model config has no units, input units will be applied
+        cdm_nounits_inputunits = ADLChargeDriftModel("test_config_files/drift_velocity_config_nounits.yaml", input_units)
+        @test cdm_nounits.electrons != cdm_nounits_inputunits.electrons
+        @test cdm_nounits.holes != cdm_nounits_inputunits.holes
     end
 
     @testset "Modify mobility parameters using keyword arguments" begin
@@ -524,6 +536,27 @@ end
         
         @test cdm2016.electrons == cdm.electrons.axis100
         @test cdm2016.holes     == cdm.holes
+    end
+
+    @testset "Test temperature scaling of drift parameters" begin
+    
+        # If a temperature is given to the ADL2016 model, the ChargeDriftModel is scaled. But at 77K (the reference temperature),
+        # the parameters should be identical to the unscaled ADL2016 model
+        
+        cdm_77 = ADL2016ChargeDriftModel(temperature = 77u"K")
+        cdm_100 = ADL2016ChargeDriftModel(temperature = 100u"K")
+        cdm = ADL2016ChargeDriftModel()
+        
+        @test cdm_77.electrons == cdm.electrons
+        @test cdm_77.holes     == cdm.holes
+        @test cdm_100.electrons.mu0 < cdm.electrons.mu0
+        @test cdm_100.holes.axis100.mu0 < cdm.holes.axis100.mu0
+        @test cdm_100.holes.axis111.mu0 < cdm.holes.axis111.mu0
+
+        cdm_2scalings = scale_to_temperature(scale_to_temperature(cdm, 87u"K"), 100u"K")
+        @test cdm_2scalings.temperaturemodel.reference_temperature == cdm_100.temperaturemodel.reference_temperature
+        @test isapprox(cdm_2scalings.electrons.E0, cdm_100.electrons.E0, atol = 5e-2)
+        @test isapprox(cdm_2scalings.electrons.mu0, cdm_100.electrons.mu0, atol = 5e-2)
     end
 end
 
