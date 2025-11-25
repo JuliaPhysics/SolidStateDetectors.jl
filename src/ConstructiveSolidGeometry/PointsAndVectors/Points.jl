@@ -66,6 +66,22 @@ function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
     CartesianPoint{T}(T(x),T(y),T(z))
 end
 
+#Unit support
+function CartesianPoint(x::Unitful.Quantity, y::Unitful.Quantity, z::Unitful.Quantity)
+    for (i, pt) in enumerate((x, y, z))
+        !(pt isa Unitful.Length) && throw(ArgumentError(
+            "Coordinate $i must be a length, got $(pt) with unit $(Unitful.unit(pt))"
+        ))
+    end
+    CartesianPoint(x::Unitful.Length, y::Unitful.Length, z::Unitful.Length)
+end
+
+function CartesianPoint(x::Unitful.Length, y::Unitful.Length, z::Unitful.Length)
+    vals = to_internal_units.( (x, y, z) )
+    T = all(v -> v isa Float32, vals) ? Float32 : Float64
+    CartesianPoint{T}(T.(vals)...)
+end
+
 CartesianPoint(; x = 0, y = 0, z = 0) = CartesianPoint(x, y, z)
 
 CartesianPoint{T}(;x = 0, y = 0, z = 0) where {T} = CartesianPoint{T}(T(x),T(y),T(z))
@@ -198,7 +214,8 @@ end
 @inline Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
 @inline Base.iszero(::CartesianZero) = true
 
-Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
+#Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
+Base.:*(z::CartesianZero, u::Unitful.Quantity) = z
 
 function Unitful.uconvert(u::Unitful.Units{T,Unitful.NoDims}, pt::CartesianZero{<:Quantity{U, Unitful.NoDims}}) where {T,U}
     CartesianZero{promote_type(T,U)}()
@@ -238,6 +255,7 @@ struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
 end
 
+#Units support
 function CylindricalPoint(r, φ, z)
     if !(r isa Real || r isa Unitful.Length)
         throw(ArgumentError("Expected `r` to be a length or Real, got unit $(Unitful.unit(r))"))
@@ -257,7 +275,7 @@ function CylindricalPoint(r, φ, z)
 
     return CylindricalPoint(r_val, φ_val, z_val)
 end
-                                                     
+
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
     # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
