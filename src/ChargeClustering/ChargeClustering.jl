@@ -16,8 +16,7 @@ function cluster_detector_hits(
     r_edep = similar(edep, 0)
     r_pos = similar(pos, 0)
 
-    posunit = unit(PT)
-    ustripped_cradius = ustrip(posunit, cluster_radius)
+    ustripped_cradius = to_internal_units(cluster_radius)
     
     for d_hits_nt in grouped
         d_hits = TypedTables.Table(d_hits_nt)
