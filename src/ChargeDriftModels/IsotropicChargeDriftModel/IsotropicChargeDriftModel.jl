@@ -13,6 +13,8 @@ struct IsotropicChargeDriftModel{T <: SSDFloat} <: AbstractChargeDriftModel{T}
     μ_h::T
 end
 
+IsotropicChargeDriftModel{T}(μ_e::Union{Quantity, AbstractString}, μ_h::Union{Quantity, AbstractString}) where {T <: SSDFloat} = IsotropicChargeDriftModel{T}(_parse_value.(T, (μ_e, μ_h), internal_mobility_unit)...)
+
 function _IsotropicChargeDriftModel(
         config::AbstractDict; 
         T::Type=Float32,
@@ -21,10 +23,10 @@ function _IsotropicChargeDriftModel(
         input_units::Union{Missing, NamedTuple} = missing,
         temperature::Union{Missing, Real, Unitful.Temperature} = missing
     )::IsotropicChargeDriftModel{T}
+
     mobility_unit = ismissing(input_units) ? internal_mobility_unit : input_units.length^2/(input_units.potential*internal_time_unit)
    IsotropicChargeDriftModel{T}(_parse_value.(T, (μ_e, μ_h), mobility_unit)...)
 end
-
 
 # Check the syntax of the IsotropicChargeDriftModel config file before parsing
 function IsotropicChargeDriftModel(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
