@@ -58,28 +58,35 @@ struct CartesianPoint{T} <: AbstractCartesianPoint{T}
     z::T
 end
 
+#Unit support
+function CartesianPoint(x, y, z)
+    for (name, pt) in zip((:x,:y,:z), (x, y, z))
+        (pt isa Real || pt isa Unitful.Length) || throw(ArgumentError(
+            "Expected `$(name)` to be a length or Real, got unit $(Unitful.unit(pt))"
+        ))
+    end
+    x_val = to_internal_units(x)
+    y_val = to_internal_units(y)
+    z_val = to_internal_units(z)
+    return CartesianPoint(x_val, y_val, z_val)
+end
+
+function CartesianPoint(x::Unitful.Length, y::Unitful.Length, z::Unitful.Length)
+    vals = to_internal_units.((x, y, z))
+    tys = map(typeof, vals)
+    T = any(T -> T === Float64, tys) ? Float64 :
+        any(T -> T === Float32, tys) ? Float32 :
+        Float64
+
+    CartesianPoint{T}(T.(vals)...)
+end
+
 #Type promotion happens here
 function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
     # ToDo: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
     CartesianPoint{T}(T(x),T(y),T(z))
-end
-
-#Unit support
-function CartesianPoint(x::Unitful.Quantity, y::Unitful.Quantity, z::Unitful.Quantity)
-    for (i, pt) in enumerate((x, y, z))
-        !(pt isa Unitful.Length) && throw(ArgumentError(
-            "Coordinate $i must be a length, got $(pt) with unit $(Unitful.unit(pt))"
-        ))
-    end
-    CartesianPoint(x::Unitful.Length, y::Unitful.Length, z::Unitful.Length)
-end
-
-function CartesianPoint(x::Unitful.Length, y::Unitful.Length, z::Unitful.Length)
-    vals = to_internal_units.( (x, y, z) )
-    T = all(v -> v isa Float32, vals) ? Float32 : Float64
-    CartesianPoint{T}(T.(vals)...)
 end
 
 CartesianPoint(; x = 0, y = 0, z = 0) = CartesianPoint(x, y, z)
@@ -214,6 +221,7 @@ end
 @inline Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
 @inline Base.iszero(::CartesianZero) = true
 
+# ToDo: Revert this once we support units internally.
 #Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
 Base.:*(z::CartesianZero, u::Unitful.Quantity) = z
 
