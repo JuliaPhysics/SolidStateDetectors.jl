@@ -66,6 +66,8 @@ import Unitful: @u_str
         @test CartesianPoint(1.0u"mm", 2.0f0u"cm", 3.0f0u"m") isa CartesianPoint{Float64}
         @test CartesianPoint(1.0f0u"mm", 2.0f0u"cm", 3.0f0u"m") isa CartesianPoint{Float32}
         @test CartesianPoint(1u"mm", 2u"cm", 3u"m") isa CartesianPoint{Float64}
+        @test CartesianPoint(1u"mm", 0, 0) isa CartesianPoint{Float64}
+        @test CartesianPoint(1u"m", 2u"m", 3f0u"m") isa CartesianPoint{Float32}
         
         # test throwing errors with wrong units
         @test_throws ArgumentError CartesianPoint(1u"m", 2u"rad", 3u"m")
@@ -116,6 +118,8 @@ import Unitful: @u_str
         @test CylindricalPoint(1.0u"mm", 2.0f0u"rad", 3.0f0u"m") isa CylindricalPoint{Float64}
         @test CylindricalPoint(1.0f0u"mm", 2.0f0u"rad", 3.0f0u"m") isa CylindricalPoint{Float32}
         @test CylindricalPoint(1u"mm", 2u"rad", 3u"m") isa CylindricalPoint{Float64}
+        @test CylindricalPoint(1u"mm", 0, 0) isa CylindricalPoint{Float64}
+        @test CylindricalPoint(1u"m", 2u"rad", 3f0u"m") isa CylindricalPoint{Float32}
         
         # test throwing errors with wrong units
         @test_throws ArgumentError CylindricalPoint(1u"rad", 2u"rad", 3u"m")
