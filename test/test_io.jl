@@ -69,7 +69,7 @@ end
         detno = Int32[1],
         thit = VectorOfVectors([T[0] * u"s"]),
         edep = VectorOfVectors([T[1] * u"eV"]),
-        pos = VectorOfVectors([[SVector{3, T}.(0.01, 0.01, 0.01)]])
+        pos = VectorOfVectors([[SVector{3, T}.(0.01, 0.01, 0.01) * u"m"]])
     )
 
     contact_charge_signals = timed_simulate_waveforms(      
