@@ -63,6 +63,13 @@ simulate_waveforms(mcevents, sim, "output_dir", "my_basename", Δt = 1u"ns", ver
 !!! note
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
+function _get_unitless_positions_svec(point_vectors::AbstractVector{<:SVector{3, <:Quantity}})
+    converted_type = typeof(to_internal_units(point_vectors[1][1]))
+    [SVector{3, converted_type}(to_internal_units.(v)) for v in point_vectors]
+end
+_get_unitless_positions_svec(point_vectors::AbstractVector{<:SVector{3, <:Real}}) = point_vectors
+_get_unitless_positions_svec(point_vectors::AbstractVector{<:CartesianPoint{<:Real}}) = point_vectors
+
 function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::Simulation{T};
                              Δt::RealQuantity = 4u"ns",
                              max_nsteps::Int = 1000,
@@ -76,6 +83,10 @@ function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::
                              geometry_check::Bool = false,
                              verbose::Bool = false ) where {T <: SSDFloat}
     mcevents = TypedTables.Table(mcevents_table)
+    #ToDo: Provisional until we support units in CartesianPoints
+    unitless_pos = [collect(_get_unitless_positions_svec(v)) for v in mcevents.pos]
+    mcevents = TypedTables.Table((evtno = mcevents.evtno, detno = mcevents.detno, thit  = mcevents.thit, edep  = mcevents.edep, pos   = unitless_pos))
+
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -115,7 +126,6 @@ function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::
     )
     return vcat(mcevents_chns...)  
 end
-
 
 # Support detectors hits with positions given as vectors:
 function _get_unitless_positions(point_vectors::AbstractVector{<:StaticVector{3}})
