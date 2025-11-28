@@ -13,12 +13,6 @@ function Base.isapprox(a::AbstractCartesianPoint, b::AbstractCartesianPoint; kwa
            isapprox(get_z(a), get_z(b); kwargs...)
 end
 
-function to_internal_units(x::AbstractCartesianPoint)
-    CartesianPoint(to_internal_units(get_x(x)), to_internal_units(get_y(x)), to_internal_units(get_z(x)))
-end
-
-
-
 # Unitful uses the `*` and `/` operators to combine values with units. But mathematically that's really not an algebraic
 # product (not defined for affine points), but a cartesian product, so supporting this should be fine:
 Base.:(*)(pt::AbstractCartesianPoint{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) * u, get_y(pt) * u, get_z(pt) * u)
@@ -62,6 +56,21 @@ struct CartesianPoint{T} <: AbstractCartesianPoint{T}
     x::T
     y::T
     z::T
+    CartesianPoint{T}(x::T, y::T, z::T) where {T<:AbstractFloat} = new(x, y, z)
+    CartesianPoint{T}(x::Real, y::Real, z::Real) where {T} = new(T(x), T(y), T(z))
+end
+
+#Units support
+function CartesianPoint(x, y, z)
+    for (name, pt) in zip((:x, :y, :z), (x, y, z))
+        (pt isa Real || pt isa Unitful.Length) ||
+            throw(ArgumentError("Expected $(name) to be a length or Real, got unit $(Unitful.unit(pt))"))
+    end
+    x_val = to_internal_units(x)
+    y_val = to_internal_units(y)
+    z_val = to_internal_units(z)
+
+    return CartesianPoint(x_val, y_val, z_val)
 end
 
 #Type promotion happens here
@@ -204,7 +213,9 @@ end
 @inline Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
 @inline Base.iszero(::CartesianZero) = true
 
-Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
+# ToDo: Revert this once we support units internally.
+#Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
+Base.:*(z::CartesianZero, u::Unitful.Quantity) = z
 
 function Unitful.uconvert(u::Unitful.Units{T,Unitful.NoDims}, pt::CartesianZero{<:Quantity{U, Unitful.NoDims}}) where {T,U}
     CartesianZero{promote_type(T,U)}()
@@ -242,6 +253,27 @@ struct CylindricalPoint{T} <: AbstractCylindricalPoint{T}
     z::T
     CylindricalPoint{T}(r::T, φ::T, z::T) where {T<:AbstractFloat} = new(r, mod(φ,T(2π)), z)
     CylindricalPoint{T}(r::Real, φ::Real, z::Real) where {T} = new(T(r), mod(T(φ),T(2π)), T(z))
+end
+
+#Units support
+function CylindricalPoint(r, φ, z)
+    if !(r isa Real || r isa Unitful.Length)
+        throw(ArgumentError("Expected `r` to be a length or Real, got unit $(Unitful.unit(r))"))
+    end
+
+    if !(φ isa Real || φ isa Unitful.Quantity{<:Real, NoDims})
+        throw(ArgumentError("Expected `φ` to be an angle or Real, got unit $(Unitful.unit(φ))"))
+    end
+
+    if !(z isa Real || z isa Unitful.Length)
+        throw(ArgumentError("Expected `z` to be a length or Real, got unit $(Unitful.unit(z))"))
+    end
+
+    r_val = to_internal_units(r)
+    φ_val = to_internal_units(φ)
+    z_val = to_internal_units(z)
+
+    return CylindricalPoint(r_val, φ_val, z_val)
 end
 
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
@@ -303,4 +335,21 @@ Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 @inline Base.:(-)(a::CylindricalPoint, b::CylindricalPoint) = CartesianPoint(a) - CartesianPoint(b)
 
 @inline Base.transpose(pt::CylindricalPoint) = CylindricalPoint(transpose(pt.r), transpose(pt.φ), transpose(pt.z)) 
+
 @inline Base.adjoint(pt::CylindricalPoint) = CylindricalPoint(adjoint(pt.r), adjoint(pt.φ), adjoint(pt.z))
+
+function to_internal_units(pt::CartesianPoint)
+    CartesianPoint(to_internal_units(pt.x), to_internal_units(pt.y), to_internal_units(pt.z))
+end
+
+function to_internal_units(pt::CylindricalPoint)
+    _r = to_internal_units(pt.r)
+    _φ = to_internal_units(pt.φ)
+    _z = to_internal_units(pt.z)
+
+    return CartesianPoint(_r * cos(_φ), _r * sin(_φ), _z)
+end
+
+function to_internal_units(pt::AbstractCoordinatePoint)
+    error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
+end

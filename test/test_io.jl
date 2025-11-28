@@ -64,51 +64,55 @@ end
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
     timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
 
-    evt_table = Table(
-        evtno = Int32[1], 
-        detno = Int32[1],
-        thit = VectorOfVectors([T[0] * u"s"]),
-        edep = VectorOfVectors([T[1] * u"eV"]),
-        pos = VectorOfVectors([[SVector{3, T}.(0.01, 0.01, 0.01) * u"m"]])
-    )
-
-    contact_charge_signals = timed_simulate_waveforms(      
-            evt_table,
-            sim,
-            max_nsteps = 4000, 
-            Δt = 1u"ns", 
-            number_of_carriers = 20,
-            number_of_shells = 2,
-            geometry_check = true,
-            verbose = false);
-    
-    @timed_testset "Regular simulate_waveforms" begin
-        signalsum = T(0)
-        for i in 1:length(contact_charge_signals.waveform)
-            signalsum += abs(ustrip(contact_charge_signals.waveform[i].signal[end]))
-        end
-        signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
-        @test isapprox( signalsum, T(2), atol = 5e-3 )
-    end
-
-    @timed_testset "LegendHDF5IO simulate_waveforms" begin
-        timed_simulate_waveforms(      
-            evt_table,
-            sim,
-            ".",
-            chunk_n_physics_events = 1,
-            max_nsteps = 4000, 
-            Δt = 1u"ns", 
-            number_of_carriers = 20,
-            number_of_shells = 2,
-            geometry_check = true,
-            verbose = false
+    # test I/O for both SVector (with and without units) and CartesianPoint
+    for pos in ([SVector{3, T}.(10, 10, 10) * u"mm"], [SVector{3, T}.(0.01, 0.01, 0.01)], [CartesianPoint{T}(0.01, 0.01, 0.01)])
+        
+        evt_table = Table(
+            evtno = Int32[1], 
+            detno = Int32[1],
+            thit = VectorOfVectors([T[0] * u"s"]),
+            edep = VectorOfVectors([T[1] * u"eV"]),
+            pos = VectorOfVectors([pos])
         )
-        @info isfile("generated_waveforms_evts_1-1.h5")
-        @test contact_charge_signals == LegendHDF5IO.lh5open("generated_waveforms_evts_1-1.h5") do h5f
-            @test haskey(h5f, "generated_waveforms")
-            LegendHDF5IO.readdata(h5f.data_store, "generated_waveforms")
+
+        contact_charge_signals = timed_simulate_waveforms(      
+                evt_table,
+                sim,
+                max_nsteps = 4000, 
+                Δt = 1u"ns", 
+                number_of_carriers = 20,
+                number_of_shells = 2,
+                geometry_check = true,
+                verbose = false);
+        
+        @timed_testset "Regular simulate_waveforms" begin
+            signalsum = T(0)
+            for i in 1:length(contact_charge_signals.waveform)
+                signalsum += abs(ustrip(contact_charge_signals.waveform[i].signal[end]))
+            end
+            signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
+            @test isapprox( signalsum, T(2), atol = 5e-3 )
         end
-        rm("generated_waveforms_evts_1-1.h5")
+
+        @timed_testset "LegendHDF5IO simulate_waveforms" begin
+            timed_simulate_waveforms(      
+                evt_table,
+                sim,
+                ".",
+                chunk_n_physics_events = 1,
+                max_nsteps = 4000, 
+                Δt = 1u"ns", 
+                number_of_carriers = 20,
+                number_of_shells = 2,
+                geometry_check = true,
+                verbose = false
+            )
+            @info isfile("generated_waveforms_evts_1-1.h5")
+            @test contact_charge_signals == LegendHDF5IO.lh5open("generated_waveforms_evts_1-1.h5") do h5f
+                @test haskey(h5f, "generated_waveforms")
+                LegendHDF5IO.readdata(h5f.data_store, "generated_waveforms")
+            end
+            rm("generated_waveforms_evts_1-1.h5")
+        end
     end
 end

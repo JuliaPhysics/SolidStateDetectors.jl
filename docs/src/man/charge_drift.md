@@ -485,7 +485,7 @@ using SolidStateDetectors #hide
 using Unitful #hide
 using Plots #hide
 T = Float64 #hide
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy)
 plot(nbcc)
@@ -497,7 +497,7 @@ plot(nbcc, color = :red, size = (500,500), xlims = (-0.0012, 0.0012), ylims = (-
 For an [`NBodyChargeCloud`](@ref) consisting of more than around 50 charges, the shells should consist of more than 20 point charges and the approach with using [Platonic Solids](@ref) for the shell structure might not be favored anymore. For this, a [second algorithm](https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf) was implemented that generates point charges equally distributed on the surface of a regular sphere. The approximate number of charges needs to be passed to the constructor of [`NBodyChargeCloud`](@ref) to use this method.
 
 ````@example NBodyChargeCloud
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 plot(nbcc)
@@ -510,7 +510,7 @@ plot(nbcc, color = :red, size = (500,500), xlims = (-0.0012, 0.0012), ylims = (-
 Diffusion describes the random thermal motion of charge carriers. In SolidStateDetectors.jl, diffusion is simulated using a random walk algorithm. Diffusion is simulated using fixed-step vectors where the magnitude of the step vectors depends on the diffusion constant $D$ and the time steps $\Delta t$.
 
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
@@ -547,7 +547,7 @@ After the creation electron-hole pairs, both the electron and the hole clouds re
 SolidStateDetectors.jl does not account for attraction of electron and holes but only for repulsion of charge carriers of the same type. The determination of the electric field vector is calculated pair-wise for each pair of charge carriers.
 
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
@@ -560,7 +560,7 @@ simulate!(evt, sim, self_repulsion = true)
 
 [Diffusion](@ref) and [Self-Repulsion](@ref) can be simulated both at once to get the most realistic picture:
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
