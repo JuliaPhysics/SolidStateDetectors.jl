@@ -20,8 +20,7 @@ function cluster_detector_hits(
     r_pos = similar(pos, 0)
     r_thit = similar(thit, 0)
 
-    posunit = unit(PT)
-    ustripped_cradius = ustrip(posunit, cluster_radius)
+    ustripped_cradius = ustrip(internal_length_unit, cluster_radius)
 
     for d_hits_nt in grouped
         d_hits = TypedTables.Table(d_hits_nt)
@@ -40,7 +39,7 @@ function cluster_detector_hits(
                 if length(t_hits) > 3
                     d_detno = first(t_hits.detno)
                     @assert all(isequal(d_detno), t_hits.detno)
-                    clusters = Clustering.dbscan(hcat((ustrip.(posunit, getindex.(t_hits.pos,i)) for i in 1:3)...)', 
+                    clusters = Clustering.dbscan(hcat((ustrip.(internal_length_unit, getindex.(t_hits.pos,i)) for i in 1:3)...)', 
                         ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
                     
                     for c in clusters
