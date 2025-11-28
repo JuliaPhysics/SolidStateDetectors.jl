@@ -76,10 +76,6 @@ function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::
                              geometry_check::Bool = false,
                              verbose::Bool = false ) where {T <: SSDFloat}
     mcevents = TypedTables.Table(mcevents_table)
-    #ToDo: Provisional until we support units in CartesianPoints
-    unitless_pos = [collect(to_internal_units.(v)) for v in mcevents.pos]
-    mcevents = TypedTables.Table((evtno = mcevents.evtno, detno = mcevents.detno, thit  = mcevents.thit, edep  = mcevents.edep, pos   = unitless_pos))
-
     n_total_physics_events = length(mcevents)
     Δtime = T(to_internal_units(Δt)) 
     n_contacts = length(sim.detector.contacts)
@@ -193,7 +189,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
 
     @assert is_detector_hits_table(mcevents) "Table does not have the correct format"
     @showprogress map(mcevents) do phyevt
-        locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
+        locations, edeps = _convertEnergyDepsToChargeDeps(to_internal_units.(phyevt.pos), phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
                 VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, T(Δt.val) * unit(Δt);
                 max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose
