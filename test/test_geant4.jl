@@ -115,6 +115,11 @@ end
     @test length(flatview(clustered_evts_static.pos)) <= length(flatview(evts_static.pos))
     @test eltype(first(clustered_evts_static.pos)) <: StaticVector{3}
 
+    # Check clustering with cluster radius being unitless or with the wrong unit
+    clustered_evts_static_unitless = SolidStateDetectors.cluster_detector_hits(evts_static, 1e-5)
+    @test clustered_evts_static == clustered_evts_static_unitless
+    @test_throws Exception SolidStateDetectors.cluster_detector_hits(evts_static, 2u"kg")
+
     # Generate waveforms using StaticVectors as eltype of pos
     wf_static = simulate_waveforms(evts_static, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_static isa Table

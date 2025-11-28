@@ -5,7 +5,7 @@ function cluster_detector_hits(
         edep::AbstractVector{TT},
         pos::AbstractVector{<:Union{<:StaticVector{3,PT}, <:CartesianPoint{PT}}},
         cluster_radius::RealQuantity
-    ) where {TT <: RealQuantity, PT <: RealQuantity}
+    ) where {TT <: RealQuantity, T <: Real, PT <: Union{T, <:Unitful.Length{T}}}
 
     unsorted = TypedTables.Table(detno = detno, edep = edep, pos = pos)
     sorting_idxs = sortperm(unsorted.detno)
@@ -16,7 +16,7 @@ function cluster_detector_hits(
     r_edep = similar(edep, 0)
     r_pos = similar(pos, 0)
 
-    ustripped_cradius = to_internal_units(cluster_radius)
+    ustripped_cradius = _parse_value(float(T), cluster_radius, internal_length_unit)
     
     for d_hits_nt in grouped
         d_hits = TypedTables.Table(d_hits_nt)
@@ -24,7 +24,7 @@ function cluster_detector_hits(
         @assert all(isequal(d_detno), d_hits.detno)
         if length(d_hits) > 3
             
-            clusters = Clustering.dbscan(hcat((ustrip.(getindex.(d_hits.pos,i)) for i in 1:3)...)', 
+            clusters = Clustering.dbscan(hcat((to_internal_units.(getindex.(d_hits.pos,i)) for i in 1:3)...)', 
                 ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
             for c in clusters
                 idxs = vcat(c.boundary_indices, c.core_indices)
