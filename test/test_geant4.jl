@@ -103,13 +103,13 @@ end
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
 
     # Use the table with added Fano noise
-    wf = simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
-    @test wf isa Table
-    @test :waveform in columnnames(wf)
-    @test length(wf) == length(evts_fano) * sum(.!ismissing.(sim.weighting_potentials))
+    wf_fano = simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
+    @test wf_fano isa Table
+    @test :waveform in columnnames(wf_fano)
+    @test length(wf_fano) == length(evts_fano) * sum(.!ismissing.(sim.weighting_potentials))
 
-    # Try the same method using StaticVectors as eltype of pos
-    evts_static = Table(evts; pos = VectorOfVectors(broadcast.(p -> SVector{3}(p.x, p.y, p.z), evts.pos)))
+    # Try the same method using StaticVectors as eltype of pos (with units of mm)
+    evts_static = Table(evts; pos = VectorOfVectors(broadcast.(p -> SVector{3}(p.x, p.y, p.z) * 1000u"mm", SolidStateDetectors.to_internal_units(evts.pos))))
     clustered_evts_static = SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm")
     @test length(clustered_evts_static) == length(evts_static)
     @test length(flatview(clustered_evts_static.pos)) <= length(flatview(evts_static.pos))
@@ -121,4 +121,6 @@ end
     @test :waveform in columnnames(wf_static)
     @test length(wf_static) == length(evts_static) * sum(.!ismissing.(sim.weighting_potentials))
 
+    # Result should not depend whether input positions are SVector or CartesianPoint
+    @test wf_static.waveform ≈ wf.waveform
 end
