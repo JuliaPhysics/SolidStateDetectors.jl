@@ -56,29 +56,21 @@ struct CartesianPoint{T} <: AbstractCartesianPoint{T}
     x::T
     y::T
     z::T
+    CartesianPoint{T}(x::T, y::T, z::T) where {T<:AbstractFloat} = new(x, y, z)
+    CartesianPoint{T}(x::Real, y::Real, z::Real) where {T} = new(T(x), T(y), T(z))
 end
 
-#Unit support
+#Units support
 function CartesianPoint(x, y, z)
-    for (name, pt) in zip((:x,:y,:z), (x, y, z))
-        (pt isa Real || pt isa Unitful.Length) || throw(ArgumentError(
-            "Expected `$(name)` to be a length or Real, got unit $(Unitful.unit(pt))"
-        ))
+    for (name, pt) in zip((:x, :y, :z), (x, y, z))
+        (pt isa Real || pt isa Unitful.Length) ||
+            throw(ArgumentError("Expected $(name) to be a length or Real, got unit $(Unitful.unit(pt))"))
     end
     x_val = to_internal_units(x)
     y_val = to_internal_units(y)
     z_val = to_internal_units(z)
+
     return CartesianPoint(x_val, y_val, z_val)
-end
-
-function CartesianPoint(x::Unitful.Length, y::Unitful.Length, z::Unitful.Length)
-    vals = to_internal_units.((x, y, z))
-    tys = map(typeof, vals)
-    T = any(T -> T === Float64, tys) ? Float64 :
-        any(T -> T === Float32, tys) ? Float32 :
-        Float64
-
-    CartesianPoint{T}(T.(vals)...)
 end
 
 #Type promotion happens here
