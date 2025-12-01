@@ -1,6 +1,6 @@
 """
-    mutable struct Event{T <: SSDFloat}
-
+  mutable struct Event{T <: SSDFloat}
+         
 Collection struct for individual events. 
 This (mutable) struct is meant to be used to look at individual events,
 not to process a huge amount of events.
@@ -19,30 +19,40 @@ mutable struct Event{T <: SSDFloat}
     Event{T}() where {T <: SSDFloat} = new{T}(VectorOfArrays(Vector{CartesianPoint{T}}[]), VectorOfArrays(Vector{T}[]), missing, missing)
 end
 
-function Event(location::AbstractCoordinatePoint{T}, energy::RealQuantity = one(T))::Event{T} where {T <: SSDFloat}
+function Event(location::AbstractCoordinatePoint, energy::RealQuantity = 1)
+    pt_internal = to_internal_units(location)
+    T = eltype(pt_internal)
     evt = Event{T}()
-    evt.locations = VectorOfArrays([[CartesianPoint(location)]])
-    evt.energies = VectorOfArrays([[T(to_internal_units(energy))]])
+    evt.locations = VectorOfArrays([[pt_internal]])
+    evt.energies  = VectorOfArrays([[T(to_internal_units(energy))]])
     return evt
 end
 
-function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector{<:RealQuantity} = ones(T, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)::Event{T} where {T <: SSDFloat}
+function Event(locations::Vector{<:AbstractCoordinatePoint}, energies::Vector{<:RealQuantity} = fill(1, length(locations)); max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN)
+    pts_internal = to_internal_units.(locations)
+    T = eltype(first(pts_internal))
     d::T = T(to_internal_units(max_interaction_distance))
     @assert isnan(d) || d >= 0 "Max. interaction distance must be positive or NaN (no grouping), but $(max_interaction_distance) was given."
     evt = Event{T}()
+    
     if isnan(d) # default: no grouping, the charges from different hits drift independently
-        evt.locations = VectorOfArrays(broadcast(pt -> [CartesianPoint(pt)], locations))
-        evt.energies = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
+        evt.locations = VectorOfArrays(broadcast(pt -> [pt], pts_internal))
+        evt.energies  = VectorOfArrays(broadcast(E -> [T(to_internal_units(E))], energies))
     else
-        evt.locations, evt.energies = group_points_by_distance(CartesianPoint.(locations), T.(to_internal_units.(energies)), d)
+        evt.locations, evt.energies = group_points_by_distance(pts_internal, T.(to_internal_units.(energies)), d)
     end
     return evt
 end
 
-function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, energies::Vector{<:Vector{<:RealQuantity}} = [[one(T) for i in j] for j in locations])::Event{T} where {T <: SSDFloat}
+function Event(locations::Vector{<:Vector{<:AbstractCoordinatePoint}}, energies::Vector{<:Vector{<:RealQuantity}} = [[1 for _ in group] for group in locations])
+
+    T = eltype(to_internal_units(first(first(locations))))
+    locs = [[convert(CartesianPoint{T}, to_internal_units(pt)) for pt in group] for group in locations]
+    ens  = [[T(to_internal_units(E)) for E in group] for group in energies]
+    
     evt = Event{T}()
-    evt.locations = VectorOfArrays(broadcast(pts -> CartesianPoint{T}.(pts), locations))
-    evt.energies = VectorOfArrays(Vector{T}.(to_internal_units.(energies)))
+    evt.locations = VectorOfArrays(locs)
+    evt.energies  = VectorOfArrays(ens)
     return evt
 end
 
@@ -66,7 +76,6 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
         radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(energies)), particle_type),
         max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN
     )::Event{T} where {T <: SSDFloat, PT <: ParticleType}
-
 
     @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
 
@@ -99,14 +108,16 @@ function Event(locations::Vector{<:AbstractCoordinatePoint{T}}, energies::Vector
 end
 
 function Event(
-        locations::Vector{<:Vector{<:AbstractCoordinatePoint{T}}}, 
-        energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
-        particle_type::Type{PT} = Gamma, number_of_shells::Int = 2,
-        radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(T.(to_internal_units.(e)), particle_type), energies)
-    ) where {T <: SSDFloat, PT <: ParticleType}
-    
-    @assert eachindex(locations) == eachindex(energies) == eachindex(radius)
-    events = map(i -> Event(locations[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
+    locations::Vector{<:Vector{<:AbstractCoordinatePoint}},
+    energies::Vector{<:Vector{<:RealQuantity}}, N::Int;
+    particle_type::Type = Gamma, number_of_shells::Int = 2,
+    radius::Vector{<:Vector{<:RealQuantity}} = map(e -> radius_guess.(to_internal_units.(e), particle_type), energies)
+)
+    locs_internal = [to_internal_units.(loc) for loc in locations]
+
+    @assert eachindex(locs_internal) == eachindex(energies) == eachindex(radius)
+    events = map(i -> Event(locs_internal[i], energies[i], N; particle_type, number_of_shells, radius = radius[i]), eachindex(locations))
+
     Event(flatview.(getfield.(events, :locations)), flatview.(getfield.(events, :energies)))
 end
 

@@ -116,7 +116,6 @@ function simulate_waveforms( mcevents_table::AbstractVector{<:NamedTuple}, sim::
     return vcat(mcevents_chns...)  
 end
 
-
 # Support detectors hits with positions given as vectors:
 function _get_unitless_positions(point_vectors::AbstractVector{<:StaticVector{3}})
     Ref(cartesian_zero) .+ to_internal_units.(point_vectors)
@@ -190,7 +189,7 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
 
     @assert is_detector_hits_table(mcevents) "Table does not have the correct format"
     @showprogress map(mcevents) do phyevt
-        locations, edeps = _convertEnergyDepsToChargeDeps(phyevt.pos, phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
+        locations, edeps = _convertEnergyDepsToChargeDeps(to_internal_units.(phyevt.pos), phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
         drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
                 VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, T(Δt.val) * unit(Δt);
                 max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose
