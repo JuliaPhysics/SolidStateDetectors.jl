@@ -128,10 +128,6 @@ end
     CartesianPoint(pt.x - v[1], pt.y - v[2], pt.z - v[3])
 end
 
-@inline function Base.:*(r::RotationVec{T}, p::CartesianPoint{T}) where T
-    r * SVector{3,T}(p.x, p.y, p.z)
-end
-
 @inline Base.:(-)(a::CartesianPoint, b::CartesianPoint) = CartesianVector(a.x - b.x, a.y - b.y, a.z - b.z)
 
 @inline Base.transpose(pt::CartesianPoint) = CartesianPoint(transpose(pt.x), transpose(pt.y), transpose(pt.z))
