@@ -64,6 +64,11 @@ end
         @test cd isa SolidStateDetectors.LinearChargeDensity{T}
         @test cd.offsets[1] == 1f-10
         @test cd.gradients[1] == 1f-11
+
+        pt = CartesianPoint{T}(1.0, 0.0, 0.0)  
+        ρ = SolidStateDetectors.get_charge_density(cd, pt)
+        # Expected: ρ = offset_x + x*grad_x = 1e-10 + 1e-11
+        @test ρ ≈ T(1.1e-10)
     end
     @testset "Cylindrical charge density" begin 
         d = Dict("charge_density" => Dict(

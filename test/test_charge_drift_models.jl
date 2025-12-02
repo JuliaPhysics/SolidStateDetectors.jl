@@ -250,7 +250,7 @@ end
         @test SolidStateDetectors.calculate_mobility(simA.detector.semiconductor.charge_drift_model, CartesianPoint{T}(0,0,0), SolidStateDetectors.Hole) isa T
     end
 
-    @testset "Test if the detector is depleted (inactive layer is not taken into account for depletion)" begin
+    @testset "Test if the detector is depleted (inactive layer is not taken into account for depletion) and in_inactive_layer" begin
         mm = 1 / 1000
         pn_r = 8.957282 * mm
         g = Grid(simA)
@@ -261,6 +261,10 @@ end
         user_g = typeof(g)((user_ax1, ax2, ax3))
         calculate_electric_potential!(simA, grid=user_g, depletion_handling=true)
         @test is_depleted(simA.point_types)
+        pt_active = CartesianPoint{T}(0.005, 0.0, 0.005)
+        pt_inactive = CartesianPoint{T}(0.0095, 0.0, 0.005)
+        @test SolidStateDetectors.in_inactive_layer(pt_active, nothing, simA.point_types) == false
+        @test SolidStateDetectors.in_inactive_layer(pt_inactive, nothing, simA.point_types) == true
     end
 end
 
@@ -599,6 +603,40 @@ end
     end
 end
 
+struct OutsideTestVolume{T} <: SolidStateDetectors.AbstractVirtualVolume{T} end
+Base.in(::CartesianPoint{T}, ::OutsideTestVolume{T}) where {T} = false
+
+@testset "Modulate Drift Vector" begin
+    T = Float64
+    sv = CartesianVector{T}(1,2,3)
+    pt = CartesianPoint{T}(0,0,0)
+
+    example_primitive_dir = joinpath(@__DIR__, "../examples/example_primitive_files")
+    geom = SolidStateDetectors.ConstructiveSolidGeometry.Geometry(T, joinpath(example_primitive_dir, "Box.yaml"))
+
+    arb_vol = SolidStateDetectors.ArbitraryDriftModificationVolume{T}("arb", 1, geom)
+    @test_throws ErrorException SolidStateDetectors.modulate_driftvector(sv, pt, [arb_vol])
+
+    step_vectors = [CartesianVector{T}(1,0,0), CartesianVector{T}(0,1,0)]
+    current_pos  = [pt, pt]
+    @test_throws ErrorException SolidStateDetectors._modulate_driftvectors!(step_vectors, current_pos, [arb_vol])
+
+    empty_vdv = SolidStateDetectors.AbstractVirtualVolume{T}[]
+    @test SolidStateDetectors.modulate_driftvector(sv, pt, empty_vdv) == sv
+
+    result = SolidStateDetectors.modulate_driftvector(sv, pt, [OutsideTestVolume{T}()])
+    @test result == sv
+
+    step_vectors = [CartesianVector{T}(1,0,0), CartesianVector{T}(0,1,0)]
+    current_pos  = [pt, pt]
+    SolidStateDetectors._modulate_driftvectors!(step_vectors, current_pos, [OutsideTestVolume{T}()])
+    @test step_vectors == [CartesianVector{T}(1,0,0), CartesianVector{T}(0,1,0)]
+
+    dead_vol = SolidStateDetectors.DeadVolume{T, typeof(geom)}("dead", geom)
+    result = SolidStateDetectors.modulate_driftvector(sv, pt, dead_vol)
+    @test result == CartesianVector{T}(0,0,0)
+end
+
 @timed_testset "NBodyChargeCloud Units" begin
 
     cartesian_unit = CartesianPoint(0.01u"m", 0.0u"m", 0.05u"m")
@@ -641,5 +679,4 @@ end
     @test all(x -> x == nb_zero_cyl.locations[1], nb_zero_cyl.locations) 
     @test isapprox(sum(nb_zero_cyl.energies), ustrip.(u"eV", Edep))
     @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero_cyl.locations)
-
 end
