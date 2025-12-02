@@ -117,26 +117,34 @@ function in(pt::CartesianPoint{T}, p::Polygon{N,T}, csgtol::T = csg_default_tol(
     return isapprox((pt - origin(plane)) ⋅ normal(plane), 0, atol = csgtol) && begin
         rot = _get_rot_for_rotation_on_xy_plane(p)
         vs = vertices(p)
-        pts2d = SVector{N+1, SVector{2, T}}(
-            view(rot * vs[i%N + 1], 1:2) for i in 0:N  
+
+        pts2d = SVector{N+1, SVector{2,T}}(
+            SVector{2,T}((rot * (vs[i % N + 1] - cartesian_zero)).x,
+                         (rot * (vs[i % N + 1] - cartesian_zero)).y) for i in 0:N
         )
-        # PolygonOps.inpolygon -> in = 1, on = -1, out = 0)
-        return PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0 
+        
+        point2d = SVector{2,T}((rot * (pt - cartesian_zero)).x,
+                                (rot * (pt - cartesian_zero)).y)
+
+        PolygonOps.inpolygon(point2d, pts2d) != 0
     end
 end
 
 function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Quadrangle{T}) where {T}
     rot = _get_rot_for_rotation_on_xy_plane(p)
     vs = vertices(p)
-    pts2d = SVector{5, SVector{2, T}}(
-        view(rot * vs[1], 1:2), 
-        view(rot * vs[2], 1:2), 
-        view(rot * vs[3], 1:2), 
-        view(rot * vs[4], 1:2), 
-        view(rot * vs[1], 1:2), 
+
+    pts2d = SVector{5, SVector{2,T}}(
+        SVector{2,T}((rot * (vs[1] - cartesian_zero)).x, (rot * (vs[1] - cartesian_zero)).y),
+        SVector{2,T}((rot * (vs[2] - cartesian_zero)).x, (rot * (vs[2] - cartesian_zero)).y),
+        SVector{2,T}((rot * (vs[3] - cartesian_zero)).x, (rot * (vs[3] - cartesian_zero)).y),
+        SVector{2,T}((rot * (vs[4] - cartesian_zero)).x, (rot * (vs[4] - cartesian_zero)).y),
+        SVector{2,T}((rot * (vs[1] - cartesian_zero)).x, (rot * (vs[1] - cartesian_zero)).y),
     )
-    # PolygonOps.inpolygon -> in = 1, on = -1, out = 0)
-    return PolygonOps.inpolygon(view(rot * pt, 1:2), pts2d) != 0 
+
+    point2d = SVector{2,T}((rot * (pt - cartesian_zero)).x, (rot * (pt - cartesian_zero)).y)
+
+    return PolygonOps.inpolygon(point2d, pts2d) != 0
 end
 
 function _transform_into_global_coordinate_system(poly::Polygon{N, T}, p::AbstractPrimitive{T}) where {N, T}
