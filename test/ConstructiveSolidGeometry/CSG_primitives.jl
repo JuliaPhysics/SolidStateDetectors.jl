@@ -525,14 +525,14 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             @test all(p -> p[3] == 0, samples)  # xy-plane
             @test length(samples) > 0
         end
-
+        
         @testset "sample" begin
             samples = CSG.sample(poly, 0.3)
             @test all(p -> p isa CartesianPoint{T}, samples)
             @test all(p -> p[3] == 0, samples)
             @test length(samples) > 0
         end
-        
+
         @testset "distance" begin
             p_inside  = CartesianPoint{T}(0.5,0.5,0)
             p_above   = CartesianPoint{T}(0.5,0.5,1)
@@ -542,7 +542,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             @test isapprox(CSG.distance(p_above,  poly), 1; atol=1e-12)
             @test isapprox(CSG.distance(p_outside, poly), 1; atol=1e-12)
         end
-        
+
         @testset "_get_rot_for_rotation_on_xy_plane" begin
         poly_xy = CSG.Polygon(SVector(
             CartesianPoint{T}(0,0,0),
@@ -563,7 +563,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             
             rot = CSG._get_rot_for_rotation_on_xy_plane(poly_tilted)
             # Rotated vertices should lie on z = 0
-            for v in (rot * p for p in pts_tilted)
+            for v in (rot * (p - cartesian_zero) for p in pts_tilted)
                 @test abs(v[3]) ≤ 1e-12
             end
             
@@ -571,7 +571,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             n_rot = rot * SVector{3,T}(CSG.normal(poly_tilted)...)
             @test isapprox(n_rot, SVector(0,0,1), atol=1e-12)
         end
-        
+       
         @testset "in polygon" begin
             # Inside point
             p_in = CartesianPoint{T}(0.5, 0.5, 0)
