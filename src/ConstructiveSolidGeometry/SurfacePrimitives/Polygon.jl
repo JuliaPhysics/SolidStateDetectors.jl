@@ -119,13 +119,11 @@ function in(pt::CartesianPoint{T}, p::Polygon{N,T}, csgtol::T = csg_default_tol(
         vs = vertices(p)
 
         pts2d = SVector{N+1, SVector{2,T}}(
-            SVector{2,T}((rot * (vs[i % N + 1] - cartesian_zero)).x,
-                         (rot * (vs[i % N + 1] - cartesian_zero)).y) for i in 0:N
+            [SVector{2,T}(view(rot * (vs[i % N + 1] - cartesian_zero), 1:2)) for i in 0:N]...
         )
-        
-        point2d = SVector{2,T}((rot * (pt - cartesian_zero)).x,
-                                (rot * (pt - cartesian_zero)).y)
 
+        rotated_pt = rot * (pt - cartesian_zero)
+        point2d = SVector{2,T}(view(rotated_pt, 1:2))
         PolygonOps.inpolygon(point2d, pts2d) != 0
     end
 end
@@ -135,15 +133,12 @@ function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Quadrangle{T}) 
     vs = vertices(p)
 
     pts2d = SVector{5, SVector{2,T}}(
-        SVector{2,T}((rot * (vs[1] - cartesian_zero)).x, (rot * (vs[1] - cartesian_zero)).y),
-        SVector{2,T}((rot * (vs[2] - cartesian_zero)).x, (rot * (vs[2] - cartesian_zero)).y),
-        SVector{2,T}((rot * (vs[3] - cartesian_zero)).x, (rot * (vs[3] - cartesian_zero)).y),
-        SVector{2,T}((rot * (vs[4] - cartesian_zero)).x, (rot * (vs[4] - cartesian_zero)).y),
-        SVector{2,T}((rot * (vs[1] - cartesian_zero)).x, (rot * (vs[1] - cartesian_zero)).y),
-    )
-
-    point2d = SVector{2,T}((rot * (pt - cartesian_zero)).x, (rot * (pt - cartesian_zero)).y)
-
+        SVector{2,T}(view(rot * (vs[i % 4 + 1] - cartesian_zero), 1:2)) for i in 0:4
+            )
+    
+    rotated_pt = rot * (pt - cartesian_zero)
+    point2d = SVector{2,T}(view(rotated_pt, 1:2))
+    
     return PolygonOps.inpolygon(point2d, pts2d) != 0
 end
 
