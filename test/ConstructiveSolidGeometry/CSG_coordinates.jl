@@ -7,7 +7,7 @@ using SolidStateDetectors.ConstructiveSolidGeometry: CartesianPoint, CartesianVe
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
 
-import Unitful: @u_str
+using Unitful
 
 @testset "points_and_vectors" begin
     @testset "cartesian" begin
@@ -126,4 +126,43 @@ import Unitful: @u_str
         @test_throws ArgumentError CylindricalPoint(1u"m", 2u"m", 3u"m")
         @test_throws ArgumentError CylindricalPoint(1u"m", 2u"rad", 3u"rad")
     end
+end
+
+@testset "CartesianVector" begin
+    v1 = CartesianVector(1, 2, 3)
+    @test v1.x == 1 && v1.y == 2 && v1.z == 3
+    @test v1 isa CartesianVector{Float64}
+
+    v2 = CartesianVector{Float32}(x=1.0, y=2.0, z=3.0)
+    @test v2.x == 1f0 && v2.y == 2f0 && v2.z == 3f0
+
+    z = zero(CartesianVector{Float64})
+    @test z == CartesianVector(0.0, 0.0, 0.0)
+
+    v = CartesianVector(1.0, 2.0, 3.0)
+    v_mul = v * u"m"
+    @test v_mul == CartesianVector(1.0u"m", 2.0u"m", 3.0u"m")
+
+    vq = CartesianVector(1.0u"m", 2.0u"m", 3.0u"m")
+    v_div = vq / u"m"
+    @test v_div == CartesianVector(1.0, 2.0, 3.0)
+
+    vq = CartesianVector(100.0u"cm", 200.0u"cm", 300.0u"cm")
+    vconv = uconvert(u"m", vq)
+    @test vconv == CartesianVector(1.0u"m", 2.0u"m", 3.0u"m")
+
+    vq = CartesianVector(1.0u"m", 2.0u"m", 3.0u"m")
+    vstrip = ustrip(vq)
+    @test vstrip == CartesianVector(1.0, 2.0, 3.0)
+
+    cz1 = CartesianZero{Float32}()
+    cz2 = CartesianZero{Float64}()
+    v = CartesianVector(1.0f0, 2.0f0, 3.0f0)
+    
+    # Unary minus on CartesianVector should produce a CartesianVector
+    @test -v == CartesianVector(-1.0f0, -2.0f0, -3.0f0)
+
+    # Subtracting two CartesianZero objects should produce a zero CartesianVector
+    @test -(cz1, cz2) == CartesianVector(0.0, 0.0, 0.0)
+
 end
