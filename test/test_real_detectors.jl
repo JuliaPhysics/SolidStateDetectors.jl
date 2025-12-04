@@ -119,6 +119,23 @@ end
     @test idx_x == SolidStateDetectors.searchsortednearest(ticks, pt.x)
     @test idx_y == SolidStateDetectors.searchsortednearest(ticks, pt.y)
     @test idx_z == SolidStateDetectors.searchsortednearest(ticks, pt.z)
+    
+    # Additional tests: find_closest_gridpoint
+    # CartesianPoint version
+    idxs_cart = SolidStateDetectors.find_closest_gridpoint(pt, grid)
+    @test idxs_cart[1] == SolidStateDetectors.searchsortednearest(ticks, pt.x)
+    @test idxs_cart[2] == SolidStateDetectors.searchsortednearest(ticks, pt.y)
+    @test idxs_cart[3] == SolidStateDetectors.searchsortednearest(ticks, pt.z)
+    
+    # CylindricalPoint version
+    pt_cyl = CylindricalPoint{T}(0.33f0, π/3, 0.12f0)
+    idxs_cyl = SolidStateDetectors.find_closest_gridpoint(pt_cyl, grid)
+    
+    # Convert Cylindrical to Cartesian for comparison
+    pt_cyl_cart = CartesianPoint(pt_cyl)
+    @test idxs_cyl[1] == SolidStateDetectors.searchsortednearest(ticks, pt_cyl_cart.x)
+    @test idxs_cyl[2] == SolidStateDetectors.searchsortednearest(ticks, pt_cyl_cart.y)
+    @test idxs_cyl[3] == SolidStateDetectors.searchsortednearest(ticks, pt_cyl_cart.z)
 end
 @timed_testset "HexagonalPrism" begin
     sim = Simulation{T}(SSD_examples[:Hexagon])
