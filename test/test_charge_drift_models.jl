@@ -635,6 +635,9 @@ Base.in(::CartesianPoint{T}, ::OutsideTestVolume{T}) where {T} = false
     dead_vol = SolidStateDetectors.DeadVolume{T, typeof(geom)}("dead", geom)
     result = SolidStateDetectors.modulate_driftvector(sv, pt, dead_vol)
     @test result == CartesianVector{T}(0,0,0)
+
+    result = SolidStateDetectors.modulate_driftvector(sv, pt, missing)
+    @test result == sv
 end
 
 @timed_testset "NBodyChargeCloud Units" begin
