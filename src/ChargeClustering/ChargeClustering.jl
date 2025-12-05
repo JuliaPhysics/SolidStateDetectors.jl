@@ -14,12 +14,8 @@ function cluster_detector_hits(
     sorting_idxs = sortperm(unsorted.detno)
     sorted = unsorted[sorting_idxs]
     grouped = TypedTables.Table(consgroupedview(sorted.detno, TypedTables.columns(sorted)))
-
-    r_detno = similar(detno, 0)
-    r_edep = similar(edep, 0)
-    r_pos = similar(pos, 0)
-    r_thit = similar(thit, 0)
-
+    
+    results = []
     ustripped_cradius = ustrip(internal_length_unit, cluster_radius)
 
     for d_hits_nt in grouped
@@ -36,6 +32,13 @@ function cluster_detector_hits(
         @inbounds for i in eachindex(t_vals) .+ 1
             if i > lastindex(t_vals) || t_vals[i] - t_vals[current_group] > cluster_time
                 t_hits = view(d_hits, current_group:i-1)
+                
+                # Each time cluster gets its own result entry
+                r_detno = similar(detno, 0)
+                r_edep = similar(edep, 0)
+                r_pos = similar(pos, 0)
+                r_thit = similar(thit, 0)
+                
                 if length(t_hits) > 3
                     d_detno = first(t_hits.detno)
                     @assert all(isequal(d_detno), t_hits.detno)
@@ -64,12 +67,13 @@ function cluster_detector_hits(
                     append!(r_pos, t_hits.pos)
                     append!(r_thit, t_hits.thit)
                 end
+                
+                push!(results, (detno = r_detno, edep = r_edep, pos = r_pos, thit = r_thit))
                 current_group = i
             end
         end
     end
-
-    (detno = r_detno, edep = r_edep, pos = r_pos, thit = r_thit)
+    results
 end
 
 
@@ -82,24 +86,38 @@ function cluster_detector_hits(
     @assert :thit in TypedTables.columnnames(table) "Table has no column `thit`"
     @assert :edep in TypedTables.columnnames(table) "Table has no column `edep`"
     @assert :detno in TypedTables.columnnames(table) "Table has no column `detno`"
-    clustered_nt = map(
-        evt -> cluster_detector_hits(
+    
+    # Collect all time-clustered results
+    all_results = []
+    evtno_col = []
+    
+    for (evtno, evt) in enumerate(table)
+        time_clusters = cluster_detector_hits(
             evt.detno,
             evt.edep,
             evt.pos,
             evt.thit,
             cluster_radius,
             cluster_time
-        ),
-        table
-    )
-    TypedTables.Table(merge(
-        TypedTables.columns(table),
-        map(
-            VectorOfVectors,
-            TypedTables.columns(clustered_nt)
         )
-    ))
+        
+        # Each time cluster becomes a separate row
+        for tc in time_clusters
+            push!(all_results, tc)
+            push!(evtno_col, evtno)
+        end
+    end
+    
+    # Build output table
+    result_columns = (
+        evtno = evtno_col,
+        detno = VectorOfVectors([r.detno for r in all_results]),
+        thit = VectorOfVectors([r.thit for r in all_results]),
+        edep = VectorOfVectors([r.edep for r in all_results]),
+        pos = VectorOfVectors([r.pos for r in all_results])
+    )
+    
+    TypedTables.Table(result_columns)
 end
 
 
