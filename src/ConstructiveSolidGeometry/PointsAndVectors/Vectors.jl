@@ -22,6 +22,21 @@ struct CartesianVector{T} <: AbstractCoordinateVector{T, Cartesian}
     x::T
     y::T
     z::T
+
+    CartesianVector{T}(x::T, y::T, z::T) where {T<:AbstractFloat} = new(x, y, z)
+    CartesianVector{T}(x::Real, y::Real, z::Real) where {T} = new(T(x), T(y), T(z))
+end
+
+function CartesianVector(x, y, z)
+    for (name, val) in zip((:x, :y, :z), (x, y, z))
+        (isa(val, Real) || isa(val, Unitful.Length)) ||
+            throw(ArgumentError("Expected $(name) to be a Real or Unitful.Quantity, got $(typeof(val))"))
+    end
+    x_val = to_internal_units(x)
+    y_val = to_internal_units(y)
+    z_val = to_internal_units(z)
+
+    return CartesianVector(x_val, y_val, z_val)
 end
 
 #Type promotion happens here
@@ -41,14 +56,16 @@ CartesianVector{T}(; x = 0, y = 0, z = 0) where {T} = CartesianVector{T}(T(x),T(
 
 # Need to specialize multiplication and division with units for CartesianVector, otherwise result would just be an SVector:
 Base.:(*)(v::CartesianVector{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianVector(v.x * u, v.y * u, v.z * u)
-Base.:(/)(v::CartesianVector{<:Quantity{<:Real, Unitful.𝐋}}, u::Unitful.Units) = CartesianVector(v.x / u, v.y / u, v.z / u)
+#Base.:(/)(v::CartesianVector{<:Quantity{<:Real, Unitful.𝐋}}, u::Unitful.Units) = CartesianVector(v.x / u, v.y / u, v.z / u)
 
 # For user convenience, to enable constructs like `ustrip(u"mm", v)` and `NoUnits(v / u"mm")`, we'll support uconvert/ustrip
 # for CartesianVector. Unitful doesn't encourage defining those for collections, but we'll view cartesian vectors as single
 # mathematical objects in regard to units:
-Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.𝐋}, v::CartesianVector{<:Quantity{<:Real, Unitful.𝐋}}) = CartesianVector(uconvert(u, v.x), uconvert(u, v.y), uconvert(u, v.z))
-Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.NoDims}, v::CartesianVector{<:Quantity{<:Real, Unitful.NoDims}}) = CartesianVector(uconvert(u, v.x), uconvert(u, v.y), uconvert(u, v.z))
-Unitful.ustrip(v::CartesianVector) = CartesianVector(ustrip(v.x), ustrip(v.y), ustrip(v.z))
+
+#ToDo: Uncomment when units are supported
+#Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.𝐋}, v::CartesianVector{<:Quantity{<:Real, Unitful.𝐋}}) = CartesianVector(uconvert(u, v.x), uconvert(u, v.y), uconvert(u, v.z))
+#Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.NoDims}, v::CartesianVector{<:Quantity{<:Real, Unitful.NoDims}}) = CartesianVector(uconvert(u, v.x), uconvert(u, v.y), uconvert(u, v.z))
+#Unitful.ustrip(v::CartesianVector) = CartesianVector(ustrip(v.x), ustrip(v.y), ustrip(v.z))
 
 
 # @inline rotate(pt::CartesianPoint{T}, r::RotMatrix{3,T,TT}) where {T, TT} = r.mat * pt

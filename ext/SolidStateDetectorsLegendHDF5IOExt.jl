@@ -6,6 +6,8 @@ import ..LegendHDF5IO
 
 using ..SolidStateDetectors
 using ..SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
+using ..SolidStateDetectors.ConstructiveSolidGeometry: AbstractCoordinatePoint
+
 using ArraysOfArrays
 import Tables
 using TypedTables, Unitful, UnitfulAtomic
@@ -55,14 +57,107 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
         @info "Now simulating $(evtrange) and storing it in\n\t \"$ofn\""
         mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, signal_unit, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
 
-        # LH5 can't handle CartesianPoint, turn positions into CartesianVectors which will be saved as SVectors
-        pos_vec = VectorOfVectors([[CartesianPoint(p...) - cartesian_zero for p in ps] for ps in mcevents_sub.pos])
-        new_mcevents_sub = TypedTables.Table(merge(Tables.columns(mcevents_sub), (pos = pos_vec,)))
+        # # LH5 couldn't handle CartesianPoint, turn positions into CartesianVectors which will be saved as SVectors
+        # pos_vec = VectorOfVectors([[CartesianPoint(p...) - cartesian_zero for p in ps] for ps in mcevents_sub.pos])
+        # new_mcevents_sub = TypedTables.Table(merge(Tables.columns(mcevents_sub), (pos = pos_vec,)))
 
         LegendHDF5IO.lh5open(ofn, "w") do h5f
-            LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", new_mcevents_sub)
+            LegendHDF5IO.writedata(h5f.data_store, "generated_waveforms", mcevents_sub)
         end        
     end    
+end
+
+
+# Add support for reading and writing CartesianPoint and CylindricalPoint using LegendHDF5IO
+function __init__()
+    LegendHDF5IO._datatype_dict["cartesianpoint"] = CartesianPoint
+    LegendHDF5IO._datatype_dict["cylindricalpoint"] = CylindricalPoint
+end
+
+LegendHDF5IO.datatype_to_string(::Type{<:CartesianPoint}) = "cartesianpoint"
+LegendHDF5IO.datatype_to_string(::Type{<:CylindricalPoint}) = "cylindricalpoint"
+
+
+
+# support writing points to HDF5 file using LH5Array
+function LegendHDF5IO.create_entry(parent::LegendHDF5IO.LHDataStore, name::AbstractString, 
+    pt::T; kwargs...) where {T <: AbstractCoordinatePoint}
+    LegendHDF5IO.create_entry(parent, name, getindex.(Ref(pt), 1:3); kwargs...)
+    LegendHDF5IO.setdatatype!(parent.data_store[name], T)
+    nothing
+end
+
+function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Dataset, T::Type{<:AbstractCoordinatePoint})
+    T(read(ds) .* LegendHDF5IO.getunits(ds)...)
+end
+
+# support writing arrays of points to HDF5 file using LH5Array
+function LegendHDF5IO.create_entry(parent::LegendHDF5IO.LHDataStore, name::AbstractString, 
+    pts::T; kwargs...) where {T <: AbstractVector{<:AbstractCoordinatePoint}}
+    LegendHDF5IO.create_entry(parent, name, VectorOfVectors([getindex.(Ref(pt), 1:3) for pt in pts]); kwargs...)
+    LegendHDF5IO.setdatatype!(parent.data_store[name], T)
+    nothing
+end
+
+function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Group, T::Type{<:AbstractVector{<:CartesianPoint}})
+    data = LegendHDF5IO.LH5Array(ds, VectorOfVectors)
+    Vector([CartesianPoint(d...) for d in data])
+end
+
+function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Group, T::Type{<:AbstractVector{<:CylindricalPoint}})
+    data = LegendHDF5IO.LH5Array(ds, VectorOfVectors)
+    Vector([CylindricalPoint(d...) for d in data])
+end
+
+# support writing points to HDF5 file using readdata/writedata
+function LegendHDF5IO.writedata(
+    output::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
+    pt::AbstractCoordinatePoint,
+    fulldatatype::DataType = typeof(pt)
+)
+    data = getindex.(Ref(pt), 1:3)
+    LegendHDF5IO.writedata(output, name, data, fulldatatype)
+end
+
+function LegendHDF5IO.readdata(
+    input::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
+    fulldatatype::Type{T}
+) where {T <: AbstractCoordinatePoint}
+    data = LegendHDF5IO.readdata(input, name, Vector)
+    T(data...)
+end
+
+
+# support writing arrays of points to HDF5 file using readdata/writedata
+function LegendHDF5IO.writedata(
+    output::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
+    pts::AbstractVector{<:AbstractCoordinatePoint},
+    fulldatatype::DataType = typeof(pts)
+)
+    data = VectorOfVectors([getindex.(Ref(pt), 1:3) for pt in pts])
+    LegendHDF5IO.writedata(output, name, data, fulldatatype)
+    LegendHDF5IO.setdatatype!(output[name], fulldatatype)
+    nothing
+end
+
+function LegendHDF5IO.readdata(
+    input::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
+    fulldatatype::Type{T}
+) where {T <:AbstractVector{<:CartesianPoint}}
+    data = LegendHDF5IO.readdata(input, name, VectorOfVectors)
+    output = [CartesianPoint(d...) for d in data]
+    @assert output isa T
+    output
+end
+
+function LegendHDF5IO.readdata(
+    input::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
+    fulldatatype::Type{T}
+) where {T <:AbstractVector{<:CylindricalPoint}}
+    data = LegendHDF5IO.readdata(input, name, VectorOfVectors)
+    output = [CylindricalPoint(d...) for d in data]
+    @assert output isa T
+    output
 end
 
 end # module LegendHDF5IO

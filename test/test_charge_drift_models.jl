@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors
-using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared
+using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared, scale_to_temperature
 using ArraysOfArrays
 using InteractiveUtils
 using StaticArrays
@@ -250,7 +250,7 @@ end
         @test SolidStateDetectors.calculate_mobility(simA.detector.semiconductor.charge_drift_model, CartesianPoint{T}(0,0,0), SolidStateDetectors.Hole) isa T
     end
 
-    @testset "Test if the detector is depleted (inactive layer is not taken into account for depletion)" begin
+    @testset "Test if the detector is depleted (inactive layer is not taken into account for depletion) and in_inactive_layer" begin
         mm = 1 / 1000
         pn_r = 8.957282 * mm
         g = Grid(simA)
@@ -261,6 +261,10 @@ end
         user_g = typeof(g)((user_ax1, ax2, ax3))
         calculate_electric_potential!(simA, grid=user_g, depletion_handling=true)
         @test is_depleted(simA.point_types)
+        pt_active = CartesianPoint{T}(0.005, 0.0, 0.005)
+        pt_inactive = CartesianPoint{T}(0.0095, 0.0, 0.005)
+        @test SolidStateDetectors.in_inactive_layer(pt_active, nothing, simA.point_types) == false
+        @test SolidStateDetectors.in_inactive_layer(pt_inactive, nothing, simA.point_types) == true
     end
 end
 
@@ -271,7 +275,7 @@ end
         @test cdm0.μ_e  == 0.1f0
         @test cdm0.μ_h == 0.1f0
 
-        cdm1 = IsotropicChargeDriftModel{T}(1000u"cm^2/(V*s)", 1000u"cm^2/(V*s)")
+        cdm1 = IsotropicChargeDriftModel{T}(μ_e = 1000u"cm^2/(V*s)", μ_h = 1000u"cm^2/(V*s)")
         @test cdm1 == cdm0
 
         cdm2 = IsotropicChargeDriftModel{T}(0.1, 0.1)
@@ -376,7 +380,7 @@ end
                 end
             end
         
-            config = joinpath(@__DIR__,"../examples/example_config_files/ADLChargeDriftModel/drift_velocity_config_axes.yaml")
+            config = "test_config_files/drift_velocity_config_axes.yaml"
 
             @testset "All axes in one plane" begin
 
@@ -414,7 +418,7 @@ end
     end
 
     @testset "Test parsing of ADLChargeDriftModel config files with units" begin
-        cdm0 = ADLChargeDriftModel() # default charge drift model
+        cdm0 = ADLChargeDriftModel() # default charge drift model with units
         @test cdm0.electrons.axis100.mu0  == 3.8609f0
         @test cdm0.electrons.axis100.beta == 0.805f0
         @test cdm0.electrons.axis100.E0   == 51100f0
@@ -429,12 +433,24 @@ end
         @test cdm0.holes.axis111.mu0  == 6.1215f0
         @test cdm0.holes.axis111.beta == 0.662f0
         @test cdm0.holes.axis111.E0   == 18200f0
+        
+        # default charge drift model config has units, input units should be ignored
+        input_units = SolidStateDetectors.construct_units(Dict("units" => Dict("length" => "mm", "potential" => "V", "angle" => "deg", "temperature" => "K")))
 
-        cdm_nounits = ADLChargeDriftModel(joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config_nounits.yaml"))
+        cdm0_inputunits = ADLChargeDriftModel(SolidStateDetectors.default_ADL_config_file, input_units)
+        @test cdm0.electrons == cdm0_inputunits.electrons
+        @test cdm0.holes == cdm0_inputunits.holes
+
+        # charge drift model config has no units, internal units are assumed
+        cdm_nounits = ADLChargeDriftModel("test_config_files/drift_velocity_config_nounits.yaml")
         @test cdm0.electrons == cdm_nounits.electrons
         @test cdm0.holes == cdm_nounits.holes
         @test cdm0.crystal_orientation ≈ cdm_nounits.crystal_orientation
 
+        # charge drift model config has no units, input units will be applied
+        cdm_nounits_inputunits = ADLChargeDriftModel("test_config_files/drift_velocity_config_nounits.yaml", input_units)
+        @test cdm_nounits.electrons != cdm_nounits_inputunits.electrons
+        @test cdm_nounits.holes != cdm_nounits_inputunits.holes
     end
 
     @testset "Modify mobility parameters using keyword arguments" begin
@@ -525,6 +541,27 @@ end
         @test cdm2016.electrons == cdm.electrons.axis100
         @test cdm2016.holes     == cdm.holes
     end
+
+    @testset "Test temperature scaling of drift parameters" begin
+    
+        # If a temperature is given to the ADL2016 model, the ChargeDriftModel is scaled. But at 77K (the reference temperature),
+        # the parameters should be identical to the unscaled ADL2016 model
+        
+        cdm_77 = ADL2016ChargeDriftModel(temperature = 77u"K")
+        cdm_100 = ADL2016ChargeDriftModel(temperature = 100u"K")
+        cdm = ADL2016ChargeDriftModel()
+        
+        @test cdm_77.electrons == cdm.electrons
+        @test cdm_77.holes     == cdm.holes
+        @test cdm_100.electrons.mu0 < cdm.electrons.mu0
+        @test cdm_100.holes.axis100.mu0 < cdm.holes.axis100.mu0
+        @test cdm_100.holes.axis111.mu0 < cdm.holes.axis111.mu0
+
+        cdm_2scalings = scale_to_temperature(scale_to_temperature(cdm, 87u"K"), 100u"K")
+        @test cdm_2scalings.temperaturemodel.reference_temperature == cdm_100.temperaturemodel.reference_temperature
+        @test isapprox(cdm_2scalings.electrons.E0, cdm_100.electrons.E0, atol = 5e-2)
+        @test isapprox(cdm_2scalings.electrons.mu0, cdm_100.electrons.mu0, atol = 5e-2)
+    end
 end
 
 @timed_testset "Test grouping of charges" begin
@@ -564,4 +601,85 @@ end
             end
         end
     end
+end
+
+struct OutsideTestVolume{T} <: SolidStateDetectors.AbstractVirtualVolume{T} end
+Base.in(::CartesianPoint{T}, ::OutsideTestVolume{T}) where {T} = false
+
+@testset "Modulate Drift Vector" begin
+    T = Float64
+    sv = CartesianVector{T}(1,2,3)
+    pt = CartesianPoint{T}(0,0,0)
+
+    example_primitive_dir = joinpath(@__DIR__, "../examples/example_primitive_files")
+    geom = SolidStateDetectors.ConstructiveSolidGeometry.Geometry(T, joinpath(example_primitive_dir, "Box.yaml"))
+
+    arb_vol = SolidStateDetectors.ArbitraryDriftModificationVolume{T}("arb", 1, geom)
+    @test_throws ErrorException SolidStateDetectors.modulate_driftvector(sv, pt, [arb_vol])
+
+    step_vectors = [CartesianVector{T}(1,0,0), CartesianVector{T}(0,1,0)]
+    current_pos  = [pt, pt]
+    @test_throws ErrorException SolidStateDetectors._modulate_driftvectors!(step_vectors, current_pos, [arb_vol])
+
+    empty_vdv = SolidStateDetectors.AbstractVirtualVolume{T}[]
+    @test SolidStateDetectors.modulate_driftvector(sv, pt, empty_vdv) == sv
+
+    result = SolidStateDetectors.modulate_driftvector(sv, pt, [OutsideTestVolume{T}()])
+    @test result == sv
+
+    step_vectors = [CartesianVector{T}(1,0,0), CartesianVector{T}(0,1,0)]
+    current_pos  = [pt, pt]
+    SolidStateDetectors._modulate_driftvectors!(step_vectors, current_pos, [OutsideTestVolume{T}()])
+    @test step_vectors == [CartesianVector{T}(1,0,0), CartesianVector{T}(0,1,0)]
+
+    dead_vol = SolidStateDetectors.DeadVolume{T, typeof(geom)}("dead", geom)
+    result = SolidStateDetectors.modulate_driftvector(sv, pt, dead_vol)
+    @test result == CartesianVector{T}(0,0,0)
+
+    result = SolidStateDetectors.modulate_driftvector(sv, pt, missing)
+    @test result == sv
+end
+
+@timed_testset "NBodyChargeCloud Units" begin
+
+    cartesian_unit = CartesianPoint(0.01u"m", 0.0u"m", 0.05u"m")
+    cartesian_float = CartesianPoint(0.01, 0.0, 0.05)
+    cylindrical_unit = CylindricalPoint(0.01u"m", (π/4)u"rad", 0.05u"m")
+    cylindrical_float = CylindricalPoint(0.01, π/4, 0.05)
+    Edep = 1u"MeV"
+    
+    # Variant 1: CartesianPoint with Units, energy
+    nb1 = NBodyChargeCloud(cartesian_unit, Edep)
+    @test all(x -> x isa CartesianPoint, nb1.locations)
+    @test isapprox(sum(nb1.energies), ustrip.(u"eV", Edep))
+
+    # Variant 2: CylindricalPoint with Units, energy
+    nb2 = NBodyChargeCloud(cylindrical_unit, Edep)
+    @test all(x -> x isa CartesianPoint, nb2.locations)
+    @test isapprox(sum(nb2.energies), ustrip.(u"eV", Edep))
+
+    # Variant 3: CartesianPoint with Units, energy, N
+    nb3 = NBodyChargeCloud(cartesian_unit, Edep, 10, radius = 0.001, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb3.locations)
+    @test length(nb3.locations) >= 10
+    @test isapprox(sum(nb3.energies), ustrip.(u"eV", Edep))
+
+    # Variant 4: CylindricalPoint with Units, energy, N
+    nb4 = NBodyChargeCloud(cylindrical_unit, Edep, 10, radius = 0.001, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb4.locations)
+    @test length(nb4.locations) >= 10
+    @test isapprox(sum(nb4.energies), ustrip.(u"eV", Edep))
+
+    # Edge case, zero radius
+    nb_zero = NBodyChargeCloud(cartesian_float, Edep, 5, radius = 0.0, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb_zero.locations)
+    @test all(x -> x == nb_zero.locations[1], nb_zero.locations)  # all points coincide at the center
+    @test isapprox(sum(nb_zero.energies), ustrip.(u"eV", Edep))
+    @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero.locations)
+
+    nb_zero_cyl = NBodyChargeCloud(cylindrical_float, Edep, 5, radius = 0.0, number_of_shells = 1)
+    @test all(x -> x isa CartesianPoint, nb_zero_cyl.locations)
+    @test all(x -> x == nb_zero_cyl.locations[1], nb_zero_cyl.locations) 
+    @test isapprox(sum(nb_zero_cyl.energies), ustrip.(u"eV", Edep))
+    @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero_cyl.locations)
 end

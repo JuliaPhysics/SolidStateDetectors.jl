@@ -44,14 +44,20 @@ given by a center charge surrounded by shells consisting of platonic solids.
 
 ## Example
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 NBodyChargeCloud(center, energy, number_of_shells = 3, shell_structure = SolidStateDetectors.Icosahedron)
 ```
 
 !!! note
-    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
+function NBodyChargeCloud(center::Union{<:CartesianPoint{<:Unitful.Quantity},<:CylindricalPoint{<:Union{SSDFloat, Unitful.Quantity}}},
+    energy::RealQuantity; kwargs...)
+    internal_center = to_internal_units(center)
+    return NBodyChargeCloud(internal_center, energy; kwargs...)
+end
+
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2, shell_structure = Dodecahedron
     )::NBodyChargeCloud{T, number_of_shells, typeof(shell_structure{T})} where {T, PT <: ParticleType}
@@ -113,14 +119,20 @@ Find the algorithm to create the shells [here](https://www.cmu.edu/biolphys/dese
 
 ## Example
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 NBodyChargeCloud(center, energy, 200, number_of_shells = 3)
 ```
 
 !!! note
-    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/PainterQubits/Unitful.jl).
+    Using values with units for `energy` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
+function NBodyChargeCloud(center::Union{<:CartesianPoint{<:Unitful.Quantity},<:CylindricalPoint{<:Union{SSDFloat, Unitful.Quantity}}},
+    energy::RealQuantity, N::Integer; kwargs...)
+    internal_center = to_internal_units(center)
+    return NBodyChargeCloud(internal_center, energy, N; kwargs...)
+end
+
 function NBodyChargeCloud(center::CartesianPoint{T}, energy::RealQuantity, N::Integer, particle_type::Type{PT} = Gamma;
         radius::T = radius_guess(T(to_internal_units(energy)), particle_type), number_of_shells::Int = 2,
     )::NBodyChargeCloud{T, number_of_shells, NTuple{N > 1 ? number_of_shells : 0, Int}} where {T, PT <: ParticleType}

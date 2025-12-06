@@ -45,7 +45,7 @@ medium: vacuum
 detectors:
   - semiconductor:
       material: HPGe
-      temperature: 78
+      temperature: 95
       impurity_density:
         name: cylindrical
         r:

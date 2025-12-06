@@ -29,11 +29,6 @@ end
     include("test_charge_drift_models.jl")
 end
 
-@timed_testset "Fano factor" begin
-    
-
-end
-
 @timed_testset "Isochrone" begin
     include("test_isochrone.jl")
 end
@@ -56,6 +51,10 @@ end
 
 @timed_testset "Test position-dependent diffusion" begin
     include("test_diffusion.jl")
+end
+
+@timed_testset "Test platonic solids" begin
+    include("test_platonic_solids.jl")
 end
 
 @timed_testset "Geant4 extension" begin

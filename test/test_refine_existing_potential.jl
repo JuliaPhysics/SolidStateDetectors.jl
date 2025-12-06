@@ -4,10 +4,10 @@ using Test
 T = Float32
 
 @timed_testset "Test simulating in two refinement steps" begin
-    sim = Simulation{T}("BEGe_01.yaml")
+    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
     timed_calculate_electric_potential!(sim, refinement_limits = [0.2, 0.1], depletion_handling = true)
 
-    sim2 = Simulation{T}("BEGe_01.yaml")
+    sim2 = Simulation{T}("test_config_files/BEGe_01.yaml")
     timed_calculate_electric_potential!(sim2, refinement_limits = [0.2], depletion_handling = true)
     timed_calculate_electric_potential!(sim2, refinement_limits = [0.1], depletion_handling = true, initialize = false)
 

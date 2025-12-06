@@ -27,7 +27,7 @@ In order to set the `ElectricFieldChargeDriftModel` for the simulation, the prec
 
 ```julia
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
-charge_drift_model = ElectricFieldChargeDriftModel(T)
+charge_drift_model = ElectricFieldChargeDriftModel(T=T)
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 ```
 
@@ -44,7 +44,7 @@ On each axes, $v_{l}$ can be described through the parametrization proposed by [
 v_l = \frac{\mu_0 E}{(1 + (E/E_0 )^{\beta})^{1/ \beta}} - \mu_{n} E.
 ```
 
-The parameters $\mu_{0}$, $E_{0}$ and $\beta$ differ for electrons and holes, and $\mu_{n}$ is only relevant for electrons. These parameters were obtained by [B. Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) by measuring the drift velocities of electrons and holes in the $\langle$100$\rangle$ and $\langle$111$\rangle$ directions in high purity germanium at a temperature of 78 K. These parameters are stored in a configuration file, "drift\_velocity\_config.yaml", located in `<package_directory>/example/example_config_files/ADLChargeDriftModel`. The configuration file is expressed as following:
+The parameters $\mu_{0}$, $E_{0}$ and $\beta$ differ for electrons and holes, and $\mu_{n}$ is only relevant for electrons. These parameters were obtained by [B. Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) in 2006 and by [B. Bruyneel et al.](https://link.springer.com/article/10.1140/epja/i2016-16070-9) in 2016 by measuring the drift velocities of electrons and holes in the $\langle$100$\rangle$ and $\langle$111$\rangle$ directions in high purity germanium at a temperature of 77 K. These parameters are stored in a configuration file, "drift\_velocity\_config.yaml" and "drift\_velocity\_config\_2016.yaml" respectively, located in `<package_directory>/example/example_config_files/ADLChargeDriftModel`. The configuration file is expressed as following:
 
 
 ```yaml
@@ -75,22 +75,61 @@ drift:
         E0: 182V/cm
 ```
 
-where the parameters are stored under the keys `e100`, `e111`, `h100` and `h111`, in which `e` and `h` stand for electrons and holes, respectively, and `100` and `111`, for the principal axes $\langle$100$\rangle$ and $\langle$111$\rangle$. 
+where the parameters are stored under the keys `e100`, `e111`, `h100` and `h111`, in which `e` and `h` stand for electrons and holes, respectively, and `100` and `111`, for the principal axes $\langle$100$\rangle$ and $\langle$111$\rangle$. In the 2016 publication, no `e111` is given, instead the electron inter valley scattering rate is given. With these parameters the drift velocity can be calculated for the other axes.
+
+```yaml
+model: ADL2016ChargeDriftModel
+phi110: -45°
+material: HPGe
+drift:
+  velocity:
+    model: Bruyneel2016
+    parameters:
+      e100:
+        mu0: 37165cm^2/(V*s)
+        beta: 0.804
+        E0: 507.7V/cm
+        mun: -145cm^2/(V*s)
+      escattering:
+        eta0: 0.496
+        b: 0.0296
+        Eref: 1200V/cm
+      h100:
+        mu0: 62934cm^2/(V*s)
+        beta: 0.735
+        E0: 181.9V/cm
+      h111:
+        mu0: 62383cm^2/(V*s)
+        beta: 0.749
+        E0: 143.9V/cm
+```
+
 By default, in `SolidStateDetectors.jl` the $\langle$001$\rangle$ axis is aligned with the Z-axis of the coordinate system of the simulation. The crystal orientation can be set through the `phi110` parameter, where the $\langle$001$\rangle$ axis is still aligned with the Z-axis and the angle between the $\langle$110$\rangle$ principal direction of the crystal and the X-axis is given by `phi110`. Alternatively, the crystal orientation can be set by passing a rotation matrix that describes the rotation from the global coordinate system to the crystal orientation system.
 
 
 If the electric field is not aligned with any of the crystal axes, the charge drift velocity is not necessarily aligned with the electric field. In the [`ADLChargeDriftModel`](@ref), two models are implemented to describe the charge drift of electrons and holes between the axes. Detailed information about the charge drift models is provided in the papers from [L. Mihailescu et al. ](https://www.sciencedirect.com/science/article/pii/S0168900299012863) for electrons and from [B.Bruyneel et al.](https://www.sciencedirect.com/science/article/pii/S0168900206015166) for holes. Find the detailed calculations and modifications from the publications as implemented in SolidStateDetectors.jl [here](../assets/ADLChargeDriftModel.pdf).
 
 
-In order to perform the calculation of the drift velocities, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` function. The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
+In order to perform the calculation of the drift velocities, a configuration file containing the parametrization values like the "drift\_velocity\_config.yaml" (with Bruyneel's data or modified values), has to be passed as an argument to the `ADLChargeDriftModel` or `ADL2016ChargeDriftModel` function. The precision of the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
 
 ```julia
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
-charge_drift_model = ADLChargeDriftModel("<path_to_ADL_configuration_file>", T=T)
+charge_drift_model = ADL2016ChargeDriftModel("<path_to_ADL_configuration_file>", T=T)
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 ```
 
+Default constructors such as `ADL2016ChargeDriftModel()` and `ADL2016ChargeDriftModel(T=T)` are also available. These automatically load the parameters from the files in `<package_directory>/example/example_config_files/ADLChargeDriftModel`
+
 The `ÀDLChargeDriftModel` can also be specified already in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
+```yaml 
+detectors:
+  semiconductor:
+    # ...
+    charge_drift_model:
+        include: ADLChargeDriftModel/drift_velocity_config_2016.yaml
+```
+or
+
 ```yaml 
 detectors:
   semiconductor:
@@ -121,19 +160,49 @@ The `charge_drift_model` needs:
 - `material` (optional): the semiconductor material. If no material is given, the `material` of the semiconductor is taken by default.
 - `drift`: the parameters needed to describe the longitudinal drift velocity along the $\langle$100$\rangle$ and $\langle$111$\rangle$ axes, see above.
 
-The values from the default configuration file correspond to germanium at 78 K. Calculations of the drift velocities at other temperatures are also supported by the `ADLChargeDriftModel`. While experimental observations suggest that the charge mobilities of electrons and holes in the crystal are temperature dependent, the dependency law has not yet been established. Several models have been proposed to reproduce the experimental behavior, and some examples of them can be found in the directory `<package_directory>/src/ChargeDriftModels/ADL/`. The examples include a linear model, a Boltzmann model and a power-law model. To use these models in the calculation of the drift velocities, the corresponding configuration file, the temperature and the precision must be given to the function. As an example, in order to use the Boltzmann model at a temperature of 100 K:
+The values from the default configuration file correspond to germanium at 77 K. Calculations of the drift velocities at other temperatures are also supported by the `ADLChargeDriftModel`. A parametrization for the temperature dependence of drift velocity, as a function of the electric 
+field strength, $E$, was proposed by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633):
+```math
+\quad\mu_0(T) = A/T^P~, \quad V_s(T) = B\tanh^{1/2}(\theta/2T) 
+```
+Note that the saturation velocity, $V_s$, is related to $E_0$ via
+```math
+E_0(T) = V_s(T)/\mu_0(T)
+```
+The four parameters, $A$, $P$, $B$, $\theta$, are different for electrons and holes. 
+This model can be used to scale the $\mu_{0}$ and $E_{0}$ parameters of the `ADLChargeDriftModel` directly as follows:
+```math
+\mu_0(T) = \mu_0(77K) \left(\frac{T}{77K}\right)^{-P}~, \quad E_0(T) = E_0(77K) \sqrt{\frac{\tanh(\theta/2T)}{\tanh(\theta/2 \cdot 77K)}} \frac{\mu_0(77K)}{\mu_0(T)}
+```
+
+The implementation of the model can be found in the directory `<package_directory>/src/ChargeDriftModels/ADLChargeDriftModel/TemperatureModels`. To use this in the calculation of the drift velocities, the corresponding configuration file, the temperature and the precision must be given to the function.
 
 ```julia
 T = SolidStateDetectors.get_precision_type(sim) # e.g. Float32
-charge_drift_model = ADLChargeDriftModel("<path_to_drift_velocity_config_boltzmann.yaml>", T = T, temperature = 100) 
+charge_drift_model = ADL2016ChargeDriftModel("<path_to_ADL_configuration_file>", T = T, temperature = 100u"K") 
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 ```
 
 
-If no temperature is given as a parameter, the calculations will be performed at a default temperature of 78 K.
+If no temperature is given as a parameter, the calculations will be performed at a default temperature of 77 K. If no configuration file is given, the default config file `<package_directory>/example/example_config_files/ADLChargeDriftModel/drift_velocity_config_2016.yaml` is loaded. In charge drift configuration files, the M.A. Omar and L. Reggiani parametrization can be used by adding the following `temperature_dependence` field like this:
 
-It should be noted that the correct model has not yet been identified, and the parameters inside these configuration files -besides the default ADL ones- are just educated guesses.
+```yaml
+temperature_dependence:
+  reference_temperature: 77K
+  model: Omar1987
+  parameters:
+    e:
+      p: 1.68
+      theta: 200K
+    h:
+      p: 2.4
+      theta: 200K
+```
 
+For convenience, this model can already be found in the `drift_velocity_config.yaml` and `drift_velocity_config_2016.yaml` example config files. 
+
+!!! note
+    The default parameters used in this model were calculated by [M.A. Omar and L. Reggiani](https://www.sciencedirect.com/science/article/pii/0038110187900633) before the publication of the `ADLChargeDriftModel` parameters, with $\beta = 2$. Thus, the use of this model to scale the drift parameters in `ADLChargeDriftModel` or `ADL2016ChargeDriftModel` is considered experimental. 
 
 ### Inactive Layer Charge Drift Model
 
@@ -141,7 +210,7 @@ The [`InactiveLayerChargeDriftModel`](@ref) describes a system in which electron
 
 The mobilities are calculated considering three major scattering process: scattering off ionized impurities, neutral impurities and acoustic phonons. Thus, the mobilities depend on the impurity concentrations and temperature.
 
-The precision of the the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
+The precision of the calculation `T` (`Float32` or `Float64`) has to be given as a keyword `T`. Note that `T` has to be of the same type as the chosen in the simulation:
 
 The `InactiveLayerChargeDriftModel` can be specified in the configuration file as field `charge_drift_model` of the `semiconductor` of a detector, e.g.
 
@@ -416,7 +485,7 @@ using SolidStateDetectors #hide
 using Unitful #hide
 using Plots #hide
 T = Float64 #hide
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy)
 plot(nbcc)
@@ -428,7 +497,7 @@ plot(nbcc, color = :red, size = (500,500), xlims = (-0.0012, 0.0012), ylims = (-
 For an [`NBodyChargeCloud`](@ref) consisting of more than around 50 charges, the shells should consist of more than 20 point charges and the approach with using [Platonic Solids](@ref) for the shell structure might not be favored anymore. For this, a [second algorithm](https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf) was implemented that generates point charges equally distributed on the surface of a regular sphere. The approximate number of charges needs to be passed to the constructor of [`NBodyChargeCloud`](@ref) to use this method.
 
 ````@example NBodyChargeCloud
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 plot(nbcc)
@@ -441,11 +510,11 @@ plot(nbcc, color = :red, size = (500,500), xlims = (-0.0012, 0.0012), ylims = (-
 Diffusion describes the random thermal motion of charge carriers. In SolidStateDetectors.jl, diffusion is simulated using a random walk algorithm. Diffusion is simulated using fixed-step vectors where the magnitude of the step vectors depends on the diffusion constant $D$ and the time steps $\Delta t$.
 
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
-simulate!(evt, sim, diffusion = true)
+simulate!(evt, sim, diffusion = true, end_drift_when_no_field = true)
 ```
 ![Diffusion](../assets/diffusion.gif)
 
@@ -478,11 +547,11 @@ After the creation electron-hole pairs, both the electron and the hole clouds re
 SolidStateDetectors.jl does not account for attraction of electron and holes but only for repulsion of charge carriers of the same type. The determination of the electric field vector is calculated pair-wise for each pair of charge carriers.
 
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
-simulate!(evt, sim, self_repulsion = true)
+simulate!(evt, sim, self_repulsion = true, end_drift_when_no_field = true)
 ```
 ![SelfRepulsion](../assets/self_repulsion.gif)
 
@@ -491,11 +560,11 @@ simulate!(evt, sim, self_repulsion = true)
 
 [Diffusion](@ref) and [Self-Repulsion](@ref) can be simulated both at once to get the most realistic picture:
 ```julia
-center = CartesianPoint{T}([0,0,0])
+center = CartesianPoint{T}(0,0,0)
 energy = 1460u"keV"
 nbcc = NBodyChargeCloud(center, energy, 100)
 evt = Event(nbcc)
-simulate!(evt, sim, diffusion = true, self_repulsion = true)
+simulate!(evt, sim, diffusion = true, self_repulsion = true, end_drift_when_no_field = true)
 ```
 ![GroupEffects](../assets/group_effects.gif)
 

@@ -1,6 +1,9 @@
 using Test
 using SolidStateDetectors
 using StaticArrays
+using LinearAlgebra
+using Rotations
+using Unitful
 
 import SolidStateDetectors.ConstructiveSolidGeometry as CSG
 import SolidStateDetectors.ConstructiveSolidGeometry: Geometry, Dictionary
@@ -89,6 +92,99 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         tuple_cone = @inferred CSG.Cone{Float64}(φ=(π/4,3*π/4), rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
         rot_cone = @inferred CSG.Cone{Float64}(φ=π/2, rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0) * SMatrix{3}(cos(π/4),sin(π/4),0,-sin(π/4),cos(π/4),0,0,0,1))
         @test tuple_cone ==rot_cone
+
+        # PartialCylinder (OpenPrimitive)
+        pc_open = CSG.Cone(CSG.OpenPrimitive, r = convert(T, 1.0), φ = convert(T, π/2), hZ = convert(T, 1.0))
+        @test CSG._in(CartesianPoint{T}(0.5, 0.2, 0.0), pc_open)
+        @test !CSG._in(CartesianPoint{T}(1.1, 0.0, 0.0), pc_open)
+        @test !CSG._in(CartesianPoint{T}(-0.5, -0.2, 0.0), pc_open)
+        @test !CSG._in(CartesianPoint{T}(0.5, 0.0, 1.0), pc_open)
+        
+        # VaryingCylinder (ClosedPrimitive)
+        vc_closed = CSG.Cone{T}(r = ((convert(T,1.0),), (convert(T,3.0),)), φ = nothing, hZ = convert(T,2.0))
+        @test CSG._in(CartesianPoint{T}(1.9, 0.0, 0.0), vc_closed)
+        @test !CSG._in(CartesianPoint{T}(2.1, 0.0, 0.0), vc_closed)
+        @test CSG._in(CartesianPoint{T}(1.0, 0.0, -2.0), vc_closed)
+        @test CSG._in(CartesianPoint{T}(3.0, 0.0, 2.0), vc_closed)
+        
+        # VaryingCylinder (OpenPrimitive)
+        vc_open = CSG.Cone(CSG.OpenPrimitive, r = ((convert(T,1.0),), (convert(T,3.0),)), φ = nothing, hZ = convert(T,2.0))
+        @test !CSG._in(CartesianPoint{T}(2.0, 0.0, 0.0), vc_open)
+        @test CSG._in(CartesianPoint{T}(1.9, 0.0, 0.0), vc_open)
+        @test !CSG._in(CartesianPoint{T}(3.0, 0.0, 2.0), vc_open)
+        
+        # PartialVaryingCylinder (ClosedPrimitive)
+        pvc_closed = CSG.Cone{T}(r = ((convert(T,1.0),), (convert(T,2.0),)), φ = convert(T, π), hZ = convert(T, 1.0))
+        @test CSG._in(CartesianPoint{T}(1.4, 0.1, 0.0), pvc_closed)
+        @test !CSG._in(CartesianPoint{T}(1.6, 0.0, 0.0), pvc_closed)
+        @test !CSG._in(CartesianPoint{T}(1.0, -0.1, 0.0), pvc_closed)
+        
+        # PartialVaryingCylinder (OpenPrimitive)
+        pvc_open = CSG.Cone(CSG.OpenPrimitive, r = ((convert(T,1.0),), (convert(T,2.0),)), φ = convert(T, π), hZ = convert(T, 1.0))
+        @test !CSG._in(CartesianPoint{T}(1.5, 0.0, 0.0), pvc_open)
+        @test CSG._in(CartesianPoint{T}(1.4, 0.1, 0.0), pvc_open)
+        
+        # PartialVaryingTube (OpenPrimitive)
+        pvt_open = CSG.Cone(CSG.OpenPrimitive, r = ((convert(T,1.0), convert(T,2.0)), (convert(T,1.5), convert(T,2.5))), φ = convert(T, π/2), hZ = convert(T, 1.0))
+        @test CSG._in(CartesianPoint{T}(1.6, 0.2, 0.0), pvt_open)
+        @test !CSG._in(CartesianPoint{T}(1.1, 0.0, 0.0), pvt_open)
+        @test !CSG._in(CartesianPoint{T}(2.6, 0.0, 0.0), pvt_open)
+        @test !CSG._in(CartesianPoint{T}(1.6, -0.2, 0.0), pvt_open)
+        
+        # Upward cones
+        r_up_closed = ((nothing, convert(T,0.0)), nothing)
+        r_up_open   = ((nothing, convert(T,0.1)), nothing)
+        φ_up = nothing
+        h_up = convert(T, 1.0)
+        origin = CartesianPoint{T}(0.0, 0.0, 0.0)
+        rotation = SMatrix{3,3,T}(I)
+
+        # Closed UpwardCone
+        upward_closed = CSG.UpwardCone{T, CSG.ClosedPrimitive}(r_up_closed, φ_up, h_up, origin, rotation)
+        @test CSG._in(CartesianPoint{T}(0.0, 0.0, 0.5), upward_closed)
+        @test !CSG._in(CartesianPoint{T}(0.0, 0.0, 1.1), upward_closed)
+        @test !CSG._in(CartesianPoint{T}(2.0, 0.0, 0.5), upward_closed)
+        @test length(CSG.surfaces(upward_closed)) > 0
+        
+        # Open UpwardCone
+        upward_open = CSG.UpwardCone{T, CSG.OpenPrimitive}(r_up_open, φ_up, h_up, origin, rotation)
+        @test CSG._in(CartesianPoint{T}(0.0, 0.0, 0.5), upward_open)
+        @test !CSG._in(CartesianPoint{T}(0.0, 0.0, 1.0), upward_open)
+        @test !CSG._in(CartesianPoint{T}(2.0, 0.0, 0.5), upward_open)
+        @test length(CSG.surfaces(upward_open)) > 0
+        
+        # PartialUpwardCone
+        φ_puc = convert(T, π)
+        h_puc = convert(T, 1.0)
+        r_puc_closed = ((nothing, convert(T,0.1)), nothing)
+        r_puc_open   = ((nothing, convert(T,0.5)), nothing)
+        
+        puc_closed = CSG.PartialUpwardCone{T, CSG.ClosedPrimitive}(r_puc_closed, φ_puc, h_puc, origin, rotation)
+        puc_open   = CSG.PartialUpwardCone{T, CSG.OpenPrimitive}(r_puc_open, φ_puc, h_puc, origin, rotation)
+        
+        z_test = convert(T, 0.1)
+        r_max_closed = CSG.radius_at_z(puc_closed.hZ, puc_closed.r[1][2], zero(T), z_test)
+        r_max_open   = CSG.radius_at_z(puc_open.hZ,   puc_open.r[1][2], zero(T), z_test)
+        
+        # Points inside the cone
+        r_inside_closed = r_max_closed * 0.5
+        r_inside_open   = r_max_open   * 0.5
+
+        # ---- Closed cone tests ----
+        @test CSG._in(CartesianPoint{T}(r_inside_closed, 0.0, z_test), puc_closed)
+        @test !CSG._in(CartesianPoint{T}(r_max_closed * 1.1, 0.0, z_test), puc_closed)
+        @test !CSG._in(CartesianPoint{T}(r_inside_closed, -0.1, z_test), puc_closed)
+        
+        # ---- Open cone tests ----
+        x_inside_open = r_inside_open * cos(T(0.1))  # small angle inside φ range
+        y_inside_open = r_inside_open * sin(T(0.1))
+        @test CSG._in(CartesianPoint{T}(x_inside_open, y_inside_open, z_test), puc_open)
+        @test !CSG._in(CartesianPoint{T}(r_max_open * 1.1, 0.0, z_test), puc_open)
+        @test !CSG._in(CartesianPoint{T}(r_inside_open/2, -0.1, z_test), puc_open)
+        
+        surfs = CSG.surfaces(puc_open)
+        @test length(surfs) > 0
+        @test all(x -> x !== nothing, surfs)
     end
     @testset "Torus" begin
         for r_tube in (2.0, Dict("from" => 1.0, "to" => 2.0)), 
@@ -163,6 +259,60 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         tuple_torus = @inferred CSG.Torus{Float64}(φ=(π/4,3*π/4),θ=nothing,rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0))
         rot_torus = @inferred CSG.Torus{Float64}(φ=π/2,θ=nothing,rotation=SMatrix{3}(0,0,-1,0,1,0,1,0,0) * SMatrix{3}(cos(π/4),sin(π/4),0,-sin(π/4),cos(π/4),0,0,0,1))
         @test tuple_torus ==rot_torus
+
+        @testset "_in" begin
+            r_torus, r_tube = 5.0, (1.0, 2.0)
+            origin = CartesianPoint(0.0, 0.0, 0.0)
+            rot = RotX(0.0)
+            
+            # Hollow OpenPrimitive Torus
+            t_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, nothing, origin, rot)
+            
+            # Point safely inside tube (avoid boundaries due to csgtol)
+            rmin, rmax = r_tube
+            safe_r = (rmin + rmax) / 2
+            pt_inside = CartesianPoint(r_torus + safe_r, 0.0, 0.0)
+            @test CSG._in(pt_inside, t_open)
+            
+            # Point outside radially   
+            pt_out_rad = CartesianPoint(r_torus + rmax + 1.0, 0.0, 0.0)
+            @test !CSG._in(pt_out_rad, t_open)
+            # Hollow OpenPrimitive with φ restriction
+            t_phi = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, (0.0, π/2), nothing, origin, rot)
+            pt_out_phi = CartesianPoint(-r_torus - safe_r, 0.0, 0.0) # φ = π, outside
+            @test !CSG._in(pt_out_phi, t_phi)
+
+            # Hollow OpenPrimitive with θ restriction
+            t_theta = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, (0.0, π/4), origin, rot)
+            # Point with z above allowed θ
+            pt_out_theta = CartesianPoint(r_torus + safe_r, 0.0, rmax + 1.0)
+            @test !CSG._in(pt_out_theta, t_theta)
+        end
+        @testset "surfaces" begin
+            r_torus, r_tube = 5.0, 1.0
+	    φ, θ = π/2, π/4
+            origin = CartesianPoint(0.0, 0.0, 0.0)
+            rot = RotX(0.0)
+
+            # FullThetaTorus ClosedPrimitive
+            t_closed = CSG.Torus{Float64, CSG.ClosedPrimitive}(r_torus, r_tube, nothing, nothing, origin, rot)
+            s = CSG.surfaces(t_closed)
+            @test length(s) == 1
+
+            # FullThetaTorus OpenPrimitive                                                 
+            t_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, nothing, origin, rot)
+            s_open = CSG.surfaces(t_open)
+            @test length(s_open) == 1
+            # HollowThetaTorus ClosedPrimitive
+            t_hollow = CSG.Torus{Float64, CSG.ClosedPrimitive}(r_torus, (0.5,1.0), (0.0, φ), (0.0, θ), origin, rot)
+            s_hollow = CSG.surfaces(t_hollow)
+            @test length(s_hollow) == 6
+            
+            # HollowThetaTorus OpenPrimitive
+            t_hollow_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, (0.5,1.0), (0.0, φ), (0.0, θ), origin, rot)
+            s_hollow_open = CSG.surfaces(t_hollow_open)
+            @test length(s_hollow_open) == 6
+        end
     end    
     @testset "Polycone" begin
         polycone1 = CSG.Polycone(CSG.ClosedPrimitive,r=Float32[0,2,4,0,0],z=Float32[0,1,2,3,0],origin=zero(CartesianPoint{Float16}),rotation=one(SMatrix{3, 3, Float16, 9}))
@@ -220,6 +370,15 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !in(CartesianPoint{Float64}(1,1,3),box_open_trafo)
         @test !in(CartesianPoint{Float64}(1,1,3+tol),box_closed_trafo)
         @test in(CartesianPoint{Float64}(1,1,3-tol),box_open_trafo)
+
+        # Test Volume Primitives
+        pt_outside = CartesianPoint{Float32}(3, 0, 0)
+        pt_inside  = CartesianPoint{Float32}(0.5, 0, 0)
+        # Expected distances
+        expected_distance_outside = 2.0f0  # nearest face along x
+        expected_distance_inside  = 0.5f0  # nearest face along x
+        @test CSG.distance(pt_outside, box2) ≈ expected_distance_outside
+        @test CSG.distance(pt_inside, box2) ≈ expected_distance_inside
     end
     @testset "RegularPrism" begin
         prism1 = @inferred CSG.RegularPrism{3}(CSG.ClosedPrimitive,r=1f0, hZ = 2f0)
@@ -263,15 +422,74 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @inferred CSG.RegularPrism{4,Float32}()
         @inferred CSG.RegularPrism{5,Float32}()
         @inferred CSG.RegularPrism{6,Float32}()
-	  end
+    end
     @testset "EllipsoidMantle" begin
-        CSG.EllipsoidMantle{Float32}(r = 1f0)
+        em = CSG.EllipsoidMantle{Float32}(r = 1f0)
         CSG.EllipsoidMantle() 
-	  end
+
+        # Point on the surface
+        pt = CartesianPoint{Float32}(1f0, 0f0, 0f0)
+
+        # Test normal
+        normal_vec = CSG.normal(em, pt)
+        @test isa(normal_vec, CartesianVector{Float32})
+        @test abs(norm(normal_vec) - 1f0) < 1e-5  # normalized
+        
+        # Test vertices
+        verts = CSG.vertices(em, 8)
+        @test isa(verts, Vector{CartesianPoint{Float32}})
+        @test length(verts) > 0
+	
+	# Test sample
+        samples = CSG.sample(em, 0.1f0)
+        @test isa(samples, Vector{CartesianPoint{Float32}})
+        @test length(samples) > 0
+    end
     @testset "EllipticalSurface" begin
         @inferred CSG.EllipticalSurface{Float32}(r = 1f0)
         @inferred CSG.EllipticalSurface()
         @inferred CSG.EllipticalSurface(φ=(1.,2.))    
+
+        es_full    = CSG.EllipticalSurface{Float32}(r=1f0)
+        es_partial = CSG.EllipticalSurface{Float32}(r=1f0, φ=Float32(π/2))
+        es_annulus = CSG.EllipticalSurface{Float32}(r=(0.5f0, 1f0))
+
+        verts_full = CSG.vertices(es_full, 8)
+        @test isa(verts_full, Vector{CartesianPoint{Float32}})
+        @test length(verts_full) == 10
+
+        verts_annulus = CSG.vertices(es_annulus, 8)
+        @test isa(verts_annulus, Vector{CartesianPoint{Float32}})
+        @test length(verts_annulus) == 2*9
+
+        samples_full = CSG.sample(es_full, 0.1f0)
+        @test isa(samples_full, Vector{CartesianPoint{Float32}})
+        @test length(samples_full) > 0
+
+        samples_annulus = CSG.sample(es_annulus, 0.1f0)
+        @test isa(samples_annulus, Vector{CartesianPoint{Float32}})
+        @test length(samples_annulus) > 0
+
+        circ, edges = CSG.lines(CSG.EllipticalSurface(r=1f0, φ=Float32(π/2)))
+        @test isa(circ, CSG.Ellipse{Float32, Float32, Float32})
+        @test all(isa.(edges, CSG.Edge{Float32}))
+
+        p_inside = CartesianPoint{Float32}(0.5f0, 0f0, 0f0)
+        p_outside = CartesianPoint{Float32}(1.5f0, 0f0, 0f0)
+        @test CSG._in_cyl_r(p_inside, 1f0)
+        @test !CSG._in_cyl_r(p_outside, 1f0)
+        @test CSG._in_cyl_r(p_inside, (0.2f0, 0.6f0))
+        @test !CSG._in_cyl_r(p_outside, (0.2f0, 0.6f0))
+
+        pt = CartesianPoint{Float32}(1f0, 0f0, 0f0)
+        dist_full = CSG.distance_to_surface(pt, es_full)
+        @test isa(dist_full, Float32)
+        @test dist_full ≈ 0f0 atol=1e-5
+
+        pt_off = CartesianPoint{Float32}(1.5f0, 0f0, 0f0)
+        dist_annulus = CSG.distance_to_surface(pt_off, es_annulus)
+        @test isa(dist_annulus, Float32)
+        @test dist_annulus > 0f0
     end
     @testset "Plane" begin
         plane1 = @inferred CSG.Plane{Float32}(normal = CartesianVector(1,0,0))
@@ -282,22 +500,215 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         CSG.ConeMantle{Float32}(r = 1f0)
         CSG.ConeMantle()
         CSG.ConeMantle(φ=(1.,2.))    
+
+        cm_out = CSG.ConeMantle{Float32}( :outwards; r=(1f0, 2f0), φ=nothing, hZ=1f0 )
+        cm_in  = CSG.flip(cm_out)
+
+        pt_top    = CartesianPoint{Float32}(0, 1.5f0, 1.0f0)      # near top radius
+        pt_bottom = CartesianPoint{Float32}(0, 0.5f0, -1.0f0)     # near bottom radius
+        pt_mid    = CartesianPoint{Float32}(1.0f0, 0, 0.0f0)        # mid cone height
+
+        normal_out = CSG.normal(cm_out, pt_mid)
+        normal_in  = CSG.normal(cm_in, pt_mid)
+
+        @test isa(normal_out, CartesianVector{Float32})
+        @test isa(normal_in, CartesianVector{Float32})
+        # inwards vs outwards should point opposite
+        @test dot(normal_out, normal_in) ≈ -1f0 atol=1e-5
+        
+        n_arc = 8
+        verts = CSG.vertices(cm_out, n_arc)
+        @test isa(verts, Vector{CartesianPoint{Float32}})
+        @test length(verts) == 2*(n_arc + 1)   # bottom + top circle points
+        
+        # All vertices should lie approximately on their respective radius circles
+        r_bot = CSG.radius_at_z(cm_out, -cm_out.hZ)
+        r_top = CSG.radius_at_z(cm_out, cm_out.hZ)
+        for (i, v) in enumerate(verts)
+            if i <= n_arc+1
+                @test abs(norm(CartesianVector(v.x, v.y, 0)) - r_bot) < 1e-5
+            else
+                @test abs(norm(CartesianVector(v.x, v.y, 0)) - r_top) < 1e-5
+            end
+        end
+        
+        pts = CSG.sample(cm_out, Float32(1))
+        @test isa(pts, Vector{CartesianPoint{Float32}})
+        @test length(pts) >= 2  # must have at least 2 points
+        
+        # Check that all points are within height bounds
+        for pt in pts
+            @test -cm_out.hZ - 1e-5 ≤ pt.z ≤ cm_out.hZ + 1e-5
+        end
     end
     @testset "Ellipse" begin
-        ell1 = @inferred CSG.Ellipse{Float32}(r = 1f0, φ=10f0)
+        ell1 = @inferred CSG.Ellipse{Float32}(r = 1.0f0, φ=10.0f0)
         @inferred CSG.Ellipse{T}(r = (1,2))
-        ell2 = @inferred CSG.Ellipse(r = 1f0, φ=10f0) 
+        ell2 = @inferred CSG.Ellipse(r = 1.0f0, φ=10.0f0) 
         @test ell1 == ell2
     end
     @testset "Line" begin
         line1 = @inferred CSG.Line{Float32}()
         line2 = @inferred CSG.Line(direction = CartesianVector{Float32}(0,0,1)) 
         @test line1 == line2
+        
+        # Line along the x-axis, origin at (0,0,0)
+        a = CartesianPoint{T}(0,0,0)
+        b = CartesianPoint{T}(1,0,0)
+        l = CSG.Line(a, b)
+        
+        # Point on the line → distance = 0
+        pt_on_line = CartesianPoint{T}(2,0,0)
+        @test CSG.distance(pt_on_line, l) ≈ T(0)
+
+        # Point above the line in z direction → distance = 1
+        pt_above = CartesianPoint{T}(2,0,1)
+        @test CSG.distance(pt_above, l) ≈ T(1)
+        
+        # Point above the line in y direction → distance = 2
+        pt_side = CartesianPoint{T}(3,2,0)
+        @test CSG.distance(pt_side, l) ≈ T(2)
+        
+        # Line along arbitrary direction
+        a2 = CartesianPoint{T}(1,1,1)
+        b2 = CartesianPoint{T}(2,3,2)
+        l2 = CSG.Line(a2, b2)
+        pt2 = CartesianPoint{T}(3,1,1)
+        # Compute expected distance manually
+        v = pt2 - l2.origin
+        d_expected = norm(cross(v, l2.direction)) / norm(l2.direction)
+        @test CSG.distance(pt2, l2) ≈ d_expected 
     end
     @testset "Edge" begin
         edge1 = @inferred CSG.Edge{Float32}()
         edge2 = @inferred CSG.Edge(a = CartesianPoint{Float32}(0,0,0), b = CartesianPoint{Float16}(0,0,1)) 
         @test edge1 == edge2
+        
+        # Edge along x-axis
+        a = CartesianPoint{T}(0,0,0)
+        b = CartesianPoint{T}(1,0,0)
+        e = CSG.Edge(a, b)
+        
+        # Case 1: Point on the segment → distance = 0
+        pt_on = CartesianPoint{T}(0.5,0,0)
+        @test CSG.distance(pt_on, e) ≈ T(0)
+        
+        # Case 2: Point beyond b → distance = ||pt - b||
+        pt_beyond = CartesianPoint{T}(2,1,0)
+        @test CSG.distance(pt_beyond, e) ≈ norm(pt_beyond - b)
+        
+        # Case 3: Point before a → distance = ||pt - a||
+        pt_before = CartesianPoint{T}(-1,1,0)
+        @test CSG.distance(pt_before, e) ≈ norm(pt_before - a)
+        
+        # Case 4: Point off the segment but projection falls on segment
+        pt_off = CartesianPoint{T}(0.5,2,0)
+        v = b - a
+        expected = norm(cross(pt_off - a, v)) / norm(v)
+        @test CSG.distance(pt_off, e) ≈ expected
+        
+        e_vert = CSG.Edge(CartesianPoint{T}(0,0,0), CartesianPoint{T}(0,0,1))
+        pt_off_vert = CartesianPoint{T}(1,0,0.5)
+        @test CSG.distance(pt_off_vert, e_vert) ≈ T(1) 
+    end
+    @testset "Polygon" begin
+        # Simple square in xy-plane
+        pts = SVector(
+            CartesianPoint{T}(0,0,0),
+            CartesianPoint{T}(1,0,0),
+            CartesianPoint{T}(1,1,0),
+            CartesianPoint{T}(0,1,0)
+        )
+        poly = CSG.Polygon(pts)
+        tri = CSG.Triangle{T}([pts[1], pts[2], pts[3]])
+        
+        @testset "_sample_excluding_border" begin
+            samples = CSG._sample_excluding_border(tri, 0.2)
+            @test all(p -> p isa CartesianPoint{T}, samples)
+            @test all(p -> p[3] == 0, samples)  # xy-plane
+            @test length(samples) > 0
+        end
+        
+        @testset "sample" begin
+            samples = CSG.sample(poly, 0.3)
+            @test all(p -> p isa CartesianPoint{T}, samples)
+            @test all(p -> p[3] == 0, samples)
+            @test length(samples) > 0
+        end
+
+        @testset "distance" begin
+            p_inside  = CartesianPoint{T}(0.5,0.5,0)
+            p_above   = CartesianPoint{T}(0.5,0.5,1)
+            p_outside = CartesianPoint{T}(2,0.5,0)
+            
+            @test isapprox(CSG.distance(p_inside, poly), 0; atol=1e-12)
+            @test isapprox(CSG.distance(p_above,  poly), 1; atol=1e-12)
+            @test isapprox(CSG.distance(p_outside, poly), 1; atol=1e-12)
+        end
+
+        @testset "_get_rot_for_rotation_on_xy_plane" begin
+        poly_xy = CSG.Polygon(SVector(
+            CartesianPoint{T}(0,0,0),
+            CartesianPoint{T}(1,0,0),
+            CartesianPoint{T}(1,1,0),
+            CartesianPoint{T}(0,1,0),
+            ))
+            
+        rot_xy = CSG._get_rot_for_rotation_on_xy_plane(poly_xy)
+            
+            pts_tilted = SVector(
+                CartesianPoint{T}(0,0,0),
+                CartesianPoint{T}(1,0,1),
+                CartesianPoint{T}(1,1,1),
+                CartesianPoint{T}(0,1,0),
+            )
+            poly_tilted = CSG.Polygon(pts_tilted)
+            
+            rot = CSG._get_rot_for_rotation_on_xy_plane(poly_tilted)
+            # Rotated vertices should lie on z = 0
+            for v in (rot * (p - cartesian_zero) for p in pts_tilted)
+                @test abs(v[3]) ≤ 1e-12
+            end
+            
+            # Rotated normal should be (0,0,1)
+            n_rot = rot * SVector{3,T}(CSG.normal(poly_tilted)...)
+            @test isapprox(n_rot, SVector(0,0,1), atol=1e-12)
+        end
+       
+        @testset "in polygon" begin
+            # Inside point
+            p_in = CartesianPoint{T}(0.5, 0.5, 0)
+            @test CSG.in(p_in, poly)
+            
+            # Outside point
+            p_out = CartesianPoint{T}(1.5, 0.5, 0)
+            @test !CSG.in(p_out, poly)
+            
+            # On boundary
+            p_edge = CartesianPoint{T}(0.5, 0, 0)
+            @test CSG.in(p_edge, poly)   # on-edge should return true
+            
+            # Off the plane
+            p_above_plane = CartesianPoint{T}(0.5, 0.5, 1)
+            @test !CSG.in(p_above_plane, poly)
+
+            # Tilted Polygon
+            pts_tilted = SVector(
+                CartesianPoint{T}(0,0,0),
+                CartesianPoint{T}(1,0,1),
+                CartesianPoint{T}(1,1,1),
+                CartesianPoint{T}(0,1,0)
+            )
+            poly_tilt = CSG.Polygon(pts_tilted)
+            
+            # Inside projected area
+            p_in_tilted = CartesianPoint{T}(0.5, 0.5, 0.5)
+            @test CSG.in(p_in_tilted, poly_tilt)
+            
+            # Outside projected area
+            p_out_tilted = CartesianPoint{T}(2, 0.5, 1)
+            @test !CSG.in(p_out_tilted, poly_tilt)
+        end
     end
 end
 
@@ -305,4 +716,72 @@ end
     sim = Simulation{T}(SSD_examples[:InvertedCoax])
     c = sim.detector.contacts[2].geometry
     @test Geometry(T, Dictionary(c), default_units, no_translations) == c
+end
+
+@testset "Test geometry rounding" begin
+    pt = CartesianPoint{Float64}(1.23456789, 0.0, 1e-13)
+    rounded_pt = CSG.geom_round(pt)
+    
+    @test rounded_pt.x == 1.23456789
+    @test rounded_pt.y == 0.0
+    @test rounded_pt.z == 0.0
+    
+    pt32 = CartesianPoint{Float32}(1.2345678f0, Float32(1e-7), Float32(-1e-7))
+    rounded_pt32 = CSG.geom_round(pt32)
+    
+    @test rounded_pt32.x ≈ 1.234568f0
+    @test rounded_pt32.y == 0.0f0
+    @test rounded_pt32.z == 0.0f0
+        
+    pts = [CartesianPoint{Float64}(1e-13, 2.3456789, 0.0),
+           CartesianPoint{Float64}(0.123456789, 1e-14, -0.987654321)]
+    rounded_pts = CSG.geom_round(pts)
+    
+    @test rounded_pts[1].x == 0.0
+    @test rounded_pts[1].y ≈ 2.3456789
+    @test rounded_pts[1].z == 0.0
+    @test rounded_pts[2].x ≈ 0.123456789
+    @test rounded_pts[2].y == 0.0
+    @test rounded_pts[2].z ≈ -0.987654321
+end
+
+@testset "Geometry Test" begin
+    outer_transformations = (
+        rotation    = SMatrix{3,3,T}(I),
+        translation = CartesianVector{T}(1.0, 2.0, 3.0)
+    )
+    dict = Dict(
+        "Z" => π/2,
+        "box" => Dict(
+            "hX"        => 1.0,
+            "hY"        => 2.0,
+            "hZ"        => 3.0,
+            "translation" => CartesianVector{T}(4.0, 5.0, 6.0)
+        )
+    )
+    input_units = (angle  = u"rad", length = u"m")
+    geom = CSG.Geometry(T, CSG.Rotation, dict, input_units, outer_transformations)
+
+    primitive_translation_rotated = geom.rotation * dict["box"]["translation"]
+
+    expected_origin = CartesianPoint(
+        outer_transformations.translation[1] + primitive_translation_rotated[1],
+        outer_transformations.translation[2] + primitive_translation_rotated[2],
+        outer_transformations.translation[3] + primitive_translation_rotated[3]
+    )
+    @test geom.origin == expected_origin
+
+    expected_rot = SMatrix{3,3,T,9}(RotZ(π/2))
+    @test geom.rotation ≈ expected_rot
+
+    # --- Test + operator for AbstractConstructiveGeometry ---
+    v = CartesianVector{T}(1.0, -2.0, 0.5)
+    geom_translated = geom + v
+    @test geom_translated.origin == geom.origin + v
+    @test geom_translated.rotation ≈ geom.rotation
+    # --- Test + operator for AbstractPrimitive ---
+    prim = CSG.Box(CSG.ClosedPrimitive, hX=1.0, hY=2.0, hZ=3.0)
+    prim_translated = prim + v
+    @test prim_translated.origin == prim.origin + v
+    @test prim_translated.rotation ≈ prim.rotation
 end

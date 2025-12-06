@@ -64,6 +64,11 @@ end
         @test cd isa SolidStateDetectors.LinearChargeDensity{T}
         @test cd.offsets[1] == 1f-10
         @test cd.gradients[1] == 1f-11
+
+        pt = CartesianPoint{T}(1.0, 0.0, 0.0)  
+        ρ = SolidStateDetectors.get_charge_density(cd, pt)
+        # Expected: ρ = offset_x + x*grad_x = 1e-10 + 1e-11
+        @test ρ ≈ T(1.1e-10)
     end
     @testset "Cylindrical charge density" begin 
         d = Dict("charge_density" => Dict(
@@ -82,7 +87,7 @@ end
 end
 
 @timed_testset "Test boule impurity densities and corrections" begin
-    sim = Simulation{T}("BEGe_01.yaml")
+    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
 
     @test SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0)) == T(0.8*T(SolidStateDetectors.to_internal_units(-5e9u"cm^-3")) + T(SolidStateDetectors.to_internal_units(-5e8u"cm^-3")))
 
@@ -96,7 +101,7 @@ end
 
     @test det_ρ0 == boule_ρ0 + boule_gradient * det_z0
 
-    sim2 = Simulation{T}("BEGe_02.yaml")
+    sim2 = Simulation{T}("test_config_files/BEGe_02.yaml")
 
     @test sim.detector.semiconductor.impurity_density_model == sim2.detector.semiconductor.impurity_density_model
 
