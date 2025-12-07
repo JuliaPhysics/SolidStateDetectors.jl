@@ -1,26 +1,27 @@
 model: ADLChargeDriftModel
-phi110: 0
+phi110: 0°
 material: Si
 drift:
   velocity:
     model: Bruyneel2006
-    temperature: 300
     parameters:
       e100:
-        mu0: 0.144
+        mu0: 1440cm^2/(V*s)
         beta: 0.992
-        E0: 731944
-        mun: 0
+        E0: 7319.44V/cm
+        mun: 0cm^2/(V*s)
       e111:
-        mu0: 0.144
+        mu0: 1440cm^2/(V*s)
         beta: 1.075
-        E0: 731944
-        mun: 0
+        E0: 7319.44V/cm
+        mun: 0cm^2/(V*s)
       h100:
-        mu0: 0.0474
+        mu0: 474cm^2/(V*s)
         beta: 1.181
-        E0: 1983122
+        E0: 19831.22V/cm
       h111:
-        mu0: 0.0474
+        mu0: 474cm^2/(V*s)
         beta: 0.924
-        E0: 1983122
+        E0: 19831.22V/cm
+temperature_dependence:
+  reference_temperature: 300K

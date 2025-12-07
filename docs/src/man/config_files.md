@@ -87,7 +87,7 @@ units:
 ```
 will lead to all `length` values to be parsed in units of `mm`, while all `angle` values will be parsed in units of `deg` (degree).
 
-The configuration files also allow for directly passing units to the values that will be parsed using `uparse` from the [Unitful.jl](https://github.com/PainterQubits/Unitful.jl) package, e.g.
+The configuration files also allow for directly passing units to the values that will be parsed using `uparse` from the [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl) package, e.g.
 ```yaml
 units: 
   length: mm
@@ -114,7 +114,7 @@ tube:
     to: 4cm
   h: 6cm
 ```
-In the last example, even if the `length` unit was set to `mm`, the values will be parsed in units of `cm`. Please note to not leave a white space between the value and the unit and to use the [Unitful.jl](https://github.com/PainterQubits/Unitful.jl) notation.
+In the last example, even if the `length` unit was set to `mm`, the values will be parsed in units of `cm`. Please note to not leave a white space between the value and the unit and to use the [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl) notation.
 
 
 

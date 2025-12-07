@@ -23,3 +23,5 @@ drift:
         mu0: 6.1215
         beta: 0.662
         E0: 18200
+temperature_dependence:
+  reference_temperature: 78K

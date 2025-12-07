@@ -1,9 +1,9 @@
 model: ADLChargeDriftModel
-phi110: 1.25664
+phi110: -0.785398
+material: HPGe
 drift:
   velocity:
     model: Bruyneel2006
-    temperature: 78
     parameters:
       e100:
         mu0: 3.8609
@@ -24,14 +24,4 @@ drift:
         beta: 0.662
         E0: 18200
 temperature_dependence:
-  model: PowerLaw
-  temperature: 80
-  parameters:
-    e100:
-      p1: 0.582294
-    e111:
-      p1: 0.70492
-    h100:
-      p1: 0.582294
-    h111:
-      p1: 0.70492
+  reference_temperature: 78K

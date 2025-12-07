@@ -100,6 +100,43 @@ end
     end
     @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
 end
+@testset "CartesianGrid3D" begin
+    ticks = collect(0.0f0:0.25f0:1.0f0)
+    ax_x = SolidStateDetectors.DiscreteAxis(0.0f0, 1.0f0, :infinite, :none, :closed, :closed, ticks)
+    ax_y = SolidStateDetectors.DiscreteAxis(0.0f0, 1.0f0, :infinite, :none, :closed, :closed, ticks)
+    ax_z = SolidStateDetectors.DiscreteAxis(0.0f0, 1.0f0, :infinite, :none, :closed, :closed, ticks)
+
+    grid = SolidStateDetectors.CartesianGrid3D{T}((ax_x, ax_y, ax_z))
+    pt = CartesianPoint{T}(0.33f0, 0.61f0, 0.12f0)
+    
+    nearest_pt = SolidStateDetectors.searchsortednearest(grid, pt)
+    @test nearest_pt isa CartesianPoint{T}
+    
+    idx_x = findfirst(t -> t == nearest_pt.x, ticks)
+    idx_y = findfirst(t -> t == nearest_pt.y, ticks)
+    idx_z = findfirst(t -> t == nearest_pt.z, ticks)
+    
+    @test idx_x == SolidStateDetectors.searchsortednearest(ticks, pt.x)
+    @test idx_y == SolidStateDetectors.searchsortednearest(ticks, pt.y)
+    @test idx_z == SolidStateDetectors.searchsortednearest(ticks, pt.z)
+    
+    # Additional tests: find_closest_gridpoint
+    # CartesianPoint version
+    idxs_cart = SolidStateDetectors.find_closest_gridpoint(pt, grid)
+    @test idxs_cart[1] == SolidStateDetectors.searchsortednearest(ticks, pt.x)
+    @test idxs_cart[2] == SolidStateDetectors.searchsortednearest(ticks, pt.y)
+    @test idxs_cart[3] == SolidStateDetectors.searchsortednearest(ticks, pt.z)
+    
+    # CylindricalPoint version
+    pt_cyl = CylindricalPoint{T}(0.33f0, π/3, 0.12f0)
+    idxs_cyl = SolidStateDetectors.find_closest_gridpoint(pt_cyl, grid)
+    
+    # Convert Cylindrical to Cartesian for comparison
+    pt_cyl_cart = CartesianPoint(pt_cyl)
+    @test idxs_cyl[1] == SolidStateDetectors.searchsortednearest(ticks, pt_cyl_cart.x)
+    @test idxs_cyl[2] == SolidStateDetectors.searchsortednearest(ticks, pt_cyl_cart.y)
+    @test idxs_cyl[3] == SolidStateDetectors.searchsortednearest(ticks, pt_cyl_cart.z)
+end
 @timed_testset "HexagonalPrism" begin
     sim = Simulation{T}(SSD_examples[:Hexagon])
     timed_simulate!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
