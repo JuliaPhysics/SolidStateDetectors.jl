@@ -812,6 +812,57 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
     nothing
 end
 
+"""
+    compute_min_tick_distance(grid, T, CS)
+
+Compute the minimum grid spacing (tick distance) for a simulation grid.
+
+# Arguments
+- `grid` : a grid object containing 3 axes, either Cartesian or Cylindrical.
+- `T` : numeric type.
+- `CS` : coordinate system type, either `Cartesian` or `Cylindrical`.
+
+# Return
+- Tuple of minimum spacing `(Δx, Δy, Δz)` for Cartesian, `(Δr, Δφ, Δz)` for Cylindrical.
+"""
+function compute_min_tick_distance(grid, T, CS)
+    min_tick = T(1e-12)
+    max_tick = T(1e-5)
+    fraction = T(1e-3)
+
+    if CS == Cylindrical
+        r_axis, phi_axis, z_axis = grid.axes
+
+        r_vals = collect(r_axis)
+        z_vals = collect(z_axis)
+
+        r_min, r_max = T(first(r_vals)), T(last(r_vals))
+        z_min, z_max = T(first(z_vals)), T(last(z_vals))
+        r_mid = (r_min + r_max)/2
+        safe_r_mid = max(abs(r_mid), T(1e-30))
+
+        r_len = r_max - r_min
+        z_len = z_max - z_min
+
+        Δr = clamp(r_len * fraction, min_tick, max_tick)
+        Δφ = clamp(Δr / safe_r_mid, min_tick, max_tick)
+        Δz = clamp(z_len * fraction, min_tick, max_tick)
+
+        return (Δr, Δφ, Δz)
+    else
+        x_axis, y_axis, z_axis = grid.axes
+        x_vals, y_vals, z_vals = collect(x_axis), collect(y_axis), collect(z_axis)
+        x_min, x_max = T(first(x_vals)), T(last(x_vals))
+        y_min, y_max = T(first(y_vals)), T(last(y_vals))
+        z_min, z_max = T(first(z_vals)), T(last(z_vals))
+
+        Δx = clamp((x_max - x_min) * fraction, min_tick, max_tick)
+        Δy = clamp((y_max - y_min) * fraction, min_tick, max_tick)
+        Δz = clamp((z_max - z_min) * fraction, min_tick, max_tick)
+
+        return (Δx, Δy, Δz)
+    end
+end
 
 function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
         convergence_limit::Real = 1e-7,
@@ -849,34 +900,9 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         else
             sor_consts = T.(sor_consts)
         end
-        new_min_tick_distance::NTuple{3, T} = if CS == Cylindrical
-            if !ismissing(min_tick_distance)
-                if min_tick_distance isa LengthQuantity
-                    world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
-                    min_distance_z = min_distance_r = T(to_internal_units(min_tick_distance))
-                    min_distance_r, min_distance_z / world_r_mid, min_distance_z
-                else 
-                    T(to_internal_units(min_tick_distance[1])),
-                    T(to_internal_units(min_tick_distance[2])),
-                    T(to_internal_units(min_tick_distance[3]))
-                end 
-            else
-                (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) 
-            end
-        else
-            if !ismissing(min_tick_distance)
-                if min_tick_distance isa LengthQuantity
-                    min_distance = T(to_internal_units(min_tick_distance))
-                    min_distance, min_distance, min_distance
-                else
-                    T(to_internal_units(min_tick_distance[1])),
-                    T(to_internal_units(min_tick_distance[2])),
-                    T(to_internal_units(min_tick_distance[3]))
-                end
-            else
-                (T(1e-5), T(1e-5), T(1e-5))
-            end
-        end
+
+        new_min_tick_distance = compute_min_tick_distance(grid, T, CS)
+
         refine = !ismissing(refinement_limits)
         if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
         n_refinement_steps = length(refinement_limits)
