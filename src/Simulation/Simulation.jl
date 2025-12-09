@@ -813,55 +813,60 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
 end
 
 """
-    compute_min_tick_distance(grid, T, CS)
+    compute_min_tick_distance(grid)
 
-Compute the minimum grid spacing (tick distance) for a simulation grid.
+Compute the minimum grid spacing (tick distance) for a grid.
+Tick distances are computed as a small fraction of the physical axis lengths and then clamped to a safe numerical range.
 
 # Arguments
-- `grid` : a grid object containing 3 axes, either Cartesian or Cylindrical.
-- `T` : numeric type.
-- `CS` : coordinate system type, either `Cartesian` or `Cylindrical`.
+- `grid` : A simulation grid (`CylindricalGrid` or `CartesianGrid3D`).
 
-# Return
-- Tuple of minimum spacing `(Δx, Δy, Δz)` for Cartesian, `(Δr, Δφ, Δz)` for Cylindrical.
+# Returns
+A tuple of minimum tick distances in internal units, matching the grid type:
+- Cylindrical: `(Δr, Δφ, Δz)`
+- Cartesian: `(Δx, Δy, Δz)`
 """
-function compute_min_tick_distance(grid, T, CS)
+function compute_min_tick_distance(grid::CylindricalGrid{T}) where {T}
     min_tick = T(1e-12)
     max_tick = T(1e-5)
     fraction = T(1e-3)
 
-    if CS == Cylindrical
-        r_axis, phi_axis, z_axis = grid.axes
+    r_axis, phi_axis, z_axis = grid.axes
 
-        r_vals = collect(r_axis)
-        z_vals = collect(z_axis)
+    r_min = T(r_axis.interval.left)
+    r_max = T(r_axis.interval.right)
+    r_len = width(r_axis.interval)
 
-        r_min, r_max = T(first(r_vals)), T(last(r_vals))
-        z_min, z_max = T(first(z_vals)), T(last(z_vals))
-        r_mid = (r_min + r_max)/2
-        safe_r_mid = max(abs(r_mid), T(1e-30))
+    z_min = T(z_axis.interval.left)
+    z_max = T(z_axis.interval.right)
+    z_len = width(z_axis.interval)
 
-        r_len = r_max - r_min
-        z_len = z_max - z_min
+    r_mid = (r_min + r_max)/2
+    safe_r_mid = max(abs(r_mid), T(1e-30))
 
-        Δr = clamp(r_len * fraction, min_tick, max_tick)
-        Δφ = clamp(Δr / safe_r_mid, min_tick, max_tick)
-        Δz = clamp(z_len * fraction, min_tick, max_tick)
+    Δr = clamp(r_len * fraction, min_tick, max_tick)
+    Δφ = clamp(Δr / safe_r_mid, min_tick, max_tick)
+    Δz = clamp(z_len * fraction, min_tick, max_tick)
 
-        return (Δr, Δφ, Δz)
-    else
-        x_axis, y_axis, z_axis = grid.axes
-        x_vals, y_vals, z_vals = collect(x_axis), collect(y_axis), collect(z_axis)
-        x_min, x_max = T(first(x_vals)), T(last(x_vals))
-        y_min, y_max = T(first(y_vals)), T(last(y_vals))
-        z_min, z_max = T(first(z_vals)), T(last(z_vals))
+    return (Δr, Δφ, Δz)
+end
 
-        Δx = clamp((x_max - x_min) * fraction, min_tick, max_tick)
-        Δy = clamp((y_max - y_min) * fraction, min_tick, max_tick)
-        Δz = clamp((z_max - z_min) * fraction, min_tick, max_tick)
+function compute_min_tick_distance(grid::CartesianGrid3D{T}) where {T}
+    min_tick = T(1e-12)
+    max_tick = T(1e-5)
+    fraction = T(1e-3)
 
-        return (Δx, Δy, Δz)
-    end
+    x_axis, y_axis, z_axis = grid.axes
+
+    x_len = width(x_axis.interval)
+    y_len = width(y_axis.interval)
+    z_len = width(z_axis.interval)
+
+    Δx = clamp(x_len * fraction, min_tick, max_tick)
+    Δy = clamp(y_len * fraction, min_tick, max_tick)
+    Δz = clamp(z_len * fraction, min_tick, max_tick)
+
+    return (Δx, Δy, Δz)
 end
 
 function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
@@ -900,8 +905,21 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         else
             sor_consts = T.(sor_consts)
         end
-
-        new_min_tick_distance = compute_min_tick_distance(grid, T, CS)
+      
+        new_min_tick_distance::NTuple{3,T} = begin
+            if ismissing(min_tick_distance)
+                compute_min_tick_distance(grid)
+            elseif min_tick_distance isa LengthQuantity
+                min_distance = T(to_internal_units(min_tick_distance))
+                (min_distance, min_distance, min_distance)
+            else
+                (
+                    T(to_internal_units(min_tick_distance[1])),
+                    T(to_internal_units(min_tick_distance[2])),
+                    T(to_internal_units(min_tick_distance[3]))
+                )
+            end
+        end
 
         refine = !ismissing(refinement_limits)
         if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
