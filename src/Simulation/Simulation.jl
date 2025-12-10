@@ -833,20 +833,14 @@ function compute_min_tick_distance(grid::CylindricalGrid{T}) where {T}
 
     r_axis, phi_axis, z_axis = grid.axes
 
-    r_min = T(r_axis.interval.left)
-    r_max = T(r_axis.interval.right)
     r_len = width(r_axis.interval)
-
-    z_min = T(z_axis.interval.left)
-    z_max = T(z_axis.interval.right)
     z_len = width(z_axis.interval)
+    
+    safe_r_mid = max(abs(mean(r_axis.interval)), T(1e-30))
 
-    r_mid = (r_min + r_max)/2
-    safe_r_mid = max(abs(r_mid), T(1e-30))
-
-    Δr = clamp(r_len * fraction, min_tick, max_tick)
-    Δφ = clamp(Δr / safe_r_mid, min_tick, max_tick)
-    Δz = clamp(z_len * fraction, min_tick, max_tick)
+    Δr::T = clamp(r_len * fraction, min_tick, max_tick)
+    Δφ::T = clamp(Δr / safe_r_mid, min_tick, max_tick)
+    Δz::T = clamp(z_len * fraction, min_tick, max_tick)
 
     return (Δr, Δφ, Δz)
 end
@@ -862,9 +856,9 @@ function compute_min_tick_distance(grid::CartesianGrid3D{T}) where {T}
     y_len = width(y_axis.interval)
     z_len = width(z_axis.interval)
 
-    Δx = clamp(x_len * fraction, min_tick, max_tick)
-    Δy = clamp(y_len * fraction, min_tick, max_tick)
-    Δz = clamp(z_len * fraction, min_tick, max_tick)
+    Δx::T = clamp(x_len * fraction, min_tick, max_tick)
+    Δy::T = clamp(y_len * fraction, min_tick, max_tick)
+    Δz::T = clamp(z_len * fraction, min_tick, max_tick)
 
     return (Δx, Δy, Δz)
 end
@@ -910,17 +904,23 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             if ismissing(min_tick_distance)
                 compute_min_tick_distance(grid)
             elseif min_tick_distance isa LengthQuantity
-                min_distance = T(to_internal_units(min_tick_distance))
-                (min_distance, min_distance, min_distance)
+                if CS == Cylindrical
+                    world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2 
+                    min_distance_z = min_distance_r = T(to_internal_units(min_tick_distance)) 
+                    min_distance_r, min_distance_z / world_r_mid, min_distance_z 
+                else
+                    min_distance = T(to_internal_units(min_tick_distance))
+                    (min_distance, min_distance, min_distance)
+                end
             else
                 (
                     T(to_internal_units(min_tick_distance[1])),
                     T(to_internal_units(min_tick_distance[2])),
                     T(to_internal_units(min_tick_distance[3]))
-                )
+                    )
             end
         end
-
+        
         refine = !ismissing(refinement_limits)
         if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
         n_refinement_steps = length(refinement_limits)

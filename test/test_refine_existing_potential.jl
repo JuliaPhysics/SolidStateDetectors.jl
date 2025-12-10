@@ -88,7 +88,7 @@ end
     @test length(sim.electric_potential.grid[2]) == 1
     @test length(sim.electric_potential.grid[3]) == 62
     
-    # Cartesian Case
+    # Cartesian Case um
     cf_cart = deepcopy(cf)
     cf_cart["grid"]["coordinates"] = "cartesian"
     cf_cart["grid"]["axes"] = Dict(
@@ -105,11 +105,31 @@ end
     sim_cart = Simulation{T}(cf_cart)
     timed_calculate_electric_potential!(sim_cart)
     
-    @test length(sim_cart.electric_potential.grid[1]) ≈ 60
-    @test length(sim_cart.electric_potential.grid[2]) ≈ 60
-    @test length(sim_cart.electric_potential.grid[3]) ≈ 62
+    @test length(sim_cart.electric_potential.grid[1]) == 60
+    @test length(sim_cart.electric_potential.grid[2]) == 60
+    @test length(sim_cart.electric_potential.grid[3]) == 62
 
     grid_lengths = length.(sim_cart.electric_potential.grid)
     @test maximum(grid_lengths) - minimum(grid_lengths) <= 2
 
+    # Cartesian Case mm
+    cf_cart_mm = deepcopy(cf)
+    cf_cart_mm["grid"]["coordinates"] = "cartesian"
+    cf_cart_mm["grid"]["axes"] = Dict(
+        "x" => Dict("to" => 60),
+        "y" => Dict("to" => 60),
+        "z" => Dict("to" => 60)
+    )
+    cf_cart_mm["units"]["length"] = "mm"
+    cf_cart_mm["detectors"][1]["semiconductor"]["impurity_density"] = Dict(
+        "name" => "cylindrical",
+        "r"    => Dict("init" => 0, "gradient" => 0),
+        "z"    => Dict("init" => 0, "gradient" => 0)
+    )
+    sim_cart_mm = Simulation{T}(cf_cart_mm)
+    timed_calculate_electric_potential!(sim_cart_mm)
+
+    @test length(sim_cart_mm.electric_potential.grid[1]) == 60
+    @test length(sim_cart_mm.electric_potential.grid[2]) == 60
+    @test length(sim_cart_mm.electric_potential.grid[3]) == 64
 end
