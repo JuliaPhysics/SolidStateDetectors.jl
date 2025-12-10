@@ -252,7 +252,7 @@ function Grid(sim::Simulation{T, Cylindrical};
         (T[], T[], T[])
     end
 
-    world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
+    world_r_mid = mean(world.intervals[1])
     if for_weighting_potential && world_Δφ > 0
         world_φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(0, 2π)
         world_Δφ = width(world_φ_int)
@@ -904,20 +904,17 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             if ismissing(min_tick_distance)
                 compute_min_tick_distance(grid)
             elseif min_tick_distance isa LengthQuantity
+                min_distance = T(to_internal_units(min_tick_distance)) 
                 if CS == Cylindrical
-                    world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2 
-                    min_distance_z = min_distance_r = T(to_internal_units(min_tick_distance)) 
-                    min_distance_r, min_distance_z / world_r_mid, min_distance_z 
+                    world_r_mid = mean(sim.world.intervals[1])
+                    min_distance, min_distance / world_r_mid, min_distance 
                 else
-                    min_distance = T(to_internal_units(min_tick_distance))
-                    (min_distance, min_distance, min_distance)
+                    min_distance, min_distance, min_distance
                 end
             else
-                (
-                    T(to_internal_units(min_tick_distance[1])),
-                    T(to_internal_units(min_tick_distance[2])),
-                    T(to_internal_units(min_tick_distance[3]))
-                    )
+                T(to_internal_units(min_tick_distance[1])),
+                T(to_internal_units(min_tick_distance[2])),
+                T(to_internal_units(min_tick_distance[3]))
             end
         end
         
