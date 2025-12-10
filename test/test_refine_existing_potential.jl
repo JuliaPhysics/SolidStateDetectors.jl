@@ -113,19 +113,8 @@ end
     @test maximum(grid_lengths) - minimum(grid_lengths) <= 2
 
     # Cartesian Case mm
-    cf_cart_mm = deepcopy(cf)
-    cf_cart_mm["grid"]["coordinates"] = "cartesian"
-    cf_cart_mm["grid"]["axes"] = Dict(
-        "x" => Dict("to" => 60),
-        "y" => Dict("to" => 60),
-        "z" => Dict("to" => 60)
-    )
+    cf_cart_mm = deepcopy(cf_cart)
     cf_cart_mm["units"]["length"] = "mm"
-    cf_cart_mm["detectors"][1]["semiconductor"]["impurity_density"] = Dict(
-        "name" => "cylindrical",
-        "r"    => Dict("init" => 0, "gradient" => 0),
-        "z"    => Dict("init" => 0, "gradient" => 0)
-    )
     sim_cart_mm = Simulation{T}(cf_cart_mm)
     timed_calculate_electric_potential!(sim_cart_mm)
 
