@@ -16,6 +16,10 @@ T = Float32
         @test cd isa ConstantImpurityDensity{T}
         @test cd.ρ == -5f15
         @test cd == ConstantImpurityDensity(-5f9u"cm^-3")
+        cd_scaled = @test_nowarn (cd * 1.2)
+        @test cd_scaled.ρ ≈ -6f15
+        cd_offset = @test_nowarn cd + 1f9u"cm^-3"
+        @test cd_offset.ρ ≈ -4f15
 
         # passing an incompatible unit will throw a ConfigFileError
         @test_throws SolidStateDetectors.ConfigFileError ConstantImpurityDensity{T}(-5u"K")
@@ -24,29 +28,41 @@ T = Float32
         d = Dict("impurity_density" => Dict(
                 "name" => "linear",
                     "x" => Dict(
-                        "init" => 1e-10,
-                        "gradient" => 1.0e-11
+                        "init" => 1e10,
+                        "gradient" => 1.0e11
                 )
             )
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa LinearImpurityDensity{T}
-        @test cd.offset == 1f-10
-        @test cd.gradients[1] == 1f-11
+        @test cd.offset == 1f10
+        @test cd.gradients[1] == 1f11
+        cd_scaled = @test_nowarn (cd * 1.2)
+        @test cd_scaled.offset ≈ 1.2f10
+        @test cd_scaled.gradients[1] ≈ 1.2f11
+        cd_offset = @test_nowarn cd + 1f10u"m^-3"
+        @test cd_offset.offset ≈ 2f10
+        @test cd_offset.gradients == cd.gradients
     end
     @testset "Cylindrical impurity density" begin 
         d = Dict("impurity_density" => Dict(
                 "name" => "cylindrical",
                     "r" => Dict(
-                        "init" => 1e-10,
-                        "gradient" => 1.0e-11
+                        "init" => 1e10,
+                        "gradient" => 1.0e11
                 )
             )
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.CylindricalImpurityDensity{T}
-        @test cd.offset == 1f-10
-        @test cd.gradients[1] == 1f-11
+        @test cd.offset == 1f10
+        @test cd.gradients[1] == 1f11
+        cd_scaled = @test_nowarn (cd * 1.2)
+        @test cd_scaled.offset ≈ 1.2f10
+        @test cd_scaled.gradients[1] ≈ 1.2f11
+        cd_offset = @test_nowarn cd + 1f10u"m^-3"
+        @test cd_offset.offset ≈ 2f10
+        @test cd_offset.gradients == cd.gradients
     end
 end
 
