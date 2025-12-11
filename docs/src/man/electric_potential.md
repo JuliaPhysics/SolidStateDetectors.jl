@@ -70,20 +70,18 @@ each Cartesian direction (`x`, `y` and `z`), e.g.
 ```yaml
 impurity_density:
   name: linear
-  z:
-    init: 1e10cm^-3
-    gradient: 1e10cm^-4
+  init: 1e10cm^-3
+  gradient: 
+    z: 1e10cm^-4
 ```
 or
 ```yaml
 impurity_density:
   name: linear
-  x:
-    init: 0
-    gradient: 1e10
-  z:
-    init: 0
-    gradient: 1e10
+  init: 0 # optional
+  gradient:
+    x: 1e10
+    z: 1e10
 ```
 In the first example, the `init` value corresponds to the value at `z = 0` whereas the gradient points towards positive `z`.
 In the second example, the impurity density is 0 at the origin of the coordinate system, whereas the gradient of the impurity density profile points in $\langle101\rangle$ direction.
@@ -98,9 +96,9 @@ each cylindrical spatial direction (`r` and `z`), e.g.
 ```yaml 
 impurity_density:
   name: cylindrical
-  r:
-    init: 1e10cm^-3
-    gradient: 1e10cm^-4
+  init: 1e10cm^-3
+  gradient:
+    r: 1e10cm^-4
 ```
 Here, the impurity density at the origin is $10^{10}$cm$^{-3}$ and it increases radially with the gradient $10^{10}$cm$^{-4}$.
 If no units are given, `init` is parsed in units of `units.length`$^{-3}$ and `gradient` in units of `units.length`$^{-4}$.

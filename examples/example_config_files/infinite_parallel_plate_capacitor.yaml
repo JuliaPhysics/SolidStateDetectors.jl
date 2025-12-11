@@ -24,17 +24,6 @@ detectors:
   - semiconductor:
       material: HPGe
       temperature: 78
-      impurity_density:
-        name: linear
-        x:
-          init: 0
-          gradient: 0
-        y:
-          init: 0
-          gradient: 0
-        z:
-          init: 0
-          gradient: 0
       geometry:
         box:
           hX: 0.5

@@ -16,11 +16,12 @@ that can each contain `init` for initial values at 0 and `gradient` for gradient
 
 An example definition of a cylindrical charge density looks like this:
 ```yaml 
+# charge density with linear gradient in r
 charge_density:
   name: cylindrical
-  r:  # charge density with linear gradient in r
-    init: 1.0e-10     # C/m³
-    gradient: 1.0e-11 # C/m⁴
+  init: 1.0e-10     # C/m³
+  gradient: 
+    r: 1.0e-11 # C/m⁴
 ```
 """
 struct CylindricalChargeDensity{T <: SSDFloat} <: AbstractChargeDensity{T}

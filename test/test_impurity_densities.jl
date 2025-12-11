@@ -27,9 +27,9 @@ T = Float32
     @testset "Linear impurity density" begin 
         d = Dict("impurity_density" => Dict(
                 "name" => "linear",
-                    "x" => Dict(
-                        "init" => 1e10,
-                        "gradient" => 1.0e11
+                "init" => 1e10,
+                "gradient" => Dict(
+                    "x" => 1.0e11
                 )
             )
         )
@@ -43,13 +43,26 @@ T = Float32
         cd_offset = @test_nowarn cd + 1f10u"m^-3"
         @test cd_offset.offset ≈ 2f10
         @test cd_offset.gradients == cd.gradients
+
+        # should throw a warning, but still work and give the same results
+        d_deprecated = Dict("impurity_density" => Dict(
+                "name" => "linear",
+                "x" => Dict(
+                    "init" => 1e10,
+                    "gradient" => 1.0e11
+                )
+            )
+        )
+        cd_deprecated = @test_logs (:warn,) SolidStateDetectors.ImpurityDensity(T, d_deprecated["impurity_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd_deprecated == cd
+
     end
     @testset "Cylindrical impurity density" begin 
         d = Dict("impurity_density" => Dict(
                 "name" => "cylindrical",
-                    "r" => Dict(
-                        "init" => 1e10,
-                        "gradient" => 1.0e11
+                "init" => 1e10,
+                "gradient" => Dict(
+                    "r" => 1.0e11
                 )
             )
         )
@@ -63,6 +76,18 @@ T = Float32
         cd_offset = @test_nowarn cd + 1f10u"m^-3"
         @test cd_offset.offset ≈ 2f10
         @test cd_offset.gradients == cd.gradients
+
+        d_deprecated = Dict("impurity_density" => Dict(
+                "name" => "cylindrical",
+                "r" => Dict(
+                    "init" => 1e10,
+                    "gradient" => 1.0e11
+                )
+            )
+        )
+        cd_deprecated = @test_logs (:warn,) SolidStateDetectors.ImpurityDensity(T, d_deprecated["impurity_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd_deprecated == cd
+
     end
 end
 
@@ -70,9 +95,9 @@ end
     @testset "Linear charge density" begin 
         d = Dict("charge_density" => Dict(
                 "name" => "linear",
-                    "x" => Dict(
-                        "init" => 1e-10,
-                        "gradient" => 1.0e-11
+                "init" => 1e-10,
+                "gradient" => Dict(
+                    "x" => 1.0e-11
                 )
             )
         )
@@ -80,6 +105,17 @@ end
         @test cd isa SolidStateDetectors.LinearChargeDensity{T}
         @test cd.offset == 1f-10
         @test cd.gradients[1] == 1f-11
+
+        d_deprecated = Dict("charge_density" => Dict(
+                "name" => "linear",
+                "x" => Dict(
+                    "init" => 1e-10,
+                    "gradient" => 1.0e-11
+                )
+            )
+        )
+        cd_deprecated = @test_logs (:warn,) SolidStateDetectors.ChargeDensity(T, d_deprecated["charge_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd_deprecated == cd
 
         pt = CartesianPoint{T}(1.0, 0.0, 0.0)  
         ρ = SolidStateDetectors.get_charge_density(cd, pt)
@@ -89,9 +125,9 @@ end
     @testset "Cylindrical charge density" begin 
         d = Dict("charge_density" => Dict(
                 "name" => "cylindrical",
-                    "r" => Dict(
-                        "init" => 1e-10,
-                        "gradient" => 1.0e-11
+                "init" => 1e-10,
+                "gradient" => Dict(
+                    "r" => 1.0e-11
                 )
             )
         )
@@ -99,6 +135,17 @@ end
         @test cd isa SolidStateDetectors.CylindricalChargeDensity{T}
         @test cd.offset == 1f-10
         @test cd.gradients[1] == 1f-11
+
+        d_deprecated = Dict("charge_density" => Dict(
+                "name" => "cylindrical",
+                "r" => Dict(
+                    "init" => 1e-10,
+                    "gradient" => 1.0e-11
+                )
+            )
+        )
+        cd_deprecated = @test_logs (:warn,) SolidStateDetectors.ChargeDensity(T, d_deprecated["charge_density"], SolidStateDetectors.default_unit_tuple())
+        @test cd_deprecated == cd
     end
 end
 

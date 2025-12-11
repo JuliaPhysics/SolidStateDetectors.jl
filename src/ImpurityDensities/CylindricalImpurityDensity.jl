@@ -15,12 +15,13 @@ A `CylindricalImpurityDensity` is defined in the configuration file through the 
 that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
 
 An example definition of a cylindrical impurity density looks like this:
-```yaml 
+```yaml
+# impurity profile with linear gradient in r 
 impurity_density:
   name: cylindrical
-  r:  # impurity profile with linear gradient in r
-    init: 1.0e10     # 1/m³
-    gradient: 1.0e11 # 1/m⁴
+  init: 1.0e10 # 1/m³
+  gradient: 
+    r: 1.0e11  # 1/m⁴
 ```
 """
 struct CylindricalImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}

@@ -15,11 +15,12 @@ that can each contain `init` for initial values at 0 and `gradient` for gradient
 
 An example definition of a linear impurity density looks like this:
 ```yaml 
+# impurity profile with linear gradient in x
 impurity_density:
   name: linear
-  x:  # impurity profile with linear gradient in x
-    init: 1.0e10     # 1/m³
-    gradient: 1.0e11 # 1/m⁴
+  init: 1.0e10 # 1/m³
+  gradient: 
+    x: 1.0e11  # 1/m⁴
 ```
 """
 struct LinearImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
