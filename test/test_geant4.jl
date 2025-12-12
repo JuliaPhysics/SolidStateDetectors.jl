@@ -57,7 +57,7 @@ end
 @testset "Run Geant4 simulations" begin
 
     # Create G4JLApplication
-    sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
+    sim = @test_nowarn Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
     app = Geant4.G4JLApplication(sim, source)
 
