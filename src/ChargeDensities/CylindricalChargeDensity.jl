@@ -30,19 +30,14 @@ struct CylindricalChargeDensity{T <: SSDFloat} <: AbstractChargeDensity{T}
 end
 
 function ChargeDensity(T::DataType, t::Val{:cylindrical}, dict::AbstractDict, input_units::NamedTuple)
-    offset, gradients = zero(T), zeros(T,3)
     density_unit = internal_charge_unit * input_units.length^(-3)
     density_gradient_unit = internal_charge_unit * input_units.length^(-4)
-    if prod(map(k -> k in ["r","z"], collect(keys(dict)))) @warn "Only r and z are supported in the cylindrical charge density model.\nChange the charge density model in the config file or remove all other entries." end
-    if haskey(dict, "r")
-        if haskey(dict["r"], "init")     offset += _parse_value(T, dict["r"]["init"], density_unit) end
-        if haskey(dict["r"], "gradient") gradients[1] = _parse_value(T, dict["r"]["gradient"], density_gradient_unit) end
+    offset::T = _parse_value(T, get(dict, "init", 0), density_unit)
+    gradients::NTuple{3, T} = let g = get(dict, "gradient", Dict())
+        haskey(g, "phi") && @warn "Ignoring gradient for phi in cylindrical charge density"
+        _parse_value.(T, (get(g, "r", 0), 0, get(g, "z", 0)), density_gradient_unit)
     end
-    if haskey(dict, "z")     
-        if haskey(dict["z"], "init")     offset +=  _parse_value(T, dict["z"]["init"], density_unit) end
-        if haskey(dict["z"], "gradient") gradients[3] = _parse_value(T, dict["z"]["gradient"], density_gradient_unit) end
-    end
-    CylindricalChargeDensity{T}( T(offset), NTuple{3, T}(gradients) )
+    CylindricalChargeDensity{T}( offset, gradients )
 end
 
 function get_charge_density(lcdm::CylindricalChargeDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}

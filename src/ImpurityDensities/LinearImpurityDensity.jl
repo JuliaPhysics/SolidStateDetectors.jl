@@ -29,23 +29,13 @@ struct LinearImpurityDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 end
 
 function ImpurityDensity(T::DataType, t::Val{:linear}, dict::AbstractDict, input_units::NamedTuple)
-    offset, gradients = zero(T), zeros(T,3)
     density_unit = input_units.length^(-3)
     density_gradient_unit = input_units.length^(-4)
-    if prod(map(k -> k in ["x","y","z"], collect(keys(dict)))) @warn "Only x, y and z are supported in the linear impurity density model.\nChange the impurity density model in the config file or remove all other entries." end
-    if haskey(dict, "x")     
-        if haskey(dict["x"], "init")     offset += _parse_value(T, dict["x"]["init"], density_unit) end
-        if haskey(dict["x"], "gradient") gradients[1] = _parse_value(T, dict["x"]["gradient"], density_gradient_unit) end
+    offset::T = _parse_value(T, get(dict, "init", 0), density_unit)
+    gradients::NTuple{3, T} = let g = get(dict, "gradient", Dict())
+        _parse_value.(T, (get(g, "x", 0), get(g, "y", 0), get(g, "z", 0)), density_gradient_unit)
     end
-    if haskey(dict, "y")     
-        if haskey(dict["y"], "init")     offset += _parse_value(T, dict["y"]["init"], density_unit) end
-        if haskey(dict["y"], "gradient") gradients[2] = _parse_value(T, dict["y"]["gradient"], density_gradient_unit) end
-    end
-    if haskey(dict, "z")     
-        if haskey(dict["z"], "init")     offset += _parse_value(T, dict["z"]["init"], density_unit) end
-        if haskey(dict["z"], "gradient") gradients[3] = _parse_value(T, dict["z"]["gradient"], density_gradient_unit) end
-    end
-    LinearImpurityDensity{T}( T(offset), NTuple{3, T}(gradients) )
+    LinearImpurityDensity{T}( offset, gradients )
 end
 
 function get_impurity_density(lcdm::LinearImpurityDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
