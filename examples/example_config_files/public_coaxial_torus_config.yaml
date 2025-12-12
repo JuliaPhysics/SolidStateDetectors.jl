@@ -26,16 +26,8 @@ detectors:
     material: HPGe
     temperature: 78
     impurity_density:
-      name: linear
-      r:
-        init: 0
-        gradient: 0
-      phi:
-        init: 0
-        gradient: 0
-      z:
-        init: -1e7
-        gradient: 0
+      name: constant
+      value: -1e7
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:

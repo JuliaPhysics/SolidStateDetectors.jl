@@ -27,14 +27,6 @@ detectors:
 - semiconductor:
     material: HPGe
     temperature: 78
-    impurity_density:
-      name: cylindrical
-      r:
-        init: 0
-        gradient: 0
-      z:
-        init: 0
-        gradient: 0
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_config.yaml
     geometry:

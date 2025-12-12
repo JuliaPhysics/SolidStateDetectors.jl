@@ -27,11 +27,6 @@ detectors:
       temperature: 78
       charge_drift_model:
         model: ElectricFieldChargeDriftModel
-      impurity_density:
-        name: cylindrical
-        z:
-          init: 0
-          gradient: 0
       geometry:
         sphere:
           r: 1
