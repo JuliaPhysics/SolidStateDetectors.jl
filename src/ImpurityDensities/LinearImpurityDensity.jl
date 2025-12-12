@@ -31,7 +31,7 @@ function ImpurityDensity(T::DataType, t::Val{:linear}, dict::AbstractDict, input
     offsets, gradients = zeros(T,3), zeros(T,3)
     density_unit = input_units.length^(-3)
     density_gradient_unit = input_units.length^(-4)
-    if prod(map(k -> k in ["x","y","z"], collect(keys(dict)))) @warn "Only x, y and z are supported in the linear impurity density model.\nChange the impurity density model in the config file or remove all other entries." end
+    if !prod(map(k -> k in ("x","y","z"), filter(x -> !(x in ("name", "corrections")), collect(keys(dict))))) @warn "Only x, y and z are supported in the linear impurity density model.\nChange the impurity density model in the config file or remove all other entries." end
     if haskey(dict, "x")     
         if haskey(dict["x"], "init")     offsets[1]   = _parse_value(T, dict["x"]["init"], density_unit) end
         if haskey(dict["x"], "gradient") gradients[1] = _parse_value(T, dict["x"]["gradient"], density_gradient_unit) end

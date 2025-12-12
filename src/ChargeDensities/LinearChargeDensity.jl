@@ -31,7 +31,7 @@ function ChargeDensity(T::DataType, t::Val{:linear}, dict::AbstractDict, input_u
     offsets, gradients = zeros(T,3), zeros(T,3)
     density_unit = internal_charge_unit * input_units.length^(-3)
     density_gradient_unit = internal_charge_unit * input_units.length^(-4)
-    if prod(map(k -> k in ["x","y","z"], collect(keys(dict)))) @warn "Only x, y and z are supported in the linear charge density model.\nChange the charge density model in the config file or remove all other entries." end
+    if !prod(map(k -> k in ("x","y","z"), filter(x -> x != "name", collect(keys(dict))))) @warn "Only x, y and z are supported in the linear charge density model.\nChange the charge density model in the config file or remove all other entries." end
     if haskey(dict, "x")
         if haskey(dict["x"], "init")     offsets[1]   = _parse_value(T, dict["x"]["init"], density_unit) end
         if haskey(dict["x"], "gradient") gradients[1] = _parse_value(T, dict["x"]["gradient"], density_gradient_unit) end
