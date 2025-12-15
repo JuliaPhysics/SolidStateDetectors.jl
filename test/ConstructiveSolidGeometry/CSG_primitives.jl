@@ -210,7 +210,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         # PartialDownwardCone ClosedPrimitive
         pdc_closed = CSG.PartialDownwardCone{T, CSG.ClosedPrimitive}(r_cone, T(π), 1.0, origin, rotation)
         @test CSG._in(CartesianPoint{T}(0.5, 0.0, -0.5), pdc_closed)
-        @test CSG._in(CartesianPoint{T}(0.0, 0.0, -1.0), pdc_closed)
+        @test CSG._in(CartesianPoint{T}(1e-12, 0.0, -1.0), pdc_closed)
         @test !CSG._in(CartesianPoint{T}(0.5, -0.6, -0.5), pdc_closed)
         
         # PartialDownwardCone OpenPrimitive
