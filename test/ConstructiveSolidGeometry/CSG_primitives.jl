@@ -137,7 +137,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         r_up_open   = ((nothing, convert(T,0.1)), nothing)
         φ_up = nothing
         h_up = convert(T, 1.0)
-        origin = CartesianPoint{T}(0.0, 0.0, 0.0)
+        origin = zero(CartesianPoint{Float64}())
         rotation = SMatrix{3,3,T}(I)
 
         # Closed UpwardCone
@@ -185,9 +185,6 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         surfs = CSG.surfaces(puc_open)
         @test length(surfs) > 0
         @test all(x -> x !== nothing, surfs)
-
-        origin = CSG.CartesianPoint{T}(0.0, 0.0, 0.0)
-        rotation = SMatrix{3,3,T}(I)
         
         # Radii must match type: Tuple{Nothing, Tuple{Nothing,T}}
         r_top = (nothing, 2.0)
@@ -210,23 +207,28 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         # PartialDownwardCone ClosedPrimitive
         pdc_closed = CSG.PartialDownwardCone{T, CSG.ClosedPrimitive}(r_cone, T(π), 1.0, origin, rotation)
         @test CSG._in(CartesianPoint{T}(0.5, 0.0, -0.5), pdc_closed)
+        #@test CSG._in(CartesianPoint{T}(0.0, 0.0, -1.0), pdc_closed)
         @test CSG._in(CartesianPoint{T}(1e-12, 0.0, -1.0), pdc_closed)
         @test !CSG._in(CartesianPoint{T}(0.5, -0.6, -0.5), pdc_closed)
         
         # PartialDownwardCone OpenPrimitive
         pdc_open = CSG.PartialDownwardCone{T, CSG.OpenPrimitive}(r_cone, T(π/2), 1.0, origin, rotation)
         @test CSG._in(CartesianPoint{T}(0.2, 0.2, -0.5), pdc_open)
-        @test CSG._in(CartesianPoint{T}(1e-12, 0.0, -1.0), pdc_closed)
+        @test !CSG._in(CartesianPoint{T}(0.0, 0.0, -1.0), pdc_open)
         @test !CSG._in(CartesianPoint{T}(1.5, 0.0, -0.5), pdc_open)
 
         # Surfaces tests
         surfs_dc_closed = CSG.surfaces(dc_closed)
-        @test length(surfs_dc_closed) > 0
-        @test all(x -> x !== nothing, surfs_dc_closed)
+        @test length(surfs_dc_closed) == 2
+        @test surfs_dc_closed[1] isa CSG.EllipticalSurface
+        @test surfs_dc_closed[2] isa CSG.FullConeMantle
         
         surfs_pdc_closed = CSG.surfaces(pdc_closed)
-        @test length(surfs_pdc_closed) > 0
-        @test all(x -> x !== nothing, surfs_pdc_closed)
+        @test length(surfs_pdc_closed) == 4
+        @test surfs_pdc_closed[1] isa CSG.EllipticalSurface
+        @test surfs_pdc_closed[2] isa CSG.PartialConeMantle
+        @test surfs_pdc_closed[3] isa CSG.Triangle
+        @test surfs_pdc_closed[4] isa CSG.Triangle
         
         # TopClosedTube
         r_inner = (0.3, 0.5)
@@ -245,15 +247,15 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         surfs_closed = CSG.surfaces(tube_closed)
         @test length(surfs_closed) == 3
-        @test typeof(surfs_closed[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_closed[2]) <: CSG.FullConeMantle
-        @test typeof(surfs_closed[3]) <: CSG.FullConeMantle
+        @test surfs_closed[1] isa CSG.EllipticalSurface
+        @test surfs_closed[2] isa CSG.FullConeMantle
+        @test surfs_closed[3] isa CSG.FullConeMantle
         
         surfs_open = CSG.surfaces(tube_open)
         @test length(surfs_open) == 3
-        @test typeof(surfs_open[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_open[2]) <: CSG.FullConeMantle
-        @test typeof(surfs_open[3]) <: CSG.FullConeMantle
+        @test surfs_open[1] isa CSG.EllipticalSurface
+        @test surfs_open[2] isa CSG.FullConeMantle
+        @test surfs_open[3] isa CSG.FullConeMantle
 
         phi_partial = π/2
         # PartialTopClosedTube
@@ -272,19 +274,19 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         surfs_closed = CSG.surfaces(p_tube_closed)
         @test length(surfs_closed) == 5
-        @test typeof(surfs_closed[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_closed[2]) <: CSG.PartialConeMantle
-        @test typeof(surfs_closed[3]) <: CSG.PartialConeMantle
-        @test typeof(surfs_closed[4]) <: CSG.Triangle
-        @test typeof(surfs_closed[5]) <: CSG.Triangle
-        
+        @test surfs_closed[1] isa CSG.EllipticalSurface
+        @test surfs_closed[2] isa CSG.PartialConeMantle
+        @test surfs_closed[3] isa CSG.PartialConeMantle
+        @test surfs_closed[4] isa CSG.Triangle
+        @test surfs_closed[5] isa CSG.Triangle
+
         surfs_open = CSG.surfaces(p_tube_open)
         @test length(surfs_open) == 5
-        @test typeof(surfs_open[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_open[2]) <: CSG.PartialConeMantle
-        @test typeof(surfs_open[3]) <: CSG.PartialConeMantle
-        @test typeof(surfs_open[4]) <: CSG.Triangle
-        @test typeof(surfs_open[5]) <: CSG.Triangle
+        @test surfs_open[1] isa CSG.EllipticalSurface
+        @test surfs_open[2] isa CSG.PartialConeMantle
+        @test surfs_open[3] isa CSG.PartialConeMantle
+        @test surfs_open[4] isa CSG.Triangle
+        @test surfs_open[5] isa CSG.Triangle
 
         # BottomClosedTube and PartialBottomClosedTube
         r_inner = 0.5
@@ -298,49 +300,57 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
 
         @test CSG._in(CartesianPoint(0.5, 0.0, -1.0), tube_closed)
         @test CSG._in(CartesianPoint(0.8, 0.0, 1.0), tube_closed)
+        @test CSG._in(CartesianPoint(-0.9, 0.0, 0.9), tube_closed)
         @test !CSG._in(CartesianPoint(1.1, 0.0, 0.0), tube_closed)
         @test !CSG._in(CartesianPoint(0.5, 0.0, 1.1), tube_closed)
         
-        @test !CSG._in(CartesianPoint(0.3, 0.0, -0.1), tube_open)
-        @test !CSG._in(CartesianPoint(0.5, 0.0, 0.0), tube_open)
-        @test CSG._in(CartesianPoint(0.9, 0.0, 0.9), tube_open)
-        
+        @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), tube_open)
+        @test !CSG._in(CartesianPoint(0.8, 0.0, 1.0), tube_open)
+        @test CSG._in(CartesianPoint(-0.9, 0.0, 0.9), tube_open)
+        @test !CSG._in(CartesianPoint(1.1, 0.0, 0.0), tube_open)
+        @test !CSG._in(CartesianPoint(0.5, 0.0, 1.1), tube_open)
+
         @test CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_closed)
-        @test !CSG._in(CartesianPoint(-0.6, 0.0, 0.0), p_tube_closed)
-        @test !CSG._in(CartesianPoint(0.9, 0.9, 0.0), p_tube_closed)
-        
-        @test !CSG._in(CartesianPoint(0.6, 0.0, 0.0), p_tube_open)
+        @test CSG._in(CartesianPoint(0.8, 0.0, 1.0), p_tube_closed)
+        @test !CSG._in(CartesianPoint(-0.9, 0.0, 0.9), p_tube_closed)
+        @test CSG._in(CartesianPoint(0.9, 0.1, 0.9), p_tube_closed)
+        @test !CSG._in(CartesianPoint(1.1, 0.0, 0.0), p_tube_closed)
+        @test !CSG._in(CartesianPoint(0.5, 0.0, 1.1), p_tube_closed)
+
+        @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_open)
+        @test !CSG._in(CartesianPoint(0.8, 0.0, 1.0), p_tube_open)
+	@test !CSG._in(CartesianPoint(-0.9, 0.0, 0.9), p_tube_open)
         @test CSG._in(CartesianPoint(0.9, 0.1, 0.9), p_tube_open)
-        @test !CSG._in(CartesianPoint(-0.1, 0.0, 0.0), p_tube_open)
-        @test !CSG._in(CartesianPoint(0.6, 0.0, 1.1), p_tube_open)
+        @test !CSG._in(CartesianPoint(1.1, 0.0, 0.0), p_tube_open)
+        @test !CSG._in(CartesianPoint(0.5, 0.0, 1.1), p_tube_open)
         
         surfs_closed = CSG.surfaces(tube_closed)
         @test length(surfs_closed) == 3
-        @test typeof(surfs_closed[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_closed[2]) <: CSG.FullConeMantle
-        @test typeof(surfs_closed[3]) <: CSG.FullConeMantle
+        @test surfs_closed[1] isa CSG.EllipticalSurface
+        @test surfs_closed[2] isa CSG.FullConeMantle
+        @test surfs_closed[3] isa CSG.FullConeMantle
         
         surfs_open = CSG.surfaces(tube_open)
         @test length(surfs_open) == 3
-        @test typeof(surfs_open[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_open[2]) <: CSG.FullConeMantle
-        @test typeof(surfs_open[3]) <: CSG.FullConeMantle
+        @test surfs_open[1] isa CSG.EllipticalSurface
+        @test surfs_open[2] isa CSG.FullConeMantle
+        @test surfs_open[3] isa CSG.FullConeMantle
         
         surfs_p_closed = CSG.surfaces(p_tube_closed)
         @test length(surfs_p_closed) == 5
-        @test typeof(surfs_p_closed[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_p_closed[2]) <: CSG.PartialConeMantle
-        @test typeof(surfs_p_closed[3]) <: CSG.PartialConeMantle
-        @test typeof(surfs_p_closed[4]) <: CSG.Triangle
-        @test typeof(surfs_p_closed[5]) <: CSG.Triangle
+        @test surfs_p_closed[1] isa CSG.EllipticalSurface
+        @test surfs_p_closed[2] isa CSG.PartialConeMantle
+        @test surfs_p_closed[3] isa CSG.PartialConeMantle
+        @test surfs_p_closed[4] isa CSG.Triangle
+        @test surfs_p_closed[5] isa CSG.Triangle
         
         surfs_p_open = CSG.surfaces(p_tube_open)
         @test length(surfs_p_open) == 5
-        @test typeof(surfs_p_open[1]) <: CSG.EllipticalSurface
-        @test typeof(surfs_p_open[2]) <: CSG.PartialConeMantle
-        @test typeof(surfs_p_open[3]) <: CSG.PartialConeMantle
-        @test typeof(surfs_p_open[4]) <: CSG.Triangle
-        @test typeof(surfs_p_open[5]) <: CSG.Triangle
+        @test surfs_p_open[1] isa CSG.EllipticalSurface
+        @test surfs_p_open[2] isa CSG.PartialConeMantle
+        @test surfs_p_open[3] isa CSG.PartialConeMantle
+        @test surfs_p_open[4] isa CSG.Triangle
+        @test surfs_p_open[5] isa CSG.Triangle
     end
 
     @testset "Torus" begin
@@ -514,18 +524,18 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         n_out = CSG.normal(tm_out, pt)
         n_in  = CSG.normal(tm_in, pt)
         
-        @test isa(n_out, CartesianVector{Float64})
-        @test isa(n_in, CartesianVector{Float64})
+        @test n_out isa CartesianVector{Float64}
+        @test n_in isa CartesianVector{Float64}
         @test dot(n_out, n_in) < -0.999
         
         # Test vertices
         verts = CSG.vertices(tm_out, 8)
-        @test isa(verts, Vector{CartesianPoint{Float64}})
+        @test verts isa Vector{CartesianPoint{Float64}}
         @test length(verts) > 0
         
         # Test sample
         samples = CSG.sample(tm_out, 0.1)
-        @test isa(samples, Vector{CartesianPoint{Float64}})
+        @test samples isa Vector{CartesianPoint{Float64}}
         @test length(samples) > 0
         
         # Test TorusThetaSurface
@@ -534,13 +544,13 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         hZ = 0.5
         
         ts_flat = CSG.TorusThetaSurface(r, φ, hZ, origin, rot, Val(:flat))
-        @test isa(ts_flat, CSG.EllipticalSurface)
+        @test ts_flat isa CSG.EllipticalSurface
         
         ts_in = CSG.TorusThetaSurface(r, φ, hZ, origin, rot, Val(:inwards))
-        @test isa(ts_in, CSG.ConeMantle)
+        @test ts_in isa CSG.ConeMantle
         
         ts_out = CSG.TorusThetaSurface(r, φ, hZ, origin, rot, Val(:outwards))
-        @test isa(ts_out, CSG.ConeMantle)
+        @test ts_out isa CSG.ConeMantle
     end
     @testset "Polycone" begin
         polycone1 = CSG.Polycone(CSG.ClosedPrimitive,r=Float32[0,2,4,0,0],z=Float32[0,1,2,3,0],origin=zero(CartesianPoint{Float16}),rotation=one(SMatrix{3, 3, Float16, 9}))
@@ -660,7 +670,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
 
         # Test normal
         normal_vec = CSG.normal(em, pt)
-        @test isa(normal_vec, CartesianVector{Float32})
+        @test normal_vec isa CartesianVector{Float32}
         @test abs(norm(normal_vec) - 1f0) < 1e-5  # normalized
         
         em_out = CSG.EllipsoidMantle{Float32}(:outwards; r=(1f0, 2f0, 3f0))
@@ -670,8 +680,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         n_out = CSG.normal(em_out, pt2)
         n_in  = CSG.normal(em_in,  pt2)
 
-        @test isa(n_out, CartesianVector{Float32})
-        @test isa(n_in,  CartesianVector{Float32})
+        @test n_out isa CartesianVector{Float32}
+        @test n_in isa CartesianVector{Float32}
         v_pt2 = CartesianVector(pt2.x, pt2.y, pt2.z)
         # Outward normal must point away from center
         @test dot(n_out, v_pt2) > 0
@@ -696,12 +706,12 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         # Test vertices
         verts = CSG.vertices(em, 8)
-        @test isa(verts, Vector{CartesianPoint{Float32}})
+        @test verts isa Vector{CartesianPoint{Float32}}
         @test length(verts) > 0
 	
 	# Test sample
         samples = CSG.sample(em, 0.1f0)
-        @test isa(samples, Vector{CartesianPoint{Float32}})
+        @test samples isa Vector{CartesianPoint{Float32}}
         @test length(samples) > 0
     end
     @testset "EllipticalSurface" begin
@@ -714,23 +724,23 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         es_annulus = CSG.EllipticalSurface{Float32}(r=(0.5f0, 1f0))
 
         verts_full = CSG.vertices(es_full, 8)
-        @test isa(verts_full, Vector{CartesianPoint{Float32}})
+        @test verts_full isa Vector{CartesianPoint{Float32}}
         @test length(verts_full) == 10
 
         verts_annulus = CSG.vertices(es_annulus, 8)
-        @test isa(verts_annulus, Vector{CartesianPoint{Float32}})
+        @test verts_annulus isa Vector{CartesianPoint{Float32}}
         @test length(verts_annulus) == 2*9
 
         samples_full = CSG.sample(es_full, 0.1f0)
-        @test isa(samples_full, Vector{CartesianPoint{Float32}})
+        @test samples_full isa Vector{CartesianPoint{Float32}}
         @test length(samples_full) > 0
 
         samples_annulus = CSG.sample(es_annulus, 0.1f0)
-        @test isa(samples_annulus, Vector{CartesianPoint{Float32}})
+        @test samples_annulus isa Vector{CartesianPoint{Float32}}
         @test length(samples_annulus) > 0
 
         circ, edges = CSG.lines(CSG.EllipticalSurface(r=1f0, φ=Float32(π/2)))
-        @test isa(circ, CSG.Ellipse{Float32, Float32, Float32})
+        @test circ isa CSG.Ellipse{Float32, Float32, Float32}
         @test all(isa.(edges, CSG.Edge{Float32}))
 
         p_inside = CartesianPoint{Float32}(0.5f0, 0f0, 0f0)
@@ -742,12 +752,12 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
 
         pt = CartesianPoint{Float32}(1f0, 0f0, 0f0)
         dist_full = CSG.distance_to_surface(pt, es_full)
-        @test isa(dist_full, Float32)
+        @test dist_full isa Float32
         @test dist_full ≈ 0f0 atol=1e-5
 
         pt_off = CartesianPoint{Float32}(1.5f0, 0f0, 0f0)
         dist_annulus = CSG.distance_to_surface(pt_off, es_annulus)
-        @test isa(dist_annulus, Float32)
+        @test dist_annulus isa Float32
         @test dist_annulus > 0f0
     end
     @testset "Plane" begin
@@ -767,8 +777,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         normal_out = CSG.normal(cm_out, pt)
         normal_in  = CSG.normal(cm_in, pt)
 
-        @test isa(normal_out, CartesianVector{Float32})
-        @test isa(normal_in, CartesianVector{Float32})
+        @test normal_out isa CartesianVector{Float32}
+        @test normal_in isa CartesianVector{Float32}
         # inwards vs outwards should point opposite
         @test dot(normal_out, normal_in) ≈ -1f0 atol=1e-5
 
@@ -778,7 +788,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         n_arc = 8
         verts = CSG.vertices(cm_out, n_arc)
-        @test isa(verts, Vector{CartesianPoint{Float32}})
+        @test verts isa Vector{CartesianPoint{Float32}}
         @test length(verts) == 2*(n_arc + 1)   # bottom + top circle points
         
         # All vertices should lie approximately on their respective radius circles
@@ -793,7 +803,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         end
         
         pts = CSG.sample(cm_out, Float32(1))
-        @test isa(pts, Vector{CartesianPoint{Float32}})
+        @test pts isa Vector{CartesianPoint{Float32}}
         @test length(pts) >= 2  # must have at least 2 points
 
         # Check that all points are within height bounds
