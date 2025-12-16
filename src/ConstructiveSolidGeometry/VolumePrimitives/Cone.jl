@@ -464,8 +464,9 @@ function _in(pt::CartesianPoint, c::PartialDownwardCone{T,ClosedPrimitive}; csgt
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
         r <= r_out + csgtol &&
-        _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end 
+#            ( r ≤ csgtol || _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r) )
+            _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
+    end
 end
 function _in(pt::CartesianPoint, c::PartialDownwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
     abs(pt.z) + csgtol < c.hZ && begin
