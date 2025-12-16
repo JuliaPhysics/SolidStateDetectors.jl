@@ -28,7 +28,6 @@ using StaticArrays
 using StatsBase
 using Unitful
 using UnitfulAtomic
-using UnitfulParsableString
 using YAML
 
 include("ka_compat.jl")

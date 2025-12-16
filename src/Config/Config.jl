@@ -58,17 +58,20 @@ function _update_density_config!(cf::AbstractDict, density::AbstractString, unit
                     value = _parse_value(Float64, v["gradient"], UNIT / internal_length_unit)
                     if !iszero(value)
                         if !haskey(cf, "gradient"); cf["gradient"] = OrderedCollections.OrderedDict() end
-                        cf["gradient"][k] = v["gradient"]
+                        cf["gradient"][k] = replace(string(v["gradient"]), " " => "*")
                     end
                 end
 
             end
         end
 
+        # manually handle the units added to the offset in the config file (if existent)
+        merge!(cf, Dict("offset" => "$(replace(string(cf["offset"]), " " => "*"))"))
+
         # if there are no gradients: consider using a constant density
         if !haskey(cf, "gradient")
             cf["name"] = "constant"
-            cf["value"] = pop!(cf, "offset", 0)
+            cf["value"] = replace(string(pop!(cf, "offset", 0)), " " => "*")
         end
 
         @warn msg * "Updating the config dictionary to the updated syntax:\n\n$(YAML.write(Dict("$(density)_density" => cf)))\n"
