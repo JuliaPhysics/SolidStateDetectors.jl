@@ -29,7 +29,7 @@ T = Float32
     @testset "Linear impurity density" begin 
         d = Dict("impurity_density" => Dict(
                 "name" => "linear",
-                "init" => 1e10,
+                "offset" => 1e10,
                 "gradient" => Dict(
                     "x" => 1.0e11
                 )
@@ -66,7 +66,7 @@ T = Float32
         # Impurity densities with not gradient should be updated to constant
         dc_deprecated = Dict("impurity_density" => Dict(
                 "name" => "linear",
-                "x" => Dict(
+                "y" => Dict(
                     "init" => 1e10,
                     "gradient" => 0
                 )
@@ -79,7 +79,7 @@ T = Float32
     @testset "Cylindrical impurity density" begin 
         d = Dict("impurity_density" => Dict(
                 "name" => "cylindrical",
-                "init" => 1e10,
+                "offset" => 1e10,
                 "gradient" => Dict(
                     "r" => 1.0e11
                 )
@@ -118,7 +118,7 @@ end
     @testset "Linear charge density" begin 
         d = Dict("charge_density" => Dict(
                 "name" => "linear",
-                "init" => 1e-10,
+                "offset" => 1e-10,
                 "gradient" => Dict(
                     "x" => 1.0e-11
                 )
@@ -148,7 +148,7 @@ end
     @testset "Cylindrical charge density" begin 
         d = Dict("charge_density" => Dict(
                 "name" => "cylindrical",
-                "init" => 1e-10,
+                "offset" => 1e-10,
                 "gradient" => Dict(
                     "r" => 1.0e-11
                 )

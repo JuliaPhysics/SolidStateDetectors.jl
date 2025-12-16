@@ -25,7 +25,7 @@ detectors:
       temperature: 78
       impurity_density:
         name: linear
-        init: 1e7
+        offset: 1e7
         gradient: 
           z: 5e4
       charge_drift_model:

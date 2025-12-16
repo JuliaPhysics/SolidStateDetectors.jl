@@ -469,7 +469,7 @@ function siggentodict(config::AbstractDict;
                     "temperature" => config["xtal_temp"],
                     "impurity_density" => dicttype(
                                 "name" => "cylindrical",
-                                "init" => impurity_z0,
+                                "offset" => impurity_z0,
                                 "gradient" => dicttype("z" => impurity_gradient)),
                     "geometry"    => geometry),
                     "contacts"    => [ contact_1, contact_2 ]);

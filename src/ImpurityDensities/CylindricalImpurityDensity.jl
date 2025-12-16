@@ -11,15 +11,15 @@ of a cylindrical coordinate system.
 ## Definition in Configuration File
 
 A `CylindricalImpurityDensity` is defined in the configuration file through the field `impurity_density` 
-(of a `passive` or `surrounding`) with `name: cylindrical` and optional fields `r` and `z`
-that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
+(of a `passive` or `surrounding`) with `name: cylindrical`  and optional fields `offset` for the impurity
+density value at the origin of the coordinate system, and `gradient` for gradients in `r` and/or `z`.
 
 An example definition of a cylindrical impurity density looks like this:
 ```yaml
 # impurity profile with linear gradient in r 
 impurity_density:
   name: cylindrical
-  init: 1.0e10 # 1/m³
+  offset: 1.0e10 # 1/m³
   gradient: 
     r: 1.0e11  # 1/m⁴
 ```
@@ -32,8 +32,8 @@ end
 function ImpurityDensity(T::DataType, t::Val{:cylindrical}, dict::AbstractDict, input_units::NamedTuple)
     density_unit = input_units.length^(-3)
     density_gradient_unit = input_units.length^(-4)
-    offset::T = _parse_value(T, get(dict, "init", 0), density_unit)
-    gradients::NTuple{3, T} = let g = get(dict, "gradient", Dict())
+    offset::T = _parse_value(T, get(dict, "offset", get(dict, "init", 0)), density_unit)
+    gradients::NTuple{3, T} = let g = get(dict, "gradient", get(dict, "gradients", Dict()))
         haskey(g, "phi") && @warn "Ignoring gradient for phi in cylindrical impurity density"
         _parse_value.(T, (get(g, "r", 0), 0, get(g, "z", 0)), density_gradient_unit)
     end

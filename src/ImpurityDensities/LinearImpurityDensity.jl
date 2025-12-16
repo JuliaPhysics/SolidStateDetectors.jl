@@ -10,15 +10,15 @@ Impurity density model which assumes a linear gradient in impurity density in ea
 ## Definition in Configuration File
 
 A `LinearImpurityDensity` is defined in the configuration file through the field `impurity_density` 
-(of a `passive` or `surrounding`) with `name: linear` and optional fields `x`, `y` and `z`
-that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
+(of a `passive` or `surrounding`) with `name: linear` and  and optional fields `offset` for the impurity
+density value at the origin of the coordinate system, and `gradient` for gradients in `x`, `y` and/or `z`.
 
 An example definition of a linear impurity density looks like this:
 ```yaml 
 # impurity profile with linear gradient in x
 impurity_density:
   name: linear
-  init: 1.0e10 # 1/m³
+  offset: 1.0e10 # 1/m³
   gradient: 
     x: 1.0e11  # 1/m⁴
 ```
@@ -31,8 +31,8 @@ end
 function ImpurityDensity(T::DataType, t::Val{:linear}, dict::AbstractDict, input_units::NamedTuple)
     density_unit = input_units.length^(-3)
     density_gradient_unit = input_units.length^(-4)
-    offset::T = _parse_value(T, get(dict, "init", 0), density_unit)
-    gradients::NTuple{3, T} = let g = get(dict, "gradient", Dict())
+    offset::T = _parse_value(T, get(dict, "offset", get(dict, "init", 0)), density_unit)
+    gradients::NTuple{3, T} = let g = get(dict, "gradient", get(dict, "gradients", Dict()))
         _parse_value.(T, (get(g, "x", 0), get(g, "y", 0), get(g, "z", 0)), density_gradient_unit)
     end
     LinearImpurityDensity{T}( offset, gradients )

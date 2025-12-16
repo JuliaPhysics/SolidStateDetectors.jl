@@ -29,8 +29,9 @@ abstract type AbstractConfig{T <: SSDFloat} end
 function _update_density_config!(cf::AbstractDict, density::AbstractString, units::UnitTuple = default_unit_tuple())
     
     OLD_KEYS = Dict("linear" => ("x", "y", "z"), "cylindrical" => ("r", "z"))[cf["name"]]
-    NEW_KEYS = ("init", "gradient")
+    NEW_KEYS = ("offset", "gradient")
     UNIT = Dict("impurity" => units.length^(-3), "charge" => internal_charge_unit * units.length^(-3))[density]
+    UNIT_STRING = Dict("impurity" => string(units.length^(-3)), "charge" => string(internal_charge_unit) * "*" * string(units.length^(-3)))[density]
 
     if any(haskey.(Ref(cf), OLD_KEYS)) # still in the old format
         msg = """Deprecation warning: Since v0.11.0, the configuration syntax for the $(cf["name"]) $(density) density has been updated.
@@ -43,13 +44,13 @@ function _update_density_config!(cf::AbstractDict, density::AbstractString, unit
                 v = pop!(cf, k)
                 # combine all inits together
                 if haskey(v, "init")
-                    value = uparse(string(v["init"]))
+                    value = v["init"] isa Quantity ? v["init"] : _parse_value(Float64, v["init"], UNIT)
                     if !iszero(value) 
-                        if !haskey(cf, "init"); cf["init"] = zero(value) end
-                        # propagate the units of the first init value with units
-                        if (value isa Quantity) && !(cf["init"] isa Quantity) cf["init"] = float(uconvert(unit(value), cf["init"] * UNIT)) end
-                        if !(value isa Quantity) && (cf["init"] isa Quantity) value = float(uconvert(unit(cf["init"]), value * UNIT)) end
-                        cf["init"] += value
+                        if !haskey(cf, "offset"); cf["offset"] = zero(value) end
+                        # propagate the units of the first offset value with units
+                        if (value isa Quantity) && !(cf["offset"] isa Quantity) cf["offset"] = float(uconvert(unit(value), cf["offset"] * UNIT)) end
+                        if !(value isa Quantity) && (cf["offset"] isa Quantity) value = float(uconvert(unit(cf["offset"]), value * UNIT)) end
+                        cf["offset"] += value
                     end
                 end
                 # rearrange the gradient, but no need to parse/add anything, so just take the value
@@ -67,7 +68,7 @@ function _update_density_config!(cf::AbstractDict, density::AbstractString, unit
         # if there are no gradients: consider using a constant density
         if !haskey(cf, "gradient")
             cf["name"] = "constant"
-            cf["value"] = pop!(cf, "init", 0)
+            cf["value"] = pop!(cf, "offset", 0)
         end
 
         @warn msg * "Updating the config dictionary to the updated syntax:\n\n$(YAML.write(Dict("$(density)_density" => cf)))\n"

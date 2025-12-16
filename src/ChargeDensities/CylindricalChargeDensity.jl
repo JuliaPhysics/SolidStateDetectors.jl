@@ -11,15 +11,15 @@ of a cylindrical coordinate system.
 ## Definition in Configuration File
 
 A `CylindricalChargeDensity` is defined in the configuration file through the field `charge_density` 
-(of a `passive` or `surrounding`) with `name: cylindrical` and optional fields `r` and `z`
-that can each contain `init` for initial values at 0 and `gradient` for gradients in that dimension.
+(of a `passive` or `surrounding`) with `name: cylindrical` and optional fields `offset` for the charge
+density value at the origin of the coordinate system, and `gradient` for gradients in `r` and/or `z`.
 
 An example definition of a cylindrical charge density looks like this:
 ```yaml 
 # charge density with linear gradient in r
 charge_density:
   name: cylindrical
-  init: 1.0e-10     # C/m³
+  offset: 1.0e-10     # C/m³
   gradient: 
     r: 1.0e-11 # C/m⁴
 ```
@@ -32,8 +32,8 @@ end
 function ChargeDensity(T::DataType, t::Val{:cylindrical}, dict::AbstractDict, input_units::NamedTuple)
     density_unit = internal_charge_unit * input_units.length^(-3)
     density_gradient_unit = internal_charge_unit * input_units.length^(-4)
-    offset::T = _parse_value(T, get(dict, "init", 0), density_unit)
-    gradients::NTuple{3, T} = let g = get(dict, "gradient", Dict())
+    offset::T = _parse_value(T, get(dict, "offset", get(dict, "init", 0)), density_unit)
+    gradients::NTuple{3, T} = let g = get(dict, "gradient", get(dict, "gradients", Dict()))
         haskey(g, "phi") && @warn "Ignoring gradient for phi in cylindrical charge density"
         _parse_value.(T, (get(g, "r", 0), 0, get(g, "z", 0)), density_gradient_unit)
     end
