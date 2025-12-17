@@ -48,12 +48,9 @@ detectors:
       temperature: 95
       impurity_density:
         name: cylindrical
-        r:
-          init: 0
-          gradient: 0
-        z:
-          init: -1e7
-          gradient: -1e5
+        offset: -1e7
+        gradient: 
+          z: -1e5
       charge_drift_model:
         include: ADLChargeDriftModel/drift_velocity_config.yaml
       charge_trapping_model:

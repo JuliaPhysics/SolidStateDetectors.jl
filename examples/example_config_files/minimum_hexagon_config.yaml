@@ -32,15 +32,9 @@ detectors:
     temperature: 140
     impurity_density:
       name: linear
-      r:
-        init: 0
-        gradient: 0
-      phi:
-        init: 0
-        gradient: 0
-      z:
-        init: 4e6
-        gradient: 2e5
+      offset: 4e6
+      gradient: 
+        z: 2e5
     charge_drift_model:
       include: ADLChargeDriftModel/drift_velocity_Si_300K.yaml
     geometry:

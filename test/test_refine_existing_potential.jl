@@ -77,9 +77,8 @@ end
     
     cf["units"]["length"] = "µm"
     cf["detectors"][1]["semiconductor"]["impurity_density"] = Dict(
-        "name" => "cylindrical",
-        "r"    => Dict("init" => 0, "gradient" => 0),
-        "z"    => Dict("init" => 0, "gradient" => 0)
+        "name" => "constant",
+        "value" => 0
     )
     
     sim = Simulation{T}(cf)
@@ -98,9 +97,8 @@ end
     )
     cf_cart["units"]["length"] = "µm"
     cf_cart["detectors"][1]["semiconductor"]["impurity_density"] = Dict(
-        "name" => "cylindrical",
-        "r"    => Dict("init" => 0, "gradient" => 0),
-        "z"    => Dict("init" => 0, "gradient" => 0)
+        "name" => "constant",
+        "value" => 0
     )
     sim_cart = Simulation{T}(cf_cart)
     timed_calculate_electric_potential!(sim_cart)
