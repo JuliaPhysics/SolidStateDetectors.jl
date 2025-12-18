@@ -31,24 +31,49 @@ struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{
     lithium_diffusivity_in_germanium::T
 end
 
-function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T)::T where {T <: SSDFloat}
+struct LithiumDiffusionBranch{T <: SSDFloat}
+    T_min::T
+    T_max::T
+    D0::T
+    H::T
+end
+
+struct LithiumDiffusionParameters{T <: SSDFloat}
+    lowT::LithiumDiffusionBranch{T}
+    highT::LithiumDiffusionBranch{T}
+end
+
+struct LithiumSaturationParameters{T <: SSDFloat}
+    a::T
+    b::T
+end
+
+struct ThermalDiffusionLithiumDensityParameters{T <: SSDFloat}
+    diffusion::LithiumDiffusionParameters{T}
+    saturation::LithiumSaturationParameters{T}
+end
+
+include("ThermalDiffusionLithiumDensityParameters.jl")
+
+function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T,parameters)::LithiumDiffusionParameters::T where {T <: SSDFloat}
     # D0 [m^2*s^-1]
     # H [cal]
-    D0::T, H::T = ifelse(lithium_annealing_temperature <= 873, T.((2.5e-7, 11800)), T.((1.3e-7, 10700)))
+    D0::T, H::T = ifelse(lithium_annealing_temperature <= parameters.lowT.T_max, T.((parameters.lowT.D0, parameters.lowT.H)), T.((parameters.highT.D0, parameters.highT.H)))
     D0 * exp(-H/(R_gas*lithium_annealing_temperature))
 end
-function calculate_lithium_saturated_density(lithium_annealing_temperature::T)::T where {T <: SSDFloat}
-    exp10(27.27 - 2610.0/lithium_annealing_temperature)
+function calculate_lithium_saturated_density(lithium_annealing_temperature::T,parameters::LithiumSaturationParameters)::T where {T <: SSDFloat}
+    exp10(parameters.a - parameters.b/lithium_annealing_temperature)
 end
 
 function ThermalDiffusionLithiumDensity{T}(
+    modelParameters::ThermalDiffusionLithiumDensityParameters{T} = ThermalDiffusionLithiumParameters(), 
     lithium_annealing_temperature::T,
     lithium_annealing_time::T,
     contact_with_lithium_doped::G,
     inactive_contact_id::Int;
     distance_to_contact::Function = pt::AbstractCoordinatePoint{T} -> ConstructiveSolidGeometry.distance_to_surface(pt, contact_with_lithium_doped),
-    lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature),
-    lithium_diffusivity_in_germanium::T = calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature),
+    lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature,modelParameters.saturation),
+    lithium_diffusivity_in_germanium::T = calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature,modelParameters.diffusion),
 ) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
     ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, inactive_contact_id, distance_to_contact, lithium_density_on_contact, lithium_diffusivity_in_germanium)
 end
