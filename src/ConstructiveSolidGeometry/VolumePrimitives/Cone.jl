@@ -394,8 +394,8 @@ function _in(pt::CartesianPoint, c::PartialUpwardCone{T,ClosedPrimitive}; csgtol
     az <= c.hZ + csgtol && begin
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z)
-        r <= r_out + csgtol &&
-        _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
+        φ = atan(pt.y, pt.x)
+        r <= r_out + csgtol && (_in_angular_interval_closed(φ, c.φ, csgtol = zero(T)) || r_out * sin(min((2π-φ, φ-c.φ, π/2)...)) <= csgtol)
     end 
 end
 function _in(pt::CartesianPoint, c::PartialUpwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
@@ -463,9 +463,8 @@ function _in(pt::CartesianPoint, c::PartialDownwardCone{T,ClosedPrimitive}; csgt
     az <= c.hZ + csgtol && begin
         r = hypot(pt.x, pt.y)
         r_out = radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
-        r <= r_out + csgtol &&
-#            ( r ≤ csgtol || _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r) )
-            _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
+        φ = atan(pt.y, pt.x)
+        r <= r_out + csgtol && (_in_angular_interval_closed(φ, c.φ, csgtol = zero(T)) || r_out * sin(min((2π-φ, φ-c.φ, π/2)...)) <= csgtol)
     end
 end
 function _in(pt::CartesianPoint, c::PartialDownwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
