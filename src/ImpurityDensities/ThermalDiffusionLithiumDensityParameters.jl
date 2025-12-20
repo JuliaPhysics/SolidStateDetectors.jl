@@ -11,11 +11,11 @@ function _ThermalDiffusionLithiumParameters(
     diffusivity_unit = !ismissing(input_units) ?
         input_units.length^2 / internal_time_unit : internal_length_unit^2/internal_time_unit
 
-temp_ranges_parameters = Vector{LithiumDiffusionBranch{T}}()
+temp_ranges_parameters = Vector{LithiumDiffusionParameters{T}}()
 
 for r in temperature_ranges
     push!(temp_ranges_parameters,
-        LithiumDiffusionBranch{T}(
+        LithiumDiffusionParameters{T}(
             _parse_value(T, r["T_min"], temperature_unit),
             _parse_value(T, r["T_max"], temperature_unit),
             _parse_value(T, r["D0"], diffusivity_unit),
