@@ -1,0 +1,17 @@
+model: ThermalDiffusionLithiumDensity
+material: HPGe
+
+
+annealing_temperature_ranges:
+  - T_min: 473K
+    T_max: 873K
+    D0: 2.5e-7m^2/s
+    H: 11800cal
+  - T_min: 873K
+    T_max: 1273K
+    D0: 1.3e-7m^2/s
+    H: 10700cal    
+  
+experimental_parameters:
+a: 21.27
+b: 2610

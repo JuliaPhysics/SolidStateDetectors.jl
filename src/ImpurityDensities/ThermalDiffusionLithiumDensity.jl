@@ -31,16 +31,11 @@ struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{
     lithium_diffusivity_in_germanium::T
 end
 
-struct LithiumDiffusionBranch{T <: SSDFloat}
+struct LithiumDiffusionParameters{T <: SSDFloat}
     T_min::T
     T_max::T
     D0::T
     H::T
-end
-
-struct LithiumDiffusionParameters{T <: SSDFloat}
-    lowT::LithiumDiffusionBranch{T}
-    highT::LithiumDiffusionBranch{T}
 end
 
 struct LithiumSaturationParameters{T <: SSDFloat}
@@ -48,33 +43,42 @@ struct LithiumSaturationParameters{T <: SSDFloat}
     b::T
 end
 
-struct ThermalDiffusionLithiumDensityParameters{T <: SSDFloat}
-    diffusion::LithiumDiffusionParameters{T}
+struct ThermalDiffusionLithiumDensityParameters{T <: SSDFloat,N}
+    diffusion::NTuple{N, LithiumDiffusionParameters{T}}
     saturation::LithiumSaturationParameters{T}
 end
 
 include("ThermalDiffusionLithiumDensityParameters.jl")
 
-function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T,parameters::LithiumDiffusionParameters)::T where {T <: SSDFloat}
+function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T,parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
     # D0 [m^2*s^-1]
     # H [cal]
-    D0::T, H::T = ifelse(lithium_annealing_temperature <= parameters.lowT.T_max, T.((parameters.lowT.D0, parameters.lowT.H)), T.((parameters.highT.D0, parameters.highT.H)))
+    if !(parameters[1].T_min ≤ lithium_annealing_temperature ≤ parameters[end].T_max)
+        throw(ArgumentError("Invalid lithium_annealing_temperature=$(lithium_annealing_temperature): expected $(parameters[1].T_min) ≤ lithium_annealing_temperature ≤ $(parameters[end].T_max)."))
+    end
+    for i in 1:length(parameters)
+        if lithium_annealing_temperature <= parameters[i].T_max
+            D0::T, H::T =  T.((parameters[i].D0, parameters[i].H))
+            break
+        end    
+    end
     D0 * exp(-H/(R_gas*lithium_annealing_temperature))
 end
 function calculate_lithium_saturated_density(lithium_annealing_temperature::T,parameters::LithiumSaturationParameters)::T where {T <: SSDFloat}
     exp10(parameters.a - parameters.b/lithium_annealing_temperature)
 end
 
+# N is the number of ranges included in the yaml file
 function ThermalDiffusionLithiumDensity{T}( 
     lithium_annealing_temperature::T,
     lithium_annealing_time::T,
     contact_with_lithium_doped::G,
     inactive_contact_id::Int;
-    modelParameters::ThermalDiffusionLithiumDensityParameters{T} = ThermalDiffusionLithiumParameters(), 
+    model_parameters::ThermalDiffusionLithiumDensityParameters{T,N} = ThermalDiffusionLithiumParameters(), 
     distance_to_contact::Function = pt::AbstractCoordinatePoint{T} -> ConstructiveSolidGeometry.distance_to_surface(pt, contact_with_lithium_doped),
-    lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature,modelParameters.saturation),
-    lithium_diffusivity_in_germanium::T = calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature,modelParameters.diffusion),
-) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
+    lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature,model_parameters.saturation),
+    lithium_diffusivity_in_germanium::T = calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature,model_parameters.diffusion),
+) where {T <: SSDFloat,N, G <: Union{<:AbstractGeometry, Nothing}}
     ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, inactive_contact_id, distance_to_contact, lithium_density_on_contact, lithium_diffusivity_in_germanium)
 end
 
@@ -84,7 +88,8 @@ function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict,
     contact_with_lithium_doped = haskey(dict, "contact_with_lithium_doped") ? dict["contact_with_lithium_doped"] : nothing # you don't have to pass the geometry of doped contact only when the distance_to_contact is passed
     inactive_contact_id = get(dict, "doped_contact_id", -1)
     inactive_contact_id < 1 && error("Invalid doped_contact_id: missing or misspelled key")
-    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, inactive_contact_id)
+    model_parameters = haskey(dict,"model_parameters") ? ThermalDiffusionLithiumParameters(dict["model_parameters"]) : ThermalDiffusionLithiumParameters()
+    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, inactive_contact_id,model_parameters)
 end
 
 function get_impurity_density(li_diffusion::ThermalDiffusionLithiumDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
