@@ -50,7 +50,7 @@ end
 
 include("ThermalDiffusionLithiumDensityParameters.jl")
 
-function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T,parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
+function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T, parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
     # D0 [m^2*s^-1]
     # H [cal]
     D0 = parameters[end].D0
@@ -76,7 +76,7 @@ function ThermalDiffusionLithiumDensity{T}(
     lithium_annealing_time::T,
     contact_with_lithium_doped::G,
     inactive_contact_id::Int;
-    model_parameters::ThermalDiffusionLithiumDensityParameters{T,N} = ThermalDiffusionLithiumParameters(), 
+    model_parameters::ThermalDiffusionLithiumDensityParameters{T,N} = ThermalDiffusionLithiumParameters(T=T), 
     distance_to_contact::Function = pt::AbstractCoordinatePoint{T} -> ConstructiveSolidGeometry.distance_to_surface(pt, contact_with_lithium_doped),
     lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature,model_parameters.saturation),
     lithium_diffusivity_in_germanium::T = calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature,model_parameters.diffusion),
@@ -90,7 +90,7 @@ function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict,
     contact_with_lithium_doped = haskey(dict, "contact_with_lithium_doped") ? dict["contact_with_lithium_doped"] : nothing # you don't have to pass the geometry of doped contact only when the distance_to_contact is passed
     inactive_contact_id = get(dict, "doped_contact_id", -1)
     inactive_contact_id < 1 && error("Invalid doped_contact_id: missing or misspelled key")
-    model_parameters = haskey(dict,"model_parameters") ? ThermalDiffusionLithiumParameters(dict["model_parameters"]) : ThermalDiffusionLithiumParameters()
+    model_parameters = haskey(dict,"model_parameters") ? ThermalDiffusionLithiumParameters(dict["model_parameters"]; T) : ThermalDiffusionLithiumParameters(; T)
     ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, inactive_contact_id,model_parameters)
 end
 
