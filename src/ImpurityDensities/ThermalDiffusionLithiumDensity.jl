@@ -1,5 +1,5 @@
 """
-struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+    struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
 
 Lithium impurity density model. Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
  
@@ -31,46 +31,8 @@ struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{
     lithium_diffusivity_in_germanium::T
 end
 
-struct LithiumDiffusionParameters{T <: SSDFloat}
-    T_min::T
-    T_max::T
-    D0::T
-    H::T
-end
-
-struct LithiumSaturationParameters{T <: SSDFloat}
-    a::T
-    b::T
-end
-
-struct ThermalDiffusionLithiumDensityParameters{T <: SSDFloat,N}
-    diffusion::NTuple{N, LithiumDiffusionParameters{T}}
-    saturation::LithiumSaturationParameters{T}
-end
-
 include("ThermalDiffusionLithiumDensityParameters.jl")
 
-function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T, parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
-    # D0 [m^2*s^-1]
-    # H [cal]
-    D0 = parameters[end].D0
-    H  = parameters[end].H
-    if !(parameters[1].T_min ≤ lithium_annealing_temperature ≤ parameters[end].T_max)
-        throw(ArgumentError("Invalid lithium_annealing_temperature=$(lithium_annealing_temperature): expected $(parameters[1].T_min) ≤ lithium_annealing_temperature ≤ $(parameters[end].T_max)."))
-    end
-    for parameter in parameters
-        if lithium_annealing_temperature <= parameter.T_max
-            D0::T, H::T =  T.((parameter.D0, parameter.H))
-            break
-        end    
-    end
-    D0 * exp(-H/(R_gas*lithium_annealing_temperature))
-end
-function calculate_lithium_saturated_density(lithium_annealing_temperature::T, parameters::LithiumSaturationParameters)::T where {T <: SSDFloat}
-    exp10(parameters.a - parameters.b/lithium_annealing_temperature + 6)
-end
-
-# N is the number of ranges included in the yaml file
 function ThermalDiffusionLithiumDensity{T}( 
     lithium_annealing_temperature::T,
     lithium_annealing_time::T,
