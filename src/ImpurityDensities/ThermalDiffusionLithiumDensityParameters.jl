@@ -22,7 +22,7 @@ struct LithiumDiffusionParameters{T <: SSDFloat}
     H::T
 end
 
-function calculate_lithium_diffusivity_in_germanium(lithium_annealing_temperature::T, parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
+function calculate_lithium_diffusivity(lithium_annealing_temperature::T, parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
 
     if !(parameters[1].T_min ≤ lithium_annealing_temperature ≤ parameters[end].T_max)
         throw(ArgumentError("Invalid lithium_annealing_temperature=$(lithium_annealing_temperature): expected $(parameters[1].T_min) ≤ lithium_annealing_temperature ≤ $(parameters[end].T_max)."))
