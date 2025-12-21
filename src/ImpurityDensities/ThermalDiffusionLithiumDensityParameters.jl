@@ -11,6 +11,19 @@ function _ThermalDiffusionLithiumParameters(
     diffusivity_unit = !ismissing(input_units) ?
         input_units.length^2 / internal_time_unit : internal_length_unit^2/internal_time_unit
 
+    temp_ranges_parameters = Vector{LithiumDiffusionParameters{T}}()
+
+    for r in temperature_ranges
+        push!(temp_ranges_parameters,
+            LithiumDiffusionParameters{T}(
+                _parse_value(T, r["T_min"], temperature_unit),
+                _parse_value(T, r["T_max"], temperature_unit),
+                _parse_value(T, r["D0"], diffusivity_unit),
+                _parse_value(T, r["H"], u"cal") / ustrip(Unitful.NoUnits, one(T) * u"cal" / internal_energy_unit) # convert to cal internally
+            )
+        )
+    end
+
     diffusion_params = Tuple(
         LithiumDiffusionParameters{T}(
             _parse_value(T, r["T_min"], temperature_unit),
@@ -22,15 +35,18 @@ function _ThermalDiffusionLithiumParameters(
     )
 
     for i in eachindex(diffusion_params)
-        if(diffusion_params[i].T_max < diffusion_params[i].T_min)
+        if diffusion_params[i].T_max < diffusion_params[i].T_min
             throw(ConfigFileError("Invalid annealing temperature range $i: T_max must be ≥ T_min."))
         end
-        if(i>1 && diffusion_params[i-1].T_max != diffusion_params[i].T_min)
+        if i>1 && diffusion_params[i-1].T_max != diffusion_params[i].T_min
             throw(ConfigFileError("Annealing temperature ranges must be contiguous and increasing: range $(i-1) ends at a different temperature than range $i starts."))
         end
     end
 
-    saturation_params = LithiumSaturationParameters{T}(_parse_value(T, a, Unitful.NoUnits), _parse_value(T, b, Unitful.NoUnits))
+
+    saturation_params = LithiumSaturationParameters{T}(
+        _parse_value(T, a, Unitful.NoUnits), _parse_value(T, b, Unitful.NoUnits)
+    )
 
     return ThermalDiffusionLithiumDensityParameters(
         diffusion_params,
@@ -38,22 +54,27 @@ function _ThermalDiffusionLithiumParameters(
     )
 end
 
-const minimum_num_of_temp_ranges = 2
 
 function ThermalDiffusionLithiumParameters(config::AbstractDict, input_units::Union{Missing, NamedTuple} = missing; kwargs...)
     if !haskey(config, "annealing_temperature_ranges") 
         throw(ConfigFileError("ThermalDiffusionLithiumDensity config file needs entry 'annealing_temperature_ranges'.")) 
-    elseif length(config["annealing_temperature_ranges"])<minimum_num_of_temp_ranges
+    elseif isempty(config["annealing_temperature_ranges"])
         throw(ConfigFileError("ThermalDiffusionLithiumDensity config file needs at least $minimum_num_of_temp_ranges entries in 'annealing_temperature_ranges'."))
     end 
 
-    for i in 1:length(config["annealing_temperature_ranges"])
+    for (i, temperature_range) in enumerate(config["annealing_temperature_ranges"])
         for axis in ("T_min", "T_max", "D0", "H")
-            if !haskey(config["annealing_temperature_ranges"][i], axis)
+            if !haskey(temperature_range, axis)
                 throw(ConfigFileError("ThermalDiffusionLithiumDensity config file needs entry 'annealing_temperature_ranges[$i]/$(axis)'."))
             end
         end
+        for k in keys(temperature_range)
+            if !(k in ("T_min", "T_max", "D0", "H"))
+                @warn "Encountered unexpected key `$(k)` in 'annealing_temperature_ranges[$i]': Allowed keys are `T_min`, `T_max`, `D0` and `H`. Key `$(k)` will be ignored."
+            end
+        end
     end
+     
 
     if !haskey(config, "experimental_parameters") 
         throw(ConfigFileError("ThermalDiffusionLithiumDensity config file needs entry 'experimental_parameters'.")) 
