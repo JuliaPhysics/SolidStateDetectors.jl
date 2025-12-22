@@ -77,15 +77,13 @@ end
 
 
 function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQuantity, cluster_time::RealQuantity = Inf * u"s")
-    
     @assert is_detector_hits_table(table) "Table does not have the correct format"
-
+    
     col_names = TypedTables.columnnames(table)
     col_vectors = map(col -> similar(getproperty(table, col), 0), col_names)
-    reduced_col_names = filter(col -> col ∉ (:detno, :edep, :pos, :thit), col_names)
-
-    clustered_nt = NamedTuple{col_names}(col_vectors)
-
+    unclustered_col_names = filter(col -> col ∉ (:detno, :edep, :pos, :thit), col_names)
+    col_nt = NamedTuple{col_names}(col_vectors)
+    
     for (idx, evt) in enumerate(table)
         time_clusters = cluster_detector_hits(
             evt.detno,
@@ -98,16 +96,30 @@ function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQua
         
         for result in time_clusters
             for col in (:detno, :edep, :pos, :thit)
-                push!(clustered_nt[col], getfield(result, col))
+                push!(col_nt[col], getfield(result, col))
             end
 
-            for col in reduced_col_names
-                push!(clustered_nt[col], getfield(evt, col))
+            for col in unclustered_col_names
+                push!(col_nt[col], getfield(evt, col))
             end
         end
     end
-
-    TypedTables.Table(clustered_nt)
+    
+    # Convert clustered columns to VectorOfVectors
+    clustered_cols = (
+        detno = VectorOfVectors(col_nt.detno),
+        edep = VectorOfVectors(col_nt.edep),
+        pos = VectorOfVectors(col_nt.pos),
+        thit = VectorOfVectors(col_nt.thit)
+    )
+    
+    # Merge with the remaining columns
+    final_nt = merge(
+        NamedTuple{unclustered_col_names}(map(col -> col_nt[col], unclustered_col_names)),
+        clustered_cols
+    )
+    
+    TypedTables.Table(final_nt)
 end
 
 
