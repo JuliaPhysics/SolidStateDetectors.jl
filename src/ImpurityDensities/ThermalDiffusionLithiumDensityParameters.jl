@@ -102,7 +102,7 @@ function _ThermalDiffusionLithiumParameters(
             _parse_value(T, r["T_min"], temperature_unit),
             _parse_value(T, r["T_max"], temperature_unit),
             _parse_value(T, r["D0"], diffusivity_unit),
-            T.(ustrip(u"cal", _parse_value(T, r["H"], u"cal") * internal_energy_unit)) # convert to cal internally
+            _parse_value(T, r["H"], internal_activation_energy_unit)
         )
         for r in temperature_ranges
     )
