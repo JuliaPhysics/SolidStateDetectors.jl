@@ -289,7 +289,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !CSG._in(CartesianPoint{T}(0.0, 0.0, 1.0), pdc_open)
         @test !CSG._in(CartesianPoint{T}(2.0, 0.0, 1.0), pdc_open)
         @test !CSG._in(CartesianPoint{T}(0.0, 2.0, 1.0), pdc_open)
-	@test !CSG._in(CartesianPoint{T}(-2.0, 0.0, 1.0), pdc_open)
+        @test !CSG._in(CartesianPoint{T}(-2.0, 0.0, 1.0), pdc_open)
         
         # Surfaces tests
         surfs_dc_closed = CSG.surfaces(dc_closed)
@@ -315,7 +315,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !CSG._in(CartesianPoint(0.0, 0.0, -1.5), tube_closed) # below bottom
         
         tube_open = CSG.TopClosedTube{Float64, CSG.OpenPrimitive}(r_cone, nothing, hZ, origin, rotation)
-	@test !CSG._in(CartesianPoint(0.5, 0.0, -1), tube_open)
+        @test !CSG._in(CartesianPoint(0.5, 0.0, -1), tube_open)
         @test !CSG._in(CartesianPoint(1.0, 0.0, 1.0), tube_open)
         @test !CSG._in(CartesianPoint(0.0, 0.0, -1.5), tube_open)
         
@@ -350,7 +350,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_open)
         @test !CSG._in(CartesianPoint(0.0, 0.0, -1.5), p_tube_open)
         @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_open)
-	@test !CSG._in(CartesianPoint(0.3, 0.0, -1.0), p_tube_open)
+        @test !CSG._in(CartesianPoint(0.3, 0.0, -1.0), p_tube_open)
         
         surfs_closed = CSG.surfaces(p_tube_closed)
         @test surfs_closed[1] isa CSG.EllipticalSurface

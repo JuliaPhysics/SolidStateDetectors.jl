@@ -139,17 +139,12 @@ const Cylinder{T,CO} = Cone{T,CO,T,Nothing} # Full in φ
 const PartialCylinder{T,CO} = Cone{T,CO,T,T} 
 
 ### Cylinder
-
 function _in(pt::CartesianPoint, c::Cylinder{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z) 
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y) 
-        r <= c.r + csgtol
-    end
+    hypot(max(zero(T), hypot(pt.x, pt.y) - c.r), max(zero(T), pt.z - c.hZ, - pt.z - c.hZ)) <= csgtol
 end
+
 function _in(pt::CartesianPoint, c::Cylinder{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) < c.hZ - csgtol &&
-    hypot(pt.x, pt.y) < c.r - csgtol
+    abs(pt.z) < c.hZ - csgtol && hypot(pt.x, pt.y) < c.r - csgtol
 end
 
 function surfaces(t::Cylinder{T}) where {T}
