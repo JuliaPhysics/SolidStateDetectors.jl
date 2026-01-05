@@ -294,19 +294,29 @@ const PartialVaryingTube{T,CO} = Cone{T,CO,Tuple{Tuple{T,T},Tuple{T,T}},T}
 
 #(r_bot_in = r[1][1], r_bot_out = r[1][2], r_top_in = r[2][1], r_top_out = r[2][2])
 
-function _in(pt::CartesianPoint, c::VaryingTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
-        r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z)
-        r_in - csgtol <= r  &&
-        r <= r_out + csgtol
-    end
+### VaryingTube
+function _in(pt::CartesianPoint, c::VaryingTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    r::T = hypot(pt.x, pt.y)
+    z::T = pt.z 
+    r_in::T  = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], z)
+    r_out::T = radius_at_z(c.hZ, c.r[1][2], c.r[2][2], z)
+    Δr_in::T  = c.r[2][1] - c.r[1][1]
+    Δr_out::T = c.r[2][2] - c.r[1][2]
+    Δz_in::T  = iszero(c.hZ) ? zero(T) : csgtol * Δr_in / hypot(2*c.hZ, Δr_in)
+    Δz_out::T = iszero(c.hZ) ? zero(T) : csgtol * Δr_out / hypot(2*c.hZ, Δr_out)
+    return (abs(z - Δz_in) < c.hZ && r >= r_in - csgtol * hypot(2*c.hZ, Δr_in) / (2*c.hZ) ||
+        ((z + c.hZ)^2 <= csgtol^2 && r >= c.r[1][1] - sqrt(csgtol^2 - (z + c.hZ)^2)) ||
+        ((z - c.hZ)^2 <= csgtol^2 && r >= c.r[2][1] - sqrt(csgtol^2 - (z - c.hZ)^2))) &&
+        (abs(z + Δz_out) < c.hZ && r <= r_out + csgtol * hypot(2*c.hZ, Δr_out) / (2*c.hZ) ||
+        ((z + c.hZ)^2 <= csgtol^2 && r <= c.r[1][2] + sqrt(csgtol^2 - (z + c.hZ)^2)) ||
+        ((z - c.hZ)^2 <= csgtol^2 && r <= c.r[2][2] + sqrt(csgtol^2 - (z - c.hZ)^2)))
 end
-function _in(pt::CartesianPoint, c::VaryingTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ &&
-    csgtol + radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) < hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z) - csgtol
+
+function _in(pt::CartesianPoint, c::VaryingTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    r::T = hypot(pt.x, pt.y)
+    return abs(pt.z) + csgtol < c.hZ &&
+        r > radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) + csgtol * hypot(2*c.hZ, c.r[2][1] - c.r[1][1]) / (2*c.hZ) &&
+        r < radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z) - csgtol * hypot(2*c.hZ, c.r[2][2] - c.r[1][2]) / (2*c.hZ)
 end
 
 function surfaces(t::VaryingTube{T}) where {T}
