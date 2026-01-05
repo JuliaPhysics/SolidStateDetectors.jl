@@ -213,17 +213,22 @@ _____\
 const VaryingCylinder{T,CO} = Cone{T,CO,Tuple{Tuple{T},Tuple{T}},Nothing} # Full in φ
 const PartialVaryingCylinder{T,CO} = Cone{T,CO,Tuple{Tuple{T},Tuple{T}},T}
 
+
+### VaryingCylinder
 function _in(pt::CartesianPoint, c::VaryingCylinder{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z) 
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y) 
-        rz = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
-        r <= rz + csgtol
-    end
+    r::T = hypot(pt.x, pt.y)
+    z::T = pt.z 
+    rz::T = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], z)
+    Δr::T = c.r[2][1] - c.r[1][1]
+    Δz::T = iszero(c.hZ) ? zero(T) : -csgtol * Δr / hypot(2*c.hZ, Δr)
+    return (abs(z - Δz) < c.hZ && r <= rz + csgtol * hypot(2*c.hZ, Δr) / (2*c.hZ)) ||
+        ((z + c.hZ)^2 <= csgtol^2 && r <= c.r[1][1] + sqrt(csgtol^2 - (z + c.hZ)^2)) ||
+        ((z - c.hZ)^2 <= csgtol^2 && r <= c.r[2][1] + sqrt(csgtol^2 - (z - c.hZ)^2))
 end
+
 function _in(pt::CartesianPoint, c::VaryingCylinder{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ &&
-    csgtol + hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
+    abs(pt.z) < c.hZ - csgtol &&
+    hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) - csgtol * hypot(2*c.hZ, c.r[2][1] - c.r[1][1]) / (2*c.hZ)
 end
 
 function surfaces(t::VaryingCylinder{T}) where {T}
@@ -677,6 +682,8 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
     hZ = if haskey(dict, "h")
         _parse_value(T, dict["h"], length_unit) / 2
     end
+
+    # TODO: throw error if hZ == 0 and different radii at top and bottom ?
 
     cone = Cone{T}(ClosedPrimitive; 
         r = r, 
