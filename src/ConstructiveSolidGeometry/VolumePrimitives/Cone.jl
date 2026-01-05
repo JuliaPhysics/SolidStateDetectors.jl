@@ -423,17 +423,8 @@ __\
 const UpwardCone{T,CO} = Cone{T,CO,Tuple{Tuple{Nothing,T},Nothing},Nothing} # Full in φ
 const PartialUpwardCone{T,CO} = Cone{T,CO,Tuple{Tuple{Nothing,T},Nothing},T}
 
-function _in(pt::CartesianPoint, c::UpwardCone{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_out = radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z)
-        r <= r_out + csgtol
-    end 
-end
-function _in(pt::CartesianPoint, c::UpwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ &&
-    hypot(pt.x, pt.y) + csgtol < radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z)
+function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{Tuple{Nothing,T},Nothing}}; csgtol::T = csg_default_tol(T)) where {T,CO} 
+    _in(pt, Cone{T,CO}(((c.r[1][2],), (zero(T),)), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
 function surfaces(t::UpwardCone{T}) where {T}
@@ -442,23 +433,6 @@ function surfaces(t::UpwardCone{T}) where {T}
     e_bot = EllipticalSurface{T}(r = t.r[1][2], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
     # normals of the surfaces show inside the volume primitives. 
     e_bot, outer_mantle
-end
-
-function _in(pt::CartesianPoint, c::PartialUpwardCone{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_out = radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z)
-        φ = atan(pt.y, pt.x)
-        r <= r_out + csgtol && (_in_angular_interval_closed(φ, c.φ, csgtol = zero(T)) || r_out * sin(min((2π-φ, φ-c.φ, π/2)...)) <= csgtol)
-    end 
-end
-function _in(pt::CartesianPoint, c::PartialUpwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ && begin
-        r = hypot(pt.x, pt.y)
-        csgtol + r < radius_at_z(c.hZ, c.r[1][2], zero(T), pt.z) &&
-        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end
 end
 
 function surfaces(t::PartialUpwardCone{T}) where {T}
@@ -491,18 +465,8 @@ ___
 const DownwardCone{T,CO} = Cone{T,CO,Tuple{Nothing,Tuple{Nothing,T}},Nothing} # Full in φ
 const PartialDownwardCone{T,CO} = Cone{T,CO,Tuple{Nothing,Tuple{Nothing,T}},T} 
 
-
-function _in(pt::CartesianPoint, c::DownwardCone{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_out = radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
-        r <= r_out + csgtol
-    end 
-end
-function _in(pt::CartesianPoint, c::DownwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ &&
-    hypot(pt.x, pt.y) + csgtol < radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
+function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{Nothing,Tuple{Nothing,T}}}; csgtol::T = csg_default_tol(T)) where {T,CO} 
+    _in(pt, Cone{T,CO}(((zero(T),), (c.r[2][2],)), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
 function surfaces(t::DownwardCone{T}) where {T}
@@ -511,23 +475,6 @@ function surfaces(t::DownwardCone{T}) where {T}
     e_top = EllipticalSurface{T}(r = t.r[2][2], φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
     # normals of the surfaces show inside the volume primitives. 
     e_top, outer_mantle
-end
-
-function _in(pt::CartesianPoint, c::PartialDownwardCone{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_out = radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z)
-        φ = atan(pt.y, pt.x)
-        r <= r_out + csgtol && (_in_angular_interval_closed(φ, c.φ, csgtol = zero(T)) || r_out * sin(min((2π-φ, φ-c.φ, π/2)...)) <= csgtol)
-    end
-end
-function _in(pt::CartesianPoint, c::PartialDownwardCone{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ && begin
-        r = hypot(pt.x, pt.y) 
-        csgtol + r < radius_at_z(c.hZ, zero(T), c.r[2][2], pt.z) &&
-        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end
 end
 
 function surfaces(t::PartialDownwardCone{T}) where {T}
@@ -561,20 +508,8 @@ end
 const TopClosedTube{T,CO} = Cone{T,CO,Tuple{Tuple{T,T},T},Nothing} # Full in φ
 const PartialTopClosedTube{T,CO} = Cone{T,CO,Tuple{Tuple{T,T},T},T} 
 
-
-function _in(pt::CartesianPoint, c::TopClosedTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2], pt.z)
-        r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2], pt.z)
-        r_in - csgtol <= r &&
-        r <= r_out + csgtol 
-    end
-end
-function _in(pt::CartesianPoint, c::TopClosedTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ &&
-    csgtol + radius_at_z(c.hZ, c.r[1][1], c.r[2], pt.z) < hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1][2], c.r[2], pt.z) - csgtol
+function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{Tuple{T,T},T}}; csgtol::T = csg_default_tol(T)) where {T,CO} 
+    _in(pt, Cone{T,CO}((c.r[1], (c.r[2], c.r[2])), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
 function surfaces(t::TopClosedTube{T}) where {T}
@@ -586,25 +521,6 @@ function surfaces(t::TopClosedTube{T}) where {T}
     # e_top = Annulus{T}(r = (t.r[2][1], t.r[2][2]), φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
     # normals of the surfaces show inside the volume primitives. 
     e_bot, inner_mantle, outer_mantle
-end
-
-function _in(pt::CartesianPoint, c::PartialTopClosedTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2], pt.z)
-        r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2], pt.z)
-        r_in - csgtol <= r &&
-        r <= r_out + csgtol &&
-        _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end 
-end
-function _in(pt::CartesianPoint, c::PartialTopClosedTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ && begin
-        r = hypot(pt.x, pt.y)
-        csgtol + radius_at_z(c.hZ, c.r[1][1], c.r[2], pt.z) < r < radius_at_z(c.hZ, c.r[1][2], c.r[2], pt.z) - csgtol &&
-        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end
 end
 
 function surfaces(t::PartialTopClosedTube{T}) where {T}
@@ -642,20 +558,8 @@ ______
 const BottomClosedTube{T,CO} = Cone{T,CO,Tuple{T,Tuple{T,T}},Nothing} # Full in φ
 const PartialBottomClosedTube{T,CO} = Cone{T,CO,Tuple{T,Tuple{T,T}},T} 
 
-
-function _in(pt::CartesianPoint, c::BottomClosedTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_in = radius_at_z(c.hZ, c.r[1], c.r[2][1], pt.z)
-        r_out = radius_at_z(c.hZ, c.r[1], c.r[2][2], pt.z)
-        r_in - csgtol <= r &&
-        r <= r_out + csgtol 
-    end
-end
-function _in(pt::CartesianPoint, c::BottomClosedTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ &&
-    csgtol + radius_at_z(c.hZ, c.r[1], c.r[2][1], pt.z) < hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1], c.r[2][2], pt.z) - csgtol
+function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{T,Tuple{T,T}}}; csgtol::T = csg_default_tol(T)) where {T,CO} 
+    _in(pt, Cone{T,CO}(((c.r[1], c.r[1]), c.r[2]), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
 function surfaces(t::BottomClosedTube{T}) where {T}
@@ -667,25 +571,6 @@ function surfaces(t::BottomClosedTube{T}) where {T}
     e_top = EllipticalSurface{T}(r = (t.r[2][1], t.r[2][2]), φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
     # normals of the surfaces show inside the volume primitives. 
     e_top, inner_mantle, outer_mantle
-end
-
-function _in(pt::CartesianPoint, c::PartialBottomClosedTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_in = radius_at_z(c.hZ, c.r[1], c.r[2][1], pt.z)
-        r_out = radius_at_z(c.hZ, c.r[1], c.r[2][2], pt.z)
-        r_in - csgtol <= r &&
-        r <= r_out + csgtol &&
-        _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end 
-end
-function _in(pt::CartesianPoint, c::PartialBottomClosedTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ && begin
-        r = hypot(pt.x, pt.y)
-        csgtol + radius_at_z(c.hZ, c.r[1], c.r[2][1], pt.z) < r < radius_at_z(c.hZ, c.r[1], c.r[2][2], pt.z) - csgtol &&
-        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end
 end
 
 function surfaces(t::PartialBottomClosedTube{T}) where {T}
