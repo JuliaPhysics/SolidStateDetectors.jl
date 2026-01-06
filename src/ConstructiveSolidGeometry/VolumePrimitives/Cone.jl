@@ -349,23 +349,44 @@ function surfaces(t::VaryingTube{T}) where {T}
     e_top, e_bot, inner_mantle, outer_mantle
 end
 
+### PartialVaryingTube
 function _in(pt::CartesianPoint, c::PartialVaryingTube{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z)
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y)
-        r_in = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
-        r_out = radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z)
-        r_in - csgtol <= r &&
-        r <= r_out + csgtol &&
-        _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
+    r::T = hypot(pt.x, pt.y)
+    φ::T = mod(atan(pt.y, pt.x), T(2π))
+    z::T = pt.z
+    abs(z) <= c.hZ + csgtol && if _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = zero(T))
+        _in(pt, Cone{T,ClosedPrimitive}(c.r, nothing, c.hZ, c.origin, c.rotation); csgtol)
+    else
+        r_in  = clamp(radius_at_z(c.hZ, c.r[1][1], c.r[2][1], z), extrema((c.r[1][1], c.r[2][1]))...)
+        r_out = clamp(radius_at_z(c.hZ, c.r[1][2], c.r[2][2], z), extrema((c.r[1][2], c.r[2][2]))...)
+        Δr_in  = c.r[2][1] - c.r[1][1]
+        Δr_out = c.r[2][2] - c.r[1][2]
+        t_in =  ((r - c.r[1][1]) * Δr_in + (z + c.hZ) * 2c.hZ) / (Δr_in^2 + 4c.hZ^2)
+        s_in = -((r - c.r[1][1]) * 2c.hZ - (z + c.hZ) * Δr_in) / (Δr_in^2 + 4c.hZ^2)
+        t_out = ((r - c.r[1][2]) * Δr_out + (z + c.hZ) * 2c.hZ) / (Δr_out^2 + 4c.hZ^2)
+        s_out = ((r - c.r[1][2]) * 2c.hZ - (z + c.hZ) * Δr_out) / (Δr_out^2 + 4c.hZ^2)
+        d::T = if r_in <= r <= r_out && abs(z) <= c.hZ
+            zero(T)
+        elseif 0 <= t_in <= 1 && s_in >= 0
+            s_in * hypot(Δr_in, 2c.hZ)
+        elseif 0 <= t_out <= 1 && s_out >= 0
+            s_out * hypot(Δr_out, 2c.hZ)
+        elseif t_out > 1 || t_in > 1
+            hypot(abs(z - c.hZ), max(0, r - c.r[2][2], c.r[2][1] - r))
+        else # t_out < 0 || t_in < 0
+            hypot(abs(-z - c.hZ), max(0, r - c.r[1][2], c.r[1][1] - r))
+        end
+        (r * sin(min(T(2π)-φ, φ-c.φ, T(π/2))))^2 + d^2 <= csgtol^2
     end 
 end
+
 function _in(pt::CartesianPoint, c::PartialVaryingTube{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ && begin
-        r = hypot(pt.x, pt.y)
-        csgtol + radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) < r < radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z) - csgtol &&
-        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end
+    r::T = hypot(pt.x, pt.y) 
+    φ::T = mod(atan(pt.y, pt.x), T(2π))
+    abs(pt.z) + csgtol < c.hZ && 
+        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = zero(T)) && r * sin(min(φ, c.φ - φ, T(π/2))) > csgtol &&
+        r > radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) + csgtol * hypot(2c.hZ, c.r[2][1] - c.r[1][1]) / 2c.hZ &&
+        r < radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z) - csgtol * hypot(2c.hZ, c.r[2][2] - c.r[1][2]) / 2c.hZ
 end
 
 function surfaces(t::PartialVaryingTube{T}) where {T}
