@@ -540,7 +540,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         end
         @testset "surfaces" begin
             r_torus = 5.0
-	    φ, θ = π/2, π/4
+            φ, θ = π/2, π/4
             origin = CartesianPoint(0.0, 0.0, 0.0)
             rot = RotX(0.0)
 
