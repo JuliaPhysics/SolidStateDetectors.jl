@@ -241,21 +241,40 @@ function surfaces(t::VaryingCylinder{T}) where {T}
     e_top, e_bot, mantle
 end
 
+### PartialVaryingCylinder
 function _in(pt::CartesianPoint, c::PartialVaryingCylinder{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    az = abs(pt.z) 
-    az <= c.hZ + csgtol && begin
-        r = hypot(pt.x, pt.y) 
-        rz = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z)
-        r <= rz + csgtol &&
-        _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
+    r::T = hypot(pt.x, pt.y)
+    φ::T = mod(atan(pt.y, pt.x), T(2π))
+    z::T = pt.z
+    rz::T = radius_at_z(c.hZ, c.r[1][1], c.r[2][1], z)
+    Δr::T = c.r[2][1] - c.r[1][1]
+    abs(z) <= c.hZ + csgtol && if _in_angular_interval_closed(φ, c.φ, csgtol = zero(T)) 
+        _in(pt, Cone{T,ClosedPrimitive}(c.r, nothing, c.hZ, c.origin, c.rotation); csgtol)
+    else
+        t::T = ((r - c.r[1][1]) * Δr + (z + c.hZ) * 2c.hZ) / (Δr^2 + 4c.hZ^2)
+        s::T = ((r - c.r[1][1]) * 2c.hZ - (z + c.hZ) * Δr) / (Δr^2 + 4c.hZ^2)
+        d::T = if r <= rz && abs(z) <= c.hZ
+            zero(T)
+        elseif 0 <= t <= 1 && s >= 0
+            s * hypot(Δr, 2c.hZ)
+        elseif t > 1 || (t >= 0 && s <= 0 && Δr > 0)
+            hypot(abs(z - c.hZ), max(zero(T), r - c.r[2][1]))
+        elseif t < 0 || (t <= 1 && s <= 0 && Δr < 0)
+            hypot(abs(-z - c.hZ), max(zero(T), r - c.r[1][1]))
+        else 
+            hypot(r, max(zero(T), pt.z - c.hZ, - pt.z - c.hZ))
+        end
+        (r * sin(min(T(2π)-φ, φ-c.φ, T(π/2))))^2 + d^2 <= csgtol^2
     end
 end
+
 function _in(pt::CartesianPoint, c::PartialVaryingCylinder{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T} 
-    abs(pt.z) + csgtol < c.hZ && begin
-        r = hypot(pt.x, pt.y) 
-        csgtol + r < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) &&
-        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)
-    end
+    r::T = hypot(pt.x, pt.y) 
+    φ::T = mod(atan(pt.y, pt.x), T(2π))
+    Δr::T = c.r[2][1] - c.r[1][1]
+    abs(pt.z) + csgtol < c.hZ && 
+        r < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) - csgtol * hypot(2c.hZ, Δr) / 2c.hZ &&
+        _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = zero(T)) && r * sin(min(φ, c.φ - φ, T(π/2))) > csgtol
 end
 
 function surfaces(t::PartialVaryingCylinder{T}) where {T}
