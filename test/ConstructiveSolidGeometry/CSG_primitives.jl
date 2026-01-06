@@ -511,7 +511,8 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test tuple_torus ==rot_torus
 
         @testset "_in" begin
-            r_torus, r_tube = 5.0, (1.0, 2.0)
+        for r_tube in (2.0, (1.0, 2.0))
+            r_torus = 5.0
             origin = CartesianPoint(0.0, 0.0, 0.0)
             rot = RotX(0.0)
             
@@ -519,7 +520,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             t_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, nothing, origin, rot)
             
             # Point safely inside tube (avoid boundaries due to csgtol)
-            rmin, rmax = r_tube
+            rmin, rmax = CSG._radial_endpoints(r_tube)
             safe_r = (rmin + rmax) / 2
             pt_inside = CartesianPoint(r_torus + safe_r, 0.0, 0.0)
             @test CSG._in(pt_inside, t_open)
@@ -527,16 +528,27 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             # Point outside radially   
             pt_out_rad = CartesianPoint(r_torus + rmax + 1.0, 0.0, 0.0)
             @test !CSG._in(pt_out_rad, t_open)
+
             # Hollow OpenPrimitive with φ restriction
             t_phi = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, (0.0, π/2), nothing, origin, rot)
             pt_out_phi = CartesianPoint(-r_torus - safe_r, 0.0, 0.0) # φ = π, outside
             @test !CSG._in(pt_out_phi, t_phi)
+
+            t_phi = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, (0.0, 3π/2), nothing, origin, rot)
+            pt_out_phi = CartesianPoint(-r_torus - safe_r, 0.0, 0.0) # φ = π, outside
+            @test CSG._in(pt_out_phi, t_phi)
 
             # Hollow OpenPrimitive with θ restriction
             t_theta = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, (0.0, π/4), origin, rot)
             # Point with z above allowed θ
             pt_out_theta = CartesianPoint(r_torus + safe_r, 0.0, rmax + 1.0)
             @test !CSG._in(pt_out_theta, t_theta)
+
+            t_theta = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, (0.0, 3π/2), origin, rot)
+            # Point with z above allowed θ
+            pt_out_theta = CartesianPoint(r_torus + safe_r, 0.0, rmax + 1.0)
+            @test !CSG._in(pt_out_theta, t_theta)
+        end
         end
         @testset "surfaces" begin
             r_torus = 5.0
