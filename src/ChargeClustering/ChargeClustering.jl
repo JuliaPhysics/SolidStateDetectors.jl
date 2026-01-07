@@ -2,69 +2,124 @@
 
 function cluster_detector_hits(
         detno::AbstractVector{<:Integer},
-        edep::AbstractVector{TT},
+        edep::AbstractVector{ET},
         pos::AbstractVector{<:Union{<:StaticVector{3,PT}, <:CartesianPoint{PT}}},
-        cluster_radius::RealQuantity
-    ) where {TT <: RealQuantity, T <: Real, PT <: Union{T, <:Unitful.Length{T}}}
+        thit::AbstractVector{TTT},
+        cluster_radius::RealQuantity,
+        cluster_time::RealQuantity = Inf*u"s"
+    ) where {ET<:RealQuantity, T<:Real, PT<:Union{T,<:Unitful.Length{T}}, TT<:Real, TTT<:Union{TT,<:Unitful.Time{TT}}}
 
-    unsorted = TypedTables.Table(detno = detno, edep = edep, pos = pos)
+    unsorted = TypedTables.Table(detno = detno, edep = edep, pos = pos, thit = thit)
     sorting_idxs = sortperm(unsorted.detno)
     sorted = unsorted[sorting_idxs]
     grouped = TypedTables.Table(consgroupedview(sorted.detno, TypedTables.columns(sorted)))
-
-    r_detno = similar(detno, 0)
-    r_edep = similar(edep, 0)
-    r_pos = similar(pos, 0)
-
-    ustripped_cradius = _parse_value(float(T), cluster_radius, internal_length_unit)
     
+    results = eltype(grouped)[]
+    ustripped_cradius = _parse_value(float(T), cluster_radius, internal_length_unit)
+
     for d_hits_nt in grouped
         d_hits = TypedTables.Table(d_hits_nt)
         d_detno = first(d_hits.detno)
         @assert all(isequal(d_detno), d_hits.detno)
-        if length(d_hits) > 3
-            
-            clusters = Clustering.dbscan(hcat((to_internal_units.(getindex.(d_hits.pos,i)) for i in 1:3)...)', 
-                ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
-            for c in clusters
-                idxs = vcat(c.boundary_indices, c.core_indices)
-                @assert length(idxs) == c.size
-                c_hits = view(d_hits, idxs)
+
+        # sort hits by time
+        t_sort_idx = sortperm(d_hits.thit)
+        d_hits = d_hits[t_sort_idx]
+        t_vals = to_internal_units.(d_hits.thit)
+
+        current_group = 1
+        @inbounds for i in eachindex(t_vals) .+ 1
+            if i > lastindex(t_vals) || t_vals[i] - t_vals[current_group] > _parse_value(float(TT), cluster_time, internal_time_unit)
+                t_hits = view(d_hits, current_group:i-1)
                 
-                push!(r_detno, d_detno)
-                esum = sum(c_hits.edep)
-                push!(r_edep, esum)
-                if esum ≈ zero(TT)
-                    push!(r_pos, barycenter(c_hits.pos))
+                # Each time cluster gets its own result entry
+                r_detno = similar(detno, 0)
+                r_edep = similar(edep, 0)
+                r_pos = similar(pos, 0)
+                r_thit = similar(thit, 0)
+                
+                if length(t_hits) > 3
+                    d_detno = first(t_hits.detno)
+                    @assert all(isequal(d_detno), t_hits.detno)
+                    clusters = Clustering.dbscan(hcat((to_internal_units.(getindex.(t_hits.pos,i)) for i in 1:3)...)', 
+                        ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters
+                    
+                    for c in clusters
+                        idxs = vcat(c.boundary_indices, c.core_indices)
+                        @assert length(idxs) == c.size
+                        c_hits = view(t_hits, idxs)
+                        esum = sum(c_hits.edep)
+                        push!(r_detno, d_detno)
+                        push!(r_edep, esum)
+                        if esum ≈ zero(ET)
+                            push!(r_pos, barycenter(c_hits.pos))
+                            push!(r_thit, mean(c_hits.thit))
+                        else
+                            weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
+                            push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
+                            push!(r_thit, sum(c_hits.thit .* weights))
+                        end
+                    end
                 else
-                    weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
-                    push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
+                    append!(r_detno, t_hits.detno)
+                    append!(r_edep, t_hits.edep)
+                    append!(r_pos, t_hits.pos)
+                    append!(r_thit, t_hits.thit)
                 end
+                
+                push!(results, (detno = r_detno, edep = r_edep, pos = r_pos, thit = r_thit))
+                current_group = i
             end
-        else
-            append!(r_detno, d_hits.detno)
-            append!(r_edep, d_hits.edep)
-            append!(r_pos, d_hits.pos)
         end
     end
-
-    (detno = r_detno, edep = r_edep, pos = r_pos)
+    results
 end
 
 
-function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQuantity)
+function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQuantity, cluster_time::RealQuantity = Inf * u"s")
     @assert is_detector_hits_table(table) "Table does not have the correct format"
-    clustered_nt = map(
-        evt -> cluster_detector_hits(evt.detno, evt.edep, evt.pos, cluster_radius),
-        table
-    )
-    TypedTables.Table(merge(
-        TypedTables.columns(table),
-        map(
-            VectorOfVectors,
-            TypedTables.columns(clustered_nt)
+    
+    col_names = TypedTables.columnnames(table)
+    col_vectors = map(col -> similar(getproperty(table, col), 0), col_names)
+    unclustered_col_names = filter(col -> col ∉ (:detno, :edep, :pos, :thit), col_names)
+    col_nt = NamedTuple{col_names}(col_vectors)
+    
+    for (idx, evt) in enumerate(table)
+        time_clusters = cluster_detector_hits(
+            evt.detno,
+            evt.edep,
+            evt.pos,
+            evt.thit,
+            cluster_radius,
+            cluster_time
         )
-    ))
+        
+        for result in time_clusters
+            for col in (:detno, :edep, :pos, :thit)
+                push!(col_nt[col], getfield(result, col))
+            end
+
+            for col in unclustered_col_names
+                push!(col_nt[col], getfield(evt, col))
+            end
+        end
+    end
+    
+    # Convert clustered columns to VectorOfVectors
+    clustered_cols = (
+        detno = VectorOfVectors(col_nt.detno),
+        edep = VectorOfVectors(col_nt.edep),
+        pos = VectorOfVectors(col_nt.pos),
+        thit = VectorOfVectors(col_nt.thit)
+    )
+    
+    # Merge with the remaining columns
+    final_nt = merge(
+        NamedTuple{unclustered_col_names}(map(col -> col_nt[col], unclustered_col_names)),
+        clustered_cols
+    )
+    
+    TypedTables.Table(final_nt)
 end
 
 
