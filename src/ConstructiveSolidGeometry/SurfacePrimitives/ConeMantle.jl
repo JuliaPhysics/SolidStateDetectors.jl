@@ -91,16 +91,18 @@ get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
-    x, y, _ = p_local
-    normal_local = normalize(CartesianVector(x, y, 0))
+    x = p_local.x
+    y = p_local.y
+    normal_local = normalize(CartesianVector(x, y, zero(T)))
     #FELIX z component ?
     return _transform_into_global_coordinate_system(normal_local, cm)
 end
 
 function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
-    x, y, _ = p_local
-    normal_local = -normalize(CartesianVector(x, y, 0))
+    x = p_local.x
+    y = p_local.y
+    normal_local = -normalize(CartesianVector(x, y, zero(T)))
     return _transform_into_global_coordinate_system(normal_local, cm)
 end
 
