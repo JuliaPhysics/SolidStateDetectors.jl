@@ -7,9 +7,9 @@ T = Float32
 @testset "Test depletion estimation" begin
     config_file = joinpath(@__DIR__, "test_config_files/BEGe_01.yaml")
     sim = Simulation{T}(config_file)
-    calculate_electric_potential!(sim, refinement_limits=0.01)
+    timed_calculate_electric_potential!(sim, refinement_limits=0.01)
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
-    calculate_weighting_potential!(sim, id, refinement_limits=0.01)
+    timed_calculate_weighting_potential!(sim, id, refinement_limits=0.01)
     SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(
         sim, id)
     U_est = estimate_depletion_voltage(sim) # around 2600
@@ -18,10 +18,10 @@ T = Float32
     U₋ = U_est - ΔU
     U₊ = U_est + ΔU
     sim.detector = SolidStateDetector(sim.detector, contact_id=id, contact_potential=U₊)
-    calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
+    timed_calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
     undepleted = !is_depleted(sim.point_types)
     sim.detector = SolidStateDetector(sim.detector, contact_id=id, contact_potential=U₋)
-    calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
+    timed_calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
     depleted = is_depleted(sim.point_types)
     @test undepleted && depleted
 end

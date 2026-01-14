@@ -239,20 +239,20 @@ end
 
     pt = CartesianPoint{Float64}(0.2, -0.1, 0.3)
 
-    @test @inferred(get_impurity_density(lb, pt)) isa Float64
-    @test @inferred(get_impurity_density(le, pt)) isa Float64
-    @test @inferred(get_impurity_density(pb, pt)) isa Float64
-    @test @inferred(get_impurity_density(pe, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(lb, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(le, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(pb, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(pe, pt)) isa Float64
 end
 
 @testset "Charge density types" begin
     # Test get_charge_density accepts AbstractCoordinatePoint
-    lcd = LinearChargeDensity{Float32}(1f0, (0f0, 1f0, 0f0))
-    ccd = CylindricalChargeDensity{Float32}(2f0, (1f0, 0f0, -1f0))
+    lcd = SolidStateDetectors.LinearChargeDensity{Float32}(1f0, (0f0, 1f0, 0f0))
+    ccd = SolidStateDetectors.CylindricalChargeDensity{Float32}(2f0, (1f0, 0f0, -1f0))
 
     cart_pt = CartesianPoint{Float32}(0.5f0, 0.0f0, 2f0)
     cyl_pt = CylindricalPoint{Float32}(0.5f0, 0.0f0, 1f0)
 
-    @test @inferred(get_charge_density(lcd, cart_pt)) isa Float32
-    @test @inferred(get_charge_density(ccd, cyl_pt)) isa Float32
+    @test @inferred(SolidStateDetectors.get_charge_density(lcd, cart_pt)) isa Float32
+    @test @inferred(SolidStateDetectors.get_charge_density(ccd, cyl_pt)) isa Float32
 end
