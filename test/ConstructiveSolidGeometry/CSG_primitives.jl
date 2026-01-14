@@ -855,10 +855,40 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test dist_annulus isa Float32
         @test dist_annulus > 0f0
     end
+
+    @testset "distance_to_surface" begin
+        # Test distance_to_surface and _above_or_below_polygon accept AbstractCoordinatePoint
+        cm = CSG.ConeMantle()
+        es = CSG.EllipticalSurface()
+        torus = CSG.TorusMantle()
+        pts = SVector(
+            CartesianPoint(0.0, 0.0, 0.0),
+            CartesianPoint(1.0, 0.0, 0.0),
+            CartesianPoint(1.0, 1.0, 0.0),
+            CartesianPoint(0.0, 1.0, 0.0)
+        )
+        quad = CSG.Polygon(pts)
+        pt = CartesianPoint(0.1, 0.1, 0.1)
+
+        @test CSG.distance_to_surface(pt, cm) isa AbstractFloat
+        @test CSG.distance_to_surface(pt, es) isa AbstractFloat
+        @test CSG.distance_to_surface(pt, torus) isa AbstractFloat
+        @test CSG._above_or_below_polygon(pt, quad) isa Integer
+    end
     @testset "Plane" begin
         plane1 = @inferred CSG.Plane{Float32}(normal = CartesianVector(1,0,0))
         plane2 = @inferred CSG.Plane(normal = CartesianVector(1f0,0f0,0f0))
         @test plane1 == plane2 
+
+        # Test Plane functions use vector differences correctly
+        p = CSG.Plane(CartesianPoint(0.0, 0.0, 0.0), CartesianVector(0.0, 0.0, 1.0))
+        pt_front = CartesianPoint(0.0, 0.0, 1.0)
+        diff = pt_front - CSG.origin(p)
+        @test diff isa CartesianVector
+        @test @inferred(CSG.isinfront(pt_front, p)) === true
+        @test @inferred(CSG.isbehind(pt_front, p)) === false
+        @test @inferred(CSG._distance(pt_front, p)) == 1.0
+        @test @inferred(CSG.distance(pt_front, p)) == 1.0
     end
     @testset "ConeMantle" begin
         CSG.ConeMantle{Float32}(r = 1f0)
