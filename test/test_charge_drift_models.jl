@@ -11,7 +11,6 @@ using InteractiveUtils
 using StaticArrays
 using LinearAlgebra
 using Unitful
-using Interpolations
 
 # include("test_utils.jl")
 
@@ -621,17 +620,14 @@ end
 
 
 @testset "_calculate_signal" begin
-    # Test that the function accepts AbstractVector{CartesianPoint} and AbstractVector{T}
-    model = NoChargeTrappingModel{Float64}()
-    path = [CartesianPoint(0.0, 0.0, 0.0), CartesianPoint(0.1, 0.0, 0.0)]
-    times = [0.0, 1.0]
+    # Test that the function accepts AbstractVector{CartesianPoint{T}} and AbstractVector{T}
+    model = NoChargeTrappingModel{T}()
+    path = [CartesianPoint{T}(0.0, 0.0, 0.0), CartesianPoint{T}(0.1, 0.0, 0.0)]
+    times = T[0.0, 1.0]
+    wpot = SolidStateDetectors.interpolated_scalarfield(sim.weighting_potentials[1])
     
-    # Create simple interpolation object
-    interp = Interpolations.interpolate(zeros(2, 2, 2), Interpolations.BSpline(Interpolations.Linear()))
-    wpot = Interpolations.extrapolate(interp, Interpolations.Flat())
-    
-    signal = SolidStateDetectors._calculate_signal(model, path, times, 1.0, wpot)
-    @test signal isa Vector{Float64}
+    signal = SolidStateDetectors._calculate_signal(model, path, times, one(T), wpot, sim.point_types)
+    @test signal isa Vector{T}
     @test length(signal) == length(times)
 end
 
