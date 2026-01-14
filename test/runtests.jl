@@ -57,6 +57,10 @@ end
     include("test_platonic_solids.jl")
 end
 
+@timed_testset "MC events processing" begin
+    include("test_mc_events_processing.jl")
+end
+
 @timed_testset "Geant4 extension" begin
     if Sys.WORD_SIZE == 64 include("test_geant4.jl") end
 end
