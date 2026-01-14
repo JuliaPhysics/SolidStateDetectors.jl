@@ -4,11 +4,14 @@ using Test
 
 using SolidStateDetectors
 using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared, scale_to_temperature
+using SolidStateDetectors.ConstructiveSolidGeometry: AbstractCoordinatePoint
+using SolidStateDetectors: AbstractVirtualVolume
 using ArraysOfArrays
 using InteractiveUtils
 using StaticArrays
 using LinearAlgebra
 using Unitful
+using Interpolations
 
 # include("test_utils.jl")
 
@@ -605,6 +608,32 @@ end
 
 struct OutsideTestVolume{T} <: SolidStateDetectors.AbstractVirtualVolume{T} end
 Base.in(::CartesianPoint{T}, ::OutsideTestVolume{T}) where {T} = false
+
+@testset "Virtual volumes" begin
+    struct DummyGeom end
+    Base.in(::AbstractCoordinatePoint{T}, ::DummyGeom) where {T} = true
+    struct DummyVV{T} <: AbstractVirtualVolume{T}
+        geometry::DummyGeom
+    end
+    pt = CartesianPoint{Float64}(0, 0, 0)
+    @test in(pt, DummyVV{Float64}(DummyGeom()))
+end
+
+
+@testset "_calculate_signal" begin
+    # Test that the function accepts AbstractVector{CartesianPoint} and AbstractVector{T}
+    model = NoChargeTrappingModel{Float64}()
+    path = [CartesianPoint(0.0, 0.0, 0.0), CartesianPoint(0.1, 0.0, 0.0)]
+    times = [0.0, 1.0]
+    
+    # Create simple interpolation object
+    interp = Interpolations.interpolate(zeros(2, 2, 2), Interpolations.BSpline(Interpolations.Linear()))
+    wpot = Interpolations.extrapolate(interp, Interpolations.Flat())
+    
+    signal = SolidStateDetectors._calculate_signal(model, path, times, 1.0, wpot)
+    @test signal isa Vector{Float64}
+    @test length(signal) == length(times)
+end
 
 @testset "Modulate Drift Vector" begin
     T = Float64
