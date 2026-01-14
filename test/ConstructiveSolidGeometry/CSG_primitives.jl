@@ -569,6 +569,12 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             @test tm isa CSG.TorusMantle{Float64,Float64,Tuple{Float64,Float64},:inwards}
             @test es1 isa CSG.EllipticalSurface
             @test es2 isa CSG.ConeMantle
+
+            t_full_closed = CSG.FullThetaTorus{Float64, CSG.ClosedPrimitive}(r_torus, r_tube, φ, nothing, origin, rot)
+            tm, es1, es2 = CSG.surfaces(t_full_closed)
+            @test tm isa CSG.FullThetaTorusMantle
+            @test es1 isa CSG.CircularArea
+            @test es2 isa CSG.CircularArea
             
             # FullThetaTorus OpenPrimitive                                                 
             t_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, nothing, nothing, origin, rot)
@@ -581,22 +587,35 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             @test tm isa CSG.TorusMantle{Float64,Float64,Tuple{Float64,Float64},:outwards}
             @test es1 isa CSG.EllipticalSurface
             @test es2 isa CSG.ConeMantle
+
+            t_full_open   = CSG.FullThetaTorus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, φ, nothing, origin, rot)
+            tm, es1, es2 = CSG.surfaces(t_full_open)
+            @test tm isa CSG.FullThetaTorusMantle
+            @test es1 isa CSG.CircularArea
+            @test es2 isa CSG.CircularArea
             
             # HollowThetaTorus ClosedPrimitive
-            r_tube = (0.5, 1.0)
-
-            t_hollow = CSG.Torus{Float64, CSG.ClosedPrimitive}(r_torus, r_tube, (0.0, φ), (0.0, θ), origin, rot)
-            s_hollow = CSG.surfaces(t_hollow)
-            @test length(s_hollow) == 6
-            tm_in, tm_out, es1, es2 = CSG.surfaces(t_hollow)
+            r_tube_hollow = (0.5, 1.0)
+            
+            t_hollow_closed = CSG.Torus{Float64, CSG.ClosedPrimitive}(r_torus, r_tube_hollow, (0.0, φ), (0.0, θ), origin, rot)
+            s_hollow_closed = CSG.surfaces(t_hollow_closed)
+            @test length(s_hollow_closed) == 6
+            tm_in, tm_out, es1, es2 = CSG.surfaces(t_hollow_closed)
             
             @test tm_in  isa CSG.TorusMantle{Float64, Float64, Tuple{Float64, Float64}, :outwards}
             @test tm_out isa CSG.TorusMantle{Float64, Float64, Tuple{Float64, Float64}, :inwards}
             @test es1 isa CSG.EllipticalSurface
             @test es2 isa CSG.ConeMantle
+
+            t_hollow_closed = CSG.HollowThetaTorus{Float64, CSG.ClosedPrimitive}(r_torus, r_tube_hollow, φ, nothing, origin, rot)
+            tm_in, tm_out, es1, es2 = CSG.surfaces(t_hollow_closed)
+            @test tm_in  isa CSG.FullThetaTorusMantle
+            @test tm_out isa CSG.FullThetaTorusMantle
+            @test es1    isa CSG.Annulus
+            @test es2    isa CSG.Annulus
             
             # HollowThetaTorus OpenPrimitive
-            t_hollow_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube, (0.0, φ), (0.0, θ), origin, rot)
+            t_hollow_open = CSG.Torus{Float64, CSG.OpenPrimitive}(r_torus, r_tube_hollow, (0.0, φ), (0.0, θ), origin, rot)
             s_hollow_open = CSG.surfaces(t_hollow_open)
             @test length(s_hollow_open) == 6
             tm_in, tm_out, es1, es2 = CSG.surfaces(t_hollow_open)
@@ -605,6 +624,13 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
             @test tm_out isa CSG.TorusMantle{Float64, Float64, Tuple{Float64, Float64}, :outwards}
             @test es1 isa CSG.EllipticalSurface
             @test es2 isa CSG.ConeMantle
+
+            t_hollow_open = CSG.HollowThetaTorus{Float64, CSG.OpenPrimitive}(r_torus, r_tube_hollow, φ, nothing, origin, rot)
+            tm_in, tm_out, es1, es2 = CSG.surfaces(t_hollow_open)
+            @test tm_in  isa CSG.FullThetaTorusMantle
+            @test tm_out isa CSG.FullThetaTorusMantle
+            @test es1    isa CSG.Annulus
+            @test es2    isa CSG.Annulus
         end
     end    
     @testset "TorusMantle" begin
@@ -880,6 +906,28 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         v_pt = CartesianVector(pt.x, pt.y, pt.z)
         @test dot(normal_out, v_pt) > 0
         @test dot(normal_in,  v_pt) < 0
+
+        # Cylindrical ConeMantle
+        cm_cyl_out = CSG.ConeMantle{Float32}(:outwards; r=1f0, φ=nothing, hZ=1f0)
+        cm_cyl_in = CSG.ConeMantle{Float32}(:inwards; r=1f0, φ=nothing, hZ=1f0)
+
+        pt_cyl = CartesianPoint{Float32}(0.6f0, 0.8f0, 0.2f0)
+
+        n_out = CSG.normal(cm_cyl_out, pt_cyl)
+        n_in  = CSG.normal(cm_cyl_in,  pt_cyl)
+
+        @test n_out isa CartesianVector{Float32}
+        @test n_in  isa CartesianVector{Float32}
+
+        # purely radial, no z component
+        @test abs(n_out.z) ≤ 1f-6
+        @test abs(n_in.z)  ≤ 1f-6
+        @test dot(n_out, n_in) ≈ -1f0 atol=1f-6
+
+        # radial direction test
+        v_radial = normalize(CartesianVector(pt_cyl.x, pt_cyl.y, 0f0))
+        @test dot(n_out, v_radial) ≈  1f0 atol=1f-6
+        @test dot(n_in,  v_radial) ≈ -1f0 atol=1f-6
         
         n_arc = 8
         verts = CSG.vertices(cm_out, n_arc)
@@ -1149,4 +1197,48 @@ end
     prim_translated = prim + v
     @test prim_translated.origin == prim.origin + v
     @test prim_translated.rotation ≈ prim.rotation
+end
+
+@testset "_in_φ" begin
+    # Cartesian points
+    p1 = CartesianPoint(1.0, 0.0, 0.0)   # φ = 0
+    p2 = CartesianPoint(0.0, 1.0, 0.0)   # φ = π/2
+    p3 = CartesianPoint(-1.0, 0.0, 0.0)  # φ = π
+    p4 = CartesianPoint(0.0, -1.0, 0.0)  # φ = 3π/2
+    
+    @test CSG._in_φ(p1, nothing)
+    @test CSG._in_φ(p2, nothing)
+    @test CSG._in_φ(p3, nothing)
+    @test CSG._in_φ(p4, nothing)
+
+    @test CSG._in_φ(p1, π/4)
+    @test !CSG._in_φ(p2, π/4)
+    @test CSG._in_φ(p2, π/2)
+    @test !CSG._in_φ(p3, π/2)
+
+    @test CSG._in_φ(p1, (0.0, π/2))
+    @test CSG._in_φ(p2, (0.0, π/2))
+    @test !CSG._in_φ(p3, (0.0, π/2))
+    @test !CSG._in_φ(p4, (0.0, π/2))
+
+    # Cylindrical points
+    c1 = CylindricalPoint(1.0, 0.0, 0.0)      # φ = 0
+    c2 = CylindricalPoint(1.0, π/2, 0.0)      # φ = π/2
+    c3 = CylindricalPoint(1.0, π, 0.0)        # φ = π
+    c4 = CylindricalPoint(1.0, 3π/2, 0.0)     # φ = 3π/2
+    
+    @test CSG._in_φ(c1, nothing)
+    @test CSG._in_φ(c2, nothing)
+    @test CSG._in_φ(c3, nothing)
+    @test CSG._in_φ(c4, nothing)
+
+    @test CSG._in_φ(c1, π/4)
+    @test !CSG._in_φ(c2, π/4)
+    @test CSG._in_φ(c2, π/2)
+    @test !CSG._in_φ(c3, π/2)
+
+    @test CSG._in_φ(c1, (0.0, π/2))
+    @test CSG._in_φ(c2, (0.0, π/2))
+    @test !CSG._in_φ(c3, (0.0, π/2))
+    @test !CSG._in_φ(c4, (0.0, π/2))
 end
