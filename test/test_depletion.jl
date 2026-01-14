@@ -5,7 +5,8 @@ using Unitful
 T = Float32
 
 @testset "Test depletion estimation" begin
-    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
+    config_file = joinpath(@__DIR__, "test_config_files/BEGe_01.yaml")
+    sim = Simulation{T}(config_file)
     calculate_electric_potential!(sim, refinement_limits=0.01)
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     calculate_weighting_potential!(sim, id, refinement_limits=0.01)
@@ -23,4 +24,15 @@ T = Float32
     calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
     depleted = is_depleted(sim.point_types)
     @test undepleted && depleted
+end
+
+@testset "_estimate_depletion_voltage_factor" begin
+    # Test functions accept AbstractVector
+    center_only = 1.0
+    center_zero = -2.0
+    neighbors_only = [0.5, 0.0, -0.5]
+    neighbors_zero = [-1.0, -2.0, -3.0]
+    est = SolidStateDetectors._estimate_depletion_voltage_factor(center_only, center_zero, neighbors_only, neighbors_zero)
+    @test est isa Float64
+    @test SolidStateDetectors._replace_NaN_with_minimum([NaN, 2.0, 3.0]) == [2.0, 2.0, 3.0]
 end
