@@ -94,7 +94,6 @@ function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::Car
     x = p_local.x
     y = p_local.y
     normal_local = normalize(CartesianVector(x, y, zero(T)))
-    #FELIX z component ?
     return _transform_into_global_coordinate_system(normal_local, cm)
 end
 

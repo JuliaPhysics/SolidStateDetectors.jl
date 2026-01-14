@@ -265,15 +265,15 @@ function surfaces(t::HollowPhiTorus{T,OpenPrimitive,TT1,TT2}) where {T,TT1,TT2}
     (tm_in, tm_out, cm1, cm2)
 end
 function surfaces(t::HollowThetaTorus{T,ClosedPrimitive}) where {T}
-    tm_in  = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[1], t.φ, nothing, t.origin, t.rotation)
-    tm_out = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[2], t.φ, nothing, t.origin, t.rotation)
+    tm_in  = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
+    tm_out = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
     es1 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation)
     es2 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation)
     (tm_in, tm_out, es1, es2)
 end
 function surfaces(t::HollowThetaTorus{T,OpenPrimitive}) where {T}
-    tm_in  = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[1], t.φ, nothing, t.origin, t.rotation)
-    tm_out = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[2], t.φ, nothing, t.origin, t.rotation)
+    tm_in  = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
+    tm_out = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
     es1 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation)
     es2 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation)
     (tm_in, tm_out, es1, es2)
