@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors.ConstructiveSolidGeometry: CartesianPoint, CartesianVector, 
-    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, barycenter
+    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, barycenter, geom_round
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
 
@@ -198,30 +198,20 @@ end
     @test Base.convert(CartesianPoint{Float32}, pt) isa CartesianPoint{Float32}
     @test_throws DimensionMismatch pt + [1.0, 2.0]
     @test_throws DimensionMismatch pt - [1.0, 2.0]
-end
 
-@testset "CSG intersection" begin
-    # Test in() accepts AbstractCoordinatePoint
-    import SolidStateDetectors.ConstructiveSolidGeometry as CSG
-    sphere = CSG.Ellipsoid(r = 1.0)
-    box = CSG.Box(hX = 1.0, hY = 1.0, hZ = 1.0)
-    inter = CSG.CSGIntersection(sphere, box)
-    pt_in = CartesianPoint(0.2, 0.2, 0.2)
-    @test in(pt_in, inter)
+    # Test frame_transformation accepts AbstractVector{<:AbstractCoordinateVector}
+    vectors = [CartesianVector(1.0, 0.0, 0.0), CartesianVector(0.0, 1.0, 0.0)]
+    transformed = frame_transformation(LocalAffineFrame(cartesian_zero, one(SMatrix{3,3,Float64,9})), global_frame, vectors)
+    @test transformed isa AbstractVector{<:CartesianVector}
+    @test transformed == vectors 
 end
 
 @testset "geom_round" begin
-    # Test geom_round accepts AbstractVector{<:AbstractCoordinatePoint}
-    import SolidStateDetectors.ConstructiveSolidGeometry as CSG
-    pts = [CartesianPoint(1.0, 1e-13, 2.0), CartesianPoint(0.0, 0.0, 0.0)]
-    rounded = CSG.geom_round(pts)
-    @test all(p -> p isa CartesianPoint, rounded)
-end
-
-@testset "frame_transformation" begin
-    # Test frame_transformation accepts AbstractVector{<:AbstractCoordinateVector}
-    v1 = CartesianVector(1.0, 0.0, 0.0)
-    vectors = [v1, CartesianVector(0.0, 1.0, 0.0)]
-    transformed = frame_transformation(LocalAffineFrame(cartesian_zero, one(SMatrix{3,3,Float64,9})), global_frame, vectors)
-    @test transformed isa AbstractVector{<:CartesianVector}
+    for T in (Float32, Float64)
+        pts = [CartesianPoint{T}(1.0, 1e-13, 2.0), CylindricalPoint{T}(1.0, 1e-13, 0.0)]
+        rounded = geom_round(pts)
+        @test all(isa.(rounded, typeof.(pts)))
+        @test all(rounded .!= pts)
+        @test all(iszero.(getindex.(rounded, 2)))
+    end
 end

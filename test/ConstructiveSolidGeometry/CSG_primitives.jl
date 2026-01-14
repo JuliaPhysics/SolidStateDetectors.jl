@@ -1180,3 +1180,12 @@ end
     @test prim_translated.origin == prim.origin + v
     @test prim_translated.rotation ≈ prim.rotation
 end
+
+@testset "CSG intersection" begin
+    # Test in() accepts AbstractCoordinatePoint
+    sphere = CSG.Ellipsoid(r = 1.0)
+    box = CSG.Box(hX = 1.0, hY = 1.0, hZ = 1.0)
+    inter = CSG.CSGIntersection(sphere, box)
+    pt_in = CartesianPoint(0.2, 0.2, 0.2)
+    @test pt_in in inter
+end

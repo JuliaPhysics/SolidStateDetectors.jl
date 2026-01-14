@@ -5,8 +5,7 @@ using Unitful
 T = Float32
 
 @testset "Test depletion estimation" begin
-    config_file = joinpath(@__DIR__, "test_config_files/BEGe_01.yaml")
-    sim = Simulation{T}(config_file)
+    sim = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim, refinement_limits=0.01)
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     timed_calculate_weighting_potential!(sim, id, refinement_limits=0.01)
