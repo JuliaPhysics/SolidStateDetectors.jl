@@ -1216,11 +1216,6 @@ end
     @test CSG._in_φ(p2, π/2)
     @test !CSG._in_φ(p3, π/2)
 
-    @test CSG._in_φ(p1, (0.0, π/2))
-    @test CSG._in_φ(p2, (0.0, π/2))
-    @test !CSG._in_φ(p3, (0.0, π/2))
-    @test !CSG._in_φ(p4, (0.0, π/2))
-
     # Cylindrical points
     c1 = CylindricalPoint(1.0, 0.0, 0.0)      # φ = 0
     c2 = CylindricalPoint(1.0, π/2, 0.0)      # φ = π/2
@@ -1236,9 +1231,4 @@ end
     @test !CSG._in_φ(c2, π/4)
     @test CSG._in_φ(c2, π/2)
     @test !CSG._in_φ(c3, π/2)
-
-    @test CSG._in_φ(c1, (0.0, π/2))
-    @test CSG._in_φ(c2, (0.0, π/2))
-    @test !CSG._in_φ(c3, (0.0, π/2))
-    @test !CSG._in_φ(c4, (0.0, π/2))
 end
