@@ -298,7 +298,7 @@ struct CustomChargeTrappingModel{T <: SSDFloat} <: AbstractChargeTrappingModel{T
 end
 ```
 
-The second step would be to define a method for `_calculate_signal`, which returns a charge signal based on a given charge drift `path` and its `pathtimestamps`, the `charge` value of the charge cloud, the interpolated weighting potential `wpot` and the coordinate system type `S` (`Cartesian` or `Cylindrical`):
+The second step would be to define a method for `_calculate_signal`, which returns a charge signal based on a given charge drift `path` and its `pathtimestamps`, the `charge` value of the charge cloud, the interpolated weighting potential `wpot` and the `point_types` to infer the coordinate system type `S` (`Cartesian` or `Cylindrical`):
 
 ```julia
 using SolidStateDetectors: CoordinateSystemType, SSDFloat
@@ -309,8 +309,8 @@ function SolidStateDetectors._calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
-    )::Vector{T} where {T <: SSDFloat}
+        point_types::PointTypes{T, N, S}
+    )::Vector{T} where {T <: SSDFloat, N, S}
 
     # Implement method here
 end

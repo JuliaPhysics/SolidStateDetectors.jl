@@ -3,7 +3,7 @@
 using Test
 
 using SolidStateDetectors.ConstructiveSolidGeometry: CartesianPoint, CartesianVector, 
-    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, barycenter
+    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, barycenter, geom_round
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
 
@@ -73,6 +73,14 @@ using Unitful
         @test_throws ArgumentError CartesianPoint(1u"m", 2u"rad", 3u"m")
         @test_throws ArgumentError CartesianPoint(1u"s", 2u"m", 3u"m")
         @test_throws ArgumentError CartesianPoint(1u"m", 2u"m", 3u"kg")
+
+
+        # test Base.convert
+        p32 = CartesianPoint{Float32}(1.0, 2.0, 3.0)
+        p64 = CartesianPoint{Float64}(1.0, 2.0, 3.0)
+        @test @inferred(convert(CartesianPoint{Float64}, p32)) isa CartesianPoint{Float64}
+        @test @inferred(convert(CartesianPoint{Float64}, p32)) == p64
+
     end
 
     @testset "cylindrical" begin
@@ -173,4 +181,37 @@ end
     cz1 = CartesianZero{Float32}()
     cz2 = CartesianZero{Float64}()
     @test -(cz1, cz2) == CartesianVector(0.0, 0.0, 0.0)
+end
+
+@testset "affine operations" begin
+    # Test affine geometrical operations
+    pt = CartesianPoint(1.0, 2.0, 3.0)
+    v = CartesianVector(0.1, -0.2, 0.3)
+
+    @test pt - cartesian_zero isa CartesianVector
+    @test cartesian_zero + v isa CartesianPoint
+    @test pt - v isa CartesianPoint
+    @test pt + v isa CartesianPoint
+    @test transpose(pt) isa CartesianPoint
+    @test adjoint(pt) isa CartesianPoint
+    @test CartesianPoint{Float32}(pt) isa CartesianPoint{Float32}
+    @test Base.convert(CartesianPoint{Float32}, pt) isa CartesianPoint{Float32}
+    @test_throws DimensionMismatch pt + [1.0, 2.0]
+    @test_throws DimensionMismatch pt - [1.0, 2.0]
+
+    # Test frame_transformation accepts AbstractVector{<:AbstractCoordinateVector}
+    vectors = [CartesianVector(1.0, 0.0, 0.0), CartesianVector(0.0, 1.0, 0.0)]
+    transformed = frame_transformation(LocalAffineFrame(cartesian_zero, one(SMatrix{3,3,Float64,9})), global_frame, vectors)
+    @test transformed isa AbstractVector{<:CartesianVector}
+    @test transformed == vectors 
+end
+
+@testset "geom_round" begin
+    for T in (Float32, Float64)
+        pts = [CartesianPoint{T}(1.0, 1e-13, 2.0), CylindricalPoint{T}(1.0, 1e-13, 0.0)]
+        rounded = geom_round(pts)
+        @test all(isa.(rounded, typeof.(pts)))
+        @test all(rounded .!= pts)
+        @test all(iszero.(getindex.(rounded, 2)))
+    end
 end
