@@ -325,6 +325,14 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test surfs_closed[2] isa CSG.FullConeMantle
         @test surfs_closed[3] isa CSG.FullConeMantle
         
+        ε = 1e-6
+        pt = surfs_closed[1].origin + CartesianVector(r_inner[2], 0.0, 0.0)
+        n = CSG.normal(surfs_closed[1], pt)
+        pt_plus  = pt + ε*n
+        pt_minus = pt - ε*n
+        @test CSG._in(pt_plus, tube_closed)
+        @test !CSG._in(pt_minus, tube_closed)
+        
         surfs_open = CSG.surfaces(tube_open)
         @test length(surfs_open) == 3
         @test surfs_open[1] isa CSG.EllipticalSurface
