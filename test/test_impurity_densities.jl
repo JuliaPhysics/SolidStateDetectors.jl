@@ -1,6 +1,6 @@
 using SolidStateDetectors
 using Test
-
+using StaticArrays
 using Unitful
 
 T = Float32
@@ -222,4 +222,37 @@ end
     U_est_spline = timed_estimate_depletion_voltage(sim)
 
     @test isapprox(U_est, U_est_spline; atol=10u"V")
+end
+
+@testset "Boule impurity densities" begin
+    # Test constructors accept AbstractVector and get_impurity_density accepts AbstractCoordinatePoint
+    pars_lin = SVector(1.0, -2.0)
+    pars_linexp = SVector(1.0, -2.0, 3.0, 0.5, 2.0)
+    pars_par = SVector(1.0, -2.0, 0.1)
+    pars_parexp = SVector(1.0, -2.0, 0.1, 0.5, 1.5, 2.0)
+    det_z0 = 0.4
+
+    lb = LinBouleImpurityDensity{Float64}(pars_lin, det_z0)
+    le = LinExpBouleImpurityDensity{Float64}(pars_linexp, det_z0)
+    pb = ParBouleImpurityDensity{Float64}(pars_par, det_z0)
+    pe = ParExpBouleImpurityDensity{Float64}(pars_parexp, det_z0)
+
+    pt = CartesianPoint{Float64}(0.2, -0.1, 0.3)
+
+    @test @inferred(SolidStateDetectors.get_impurity_density(lb, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(le, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(pb, pt)) isa Float64
+    @test @inferred(SolidStateDetectors.get_impurity_density(pe, pt)) isa Float64
+end
+
+@testset "Charge density types" begin
+    # Test get_charge_density accepts AbstractCoordinatePoint
+    lcd = SolidStateDetectors.LinearChargeDensity{Float32}(1f0, (0f0, 1f0, 0f0))
+    ccd = SolidStateDetectors.CylindricalChargeDensity{Float32}(2f0, (1f0, 0f0, -1f0))
+
+    cart_pt = CartesianPoint{Float32}(0.5f0, 0.0f0, 2f0)
+    cyl_pt = CylindricalPoint{Float32}(0.5f0, 0.0f0, 1f0)
+
+    @test @inferred(SolidStateDetectors.get_charge_density(lcd, cart_pt)) isa Float32
+    @test @inferred(SolidStateDetectors.get_charge_density(ccd, cyl_pt)) isa Float32
 end

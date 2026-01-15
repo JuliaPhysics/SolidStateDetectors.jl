@@ -5,6 +5,7 @@ using Test
 using SolidStateDetectors
 using ArraysOfArrays
 using RadiationDetectorSignals
+using Rotations
 using StaticArrays
 using TypedTables
 using Unitful
@@ -89,8 +90,7 @@ end
             LegendHDF5IO.writedata(h5, "geant4", evts)
         end
         @test isfile(tmpfile)
-        
-        evts == LegendHDF5IO.lh5open(tmpfile) do h5
+        @test evts == LegendHDF5IO.lh5open(tmpfile) do h5
             LegendHDF5IO.readdata(h5, "geant4")
         end
     end
@@ -128,4 +128,35 @@ end
 
     # Result should not depend whether input positions are SVector or CartesianPoint
     @test wf_static.waveform ≈ wf.waveform
+
+    # test table_utils.jl
+    @testset "Test table utils" begin
+        evts_split = SolidStateDetectors.split_table_by_each_charge_deposition(evts)
+        @test length(evts_split) == length(flatview(evts.pos))
+            
+        v = CartesianVector(one(T)*u"m", zero(T)*u"m", zero(T)*u"m")
+        v_static = SVector(T(1000)*u"mm", zero(T)*u"mm", zero(T)*u"mm")
+        translated = SolidStateDetectors.translate_event_positions(evts, v)
+        @test all(p -> p isa eltype(first(evts.pos)), flatview(translated.pos))
+        @test map(p -> p + v, flatview(evts.pos)) == flatview(translated.pos)
+        translated_static = SolidStateDetectors.translate_event_positions(evts_static, v_static)
+        @test all(p -> p isa eltype(first(evts_static.pos)), flatview(translated_static.pos))
+        @test map(p -> p + v_static, flatview(evts_static.pos)) == flatview(translated_static.pos)
+
+        # inter-compatibility
+        t1 = SolidStateDetectors.translate_event_positions(evts_static, v)
+        @test all(p -> p isa eltype(first(evts_static.pos)), flatview(t1.pos))
+        @test all(isapprox.(flatview(translated_static.pos), flatview(t1.pos)))
+        t2 = SolidStateDetectors.translate_event_positions(evts, v_static)
+        @test all(p -> p isa eltype(first(evts.pos)), flatview(t2.pos))
+        @test all(isapprox.(flatview(translated.pos), flatview(t2.pos)))
+
+        r = RotZ(π)
+        rotated = SolidStateDetectors.rotate_event_positions(evts, r)
+        @test all(p -> p isa eltype(first(evts.pos)), flatview(rotated.pos))
+        @test map(p -> eltype(first(evts.pos))(cartesian_zero + r * (p - cartesian_zero)) , flatview(evts.pos)) == flatview(rotated.pos)
+        rotated_static = SolidStateDetectors.rotate_event_positions(evts_static, r)
+        @test all(p -> p isa eltype(first(evts_static.pos)), flatview(rotated_static.pos))
+        @test map(p -> eltype(first(evts_static.pos))(r * p), flatview(evts_static.pos)) == flatview(rotated_static.pos)
+    end
 end

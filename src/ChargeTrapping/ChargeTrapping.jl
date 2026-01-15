@@ -6,7 +6,7 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+        point_types::PointTypes{T, N, S}
     ) where {T <: SSDFloat, N, S}
     throw("For the chosen charge trapping model, no method for `_calculate_signal` is implemented.")
 end
@@ -38,7 +38,7 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3}, 
-        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+        point_types::PointTypes{T, N, S}
     )::Vector{T} where {T <: SSDFloat, N, S}
 
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
@@ -100,7 +100,7 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3},
-        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+        point_types::PointTypes{T, N, S}
     )::Vector{T} where {T <: SSDFloat, N, S}
 
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
@@ -201,7 +201,7 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3},
-        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+        point_types::PointTypes{T, N, S}
     )::Vector{T} where {T <: SSDFloat, N, S}
     
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))
@@ -275,7 +275,7 @@ function _calculate_signal(
         pathtimestamps::AbstractVector{T}, 
         charge::T,          
         wpot::Interpolations.Extrapolation{T, 3},
-        point_types::Union{PointTypes{T, N, S}, Nothing} = nothing
+        point_types::PointTypes{T, N, S}
     )::Vector{T} where {T <: SSDFloat, N, S}
     
     tmp_signal::Vector{T} = Vector{T}(undef, length(pathtimestamps))

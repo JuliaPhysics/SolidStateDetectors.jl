@@ -36,7 +36,7 @@ function nested_col(x::AbstractVector{<:AbstractVector}, n::AbstractVector{<:Int
     x
 end
 
-function blow_up_to_commen_length(table::TypedTables.Table)
+function blow_up_to_common_length(table::TypedTables.Table)
     n = common_length.(values(TypedTables.columns(table))...)
     return TypedTables.Table(map(c -> nested_col(c, n), TypedTables.columns(table)))
 end
@@ -47,7 +47,7 @@ function split_table_by_each_charge_deposition(table::TypedTables.Table)
     if all(isequal(row_lengths[1]), row_lengths) && all_vectors
         TypedTables.Table( map(flatview, TypedTables.columns(table)) )
     else
-        split_table_by_each_charge_deposition(blow_up_to_commen_length(table))
+        split_table_by_each_charge_deposition(blow_up_to_common_length(table))
     end
 end
 
@@ -87,25 +87,28 @@ function add_physics_event_numbers(table::TypedTables.Table)
     add_column(table, :phyevtno, flatview(collect(Int32, 1:n_events)))
 end
 
-function groub_by_evt_number(table::TypedTables.Table, colname::Symbol = :mcevtno)
+function group_by_evt_number(table::TypedTables.Table, colname::Symbol = :mcevtno)
     sorting_idxs = sortperm(getproperty(table, colname))
     sorted = table[sorting_idxs]
     return TypedTables.Table(consgroupedview((getproperty(table, colname), TypedTables.columns(sorted))))
 end
 
-
-function translate_event_positions(table::TypedTables.Table, tv::AbstractVector{<:Unitful.Quantity{<:Real, Unitful.𝐋}})
-    @assert length(tv) == 3 "translation vector must be of length 3"
-    TP = eltype(eltype(eltype(table.pos)))
-    u = unit(TP)
-    @assert all(e -> dimension(e) == Unitful.𝐋, tv) "All elements of translation vector muss be of dimension Unitful.𝐋"
-    trans = uconvert.(u, tv)
-    newpos = (pos = VectorOfVectors(map(poss -> map(pos -> pos + trans, poss), table.pos)),)
+@inline _translate_event_position(p::P, v::AbstractVector{<:Union{<:Real, <:LengthQuantity}}) where {P <: Union{<:CartesianPoint, AbstractVector{<:Real}}} = P(p + to_internal_units(v))
+@inline _translate_event_position(p::P, v::AbstractVector{<:Real}) where {P <: AbstractVector{<:LengthQuantity}} = P(p + typeof(ustrip.(p))(v) * internal_length_unit)
+@inline _translate_event_position(p::P, v::AbstractVector{<:LengthQuantity}) where {P <: AbstractVector{<:LengthQuantity}} = P(p + P(v))
+function translate_event_positions(table::TypedTables.Table, tv::AbstractVector{<:Union{<:Real, <:LengthQuantity}})
+    hasproperty(table, :pos) || throw(ArgumentError("Expected detector hit events table to have column named `pos`"))
+    length(tv) == 3 || throw(ArgumentError("Translation vector must be of length 3"))
+    eltype(eltype(eltype(table.pos))) <: Union{<:Real, <:LengthQuantity} || throw(ArgumentError("Expected table positions to be unitless or to have units of length"))
+    newpos = (pos = VectorOfVectors(map(poss -> map(pos -> _translate_event_position(pos, tv), poss), table.pos)),)
     TypedTables.Table(merge( TypedTables.columns(table), newpos ))
 end
 
-function rotate_event_positions(table, rot::Rotations.Rotation{3})
-    newpos = (pos = VectorOfVectors(map(poss -> map(pos -> rot * pos, poss), table.pos)),)
+@inline _rotate_event_position(p::P, rot::Rotations.Rotation{3}) where {P <: CartesianPoint} = P(cartesian_zero + rot * (p - cartesian_zero))
+@inline _rotate_event_position(p::P, rot::Rotations.Rotation{3}) where {P <: AbstractVector} = P(rot * p)
+function rotate_event_positions(table, rot::Rotations.Rotation{3}) 
+    hasproperty(table, :pos) || throw(ArgumentError("Expected detector hit events table to have column named `pos`"))
+    newpos = (pos = VectorOfVectors(map(poss -> map(pos -> _rotate_event_position(pos, rot), poss), table.pos)),)
     TypedTables.Table(merge( TypedTables.columns(table), newpos ))
 end
 
