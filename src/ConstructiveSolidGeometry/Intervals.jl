@@ -26,5 +26,4 @@ end
 
 @inline _in_φ(p::CylindricalPoint, φ::Nothing) = true
 @inline _in_φ(p::CylindricalPoint, φ::Real) = p.φ <= φ
-@inline _in_φ(p::CylindricalPoint, φ::Tuple{T,T}) where {T} =  r[1]<=p.φ<=φ[2]
-@inline _in_φ(p::CartesianPoint, φ::Union{Nothing, Real, Tuple{T,T}}) where {T} =  _in_φ(CylindricalPoint(p), φ)
+@inline _in_φ(p::CartesianPoint, φ::Union{Nothing, Real}) =  _in_φ(CylindricalPoint(p), φ)
