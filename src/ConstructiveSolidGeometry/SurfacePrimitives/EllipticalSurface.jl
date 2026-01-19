@@ -198,30 +198,41 @@ end
 
 get_r_limits(a::EllipticalSurface{T, <:Union{T, <:Any, Nothing}, <:Any}) where {T} = _radial_endpoints(a.r) 
 
-function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, Nothing})::T where {T}
-    a_z=a.origin[3]
-    pt = CylindricalPoint(pt)
-    rMin::T, rMax::T = get_r_limits(a)
-    _in_cyl_r(pt, a.r) ? abs(pt.z - a_z) : hypot(pt.z - a_z, min(abs(pt.r - rMin), abs(pt.r - rMax)))
-end
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, TP})::T where {T, TP<:Union{Nothing,T}}
 
-function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, <:Tuple{T,T}})::T where {T}
-    pcy = CylindricalPoint(pt)
-    rMin::T, rMax::T = get_r_limits(a)
-    φMin::T, φMax::T, _ = get_φ_limits(a)
-    if _in_φ(pcy, a.φ)
-        Δz = abs(pcy.z - a_z)
-        return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
+    pt_cyl = CylindricalPoint(pt)
+    rMin, rMax = get_r_limits(a)
+    a_z = a.origin[3]
+
+    # Full ellipse
+    if a.φ === nothing
+        Δz = abs(pt_cyl.z - a_z)
+        return _in_cyl_r(pt_cyl, a.r) ? Δz : hypot(Δz, min(abs(pt_cyl.r - rMin), abs(pt_cyl.r - rMax)))
     else
-        φNear = _φNear(pcy.φ, φMin, φMax)
+        # For now, only support unsegmented ellipses
+        error("distance_to_surface(::EllipticalSurface): segmented ellipses (φ ≠ nothing) are not supported yet")
+    end
+
+    # Segmented ellipse: φ in [0, a.φ]
+    if _in_φ(pt_cyl, a.φ)
+        Δz = abs(pt_cyl.z - a_z)
+        return _in_cyl_r(pt_cyl, a.r) ?
+            Δz :
+            hypot(Δz, min(abs(pt_cyl.r - rMin), abs(pt_cyl.r - rMax)))
+    else
+        # Nearest φ-boundary is either 0 or a.φ
+        φNear = _φNear(pt_cyl.φ, zero(T), a.φ)
+
+        pt_cart = SVector{3,T}(pt_cyl.r * cos(pt_cyl.φ), pt_cyl.r * sin(pt_cyl.φ), pt_cyl.z)
+
         if rMin == rMax
-            return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a_z)))
-        else
-            return distance_to_line(CartesianPoint(pt),
-                                    LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a_z)),
-                                                CartesianPoint(CylindricalPoint{T}(rMax,φNear,a_z))
-                                                )
-                                    )
+            pt_edge = SVector{3,T}(rMin * cos(φNear), rMin * sin(φNear), a_z)
+            return norm(pt_cart - pt_edge)
         end
+
+        p1 = SVector{3,T}(rMin*cos(φNear), rMin*sin(φNear), a_z)
+        p2 = SVector{3,T}(rMax*cos(φNear), rMax*sin(φNear), a_z)
+
+        return distance_to_line(pt_cart, LineSegment(p1, p2))
     end
 end

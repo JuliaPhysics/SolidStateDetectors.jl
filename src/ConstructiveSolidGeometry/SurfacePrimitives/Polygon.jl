@@ -146,7 +146,6 @@ function _transform_into_global_coordinate_system(poly::Polygon{N, T}, p::Abstra
     Polygon{N,T}(broadcast(pt -> _transform_into_global_coordinate_system(pt, p), poly.points))
 end
 
-
 function distance(pt::CartesianPoint, p::Polygon)
     return if _above_or_below_polygon(pt, p)
         distance(pt, Plane(p))
@@ -155,4 +154,9 @@ function distance(pt::CartesianPoint, p::Polygon)
         ds = map(e -> distance(pt, e), es)
         minimum(ds)
     end
+end
+
+@inline function distance_to_surface(::AbstractCoordinatePoint{T}, ::Polygon{N,T})::T where {N,T}
+    throw(ArgumentError("distance_to_surface for Polygon is not implemented yet"))
+    return typemax(T)
 end
