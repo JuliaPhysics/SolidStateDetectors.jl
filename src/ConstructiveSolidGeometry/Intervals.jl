@@ -25,5 +25,25 @@ end
 # @inline _in_angular_interval_open(α::Real, α_int::AbstractInterval{T}) where {T} = 0 < mod(α - α_int.left, T(2π)) < width(α_int)
 
 @inline _in_φ(p::CylindricalPoint, φ::Nothing) = true
-@inline _in_φ(p::CylindricalPoint, φ::Real) = p.φ <= φ
+@inline function _in_φ(p::CylindricalPoint, φ::Real)
+    φp = mod(float(p.φ), 2π)
+    φmax = mod(float(φ), 2π)
+    return φp <= φmax
+end
 @inline _in_φ(p::CartesianPoint, φ::Union{Nothing, Real}) =  _in_φ(CylindricalPoint(p), φ)
+
+# Convert φ to the nearest boundary
+@inline function _φNear(φ::T, φMin::T, φMax::Union{T, Nothing}) where T
+    if φMax === nothing
+        φMin, φMax = zero(T), 2π
+    end
+
+    φ = mod(φ, 2π)
+    φMin = mod(φMin, 2π)
+    φMax = mod(φMax, 2π)
+
+    # Closest boundary
+    dMin = min(mod(φ - φMin, 2π), mod(φMin - φ, 2π))
+    dMax = min(mod(φ - φMax, 2π), mod(φMax - φ, 2π))
+    return dMin <= dMax ? φMin : φMax
+end
