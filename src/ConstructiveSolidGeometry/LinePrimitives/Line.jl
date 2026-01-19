@@ -39,3 +39,24 @@ function _transform_into_object_coordinate_system(l::Line{T}, p::AbstractPrimiti
     direction = _transform_into_object_coordinate_system(l.direction, p)
     Line( origin, direction )  
 end
+
+struct LineSegment{T}
+    p1::SVector{3,T}
+    p2::SVector{3,T}
+end
+
+function distance_to_line(pt::SVector{3,T}, seg::LineSegment{T})::T where T
+    v = seg.p2 - seg.p1
+    w = pt - seg.p1
+    c1 = dot(w,v)
+    if c1 <= zero(T)
+        return norm(pt - seg.p1)
+    end
+    c2 = dot(v,v)
+    if c2 <= c1
+        return norm(pt - seg.p2)
+    end
+    b = c1 / c2
+    closest = seg.p1 + b*v
+    return norm(pt - closest)
+end
