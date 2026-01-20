@@ -892,22 +892,25 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
 
     @testset "distance_to_surface" begin
         # Test distance_to_surface and _above_or_below_polygon accept AbstractCoordinatePoint
-        cm = CSG.ConeMantle()
-        es = CSG.EllipticalSurface()
-        torus = CSG.TorusMantle()
+        cm = CSG.ConeMantle{T}()
+        es = CSG.EllipticalSurface{T}()
+        torus = CSG.TorusMantle{T}()
         pts = SVector(
-            CartesianPoint(0.0, 0.0, 0.0),
-            CartesianPoint(1.0, 0.0, 0.0),
-            CartesianPoint(1.0, 1.0, 0.0),
-            CartesianPoint(0.0, 1.0, 0.0)
+            CartesianPoint{T}(0.0, 0.0, 0.0),
+            CartesianPoint{T}(1.0, 0.0, 0.0),
+            CartesianPoint{T}(1.0, 1.0, 0.0),
+            CartesianPoint{T}(0.0, 1.0, 0.0),
+            CartesianPoint{T}(0.5, 0.1, 0.0)
         )
-        quad = CSG.Polygon(pts)
-        pt = CartesianPoint(0.1, 0.1, 0.1)
+        quad = CSG.Polygon{4,T}(pts[1:4])
+        poly = CSG.Polygon{5,T}(pts)
+        pt = CartesianPoint{T}(0.1, 0.1, 0.1)
 
-        @test CSG.distance_to_surface(pt, cm) isa AbstractFloat
-        @test CSG.distance_to_surface(pt, es) isa AbstractFloat
-        @test CSG.distance_to_surface(pt, torus) isa AbstractFloat
-        @test CSG._above_or_below_polygon(pt, quad) isa Integer
+        @test CSG.distance_to_surface(pt, cm) isa T
+        @test CSG.distance_to_surface(pt, es) isa T
+        @test CSG.distance_to_surface(pt, torus) isa T
+        @test CSG.distance_to_surface(pt, quad) isa T
+        @test CSG.distance_to_surface(pt, poly) isa T
     end
     @testset "Plane" begin
         plane1 = @inferred CSG.Plane{Float32}(normal = CartesianVector(1,0,0))
