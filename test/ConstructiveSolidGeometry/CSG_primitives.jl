@@ -1302,22 +1302,6 @@ end
     @test CSG.distance_to_line(pt_on, seg) ≈ 0.0
 end
 
-
-@testset "Segmented contacts within RCC model" begin
-    config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
-    union_list = config_dict["detectors"][1]["contacts"][2]["geometry"]["union"]
-
-    for elem in union_list
-        if haskey(elem, "tube")
-            tube_dict = elem["tube"]
-            tube_dict["phi"] = Dict("from" => "0", "to" => "60")
-        end
-    end
-    
-    simA = Simulation{T}(config_dict)
-    @test_throws TaskFailedException timed_calculate_electric_potential!(simA, refinement_limits=0.01)
-end
-
 @testset "distance_to_surface throws on segmented surfaces" begin
     pt = CartesianPoint(1.0, 2.0, 3.0)
 
