@@ -32,18 +32,17 @@ end
 end
 @inline _in_φ(p::CartesianPoint, φ::Union{Nothing, Real}) =  _in_φ(CylindricalPoint(p), φ)
 
-# Convert φ to the nearest boundary
-@inline function _φNear(φ::T, φMin::T, φMax::Union{T, Nothing}) where T
-    if φMax === nothing
-        φMin, φMax = zero(T), 2π
-    end
-
+"""
+    _φNear(φ, φMax)
+Return the nearest azimuthal boundary (0 or φMax) for segmented surfaces with φ ∈ [0, φMax].
+"""
+@inline function _φNear(φ::T, φMax::T) where T
     φ = mod(φ, 2π)
-    φMin = mod(φMin, 2π)
     φMax = mod(φMax, 2π)
-
-    # Closest boundary
-    dMin = min(mod(φ - φMin, 2π), mod(φMin - φ, 2π))
-    dMax = min(mod(φ - φMax, 2π), mod(φMax - φ, 2π))
-    return dMin <= dMax ? φMin : φMax
+    # distance to lower boundary (0)
+    d0 = min(φ, 2π - φ)
+    # distance to upper boundary (φMax)
+    dMax = min(abs(φ - φMax), 2π - abs(φ - φMax))
+    
+    return d0 <= dMax ? zero(T) : φMax
 end
