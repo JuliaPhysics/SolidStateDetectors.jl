@@ -157,6 +157,6 @@ function distance(pt::CartesianPoint, p::Polygon)
 end
 
 @inline function distance_to_surface(::AbstractCoordinatePoint{T}, ::Polygon{N,T})::T where {N,T}
-    throw(ArgumentError("distance_to_surface for Polygon is not implemented yet"))
+    throw(ArgumentError("`distance_to_surface` for Polygon is not implemented yet"))
     return typemax(T)
 end
