@@ -41,22 +41,26 @@ function _transform_into_object_coordinate_system(l::Line{T}, p::AbstractPrimiti
 end
 
 struct LineSegment{T}
-    p1::SVector{3,T}
-    p2::SVector{3,T}
+    a::CartesianPoint{T}
+    b::CartesianPoint{T}
 end
 
-function distance_to_line(pt::SVector{3,T}, seg::LineSegment{T})::T where T
-    v = seg.p2 - seg.p1
-    w = pt - seg.p1
-    c1 = dot(w,v)
-    if c1 <= zero(T)
-        return norm(pt - seg.p1)
+function distance_to_line(point::AbstractCoordinatePoint{T}, seg::LineSegment{T})::T where {T}
+    p = CartesianPoint(point)
+
+    v_ab = normalize(CartesianVector{T}(seg.b - seg.a))
+    v_ap = CartesianVector{T}(p - seg.a)
+
+    proj = dot(v_ab, v_ap)
+
+    if geom_round(proj) ≤ zero(T)
+        return norm(seg.a - p)
     end
-    c2 = dot(v,v)
-    if c2 <= c1
-        return norm(pt - seg.p2)
+
+    v_bp = CartesianVector{T}(p - seg.b)
+    if geom_round(dot(v_ab, v_bp)) ≥ zero(T)
+        return norm(seg.b - p)
     end
-    b = c1 / c2
-    closest = seg.p1 + b*v
-    return norm(pt - closest)
+
+    return sqrt(abs(dot(v_ap, v_ap) - proj^2))
 end

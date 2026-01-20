@@ -210,7 +210,7 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurfac
         return _in_cyl_r(pt_cyl, a.r) ? Δz : hypot(Δz, min(abs(pt_cyl.r - rMin), abs(pt_cyl.r - rMax)))
     else
         # For now, only support unsegmented ellipses
-        error("distance_to_surface(::EllipticalSurface): segmented ellipses (φ ≠ nothing) are not supported yet")
+        throw(ArgumentError("`distance_to_surface(::EllipticalSurface)`: segmented ellipses (φ ≠ nothing) are not supported yet"))
     end
 
     # Segmented ellipse: φ in [0, a.φ]
@@ -221,7 +221,7 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurfac
             hypot(Δz, min(abs(pt_cyl.r - rMin), abs(pt_cyl.r - rMax)))
     else
         # Nearest φ-boundary is either 0 or a.φ
-        φNear = _φNear(pt_cyl.φ, zero(T), a.φ)
+        φNear = _φNear(pt_cyl.φ, a.φ)
 
         pt_cart = SVector{3,T}(pt_cyl.r * cos(pt_cyl.φ), pt_cyl.r * sin(pt_cyl.φ), pt_cyl.z)
 
@@ -229,10 +229,9 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurfac
             pt_edge = SVector{3,T}(rMin * cos(φNear), rMin * sin(φNear), a_z)
             return norm(pt_cart - pt_edge)
         end
-
-        p1 = SVector{3,T}(rMin*cos(φNear), rMin*sin(φNear), a_z)
-        p2 = SVector{3,T}(rMax*cos(φNear), rMax*sin(φNear), a_z)
-
-        return distance_to_line(pt_cart, LineSegment(p1, p2))
+        p1 = CartesianPoint{T}(rMin*cos(φNear), rMin*sin(φNear), a_z)
+        p2 = CartesianPoint{T}(rMax*cos(φNear), rMax*sin(φNear), a_z)
+        
+        return distance_to_line(pt, LineSegment(p1, p2))
     end
 end

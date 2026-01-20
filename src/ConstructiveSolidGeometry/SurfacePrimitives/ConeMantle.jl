@@ -393,13 +393,13 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:
 
     # Generator in the meridional (r–z) plane
     edge_rz = Edge{T}(CartesianPoint{T}(rbot, zero(T), zMin), CartesianPoint{T}(rtop, zero(T), zMax))
-
+    
     # Full cone: rotational symmetry
     if c.φ === nothing
         return distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
     else
         # For now, only support unsegmented cones
-        error("distance_to_surface(::ConeMantle): segmented cones (φ ≠ nothing) are not supported yet")
+        throw(ArgumentError("`distance_to_surface(::ConeMantle)`: segmented cones (φ ≠ nothing) are not supported yet"))
     end
     
     # Segmented cone: φ ∈ [0, c.φ]
@@ -407,15 +407,14 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:
         return distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
     else
         # Nearest boundary: either 0 or c.φ
-        φNear = _φNear(pt_cyl.φ, zero(T), c.φ)
-
+        φNear = _φNear(pt_cyl.φ, c.φ)
+        
         cosφ = cos(φNear)
         sinφ = sin(φNear)
-
-        p1 = SVector{3,T}(rbot*cosφ, rbot*sinφ, zMin)
-        p2 = SVector{3,T}(rtop*cosφ, rtop*sinφ, zMax)
-
-        pt_cart = SVector{3,T}(pt_cyl.r*cos(pt_cyl.φ), pt_cyl.r*sin(pt_cyl.φ), pt_cyl.z)
-        return distance_to_line(pt_cart, LineSegment(p1, p2))
+        
+        p1 = CartesianPoint{T}(rbot*cosφ, rbot*sinφ, zMin)
+        p2 = CartesianPoint{T}(rtop*cosφ, rtop*sinφ, zMax)
+        
+        return distance_to_line(pt, LineSegment(p1, p2))
     end
 end
