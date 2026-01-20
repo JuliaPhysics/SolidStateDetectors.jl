@@ -1279,3 +1279,53 @@ end
     pt_in = CartesianPoint(0.2, 0.2, 0.2)
     @test pt_in in inter
 end
+
+@testset "distance_to_line : LineSegment" begin
+    a = CartesianPoint{T}(0.0, 0.0, 0.0)
+    b = CartesianPoint{T}(1.0, 0.0, 0.0)
+    seg = CSG.LineSegment{T}(a, b)
+
+    # Case 1: point before the segment
+    pt_before = CartesianPoint{T}(-1.0, 0.0, 0.0)
+    @test CSG.distance_to_line(pt_before, seg) ≈ 1.0
+
+    # Case 2: point after the segment
+    pt_after = CartesianPoint{T}(2.0, 0.0, 0.0)
+    @test CSG.distance_to_line(pt_after, seg) ≈ 1.0
+
+    # Case 3: perpendicular projection inside segment
+    pt_inside = CartesianPoint{T}(0.5, 1.0, 0.0)
+    @test CSG.distance_to_line(pt_inside, seg) ≈ 1.0
+
+    # Case 4 (optional): point exactly on the segment
+    pt_on = CartesianPoint{T}(0.3, 0.0, 0.0)
+    @test CSG.distance_to_line(pt_on, seg) ≈ 0.0
+end
+
+
+@testset "Segmented contacts within RCC model" begin
+    config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
+    union_list = config_dict["detectors"][1]["contacts"][2]["geometry"]["union"]
+
+    for elem in union_list
+        if haskey(elem, "tube")
+            tube_dict = elem["tube"]
+            tube_dict["phi"] = Dict("from" => "0", "to" => "60")
+        end
+    end
+    
+    simA = Simulation{T}(config_dict)
+    @test_throws TaskFailedException timed_calculate_electric_potential!(simA, refinement_limits=0.01)
+end
+
+@testset "distance_to_surface throws on segmented surfaces" begin
+    pt = CartesianPoint(1.0, 2.0, 3.0)
+
+    # Segmented EllipticalSurface
+    seg_ellipse = CSG.EllipticalSurface(r = (10.0, 20.0), origin = CartesianPoint(0.0, 0.0, 0.0), φ = (0.0, π/3))
+    @test_throws ArgumentError CSG.distance_to_surface(pt, seg_ellipse)
+
+    # Segmented ConeMantle
+    seg_cone = CSG.ConeMantle(:outwards; r = (1.0, 2.0), φ = (0.0, π/3), hZ = 1.0)
+    @test_throws ArgumentError CSG.distance_to_surface(pt, seg_cone)
+end
