@@ -30,7 +30,7 @@ function ImpurityDensity(T::DataType, t::Val{:parabolic_boule}, dict::AbstractDi
     b::T = haskey(dict, "b") ? _parse_value(T, dict["b"], input_units.length^(-4)) : T(0)
     c::T = haskey(dict, "c") ? _parse_value(T, dict["c"], input_units.length^(-5)) : T(0)
     det_z0::T = haskey(dict, "det_z0") ? _parse_value(T, dict["det_z0"], input_units.length) : T(0)
-    ParExpBouleImpurityDensity{T}(a, b, c, det_z0)
+    ParBouleImpurityDensity{T}(a, b, c, det_z0)
 end
 
 function get_impurity_density(idm::ParBouleImpurityDensity, pt::AbstractCoordinatePoint{T})::T where {T}

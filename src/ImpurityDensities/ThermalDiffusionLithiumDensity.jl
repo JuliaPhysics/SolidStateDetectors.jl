@@ -53,7 +53,7 @@ function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict,
     inactive_contact_id = get(dict, "doped_contact_id", -1)
     inactive_contact_id < 1 && error("Invalid doped_contact_id: missing or misspelled key")
     model_parameters = haskey(dict,"model_parameters") ? ThermalDiffusionLithiumParameters(dict["model_parameters"]; T) : ThermalDiffusionLithiumParameters(; T)
-    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, inactive_contact_id, model_parameters)
+    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, contact_with_lithium_doped, inactive_contact_id; model_parameters)
 end
 
 function get_impurity_density(li_diffusion::ThermalDiffusionLithiumDensity{T}, pt::AbstractCoordinatePoint{T})::T where {T <: SSDFloat}
