@@ -67,11 +67,11 @@ end
 
 
 # """
-#     RBExtBy2Array( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+#     RBExtBy2Array( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
 # 
 # Returns a RedBlack array for the `grid`. 
 # """
-function RBArray( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+function RBArray( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
     nr, nφ, nz = size(grid)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
     return zeros(T, div(nz, 2) + mod(nz, 2), nφ, nr, 2)
@@ -92,11 +92,11 @@ function RBArray( a::Array{T, N}, grid::Grid{TG, N, Cylindrical} )::Array{T, N +
 end
 
 # """
-#     RBExtBy2Array( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+#     RBExtBy2Array( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
 # 
 # Returns a RedBlack array for the `grid`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 # """
-function RBExtBy2Array( et::Type, grid::Grid{T, N, Cylindrical} )::Array{et, N + 1} where {T, N}
+function RBExtBy2Array( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
     nr, nφ, nz = size(grid)
     # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
     return zeros(T, div(nz, 2) + mod(nz, 2) + 2, nφ + 2, nr + 2, 2)
@@ -120,11 +120,11 @@ end
 
 
 # """
-#     RBExtBy2Array( et::Type, grid::CartesianGrid3D{T} )::Array{et, 4} where {T}
+#     RBExtBy2Array( T::Type, grid::CartesianGrid3D{TG} )::Array{T, 4} where {TG}
 # 
 # Returns a RedBlack array for the `grid`. The RedBlack array is extended in its size by 2 in each geometrical dimension.
 # """
-function RBExtBy2Array( et::Type, grid::CartesianGrid3D{T} )::Array{et, 4} where {T}
+function RBExtBy2Array( T::Type, grid::CartesianGrid3D{TG} )::Array{T, 4} where {TG}
     nx, ny, nz = size(grid)
     return zeros(T, div(nx, 2) + mod(nx, 2) + 2, ny + 2, nz + 2, 2)
 end
