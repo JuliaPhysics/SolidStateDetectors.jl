@@ -71,11 +71,12 @@ sim = Simulation(SSD_examples[:InvertedCoax])
 end
 
 @testset "Test LegendHDF5IO" begin
-    @test_nowarn ssd_write("legendhdf5io_test.lh5", sim)
-    @test isfile("legendhdf5io_test.lh5")
-    @test_logs (:warn, "Destination `legendhdf5io_test.lh5` already exists. Overwriting...") ssd_write("legendhdf5io_test.lh5", sim)
-    @test sim == ssd_read("legendhdf5io_test.lh5", Simulation)
-    rm("legendhdf5io_test.lh5")
+    fn = tempname() * ".lh5"
+    @test_nowarn ssd_write(fn, sim)
+    @test isfile(fn)
+    @test_logs (:warn, "Destination `$(fn)` already exists. Overwriting...") ssd_write(fn, sim)
+    @test sim == ssd_read(fn, Simulation)
+    rm(fn)
 end
 
 @timed_testset "Table Simulation" begin 

@@ -184,7 +184,7 @@ end
     for (key, sim_file) in SSD_examples
         if endswith(sim_file, ".yaml")
             @testset "Read from SSD config file: $(key)" begin
-                fn = "test.gdml"
+                fn = tempname() * ".gdml"
                 @test Geant4.G4JLDetector(sim_file, fn, save_gdml = true, verbose = false) isa Geant4.G4JLDetector
                 @test isfile(fn)
                 @test @test_nowarn Geant4.G4JLDetector(fn) isa Geant4.G4JLDetector
