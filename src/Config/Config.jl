@@ -76,7 +76,7 @@ function _update_density_config!(cf::AbstractDict, density::AbstractString, unit
 
         @warn msg * "Updating the config dictionary to the updated syntax:\n\n$(YAML.write(Dict("$(density)_density" => cf)))\n"
     end
-    cf
+    return cf
 end
 
 @inline update_impurity_density_config!(cf::AbstractDict, units::UnitTuple) = get(cf, "name", "") in ("linear", "cylindrical") ? _update_density_config!(cf, "impurity", units) : cf

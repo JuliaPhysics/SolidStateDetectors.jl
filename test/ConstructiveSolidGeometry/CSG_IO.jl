@@ -51,11 +51,11 @@ end
 
 @testset "Test LegendHDF5IO with AbstractCoordinatePoint" begin
     x = rand(T, 3)
-    x_unit = x * u"mm"
+    x_unit = CSG.from_internal_units(x, u"mm")
     pt = CartesianPoint(x...)
     pt_unit = CartesianPoint(x_unit...)
     pt_cyl = CylindricalPoint(x...)
-    pt_cyl_unit = CylindricalPoint(x .* [u"mm", u"°", u"mm"]...)
+    pt_cyl_unit = CylindricalPoint(CSG.from_internal_units.(x, [u"mm", u"°", u"mm"])...)
 
     @testset begin
         mktemp() do tmpfile, io

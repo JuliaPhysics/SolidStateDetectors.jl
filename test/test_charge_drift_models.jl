@@ -53,6 +53,11 @@ end
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
 
+@timed_testset "Initial radius for charge carriers" begin
+    for ptype in InteractiveUtils.subtypes(SolidStateDetectors.ParticleType)
+        @test SolidStateDetectors.radius_guess(T(1e6), ptype) isa T
+    end
+end
 
 @timed_testset "Charge Trapping: BoggsChargeTrappingModel" begin
     sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}())
@@ -568,7 +573,7 @@ end
 
 @timed_testset "Test grouping of charges" begin
     for N in 1:100
-        @timed_testset "Test for length $(N)" begin
+        @testset "Test for length $(N)" begin
             
             # Generate random data
             pts = [CartesianPoint{T}(rand(3)...) for _ in Base.OneTo(N)]
@@ -576,7 +581,9 @@ end
             d = rand(T)
             
             # Evaluate method
+            ptsg0    = group_points_by_distance(pts, d)
             ptsg, Eg = group_points_by_distance(pts, E, d)
+            @test ptsg0 == ptsg
             
             # Test correctness
             s0 = Set(pts)

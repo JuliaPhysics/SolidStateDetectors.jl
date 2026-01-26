@@ -177,10 +177,26 @@ end
 
     v = CartesianVector(1f0, 2f0, 3f0)
     @test -v == CartesianVector(-1f0, -2f0, -3f0)
+end
 
-    cz1 = CartesianZero{Float32}()
-    cz2 = CartesianZero{Float64}()
-    @test -(cz1, cz2) == CartesianVector(0.0, 0.0, 0.0)
+@testset "CartesianZero" begin
+    # Test handling of CartesianZero
+    cz32 = CartesianZero{Float32}()
+    cz64 = CartesianZero{Float64}()
+    @test cz32 - cz64 == CartesianVector(0.0, 0.0, 0.0)
+    @test cz32 == cz64
+
+    for CT in (Float32, Float64)
+        cz = CartesianZero{CT}()
+        sv = SVector{3,CT}(1.0, 2.0, 3.0)
+        v = CT[1.0, 2.0, 3.0]
+        @test cz == cz
+        @test zero(cz) == cz
+        @test iszero(cz)
+        @test cz * u"m" == cz
+        @test cz - sv == CartesianPoint((-sv)...)
+        @test cz - v  == CartesianPoint((-v)...)
+    end
 end
 
 @testset "affine operations" begin

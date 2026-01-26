@@ -15,12 +15,14 @@ T = Float32
 e = SolidStateDetectors.elementary_charge * u"C"
 
 struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
+@test_throws SolidStateDetectors.ConfigFileError DummyImpurityDensity{T}() * 1
+@test_throws SolidStateDetectors.ConfigFileError DummyImpurityDensity{T}() + 0
 
 @testset "Infinite Parallel Plate Capacitor" begin
     sim = Simulation{T}(SSD_examples[:InfiniteParallelPlateCapacitor])
-    calculate_electric_potential!(sim, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
-    calculate_weighting_potential!(sim, 1, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
-    calculate_weighting_potential!(sim, 2, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+    timed_calculate_electric_potential!(sim, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+    timed_calculate_weighting_potential!(sim, 1, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
+    timed_calculate_weighting_potential!(sim, 2, device_array_type = device_array_type, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1], verbose = false)
     # calculate_electric_field!(sim)
     BV_true = (maximum(broadcast(c -> c.potential, sim.detector.contacts)) - minimum(broadcast(c -> c.potential, sim.detector.contacts)))* u"V"
     # Δd = (sim.detector.contacts[2].decomposed_surfaces[1].loc - sim.detector.contacts[1].decomposed_surfaces[1].loc) * u"m"
@@ -33,7 +35,7 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
     W_true = uconvert(u"J", (ϵr * ϵ0 * E_true^2 / 2) * A * Δd)
     C_true = uconvert(u"pF", 2 * W_true / (BV_true^2))
     C_Analytical = [C_true -C_true; -C_true C_true]
-    C_ssd = calculate_capacitance_matrix(sim)
+    C_ssd = timed_calculate_capacitance_matrix(sim)
     @testset "Capacity" begin
         @test all(isapprox.(C_ssd, C_Analytical, rtol = 0.001))
     end   
@@ -47,7 +49,7 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
         
         sim.detector = SolidStateDetector(sim.detector, DummyImpurityDensity{T}());
 
-        calculate_electric_potential!(sim, 
+        timed_calculate_electric_potential!(sim, 
             device_array_type = device_array_type, 
             depletion_handling = true,
             convergence_limit = 1e-7, 
@@ -57,7 +59,7 @@ struct DummyImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T}
             verbose = false
         )
         for i in (1, 2)
-            calculate_weighting_potential!(sim, i,
+            timed_calculate_weighting_potential!(sim, i,
                 device_array_type = device_array_type, 
                 depletion_handling = true,
                 convergence_limit = 1e-7, 
@@ -99,8 +101,8 @@ end
 
 @testset "Two Spheres Capacitor" begin
     sim = Simulation{T}(SSD_examples[:TwoSpheresCapacitor])
-    simulate!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], convergence_limit = 1e-7)
-    C_ssd = calculate_capacitance_matrix(sim)
+    timed_simulate!(sim, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05, 0.025, 0.01], convergence_limit = 1e-7)
+    C_ssd = timed_calculate_capacitance_matrix(sim)
 
     R_1 = sim.detector.contacts[1].geometry.r * u"m"
     R_2 = sim.detector.contacts[2].geometry.r * u"m"
@@ -143,38 +145,46 @@ end
     sim_car = Simulation{T}(SSD_examples[:InfiniteCoaxialCapacitorCartesianCoords])
     BV_true = (maximum(broadcast(c -> c.potential, sim_cyl.detector.contacts)) - minimum(broadcast(c -> c.potential, sim_cyl.detector.contacts)))* u"V"
     ϵr = sim_cyl.detector.semiconductor.material.ϵ_r
-    R1 = sim_cyl.detector.contacts[1].geometry.r[1][2] * u"m"
-    R2 = sim_cyl.detector.contacts[2].geometry.r[1][1] * u"m"
-    V1 = sim_cyl.detector.contacts[1].potential * u"V"
-    V2 = sim_cyl.detector.contacts[2].potential * u"V"
-    L = (sim_cyl.world.intervals[3].right - sim_cyl.world.intervals[3].left) * u"m"
+    R1 = SolidStateDetectors.from_internal_units(sim_cyl.detector.contacts[1].geometry.r[1][2], u"m")
+    R2 = SolidStateDetectors.from_internal_units(sim_cyl.detector.contacts[2].geometry.r[1][1], u"m")
+    V1 = SolidStateDetectors.from_internal_units(sim_cyl.detector.contacts[1].potential, u"V")
+    V2 = SolidStateDetectors.from_internal_units(sim_cyl.detector.contacts[2].potential, u"V")
+    L = SolidStateDetectors.from_internal_units(sim_cyl.world.intervals[3].right - sim_cyl.world.intervals[3].left, u"m")
     V = π * R2^2 * L
     intV = (R2^2 - R1^2) * π * L
 
-    calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+    timed_calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+    timed_calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_cyl, 1, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+
+    zmin, zmax = SolidStateDetectors.from_internal_units.(extrema(midpoints(SolidStateDetectors.get_extended_ticks(sim_cyl.point_types.grid.z))), u"cm")
+    intV_ext = (R2^2 - R1^2) * π * (zmax - zmin)
+    @testset "Active volume" begin
+        @test isapprox(get_active_volume(sim_cyl.point_types), intV_ext, rtol = 0.05)
+        @test isapprox(get_active_volume(sim_car.point_types), intV_ext, rtol = 0.05)
+    end
+
+    timed_calculate_weighting_potential!(sim_cyl, 1, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_car, 1, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+    timed_calculate_weighting_potential!(sim_car, 1, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
         convergence_limit = 1e-3, refinement_limits = [0.2], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_cyl, 2, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
+    timed_calculate_weighting_potential!(sim_cyl, 2, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
-    calculate_weighting_potential!(sim_car, 2, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
+    timed_calculate_weighting_potential!(sim_car, 2, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
         convergence_limit = 1e-3, refinement_limits = [0.2], use_nthreads = 1, verbose = false
     )
 
     C_true = uconvert(u"pF", 2π * ϵr * ϵ0 / log(R2/R1) * L )
     C_Analytical = [C_true -C_true; -C_true C_true]
 
-    C_cyl_ssd = calculate_capacitance_matrix(sim_cyl)
-    C_car_ssd = calculate_capacitance_matrix(sim_car)
+    C_cyl_ssd = timed_calculate_capacitance_matrix(sim_cyl)
+    C_car_ssd = timed_calculate_capacitance_matrix(sim_car)
 
     @testset "Capacity" begin
         @test all(isapprox.(C_cyl_ssd, C_Analytical, rtol = 0.01))
@@ -212,10 +222,10 @@ end
     sim_cyl.detector = SolidStateDetector(sim_cyl.detector, DummyImpurityDensity{T}());
     sim_car.detector = SolidStateDetector(sim_car.detector, DummyImpurityDensity{T}());
 
-    calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (1u"cm", 15u"°", 1u"m")),
+    timed_calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (1u"cm", 15u"°", 1u"m")),
         convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05], use_nthreads = 1, verbose = false
     )
-    calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.5u"cm", 0.5u"cm", 1u"m")),
+    timed_calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.5u"cm", 0.5u"cm", 1u"m")),
         convergence_limit = 1e-7, refinement_limits = [0.2, 0.1, 0.05, 0.02], use_nthreads = 1, verbose = false
     )
 
@@ -249,7 +259,7 @@ end
         function SolidStateDetectors.get_impurity_density(cdm::DummyImpurityDensity{T}, pt::CartesianPoint{T})::T where {T}
             SolidStateDetectors.get_impurity_density(cdm, CylindricalPoint(pt))
         end
-        calculate_electric_potential!(sim, 
+        timed_calculate_electric_potential!(sim, 
             device_array_type = device_array_type, 
             depletion_handling = true,
             convergence_limit = 1e-7, 
@@ -258,7 +268,7 @@ end
             verbose = false
         )
         for i in (1, 2)
-            calculate_weighting_potential!(sim, i,
+            timed_calculate_weighting_potential!(sim, i,
                 device_array_type = device_array_type, 
                 depletion_handling = true,
                 convergence_limit = 1e-7, 

@@ -122,5 +122,5 @@ DetectorHitEvents = TypedTables.Table{<:NamedTuple{DHE_column_names, <:Tuple{DHE
         hasproperty(t, name) || throw(ArgumentError("Expected detector hit events table to have column named `$(name)`"))
         eltype(getproperty(t, name)) <: type || throw(ArgumentError("Expected detector hit events table column `$(name)` entries to be of type `$(type)`"))
     end
-    true
+    return true
 end

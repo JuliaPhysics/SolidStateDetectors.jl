@@ -116,7 +116,7 @@ function Geant4.G4JLDetector(sim::SolidStateDetectors.Simulation, output_filenam
         rm(output_filename)
     end
 
-    detector 
+    return detector 
 end
 
 function Geant4.G4JLDetector(input_filename::AbstractString, output_filename::AbstractString = "tmp.gdml"; validate_schema::Bool = true, kwargs...)
@@ -178,7 +178,7 @@ function Geant4.G4JLApplication(
     # See also https://geant4-forum.web.cern.ch/t/radioactive-decay-completely-not-working/11798/4
     ui`/process/had/rdm/thresholdForVeryLongDecayTime 1.0e+60 year`
 
-    app
+    return app
 
     # ToDo:
     #=

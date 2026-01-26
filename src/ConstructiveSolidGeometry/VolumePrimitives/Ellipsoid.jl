@@ -102,13 +102,10 @@ function Geometry(::Type{T}, ::Type{Ellipsoid}, dict::AbstractDict, input_units:
     
     r = parse_r_of_primitive(T, dict, input_units.length)
     φ = parse_φ_of_primitive(T, dict, angle_unit)
-    if !(φ === nothing)
-        error("Partial Ellipsoid (`φ = φ`) is not yet supported.")
-    end
+    isnothing(φ) || throw(ConfigFileError("Partial Ellipsoid (`φ = φ`) is not yet supported."))
     θ = parse_θ_of_primitive(T, dict, angle_unit)
-    if !(θ === nothing)
-        error("Partial Ellipsoid (`θ = θ`) is not yet supported.")
-    end
+    isnothing(θ) || throw(ConfigFileError("Partial Ellipsoid (`θ = θ`) is not yet supported."))
+
     e = if r isa Tuple{T,T}
         Ellipsoid{T}(ClosedPrimitive,
             r = r[2], 

@@ -19,9 +19,10 @@ T = Float32
     parse_material = Base.get_extension(SolidStateDetectors, :SolidStateDetectorsGeant4Ext).parse_material
     for (m,material) in SolidStateDetectors.material_properties
         @testset "$(m)" begin
-            @test_nowarn parse_material(material.name)
+            @test @test_nowarn parse_material(material.name) isa AbstractString
         end
     end
+    @test_throws ArgumentError parse_material("Unknown material")
 end
 
 @testset "Define particle sources" begin
@@ -63,12 +64,13 @@ end
     # Create G4JLApplication
     sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
-    app = Geant4.G4JLApplication(sim, source)
+    app = Geant4.G4JLApplication(sim, source, verbose = false)
 
     # Simulate 100 events
     evts = run_geant4_simulation(app, 100)
     @test evts isa Table
     @test SolidStateDetectors.is_detector_hits_table(evts)
+    @test SolidStateDetectors.get_detector_hits_table(evts) == evts
     @test length(evts) == 100
 
     # Add fano noise
@@ -94,16 +96,22 @@ end
             LegendHDF5IO.readdata(h5, "geant4")
         end
     end
+
+    # Cluster aggressively and check idempotence
+    combine_evts = SolidStateDetectors.cluster_detector_hits(evts, 1u"m")
+    @test length(combine_evts) == length(evts)
+    @test SolidStateDetectors.cluster_detector_hits(combine_evts, 1u"m") == combine_evts
     
     # Generate waveforms
-    simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
-    wf = simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
+    timed_simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
+    wf = timed_simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
+    @test SolidStateDetectors.get_detector_hits_table(wf[findall(wf.chnid .== 1)]) == evts
     @test :waveform in columnnames(wf)
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
 
     # Use the table with added Fano noise
-    wf_fano = simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
+    wf_fano = timed_simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_fano isa Table
     @test :waveform in columnnames(wf_fano)
     @test length(wf_fano) == length(evts_fano) * sum(.!ismissing.(sim.weighting_potentials))
@@ -121,7 +129,7 @@ end
     @test_throws Exception SolidStateDetectors.cluster_detector_hits(evts_static, 2u"kg")
 
     # Generate waveforms using StaticVectors as eltype of pos
-    wf_static = simulate_waveforms(evts_static, sim, Δt = 1u"ns", max_nsteps = 2000)
+    wf_static = timed_simulate_waveforms(evts_static, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_static isa Table
     @test :waveform in columnnames(wf_static)
     @test length(wf_static) == length(evts_static) * sum(.!ismissing.(sim.weighting_potentials))
@@ -158,5 +166,30 @@ end
         rotated_static = SolidStateDetectors.rotate_event_positions(evts_static, r)
         @test all(p -> p isa eltype(first(evts_static.pos)), flatview(rotated_static.pos))
         @test map(p -> eltype(first(evts_static.pos))(r * p), flatview(evts_static.pos)) == flatview(rotated_static.pos)
+    end
+
+    # Test IsotopeSource (Cs-137)
+    isource = IsotopeSource(55, 137, 0, 0, CartesianPoint(0.05,0,0.05))
+    iapp = Geant4.G4JLApplication(sim, isource, verbose = false)
+    iapp.sdetectors = app.sdetectors # workaround: copy sdetectors from previous G4JLApplication to avoid undefined reference
+    ievts = run_geant4_simulation(iapp, 100)
+
+    @test ievts isa Table
+    @test SolidStateDetectors.is_detector_hits_table(ievts)
+    @test length(ievts) == 100
+
+end
+
+@testset "Construct G4JLDetectors from config files" begin
+    for (key, sim_file) in SSD_examples
+        if endswith(sim_file, ".yaml")
+            @testset "Read from SSD config file: $(key)" begin
+                fn = "test.gdml"
+                @test Geant4.G4JLDetector(sim_file, fn, save_gdml = true, verbose = false) isa Geant4.G4JLDetector
+                @test isfile(fn)
+                @test @test_nowarn Geant4.G4JLDetector(fn) isa Geant4.G4JLDetector
+                rm(fn)
+            end
+        end
     end
 end

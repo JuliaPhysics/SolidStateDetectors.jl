@@ -84,7 +84,7 @@ function LegendHDF5IO.create_entry(parent::LegendHDF5IO.LHDataStore, name::Abstr
     pt::T; kwargs...) where {T <: AbstractCoordinatePoint}
     LegendHDF5IO.create_entry(parent, name, getindex.(Ref(pt), 1:3); kwargs...)
     LegendHDF5IO.setdatatype!(parent.data_store[name], T)
-    nothing
+    return nothing
 end
 
 function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Dataset, T::Type{<:AbstractCoordinatePoint})
@@ -96,7 +96,7 @@ function LegendHDF5IO.create_entry(parent::LegendHDF5IO.LHDataStore, name::Abstr
     pts::T; kwargs...) where {T <: AbstractVector{<:AbstractCoordinatePoint}}
     LegendHDF5IO.create_entry(parent, name, VectorOfVectors([getindex.(Ref(pt), 1:3) for pt in pts]); kwargs...)
     LegendHDF5IO.setdatatype!(parent.data_store[name], T)
-    nothing
+    return nothing
 end
 
 function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Group, T::Type{<:AbstractVector{<:CartesianPoint}})
@@ -137,7 +137,7 @@ function LegendHDF5IO.writedata(
     data = VectorOfVectors([getindex.(Ref(pt), 1:3) for pt in pts])
     LegendHDF5IO.writedata(output, name, data, fulldatatype)
     LegendHDF5IO.setdatatype!(output[name], fulldatatype)
-    nothing
+    return nothing
 end
 
 function LegendHDF5IO.readdata(
@@ -147,7 +147,7 @@ function LegendHDF5IO.readdata(
     data = LegendHDF5IO.readdata(input, name, VectorOfVectors)
     output = [CartesianPoint(d...) for d in data]
     @assert output isa T
-    output
+    return output
 end
 
 function LegendHDF5IO.readdata(
@@ -157,7 +157,7 @@ function LegendHDF5IO.readdata(
     data = LegendHDF5IO.readdata(input, name, VectorOfVectors)
     output = [CylindricalPoint(d...) for d in data]
     @assert output isa T
-    output
+    return output
 end
 
 end # module LegendHDF5IO
