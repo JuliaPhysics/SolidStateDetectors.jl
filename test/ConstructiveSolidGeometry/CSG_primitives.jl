@@ -1045,22 +1045,30 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         # Case 1: Point on the segment → distance = 0
         pt_on = CartesianPoint{T}(0.5,0,0)
-        @test CSG.distance(pt_on, e) ≈ T(0)
+        @test CSG.distance(pt_on, e) ≈ 0.0
+        pt_on = CartesianPoint{T}(0.3,0,0)
+        @test CSG.distance_to_line(pt_on, e) ≈ 0.0
         
         # Case 2: Point beyond b → distance = ||pt - b||
         pt_beyond = CartesianPoint{T}(2,1,0)
         @test CSG.distance(pt_beyond, e) ≈ norm(pt_beyond - b)
+        pt_beyond = CartesianPoint{T}(2,0,0)
+        @test CSG.distance_to_line(pt_beyond, e) ≈ 1.0
         
         # Case 3: Point before a → distance = ||pt - a||
         pt_before = CartesianPoint{T}(-1,1,0)
         @test CSG.distance(pt_before, e) ≈ norm(pt_before - a)
+        pt_before = CartesianPoint{T}(-1,0,0)
+        @test CSG.distance_to_line(pt_before, e) ≈ 1.0
         
         # Case 4: Point off the segment but projection falls on segment
         pt_off = CartesianPoint{T}(0.5,2,0)
         v = b - a
         expected = norm(cross(pt_off - a, v)) / norm(v)
         @test CSG.distance(pt_off, e) ≈ expected
-        
+        pt_inside = CartesianPoint{T}(0.5,1,0)
+        @test CSG.distance_to_line(pt_inside, e) ≈ 1.0
+
         e_vert = CSG.Edge(CartesianPoint{T}(0,0,0), CartesianPoint{T}(0,0,1))
         pt_off_vert = CartesianPoint{T}(1,0,0.5)
         @test CSG.distance(pt_off_vert, e_vert) ≈ T(1) 
@@ -1281,28 +1289,6 @@ end
     inter = CSG.CSGIntersection(sphere, box)
     pt_in = CartesianPoint(0.2, 0.2, 0.2)
     @test pt_in in inter
-end
-
-@testset "distance_to_line : LineSegment" begin
-    a = CartesianPoint{T}(0.0, 0.0, 0.0)
-    b = CartesianPoint{T}(1.0, 0.0, 0.0)
-    seg = CSG.LineSegment{T}(a, b)
-
-    # Case 1: point before the segment
-    pt_before = CartesianPoint{T}(-1.0, 0.0, 0.0)
-    @test CSG.distance_to_line(pt_before, seg) ≈ 1.0
-
-    # Case 2: point after the segment
-    pt_after = CartesianPoint{T}(2.0, 0.0, 0.0)
-    @test CSG.distance_to_line(pt_after, seg) ≈ 1.0
-
-    # Case 3: perpendicular projection inside segment
-    pt_inside = CartesianPoint{T}(0.5, 1.0, 0.0)
-    @test CSG.distance_to_line(pt_inside, seg) ≈ 1.0
-
-    # Case 4 (optional): point exactly on the segment
-    pt_on = CartesianPoint{T}(0.3, 0.0, 0.0)
-    @test CSG.distance_to_line(pt_on, seg) ≈ 0.0
 end
 
 @testset "distance_to_surface throws on segmented surfaces" begin

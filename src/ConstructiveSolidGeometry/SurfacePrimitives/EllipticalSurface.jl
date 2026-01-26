@@ -183,7 +183,7 @@ end
 #             return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
 #         else
 #             return distance_to_line(CartesianPoint(pt),
-#                                     LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)),
+#                                     Edge(CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)),
 #                                                 CartesianPoint(CylindricalPoint{T}(rMax,φNear,a.z))
 #                                                 )
 #                                     )
@@ -232,6 +232,6 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurfac
         p1 = CartesianPoint{T}(rMin*cos(φNear), rMin*sin(φNear), a_z)
         p2 = CartesianPoint{T}(rMax*cos(φNear), rMax*sin(φNear), a_z)
         
-        return distance_to_line(pt, LineSegment(p1, p2))
+        return distance_to_line(pt, Edge(p1, p2))
     end
 end

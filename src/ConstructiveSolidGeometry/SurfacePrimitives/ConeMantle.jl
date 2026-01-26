@@ -348,21 +348,6 @@ end
 #     return t1, t2, proj
 # end
 
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
-# end
-
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     φMin::T, φMax::T, _ = get_φ_limits(c)
-#     if _in_φ(pcy, c.φ)
-#         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
-#     else
-#         return distance_to_line(CartesianPoint(pt), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
-#     end
-# end
-
 
 function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T where {T}
     point = CartesianPoint(point)
@@ -415,6 +400,6 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:
         p1 = CartesianPoint{T}(rbot*cosφ, rbot*sinφ, zMin)
         p2 = CartesianPoint{T}(rtop*cosφ, rtop*sinφ, zMax)
         
-        return distance_to_line(pt, LineSegment(p1, p2))
+        return distance_to_line(pt, Edge(p1, p2))
     end
 end
