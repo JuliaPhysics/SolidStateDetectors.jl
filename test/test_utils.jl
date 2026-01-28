@@ -50,6 +50,12 @@ function timed_simulate!(args...; kwargs...)
     end
 end
 
+function timed_calculate_capacitance_matrix(args...; kwargs...)
+    @timeit testtimer() "calculate_capacitance_matrix" begin
+        calculate_capacitance_matrix(args...; kwargs...)
+    end
+end
+
 function timed_estimate_depletion_voltage(args...; kwargs...)
     @timeit testtimer() "estimate_depletion_voltage" begin
         estimate_depletion_voltage(args...; kwargs...)

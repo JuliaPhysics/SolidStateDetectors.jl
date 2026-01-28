@@ -43,7 +43,7 @@ function Dictionary(m::SMatrix{3,3,T,9}) where {T}
     else
         dict["M"] = m[:]
     end
-    dict
+    return dict
 end
 
 Dictionary(pt::CartesianPoint) = [pt.x, pt.y, pt.z]

@@ -177,72 +177,176 @@ end
     end
 end
 
-@timed_testset "Test boule impurity densities and corrections" begin
+@timed_testset "Boule impurity densities and corrections" begin
+
     sim = Simulation{T}("test_config_files/BEGe_01.yaml")
-
     @test SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0)) == T(0.8*T(SolidStateDetectors.to_internal_units(-5e9u"cm^-3")) + T(SolidStateDetectors.to_internal_units(-5e8u"cm^-3")))
-
-    det_z0 = T(0.12)
-    boule_ρ0 = T(-1e16)
-    boule_gradient = T(-1e17)
-    idm = LinBouleImpurityDensity{T}(boule_ρ0, boule_gradient, det_z0)
-    sim.detector = SolidStateDetector(sim.detector, idm)
-
-    det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CartesianPoint{T}(0,0,0))
-
-    @test det_ρ0 == boule_ρ0 + boule_gradient * det_z0
-
-    sim2 = Simulation{T}("test_config_files/BEGe_02.yaml")
-
-    @test sim.detector.semiconductor.impurity_density_model == sim2.detector.semiconductor.impurity_density_model
 
     det_z0 = T(0.05)
     boule_ρ0 = T(-3e15)
     boule_gradient = T(-1e16)
+    boule_c = T(-1e15)
     boule_n = T(-2e15)
     boule_l = T(0.05)
     boule_m = T(0.01)
+    
+    # LinBouleImpurityDensity
+    d = Dict("impurity_density" => Dict(
+        "name" => "linear_boule",
+        "a" => boule_ρ0,
+        "b" => boule_gradient,
+        "det_z0" => det_z0
+    ))
 
-    zimp = T.(collect(0:0.01:0.06))
-    yimp = T.([ -3.013e15, -3.137e15, -3.3e15, -3.571e15, -4.136e15, -5.5e15, -9.037e15])
+    idm = LinBouleImpurityDensity{T}(boule_ρ0, boule_gradient, det_z0)
+    @test (1 * idm) + 0 == idm
+    @test LinBouleImpurityDensity{T}([boule_ρ0, boule_gradient], det_z0) == idm
+    @test SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple()) == idm
+    @test SolidStateDetectors.get_impurity_density(idm, CartesianPoint{T}(0,0,0)) == boule_ρ0 + boule_gradient * det_z0
+
+    # LinExpBouleImpurityDensity
+    d = Dict("impurity_density" => Dict(
+        "name" => "linear_exponential_boule",
+        "a" => boule_ρ0,
+        "b" => boule_gradient,
+        "n" => boule_n,
+        "l" => boule_l,
+        "m" => boule_m,
+        "det_z0" => det_z0
+    ))
 
     idm = LinExpBouleImpurityDensity{T}(boule_ρ0, boule_gradient, boule_n, boule_l, boule_m, det_z0)
-    sim.detector = SolidStateDetector(sim.detector, idm)
-    
-    det_ρ0 = SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CartesianPoint{T}(0,0,0))
-    
-    @test det_ρ0 == boule_ρ0 + boule_gradient * det_z0 + boule_n * exp((det_z0 - boule_l)/boule_m)
+    @test (1 * idm) + 0 == idm
+    @test LinExpBouleImpurityDensity{T}([boule_ρ0, boule_gradient, boule_n, boule_l, boule_m], det_z0) == idm
+    @test SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple()) == idm
+    @test SolidStateDetectors.get_impurity_density(idm, CartesianPoint{T}(0,0,0)) == boule_ρ0 + boule_gradient * det_z0 + boule_n * exp((det_z0 - boule_l)/boule_m)
 
+    sim.detector = SolidStateDetector(sim.detector, idm)
     timed_calculate_electric_potential!(sim, refinement_limits=0.01)
     U_est = timed_estimate_depletion_voltage(sim)
 
+    # ParBouleImpurityDensity
+    d = Dict("impurity_density" => Dict(
+        "name" => "parabolic_boule",
+        "a" => boule_ρ0,
+        "b" => boule_gradient,
+        "c" => boule_c,
+        "det_z0" => det_z0
+    ))
+
+    idm = ParBouleImpurityDensity{T}(boule_ρ0, boule_gradient, boule_c, det_z0)
+    @test (1 * idm) + 0 == idm
+    @test ParBouleImpurityDensity{T}([boule_ρ0, boule_gradient, boule_c], det_z0) == idm
+    @test SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple()) == idm
+    @test SolidStateDetectors.get_impurity_density(idm, CartesianPoint{T}(0,0,0)) == boule_ρ0 + boule_gradient * det_z0 + boule_c * det_z0^2
+
+    # ParExpBouleImpurityDensity
+    d = Dict("impurity_density" => Dict(
+        "name" => "parabolic_exponential_boule",
+        "a" => boule_ρ0,
+        "b" => boule_gradient,
+        "c" => boule_c,
+        "n" => boule_n,
+        "l" => boule_l,
+        "m" => boule_m,
+        "det_z0" => det_z0
+    ))
+
+    idm = ParExpBouleImpurityDensity{T}(boule_ρ0, boule_gradient, boule_c, boule_n, boule_l, boule_m, det_z0)
+    @test (1 * idm) + 0 == idm
+    @test ParExpBouleImpurityDensity{T}([boule_ρ0, boule_gradient, boule_c, boule_n, boule_l, boule_m], det_z0) == idm
+    @test SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple()) == idm
+    @test SolidStateDetectors.get_impurity_density(idm, CartesianPoint{T}(0,0,0)) == boule_ρ0 + boule_gradient * det_z0 + boule_c * det_z0^2 + boule_n * exp((det_z0 - boule_l)/boule_m)
+
+    # SplineBouleImpurityDensity
+    zimp = T.(collect(0:0.01:0.06))
+    yimp = T.([ -3.013e15, -3.137e15, -3.3e15, -3.571e15, -4.136e15, -5.5e15, -9.037e15])
     idm_spline = SplineBouleImpurityDensity{T}(zimp, yimp, det_z0)
+    @test ((1 * idm_spline) + 0).ρ == idm_spline.ρ
     sim.detector = SolidStateDetector(sim.detector, idm_spline)
     timed_calculate_electric_potential!(sim, refinement_limits=0.01)
     U_est_spline = timed_estimate_depletion_voltage(sim)
-
     @test isapprox(U_est, U_est_spline; atol=10u"V")
 end
 
-@testset "Boule impurity densities" begin
-    # Test constructors accept AbstractVector and get_impurity_density accepts AbstractCoordinatePoint
-    pars_lin = SVector(1.0, -2.0)
-    pars_linexp = SVector(1.0, -2.0, 3.0, 0.5, 2.0)
-    pars_par = SVector(1.0, -2.0, 0.1)
-    pars_parexp = SVector(1.0, -2.0, 0.1, 0.5, 1.5, 2.0)
-    det_z0 = 0.4
+@testset "PtypePNJunctionImpurityDensity" begin
+    d = Dict("impurity_density" => Dict(
+        "name" => "PtypePNjunction",
+        "lithium_annealing_temperature" => "623K",
+        "lithium_annealing_time" => "18minute",
+        "doped_contact_id" => 2,
+        "bulk_impurity_density" => Dict(
+            "name" => "constant",
+            "value" => "-1e10cm^-3"
+        )
+    ))
 
-    lb = LinBouleImpurityDensity{Float64}(pars_lin, det_z0)
-    le = LinExpBouleImpurityDensity{Float64}(pars_linexp, det_z0)
-    pb = ParBouleImpurityDensity{Float64}(pars_par, det_z0)
-    pe = ParExpBouleImpurityDensity{Float64}(pars_parexp, det_z0)
+    idm = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
+    @test (1 * idm) + 0 == idm
+    @test idm isa PtypePNJunctionImpurityDensity{T}
+    @test idm.bulk_imp_model isa ConstantImpurityDensity{T}
+    
+    sidm = idm.surface_imp_model
+    @test (1 * sidm) + 0 == sidm
+    @test sidm isa ThermalDiffusionLithiumDensity{T}
+    
+    d["impurity_density"]["name"] = "li_diffusion"
+    delete!(d["impurity_density"], "bulk_impurity_density")
+    sidm2 = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
+    @test sidm2 isa ThermalDiffusionLithiumDensity{T}
+    @test sidm.lithium_density_on_contact == sidm2.lithium_density_on_contact
+    @test sidm.lithium_diffusivity == sidm2.lithium_diffusivity
+end
 
-    pt = CartesianPoint{Float64}(0.2, -0.1, 0.3)
+@testset "ThermalDiffusionLithiumParameters" begin
+    # test all the error messages constructing a lithium density parameter dictionary
+    d = Dict{String, Any}("model" => "ThermalDiffusionLithiumDensity")
 
-    @test @inferred(SolidStateDetectors.get_impurity_density(lb, pt)) isa Float64
-    @test @inferred(SolidStateDetectors.get_impurity_density(le, pt)) isa Float64
-    @test @inferred(SolidStateDetectors.get_impurity_density(pb, pt)) isa Float64
-    @test @inferred(SolidStateDetectors.get_impurity_density(pe, pt)) isa Float64
+    # missing annealing temperature ranges
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+
+    # missing experimental parameters
+    d["annealing_temperature_ranges"] = [
+        Dict("T_min" => "100K", "T_max" => "200K", "D0" => "25e-4cm^2/s", "H" => "11800cal/mol"),
+        Dict("T_min" => "200K", "T_max" => "400K", "D0" => "20e-4cm^2/s", "H" => "12300cal/mol")
+    ]
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+
+    # missing parameters a and b
+    d["experimental_parameters"] = Dict{String,Any}()
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+    d["experimental_parameters"]["a"] = 21.27
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+    d["experimental_parameters"]["b"] = 2610
+    lithium_parameters = @test_nowarn SolidStateDetectors.ThermalDiffusionLithiumParameters(d; T)
+    @test lithium_parameters isa SolidStateDetectors.ThermalDiffusionLithiumDensityParameters{T}
+
+    # calculate lithium diffusivity inside and outside of the temperature range
+    @test SolidStateDetectors.calculate_lithium_diffusivity(T(200), lithium_parameters.diffusion) isa T
+    @test_throws ArgumentError SolidStateDetectors.calculate_lithium_diffusivity(T(500), lithium_parameters.diffusion)
+
+    # empty annealing temperature ranges
+    d["annealing_temperature_ranges"] = []
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+
+    # missing H
+    d["annealing_temperature_ranges"] = [Dict("T_min" => "100K", "T_max" => "200K", "D0" => "25e-4cm^2/s")]
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+
+    # extra key
+    d["annealing_temperature_ranges"] = [Dict("T_min" => "100K", "T_max" => "200K", "D0" => "25e-4cm^2/s", "H" => "11800cal/mol", "extra" => "key")]
+    @test_logs (:warn,) SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+
+    # mixed up temperatures
+    d["annealing_temperature_ranges"] = [Dict("T_min" => "200K", "T_max" => "100K", "D0" => "25e-4cm^2/s", "H" => "11800cal/mol")]
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
+
+    # missing temperatures
+    d["annealing_temperature_ranges"] = [
+        Dict("T_min" => "100K", "T_max" => "200K", "D0" => "25e-4cm^2/s", "H" => "11800cal/mol"),
+        Dict("T_min" => "300K", "T_max" => "400K", "D0" => "20e-4cm^2/s", "H" => "12300cal/mol")
+    ]
+    @test_throws SolidStateDetectors.ConfigFileError SolidStateDetectors.ThermalDiffusionLithiumParameters(d)
 end
 
 @testset "Charge density types" begin

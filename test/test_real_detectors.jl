@@ -88,7 +88,7 @@ end
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
     # test handling at r = 0 (see PR #322)
-    timed_calculate_weighting_potential!(sim, 4, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
+    timed_calculate_weighting_potential!(sim, 4, initialize = false, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
     @timed_testset "monotonous decrease of WP" let wp = sim.weighting_potentials[4]
         φidx1 = SolidStateDetectors.searchsortednearest(wp.grid.φ, T(deg2rad(30)))
         φidx2 = SolidStateDetectors.searchsortednearest(wp.grid.φ, T(deg2rad(210)))

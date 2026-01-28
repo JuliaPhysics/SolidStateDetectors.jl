@@ -293,7 +293,7 @@ end
 function Geometry(::Type{T}, ::Type{Rotations.Rotation}, dict::AbstractDict, input_units::NamedTuple, outer_transformations::Transformations{T}) where {T}
     rotation_matrix = SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict, input_units.angle))
     key = get_geometry_key(T, dict, input_units)
-    inner_transformations = (rotation = rotation_matrix, translation = CartesianVector{T}(0,0,0))
+    inner_transformations = (rotation = rotation_matrix, translation = zero(CartesianVector{T}))
     transformations = combine_transformations(inner_transformations, outer_transformations)
     Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end

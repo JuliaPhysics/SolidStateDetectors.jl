@@ -104,7 +104,7 @@ function _group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group
     clustersidx, elem_ptr[begin:Cidx]
 end
 
-function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::VectorOfVectors{CartesianPoint{T}} where {T <: SSDFloat}
     clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
     VectorOfVectors(pts[clustersidx], elem_ptr)
 end

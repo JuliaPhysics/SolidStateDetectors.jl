@@ -399,7 +399,7 @@ function parse_geometry(e::Torus{T,<:Any,<:Any,Nothing,Tuple{T,T}}, x_solids::XM
 end
 
 
-function parse_geometry(e::RegularPrism{T, <:Any, N}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, N}
+function parse_geometry(e::RegularPrism{N,T,<:Any}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, N}
     if has_volume(e, v)
         y = new_child(x_solids, "polyhedra")
         
@@ -543,5 +543,5 @@ end
     elseif material == "CsPbBr3" return "G4_CsPbBr3"
     elseif material == "Lead" return "G4_Pb"
     end
-    throw("Material characteristics for \"$(material)\" not defined yet")
+    throw(ArgumentError("Material characteristics for \"$(material)\" not defined yet"))
 end

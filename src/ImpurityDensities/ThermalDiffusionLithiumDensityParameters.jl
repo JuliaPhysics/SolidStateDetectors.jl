@@ -23,7 +23,6 @@ struct LithiumDiffusionParameters{T <: SSDFloat}
 end
 
 function calculate_lithium_diffusivity(lithium_annealing_temperature::T, parameters::NTuple{N, LithiumDiffusionParameters{T}})::T where {T <: SSDFloat, N}
-
     if !(parameters[1].T_min ≤ lithium_annealing_temperature ≤ parameters[end].T_max)
         throw(ArgumentError("Invalid lithium_annealing_temperature=$(lithium_annealing_temperature): expected $(parameters[1].T_min) ≤ lithium_annealing_temperature ≤ $(parameters[end].T_max)."))
     end
@@ -33,9 +32,6 @@ function calculate_lithium_diffusivity(lithium_annealing_temperature::T, paramet
             return parameter.D0 * exp(-parameter.H/(R_gas*lithium_annealing_temperature))
         end
     end
-    
-    # throw an error if thediffusivity couldn't be calculated (this should never be the case)
-    throw(ArgumentError("Could not determine lithium diffusivity"))
 end
 
 
