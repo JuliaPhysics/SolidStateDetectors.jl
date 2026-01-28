@@ -348,21 +348,6 @@ end
 #     return t1, t2, proj
 # end
 
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
-# end
-
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     φMin::T, φMax::T, _ = get_φ_limits(c)
-#     if _in_φ(pcy, c.φ)
-#         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
-#     else
-#         return distance_to_line(CartesianPoint(pt), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
-#     end
-# end
-
 
 function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T where {T}
     point = CartesianPoint(point)
@@ -384,22 +369,37 @@ end
 get_r_limits(c::ConeMantle) = _radial_endpoints(c.r)
 get_z_limits(c::ConeMantle) = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
 
-function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
-    pcy = CylindricalPoint(point)
-    rbot::T, rtop::T = get_r_limits(c)
-    zMin::T, zMax::T = get_z_limits(c)
-    distance_to_line(CartesianPoint{T}(pcy.r,0,pcy.z), Edge{T}(CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
-end
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, TP, <:Any})::T where {T, TP<:Union{Nothing,T}}
 
-function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
-    pcy = CylindricalPoint(point)
-    φMin::T, φMax::T = get_φ_limits(c)
-    rbot::T, rtop::T = get_r_limits(c)
-    zMin::T, zMax::T = get_z_limits(c)
-    if _in_φ(pcy, c.φ)
-        return distance_to_line(CartesianPoint{T}(pcy.r,0,pcy.z), Edge{T}(CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
+    pt_cyl = CylindricalPoint(pt)
+
+    rbot, rtop = get_r_limits(c)
+    zMin, zMax = get_z_limits(c)
+
+    # Generator in the meridional (r–z) plane
+    edge_rz = Edge{T}(CartesianPoint{T}(rbot, zero(T), zMin), CartesianPoint{T}(rtop, zero(T), zMax))
+    
+    # Full cone: rotational symmetry
+    if c.φ === nothing
+        return distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
     else
-        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
-        return distance_to_line(point, Edge{T}(CylindricalPoint{T}(rbot,φNear,zMin), CylindricalPoint{T}(rtop,φNear,zMax)))
+        # For now, only support unsegmented cones
+        throw(ArgumentError("`distance_to_surface(::ConeMantle)`: segmented cones (φ ≠ nothing) are not supported yet"))
+    end
+    
+    # Segmented cone: φ ∈ [0, c.φ]
+    if _in_φ(pt_cyl, c.φ)
+        return distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
+    else
+        # Nearest boundary: either 0 or c.φ
+        φNear = _φNear(pt_cyl.φ, c.φ)
+        
+        cosφ = cos(φNear)
+        sinφ = sin(φNear)
+        
+        p1 = CartesianPoint{T}(rbot*cosφ, rbot*sinφ, zMin)
+        p2 = CartesianPoint{T}(rtop*cosφ, rtop*sinφ, zMax)
+        
+        return distance_to_line(pt, Edge(p1, p2))
     end
 end
