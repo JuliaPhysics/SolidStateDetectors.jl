@@ -913,13 +913,6 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test circ isa CSG.Ellipse{Float32, Float32, Float32}
         @test all(isa.(edges, CSG.Edge{Float32}))
 
-        p_inside = CartesianPoint{Float32}(0.5f0, 0f0, 0f0)
-        p_outside = CartesianPoint{Float32}(1.5f0, 0f0, 0f0)
-        @test CSG._in_cyl_r(p_inside, 1f0)
-        @test !CSG._in_cyl_r(p_outside, 1f0)
-        @test CSG._in_cyl_r(p_inside, (0.2f0, 0.6f0))
-        @test !CSG._in_cyl_r(p_outside, (0.2f0, 0.6f0))
-
         pt = CartesianPoint{Float32}(1f0, 0f0, 0f0)
         dist_full = CSG.distance_to_surface(pt, es_full)
         @test dist_full isa Float32
@@ -933,22 +926,25 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
 
     @testset "distance_to_surface" begin
         # Test distance_to_surface and _above_or_below_polygon accept AbstractCoordinatePoint
-        cm = CSG.ConeMantle()
-        es = CSG.EllipticalSurface()
-        torus = CSG.TorusMantle()
+        cm = CSG.ConeMantle{T}()
+        es = CSG.EllipticalSurface{T}()
+        torus = CSG.TorusMantle{T}()
         pts = SVector(
-            CartesianPoint(0.0, 0.0, 0.0),
-            CartesianPoint(1.0, 0.0, 0.0),
-            CartesianPoint(1.0, 1.0, 0.0),
-            CartesianPoint(0.0, 1.0, 0.0)
+            CartesianPoint{T}(0.0, 0.0, 0.0),
+            CartesianPoint{T}(1.0, 0.0, 0.0),
+            CartesianPoint{T}(1.0, 1.0, 0.0),
+            CartesianPoint{T}(0.0, 1.0, 0.0),
+            CartesianPoint{T}(0.5, 0.1, 0.0)
         )
-        quad = CSG.Polygon(pts)
-        pt = CartesianPoint(0.1, 0.1, 0.1)
+        quad = CSG.Polygon{4,T}(pts[1:4])
+        poly = CSG.Polygon{5,T}(pts)
+        pt = CartesianPoint{T}(0.1, 0.1, 0.1)
 
-        @test CSG.distance_to_surface(pt, cm) isa AbstractFloat
-        @test CSG.distance_to_surface(pt, es) isa AbstractFloat
-        @test CSG.distance_to_surface(pt, torus) isa AbstractFloat
-        @test CSG._above_or_below_polygon(pt, quad) isa Integer
+        @test CSG.distance_to_surface(pt, cm) isa T
+        @test CSG.distance_to_surface(pt, es) isa T
+        @test CSG.distance_to_surface(pt, torus) isa T
+        @test CSG.distance_to_surface(pt, quad) isa T
+        @test CSG.distance_to_surface(pt, poly) isa T
     end
     @testset "Plane" begin
         plane1 = @inferred CSG.Plane{Float32}(normal = CartesianVector(1,0,0))
@@ -1085,22 +1081,30 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         # Case 1: Point on the segment → distance = 0
         pt_on = CartesianPoint{T}(0.5,0,0)
-        @test CSG.distance(pt_on, e) ≈ T(0)
+        @test CSG.distance(pt_on, e) ≈ 0.0
+        pt_on = CartesianPoint{T}(0.3,0,0)
+        @test CSG.distance_to_line(pt_on, e) ≈ 0.0
         
         # Case 2: Point beyond b → distance = ||pt - b||
         pt_beyond = CartesianPoint{T}(2,1,0)
         @test CSG.distance(pt_beyond, e) ≈ norm(pt_beyond - b)
+        pt_beyond = CartesianPoint{T}(2,0,0)
+        @test CSG.distance_to_line(pt_beyond, e) ≈ 1.0
         
         # Case 3: Point before a → distance = ||pt - a||
         pt_before = CartesianPoint{T}(-1,1,0)
         @test CSG.distance(pt_before, e) ≈ norm(pt_before - a)
+        pt_before = CartesianPoint{T}(-1,0,0)
+        @test CSG.distance_to_line(pt_before, e) ≈ 1.0
         
         # Case 4: Point off the segment but projection falls on segment
         pt_off = CartesianPoint{T}(0.5,2,0)
         v = b - a
         expected = norm(cross(pt_off - a, v)) / norm(v)
         @test CSG.distance(pt_off, e) ≈ expected
-        
+        pt_inside = CartesianPoint{T}(0.5,1,0)
+        @test CSG.distance_to_line(pt_inside, e) ≈ 1.0
+
         e_vert = CSG.Edge(CartesianPoint{T}(0,0,0), CartesianPoint{T}(0,0,1))
         pt_off_vert = CartesianPoint{T}(1,0,0.5)
         @test CSG.distance(pt_off_vert, e_vert) ≈ T(1) 
@@ -1326,4 +1330,35 @@ end
     inter = CSG.CSGIntersection(sphere, box)
     pt_in = CartesianPoint(0.2, 0.2, 0.2)
     @test pt_in in inter
+end
+
+@testset "distance_to_surface on segmented surfaces" begin
+    pt_inφ1  = CartesianPoint{T}(0.0,  3.0, 0.0)
+    pt_inφ2  = CartesianPoint{T}(0.0,  2.0, 0.0)
+    pt_outφ1 = CartesianPoint{T}(2.0, -1.0, 0.0)
+    pt_outφ2 = CartesianPoint{T}(0.0, -2.0, 0.0)
+
+
+    # Segmented EllipticalSurface
+    seg_ellipse = CSG.EllipticalSurface{T}(r = (1.0,2.0), origin = CartesianPoint(0.0, 0.0, 0.0), φ = (0.0, π/2))
+    @test CSG.distance_to_surface(pt_inφ1,  seg_ellipse) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ2,  seg_ellipse) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_outφ1, seg_ellipse) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ2, seg_ellipse) ≈ T(sqrt(5))
+
+    # Segmented ConeMantle
+    seg_cone = CSG.ConeMantle{T}(:outwards; r = (2.0, 2.0), φ = (0.0, π/2), hZ = 1.0)
+    @test CSG.distance_to_surface(pt_inφ1,  seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ2,  seg_cone) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_outφ1, seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ2, seg_cone) ≈ T(sqrt(8))
+
+    @test CSG.distance_to_surface(pt_inφ1 + CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ1 - CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ2 + CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_inφ2 - CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_outφ1 + CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ1 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ2 + CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
+    @test CSG.distance_to_surface(pt_outφ2 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
 end

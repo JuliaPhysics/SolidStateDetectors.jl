@@ -221,4 +221,3 @@ end
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
-
