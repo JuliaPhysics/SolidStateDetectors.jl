@@ -945,6 +945,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test CSG.distance_to_surface(pt, torus) isa T
         @test CSG.distance_to_surface(pt, quad) isa T
         @test CSG.distance_to_surface(pt, poly) isa T
+        @test_throws ArgumentError CSG.distance_to_surface(pt, CSG.CSGDifference(CSG.Box{T}(), CSG.Cone{T}()))
     end
     @testset "Plane" begin
         plane1 = @inferred CSG.Plane{Float32}(normal = CartesianVector(1,0,0))
