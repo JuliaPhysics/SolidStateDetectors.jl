@@ -13,9 +13,12 @@ function Base.isapprox(a::AbstractCartesianPoint, b::AbstractCartesianPoint; kwa
            isapprox(get_z(a), get_z(b); kwargs...)
 end
 
+
 # Unitful uses the `*` and `/` operators to combine values with units. But mathematically that's really not an algebraic
 # product (not defined for affine points), but a cartesian product, so supporting this should be fine:
 Base.:(*)(pt::AbstractCartesianPoint{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) * u, get_y(pt) * u, get_z(pt) * u)
+# ToDo: Uncomment once units in points are supported
+#=
 Base.:(/)(pt::AbstractCartesianPoint{<:Quantity{<:Real, Unitful.𝐋}}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) / u, get_y(pt) / u, get_z(pt) / u)
 
 
@@ -31,10 +34,7 @@ function Unitful.uconvert(u::Unitful.Units{<:Any,Unitful.NoDims}, pt::AbstractCa
 end
 
 Unitful.ustrip(pt::AbstractCartesianPoint) = CartesianPoint(ustrip(get_x(pt)), ustrip(get_y(pt)), ustrip(get_z(pt)))
-
-
-
-
+=#
 
 
 """
@@ -213,14 +213,17 @@ end
 @inline Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
 @inline Base.iszero(::CartesianZero) = true
 
-# ToDo: Revert this once we support units internally.
-#Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
-Base.:*(z::CartesianZero, u::Unitful.Quantity) = z
 
+# ToDo: Revert this once we support units internally.
+Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
+Base.:(*)(z::CartesianZero, u::Unitful.Quantity) = z
+
+# ToDo: Uncomment once units in points are supported
+#=
 function Unitful.uconvert(u::Unitful.Units{T,Unitful.NoDims}, pt::CartesianZero{<:Quantity{U, Unitful.NoDims}}) where {T,U}
     CartesianZero{promote_type(T,U)}()
 end
-
+=#
 
 
 """
@@ -351,5 +354,5 @@ function to_internal_units(pt::CylindricalPoint)
 end
 
 function to_internal_units(pt::AbstractCoordinatePoint)
-    error("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint.")
+    throw(ArgumentError("Unsupported point type $(typeof(pt)). Expected CartesianPoint or CylindricalPoint."))
 end
