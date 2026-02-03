@@ -111,7 +111,11 @@ function in(pt::CartesianPoint{T}, p::Polygon{N,T}, csgtol::T = csg_default_tol(
 end
 
 function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Polygon{N,T}) where {N,T}
+
     rot = _get_rot_for_rotation_on_xy_plane(p)
+    # handle polygons with zero area
+    all(isfinite.(rot)) || return false
+
     vs = vertices(p)
 
     pts2d = SVector{N+1, SVector{2,T}}(
