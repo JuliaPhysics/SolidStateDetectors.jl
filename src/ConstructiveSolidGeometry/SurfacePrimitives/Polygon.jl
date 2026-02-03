@@ -67,8 +67,8 @@ get_label_name(::Polygon) = "Polygon"
 extreme_points(p::Polygon) = p.points
 
 function edges(p::Polygon{N,T})::NTuple{N, Edge{T}} where {N,T}
-    vs = vertices(p)
-    Tuple( Edge(vs[i],vs[i%N+1]) for i in 1:N )
+    vs::SVector{N, CartesianPoint{T}} = vertices(p)
+    NTuple{N, Edge{T}}( Edge(vs[i],vs[i%N+1]) for i in 1:N )
 end
 
 flip(p::Polygon) = Polygon(reverse(p.points))
