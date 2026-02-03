@@ -278,46 +278,6 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
            _transform_into_global_coordinate_system(ints2, cm)
 end
 
-# """
-#     intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
-
-# The function will always return 2 CartesianPoint's.
-# If the line just touches the mantle, the two points will be the same. 
-# If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
-# """
-# function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
-#     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
-    
-#     L1 = obj_l.origin.x
-#     L2 = obj_l.origin.y
-#     L3 = obj_l.origin.z
-#     D1 = obj_l.direction.x
-#     D2 = obj_l.direction.y
-#     D3 = obj_l.direction.z
-
-#     f1 = D1^2 + D2^2 
-#     λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
-#                 # (here eZ -> D1 = D2 = 0)
-#                 # We assume here that this is not the case -> 
-#                 # We check this in choosing the sample / evaluating dimensions in `paint!` 
-#     hZ = cm.hZ
-#     R0 = cm.r
-
-#     term1 = (2D1*L1 + 2D2*L2)^2
-#     term2 = L1^2 + L2^2 - R0^2
-#     term3 = -D1*L1 - D2*L2 
-#     term4 = term1 - 4*f1*term2
-#     sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
-    
-#     λ1 = λ * (-sq/2 + term3) 
-#     λ2 = λ * (+sq/2 + term3)
-    
-#     ints1 = obj_l.origin + λ1 * obj_l.direction 
-#     ints2 = obj_l.origin + λ2 * obj_l.direction 
-#     return _transform_into_global_coordinate_system(ints1, cm), 
-#            _transform_into_global_coordinate_system(ints2, cm)
-# end
-
 
 # function get_2d_grid_ticks_and_proj(cm::ConeMantle{T}, t) where {T}
 #     pts = extreme_points(cm)
@@ -366,40 +326,26 @@ function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T w
     end
 end
 
-get_r_limits(c::ConeMantle) = _radial_endpoints(c.r)
-get_z_limits(c::ConeMantle) = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
-
 function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, TP, <:Any})::T where {T, TP<:Union{Nothing,T}}
 
-    pt_cyl = CylindricalPoint(pt)
+    pt_cart = _transform_into_object_coordinate_system(CartesianPoint(pt), c)
+    pt_cyl  = CylindricalPoint(pt_cart)
 
-    rbot, rtop = get_r_limits(c)
-    zMin, zMax = get_z_limits(c)
+    rbot, rtop = _radial_endpoints(c.r)
+    zMin, zMax = _linear_endpoints(c.hZ)
 
     # Generator in the meridional (r–z) plane
     edge_rz = Edge{T}(CartesianPoint{T}(rbot, zero(T), zMin), CartesianPoint{T}(rtop, zero(T), zMax))
     
     # Full cone: rotational symmetry
-    if c.φ === nothing
-        return distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
-    else
-        # For now, only support unsegmented cones
-        throw(ArgumentError("`distance_to_surface(::ConeMantle)`: segmented cones (φ ≠ nothing) are not supported yet"))
-    end
-    
-    # Segmented cone: φ ∈ [0, c.φ]
-    if _in_φ(pt_cyl, c.φ)
-        return distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
+    return if isnothing(c.φ) || _in_φ(pt_cyl, c.φ)
+        distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
     else
         # Nearest boundary: either 0 or c.φ
         φNear = _φNear(pt_cyl.φ, c.φ)
-        
-        cosφ = cos(φNear)
-        sinφ = sin(φNear)
-        
+        sinφ, cosφ = sincos(φNear)
         p1 = CartesianPoint{T}(rbot*cosφ, rbot*sinφ, zMin)
         p2 = CartesianPoint{T}(rtop*cosφ, rtop*sinφ, zMax)
-        
-        return distance_to_line(pt, Edge(p1, p2))
+        distance_to_line(pt_cart, Edge(p1, p2))
     end
 end

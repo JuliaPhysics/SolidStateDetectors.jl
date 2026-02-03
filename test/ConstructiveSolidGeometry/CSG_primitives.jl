@@ -872,13 +872,6 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test circ isa CSG.Ellipse{Float32, Float32, Float32}
         @test all(isa.(edges, CSG.Edge{Float32}))
 
-        p_inside = CartesianPoint{Float32}(0.5f0, 0f0, 0f0)
-        p_outside = CartesianPoint{Float32}(1.5f0, 0f0, 0f0)
-        @test CSG._in_cyl_r(p_inside, 1f0)
-        @test !CSG._in_cyl_r(p_outside, 1f0)
-        @test CSG._in_cyl_r(p_inside, (0.2f0, 0.6f0))
-        @test !CSG._in_cyl_r(p_outside, (0.2f0, 0.6f0))
-
         pt = CartesianPoint{Float32}(1f0, 0f0, 0f0)
         dist_full = CSG.distance_to_surface(pt, es_full)
         @test dist_full isa Float32
@@ -1291,14 +1284,33 @@ end
     @test pt_in in inter
 end
 
-@testset "distance_to_surface throws on segmented surfaces" begin
-    pt = CartesianPoint(1.0, 2.0, 3.0)
+@testset "distance_to_surface on segmented surfaces" begin
+    pt_inφ1  = CartesianPoint{T}(0.0,  3.0, 0.0)
+    pt_inφ2  = CartesianPoint{T}(0.0,  2.0, 0.0)
+    pt_outφ1 = CartesianPoint{T}(2.0, -1.0, 0.0)
+    pt_outφ2 = CartesianPoint{T}(0.0, -2.0, 0.0)
+
 
     # Segmented EllipticalSurface
-    seg_ellipse = CSG.EllipticalSurface(r = (10.0, 20.0), origin = CartesianPoint(0.0, 0.0, 0.0), φ = (0.0, π/3))
-    @test_throws ArgumentError CSG.distance_to_surface(pt, seg_ellipse)
+    seg_ellipse = CSG.EllipticalSurface{T}(r = (1.0,2.0), origin = CartesianPoint(0.0, 0.0, 0.0), φ = (0.0, π/2))
+    @test CSG.distance_to_surface(pt_inφ1,  seg_ellipse) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ2,  seg_ellipse) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_outφ1, seg_ellipse) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ2, seg_ellipse) ≈ T(sqrt(5))
 
     # Segmented ConeMantle
-    seg_cone = CSG.ConeMantle(:outwards; r = (1.0, 2.0), φ = (0.0, π/3), hZ = 1.0)
-    @test_throws ArgumentError CSG.distance_to_surface(pt, seg_cone)
+    seg_cone = CSG.ConeMantle{T}(:outwards; r = (2.0, 2.0), φ = (0.0, π/2), hZ = 1.0)
+    @test CSG.distance_to_surface(pt_inφ1,  seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ2,  seg_cone) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_outφ1, seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ2, seg_cone) ≈ T(sqrt(8))
+
+    @test CSG.distance_to_surface(pt_inφ1 + CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ1 - CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_inφ2 + CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_inφ2 - CartesianVector{T}(0,0,1.0),  seg_cone) ≈ T(0.0)
+    @test CSG.distance_to_surface(pt_outφ1 + CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ1 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(1.0)
+    @test CSG.distance_to_surface(pt_outφ2 + CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
+    @test CSG.distance_to_surface(pt_outφ2 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
 end
