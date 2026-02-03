@@ -195,7 +195,7 @@ end
 
 (*)(r::AbstractMatrix, csg::A) where {A <: AbstractConstructiveGeometry} = A(r * csg.a, r * csg.b)
 
-surfaces(csg::AbstractConstructiveGeometry) = vcat(surfaces(csg.a)..., surfaces(csg.b)...)
+surfaces(csg::AbstractConstructiveGeometry) = (surfaces(csg.a)..., surfaces(csg.b)...)
 
 function switchClosedOpen(csg::CSGDifference) 
     CSGDifference(switchClosedOpen(csg.a), switchClosedOpen(csg.b))
