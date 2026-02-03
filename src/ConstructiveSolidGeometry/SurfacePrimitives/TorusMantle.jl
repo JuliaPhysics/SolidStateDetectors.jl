@@ -340,7 +340,7 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, t::TorusMantle{T, N
 
     pt_cyl  = CylindricalPoint(_transform_into_object_coordinate_system(CartesianPoint(pt), t))
 
-    _in_φ(pt_cyl, t.φ) || throw(AssertionError("φ-Partial Torus not implemented yet"))
+    _in_φ(pt_cyl, t.φ) || throw(ArgumentError("φ-Partial Torus not implemented yet"))
 
     pt_r = pt_cyl.r - t.r_torus
     pt_z = pt_cyl.z
