@@ -111,8 +111,8 @@ Base.getindex(p::CartesianPoint, k::Symbol) = getfield(p, k)
 AbstractCoordinatePoint{T, Cartesian}(x::Real, y::Real, z::Real) where T = CartesianPoint{T}(x, y, z)
 
 
-Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zero(T))
-# @inline Base.Tuple(pt::CartesianPoint) = (pt.x, pt.y, pt.z)
+@inline Base.zero(::CartesianPoint{T}) where {T} = CartesianPoint{T}(zero(T),zero(T),zero(T))
+@inline Base.iszero(pt::CartesianPoint) = iszero(pt.x) && iszero(pt.y) && iszero(pt.z)
 @inline Base.copy(pt::CartesianPoint) = CartesianPoint(pt.x, pt.y, pt.z)
 
 @inline Base.:(+)(pt::CartesianPoint, v::CartesianVector) = CartesianPoint(pt.x + v.x, pt.y + v.y, pt.z + v.z)
@@ -210,7 +210,7 @@ end
     return CartesianVector(zero(R), zero(R), zero(R))
 end
 
-@inline Base.zero(::CartesianZero{T}) where {T} = CartesianZero{T}()
+@inline Base.zero(::Union{<:CartesianZero{T}, <:Type{CartesianZero{T}}}) where {T} = CartesianZero{T}()
 @inline Base.iszero(::CartesianZero) = true
 
 
@@ -326,8 +326,8 @@ function Base.isapprox(a::CylindricalPoint, b::CylindricalPoint; kwargs...)
     return isapprox(a.r, b.r; kwargs...) && isapprox(a.φ, b.φ; kwargs...) && isapprox(a.z, b.z; kwargs...)
 end
 
-Base.zero(::CylindricalPoint{T}) where {T} = CylindricalPoint{T}(zero(T), zero(T), zero(T))
-Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
+@inline Base.zero(::CylindricalPoint{T}) where {T} = CylindricalPoint{T}(zero(T), zero(T), zero(T))
+@inline Base.iszero(pt::CylindricalPoint) = iszero(pt.r) && iszero(pt.z)
 
 @inline Base.copy(pt::CylindricalPoint) = CylindricalPoint(pt.r, pt.φ, pt.z)
 
