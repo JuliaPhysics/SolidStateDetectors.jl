@@ -309,23 +309,6 @@ end
 # end
 
 
-function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T where {T}
-    point = CartesianPoint(point)
-    v12 = normalize(CartesianVector{T}(edge.b - edge.a))
-    v_point_1 = CartesianVector{T}(point - edge.a)
-    proj_on_v12 = dot(v12,v_point_1)
-    if geom_round(proj_on_v12) ≤ T(0)
-        return norm(edge.a - point)
-    else
-        v_point_2 = CartesianVector{T}(point - edge.b)
-        if geom_round(dot(v12,v_point_2)) ≥ T(0)
-            return norm(edge.b - point)
-        else
-            return sqrt(abs(dot(v_point_1,v_point_1) - proj_on_v12^2))
-        end
-    end
-end
-
 function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, TP, <:Any})::T where {T, TP<:Union{Nothing,T}}
 
     pt_cart = _transform_into_object_coordinate_system(CartesianPoint(pt), c)
