@@ -331,8 +331,8 @@ function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:
     pt_cart = _transform_into_object_coordinate_system(CartesianPoint(pt), c)
     pt_cyl  = CylindricalPoint(pt_cart)
 
-    rbot, rtop = _radial_endpoints(c.r)
-    zMin, zMax = _linear_endpoints(c.hZ)
+    rbot::T, rtop::T = c.r isa Tuple ? c.r : (c.r, c.r)
+    zMin::T, zMax::T = _linear_endpoints(c.hZ)
 
     # Generator in the meridional (r–z) plane
     edge_rz = Edge{T}(CartesianPoint{T}(rbot, zero(T), zMin), CartesianPoint{T}(rtop, zero(T), zMax))
