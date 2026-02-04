@@ -207,7 +207,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !CSG._in(CartesianPoint{T}(-2.5, 0.0, 1.0), pvt_open)
         
         # Upward cones
-        r_up_closed = ((nothing, convert(T,0.0)), nothing)
+        r_up_closed = ((nothing, convert(T,0.1)), nothing)
         r_up_open   = ((nothing, convert(T,0.1)), nothing)
         φ_up = nothing
         h_up = convert(T, 1.0)
@@ -216,6 +216,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         # Closed UpwardCone
         upward_closed = CSG.UpwardCone{T, CSG.ClosedPrimitive}(r_up_closed, φ_up, h_up, origin, rotation)
+        @test Geometry(T, Dictionary(upward_closed), default_units, no_translations) == upward_closed
         @test CSG._in(CartesianPoint{T}(0.0, 0.0, 0.5), upward_closed)
         @test !CSG._in(CartesianPoint{T}(0.0, 0.0, 1.1), upward_closed)
         @test !CSG._in(CartesianPoint{T}(2.0, 0.0, 0.5), upward_closed)
@@ -233,6 +234,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         # PartialUpwardCone 
         puc_closed = CSG.PartialUpwardCone{T, CSG.ClosedPrimitive}(r_cone, T(π), 1.0, origin, rotation)
+        @test Geometry(T, Dictionary(puc_closed), default_units, no_translations) == puc_closed
         @test CSG._in(CartesianPoint{T}(0.5, 0.5, -0.5), puc_closed)
         @test CSG._in(CartesianPoint{T}(0.0, 0.0, -1.0), puc_closed)
         @test CSG._in(CartesianPoint{T}(0.0, 0.0, 0.0), puc_closed)
@@ -264,6 +266,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
                 
         # DownwardCone ClosedPrimitive
         dc_closed = CSG.DownwardCone{T, CSG.ClosedPrimitive}(r_cone, nothing, 1.0, origin, rotation)
+        @test Geometry(T, Dictionary(dc_closed), default_units, no_translations) == dc_closed
         @test CSG._in(CartesianPoint{T}(0.2, 0.2, -0.5), dc_closed)
         @test CSG._in(CartesianPoint{T}(1, 0, 0), dc_closed)
         @test !CSG._in(CartesianPoint{T}(1.5, 0.0, -0.5), dc_closed)
@@ -278,6 +281,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         
         # PartialDownwardCone ClosedPrimitive
         pdc_closed = CSG.PartialDownwardCone{T, CSG.ClosedPrimitive}(r_cone, T(π), 1.0, origin, rotation)
+        @test Geometry(T, Dictionary(pdc_closed), default_units, no_translations) == pdc_closed
         @test CSG._in(CartesianPoint{T}(0.5, 0.0, -0.5), pdc_closed)
         @test CSG._in(CartesianPoint{T}(0.0, 0.0, -1.0), pdc_closed)
         @test CSG._in(CartesianPoint{T}(0.0, 0.0, 0.0), pdc_closed)
