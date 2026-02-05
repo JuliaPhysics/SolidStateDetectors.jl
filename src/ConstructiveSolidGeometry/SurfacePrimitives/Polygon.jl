@@ -66,27 +66,9 @@ get_label_name(::Polygon) = "Polygon"
 
 extreme_points(p::Polygon) = p.points
 
-function edges(p::Triangle{T}) where {T}
-    vs = vertices(p)
-    return (
-        Edge(vs[1], vs[2]),
-        Edge(vs[2], vs[3]),
-        Edge(vs[3], vs[1])
-    )
-end
-function edges(p::Quadrangle{T}) where {T}
-    vs = vertices(p)
-    return (
-        Edge(vs[1], vs[2]),
-        Edge(vs[2], vs[3]),
-        Edge(vs[3], vs[4]),
-        Edge(vs[4], vs[1])
-    )
-end
-
-function edges(p::Polygon{N,T})::SVector{N, Edge{T}} where {N,T}
-    vs = vertices(p)
-    SVector{N, Edge{T}}([Edge(vs[i],vs[i%N+1]) for i in 1:N])
+function edges(p::Polygon{N,T})::NTuple{N, Edge{T}} where {N,T}
+    vs::SVector{N, CartesianPoint{T}} = vertices(p)
+    NTuple{N, Edge{T}}( Edge(vs[i],vs[i%N+1]) for i in 1:N )
 end
 
 flip(p::Polygon) = Polygon(reverse(p.points))
@@ -128,13 +110,17 @@ function in(pt::CartesianPoint{T}, p::Polygon{N,T}, csgtol::T = csg_default_tol(
     end
 end
 
-function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Quadrangle{T}) where {T}
+function _above_or_below_polygon(pt::AbstractCoordinatePoint, p::Polygon{N,T}) where {N,T}
+
     rot = _get_rot_for_rotation_on_xy_plane(p)
+    # handle polygons with zero area
+    all(isfinite.(rot)) || return false
+
     vs = vertices(p)
 
-    pts2d = SVector{5, SVector{2,T}}(
-        SVector{2,T}(view(rot * (vs[i % 4 + 1] - cartesian_zero), 1:2)) for i in 0:4
-            )
+    pts2d = SVector{N+1, SVector{2,T}}(
+        SVector{2,T}(view(rot * (vs[i % N + 1] - cartesian_zero), 1:2)) for i in 0:N
+    )
     
     rotated_pt = rot * (pt - cartesian_zero)
     point2d = SVector{2,T}(view(rotated_pt, 1:2))
@@ -146,7 +132,6 @@ function _transform_into_global_coordinate_system(poly::Polygon{N, T}, p::Abstra
     Polygon{N,T}(broadcast(pt -> _transform_into_global_coordinate_system(pt, p), poly.points))
 end
 
-
 function distance(pt::CartesianPoint, p::Polygon)
     return if _above_or_below_polygon(pt, p)
         distance(pt, Plane(p))
@@ -155,4 +140,8 @@ function distance(pt::CartesianPoint, p::Polygon)
         ds = map(e -> distance(pt, e), es)
         minimum(ds)
     end
+end
+
+@inline function distance_to_surface(pt::AbstractCoordinatePoint{T}, p::Polygon{N,T})::T where {N,T}
+    return distance(CartesianPoint(pt), p)
 end

@@ -164,64 +164,20 @@ function lines(sp::PartialAnnulus{T}; n = 2) where {T}
     return (circ_in, circ_out, edges)
 end
 
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, Nothing})::T where {T}
-#     pt = CylindricalPoint(pt)
-#     rMin::T, rMax::T = get_r_limits(a)
-#     _in_cyl_r(pt, a.r) ? abs(pt.z - a.z) : hypot(pt.z - a.z, min(abs(pt.r - rMin), abs(pt.r - rMax)))
-# end
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, TP})::T where {T, TP<:Union{Nothing,T}}
 
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::CylindricalAnnulus{T, <:Any, <:AbstractInterval})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     rMin::T, rMax::T = get_r_limits(a)
-#     φMin::T, φMax::T, _ = get_φ_limits(a)
-#     if _in_φ(pcy, a.φ)
-#         Δz = abs(pcy.z - a.z)
-#         return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
-#     else
-#         φNear = _φNear(pcy.φ, φMin, φMax)
-#         if rMin == rMax
-#             return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)))
-#         else
-#             return distance_to_line(CartesianPoint(pt),
-#                                     LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a.z)),
-#                                                 CartesianPoint(CylindricalPoint{T}(rMax,φNear,a.z))
-#                                                 )
-#                                     )
-#         end
-#     end
-# end
+    pt_cart = _transform_into_object_coordinate_system(CartesianPoint(pt), a)
+    pt_cyl = CylindricalPoint(pt_cart)
+    rMin, rMax = _radial_endpoints(a.r)
 
-
-@inline _in_cyl_r(p::CartesianPoint, r::Real) = hypot(p.x, p.y) <= r
-@inline _in_cyl_r(p::CartesianPoint, r::Tuple{T,T}) where {T} =  r[1]<=hypot(p.x, p.y)<=r[2]
-@inline _in_cyl_r(p::CylindricalPoint, r::Union{Real, Tuple{T,T}}) where {T} =  _in_cyl_r(CartesianPoint(p), r)
-
-get_r_limits(a::EllipticalSurface{T, <:Union{T, <:Any, Nothing}, <:Any}) where {T} = _radial_endpoints(a.r) 
-
-function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, Nothing})::T where {T}
-    a_z=a.origin[3]
-    pt = CylindricalPoint(pt)
-    rMin::T, rMax::T = get_r_limits(a)
-    _in_cyl_r(pt, a.r) ? abs(pt.z - a_z) : hypot(pt.z - a_z, min(abs(pt.r - rMin), abs(pt.r - rMax)))
-end
-
-function distance_to_surface(pt::AbstractCoordinatePoint{T}, a::EllipticalSurface{T, <:Any, <:Tuple{T,T}})::T where {T}
-    pcy = CylindricalPoint(pt)
-    rMin::T, rMax::T = get_r_limits(a)
-    φMin::T, φMax::T, _ = get_φ_limits(a)
-    if _in_φ(pcy, a.φ)
-        Δz = abs(pcy.z - a_z)
-        return _in_cyl_r(pcy, a.r) ? Δz : hypot(Δz, min(abs(pcy.r - rMin), abs(pcy.r - rMax)))
+    # Full ellipse
+    return if isnothing(a.φ) || _in_φ(pt_cyl, a.φ)
+        hypot(pt_cyl.z, max(zero(T), rMin - pt_cyl.r, pt_cyl.r - rMax))
     else
-        φNear = _φNear(pcy.φ, φMin, φMax)
-        if rMin == rMax
-            return norm(CartesianPoint(pt)-CartesianPoint(CylindricalPoint{T}(rMin,φNear,a_z)))
-        else
-            return distance_to_line(CartesianPoint(pt),
-                                    LineSegment(T,CartesianPoint(CylindricalPoint{T}(rMin,φNear,a_z)),
-                                                CartesianPoint(CylindricalPoint{T}(rMax,φNear,a_z))
-                                                )
-                                    )
-        end
+        # Nearest φ-boundary is either 0 or a.φ
+        φNear = _φNear(pt_cyl.φ, a.φ)
+        p1 = CartesianPoint{T}(rMin*cos(φNear), rMin*sin(φNear), 0)
+        p2 = CartesianPoint{T}(rMax*cos(φNear), rMax*sin(φNear), 0)
+        distance_to_line(pt_cart, Edge(p1, p2))
     end
 end

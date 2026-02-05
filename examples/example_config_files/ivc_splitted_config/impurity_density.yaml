@@ -1,11 +1,5 @@
 impurity_density:
   name: linear
-  phi:
-    init: 0
-    gradient: 0
-  r:
-    init: 0
-    gradient: 0
-  z:
-    init: -10000000
-    gradient: -100000
+  offset: -1e7
+  gradient:
+    z: -1e5

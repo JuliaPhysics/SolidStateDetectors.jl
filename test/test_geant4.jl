@@ -5,6 +5,7 @@ using Test
 using SolidStateDetectors
 using ArraysOfArrays
 using RadiationDetectorSignals
+using Rotations
 using StaticArrays
 using TypedTables
 using Unitful
@@ -18,9 +19,10 @@ T = Float32
     parse_material = Base.get_extension(SolidStateDetectors, :SolidStateDetectorsGeant4Ext).parse_material
     for (m,material) in SolidStateDetectors.material_properties
         @testset "$(m)" begin
-            @test_nowarn parse_material(material.name)
+            @test @test_nowarn parse_material(material.name) isa AbstractString
         end
     end
+    @test_throws ArgumentError parse_material("Unknown material")
 end
 
 @testset "Define particle sources" begin
@@ -62,7 +64,7 @@ end
     # Create G4JLApplication
     sim = Simulation{T}(SSD_examples[:InvertedCoaxInCryostat])
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
-    app = Geant4.G4JLApplication(sim, source)
+    app = Geant4.G4JLApplication(sim, source, verbose = false)
 
     # Simulate Geant4 events
     N = 100
@@ -78,7 +80,7 @@ end
     evts_fano = add_fano_noise(evts, material.E_ionisation, material.f_fano)
     @test evts_fano isa Table
     @test SolidStateDetectors.is_detector_hits_table(evts_fano)
-    @test length(evts_fano) == 100
+    @test length(evts_fano) == N
 
     # Cluster events by radius
     clustered_evts = SolidStateDetectors.cluster_detector_hits(evts, 10u"µm")
@@ -114,11 +116,15 @@ end
             LegendHDF5IO.writedata(h5, "geant4", evts)
         end
         @test isfile(tmpfile)
-        
-        evts == LegendHDF5IO.lh5open(tmpfile) do h5
+        @test evts == LegendHDF5IO.lh5open(tmpfile) do h5
             LegendHDF5IO.readdata(h5, "geant4")
         end
     end
+
+    # Cluster aggressively and check idempotence
+    combine_evts = SolidStateDetectors.cluster_detector_hits(evts, 1u"m")
+    @test length(combine_evts) == length(evts)
+    @test SolidStateDetectors.cluster_detector_hits(combine_evts, 1u"m") == combine_evts
     
     # Generate waveforms
     timed_simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
@@ -126,6 +132,7 @@ end
     # Generate waveforms with unclustered events
     wf = timed_simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
+    @test SolidStateDetectors.get_detector_hits_table(wf[findall(wf.chnid .== 1)]) == evts
     @test :waveform in columnnames(wf)
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
 
@@ -164,4 +171,60 @@ end
 
     # Result should not depend whether input positions are SVector or CartesianPoint
     @test wf_static.waveform ≈ wf.waveform
+
+    # test table_utils.jl
+    @testset "Test table utils" begin
+        evts_split = SolidStateDetectors.split_table_by_each_charge_deposition(evts)
+        @test length(evts_split) == length(flatview(evts.pos))
+            
+        v = CartesianVector(one(T)*u"m", zero(T)*u"m", zero(T)*u"m")
+        v_static = SVector(T(1000)*u"mm", zero(T)*u"mm", zero(T)*u"mm")
+        translated = SolidStateDetectors.translate_event_positions(evts, v)
+        @test all(p -> p isa eltype(first(evts.pos)), flatview(translated.pos))
+        @test map(p -> p + v, flatview(evts.pos)) == flatview(translated.pos)
+        translated_static = SolidStateDetectors.translate_event_positions(evts_static, v_static)
+        @test all(p -> p isa eltype(first(evts_static.pos)), flatview(translated_static.pos))
+        @test map(p -> p + v_static, flatview(evts_static.pos)) == flatview(translated_static.pos)
+
+        # inter-compatibility
+        t1 = SolidStateDetectors.translate_event_positions(evts_static, v)
+        @test all(p -> p isa eltype(first(evts_static.pos)), flatview(t1.pos))
+        @test all(isapprox.(flatview(translated_static.pos), flatview(t1.pos)))
+        t2 = SolidStateDetectors.translate_event_positions(evts, v_static)
+        @test all(p -> p isa eltype(first(evts.pos)), flatview(t2.pos))
+        @test all(isapprox.(flatview(translated.pos), flatview(t2.pos)))
+
+        r = RotZ(π)
+        rotated = SolidStateDetectors.rotate_event_positions(evts, r)
+        @test all(p -> p isa eltype(first(evts.pos)), flatview(rotated.pos))
+        @test map(p -> eltype(first(evts.pos))(cartesian_zero + r * (p - cartesian_zero)) , flatview(evts.pos)) == flatview(rotated.pos)
+        rotated_static = SolidStateDetectors.rotate_event_positions(evts_static, r)
+        @test all(p -> p isa eltype(first(evts_static.pos)), flatview(rotated_static.pos))
+        @test map(p -> eltype(first(evts_static.pos))(r * p), flatview(evts_static.pos)) == flatview(rotated_static.pos)
+    end
+
+    # Test IsotopeSource (Cs-137)
+    isource = IsotopeSource(55, 137, 0, 0, CartesianPoint(0.05,0,0.05))
+    iapp = Geant4.G4JLApplication(sim, isource, verbose = false)
+    iapp.sdetectors = app.sdetectors # workaround: copy sdetectors from previous G4JLApplication to avoid undefined reference
+    ievts = run_geant4_simulation(iapp, N)
+
+    @test ievts isa Table
+    @test SolidStateDetectors.is_detector_hits_table(ievts)
+    @test length(ievts) == N
+
+end
+
+@testset "Construct G4JLDetectors from config files" begin
+    for (key, sim_file) in SSD_examples
+        if endswith(sim_file, ".yaml")
+            @testset "Read from SSD config file: $(key)" begin
+                fn = tempname() * ".gdml"
+                @test Geant4.G4JLDetector(sim_file, fn, save_gdml = true, verbose = false) isa Geant4.G4JLDetector
+                @test isfile(fn)
+                @test @test_nowarn Geant4.G4JLDetector(fn) isa Geant4.G4JLDetector
+                rm(fn)
+            end
+        end
+    end
 end

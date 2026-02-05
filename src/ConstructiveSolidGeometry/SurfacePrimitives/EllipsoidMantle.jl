@@ -98,7 +98,7 @@ function normal(em::EllipsoidMantle{T,NTuple{3,T},TP,TT,:outwards}, pt::Cartesia
     # Or wrap this into somehting like `normal(em, pt) = normalize(direction(em, pt))` ?
     p = _transform_into_object_coordinate_system(pt, em)
     obj_normal = CartesianVector{T}(sign(p.x)*(p.x/em.r[1])^2, sign(p.y)*(p.y/em.r[2])^2, sign(p.z)*(p.z/em.r[3])^2) # We might want to store the inv(em.r) in the struct?
-    transform_into_global_coordinate_system(obj_normal, em)
+    _transform_into_global_coordinate_system(obj_normal, em)
 end
 function normal(em::EllipsoidMantle{T,T,TP,TT,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T,TP,TT}
     # not normalized, do we want this?
@@ -233,6 +233,6 @@ function intersection(em::EllipsoidMantle{T,T}, l::Line{T}) where {T}
 end
 
 
-# distance_to_surface(pt::CylindricalPoint{T}, s::SphereMantle{T}) where {T} = abs(hypot(pt.r, pt.z) - s.r)
-
-# distance_to_surface(pt::CartesianPoint{T}, s::SphereMantle{T}) where {T} = abs(norm(pt) - s.r)
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, s::FullSphereMantle{T})::T where {T}
+    abs(norm(_transform_into_object_coordinate_system(CartesianPoint(pt), s) - cartesian_zero) - s.r)
+end

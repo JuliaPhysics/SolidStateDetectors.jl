@@ -190,7 +190,7 @@ end
 
 # Default function to call when parsing not yet implemented
 @inline function parse_geometry(e, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)
-    throw(AssertionError("$(typeof(e).name.name) not implemented yet"))
+    throw(ArgumentError("$(typeof(e).name.name) not implemented yet"))
 end
 
 @inline CSGtoGDML(::CSGUnion) = "union"
@@ -250,7 +250,7 @@ end
 
 @inline parse_φ(::Type{T}, φ::Nothing) where {T} = (T(360), "deg")
 @inline parse_φ(::Type{T}, φ::T) where {T} = (φ, string(SolidStateDetectors.internal_angle_unit))
-@inline parse_φ(::Type, φ) = throw(AssertionError("Cone: the type of φ is unexpected"))
+@inline parse_φ(::Type, φ) = throw(ArgumentError("Cone: the type of φ is unexpected"))
 function parse_geometry(e::Cone{T,<:Any, TR}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T <: SSDFloat, TR <: Union{T, Tuple{T,T}}}
     if has_volume(e, v)
     
@@ -305,7 +305,7 @@ function parse_geometry(e::Ellipsoid{T,<:Any, TR, Nothing, Nothing}, x_solids::X
         r = if TR == T
             e.r
         end
-        isnothing(r) && throw(AssertionError("Ellipsoid: the type of r is unexpected"))
+        isnothing(r) && throw(ArgumentError("Ellipsoid: the type of r is unexpected"))
         
         # if typeof(e.φ) == Nothing
         # end
@@ -399,7 +399,7 @@ function parse_geometry(e::Torus{T,<:Any,<:Any,Nothing,Tuple{T,T}}, x_solids::XM
 end
 
 
-function parse_geometry(e::RegularPrism{T, <:Any, N}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, N}
+function parse_geometry(e::RegularPrism{N,T,<:Any}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, N}
     if has_volume(e, v)
         y = new_child(x_solids, "polyhedra")
         
@@ -456,7 +456,7 @@ function parse_geometry(e::World{T, 3, Cylindrical}, x_solids::XMLElement, x_def
     rmin, rmax = endpoints(e.intervals[1])
     z = endpoints(e.intervals[3])
     
-    !iszero(rmin) && throw(AssertionError("The r-interval of the world must start at 0."))
+    !iszero(rmin) && throw(ArgumentError("The r-interval of the world must start at 0."))
     
     name = pf * string(id)
     set_attributes(w, OrderedDict(
@@ -543,5 +543,5 @@ end
     elseif material == "CsPbBr3" return "G4_CsPbBr3"
     elseif material == "Lead" return "G4_Pb"
     end
-    throw("Material characteristics for \"$(material)\" not defined yet")
+    throw(ArgumentError("Material characteristics for \"$(material)\" not defined yet"))
 end

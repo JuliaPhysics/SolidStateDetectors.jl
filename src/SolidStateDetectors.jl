@@ -69,7 +69,7 @@ export SSD_examples
 
 export Grid
 
-export ElectricPotential, PointTypes, EffectiveChargeDensity, DielectricDistribution, WeightingPotential, ElectricField
+export ElectricPotential, PointTypes, EffectiveChargeDensity, ImpurityScale, DielectricDistribution, WeightingPotential, ElectricField
 export apply_initial_state!
 export calculate_electric_potential!, calculate_weighting_potential!, calculate_electric_field!
 export ElectricFieldChargeDriftModel, ADLChargeDriftModel, ADL2016ChargeDriftModel, IsotropicChargeDriftModel, InactiveLayerChargeDriftModel, PowerLawTemperatureModel

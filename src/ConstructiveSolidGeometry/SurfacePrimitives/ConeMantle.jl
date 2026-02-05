@@ -91,16 +91,17 @@ get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
 function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
-    x, y, _ = p_local
-    normal_local = normalize(CartesianVector(x, y, 0))
-    #FELIX z component ?
+    x = p_local.x
+    y = p_local.y
+    normal_local = normalize(CartesianVector(x, y, zero(T)))
     return _transform_into_global_coordinate_system(normal_local, cm)
 end
 
 function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
-    x, y, _ = p_local
-    normal_local = -normalize(CartesianVector(x, y, 0))
+    x = p_local.x
+    y = p_local.y
+    normal_local = -normalize(CartesianVector(x, y, zero(T)))
     return _transform_into_global_coordinate_system(normal_local, cm)
 end
 
@@ -277,46 +278,6 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
            _transform_into_global_coordinate_system(ints2, cm)
 end
 
-# """
-#     intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
-
-# The function will always return 2 CartesianPoint's.
-# If the line just touches the mantle, the two points will be the same. 
-# If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
-# """
-# function intersection(cm::ConeMantle{T,T}, l::Line{T}) where {T}
-#     obj_l = _transform_into_object_coordinate_system(l, cm) # direction is not normalized
-    
-#     L1 = obj_l.origin.x
-#     L2 = obj_l.origin.y
-#     L3 = obj_l.origin.z
-#     D1 = obj_l.direction.x
-#     D2 = obj_l.direction.y
-#     D3 = obj_l.direction.z
-
-#     f1 = D1^2 + D2^2 
-#     λ = inv(f1) # f1 is only 0 if obj_l is parallel to the axis of the cone 
-#                 # (here eZ -> D1 = D2 = 0)
-#                 # We assume here that this is not the case -> 
-#                 # We check this in choosing the sample / evaluating dimensions in `paint!` 
-#     hZ = cm.hZ
-#     R0 = cm.r
-
-#     term1 = (2D1*L1 + 2D2*L2)^2
-#     term2 = L1^2 + L2^2 - R0^2
-#     term3 = -D1*L1 - D2*L2 
-#     term4 = term1 - 4*f1*term2
-#     sq::T = term4 < 0 ? T(NaN) : sqrt(term1 - 4*f1*term2) # if this 
-    
-#     λ1 = λ * (-sq/2 + term3) 
-#     λ2 = λ * (+sq/2 + term3)
-    
-#     ints1 = obj_l.origin + λ1 * obj_l.direction 
-#     ints2 = obj_l.origin + λ2 * obj_l.direction 
-#     return _transform_into_global_coordinate_system(ints1, cm), 
-#            _transform_into_global_coordinate_system(ints2, cm)
-# end
-
 
 # function get_2d_grid_ticks_and_proj(cm::ConeMantle{T}, t) where {T}
 #     pts = extreme_points(cm)
@@ -347,58 +308,27 @@ end
 #     return t1, t2, proj
 # end
 
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
-# end
 
-# function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
-#     pcy = CylindricalPoint(pt)
-#     φMin::T, φMax::T, _ = get_φ_limits(c)
-#     if _in_φ(pcy, c.φ)
-#         return distance_to_line(PlanarPoint{T}(pcy.r,pcy.z), LineSegment(c))
-#     else
-#         return distance_to_line(CartesianPoint(pt), LineSegment(c, _φNear(pcy.φ, φMin, φMax)))
-#     end
-# end
+function distance_to_surface(pt::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, TP, <:Any})::T where {T, TP<:Union{Nothing,T}}
 
+    pt_cart = _transform_into_object_coordinate_system(CartesianPoint(pt), c)
+    pt_cyl  = CylindricalPoint(pt_cart)
 
-function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T where {T}
-    point = CartesianPoint(point)
-    v12 = normalize(CartesianVector{T}(edge.b - edge.a))
-    v_point_1 = CartesianVector{T}(point - edge.a)
-    proj_on_v12 = dot(v12,v_point_1)
-    if geom_round(proj_on_v12) ≤ T(0)
-        return norm(edge.a - point)
+    rbot::T, rtop::T = c.r isa Tuple ? c.r : (c.r, c.r)
+    zMin::T, zMax::T = _linear_endpoints(c.hZ)
+
+    # Generator in the meridional (r–z) plane
+    edge_rz = Edge{T}(CartesianPoint{T}(rbot, zero(T), zMin), CartesianPoint{T}(rtop, zero(T), zMax))
+    
+    # Full cone: rotational symmetry
+    return if isnothing(c.φ) || _in_φ(pt_cyl, c.φ)
+        distance_to_line(CartesianPoint{T}(pt_cyl.r, zero(T), pt_cyl.z), edge_rz)
     else
-        v_point_2 = CartesianVector{T}(point - edge.b)
-        if geom_round(dot(v12,v_point_2)) ≥ T(0)
-            return norm(edge.b - point)
-        else
-            return sqrt(abs(dot(v_point_1,v_point_1) - proj_on_v12^2))
-        end
-    end
-end
-
-get_r_limits(c::ConeMantle) = _radial_endpoints(c.r)
-get_z_limits(c::ConeMantle) = (c.origin[3]-c.hZ, c.origin[3]+c.hZ)
-
-function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, Nothing, <:Any})::T where {T}
-    pcy = CylindricalPoint(point)
-    rbot::T, rtop::T = get_r_limits(c)
-    zMin::T, zMax::T = get_z_limits(c)
-    distance_to_line(CartesianPoint{T}(pcy.r,0,pcy.z), Edge{T}(CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
-end
-
-function distance_to_surface(point::AbstractCoordinatePoint{T}, c::ConeMantle{T, <:Any, <:AbstractInterval, <:Any})::T where {T}
-    pcy = CylindricalPoint(point)
-    φMin::T, φMax::T = get_φ_limits(c)
-    rbot::T, rtop::T = get_r_limits(c)
-    zMin::T, zMax::T = get_z_limits(c)
-    if _in_φ(pcy, c.φ)
-        return distance_to_line(CartesianPoint{T}(pcy.r,0,pcy.z), Edge{T}(CartesianPoint{T}(rbot,0,zMin),CartesianPoint{T}(rtop,0,zMax)))
-    else
-        φNear = Δ_φ(T(pcy.φ),φMin) ≤ Δ_φ(T(pcy.φ),φMax) ? φMin : φMax
-        return distance_to_line(point, Edge{T}(CylindricalPoint{T}(rbot,φNear,zMin), CylindricalPoint{T}(rtop,φNear,zMax)))
+        # Nearest boundary: either 0 or c.φ
+        φNear = _φNear(pt_cyl.φ, c.φ)
+        sinφ, cosφ = sincos(φNear)
+        p1 = CartesianPoint{T}(rbot*cosφ, rbot*sinφ, zMin)
+        p2 = CartesianPoint{T}(rtop*cosφ, rtop*sinφ, zMax)
+        distance_to_line(pt_cart, Edge(p1, p2))
     end
 end

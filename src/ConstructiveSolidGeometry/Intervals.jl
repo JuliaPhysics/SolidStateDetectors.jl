@@ -25,6 +25,24 @@ end
 # @inline _in_angular_interval_open(α::Real, α_int::AbstractInterval{T}) where {T} = 0 < mod(α - α_int.left, T(2π)) < width(α_int)
 
 @inline _in_φ(p::CylindricalPoint, φ::Nothing) = true
-@inline _in_φ(p::CylindricalPoint, φ::Real) = p.φ <= φ
-@inline _in_φ(p::CylindricalPoint, φ::Tuple{T,T}) where {T} =  r[1]<=p.φ<=φ[2]
-@inline _in_φ(p::CartesianPoint, φ::Union{Nothing, Real, Tuple{T,T}}) where {T} =  _in_φ(CylindricalPoint(p), φ)
+@inline function _in_φ(p::CylindricalPoint, φ::Real)
+    φp = mod(float(p.φ), 2π)
+    φmax = mod(float(φ), 2π)
+    return φp <= φmax
+end
+@inline _in_φ(p::CartesianPoint, φ::Union{Nothing, Real}) =  _in_φ(CylindricalPoint(p), φ)
+
+"""
+    _φNear(φ, φMax)
+Return the nearest azimuthal boundary (0 or φMax) for segmented surfaces with φ ∈ [0, φMax].
+"""
+@inline function _φNear(φ::T, φMax::T) where T
+    φ = mod(φ, 2π)
+    φMax = mod(φMax, 2π)
+    # distance to lower boundary (0)
+    d0 = min(φ, 2π - φ)
+    # distance to upper boundary (φMax)
+    dMax = min(abs(φ - φMax), 2π - abs(φ - φMax))
+    
+    return d0 <= dMax ? zero(T) : φMax
+end

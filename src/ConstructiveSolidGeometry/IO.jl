@@ -143,20 +143,24 @@ function parse_r_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units
     end
     # Not all cases implemented yet 
     r_bot_in, r_bot_out, r_top_in, r_top_out = r[1][1], r[1][2], r[2][1], r[2][2]
-    if r_bot_in == r_top_in == zero(T) 
+    if iszero(r_bot_in) && iszero(r_top_in)
         if r_bot_out == r_top_out
             return r_bot_out # Cylinder
+        elseif iszero(r_bot_out)
+            return (nothing, (nothing, r_top_out)) # DownwardCone
+        elseif iszero(r_top_out)
+            return ((nothing, r_bot_out), nothing) # UpwardCone
         else
             return ((r_bot_out,), (r_top_out,)) # VaryingCylinder
         end
     elseif r_top_in == r_top_out && r_bot_in != r_bot_out
-        if r_top_in == 0
+        if iszero(r_top_in)
             return ((r_bot_in, r_bot_out), nothing)
         else
             return r # return ((r_bot_in, r_bot_out), r_top_in)
         end
     elseif r_top_in != r_top_out && r_bot_in == r_bot_out
-        if r_bot_in == 0
+        if iszero(r_bot_in)
             return (nothing, (r_top_in, r_top_out))
         else
             return r # return (r_bot_in, (r_top_in, r_top_out))
@@ -293,7 +297,7 @@ end
 function Geometry(::Type{T}, ::Type{Rotations.Rotation}, dict::AbstractDict, input_units::NamedTuple, outer_transformations::Transformations{T}) where {T}
     rotation_matrix = SMatrix{3, 3, T, 9}(parse_rotation_matrix(T, dict, input_units.angle))
     key = get_geometry_key(T, dict, input_units)
-    inner_transformations = (rotation = rotation_matrix, translation = CartesianVector{T}(0,0,0))
+    inner_transformations = (rotation = rotation_matrix, translation = zero(CartesianVector{T}))
     transformations = combine_transformations(inner_transformations, outer_transformations)
     Geometry(T, CSG_dict[key], dict[key], input_units, transformations)
 end

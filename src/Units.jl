@@ -17,6 +17,7 @@ const internal_diffusion_unit = internal_length_unit ^ 2 / internal_time_unit
 const internal_charge_density_unit = internal_charge_unit / internal_length_unit ^ 3
 const internal_charge_density_gradient_unit = internal_charge_unit / internal_length_unit ^ 4
 const internal_temperature_unit = u"K"
+const internal_activation_energy_unit = u"cal/mol"
 
 const external_charge_unit  = u"e_au" # elementary charge - from UnitfulAtomic.jl
 
@@ -31,6 +32,7 @@ to_internal_units(x::Quantity{<:Real, dimension(internal_diffusion_unit)})  = us
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_unit)})  = ustrip(internal_charge_density_unit,  x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_charge_density_gradient_unit)}) = ustrip(internal_charge_density_gradient_unit, x)
 to_internal_units(x::Quantity{<:Real, dimension(internal_temperature_unit)})     = ustrip(internal_temperature_unit,  x)
+to_internal_units(x::Quantity{<:Real, dimension(internal_activation_energy_unit)}) = ustrip(internal_activation_energy_unit,  x)
 
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_time_unit)})    = uconvert(unit, x * internal_time_unit)
 from_internal_units(x::Real, unit::Unitful.Units{<:Any, dimension(internal_voltage_unit)}) = uconvert(unit, x * internal_voltage_unit)
@@ -120,5 +122,5 @@ DetectorHitEvents = TypedTables.Table{<:NamedTuple{DHE_column_names, <:Tuple{DHE
         hasproperty(t, name) || throw(ArgumentError("Expected detector hit events table to have column named `$(name)`"))
         eltype(getproperty(t, name)) <: type || throw(ArgumentError("Expected detector hit events table column `$(name)` entries to be of type `$(type)`"))
     end
-    true
+    return true
 end

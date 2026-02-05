@@ -87,7 +87,7 @@ function mark_bulk_bits!(point_types::Array{PointType, 3})
             in_bulk
         end
     end
-    point_types
+    return point_types
 end
 
 

@@ -49,8 +49,8 @@ Base.convert(T::Type{ElectricField}, x::NamedTuple) = T(x)
 
 
 
-function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.nthreads()) where {T, S}
-    return ElectricField{T, 3, S, typeof(grid.axes)}(get_electric_field_from_potential( epot, point_types; use_nthreads ), epot.grid)
+function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.nthreads())::ElectricField{T, 3, S, typeof(epot.grid.axes)} where {T, S}
+    return get_electric_field_from_potential( epot, point_types; use_nthreads )
 end
 
 

@@ -5,7 +5,7 @@ const elementary_charge = Float64(ustrip(u"C", Unitful.q))
 const ϵ0 = Float64(ustrip(u"F/m", Unitful.ϵ0))
 const kB = Float64(ustrip(u"J/K", Unitful.k))
 const me = Float64(ustrip(u"kg", Unitful.me))
-const R_gas = Float64(ustrip(u"cal/K/mol", Unitful.R))
+const R_gas = Float64(ustrip(internal_activation_energy_unit / internal_temperature_unit, Unitful.R))
 
 const material_properties = Dict{Symbol, NamedTuple}()
 

@@ -24,14 +24,12 @@ In this matter the detector impurities are automatically determined from those o
 abstract type AbstractImpurityDensity{T <: SSDFloat} end
 
 @inline function ImpurityDensity(T::DataType, dict::AbstractDict, input_units::NamedTuple)
+    update_impurity_density_config!(dict, input_units)
     imp = ImpurityDensity(T, Val{Symbol(dict["name"])}(), dict, input_units)
-    if !haskey(dict, "corrections")
-        imp
-    else
-        scale = _parse_value(T, get(dict["corrections"], "scale", 1), NoUnits)
-        offset =  _parse_value(T, get(dict["corrections"], "offset", 0), input_units.length^(-3))
-        (scale * imp) + offset
-    end
+    if !haskey(dict, "corrections") return imp; end
+    scale = _parse_value(T, get(dict["corrections"], "scale", 1), NoUnits)
+    offset =  _parse_value(T, get(dict["corrections"], "offset", 0), input_units.length^(-3))
+    (scale * imp) + offset
 end
 
 (*)(idm::AbstractImpurityDensity, scale::Real) = (*)(scale, idm)

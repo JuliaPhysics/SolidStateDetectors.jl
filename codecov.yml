@@ -4,15 +4,17 @@ comment: false # do not comment PR with the result
 ignore:
   - src/PlotRecipes
   - src/ConstructiveSolidGeometry/plotting
+  - src/ka_compat.jl
 
 coverage:
-  range: 30..80 # coverage lower than 50 is red, higher than 90 green, between color code
+  range: 50..90 # coverage lower than 50 is red, higher than 90 green, between color code
 
   status:
     project: # settings affecting project coverage
       default:
         target: auto # auto % coverage target
-        threshold: 10%  # allow for 5% reduction of coverage without failing
+        threshold: 5%  # allow for 5% reduction of coverage without failing
 
     # do not run coverage on patch nor changes
+
     patch: false

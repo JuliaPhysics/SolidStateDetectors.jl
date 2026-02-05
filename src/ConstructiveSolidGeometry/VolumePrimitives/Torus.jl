@@ -265,17 +265,17 @@ function surfaces(t::HollowPhiTorus{T,OpenPrimitive,TT1,TT2}) where {T,TT1,TT2}
     (tm_in, tm_out, cm1, cm2)
 end
 function surfaces(t::HollowThetaTorus{T,ClosedPrimitive}) where {T}
-    tm_in = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
+    tm_in  = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
     tm_out = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
-    es1 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(-π/2)  * RotZ{T}(t.θ[1]))
-    es2 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(π/2)  * RotZ{T}(t.θ[1]))
+    es1 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation)
+    es2 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation)
     (tm_in, tm_out, es1, es2)
 end
 function surfaces(t::HollowThetaTorus{T,OpenPrimitive}) where {T}
-    tm_in = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
+    tm_in  = FullThetaTorusMantle{T,:inwards}(t.r_torus, t.r_tube[1], t.φ, t.θ, t.origin, t.rotation)
     tm_out = FullThetaTorusMantle{T,:outwards}(t.r_torus, t.r_tube[2], t.φ, t.θ, t.origin, t.rotation)
-    es1 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation * RotX(π/2)  * RotZ{T}(t.θ[1]))
-    es2 = Annulus{T}(t.r_tube, abs(-(t.θ...)), t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation * RotZ(t.φ) * RotX(-π/2)  * RotZ{T}(t.θ[1]))
+    es1 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus, 0, 0), t.rotation)
+    es2 = Annulus{T}(t.r_tube, nothing, t.origin + t.rotation * CartesianVector{T}(t.r_torus * cos(t.φ), t.r_torus * sin(t.φ), 0), t.rotation)
     (tm_in, tm_out, es1, es2)
 end
 function surfaces(t::Torus{T,ClosedPrimitive,Tuple{T,T},T,Tuple{T,T},TT1,TT2}) where {T,TT1,TT2}
@@ -299,59 +299,88 @@ function surfaces(t::Torus{T,OpenPrimitive,Tuple{T,T},T,Tuple{T,T},TT1,TT2}) whe
     (tm_in, tm_out, cm1, cm2, es1, es2)
 end
 
-# HollowTorus
-function _in(pt::CartesianPoint{T}, t::Torus{T,ClosedPrimitive,Tuple{T,T}}; csgtol::T = csg_default_tol(T)) where {T}
-    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    rmin::T, rmax::T = _radial_endpoints(t.r_tube)
-    return rmin - csgtol <= _r <= rmax + csgtol &&
-        (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
-        (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
-end
-function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive,Tuple{T,T}}; csgtol::T = csg_default_tol(T)) where {T}
-    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    rmin::T, rmax::T = _radial_endpoints(t.r_tube)
-    return rmin + csgtol < _r < rmax - csgtol &&
-        (isnothing(t.φ) || _in_angular_interval_open(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
-        (isnothing(t.θ) || _in_angular_interval_open(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
-end
-
 # FullTorus
-function _in(pt::CartesianPoint{T}, t::Torus{T,ClosedPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T}
-    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    rmax::T = t.r_tube
-    return _r <= rmax + csgtol &&
-        (isnothing(t.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
-        (isnothing(t.θ) || _in_angular_interval_closed(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
-end
-function _in(pt::CartesianPoint{T}, t::Torus{T,OpenPrimitive,T}; csgtol::T = csg_default_tol(T)) where {T}
-    _r = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
-    rmax::T = t.r_tube
-    return _r < rmax - csgtol &&
-        (isnothing(t.φ) || _in_angular_interval_open(atan(pt.y, pt.x), t.φ, csgtol = csgtol)) &&
-        (isnothing(t.θ) || _in_angular_interval_open(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus), t.θ, csgtol = csgtol))
+function _in(pt::CartesianPoint{T}, t::FullTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z) <= t.r_tube + csgtol
 end
 
-# #Constructors
-# function Torus(;r_torus = 1, r_tubeMin = 0, r_tubeMax = 1, φMin = 0, φMax = 2π, θMin = 0, θMax = 2π, z = 0)
-#     T = float(promote_type(typeof.((r_torus, r_tubeMin, r_tubeMax, φMin, φMax, θMin, θMax, z))...))
-#     r_tube = r_tubeMin == 0 ? T(r_tubeMax) : T(r_tubeMin)..T(r_tubeMax)
-#     φ = mod(T(φMax) - T(φMin), T(2π)) == 0 ? nothing : T(φMin)..T(φMax)
-#     θ = mod(T(θMax) - T(θMin), T(2π)) == 0 ? nothing : T(θMin)..T(θMax)
-#     Torus( T, T(r_torus), r_tube, φ, θ, T(z))
-# end
+function _in(pt::CartesianPoint{T}, t::FullTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z) < t.r_tube - csgtol
+end
 
-# Torus(r_torus, r_tubeMin, r_tubeMax, φMin, φMax, θMin, θMax, z) = Torus(;r_torus = r_torus, r_tubeMin = r_tubeMin, r_tubeMax = r_tubeMax, φMin = φMin, φMax = φMax, θMin = θMin, θMax = θMax, z = z)
+# FullThetaTorus
+function _in(pt::CartesianPoint{T}, t::FullThetaTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    φ::T = mod(atan(pt.y, pt.x), T(2π))
+    Δφ::T = max(min(T(2π)-φ, φ-t.φ), zero(T))
+    _y::T, _x::T = hypot(pt.x, pt.y) .* sincos(Δφ)
+    _r::T = hypot(_x - t.r_torus, pt.z)
+    hypot(max(_r - t.r_tube, zero(T)), _y) <= csgtol
+end
 
-# function Torus(r_torus::R1, r_tube::R2, z::TZ) where {R1<:Real, R2<:Real, TZ<:Real}
-#     T = float(promote_type(R1, R2, TZ))
-#     Torus( T, T(r_torus), T(r_tube), nothing, nothing, T(z))
-# end
+function _in(pt::CartesianPoint{T}, t::FullThetaTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    r::T = hypot(pt.x, pt.y)
+    φ::T = mod(atan(pt.y, pt.x), T(2π))
+    hypot(r - t.r_torus, pt.z) < t.r_tube - csgtol && 
+        _in_angular_interval_closed(φ, t.φ, csgtol = zero(T)) && 
+        r * sin(min(φ, t.φ - φ, T(π/2))) > csgtol
+end
 
-# function RoundChamfer(r_torus::R1, r_tube::R2, z::TZ) where {R1<:Real, R2<:Real, TZ<:Real}
-#     T = float(promote_type(R1, R2, TZ))
-#     Torus( T, T(r_torus), T(r_tube), nothing, T(0)..T(π/2), T(z))
-# end
+# FullPhiTorus
+function _in(pt::CartesianPoint{T}, t::FullPhiTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    _r::T = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    θ::T = mod(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus) - t.θ[1], T(2π))
+    Δθ::T = max(min(T(2π) - θ, θ - t.θ[2] + t.θ[1]), zero(T))
+    Δθ <= atan(csgtol, t.r_tube) ? 
+        csgtol^2 - t.r_tube^2 * sin(Δθ)^2 >= 0 && _r <= t.r_tube * cos(Δθ) + sqrt(csgtol^2 - t.r_tube^2 * sin(Δθ)^2) : 
+        _r <= csgtol / sin(min(Δθ, T(π/2)))
+end
 
+function _in(pt::CartesianPoint{T}, t::FullPhiTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    _r::T = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    θ::T = mod(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus) - t.θ[1], T(2π))
+    Δθ::T = max(min(T(2π) - θ, θ - t.θ[2] + t.θ[1]), zero(T))
+    _r < t.r_tube - csgtol && _in_angular_interval_closed(θ, t.θ[2] - t.θ[1], csgtol = zero(T)) && _r * sin(min(θ, t.θ[2] - t.θ[1] - θ, T(π/2))) > csgtol
+end
+
+# HollowTorus
+function _in(pt::CartesianPoint{T}, t::HollowTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    t.r_tube[1] - csgtol <= hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z) <= t.r_tube[2] + csgtol
+end
+
+function _in(pt::CartesianPoint{T}, t::HollowTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    t.r_tube[1] + csgtol < hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z) < t.r_tube[2] - csgtol
+end
+
+# HollowPhiTorus
+function _in(pt::CartesianPoint{T}, t::HollowPhiTorus{T,ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    _r::T = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    θ::T = mod(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus) - t.θ[1], T(2π))
+    Δθ::T = max(min(T(2π) - θ, θ - t.θ[2] + t.θ[1]), zero(T))
+    return csgtol^2 - t.r_tube[1]^2 * sin(Δθ)^2 >=0 && 
+        _r >= t.r_tube[1] * cos(Δθ) - sqrt(csgtol^2 - t.r_tube[1]^2 * sin(Δθ)^2) && 
+        if Δθ <= atan(csgtol, t.r_tube[2])
+            csgtol^2 - t.r_tube[2]^2 * sin(Δθ)^2 >= 0 && 
+            _r <= t.r_tube[2] * cos(Δθ) + sqrt(csgtol^2 - t.r_tube[2]^2 * sin(Δθ)^2) 
+        else
+            _r <= max(csgtol / sin(min(Δθ, T(π/2))), t.r_tube[1] * cos(Δθ) + sqrt(csgtol^2 - t.r_tube[1]^2 * sin(Δθ)^2))
+        end 
+end
+
+function _in(pt::CartesianPoint{T}, t::HollowPhiTorus{T,OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
+    _r::T = hypot(hypot(pt.x, pt.y) - t.r_torus, pt.z)
+    θ::T = mod(atan(pt.z, hypot(pt.x, pt.y) - t.r_torus) - t.θ[1], T(2π))
+    Δθ::T = max(min(T(2π) - θ, θ - t.θ[2] + t.θ[1]), zero(T))
+    return t.r_tube[1] + csgtol < _r < t.r_tube[2] - csgtol && 
+        _in_angular_interval_closed(θ, t.θ[2] - t.θ[1], csgtol = zero(T)) && 
+        _r * sin(min(θ, t.θ[2] - t.θ[1] - θ, T(π/2))) > csgtol
+end
+
+# Generic Torus (combination of HollowPhiTorus and FullThetaTorus)
+function _in(pt::CartesianPoint{T}, t::Torus{T,CO}; csgtol::T = csg_default_tol(T)) where {T,CO}
+    rmax::T = _radial_endpoints(t.r_tube)[2]
+    _in(pt, Torus{T,CO}(t.r_torus, t.r_tube, nothing, t.θ, t.origin, t.rotation); csgtol) && 
+    (isnothing(t.φ) || _in(pt, Torus{T,CO}(t.r_torus, rmax, t.φ, nothing, t.origin, t.rotation); csgtol))
+end
 
 extremum(t::Torus{T}) where {T} = t.r_torus + max(t.r_tube...)
 

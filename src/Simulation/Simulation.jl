@@ -252,7 +252,7 @@ function Grid(sim::Simulation{T, Cylindrical};
         (T[], T[], T[])
     end
 
-    world_r_mid = (world.intervals[1].right + world.intervals[1].left)/2
+    world_r_mid = mean(world.intervals[1])
     if for_weighting_potential && world_Δφ > 0
         world_φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(0, 2π)
         world_Δφ = width(world_φ_int)
@@ -812,6 +812,56 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
     nothing
 end
 
+"""
+    compute_min_tick_distance(grid)
+
+Compute the minimum grid spacing (tick distance) for a grid.
+Tick distances are computed as a small fraction of the physical axis lengths and then clamped to a safe numerical range.
+
+# Arguments
+- `grid` : A simulation grid (`CylindricalGrid` or `CartesianGrid3D`).
+
+# Returns
+A tuple of minimum tick distances in internal units, matching the grid type:
+- Cylindrical: `(Δr, Δφ, Δz)`
+- Cartesian: `(Δx, Δy, Δz)`
+"""
+function compute_min_tick_distance(grid::CylindricalGrid{T}) where {T}
+    min_tick = T(1e-12)
+    max_tick = T(1e-5)
+    fraction = T(1e-3)
+
+    r_axis, phi_axis, z_axis = grid.axes
+
+    r_len = width(r_axis.interval)
+    z_len = width(z_axis.interval)
+    
+    safe_r_mid = max(abs(mean(r_axis.interval)), T(1e-30))
+
+    Δr::T = clamp(r_len * fraction, min_tick, max_tick)
+    Δφ::T = clamp(Δr / safe_r_mid, min_tick, max_tick)
+    Δz::T = clamp(z_len * fraction, min_tick, max_tick)
+
+    return (Δr, Δφ, Δz)
+end
+
+function compute_min_tick_distance(grid::CartesianGrid3D{T}) where {T}
+    min_tick = T(1e-12)
+    max_tick = T(1e-5)
+    fraction = T(1e-3)
+
+    x_axis, y_axis, z_axis = grid.axes
+
+    x_len = width(x_axis.interval)
+    y_len = width(y_axis.interval)
+    z_len = width(z_axis.interval)
+
+    Δx::T = clamp(x_len * fraction, min_tick, max_tick)
+    Δy::T = clamp(y_len * fraction, min_tick, max_tick)
+    Δz::T = clamp(z_len * fraction, min_tick, max_tick)
+
+    return (Δx, Δy, Δz)
+end
 
 function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll, contact_id::Union{Missing, Int} = missing;
         convergence_limit::Real = 1e-7,
@@ -849,34 +899,25 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         else
             sor_consts = T.(sor_consts)
         end
-        new_min_tick_distance::NTuple{3, T} = if CS == Cylindrical
-            if !ismissing(min_tick_distance)
-                if min_tick_distance isa LengthQuantity
-                    world_r_mid = (sim.world.intervals[1].right + sim.world.intervals[1].left)/2
-                    min_distance_z = min_distance_r = T(to_internal_units(min_tick_distance))
-                    min_distance_r, min_distance_z / world_r_mid, min_distance_z
-                else 
-                    T(to_internal_units(min_tick_distance[1])),
-                    T(to_internal_units(min_tick_distance[2])),
-                    T(to_internal_units(min_tick_distance[3]))
-                end 
-            else
-                (T(1e-5), T(1e-5) / (0.25 * grid.axes[1][end]), T(1e-5)) 
-            end
-        else
-            if !ismissing(min_tick_distance)
-                if min_tick_distance isa LengthQuantity
-                    min_distance = T(to_internal_units(min_tick_distance))
-                    min_distance, min_distance, min_distance
+      
+        new_min_tick_distance::NTuple{3,T} = begin
+            if ismissing(min_tick_distance)
+                compute_min_tick_distance(grid)
+            elseif min_tick_distance isa LengthQuantity
+                min_distance = T(to_internal_units(min_tick_distance)) 
+                if CS == Cylindrical
+                    world_r_mid = mean(sim.world.intervals[1])
+                    min_distance, min_distance / world_r_mid, min_distance 
                 else
-                    T(to_internal_units(min_tick_distance[1])),
-                    T(to_internal_units(min_tick_distance[2])),
-                    T(to_internal_units(min_tick_distance[3]))
+                    min_distance, min_distance, min_distance
                 end
             else
-                (T(1e-5), T(1e-5), T(1e-5))
+                T(to_internal_units(min_tick_distance[1])),
+                T(to_internal_units(min_tick_distance[2])),
+                T(to_internal_units(min_tick_distance[3]))
             end
         end
+        
         refine = !ismissing(refinement_limits)
         if !(refinement_limits isa Vector) refinement_limits = [refinement_limits] end
         n_refinement_steps = length(refinement_limits)
@@ -1174,7 +1215,7 @@ Calculates the [`ElectricField`](@ref) from the [`ElectricPotential`](@ref) stor
 function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union{Missing, Int} = missing, use_nthreads::Int = Base.Threads.nthreads())::Nothing where {T <: SSDFloat, CS}
     @assert !ismissing(sim.electric_potential) "Electric potential has not been calculated yet. Please run `calculate_electric_potential!(sim)` first."
     periodicity::T = width(sim.world.intervals[2])
-    e_pot, point_types = if CS == Cylindrical && periodicity == T(0) # 2D, only one point in φ
+    epot, point_types = if CS == Cylindrical && periodicity == T(0) # 2D, only one point in φ
         if ismissing(n_points_in_φ)
             @info "\tIn electric field calculation: Keyword `n_points_in_φ` not set.\n\t\tDefault is `n_points_in_φ = 36`. 2D field will be extended to 36 points in φ."
             n_points_in_φ = 36
@@ -1184,8 +1225,8 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
                 n_points_in_φ = 36
             end
         end
-        get_2π_potential(sim.electric_potential, n_points_in_φ = n_points_in_φ),
-        get_2π_potential(sim.point_types,  n_points_in_φ = n_points_in_φ)
+        get_2π_potential(sim.electric_potential; n_points_in_φ),
+        get_2π_potential(sim.point_types; n_points_in_φ)
     elseif CS == Cylindrical
         get_2π_potential(sim.electric_potential),
         get_2π_potential(sim.point_types)
@@ -1193,7 +1234,7 @@ function calculate_electric_field!(sim::Simulation{T, CS}; n_points_in_φ::Union
         sim.electric_potential,
         sim.point_types
     end
-    sim.electric_field = get_electric_field_from_potential(e_pot, point_types; use_nthreads)
+    sim.electric_field = ElectricField(epot, point_types; use_nthreads)
     nothing
 end
 

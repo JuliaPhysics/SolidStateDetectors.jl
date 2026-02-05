@@ -37,7 +37,7 @@ sim = Simulation(SSD_examples[:InvertedCoax])
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 
-    timed_calculate_electric_field!(sim)
+    @test_logs (:info,) timed_calculate_electric_field!(sim, n_points_in_φ = 15)
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
 
@@ -48,14 +48,35 @@ sim = Simulation(SSD_examples[:InvertedCoax])
     for i in findall(ismissing.(sim.weighting_potentials)) timed_calculate_weighting_potential!(sim, i, verbose = false) end
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
+
+    for (Potential, spot) in (
+            (ElectricPotential, sim.electric_potential), 
+            (ElectricField, sim.electric_field), 
+            (ImpurityScale, sim.imp_scale), 
+            (PointTypes, sim.point_types), 
+            (EffectiveChargeDensity, sim.q_eff_imp), 
+            (EffectiveChargeDensity, sim.q_eff_fix), 
+            (WeightingPotential, sim.weighting_potentials[1]), 
+            (DielectricDistribution, sim.ϵ_r)
+        )
+
+        @test length(spot) isa Integer
+        @test spot[1] isa eltype(spot.data)
+        @test spot[:z] isa SolidStateDetectors.DiscreteAxis
+        # test the implementation of Base.convert
+        spot_nt::NamedTuple = spot
+        spot2::Potential = spot_nt
+        @test spot2 == spot
+    end
 end
 
 @testset "Test LegendHDF5IO" begin
-    @test_nowarn ssd_write("legendhdf5io_test.lh5", sim)
-    @test isfile("legendhdf5io_test.lh5")
-    @test_logs (:warn, "Destination `legendhdf5io_test.lh5` already exists. Overwriting...") ssd_write("legendhdf5io_test.lh5", sim)
-    @test sim == ssd_read("legendhdf5io_test.lh5", Simulation)
-    rm("legendhdf5io_test.lh5")
+    fn = tempname() * ".lh5"
+    @test_nowarn ssd_write(fn, sim)
+    @test isfile(fn)
+    @test_logs (:warn, "Destination `$(fn)` already exists. Overwriting...") ssd_write(fn, sim)
+    @test sim == ssd_read(fn, Simulation)
+    rm(fn)
 end
 
 @timed_testset "Table Simulation" begin 

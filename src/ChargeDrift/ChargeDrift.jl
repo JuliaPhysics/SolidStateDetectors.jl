@@ -90,7 +90,7 @@ end
 
 function _set_to_zero_vector!(v::Vector{CartesianVector{T}})::Nothing where {T <: SSDFloat}
     for n in eachindex(v)
-        v[n] = CartesianVector{T}(0,0,0)
+        v[n] = zero(CartesianVector{T})
     end
     nothing
 end
@@ -345,10 +345,10 @@ function get_crossing_pos(  det::SolidStateDetector{T}, point_types::PointTypes{
                             max_n_iter::Int = 500)::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} where {T <: SSDFloat, S}
     
     # check if the points are already in contacts                    
-    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, CartesianVector{T}(0,0,0)) end  
+    if pt_in in det.contacts return (pt_in, CD_ELECTRODE, zero(CartesianVector{T})) end  
     
     direction::CartesianVector{T} = normalize(pt_out - pt_in)
-    crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, CartesianVector{T}(0,0,0)) # need undef version for this
+    crossing_pos::Tuple{CartesianPoint{T}, UInt8, CartesianVector{T}} = (pt_out, CD_OUTSIDE, zero(CartesianVector{T})) # need undef version for this
     
     # define a Line between pt_in and pt_out
     line::ConstructiveSolidGeometry.Line{T} = ConstructiveSolidGeometry.Line{T}(pt_in, direction)

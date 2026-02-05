@@ -58,7 +58,7 @@ struct Polycone{T,CO,N,TP<:Nothing} <: AbstractVolumePrimitive{T,CO}
         end
         # sort the points counter-clockwise in the r-z-plane
         if PolygonOps.area(tuple.(_r,_z)) < 0
-            _r, _z = reverse(_r), reverse!(_z)
+            _r, _z = reverse(_r), reverse(_z)
         end
         new{T,CO,nr,typeof(φ)}(_r, _z, φ, origin, rotation)
     end
