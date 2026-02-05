@@ -69,6 +69,7 @@ end
     evts = run_geant4_simulation(app, N)
     @test evts isa Table
     @test SolidStateDetectors.is_detector_hits_table(evts)
+    @test SolidStateDetectors.get_detector_hits_table(evts) == evts
     @test length(evts) == N
     @test all(length.(values(columns(evts))) .== N)
 
@@ -120,22 +121,22 @@ end
     end
     
     # Generate waveforms
-    simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
+    timed_simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
 
     # Generate waveforms with unclustered events
-    wf = simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
+    wf = timed_simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
     @test :waveform in columnnames(wf)
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
 
     # Generate waveforms from the clustered events
-    wf_clustered = simulate_waveforms(clustered_evts, sim, Δt = 1u"ns", max_nsteps = 2000)
+    wf_clustered = timed_simulate_waveforms(clustered_evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_clustered isa Table
     @test :waveform in columnnames(wf_clustered)
     @test length(wf_clustered) == length(clustered_evts) * sum(.!ismissing.(sim.weighting_potentials))
 
     # Use the table with added Fano noise
-    wf_fano = simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
+    wf_fano = timed_simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_fano isa Table
     @test :waveform in columnnames(wf_fano)
     @test length(wf_fano) == length(evts_fano) * sum(.!ismissing.(sim.weighting_potentials))
@@ -156,7 +157,7 @@ end
     @test_throws Exception SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm", 2u"mm")
 
     # Generate waveforms using StaticVectors as eltype of pos
-    wf_static = simulate_waveforms(evts_static, sim, Δt = 1u"ns", max_nsteps = 2000)
+    wf_static = timed_simulate_waveforms(evts_static, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_static isa Table
     @test :waveform in columnnames(wf_static)
     @test length(wf_static) == length(evts_static) * sum(.!ismissing.(sim.weighting_potentials))

@@ -82,6 +82,38 @@ function cluster_by_time(table::TypedTables.Table, Δt = 1u"ns")
     end
 end
 
+function split_by_time(table::TypedTables.Table, Δt = 1u"ns") 
+    
+    hasproperty(table, :thit) || throw(ArgumentError("Expected detector hit events table to have column named `thit`"))
+    elem_ptr = deepcopy(table.thit.elem_ptr)
+    t_hit = flatview(table.thit)
+    idx = Vector{Int}(undef, length(t_hit))
+    for e in 1:size(elem_ptr,1)-1
+        t_row = t_hit[elem_ptr[e]:elem_ptr[e+1]-1]
+        s = sortperm(t_row)
+        t_last = t_row[first(s)]
+        for (i,idx) in enumerate(s)
+            t = t_row[idx]
+            dt = t - t_last
+            if _parse_value(Float64, dt, u"s") > _parse_value(Float64, Δt, u"s")
+                push!(elem_ptr, i + elem_ptr[e] - 1)
+                t_last = t
+            end
+        end
+        idx[elem_ptr[e]:elem_ptr[e+1]-1] .= s .+ (elem_ptr[e] - 1)
+    end
+    sort!(elem_ptr)
+    
+    return TypedTables.Table(
+        map(c -> all(length.(c) .== 1) ?
+            # columns that have a single entry: clone them
+            c[map(p -> findlast(p .>= table.thit.elem_ptr), elem_ptr[1:end-1])] :
+            # columns that have multiple entries: split accordingly
+            VectorOfVectors(flatview(c)[idx], elem_ptr), 
+        TypedTables.columns(table))
+    )
+end
+
 function add_physics_event_numbers(table::TypedTables.Table)
     n_events = length(TypedTables.columns(table)[1])
     add_column(table, :phyevtno, flatview(collect(Int32, 1:n_events)))
