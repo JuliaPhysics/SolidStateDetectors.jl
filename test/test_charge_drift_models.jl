@@ -4,7 +4,7 @@ using Test
 
 using SolidStateDetectors
 using SolidStateDetectors: getVe, getVh, Vl, get_path_to_example_config_files, AbstractChargeDriftModel, ConstantImpurityDensity, group_points_by_distance, distance_squared, scale_to_temperature
-using SolidStateDetectors.ConstructiveSolidGeometry: AbstractCoordinatePoint
+using SolidStateDetectors.ConstructiveSolidGeometry: AbstractCoordinatePoint, geom_sigdigits
 using SolidStateDetectors: AbstractVirtualVolume
 using ArraysOfArrays
 using InteractiveUtils
@@ -306,10 +306,6 @@ end
         "High-purity germanium" => joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_config.yaml"),
         "Silicon" => joinpath(get_path_to_example_config_files(), "ADLChargeDriftModel/drift_velocity_Si_300K_config.yaml")
     )
-
-    geom_sigdigits(::Type{Int})::Int = 12
-    geom_sigdigits(::Type{Float32})::Int = 6
-    geom_sigdigits(::Type{Float64})::Int = 12
 
     for T in (Float32, Float64) 
         @testset "Precision type: $(T)" begin

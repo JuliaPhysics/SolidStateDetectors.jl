@@ -3,7 +3,8 @@
 using Test
 
 using SolidStateDetectors.ConstructiveSolidGeometry: CartesianPoint, CartesianVector, 
-    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, barycenter, geom_round
+    CartesianZero, cartesian_zero, CylindricalPoint, LocalAffineFrame, global_frame, frame_transformation, 
+    barycenter, geom_round, to_internal_units
 using StaticArrays: Size, SVector, SMatrix
 using InverseFunctions: inverse
 
@@ -20,11 +21,13 @@ using Unitful
         a = CartesianPoint(1.0, 2.0, 3.0)
         b = CartesianPoint(3.0, 1.0, 2.0)
         v = CartesianVector(0.1, 0.2, 0.3)
+        s = SVector{3}(0.1, 0.2, 0.3)
         A = SMatrix{3,3}(1.0, 4.0, 7.0, 4.0, 5.0, 8.0, 7.0, 8.0, 9.0)
 
         @test @inferred(a + v) == CartesianPoint(1.1, 2.2, 3.3)
+        @test @inferred(a + s) == CartesianPoint(1.1, 2.2, 3.3)
         @test @inferred(a - v) == CartesianPoint(0.9, 1.8, 2.7)
-        @test @inferred(a - v) == CartesianPoint(0.9, 1.8, 2.7)
+        @test @inferred(a - s) == CartesianPoint(0.9, 1.8, 2.7)
         @test @inferred(a - b) == CartesianVector(-2.0, 1.0, 1.0)
 
         @test @inferred(zero(a) + (a - zero(a))) == a
@@ -36,14 +39,26 @@ using Unitful
         @test @inferred(CartesianPoint(a[1], a[2], a[3])) == a
         @test @inferred(CartesianPoint(a[1], a[2], a[3])) ≈ a
 
+        @test iszero(CartesianPoint{Float64}(0.0, 0.0, 0.0))
+
         frame = LocalAffineFrame(b, A)
 
         f = frame_transformation(frame, global_frame)
+        g = frame_transformation(global_frame, frame)
+        gg = frame_transformation(global_frame, global_frame)
+        ff = frame_transformation(frame, frame)
+
         @test @inferred(f(a)) == cartesian_zero + A * (a - cartesian_zero) + CartesianVector(b[1], b[2], b[3])
         @test @inferred(inverse(f)(f(a))) ≈ a
+        @test @inferred(inverse(g)(g(a))) ≈ a
+        @test @inferred(g(f(a))) ≈ a
+        @test @inferred(f(g(a))) ≈ a
+        @test @inferred(gg(a)) ≈ a
+        @test @inferred (ff(a)) ≈ a
 
-
-        #@test @inferred(CartesianZero{Float32}() * u"mm") === CartesianZero{typeof(zero(Float32) * u"mm")}()
+        # test keys and getindex
+        c = CartesianPoint(1.0, 1.0, 1.0)
+        @test all(map(k -> c[k] == 1.0, keys(c)))
 
         A = [CartesianPoint{Float32}(x,0,0) for x in -2:2]
         @test isapprox(barycenter(A), CartesianPoint{Float32}(0,0,0))
@@ -68,6 +83,7 @@ using Unitful
         @test CartesianPoint(1u"mm", 2u"cm", 3u"m") isa CartesianPoint{Float64}
         @test CartesianPoint(1u"mm", 0, 0) isa CartesianPoint{Float64}
         @test CartesianPoint(1u"m", 2u"m", 3f0u"m") isa CartesianPoint{Float32}
+        @test CartesianPoint(1u"m", 2u"m", 3u"m") == CartesianPoint(1, 2, 3) * u"m"
         
         # test throwing errors with wrong units
         @test_throws ArgumentError CartesianPoint(1u"m", 2u"rad", 3u"m")
@@ -87,6 +103,10 @@ using Unitful
         cyl = @inferred CylindricalPoint{Float32}(r=2.,z=1.)
         cyl2 = @inferred CylindricalPoint(φ=3π)
         @test CartesianPoint(cyl) == CartesianPoint(x=2f0,z=1f0)
+        @test convert(CartesianPoint{Float32}, cyl) == CartesianPoint(x=2f0,z=1f0)
+        @test copy(cyl) == cyl
+
+        @test iszero(CylindricalPoint{Float64}(0.0, rand(), 0.0))
 
         a = CylindricalPoint(1.0, π/2, 3.0)
         b = CylindricalPoint(3.0, π/2, 2.0)
@@ -104,6 +124,25 @@ using Unitful
         @test  @inferred(CylindricalPoint(a[1], a[2], a[3])) === a
         @test  @inferred(CylindricalPoint(a[1], a[2], a[3])) == a
         @test  @inferred(CylindricalPoint(a[1], a[2], a[3])) ≈ a
+
+        o = CartesianPoint(3.0, 1.0, 2.0)
+        A = SMatrix{3,3}(1.0, 4.0, 7.0, 4.0, 5.0, 8.0, 7.0, 8.0, 9.0)
+
+        frame = LocalAffineFrame(o, A)
+
+        f = frame_transformation(frame, global_frame)
+        g = frame_transformation(global_frame, frame)
+        gg = frame_transformation(global_frame, global_frame)
+        ff = frame_transformation(frame, frame)
+        
+        @test @inferred(f(a)) == CylindricalPoint(cartesian_zero + A * (CartesianPoint(a) - cartesian_zero) + CartesianVector(o[1], o[2], o[3]))
+        @test @inferred(inverse(f)(f(a))) ≈ a
+        @test @inferred(g(f(a))) ≈ a
+        @test @inferred(gg(a)) ≈ a
+        @test @inferred (ff(a)) ≈ a
+
+        @test  @inferred(adjoint(a)) == a
+        @test  @inferred(transpose(a)) == a
 
         A = [CylindricalPoint{Float32}(x,0,0) for x in -2:2]
         @test isapprox(barycenter(A), CylindricalPoint{Float32}(0,0,0))
@@ -170,6 +209,7 @@ end
 
     z = zero(CartesianVector{Float64})
     @test z == CartesianVector(0.0, 0.0, 0.0)
+    @test z == zero(z)
 
     v = CartesianVector(1.0, 2.0, 3.0)
     v_mul = v * u"m"
@@ -183,18 +223,25 @@ end
     # Test handling of CartesianZero
     cz32 = CartesianZero{Float32}()
     cz64 = CartesianZero{Float64}()
-    @test cz32 - cz64 == CartesianVector(0.0, 0.0, 0.0)
+    @test cz32 - cz64 == zero(CartesianVector{Float64})
     @test cz32 == cz64
+    @test_throws ArgumentError to_internal_units(cz64)
 
     for CT in (Float32, Float64)
         cz = CartesianZero{CT}()
+        cv = CartesianVector{CT}(1.0, 2.0, 3.0)
         sv = SVector{3,CT}(1.0, 2.0, 3.0)
         v = CT[1.0, 2.0, 3.0]
         @test cz == cz
+        @test cz ≈ cz
         @test zero(cz) == cz
+        @test zero(CartesianZero{CT}) == cz
         @test iszero(cz)
+        @test cz == zero(CartesianPoint{CT})
         @test cz * u"m" == cz
+        @test cz * 1u"m" == cz
         @test cz - sv == CartesianPoint((-sv)...)
+        @test cz - cv == CartesianPoint((-cv)...)
         @test cz - v  == CartesianPoint((-v)...)
     end
 end
