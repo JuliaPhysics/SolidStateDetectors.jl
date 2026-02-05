@@ -646,14 +646,14 @@ function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, T
         elseif isnothing(c.r[1])
             0
         else
-            OrderedDict{String, Any}("from" => c.r[1][1], "to" => c.r[1][2])
+            OrderedDict{String, Any}("from" => isnothing(c.r[1][1]) ? 0 : c.r[1][1], "to" => c.r[1][2])
         end
         dict["r"]["top"] = if c.r[2] isa Tuple{<:Real} 
             c.r[2][1]
         elseif isnothing(c.r[2])
             0
         else 
-            OrderedDict{String, Any}("from" => c.r[2][1], "to" => c.r[2][2])
+            OrderedDict{String, Any}("from" => isnothing(c.r[2][1]) ? 0 : c.r[2][1], "to" => c.r[2][2])
         end
     end
     if !isnothing(c.φ) dict["phi"] = OrderedDict("from" => "0°", "to" => string(rad2deg(c.φ))*"°") end
