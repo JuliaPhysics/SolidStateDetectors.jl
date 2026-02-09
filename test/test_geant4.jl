@@ -108,6 +108,12 @@ end
     @test evt isa Event{T}
     timed_simulate!(evt, sim, Δt = 1u"ns", max_nsteps = 2000)
 
+    # Test generating electron and hole contribution separately
+    (; electron_contribution, hole_contribution) = get_electron_and_hole_contribution(evt, sim, 1)
+    @test electron_contribution isa RDWaveform
+    @test hole_contribution isa RDWaveform
+
+    # Use the raw table
     wf = timed_simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
     @test SolidStateDetectors.get_detector_hits_table(wf[findall(wf.chnid .== 1)]) == evts
