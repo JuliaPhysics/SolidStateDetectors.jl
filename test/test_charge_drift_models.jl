@@ -16,11 +16,27 @@ using Unitful
 
 T = Float32
 
-sim = Simulation{T}(SSD_examples[:InvertedCoax])
-timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
-
 pos = CartesianPoint{T}(0.02,0,0.05); Edep = 1u"eV"
 nbcc = NBodyChargeCloud(pos, Edep, 40, radius = T(0.0005), number_of_shells = 2)
+
+@timed_testset "Create single events" begin
+    evt0 = Event([pos], [Edep], 40, radius = [T(0.0005)], number_of_shells = 2)
+    # Test out all alternative methods to create an Event
+    for evt in (
+        Event([pos], [Edep], 40, radius = [T(0.0005)], number_of_shells = 2, max_interaction_distance = 1u"m"),
+        Event([[pos]], [[Edep]], 40, radius = [[T(0.0005)]], number_of_shells = 2),
+        Event(nbcc),
+        Event([nbcc]),
+        Event([nbcc.locations], [nbcc.energies]),
+        Event(nbcc.locations, nbcc.energies, max_interaction_distance = 1u"m")
+    )
+        @test evt.locations == evt0.locations
+        @test evt.energies == evt0.energies
+    end
+end
+
+sim = Simulation{T}(SSD_examples[:InvertedCoax])
+timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1, 0.05], verbose = false)
 
 @timed_testset "Diffusion and Self-Repulsion" begin
     evt = Event(nbcc)

@@ -43,7 +43,7 @@ using .ConstructiveSolidGeometry:
             parse_rotation_matrix, parse_translate_vector, parse_CSG_transformation,
             transform, CSG_dict, Transformations, combine_transformations, barycenter,
             LocalAffineFrame, cartesian_zero, global_frame, frame_transformation, 
-            ConfigFileError, _parse_value, distance_squared,
+            ConfigFileError, _parse_value, distance_squared, geom_round,
             LengthQuantity, AngleQuantity, get_scale
 
 import .ConstructiveSolidGeometry: sample, to_internal_units, from_internal_units
