@@ -1,6 +1,6 @@
 abstract type AbstractCoordinatePoint{T, S} end
 
-zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
+@inline Base.zero(PT::Type{<:AbstractCoordinatePoint{T}}) where {T} = PT(zero(T),zero(T),zero(T))
 
 @inline StaticArrays.Size(::PT) where {PT<:AbstractCoordinatePoint} = Size(PT)
 @inline StaticArrays.Size(::Type{PT}) where {PT<:AbstractCoordinatePoint} = Size{(fieldcount(PT),)}()

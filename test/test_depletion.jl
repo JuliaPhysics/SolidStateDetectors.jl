@@ -11,7 +11,7 @@ T = Float32
     timed_calculate_weighting_potential!(sim, id, refinement_limits=0.01)
     SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(
         sim, id)
-    U_est = estimate_depletion_voltage(sim) # around 2600
+    U_est = timed_estimate_depletion_voltage(sim) # around 2600
     ΔU = 50u"V"
     # simulate over and under depletion voltage
     U₋ = U_est - ΔU
@@ -23,15 +23,13 @@ T = Float32
     timed_calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
     depleted = is_depleted(sim.point_types)
     @test undepleted && depleted
-end
 
-@testset "_estimate_depletion_voltage_factor" begin
-    # Test functions accept AbstractVector
-    center_only = 1.0
-    center_zero = -2.0
-    neighbors_only = [0.5, 0.0, -0.5]
-    neighbors_zero = [-1.0, -2.0, -3.0]
-    est = SolidStateDetectors._estimate_depletion_voltage_factor(center_only, center_zero, neighbors_only, neighbors_zero)
-    @test est isa Float64
-    @test SolidStateDetectors._replace_NaN_with_minimum([NaN, 2.0, 3.0]) == [2.0, 2.0, 3.0]
+    # Pass a searching range (with units)
+    U_alt = timed_estimate_depletion_voltage(sim, U_est * 1.5, 0u"V", tolerance = 0.1u"V")
+    @test abs(U_est - U_alt) < 5u"V"
+
+    @test_throws Exception estimate_depletion_voltage(sim, -abs(U_est), abs(U_est))
+    @test_throws Exception estimate_depletion_voltage(sim, -10, 0, tolerance = 20)
+    @test_throws Exception estimate_depletion_voltage(sim, 0u"kg", 20u"kg")
+    @test_logs (:info,) (:info,) (:warn, r".*not in the specified range.*") estimate_depletion_voltage(sim, U_est/3, 0)
 end

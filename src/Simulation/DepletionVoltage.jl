@@ -20,10 +20,10 @@ end
 
 """
     estimate_depletion_voltage(sim::Simulation{T},
-        Umin::T = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
-        Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
+        Umin::RealQuantity = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
+        Umax::RealQuantity = maximum(broadcast(c -> c.potential, sim.detector.contacts));
         contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
-        tolerance::AbstractFloat = 1e-1,
+        tolerance::RealQuantity = 0.1u"V",
         verbose::Bool = true) where {T <: AbstractFloat}
 
 Estimates the potential needed to fully deplete the detector in a given [`Simulation`](@ref)
@@ -33,12 +33,12 @@ The default searching range of potentials is set by the extrema of contact poten
 
 ## Arguments 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which the depletion voltage should be determined.
-* `Umin::T`: The minimum value of the searching range.
-* `Umax::T`: The maximum value of the searching range.
+* `Umin::Real`: The minimum value of the searching range. If no units are given, this value is parsed in units of `$(internal_voltage_unit)`.
+* `Umax::Real`: The maximum value of the searching range. If no units are given, this value is parsed in units of `$(internal_voltage_unit)`.
     
 ## Keywords
 * `contact_id::Int`: The `id` of the [`Contact`](@ref) at which the potential is applied.
-* `tolerance::AbstractFloat`: The acceptable accuracy of results. Default is 1e-1.
+* `tolerance::Real`: The acceptable accuracy of results (default = 0.1V). If no units are given, this value is parsed in units of `$(internal_voltage_unit)`.
 * `verbose::Bool = true`: Activate or deactivate additional info output. Default is `true`.
 
 ## Example
@@ -60,19 +60,23 @@ See also [`is_depleted`](@ref).
 
 """
 function estimate_depletion_voltage(sim::Simulation{T},
-    Umin::T = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
-    Umax::T = maximum(broadcast(c -> c.potential, sim.detector.contacts));
+    U_min::RealQuantity = minimum(broadcast(c -> c.potential, sim.detector.contacts)),
+    U_max::RealQuantity = maximum(broadcast(c -> c.potential, sim.detector.contacts));
     contact_id::Int = determine_bias_voltage_contact_id(sim.detector),
-    tolerance::AbstractFloat = 1e-1,
+    tolerance::RealQuantity = 0.1u"V",
     verbose::Bool = true,
     check_for_depletion = true) where {T <: AbstractFloat}
 
+    Umin::T = _parse_value(T, U_min, internal_voltage_unit) 
+    Umax::T = _parse_value(T, U_max, internal_voltage_unit)
+    tol::T  = _parse_value(T, tolerance, internal_voltage_unit)
+    
     @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim)`"
     if check_for_depletion
         @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
     end
     @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
-    @assert abs(Umax - Umin) > tolerance "Umax - Umin < tolerance. Please change Umin, Umax or tolerance." 
+    @assert abs(Umax - Umin) > tol "Umax - Umin < tolerance. Please change Umin, Umax or tolerance." 
 
     if all(sim.q_eff_imp.data .== 0) && all(sim.q_eff_fix.data .== 0)
         @warn "The detector seems to have no impurities. Therefore, the depletion voltage is 0 V"
@@ -96,11 +100,10 @@ function estimate_depletion_voltage(sim::Simulation{T},
 
     ϕρ .-= simDV.detector.contacts[contact_id].potential .* ϕV    
     Urng = Umin..Umax
-    inside = findall((simDV.point_types .& 4 .> 0) .&
-        (simDV.point_types .& inactive_layer_bit .== 0))
+    inside = findall((simDV.point_types .& 4 .> 0) .& (simDV.point_types .& inactive_layer_bit .== 0))
     U::T = NaN
     ϕ̃ = similar(ϕV)
-    while Umax-Umin>tolerance
+    while Umax - Umin > tol
         U = (Umax + Umin)/2    
         ϕ̃ .= ϕρ .+ T(U) .* ϕV
         ϕmax = maximum(ϕ̃[inside])
@@ -111,42 +114,41 @@ function estimate_depletion_voltage(sim::Simulation{T},
             ϕmax - ϕmin < abs(U) ? Umin = U : Umax = U
         end        
     end
-    bulk = findall((sim.point_types.data .& bulk_bit .> 0) .&
-        (sim.point_types.data .& inactive_layer_bit .== 0))
+    bulk = findall((sim.point_types.data .& bulk_bit .> 0) .& (sim.point_types.data .& inactive_layer_bit .== 0))
     U_min_max = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
     U2 = isempty(U_min_max) ? U : only(U_min_max)    
     U = U > 0 ? max(U, U2) : min(U, U2)
     if verbose
-        @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tolerance))))) ± $(tolerance) V applied to contact $(contact_id)."
-        if (potential_range[2] - U) < tolerance || (U - potential_range[1]) < tolerance
-            @warn "The depletion voltage is probably not in the specified range $(potential_range.*u"V")."
+        @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tol))))) ± $(tol) $(internal_voltage_unit) applied to contact $(contact_id)."
+        if (potential_range[2] - U) < tol || (U - potential_range[1]) < tol
+            @warn "The depletion voltage is probably not in the specified range $(potential_range.*internal_voltage_unit)."
         end
     end
-    return U * u"V"
+    return U * internal_voltage_unit
 end
 
-function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
-    bulk_points::Vector{CartesianIndex{3}}) where {T}
+# function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
+#     bulk_points::Vector{CartesianIndex{3}}) where {T}
 
-    indices = CartesianIndices(ϕ)
-    maxI = last(indices)
-    minI = first(indices)
-    Δ = oneunit(minI)
-    has_local_maxima = 0
-    for x₀ in bulk_points
-        is_local_maxima = true
-        ϕ₀ = ϕ[x₀]
-        neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
-        for x in neighbours
-            Δx = sum(abs.((x₀ - x).I))
-            ((x₀ == x) || Δx > 1)  && continue
-            is_local_maxima &= ϕ[x] >= ϕ₀
-        end
-        has_local_maxima += is_local_maxima
-        has_local_maxima > 0 && ((@info x₀); break)
-    end
-    has_local_maxima
-end
+#     indices = CartesianIndices(ϕ)
+#     maxI = last(indices)
+#     minI = first(indices)
+#     Δ = oneunit(minI)
+#     has_local_maxima = 0
+#     for x₀ in bulk_points
+#         is_local_maxima = true
+#         ϕ₀ = ϕ[x₀]
+#         neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
+#         for x in neighbours
+#             Δx = sum(abs.((x₀ - x).I))
+#             ((x₀ == x) || Δx > 1)  && continue
+#             is_local_maxima &= ϕ[x] >= ϕ₀
+#         end
+#         has_local_maxima += is_local_maxima
+#         has_local_maxima > 0 && ((@info x₀); break)
+#     end
+#     has_local_maxima
+# end
 
 function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3}, 
         bulk_points::Vector{CartesianIndex{3}}) where {T}
@@ -187,6 +189,7 @@ function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::A
     minimum(Umin), maximum(Umax)
 end
 
+#=
 """
     old_estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, field_sim_settings = (verbose = true,))::T
 
@@ -372,3 +375,4 @@ function _estimate_depletion_voltage_factor!(
         end
     end
 end
+=#

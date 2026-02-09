@@ -124,22 +124,20 @@ end
 function Event(evt::NamedTuple{DHE_column_names, <:Tuple{DHE_column_types...}}, T = eltype(to_internal_units(evt.edep[:])))::Event{T}
     return Event(
         [CartesianPoint{T}.(to_internal_units.(evt.pos[:]))],
-        [T.(to_internal_units.(evt.edep[:]))]
+        [T.(to_internal_units.(evt.edep[:]))];
     )
 end
 
 in(evt::Event, det::SolidStateDetector) = all( pt -> pt in det, flatview(evt.locations))
-in(evt::Event, sim::Simulation) = all( pt -> pt in sim.detector, flatview(evt.locations))
+in(evt::Event, sim::Simulation) = in(evt, sim.detector)
 
-function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true)::Event{T} where {T <: SSDFloat}
+function move_charges_inside_semiconductor!(evt::Event{T}, det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true) where {T <: SSDFloat}
     move_charges_inside_semiconductor!(evt.locations, evt.energies, det; fraction, verbose)
-    evt
 end
 
 function move_charges_inside_semiconductor!(
         locations::AbstractVector{<:AbstractVector{CartesianPoint{T}}}, energies::AbstractVector{<:AbstractVector{T}},
         det::SolidStateDetector{T}; fraction::T = T(0.2), verbose::Bool = true) where {T <: SSDFloat}
-    global g_state = (;locations, energies, det)
     for n in eachindex(locations)
         idx_in = broadcast( pt -> pt in det.semiconductor, locations[n]);
         if !all(idx_in)
@@ -164,12 +162,12 @@ function move_charges_inside_semiconductor!(
             end
             charge_center_new = barycenter(locations[n], Weights(edep_weights))
             if verbose
-                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(round.(charge_center - cartesian_zero, digits = (T == Float64 ? 12 : 6)))"*
-                " are outside. Moving them inside...\nThe new charge center is at $(round.(charge_center_new - cartesian_zero, digits = (T == Float64 ? 12 : 6))).\n"
+                @warn "$(sum(.!idx_in)) charges of the charge cloud at $(geom_round(charge_center))"*
+                " are outside. Moving them inside...\nThe new charge center is at $(geom_round(charge_center_new)).\n"
             end
         end
     end
-    nothing
+    return nothing
 end
 
 """
@@ -200,13 +198,13 @@ drift_charges!(evt, sim, Δt = 1u"ns", verbose = false)
     Using values with units for `Δt` requires the package [Unitful.jl](https://github.com/JuliaPhysics/Unitful.jl).
 """
 function drift_charges!(evt::Event{T}, sim::Simulation{T}; max_nsteps::Int = 1000, Δt::RealQuantity = 5u"ns", diffusion::Bool = false, self_repulsion::Bool = false, end_drift_when_no_field::Bool = true, geometry_check::Bool = false, verbose::Bool = true)::Nothing where {T <: SSDFloat}
-    !in(evt, sim.detector) && move_charges_inside_semiconductor!(evt, sim.detector; verbose)
+    !in(evt, sim) && move_charges_inside_semiconductor!(evt, sim.detector; verbose)
     evt.drift_paths = drift_charges(sim, evt.locations, evt.energies; Δt, max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose)
     nothing
 end
 function get_signal!(evt::Event{T}, sim::Simulation{T}, contact_id::Int; Δt::RealQuantity = 5u"ns", signal_unit::Unitful.Units = u"e_au")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges(evt::Event, sim::Simulation)` first."
-    @assert !ismissing(sim.weighting_potentials[contact_id]) "No weighting potential for contact $(contact_id). Use `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."
+    ismissing(evt.drift_paths) && throw(AssertionError("The charge drift is not yet simulated. Please run `drift_charges!(evt::Event, sim::Simulation)` first."))
+    ismissing(sim.weighting_potentials[contact_id]) && throw(AssertionError("No weighting potential for contact $(contact_id). Please run `calculate_weighting_potential!(sim::Simulation, contact_id::Int)` first."))
     if ismissing(evt.waveforms)
         evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
     end
@@ -239,15 +237,11 @@ SolidStateDetectors.get_signals!(evt, sim, Δt = 1u"ns") # if evt.drift_paths we
 !!! note 
     This method only works if `evt.drift_paths` has already been calculated and is not `missing`.
 """
-function get_signals!(evt::Event{T}, sim::Simulation{T}; Δt::RealQuantity = 5u"ns", signal_unit::Unitful.Units = u"e_au")::Nothing where {T <: SSDFloat}
-    @assert !ismissing(evt.drift_paths) "No drift path for this event. Use `drift_charges!(evt::Event, sim::Simulation)` first."
-    if ismissing(evt.waveforms)
-        evt.waveforms = Union{Missing, RadiationDetectorSignals.RDWaveform}[missing for i in eachindex(sim.detector.contacts)]
-    end
+function get_signals!(evt::Event{T}, sim::Simulation{T}; kwargs...)::Nothing where {T <: SSDFloat}
+    any(ismissing, sim.weighting_potentials) && @warn "No weighting potential(s) for some contact(s).."
     for contact in sim.detector.contacts
-        if any(ismissing, sim.weighting_potentials) "No weighting potential(s) for some contact(s).." end
         if !ismissing(sim.weighting_potentials[contact.id])
-            evt.waveforms[contact.id] = get_signal(sim, evt.drift_paths, flatview(evt.energies), contact.id; Δt, signal_unit)
+            get_signal!(evt, sim, contact.id; kwargs...)
         end
     end
     nothing
@@ -318,11 +312,8 @@ function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,
     else
         new_signal[n_baseline_samples+1:end] = wv.signal[1:total_waveform_length - n_baseline_samples]
     end
-    new_times = if TV <: AbstractRange
-        range( zero(first(wv.time)), step = step(wv.time), length = total_waveform_length )
-    else
-        error("Not yet defined for timestamps of type `$(TV)`")
-    end
+    TV <: AbstractRange || throw(ArgumentError("Not yet defined for timestamps of type `$(TV)`"))
+    new_times = range(first(wv.time), step = step(wv.time), length = total_waveform_length )
     return RDWaveform( new_times, new_signal )
 end
 
@@ -362,7 +353,7 @@ See also [`plot_electron_and_hole_contribution`](@ref).
 function get_electron_and_hole_contribution(evt::Event{T}, sim::Simulation{T, S}, contact_id::Int; signal_unit::Unitful.Units = u"e_au",
             )::NamedTuple{(:electron_contribution, :hole_contribution), <:Tuple{RDWaveform, RDWaveform}} where {T <: SSDFloat, S}
     
-    @assert !ismissing(evt.drift_paths) "The charge drift is not yet simulated. Please use `drift_charges!(evt, sim)`!"
+    ismissing(evt.drift_paths) && throw(AssertionError("The charge drift is not yet simulated. Please run `drift_charges!(evt::Event, sim::Simulation)` first."))
     
     dt::T = T(ustrip(u"ns", diff(evt.drift_paths[1].timestamps_e)[1]*u"s"))
     wp::Interpolations.Extrapolation{T, 3} = interpolated_scalarfield(sim.weighting_potentials[contact_id])

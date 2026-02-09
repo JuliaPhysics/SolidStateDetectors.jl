@@ -128,13 +128,22 @@ end
     
     # Generate waveforms
     timed_simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
+    evt = Event(evts[1], T)
+    @test evt isa Event{T}
+    timed_simulate!(evt, sim, Δt = 1u"ns", max_nsteps = 2000)
 
-    # Generate waveforms with unclustered events
+    # Test generating electron and hole contribution separately
+    (; electron_contribution, hole_contribution) = get_electron_and_hole_contribution(evt, sim, 1)
+    @test electron_contribution isa RDWaveform
+    @test hole_contribution isa RDWaveform
+
+    # Use the raw table
     wf = timed_simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
     @test SolidStateDetectors.get_detector_hits_table(wf[findall(wf.chnid .== 1)]) == evts
     @test :waveform in columnnames(wf)
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
+    @test wf.waveform[1] ≈ evt.waveforms[1]
 
     # Generate waveforms from the clustered events
     wf_clustered = timed_simulate_waveforms(clustered_evts, sim, Δt = 1u"ns", max_nsteps = 2000)

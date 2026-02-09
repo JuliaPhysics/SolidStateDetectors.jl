@@ -51,7 +51,7 @@ CartesianVector(; x = 0, y = 0, z = 0) = CartesianVector(x,y,z)
 
 CartesianVector{T}(; x = 0, y = 0, z = 0) where {T} = CartesianVector{T}(T(x),T(y),T(z))
 
-@inline Base.zero(::CartesianVector{T}) where {T} = CartesianVector{T}(zero(T),zero(T),zero(T))
+@inline Base.zero(::Union{<:CartesianVector{T}, <:Type{CartesianVector{T}}}) where {T} = CartesianVector{T}(zero(T),zero(T),zero(T))
 @inline Base.iszero(v::CartesianVector) = iszero(v.x) && iszero(v.y) && iszero(v.z)
 
 # Need to specialize multiplication and division with units for CartesianVector, otherwise result would just be an SVector:
