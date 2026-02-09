@@ -104,11 +104,16 @@ end
     
     # Generate waveforms
     timed_simulate!(sim, refinement_limits = [0.2,0.1,0.05,0.03,0.02])
+    evt = Event(evts[1], T)
+    @test evt isa Event{T}
+    timed_simulate!(evt, sim, Δt = 1u"ns", max_nsteps = 2000)
+
     wf = timed_simulate_waveforms(evts, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf isa Table
     @test SolidStateDetectors.get_detector_hits_table(wf[findall(wf.chnid .== 1)]) == evts
     @test :waveform in columnnames(wf)
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
+    @test wf.waveform[1] ≈ evt.waveforms[1]
 
     # Use the table with added Fano noise
     wf_fano = timed_simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
