@@ -2,12 +2,13 @@
 
 function cluster_detector_hits(
         detno::AbstractVector{<:Integer},
-        edep::AbstractVector{TT},
+        edep::AbstractVector{ET},
         pos::AbstractVector{<:Union{<:StaticVector{3,PT}, <:CartesianPoint{PT}}},
+        thit::AbstractVector{TTT},
         cluster_radius::RealQuantity
-    ) where {TT <: RealQuantity, T <: Real, PT <: Union{T, <:Unitful.Length{T}}}
+    ) where {ET<:RealQuantity, T<:Real, PT<:Union{T,<:Unitful.Length{T}}, TT<:Real, TTT<:Union{TT,<:Unitful.Time{TT}}}
 
-    unsorted = TypedTables.Table(detno = detno, edep = edep, pos = pos)
+    unsorted = TypedTables.Table(detno = detno, edep = edep, pos = pos, thit = thit)
     sorting_idxs = sortperm(unsorted.detno)
     sorted = unsorted[sorting_idxs]
     grouped = TypedTables.Table(consgroupedview(sorted.detno, TypedTables.columns(sorted)))
@@ -15,6 +16,7 @@ function cluster_detector_hits(
     r_detno = similar(detno, 0)
     r_edep = similar(edep, 0)
     r_pos = similar(pos, 0)
+    r_thit = similar(thit, 0)
 
     ustripped_cradius = _parse_value(float(T), cluster_radius, internal_length_unit)
     
@@ -34,28 +36,36 @@ function cluster_detector_hits(
                 push!(r_detno, d_detno)
                 esum = sum(c_hits.edep)
                 push!(r_edep, esum)
-                if esum ≈ zero(TT)
+                if esum ≈ zero(ET)
                     push!(r_pos, barycenter(c_hits.pos))
+                    push!(r_thit, mean(c_hits.thit))
                 else
                     weights = ustrip.(Unitful.NoUnits, c_hits.edep .* inv(esum))
                     push!(r_pos, barycenter(c_hits.pos, StatsBase.Weights(weights)))
+                    push!(r_thit, sum(c_hits.thit .* weights))
                 end
             end
         else
             append!(r_detno, d_hits.detno)
             append!(r_edep, d_hits.edep)
             append!(r_pos, d_hits.pos)
+            append!(r_thit, d_hits.thit)
         end
     end
 
-    (detno = r_detno, edep = r_edep, pos = r_pos)
+    (detno = r_detno, edep = r_edep, pos = r_pos, thit = r_thit)
 end
 
 
-function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQuantity)
+function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQuantity, cluster_time::RealQuantity = Inf * u"s")
     @assert is_detector_hits_table(table) "Table does not have the correct format"
+
+    if isfinite(cluster_time)
+        table = split_by_time(table, cluster_time)
+    end
+    
     clustered_nt = map(
-        evt -> cluster_detector_hits(evt.detno, evt.edep, evt.pos, cluster_radius),
+        evt -> cluster_detector_hits(evt.detno, evt.edep, evt.pos, evt.thit, cluster_radius),
         table
     )
     TypedTables.Table(merge(

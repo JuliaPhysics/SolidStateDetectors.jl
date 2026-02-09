@@ -66,25 +66,49 @@ end
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
     app = Geant4.G4JLApplication(sim, source, verbose = false)
 
-    # Simulate 100 events
-    evts = run_geant4_simulation(app, 100)
+    # Simulate Geant4 events
+    N = 100
+    evts = run_geant4_simulation(app, N)
     @test evts isa Table
     @test SolidStateDetectors.is_detector_hits_table(evts)
     @test SolidStateDetectors.get_detector_hits_table(evts) == evts
-    @test length(evts) == 100
+    @test length(evts) == N
+    @test all(length.(values(columns(evts))) .== N)
 
     # Add fano noise
     material = SolidStateDetectors.material_properties[:HPGe]
     evts_fano = add_fano_noise(evts, material.E_ionisation, material.f_fano)
     @test evts_fano isa Table
     @test SolidStateDetectors.is_detector_hits_table(evts_fano)
-    @test length(evts_fano) == 100
+    @test length(evts_fano) == N
 
     # Cluster events by radius
     clustered_evts = SolidStateDetectors.cluster_detector_hits(evts, 10u"µm")
-    @test length(clustered_evts) == length(evts)
+    @test length(clustered_evts) >= length(evts)
     @test length(flatview(clustered_evts.pos)) <= length(flatview(evts.pos))
+    column_lengths = unique(length.(values(columns(clustered_evts))))
+    @test length(column_lengths) == 1
+    @test only(column_lengths) >= N
     @test eltype(first(clustered_evts.pos)) <: CartesianPoint
+
+    # Cluster events by radius, but split in time
+    clustered_evts = SolidStateDetectors.cluster_detector_hits(evts, 10u"µm", 1u"ns")
+    @test length(evts) <= length(clustered_evts) <= length(flatview(evts.pos))
+    @test length(flatview(clustered_evts.pos)) <= length(flatview(evts.pos))
+    column_lengths = unique(length.(values(columns(clustered_evts))))
+    @test length(column_lengths) == 1
+    @test only(column_lengths) >= N
+    @test eltype(first(clustered_evts.pos)) <: CartesianPoint
+
+    # Try the same method using StaticVectors as eltype of pos
+    evts_static = Table(evts; pos = VectorOfVectors(broadcast.(p -> SVector{3}(p.x, p.y, p.z), evts.pos)))
+    clustered_evts_static = SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm", 1u"ns")
+    @test length(clustered_evts_static) == length(evts_static)
+    @test length(flatview(clustered_evts_static.pos)) <= length(flatview(evts_static.pos))
+    column_lengths = unique(length.(values(columns(clustered_evts_static))))
+    @test length(column_lengths) == 1
+    @test only(column_lengths) >= N
+    @test eltype(first(clustered_evts_static.pos)) <: StaticVector{3}
 
     # Temporary HDF5 file
     mktemp() do tmpfile, io
@@ -121,6 +145,12 @@ end
     @test length(wf) == length(evts) * sum(.!ismissing.(sim.weighting_potentials))
     @test wf.waveform[1] ≈ evt.waveforms[1]
 
+    # Generate waveforms from the clustered events
+    wf_clustered = timed_simulate_waveforms(clustered_evts, sim, Δt = 1u"ns", max_nsteps = 2000)
+    @test wf_clustered isa Table
+    @test :waveform in columnnames(wf_clustered)
+    @test length(wf_clustered) == length(clustered_evts) * sum(.!ismissing.(sim.weighting_potentials))
+
     # Use the table with added Fano noise
     wf_fano = timed_simulate_waveforms(evts_fano, sim, Δt = 1u"ns", max_nsteps = 2000)
     @test wf_fano isa Table
@@ -129,15 +159,18 @@ end
 
     # Try the same method using StaticVectors as eltype of pos (with units of mm)
     evts_static = Table(evts; pos = VectorOfVectors(broadcast.(p -> SVector{3}(p.x, p.y, p.z) * 1000u"mm", SolidStateDetectors.to_internal_units(evts.pos))))
-    clustered_evts_static = SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm")
+    clustered_evts_static = SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm", 1u"ns")
     @test length(clustered_evts_static) == length(evts_static)
     @test length(flatview(clustered_evts_static.pos)) <= length(flatview(evts_static.pos))
     @test eltype(first(clustered_evts_static.pos)) <: StaticVector{3}
 
     # Check clustering with cluster radius being unitless or with the wrong unit
-    clustered_evts_static_unitless = SolidStateDetectors.cluster_detector_hits(evts_static, 1e-5)
+    clustered_evts_static_unitless = SolidStateDetectors.cluster_detector_hits(evts_static, 1e-5, 1u"ns")
     @test clustered_evts_static == clustered_evts_static_unitless
-    @test_throws Exception SolidStateDetectors.cluster_detector_hits(evts_static, 2u"kg")
+    clustered_evts_static_unitless = SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm", 1e-9)
+    @test clustered_evts_static == clustered_evts_static_unitless
+    @test_throws Exception SolidStateDetectors.cluster_detector_hits(evts_static, 2u"s", 1u"ns")
+    @test_throws Exception SolidStateDetectors.cluster_detector_hits(evts_static, 10u"µm", 2u"mm")
 
     # Generate waveforms using StaticVectors as eltype of pos
     wf_static = timed_simulate_waveforms(evts_static, sim, Δt = 1u"ns", max_nsteps = 2000)
@@ -183,11 +216,11 @@ end
     isource = IsotopeSource(55, 137, 0, 0, CartesianPoint(0.05,0,0.05))
     iapp = Geant4.G4JLApplication(sim, isource, verbose = false)
     iapp.sdetectors = app.sdetectors # workaround: copy sdetectors from previous G4JLApplication to avoid undefined reference
-    ievts = run_geant4_simulation(iapp, 100)
+    ievts = run_geant4_simulation(iapp, N)
 
     @test ievts isa Table
     @test SolidStateDetectors.is_detector_hits_table(ievts)
-    @test length(ievts) == 100
+    @test length(ievts) == N
 
 end
 
