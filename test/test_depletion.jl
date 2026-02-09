@@ -24,14 +24,3 @@ T = Float32
     depleted = is_depleted(sim.point_types)
     @test undepleted && depleted
 end
-
-@testset "_estimate_depletion_voltage_factor" begin
-    # Test functions accept AbstractVector
-    center_only = 1.0
-    center_zero = -2.0
-    neighbors_only = [0.5, 0.0, -0.5]
-    neighbors_zero = [-1.0, -2.0, -3.0]
-    est = SolidStateDetectors._estimate_depletion_voltage_factor(center_only, center_zero, neighbors_only, neighbors_zero)
-    @test est isa Float64
-    @test SolidStateDetectors._replace_NaN_with_minimum([NaN, 2.0, 3.0]) == [2.0, 2.0, 3.0]
-end

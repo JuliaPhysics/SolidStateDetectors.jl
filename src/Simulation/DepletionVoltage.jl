@@ -125,28 +125,28 @@ function estimate_depletion_voltage(sim::Simulation{T},
     return U * u"V"
 end
 
-function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
-    bulk_points::Vector{CartesianIndex{3}}) where {T}
+# function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
+#     bulk_points::Vector{CartesianIndex{3}}) where {T}
 
-    indices = CartesianIndices(ϕ)
-    maxI = last(indices)
-    minI = first(indices)
-    Δ = oneunit(minI)
-    has_local_maxima = 0
-    for x₀ in bulk_points
-        is_local_maxima = true
-        ϕ₀ = ϕ[x₀]
-        neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
-        for x in neighbours
-            Δx = sum(abs.((x₀ - x).I))
-            ((x₀ == x) || Δx > 1)  && continue
-            is_local_maxima &= ϕ[x] >= ϕ₀
-        end
-        has_local_maxima += is_local_maxima
-        has_local_maxima > 0 && ((@info x₀); break)
-    end
-    has_local_maxima
-end
+#     indices = CartesianIndices(ϕ)
+#     maxI = last(indices)
+#     minI = first(indices)
+#     Δ = oneunit(minI)
+#     has_local_maxima = 0
+#     for x₀ in bulk_points
+#         is_local_maxima = true
+#         ϕ₀ = ϕ[x₀]
+#         neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
+#         for x in neighbours
+#             Δx = sum(abs.((x₀ - x).I))
+#             ((x₀ == x) || Δx > 1)  && continue
+#             is_local_maxima &= ϕ[x] >= ϕ₀
+#         end
+#         has_local_maxima += is_local_maxima
+#         has_local_maxima > 0 && ((@info x₀); break)
+#     end
+#     has_local_maxima
+# end
 
 function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3}, 
         bulk_points::Vector{CartesianIndex{3}}) where {T}
@@ -187,6 +187,7 @@ function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::A
     minimum(Umin), maximum(Umax)
 end
 
+#=
 """
     old_estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, field_sim_settings = (verbose = true,))::T
 
@@ -372,3 +373,4 @@ function _estimate_depletion_voltage_factor!(
         end
     end
 end
+=#
