@@ -140,7 +140,7 @@ function vertices(rp::RegularPrism{N,T,OpenPrimitive,T}) where {T,N}
     _transform_into_global_coordinate_system(pts, rp)
 end
 
-function surfaces(rp::RegularPrism{N,T,<:Any,T}) where {T,N}
+function surfaces(rp::RegularPrism{N,T,ClosedPrimitive,T}) where {T,N}
     vs = (vertices(rp))
     p_bot = Polygon{N,T}(vs[1:N])
     p_top = Polygon{N,T}(reverse(vs[N+1:end]))
