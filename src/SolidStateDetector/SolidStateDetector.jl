@@ -110,7 +110,7 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
     # SolidStateDetectors.jl does not allow for arbitrary contact IDs yet (issue #288)
     # They need to be in order (1, 2, ... , N), so throw an error if this is not the case.
     if !all(getfield.(contacts, :id) .== eachindex(contacts))
-        ArgumentError("SolidStateDetectors.jl only supports contact IDs that are in order.\n
+        ArgumentError("SolidStateDetectors.jl supports only contact IDs that are in order.\n
             Please set the ID of the first contact to 1, the ID of the second contact to 2, etc.")
     end
     

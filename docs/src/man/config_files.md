@@ -168,7 +168,7 @@ grid:
    z: #...
 ``` 
 
-All $\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, i.e. for a `120°`-periodic system
+All $\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, e.g. for a `120°`-periodic system
 ```yaml
 grid:
  coordinates: cylindrical
@@ -181,7 +181,7 @@ grid:
    z: #...
 ``` 
 
-Different boundary handling can be chosen for the `left` and `right` end of the interval, i.e. for a `60°`-periodic system with mirror symmetry at `30°`
+Different boundary handling can be chosen for the `left` and `right` end of the interval, e.g. for a `60°`-periodic system with mirror symmetry at `30°`
 ```yaml
 grid:
  coordinates: cylindrical
@@ -220,6 +220,9 @@ detectors:
       - # Contact 1
       - # Contact 2
 ```
+
+!!! note 
+    Currently, SolidStateDetectors.jl supports only defining one detector in the `detectors` array.
 
 #### Semiconductor
 
@@ -341,22 +344,22 @@ When including a separate file, the user has to add its file path in the main co
 
 Including one file:
 ```yaml
-include : "file_to_be_included.yaml"
+include: file_to_be_included.yaml
 ```
 
 Including a list of files:
 ```yaml
 include: 
-  - "first_file_to_be_included.yaml"
-  - "second_file_to_be_included.yaml"
+  - first_file_to_be_included.yaml
+  - second_file_to_be_included.yaml
 ```
 
 Add files to an array in the main configuration file
 ```yaml
 detectors:
-  - include: "first_file_in_array.yaml"
-  - include: "second_file_in_array.yaml"
-  - include: "thrid_file_in_array.yaml"
+  - include: first_file_in_array.yaml
+  - include: second_file_in_array.yaml
+  - include: thrid_file_in_array.yaml
 ```
 
 A fully working example can be seen in `SSD_examples[:InvertedCoaxInCryostat]`. Here, the channels, the geometry and other parts are split into separate configuration files.
