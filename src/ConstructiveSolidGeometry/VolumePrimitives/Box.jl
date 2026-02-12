@@ -158,7 +158,7 @@ function sample(b::Box{T})::Vector{CartesianPoint{T}} where {T}
     [vertices(b)...]
 end
 
-function surfaces(b::Box{T}) where {T}
+function surfaces(b::Box{T,ClosedPrimitive}) where {T}
     vs = vertices(b)
     return (
         Quadrangle{T}((vs[1], vs[2], vs[3], vs[4])),

@@ -137,7 +137,7 @@ function _in(pt::CartesianPoint{T}, c::Polycone{<:Any, OpenPrimitive}; csgtol::T
         PolygonOps.inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z), in = true, on = iszero(pt.x) && iszero(pt.y), out = false)
 end
 
-function surfaces(c::Polycone{T,<:Any,N,Nothing}) where {T,N}
+function surfaces(c::Polycone{T,ClosedPrimitive,N,Nothing}) where {T,N}
     s = []
     @inbounds for i in Base.OneTo(N-1)
         r1::T = c.r[i]
