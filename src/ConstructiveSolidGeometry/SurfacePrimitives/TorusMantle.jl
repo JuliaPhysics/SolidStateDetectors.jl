@@ -79,6 +79,8 @@ end
 
 flip(t::TorusMantle{T,TP,TT,:inwards}) where {T,TP,TT} = 
 TorusMantle{T,TP,TT,:outwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation )
+flip(t::TorusMantle{T,TP,TT,:outwards}) where {T,TP,TT} = 
+TorusMantle{T,TP,TT,:inwards}(t.r_torus, t.r_tube, t.φ, t.θ, t.origin, t.rotation )
 
 get_φ_limits(tm::TorusMantle{T,T}) where {T} = T(0), tm.φ
 get_φ_limits(tm::TorusMantle{T,Nothing}) where {T} = T(0), T(2π)

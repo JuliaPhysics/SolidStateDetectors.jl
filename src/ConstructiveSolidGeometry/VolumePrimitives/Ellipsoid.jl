@@ -149,9 +149,5 @@ function surfaces(e::Ellipsoid{T,ClosedPrimitive}) where {T}
     em = EllipsoidMantle{T,typeof(e.r),typeof(e.φ),typeof(e.θ),:inwards}(e.r, e.φ, e.θ, e.origin, e.rotation)
     (em,)
 end
-function surfaces(e::Ellipsoid{T,OpenPrimitive}) where {T}
-    em = EllipsoidMantle{T,typeof(e.r),typeof(e.φ),typeof(e.θ),:outwards}(e.r, e.φ, e.θ, e.origin, e.rotation)
-    (em,)
-end
 
 extremum(e::Ellipsoid{T}) where {T} = max(e.r...)

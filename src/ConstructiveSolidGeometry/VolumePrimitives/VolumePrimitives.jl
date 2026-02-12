@@ -21,6 +21,10 @@ function sample(vp::AbstractVolumePrimitive)
     unique!(mapreduce(sample, vcat, ls))
 end
 
+function surfaces(vp::AbstractVolumePrimitive{<:Any,OpenPrimitive})
+    flip.(surfaces(ClosedPrimitive(vp)))
+end
+
 include("Box.jl")
 include("Cone.jl")
 include("Ellipsoid.jl")
