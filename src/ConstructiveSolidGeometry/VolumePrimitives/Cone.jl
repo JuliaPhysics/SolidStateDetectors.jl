@@ -147,7 +147,7 @@ function _in(pt::CartesianPoint, c::Cylinder{T,OpenPrimitive}; csgtol::T = csg_d
     abs(pt.z) < c.hZ - csgtol && hypot(pt.x, pt.y) < c.r - csgtol
 end
 
-function surfaces(t::Cylinder{T}) where {T}
+function surfaces(t::Cylinder{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = FullConeMantle{T,:inwards}((t.r, t.r), t.φ, t.hZ, t.origin, t.rotation)
@@ -180,7 +180,7 @@ function _in(pt::CartesianPoint, c::PartialCylinder{T,OpenPrimitive}; csgtol::T 
     abs(pt.z) + csgtol < c.hZ && r < c.r - csgtol && _in_angular_interval_closed(φ, c.φ, csgtol = zero(T)) && r * sin(min(φ, c.φ - φ, T(π/2))) > csgtol
 end
 
-function surfaces(t::PartialCylinder{T}) where {T}
+function surfaces(t::PartialCylinder{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = PartialConeMantle{T,:inwards}((t.r, t.r), t.φ, t.hZ, t.origin, t.rotation)
@@ -199,6 +199,7 @@ function surfaces(t::PartialCylinder{T}) where {T}
     # normals of the surfaces show inside the volume primitives. 
     (e_top, e_bot, mantle, poly_l, poly_r)
 end
+
 
 ####################################################################
 ####################################################################
@@ -231,7 +232,7 @@ function _in(pt::CartesianPoint, c::VaryingCylinder{T,OpenPrimitive}; csgtol::T 
     hypot(pt.x, pt.y) < radius_at_z(c.hZ, c.r[1][1], c.r[2][1], pt.z) - csgtol * hypot(2*c.hZ, c.r[2][1] - c.r[1][1]) / (2*c.hZ)
 end
 
-function surfaces(t::VaryingCylinder{T}) where {T}
+function surfaces(t::VaryingCylinder{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = FullConeMantle{T,:inwards}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
@@ -277,7 +278,7 @@ function _in(pt::CartesianPoint, c::PartialVaryingCylinder{T,OpenPrimitive}; csg
         _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = zero(T)) && r * sin(min(φ, c.φ - φ, T(π/2))) > csgtol
 end
 
-function surfaces(t::PartialVaryingCylinder{T}) where {T}
+function surfaces(t::PartialVaryingCylinder{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     mantle = PartialConeMantle{T,:inwards}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
@@ -338,7 +339,7 @@ function _in(pt::CartesianPoint, c::VaryingTube{T,OpenPrimitive}; csgtol::T = cs
         r < radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z) - csgtol * hypot(2*c.hZ, c.r[2][2] - c.r[1][2]) / (2*c.hZ)
 end
 
-function surfaces(t::VaryingTube{T}) where {T}
+function surfaces(t::VaryingTube{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     inner_mantle = FullConeMantle{T,:outwards}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
@@ -389,7 +390,7 @@ function _in(pt::CartesianPoint, c::PartialVaryingTube{T,OpenPrimitive}; csgtol:
         r < radius_at_z(c.hZ, c.r[1][2], c.r[2][2], pt.z) - csgtol * hypot(2c.hZ, c.r[2][2] - c.r[1][2]) / 2c.hZ
 end
 
-function surfaces(t::PartialVaryingTube{T}) where {T}
+function surfaces(t::PartialVaryingTube{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     inner_mantle = PartialConeMantle{T,:outwards}((t.r[1][1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
@@ -427,7 +428,7 @@ function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{Tuple{Nothing,T},Nothing}}; 
     _in(pt, Cone{T,CO}(((c.r[1][2],), (zero(T),)), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
-function surfaces(t::UpwardCone{T}) where {T}
+function surfaces(t::UpwardCone{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     outer_mantle = FullConeMantle{T,:inwards}( (t.r[1][2], zero(T)), t.φ, t.hZ, t.origin, t.rotation)
     e_bot = EllipticalSurface{T}(r = t.r[1][2], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
@@ -435,7 +436,7 @@ function surfaces(t::UpwardCone{T}) where {T}
     e_bot, outer_mantle
 end
 
-function surfaces(t::PartialUpwardCone{T}) where {T}
+function surfaces(t::PartialUpwardCone{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     outer_mantle = PartialConeMantle{T,:inwards}( (t.r[1][2], zero(T)), t.φ, t.hZ, t.origin, t.rotation)
     e_bot = EllipticalSurface{T}(r = t.r[1][2], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
@@ -469,7 +470,7 @@ function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{Nothing,Tuple{Nothing,T}}}; 
     _in(pt, Cone{T,CO}(((zero(T),), (c.r[2][2],)), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
-function surfaces(t::DownwardCone{T}) where {T}
+function surfaces(t::DownwardCone{T,ClosedPrimitive}) where {T}
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     outer_mantle = FullConeMantle{T,:inwards}( (zero(T), t.r[2][2]), t.φ, t.hZ, t.origin, t.rotation)
     e_top = EllipticalSurface{T}(r = t.r[2][2], φ = t.φ, origin = top_center_pt, rotation = -t.rotation * RotZ{T}(π))
@@ -477,7 +478,7 @@ function surfaces(t::DownwardCone{T}) where {T}
     e_top, outer_mantle
 end
 
-function surfaces(t::PartialDownwardCone{T}) where {T}
+function surfaces(t::PartialDownwardCone{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     outer_mantle = PartialConeMantle{T,:inwards}( (t.r[2][2], zero(T)), t.φ, t.hZ, t.origin, t.rotation)
     e_bot = EllipticalSurface{T}(r = t.r[2][2], φ = t.φ, origin = bot_center_pt, rotation = t.rotation)
@@ -512,7 +513,7 @@ function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{Tuple{T,T},T}}; csgtol::T = 
     _in(pt, Cone{T,CO}((c.r[1], (c.r[2], c.r[2])), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
-function surfaces(t::TopClosedTube{T}) where {T}
+function surfaces(t::TopClosedTube{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     # top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     inner_mantle = FullConeMantle{T,:outwards}((t.r[1][1], t.r[2]), t.φ, t.hZ, t.origin, t.rotation)
@@ -523,7 +524,7 @@ function surfaces(t::TopClosedTube{T}) where {T}
     e_bot, inner_mantle, outer_mantle
 end
 
-function surfaces(t::PartialTopClosedTube{T}) where {T}
+function surfaces(t::PartialTopClosedTube{T,ClosedPrimitive}) where {T}
     bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     # top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     inner_mantle = PartialConeMantle{T,:outwards}((t.r[1][1], t.r[2]), t.φ, t.hZ, t.origin, t.rotation)
@@ -562,7 +563,7 @@ function _in(pt::CartesianPoint, c::Cone{T,CO,Tuple{T,Tuple{T,T}}}; csgtol::T = 
     _in(pt, Cone{T,CO}(((c.r[1], c.r[1]), c.r[2]), c.φ, c.hZ, c.origin, c.rotation); csgtol)
 end
 
-function surfaces(t::BottomClosedTube{T}) where {T}
+function surfaces(t::BottomClosedTube{T,ClosedPrimitive}) where {T}
     # bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     inner_mantle = FullConeMantle{T,:outwards}((t.r[1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
@@ -573,7 +574,7 @@ function surfaces(t::BottomClosedTube{T}) where {T}
     e_top, inner_mantle, outer_mantle
 end
 
-function surfaces(t::PartialBottomClosedTube{T}) where {T}
+function surfaces(t::PartialBottomClosedTube{T,ClosedPrimitive}) where {T}
     # bot_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), -t.hZ), t) 
     top_center_pt = _transform_into_global_coordinate_system(CartesianPoint{T}(zero(T), zero(T), +t.hZ), t) 
     inner_mantle = PartialConeMantle{T,:outwards}((t.r[1], t.r[2][1]), t.φ, t.hZ, t.origin, t.rotation)
