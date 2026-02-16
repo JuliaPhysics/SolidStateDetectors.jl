@@ -146,14 +146,17 @@ In the example above, the `x`, `y` and `z` axes range from `-40` to `40` units.
 
 #### Grid boundary handling
 
-Symmetries of the world can be used to reduce the calculation only to a fraction of the world. These can be passed as `boundaries` to the different `axes`.
+Symmetries of the world can be used to reduce the calculation only to a fraction of the world.
+These can be passed as `boundaries` to the different `axes`.
+For details on the different boundary conditions see [Grid Boundary Conditions](@ref).
 
 For linear axes (`x`, `y`, `z`), the `boundaries` can be chosen `infinite`, `periodic`, `reflecting`, or `fixed`.
 
 For radial axes (`r`), the boundaries can be chosen `r0` for the left boundary and `infinite`, `reflecting` or `fixed` on the right boundary.
 If no boundaries are given, the default is `r0` for the left boundary and `infinite` for the right boundary.
 
-For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. If no boundaries are given, the default is `periodic` for both edges.
+For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. 
+If no boundaries are given, the default is `periodic` for both edges.
 
 All $\varphi$-symmetric configurations can be calculated in 2D if `phi` ranges from `0` to `0` with `periodic` boundary handling, i.e.
 ```yaml
