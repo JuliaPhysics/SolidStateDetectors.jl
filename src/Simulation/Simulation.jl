@@ -38,6 +38,7 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     electric_potential::Union{ElectricPotential{T}, Missing}
     weighting_potentials::Vector{Any}
     electric_field::Union{ElectricField{T}, Missing}
+    spacing_surface_refinement::Union{NTuple{3,T}, Nothing}
 end
 
 function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -54,7 +55,8 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         missing,
         missing,
         [missing],
-        missing
+        missing,
+        nothing
     )
 end
 
@@ -113,6 +115,7 @@ function Simulation(nt::NamedTuple)
     else
         [missing for contact in sim.detector.contacts]
     end
+    sim.spacing_surface_refinement = get(nt, :spacing_surface_refinement, nothing)
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -178,13 +181,19 @@ function Simulation{T}(dict::AbstractDict)::Simulation{T} where {T <: SSDFloat}
     sim.medium = material_properties[materials[haskey(dict, "medium") ? dict["medium"] : "vacuum"]]
     sim.detector = SolidStateDetector{T}(dict, sim.input_units) 
     sim.world = if haskey(dict, "grid") && isa(dict["grid"], AbstractDict) && haskey(dict["grid"], "axes")
-            World(T, dict["grid"], sim.input_units)
+        World(T, dict["grid"], sim.input_units)
         else let det = sim.detector 
             world_limits = get_world_limits_from_objects(CS, det)
             World(CS, world_limits)
         end
     end
     sim.weighting_potentials = Missing[ missing for i in 1:length(sim.detector.contacts)]
+    sim.spacing_surface_refinement = if haskey(dict, "grid") && isa(dict["grid"], AbstractDict) &&
+                                       haskey(dict["grid"], "spacing_surface_refinement")
+        ntuple(i -> T(dict["grid"]["spacing_surface_refinement"][i]), 3)
+    else
+        nothing
+    end
     return sim
 end
 
@@ -759,6 +768,7 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 SolidStateDetectors.refine!(sim, ElectricPotential, max_diffs = (100, 100, 100), minimum_distances = (0.01, 0.02, 0.01))
 ```
 """
+
 function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
@@ -771,6 +781,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
         pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
                                         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
 
+        
         sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
@@ -811,6 +822,82 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
     sim.weighting_potentials[contact_id] = refine_scalar_potential(sim.weighting_potentials[contact_id], max_diffs, minimum_distances)
     nothing
 end
+
+"""
+Refine the simulation potential on the surface only
+"""
+
+function refine_surface!(sim::Simulation{T}, min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
+                    not_only_paint_contacts::Bool = true,
+                    paint_contacts::Bool = true,
+                    update_other_fields::Bool = true) where {T <: SSDFloat}
+
+    old_grid = sim.electric_potential.grid
+    #Enforce lower bound of 1e-5
+    for d in 1:3
+        if length(old_grid.axes[d].ticks) != 1 && min_spacing[d] < T(1e-5)
+            @warn "min_spacing[$d] = $(min_spacing[d]) < 1e-5; uaing 1e-5m spacing."
+        end
+    end
+    min_spacing = ntuple(d -> length(old_grid.axes[d].ticks) == 1 ? T(0.0) : max(T(min_spacing[d]), T(1e-5)), 3)
+    
+    # Determine which intervals have surface points
+    surface_intervals = ntuple(d -> begin
+        n_int = length(old_grid.axes[d].ticks) - 1
+        map(i -> begin
+            slice = if d == 1
+                view(sim.point_types.data, i, :, :)
+            elseif d == 2
+                view(sim.point_types.data, :, i, :)
+            else
+                view(sim.point_types.data, :, :, i)
+            end
+            has_surface_points(slice)
+        end, 1:n_int)
+    end, 3)
+
+    # Refine axes
+    new_axes = ntuple(i -> _refine_axis_surface(old_grid.axes[i], surface_intervals[i], min_spacing[i]), 3)
+    new_grid = typeof(old_grid)(new_axes)
+
+    # Interpolate potential onto new grid
+    closed_pot = _get_closed_potential(sim.electric_potential)
+    new_data = Array{T,3}(undef, size(new_grid))
+    only2d = size(closed_pot.data, 2) == 1
+    int = interpolate_closed_potential(closed_pot, Val(only2d))
+
+    if only2d
+        for i3 in axes(new_data,3), i1 in axes(new_data,1)
+            new_data[i1,1,i3] = int(new_grid.axes[1].ticks[i1], new_grid.axes[3].ticks[i3])
+        end
+    else
+        for i3 in axes(new_data,3), i2 in axes(new_data,2), i1 in axes(new_data,1)
+            new_data[i1,i2,i3] = int(new_grid.axes[1].ticks[i1],
+                                      new_grid.axes[2].ticks[i2],
+                                      new_grid.axes[3].ticks[i3])
+        end
+    end
+
+    # Update electric potential in simulation
+    sim.electric_potential = _convert_to_original_potential(sim.electric_potential, new_data, new_grid)
+    
+    # Update dependent fields
+    if update_other_fields
+        
+        pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
+                                        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
+        sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
+        sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
+        sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
+        sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs),
+                                        get_extended_midpoints_grid(sim.electric_potential.grid))
+        sim.point_types = PointTypes(PointTypeArray(pcs), sim.electric_potential.grid)
+    end
+
+    return nothing
+end
+
+
 
 """
     compute_min_tick_distance(grid)
@@ -899,6 +986,15 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         else
             sor_consts = T.(sor_consts)
         end
+        has_surface_model = isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
+        if has_surface_model && (length(refinement_limits) < 3 || last(refinement_limits) > 0.05)
+            @warn """Surface model detected:
+                - Number of refinement steps: $(length(refinement_limits))
+                - Last refinement: $(last(refinement_limits))
+                        Surface refinement requires at least 3 refinement steps and the last refinement ≤ 0.05."""
+            refinement_limits = [0.2, 0.1, 0.05]
+            @warn """Falling back to default refinement_limits = $(refinement_limits)"""
+        end
       
         new_min_tick_distance::NTuple{3,T} = begin
             if ismissing(min_tick_distance)
@@ -978,6 +1074,9 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                     device_array_type = device_array_type,
                                     use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
                                     sor_consts = sor_consts )
+
+
+            
         else
             apply_initial_state!(sim, potential_type, contact_id, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
             update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
@@ -1003,6 +1102,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 else
                     abs.(ref_limits .* bias_voltage)
                 end
+                
                 refine!(sim, ElectricPotential, max_diffs, new_min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
@@ -1015,6 +1115,26 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = is_last_ref ? T(1) : sor_consts )
+                
+                if has_surface_model && iref==3 
+                    mark_bulk_bits!(sim.point_types.data)
+                    mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
+                    mark_inactivelayer_bits!(sim.point_types.data)
+                    verbose && println("Surface Refinement")
+                    # Maximum spacing between (refined) surface ticks (if min_spacing = 1e-4m, only surface intervals wider than 0.1mm get new ticks)
+                    if sim.spacing_surface_refinement !== nothing
+                        refine_surface!(sim, sim.spacing_surface_refinement; update_other_fields=true)
+                    else
+                        refine_surface!(sim; update_other_fields=true)
+                    end
+                    update_till_convergence!( sim, potential_type, convergence_limit,
+                                              n_iterations_between_checks = n_iterations_between_checks,
+                                              max_n_iterations = max_n_iterations,
+                                              depletion_handling = depletion_handling,
+                                              device_array_type = device_array_type,
+                                              use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid),
+                                              max_nthreads[1], CS) : max_nthreads[1], sor_consts = T(1) )
+                end
             else
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, new_min_tick_distance)
@@ -1057,7 +1177,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     if depletion_handling && isEP
         mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
         
-        if isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
+        if has_surface_model
             mark_inactivelayer_bits!(sim.point_types.data)
         end
     end
