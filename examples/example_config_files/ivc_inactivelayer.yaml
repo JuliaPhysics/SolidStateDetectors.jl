@@ -20,6 +20,7 @@ grid:
       boundaries:
         left: inf
         right: inf
+  spacing_surface_refinement: [1e-4, 1e-4, 1e-4]
 medium: vacuum
 detectors:
 - semiconductor:
