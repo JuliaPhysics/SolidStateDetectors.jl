@@ -96,6 +96,7 @@ jobs:
           PYTHON: 'Conda'
       - uses: julia-actions/julia-docdeploy@v1
         env:
+          JULIA_NUM_THREADS: 4
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Needed due to https://github.com/JuliaDocs/Documenter.jl/issues/1177
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}

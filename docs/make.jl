@@ -35,7 +35,7 @@ makedocs(
             "Installation" => "man/installation.md",
             "Configuration Files" => "man/config_files.md",
             "Constructive Solid Geometry (CSG)" => "man/csg.md",
-            "Grids" => "man/Grids.md",
+            "Grids" => "man/grids.md",
             "Electric Potential" => "man/electric_potential.md",
             "Electric Field" => "man/electric_field.md",
             "Charge Drift" => "man/charge_drift.md",

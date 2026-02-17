@@ -24,6 +24,70 @@ via `:closed` or `:open` in the type of the interval.
 The ticks do not need to be evenly spaced, allowing for an adaptive refinement of the grid
 in areas where the gradient of the electric potential is large.
 
+
+## Grid Boundary Conditions
+
+In the potential calculation, the potential value at a given grid point is determined by the potential values of its nearest neighbors.
+At the boundaries of the world, there are no nearest neighbors.
+This requires to choose boundary conditions on how to continue the potential beyond the volume of the world.
+
+````@example grid
+using Plots, LaTeXStrings #hide
+xs = [1,2,3,4,5,6,7,8,9] #hide
+ys = [0.38,0.46,0.48,0.44,0.35,0.28,0.2,0.15,0.1] #hide
+nothing #hide
+````
+
+In order to explain the different boundary conditions, assume a `DiscreteAxis` with `N` ticks, `x1` to `xN`, where `x1` and `xN` define the boundary of the world in that dimension. In this example, `N = 9`:
+````@example grid
+vline([extrema(xs)...], color = :black, ls = :dash, label = "") #hide
+vline!([extrema(xs) .+ (-1,1)...], color = :darkgray, ls = :dash, label = "") #hide
+scatter!(xs, ys, label = "Potential", color = 1) #hide
+P = plot!(size = (600,200), xlims = (-0.5,10.5), ylims = (0,0.55), xlabel = "Grid ticks", ylabel = "Potential values", xticks = (1:9, latexstring.("x\$_".*string.(1:9).*"\$")), xtickfontsize = 12, margin = 5Plots.mm, ygrid = false, legend = (0.73,1)) #hide
+````
+
+For the potential calculation, extended ticks are added left and right of the outermost grid ticks. 
+In this example, they are labeled as `x0` and `xN+1`.
+The choice of boundary condition influences which potential values these virtual extended ticks acquire in the potential calculation.
+
+`periodic`: This assumes the potential to be periodic beyond the world volume, i.e. `ϕ(x0) = ϕ(xN)` and `ϕ(xN+1) = ϕ(x1)`:
+````@example grid
+A = deepcopy(P) #hide
+plot!(A, xticks = (0:10, [L"\"x$_0$\""; latexstring.("x\$_".*string.(1:9).*"\$"); L"\"x$_{10}$\""])) #hide
+plot!(A, [extrema(xs) .+ (0,1)...], [ys[begin],ys[begin]], arrow = arrow(:both, :closed), label = "", color = :orange) #hide
+plot!(A, [reverse(extrema(xs)) .- (0,1)...], [ys[end],ys[end]], arrow = arrow(:both, :closed), label = "", color = :orange) #hide
+scatter!(A, [0,length(xs)+1], [ys[end], ys[begin]], label = "periodic", color = :orange) #hide
+````
+
+`reflecting`: This assumes mirror-symmetry in the potential with respect to the world boundary, i.e. `ϕ(x0) = ϕ(x2)` and `ϕ(xN+1) = ϕ(xN-1)`:
+````@example grid
+A = deepcopy(P) #hide
+plot!(A, xticks = (0:10, [L"\"x$_0$\""; latexstring.("x\$_".*string.(1:9).*"\$"); L"\"x$_{10}$\""])) #hide
+plot!(A, [minimum(xs) .+ (-1,1)...], [ys[begin+1],ys[begin+1]], arrow = arrow(:both, :closed), label = "", color = :purple) #hide
+plot!(A, [maximum(xs) .+ (-1,1)...], [ys[end-1],ys[end-1]], arrow = arrow(:both, :closed), label = "", color = :purple) #hide
+scatter!([0,length(xs)+1], [ys[begin+1], ys[end-1]], label = "reflecting", color = :purple) #hide
+````
+
+`fixed` (or `fix`): This set the potential beyond the world volume to the potential at the world boundary, i.e. `ϕ(x0) = ϕ(x1)` and `ϕ(xN+1) = ϕ(xN)`:
+````@example grid
+A = deepcopy(P) #hide
+plot!(A, xticks = (0:10, [L"\"x$_0$\""; latexstring.("x\$_".*string.(1:9).*"\$"); L"\"x$_{10}$\""])) #hide
+plot!(A, [minimum(xs) .+ (-1,0)...], [ys[begin],ys[begin]], arrow = arrow(:both, :closed), label = "", color = :green) #hide
+plot!(A, [maximum(xs) .+ (1,0)...], [ys[end],ys[end]], arrow = arrow(:both, :closed), label = "", color = :green) #hide
+scatter!(A, [0,length(xs)+1], [ys[begin], ys[end]], label = "fix / fixed", color = :green) #hide
+````
+
+`infinite` (or `inf`): Assumes the potential to follow a relationship beyond the world volume, where the ratio between neighboring ticks is expected to stay constant, i.e. `ϕ(x0)/ϕ(x1) = ϕ(x1)/ϕ(x2)` and `ϕ(xN+1)/ϕ(xN) = ϕ(xN)/ϕ(xN-1)`:
+````@example grid
+A = deepcopy(P) #hide
+plot!(A, xticks = (0:10, [L"\"x$_0$\""; latexstring.("x\$_".*string.(1:9).*"\$"); L"\"x$_{10}$\""])) #hide
+plot!(A, -1:0.01:11, x -> ys[end] * (ys[end]/ys[end-1])^(x - xs[end]), color = :red, ls = :dash, label = "") #hide
+plot!(A, -1:0.01:11, x -> ys[begin] * (ys[begin+1]/ys[begin])^(x - xs[begin]), color = :red, ls = :dash, label = "") #hide
+scatter!(A, [0,length(xs)+1], [ys[begin]^2/ys[begin+1], ys[end]^2 / ys[end-1]], label = "inf / infinite", color = :red) #hide
+````
+
+
+
 ## Grid Initialization
 
 The grid can be specified in the configuration files, see [Grid](@ref), of `sim::Simulation`.

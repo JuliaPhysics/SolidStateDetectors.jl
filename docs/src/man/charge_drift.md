@@ -301,7 +301,7 @@ end
 The second step would be to define a method for `_calculate_signal`, which returns a charge signal based on a given charge drift `path` and its `pathtimestamps`, the `charge` value of the charge cloud, the interpolated weighting potential `wpot` and the `point_types` to infer the coordinate system type `S` (`Cartesian` or `Cylindrical`):
 
 ```julia
-using SolidStateDetectors: CoordinateSystemType, SSDFloat
+using SolidStateDetectors: SSDFloat
 using Interpolations
 function SolidStateDetectors._calculate_signal( 
         ctm::CustomChargeTrappingModel{T},

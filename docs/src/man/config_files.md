@@ -146,14 +146,17 @@ In the example above, the `x`, `y` and `z` axes range from `-40` to `40` units.
 
 #### Grid boundary handling
 
-Symmetries of the world can be used to reduce the calculation only to a fraction of the world. These can be passed as `boundaries` to the different `axes`.
+Symmetries of the world can be used to reduce the calculation only to a fraction of the world.
+These can be passed as `boundaries` to the different `axes`.
+For details on the different boundary conditions see [Grid Boundary Conditions](@ref).
 
 For linear axes (`x`, `y`, `z`), the `boundaries` can be chosen `infinite`, `periodic`, `reflecting`, or `fixed`.
 
 For radial axes (`r`), the boundaries can be chosen `r0` for the left boundary and `infinite`, `reflecting` or `fixed` on the right boundary.
 If no boundaries are given, the default is `r0` for the left boundary and `infinite` for the right boundary.
 
-For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. If no boundaries are given, the default is `periodic` for both edges.
+For angular axes (`phi`), the boundaries can be chosen `reflecting` or `periodic`. 
+If no boundaries are given, the default is `periodic` for both edges.
 
 All $\varphi$-symmetric configurations can be calculated in 2D if `phi` ranges from `0` to `0` with `periodic` boundary handling, i.e.
 ```yaml
@@ -168,7 +171,7 @@ grid:
    z: #...
 ``` 
 
-All $\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, i.e. for a `120°`-periodic system
+All $\varphi$-periodic configurations can be calculated on the fraction of the full $2\pi$ interval, e.g. for a `120°`-periodic system
 ```yaml
 grid:
  coordinates: cylindrical
@@ -181,7 +184,7 @@ grid:
    z: #...
 ``` 
 
-Different boundary handling can be chosen for the `left` and `right` end of the interval, i.e. for a `60°`-periodic system with mirror symmetry at `30°`
+Different boundary handling can be chosen for the `left` and `right` end of the interval, e.g. for a `60°`-periodic system with mirror symmetry at `30°`
 ```yaml
 grid:
  coordinates: cylindrical
@@ -220,6 +223,9 @@ detectors:
       - # Contact 1
       - # Contact 2
 ```
+
+!!! note 
+    Currently, SolidStateDetectors.jl supports only defining one detector in the `detectors` array.
 
 #### Semiconductor
 
@@ -341,22 +347,22 @@ When including a separate file, the user has to add its file path in the main co
 
 Including one file:
 ```yaml
-include : "file_to_be_included.yaml"
+include: file_to_be_included.yaml
 ```
 
 Including a list of files:
 ```yaml
 include: 
-  - "first_file_to_be_included.yaml"
-  - "second_file_to_be_included.yaml"
+  - first_file_to_be_included.yaml
+  - second_file_to_be_included.yaml
 ```
 
 Add files to an array in the main configuration file
 ```yaml
 detectors:
-  - include: "first_file_in_array.yaml"
-  - include: "second_file_in_array.yaml"
-  - include: "thrid_file_in_array.yaml"
+  - include: first_file_in_array.yaml
+  - include: second_file_in_array.yaml
+  - include: thrid_file_in_array.yaml
 ```
 
 A fully working example can be seen in `SSD_examples[:InvertedCoaxInCryostat]`. Here, the channels, the geometry and other parts are split into separate configuration files.

@@ -12,7 +12,7 @@ Pages = ["man/config_files.md"]
 Pages = ["man/csg.md"]
 ```
 ```@contents
-Pages = ["man/Grids.md"]
+Pages = ["man/grids.md"]
 ```
 ```@contents
 Pages = ["man/electric_potential.md"]

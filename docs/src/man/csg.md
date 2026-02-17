@@ -1,7 +1,7 @@
 # Constructive Solid Geometry (CSG)
 
 All objects are defined through Constructive Solid Geometry (CSG),
-where complex geometries can be constructed by combining simple volume primitives (e.g. `Tube`) through [Boolean operators](@ref) and transformed using [Transformations](@ref). 
+where complex geometries can be constructed by combining simple volume primitives (e.g. `Tube`) through [Boolean Operators](@ref) and transformed using [Transformations](@ref). 
 
 The primitives which can be used are shown under [Volume Primitives](@ref) together with how they
 can be specified in the configuration files.
@@ -134,7 +134,7 @@ plot(prism)
 ````
 
 
-## Boolean operators
+## Boolean Operators
 
 The Boolean operators are `union`, `difference` and `intersection`:
 
