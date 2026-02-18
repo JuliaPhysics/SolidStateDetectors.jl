@@ -41,7 +41,7 @@ vline!([pn_r], lw = 2, ls = :dash, color = :darkred, label = "PN junction bounda
 #md savefig("tutorial_imp_dl.svg"); nothing # hide
 #md # [![tutorial_imp_dl](tutorial_imp_dl.svg)](tutorial_imp_dl.pdf)
 
-# ## Dispaly the mobility curve
+# ## Display the mobility curve
 using SolidStateDetectors: Electron, Hole
 cdm = sim.detector.semiconductor.charge_drift_model
 depth_list = 0u"mm":0.01u"mm":(det_r-pn_r)
