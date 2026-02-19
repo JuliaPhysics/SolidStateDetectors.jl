@@ -179,22 +179,44 @@ _extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl
     return any(is_in_inactive_layer, slice)
 end
 
-function _refine_axis_surface(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, surface_intervals::AbstractVector{Bool}, min_spacing::T) where {T}
+function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, surface_intervals::AbstractVector{Bool}, min_spacing::T;
+    extra_before::Int = 5,  # intervals to refine before first surface interval
+    extra_after::Int = 5    # intervals to refine after last surface interval
+) where {T}
 
     old_ticks = ax.ticks
     n_int = length(surface_intervals)
 
-    # Merge consecutive surface intervals
+    # Find first and last surface intervals
+    first_surface = findfirst(surface_intervals)
+    last_surface  = findlast(surface_intervals)
+
+    if first_surface === nothing || last_surface === nothing
+        return ax # Nothing to refine
+    end
+
+    # Create flags for all intervals to refine
+    refine_flags = copy(surface_intervals)
+
+    # Add extra intervals before first surface interval
+    start_idx = max(first_surface - extra_before, 1)
+    refine_flags[start_idx:first_surface-1] .= true
+
+    # Add extra intervals after last surface interval
+    end_idx = min(last_surface + extra_after, n_int)
+    refine_flags[last_surface+1:end_idx] .= true
+
+    # Merge consecutive intervals to refine
     merged = Vector{UnitRange{Int}}()
     i = 1
     while i <= n_int
-        if surface_intervals[i]
+        if refine_flags[i]
             j = i
-            while j < n_int && surface_intervals[j+1]
+            while j < n_int && refine_flags[j+1]
                 j += 1
             end
             push!(merged, i:j)
-            i = j+1
+            i = j + 1
         else
             i += 1
         end
@@ -211,8 +233,8 @@ function _refine_axis_surface(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T
         end
     end
 
-    sub_widths = [(old_ticks[i+1]-old_ticks[i]) / (ns[i]+1) for i in 1:n_int]
-
+    # Subdivide intervals
+    sub_widths = [(old_ticks[i+1] - old_ticks[i]) / (ns[i]+1) for i in 1:n_int]
     ticks = Vector{T}(undef, length(old_ticks) + sum(ns))
     i_tick = 1
     for j in 1:n_int
@@ -224,24 +246,6 @@ function _refine_axis_surface(ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T
         i_tick += 1
     end
     ticks[end] = old_ticks[end]
+
     return typeof(ax)(ax.interval, ticks)
-end
-
-function _create_refined_grid_surface(p::ElectricPotential, point_types::Array{PointType,3}, min_spacing::NTuple{3,T}) where T
-
-    sz = size(point_types)
-    surface_intervals = ntuple(d -> falses(sz[d]-1), 3)
-
-    for i in 1:sz[1]-1
-        surface_intervals[1][i] = has_surface_points(point_types[i:i+1, :, :])
-    end
-    for i in 1:sz[2]-1
-        surface_intervals[2][i] = has_surface_points(point_types[:, i:i+1, :])
-    end
-    for i in 1:sz[3]-1
-        surface_intervals[3][i] = has_surface_points(point_types[:, :, i:i+1])
-    end
-    new_axes = ntuple(i -> _refine_axis_surface(p.grid.axes[i], surface_intervals[i], min_spacing[i]), 3)
-
-    return typeof(p.grid)(new_axes)
 end
