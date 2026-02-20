@@ -59,7 +59,7 @@ end
 function distance_to_line(point::AbstractCoordinatePoint{T}, edge::Edge{T})::T where {T}
     return distance(CartesianPoint(point), edge)
     #=
-    # ToDo: how is distance_to_line different from distance ? Can this be combined ?
+    # TODO: how is distance_to_line different from distance ? Can this be combined ?
     point = CartesianPoint(point)
     v12 = normalize(CartesianVector{T}(edge.b - edge.a))
     v_point_1 = CartesianVector{T}(point - edge.a)

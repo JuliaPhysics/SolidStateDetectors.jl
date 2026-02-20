@@ -10,7 +10,7 @@ using Pkg; pkg"add SolidStateDetectors"
 
 ## Visualization / Plotting (Optional)
 
-This package provides serveral [plot recipes](https://docs.juliaplots.org/latest/recipes/) for different outputs for the plotting package [Plots.jl](https://github.com/JuliaPlots/Plots.jl/).
+This package provides several [plot recipes](https://docs.juliaplots.org/latest/recipes/) for different outputs for the plotting package [Plots.jl](https://github.com/JuliaPlots/Plots.jl/).
 
 In order to use these also install the [Plots.jl](https://github.com/JuliaPlots/Plots.jl/) package via
 
@@ -29,7 +29,7 @@ By default, `gr` is loaded when importing `Plots`.
 
 For more information about the plot recipes of this package look up the [Plotting](@ref) section.
 
-This documentation was build with
+This documentation was built with
 ```@example
 using Pkg, Plots # hide
 pkgversion(m::Module) = Pkg.TOML.parsefile(joinpath(dirname(string(first(methods(m.eval)).file)), "..", "Project.toml"))["version"] # hide

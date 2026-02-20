@@ -2,8 +2,8 @@
     struct ImpurityScale{T, N, S, AT} <: AbstractArray{T, N}
         
 Impurity scalar field of the simulation.
-It is kinda an alpha map for the impurity density of semiconductors.
-It can takes values between `0` and `1`:
+It is kind of an alpha map for the impurity density of semiconductors.
+It can take values between `0` and `1`:
  * `1`: The impurity density has its full value. For grid points in depleted region of the semiconductor. 
  * `]0,1[`: The impurity density is scaled down but not zero. For grid points at the edge of the depleted region which are partially depleted.
  * `0`: The impurity density is set to `0`. For grid points in undepleted regions of the semiconductor.

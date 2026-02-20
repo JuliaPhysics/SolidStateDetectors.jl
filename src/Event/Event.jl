@@ -300,7 +300,7 @@ A waveform of length `total_waveform_length` is returned.
     add_baseline_and_extend_tail(wv, 1000, 5000)   
 
 !!! note 
-    This functions assumes that the time steps between the samples of the input waveform `wv` are the same. Thus, that the input waveform is
+    This function assumes that the time steps between the samples of the input waveform `wv` are the same. Thus, that the input waveform is
     sampled with a fixed frequency. 
 """
 function add_baseline_and_extend_tail(wv::RadiationDetectorSignals.RDWaveform{T,U,TV,UV}, n_baseline_samples::Int, total_waveform_length::Int) where {T,U,TV,UV}

@@ -25,7 +25,7 @@ plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm")
 #md savefig("tutorial_det_dl.svg"); nothing # hide
 #md # [![tutorial_det_dl](tutorial_det_dl.svg)](tutorial_det_dl.pdf)
 
-# > In the configuration file shown above, the position of the PN junction boundary `pn_r` was calculated as the position  where the density is zero.
+# > In the configuration file shown above, the position of the PN junction boundary `pn_r` was calculated as the position where the density is zero.
 
 # ## Display the impurity profile defined
 

@@ -26,7 +26,7 @@ plot(
 #md savefig("tutorial_semiconductor.svg"); nothing # hide
 #md # [![tutorial_semiconductor](tutorial_semiconductor.svg)](tutorial_semiconductor.pdf)
 
-# One can also have a look at how the initial conditions look like on the grid (its starts with a very coarse grid):
+# One can also have a look at how the initial conditions look like on the grid (it starts with a very coarse grid):
 
 apply_initial_state!(sim, ElectricPotential) # optional
 plot(
@@ -126,7 +126,7 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 
 # ## Simulation of charge drifts
 
-# Any charge drift model can be used for the calculation of the electric field. If no model is explicitely given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
+# Any charge drift model can be used for the calculation of the electric field. If no model is explicitly given, the `ElectricFieldChargeDriftModel` is used. Other configurations are saved in their configuration files and can be found under:
 
 # `<package_directory>/examples/example_config_files/ADLChargeDriftModel/<config_filename>.yaml.`
 
@@ -135,7 +135,7 @@ plot_electric_fieldlines!(sim, full_det = true, φ = 0.0)
 charge_drift_model = ADLChargeDriftModel()
 sim.detector = SolidStateDetector(sim.detector, charge_drift_model)
 
-# Now, let's create an "random" multi-site event:
+# Now, let's create a "random" multi-site event:
 
 starting_positions = [ CylindricalPoint{T}( 0.020, deg2rad(10), 0.015 ),
                        CylindricalPoint{T}( 0.015, deg2rad(20), 0.045 ),
@@ -197,7 +197,7 @@ p_pc_signal = plot( evt.waveforms[1], lw = 1.5, xlims = (0, 1100), xlabel = "Tim
 #md savefig("tutorial_waveforms.svg"); nothing # hide
 #md # [![tutorial_waveforms](tutorial_waveforms.svg)](tutorial_waveforms.pdf)
 
-# SolidStateDetectors.jl also allows to separate the observed charge signal into the charge induced by the electrons and the charge induced by the holes.
+# SolidStateDetectors.jl also allows separating the observed charge signal into the charge induced by the electrons and the charge induced by the holes.
 
 contact_id = 1
 simulate!(evt, sim, signal_unit = u"keV")

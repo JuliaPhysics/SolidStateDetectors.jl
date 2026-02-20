@@ -17,7 +17,7 @@ end
 # Unitful uses the `*` and `/` operators to combine values with units. But mathematically that's really not an algebraic
 # product (not defined for affine points), but a cartesian product, so supporting this should be fine:
 Base.:(*)(pt::AbstractCartesianPoint{<:Real}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) * u, get_y(pt) * u, get_z(pt) * u)
-# ToDo: Uncomment once units in points are supported
+# TODO: Uncomment once units in points are supported
 #=
 Base.:(/)(pt::AbstractCartesianPoint{<:Quantity{<:Real, Unitful.𝐋}}, u::Unitful.Units{<:Any,Unitful.𝐋}) = CartesianPoint(get_x(pt) / u, get_y(pt) / u, get_z(pt) / u)
 
@@ -75,7 +75,7 @@ end
 
 #Type promotion happens here
 function CartesianPoint(x::TX, y::TY, z::TZ) where {TX<:Real,TY<:Real,TZ<:Real}
-    # ToDo: Simplify this:
+    # TODO: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TX,TY,TZ))
     T = float(promote_type(eltypes...))
     CartesianPoint{T}(T(x),T(y),T(z))
@@ -85,7 +85,7 @@ CartesianPoint(; x = 0, y = 0, z = 0) = CartesianPoint(x, y, z)
 
 CartesianPoint{T}(;x = 0, y = 0, z = 0) where {T} = CartesianPoint{T}(T(x),T(y),T(z))
 
-# ToDo: Remove this, if possible
+# TODO: Remove this, if possible
 CartesianPoint{T}(v::AbstractVector) where {T} = cartesian_zero + v
 
 CartesianPoint{T}(pt::CartesianPoint{T}) where {T} = pt
@@ -214,11 +214,11 @@ end
 @inline Base.iszero(::CartesianZero) = true
 
 
-# ToDo: Revert this once we support units internally.
+# TODO: Revert this once we support units internally.
 Base.:(*)(::CartesianZero{T}, u::Unitful.Units{<:Any,Unitful.𝐋}) where {T<:Real} = CartesianZero{Quantity{T, Unitful.𝐋, typeof(u)}}()
 Base.:(*)(z::CartesianZero, u::Unitful.Quantity) = z
 
-# ToDo: Uncomment once units in points are supported
+# TODO: Uncomment once units in points are supported
 #=
 function Unitful.uconvert(u::Unitful.Units{T,Unitful.NoDims}, pt::CartesianZero{<:Quantity{U, Unitful.NoDims}}) where {T,U}
     CartesianZero{promote_type(T,U)}()
@@ -280,7 +280,7 @@ function CylindricalPoint(r, φ, z)
 end
 
 function CylindricalPoint(r::TR, φ::TP, z::TZ) where {TR<:Real,TP<:Real,TZ<:Real}
-    # ToDo: Simplify this:
+    # TODO: Simplify this:
     eltypes = _csg_get_promoted_eltype.((TR,TP,TZ))
     T = float(promote_type(eltypes...))
     CylindricalPoint{T}(T(r),T(φ),T(z))

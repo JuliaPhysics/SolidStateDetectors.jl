@@ -2,7 +2,6 @@ const Transformations{T} = NamedTuple{(:rotation, :translation), Tuple{SMatrix{3
 # Transformation rule:
 #   1. Rotate
 #   2. Translate
-# Not sure yet if Rotations will always be of type SMatrix{3, 3, T, 9} -> Any
 
 # Transformations{T}() where {T} = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(CartesianVector{T}))
 
@@ -12,11 +11,11 @@ function rotate(p::P, r::AbstractMatrix) where {P <: AbstractPrimitive}
     # Compose rotation with the primitive's local frame:
     P(p, origin = cartesian_zero + r * (p.origin - cartesian_zero), rotation = r * p.rotation)
 end
-# ToDo: Make this obsolete and then remove it:
+# TODO: Make this obsolete and then remove it:
 (*)(r::AbstractMatrix, p::AbstractPrimitive) = rotate(p, r)
 
 translate(p::P, v::CartesianVector) where {P <: AbstractPrimitive} = P(p, origin = p.origin + v, rotation = p.rotation)
-# ToDo: Make this obsolete and then remove it:
+# TODO: Make this obsolete and then remove it:
 (+)(p::AbstractPrimitive, v::CartesianVector) = translate(p, v)
 
 transform(g::AbstractPrimitive, t::Transformations) =
