@@ -174,3 +174,78 @@ end
 
 _extend_refinement_limits(rl::Real) = (rl, rl, rl )
 _extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl
+
+@inline function has_surface_points(slice::AbstractArray{PointType})::Bool
+    return any(is_in_inactive_layer, slice)
+end
+
+function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, surface_intervals::AbstractVector{Bool}, min_spacing::T;
+    extra_before::Int = 5,  # intervals to refine before first surface interval
+    extra_after::Int = 5    # intervals to refine after last surface interval
+) where {T}
+
+    old_ticks = ax.ticks
+    n_int = length(surface_intervals)
+
+    # Find first and last surface intervals
+    first_surface = findfirst(surface_intervals)
+    last_surface  = findlast(surface_intervals)
+
+    if first_surface === nothing || last_surface === nothing
+        return ax # Nothing to refine
+    end
+
+    # Create flags for all intervals to refine
+    refine_flags = copy(surface_intervals)
+
+    # Add extra intervals before first surface interval
+    start_idx = max(first_surface - extra_before, 1)
+    refine_flags[start_idx:first_surface-1] .= true
+
+    # Add extra intervals after last surface interval
+    end_idx = min(last_surface + extra_after, n_int)
+    refine_flags[last_surface+1:end_idx] .= true
+
+    # Merge consecutive intervals to refine
+    merged = Vector{UnitRange{Int}}()
+    i = 1
+    while i <= n_int
+        if refine_flags[i]
+            j = i
+            while j < n_int && refine_flags[j+1]
+                j += 1
+            end
+            push!(merged, i:j)
+            i = j + 1
+        else
+            i += 1
+        end
+    end
+
+    # Compute number of points to add per interval
+    ns = zeros(Int, n_int)
+    for r in merged
+        for i in r
+            Δ = old_ticks[i+1] - old_ticks[i]
+            if Δ > min_spacing
+                ns[i] = ceil(Int, Δ/min_spacing) - 1
+            end
+        end
+    end
+
+    # Subdivide intervals
+    sub_widths = [(old_ticks[i+1] - old_ticks[i]) / (ns[i]+1) for i in 1:n_int]
+    ticks = Vector{T}(undef, length(old_ticks) + sum(ns))
+    i_tick = 1
+    for j in 1:n_int
+        ticks[i_tick] = old_ticks[j]
+        for k in 1:ns[j]
+            i_tick += 1
+            ticks[i_tick] = old_ticks[j] + k*sub_widths[j]
+        end
+        i_tick += 1
+    end
+    ticks[end] = old_ticks[end]
+
+    return typeof(ax)(ax.interval, ticks)
+end
