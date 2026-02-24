@@ -10,7 +10,7 @@ grid:
     r:
       to: 9
       boundaries: inf
-    y:
+    phi:
       from: 0
       to: 0
       boundaries: periodic
