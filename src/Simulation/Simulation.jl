@@ -38,7 +38,6 @@ mutable struct Simulation{T <: SSDFloat, CS <: AbstractCoordinateSystem} <: Abst
     electric_potential::Union{ElectricPotential{T}, Missing}
     weighting_potentials::Vector{Any}
     electric_field::Union{ElectricField{T}, Missing}
-    spacing_surface_refinement::Union{NTuple{3,T}, Nothing}
 end
 
 function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
@@ -55,8 +54,7 @@ function Simulation{T,CS}() where {T <: SSDFloat, CS <: AbstractCoordinateSystem
         missing,
         missing,
         [missing],
-        missing,
-        nothing
+        missing
     )
 end
 
@@ -115,7 +113,6 @@ function Simulation(nt::NamedTuple)
     else
         [missing for contact in sim.detector.contacts]
     end
-    sim.spacing_surface_refinement = get(nt, :spacing_surface_refinement, nothing)
     return sim
 end
 Base.convert(T::Type{Simulation}, x::NamedTuple) = T(x)
@@ -188,12 +185,6 @@ function Simulation{T}(dict::AbstractDict)::Simulation{T} where {T <: SSDFloat}
         end
     end
     sim.weighting_potentials = Missing[ missing for i in 1:length(sim.detector.contacts)]
-    sim.spacing_surface_refinement = if haskey(dict, "grid") && isa(dict["grid"], AbstractDict) &&
-                                       haskey(dict["grid"], "spacing_surface_refinement")
-        ntuple(i -> T(dict["grid"]["spacing_surface_refinement"][i]), 3)
-    else
-        nothing
-    end
     return sim
 end
 
@@ -778,8 +769,8 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
-        pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
-                                        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
+        pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data;
+                                        not_only_paint_contacts, paint_contacts)
 
         
         sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
@@ -824,7 +815,7 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
 end
 
 """
-refine_surface!(sim::Simulation{T};
+        refine_surface!(sim::Simulation{T};
                     min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4)),
                     not_only_paint_contacts::Bool = true,
                     paint_contacts::Bool = true,
@@ -846,13 +837,13 @@ Special behaviour:
 
 # Arguments
 - `sim::Simulation{T}`: The simulation object containing the electric potential to refine.
-- `min_spacing::NTuple{3,T}`: Minimum allowed spacing in the surface after refinement. Default is `(1e-4, 1e-4, 1e-4)m`.
+- `min_spacing::NTuple{3,T}`: Minimum allowed spacing in the surface after refinement.
 """
 
-function refine_surface!(sim::Simulation{T}, min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
+function refine_surface!(sim::Simulation{T,CS}, min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
                          not_only_paint_contacts::Bool = true,
                          paint_contacts::Bool = true,
-                         update_other_fields::Bool = true) where {T <: SSDFloat}
+                         update_other_fields::Bool = true) where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     
     old_grid = sim.electric_potential.grid
 
@@ -888,7 +879,7 @@ function refine_surface!(sim::Simulation{T}, min_spacing::NTuple{3,T} = (T(1e-4)
     end, 3)
 
     # Refine axes: skip phi-axis if Cylindrical
-    is_cyl = old_grid isa Grid{<:Any, 3, Cylindrical}
+    is_cyl = CS === Cylindrical
     new_axes = ntuple(i -> begin
                           if is_cyl && i == 2
                               # Keep φ-axis type but close it for interpolation
@@ -897,13 +888,9 @@ function refine_surface!(sim::Simulation{T}, min_spacing::NTuple{3,T} = (T(1e-4)
                               _refine_axis_surface( old_grid.axes[i], surface_intervals[i], min_spacing[i],)
                           end
                       end, 3)
-    
-    if is_cyl
-        new_grid = Grid{T,3,Cylindrical}((new_axes[1], new_axes[2], new_axes[3]))
-    else
-        new_grid = Grid{T,3,Cartesian}((new_axes[1], new_axes[2], new_axes[3]))
-    end
 
+    new_grid = Grid{T, 3, CS}((new_axes[1], new_axes[2], new_axes[3]))
+    
     # Interpolate potential onto new grid
     closed_pot = _get_closed_potential(sim.electric_potential)
     new_data = Array{T,3}(undef, size(new_grid))
@@ -930,8 +917,8 @@ function refine_surface!(sim::Simulation{T}, min_spacing::NTuple{3,T} = (T(1e-4)
     # Update dependent fields
     if update_other_fields
 
-        pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data,
-                                        not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts)
+        pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data;
+                                        not_only_paint_contacts, paint_contacts)
         sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
@@ -1033,8 +1020,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         end
         has_surface_model = isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
 
-        if has_surface_model    
-            if sim.spacing_surface_refinement === nothing
+        if has_surface_model
+            if isnothing(sim.world.spacing_surface_refinement)
                 @warn """Surface model detected but `spacing_surface_refinement` is not defined.
                          Surface refinement will not be performed."""
             else
@@ -1171,13 +1158,13 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = is_last_ref ? T(1) : sor_consts )
                 
-                if has_surface_model && iref==3 && sim.spacing_surface_refinement !== nothing
+                if has_surface_model && iref==3 && !isnothing(sim.world.spacing_surface_refinement)
                     mark_bulk_bits!(sim.point_types.data)
                     mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
                     mark_inactivelayer_bits!(sim.point_types.data)
                     verbose && println("Surface Refinement")
                     # Maximum spacing between (refined) surface ticks (if min_spacing = 1e-4m, only surface intervals wider than 0.1mm get new ticks)
-                    refine_surface!(sim, sim.spacing_surface_refinement; update_other_fields=true)
+                    refine_surface!(sim, sim.world.spacing_surface_refinement; update_other_fields=true)
 
                     update_till_convergence!( sim, potential_type, convergence_limit,
                                               n_iterations_between_checks = n_iterations_between_checks,
