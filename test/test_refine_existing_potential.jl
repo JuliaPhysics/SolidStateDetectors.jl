@@ -134,8 +134,10 @@ end
     
     # Wrong refinement limits
     begin
-        sim_cyl = @test_nowarn Simulation{T}(SSD_examples[:IVCIlayer])
-        sim_cyl.spacing_surface_refinement = (1e-3, 1e-3, 1e-3)
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
+        config_dict["grid"]["spacing_surface_refinement"] = [1e-3, 1e-3, 1e-3]
+        sim_cyl = @test_nowarn Simulation{T}(config_dict)
+
         # Test normal behaviour Cylindrical
         timed_calculate_electric_potential!(sim_cyl, verbose = false, depletion_handling = true)
         grid_ax1_cyl = length(sim_cyl.electric_potential.grid[1])
@@ -155,7 +157,6 @@ end
         end
 
         # Test normal behaviour Cartesian
-        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
         config_dict["grid"]["coordinates"] = "cartesian"
         config_dict["grid"]["axes"]["x"] = Dict(
             "from" => "-40",
@@ -173,7 +174,6 @@ end
             "boundaries"   => "inf"
         )
         sim_cart = @test_nowarn Simulation{T}(config_dict)
-        sim_cart.spacing_surface_refinement = (1e-3, 1e-3, 1e-3)
         timed_calculate_electric_potential!(sim_cart, verbose = false, depletion_handling = true)
         grid_ax1_cart = length(sim_cart.electric_potential.grid[1])
         grid_ax2_cart = length(sim_cart.electric_potential.grid[2])
@@ -188,9 +188,9 @@ end
     end
     
     # Spacing out of bounds
-    sim = @test_nowarn Simulation{T}(SSD_examples[:IVCIlayer])
-    large_spacing = (1e-2, 1e-2, 1e-2)
-    sim.spacing_surface_refinement = large_spacing
+    config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
+    config_dict["grid"]["spacing_surface_refinement"] = [1e-2, 1e-2, 1e-2]
+    sim = @test_nowarn Simulation{T}(config_dict)
     
     @test_logs (
         (:warn, r"out of bounds"s)
@@ -208,13 +208,16 @@ end
         )
         
         sim_phi = @test_nowarn Simulation{T}(config_dict)
-        sim_phi.spacing_surface_refinement = nothing
-        timed_calculate_electric_potential!(sim_phi, verbose = false, depletion_handling = true)
-        notref_phi_len = length(sim_phi.electric_potential.grid.axes[2].ticks)
+        
+        delete!(config_dict["grid"], "spacing_surface_refinement")
+        sim_phi_noref = @test_nowarn Simulation{T}(config_dict)
+        timed_calculate_electric_potential!(sim_phi_noref, verbose = false, depletion_handling = true)
+        notref_phi_len = length(sim_phi_noref.electric_potential.grid.axes[2].ticks)
 
-        sim_phi.spacing_surface_refinement = (1e-3, 1e-3, 1e-3)
-        timed_calculate_electric_potential!(sim_phi, verbose = false, depletion_handling = true)
-        ref_phi_len = length(sim_phi.electric_potential.grid.axes[2].ticks)
+        config_dict["grid"]["spacing_surface_refinement"] = [1e-3,1e-3,1e-3]
+        sim_phi_ref = @test_nowarn Simulation{T}(config_dict)
+        timed_calculate_electric_potential!(sim_phi_ref, verbose = false, depletion_handling = true)
+        ref_phi_len = length(sim_phi_ref.electric_potential.grid.axes[2].ticks)
         
         @test ref_phi_len == notref_phi_len
     end
