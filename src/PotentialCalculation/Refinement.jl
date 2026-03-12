@@ -191,9 +191,7 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
     first_surface = findfirst(surface_intervals)
     last_surface  = findlast(surface_intervals)
 
-    if first_surface === nothing || last_surface === nothing
-        return ax # Nothing to refine
-    end
+    (isnothing(first_surface) || isnothing(last_surface)) && return ax
 
     # Create flags for all intervals to refine
     refine_flags = copy(surface_intervals)
