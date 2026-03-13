@@ -10,14 +10,13 @@
     pwΔmp2r, pwΔmp2l, 
     pwΔmp3r, pwΔmp3l,
 ) where {T, S}
-    
 
     # pww1r        = pcs.geom_weights[3][1, in1]
     pww1r        = geom_weights_3[1, in1]
     pww1l        = geom_weights_3[2, in1]
     pwΔmp1       = geom_weights_3[3, in1]
     Δ1_ext_inv_l = geom_weights_3[4, in1]
-    Δ1_ext_inv_r = geom_weights_3[4, in1 + 1]
+    Δ1_ext_inv_r = in1 < size(geom_weights_3, 2) ? geom_weights_3[4, in1 + 1] : geom_weights_3[4, in1]
 
     # ϵ_ijk: i: 1.RB-Dim. | j: 2.RB-Dim. | k: 3.RB-Dim.
     ϵ_lll, ϵ_llr, ϵ_lrl, ϵ_lrr, ϵ_rll, ϵ_rlr, ϵ_rrl, ϵ_rrr = get_ϵ_of_oktant(
@@ -168,18 +167,25 @@ end
     ϵ_r::AbstractArray{T, 3}, ::Type{Cylindrical},
     i1, in1, i2, in2, i3, in3
 ) where {T}
+    # Cylindrical: inner loop over z (3rd dimension)
+    i1_safe  = clamp(i1, 1, size(ϵ_r, 3))
+    in1_safe = clamp(in1, 1, size(ϵ_r, 3))
+    i2_safe  = clamp(i2, 1, size(ϵ_r, 2))
+    in2_safe = clamp(in2, 1, size(ϵ_r, 2))
+    i3_safe  = clamp(i3, 1, size(ϵ_r, 1))
+    in3_safe = clamp(in3, 1, size(ϵ_r, 1))
     # ϵ_r is not transformed into an red-black-4D-array.
     # The inner loop (over i1) is along the z-Dimension (Cylindrical Case), 
     # which is the 3rd dimension for Cylindrical coordinates: (r, φ, z)
     return @inbounds begin
-        ϵ_r[ in3, in2, in1 ],
-        ϵ_r[  i3, in2, in1 ],
-        ϵ_r[ in3,  i2, in1 ],
-        ϵ_r[  i3,  i2, in1 ],
-        ϵ_r[ in3, in2,  i1 ],
-        ϵ_r[  i3, in2,  i1 ],
-        ϵ_r[ in3,  i2,  i1 ],
-        ϵ_r[  i3,  i2,  i1 ]
+        ϵ_r[in3_safe, in2_safe, in1_safe],
+        ϵ_r[i3_safe,  in2_safe, in1_safe],
+        ϵ_r[in3_safe,  i2_safe, in1_safe],
+        ϵ_r[i3_safe,   i2_safe, in1_safe],
+        ϵ_r[in3_safe, in2_safe,  i1_safe],
+        ϵ_r[i3_safe,  in2_safe,  i1_safe],
+        ϵ_r[in3_safe,  i2_safe,  i1_safe],
+        ϵ_r[i3_safe,   i2_safe,  i1_safe]
     end
 end
 
@@ -187,17 +193,24 @@ end
     ϵ_r::AbstractArray{T, 3}, ::Type{Cartesian},
     i1, in1, i2, in2, i3, in3
 ) where {T}
+    # Cartesian: inner loop over x (1st dimension)
+    i1_safe  = clamp(i1, 1, size(ϵ_r, 1))
+    in1_safe = clamp(in1, 1, size(ϵ_r, 1))
+    i2_safe  = clamp(i2, 1, size(ϵ_r, 2))
+    in2_safe = clamp(in2, 1, size(ϵ_r, 2))
+    i3_safe  = clamp(i3, 1, size(ϵ_r, 3))
+    in3_safe = clamp(in3, 1, size(ϵ_r, 3))
     # The inner loop (over i1) is along the x-Dimension (Cartesian Case), 
     # which is the 1rd dimension for Cartesian coordinates: (x, y, z)
     return @inbounds begin
-        ϵ_r[ in1, in2, in3 ], 
-        ϵ_r[ in1, in2,  i3 ],
-        ϵ_r[ in1,  i2, in3 ], 
-        ϵ_r[ in1,  i2,  i3 ],
-        ϵ_r[  i1, in2, in3 ],
-        ϵ_r[  i1, in2,  i3 ],
-        ϵ_r[  i1,  i2, in3 ],
-        ϵ_r[  i1,  i2,  i3 ]
+        ϵ_r[in1_safe, in2_safe, in3_safe],
+        ϵ_r[in1_safe, in2_safe,  i3_safe],
+        ϵ_r[in1_safe,  i2_safe, in3_safe],
+        ϵ_r[in1_safe,  i2_safe,  i3_safe],
+        ϵ_r[ i1_safe, in2_safe, in3_safe],
+        ϵ_r[ i1_safe, in2_safe,  i3_safe],
+        ϵ_r[ i1_safe,  i2_safe, in3_safe],
+        ϵ_r[ i1_safe,  i2_safe,  i3_safe]
     end
 end
 
