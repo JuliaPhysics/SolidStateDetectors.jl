@@ -894,7 +894,7 @@ function refine_surface!(sim::Simulation{T,CS}, min_spacing::NTuple{3,T} = (T(1e
     # Interpolate potential onto new grid
     closed_pot = _get_closed_potential(sim.electric_potential)
     new_data = Array{T,3}(undef, size(new_grid))
-    only2d = size(closed_pot.data, 2) == 1
+    only2d = is_cyl && size(closed_pot.data, 2) == 1
     int = interpolate_closed_potential(closed_pot, Val(only2d))
     
     if only2d

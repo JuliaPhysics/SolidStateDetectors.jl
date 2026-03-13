@@ -63,13 +63,13 @@ function World{T, N, S}(args...) where {T <: SSDFloat, N, S}
 end
 
 function World(T, dict::AbstractDict, input_units::NamedTuple)::World
-
+    
     spacing_surface_refinement = if haskey(dict, "spacing_surface_refinement")
-        ntuple(i -> T(dict["spacing_surface_refinement"][i]), 3)
+        ntuple(i -> _parse_value(T, dict["spacing_surface_refinement"][i], internal_length_unit), 3)
     else
         nothing
     end
-
+    
     if dict["coordinates"] == "cylindrical"
         return CylindricalWorld(T, dict["axes"], input_units, spacing_surface_refinement)
     elseif dict["coordinates"] == "cartesian"
