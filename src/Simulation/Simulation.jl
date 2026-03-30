@@ -815,7 +815,7 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
 end
 
 """
-        refine_surface!(sim::Simulation{T};
+    refine_surface!(sim::Simulation{T};
                     min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4)),
                     not_only_paint_contacts::Bool = true,
                     paint_contacts::Bool = true,
@@ -846,22 +846,24 @@ function refine_surface!(sim::Simulation{T,CS}, min_spacing::NTuple{3,T} = (T(1e
                          update_other_fields::Bool = true) where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     
     old_grid = sim.electric_potential.grid
-
-    # Enforce minimum and maximum spacing for surface refinement (10 µm < min_spacing < 1 mm)
+    min_spacing = collect(min_spacing)
+    
     for d in 1:3
         if length(old_grid.axes[d].ticks) != 1
-            if min_spacing[d] < T(1e-5) || min_spacing[d] > T(1e-3)
-                @warn "min_spacing[$d] = $(min_spacing[d]) m is out of bounds (1e-5 m < min_spacing < 1e-3 m). Higher values don't require surface refinement"
-                if min_spacing[d] < T(1e-5)
-                    @warn "Using min_spacing[$d] = 1e-5 m"
-                else
-                    @warn "Using min_spacing[$d] = 1e-3 m"  
-                end
+            axis_width = rightendpoint(old_grid.axes[d].interval) - leftendpoint(old_grid.axes[d].interval)
+            min_allowed = axis_width * T(5e-5)
+            max_allowed = axis_width * T(1e-1)
+            
+            val = T(min_spacing[d])
+            
+            if val < min_allowed || val > max_allowed
+                @warn "min_spacing[$d] = $val m is out of bounds (min_allowed = $min_allowed, max_allowed = $max_allowed)."
+                min_spacing[d] = clamp(val, min_allowed, max_allowed)
             end
         end
     end
     
-    min_spacing = ntuple(d -> length(old_grid.axes[d].ticks) == 1 ? T(0.0) : clamp(T(min_spacing[d]), T(1e-5), T(1e-3)), 3)
+    min_spacing = ntuple(d -> length(old_grid.axes[d].ticks) == 1 ? T(0.0) : min_spacing[d], 3)
 
     # Determine which intervals have surface points
     surface_intervals = ntuple(d -> begin
@@ -1021,7 +1023,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         has_surface_model = isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
 
         if has_surface_model
-            if isnothing(sim.world.spacing_surface_refinement)
+            if any(isnan, sim.world.spacing_surface_refinement)
                 @warn """Surface model detected but `spacing_surface_refinement` is not defined.
                          Surface refinement will not be performed."""
             else
@@ -1158,14 +1160,14 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 paint_contacts = paint_contacts,
                                                 sor_consts = is_last_ref ? T(1) : sor_consts )
                 
-                if has_surface_model && iref==3 && !isnothing(sim.world.spacing_surface_refinement)
+                if has_surface_model && iref==3 && !any(isnan, sim.world.spacing_surface_refinement)
+                    # perform surface refinement
                     mark_bulk_bits!(sim.point_types.data)
                     mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
                     mark_inactivelayer_bits!(sim.point_types.data)
-                    verbose && println("Surface Refinement")
                     # Maximum spacing between (refined) surface ticks (if min_spacing = 1e-4m, only surface intervals wider than 0.1mm get new ticks)
                     refine_surface!(sim, sim.world.spacing_surface_refinement; update_other_fields=true)
-
+                    verbose && println("End Surface Refinement")
                     update_till_convergence!( sim, potential_type, convergence_limit,
                                               n_iterations_between_checks = n_iterations_between_checks,
                                               max_n_iterations = max_n_iterations,
