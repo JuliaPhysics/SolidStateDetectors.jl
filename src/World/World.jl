@@ -55,7 +55,7 @@ Definition of the finite volume on which a [`Simulation`](@ref) is performed.
 """
 struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N} 
     intervals::NTuple{N, SSDInterval{T}}
-    spacing_surface_refinement::Union{NTuple{N,T}, Nothing}
+    spacing_surface_refinement::NTuple{N, T}
 end
 
 function World{T, N, S}(args...) where {T <: SSDFloat, N, S} 
@@ -67,7 +67,7 @@ function World(T, dict::AbstractDict, input_units::NamedTuple)::World
     spacing_surface_refinement = if haskey(dict, "spacing_surface_refinement")
         ntuple(i -> _parse_value(T, dict["spacing_surface_refinement"][i], internal_length_unit), 3)
     else
-        nothing
+        ntuple(i -> T(NaN), 3)
     end
     
     if dict["coordinates"] == "cylindrical"
@@ -164,8 +164,7 @@ function get_cartesian_SSDInterval(T, dict::AbstractDict, input_units::NamedTupl
     return SSDInterval{T, L, R, BL, BR}(from, to)
 end
 
-
-function CylindricalWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_surface_refinement)::World
+function CylindricalWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_surface_refinement::NTuple)::World
     r_int = get_r_SSDInterval(T, dict["r"], input_units)
     φ_int = get_φ_SSDInterval(T, dict, input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
@@ -173,14 +172,14 @@ function CylindricalWorld(T, dict::AbstractDict, input_units::NamedTuple, spacin
 end
 
 
-function CartesianWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_surface_refinement)::World
+function CartesianWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_surface_refinement::NTuple)::World
     x_int = get_cartesian_SSDInterval(T, dict["x"], input_units)
     y_int = get_cartesian_SSDInterval(T, dict["y"], input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
     return World{T, 3, Cartesian}( (x_int, y_int, z_int), spacing_surface_refinement )
 end
 
-function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T; spacing_surface_refinement=nothing)::World where {T <: SSDFloat}
+function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T; spacing_surface_refinement::NTuple{3,T} = ntuple(i->T(NaN),3))::World where {T <: SSDFloat}
     Δx::T = (xr - xl) / 10
     Δy::T = (yr - yl) / 10
     Δz::T = (zr - zl) / 10
@@ -190,7 +189,7 @@ function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T; spacing_surfac
     return World{T, 3, Cartesian}( (x_int, y_int, z_int), spacing_surface_refinement )
 end
 
-function CylindricalWorld(r_max::T, zl::T, zr::T; spacing_surface_refinement=nothing)::World where {T <: SSDFloat}
+function CylindricalWorld(r_max::T, zl::T, zr::T; spacing_surface_refinement::NTuple{3,T} = ntuple(i->T(NaN),3))::World where {T <: SSDFloat}
     r_int = SSDInterval{T, :closed, :closed, :r0, :infinite}(T(0), abs(r_max * T(1.1)))
     φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(T(0), T(2π))
     Δz::T = zr - zl
