@@ -58,8 +58,8 @@ struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N}
     spacing_surface_refinement::NTuple{N, T}
 end
 
-function World{T, N, S}(args...) where {T <: SSDFloat, N, S} 
-    return World{T, N, S}(args)
+function World{T, N, S}(args...; surface_refinement_limits::NTuple{N,T} = ntuple(i -> T(NaN), N)) where {T <: SSDFloat, N, S} 
+    return World{T, N, S}(args, surface_refinement_limits)
 end
 
 function World(T, dict::AbstractDict, input_units::NamedTuple)::World
@@ -179,22 +179,22 @@ function CartesianWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_
     return World{T, 3, Cartesian}( (x_int, y_int, z_int), spacing_surface_refinement )
 end
 
-function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T; spacing_surface_refinement::NTuple{3,T} = ntuple(i->T(NaN),3))::World where {T <: SSDFloat}
+function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T; kwargs...)::World where {T <: SSDFloat}
     Δx::T = (xr - xl) / 10
     Δy::T = (yr - yl) / 10
     Δz::T = (zr - zl) / 10
     x_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(xl - Δx, xr + Δx)
     y_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(yl - Δy, yr + Δy)
     z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - Δz, zr + Δz)
-    return World{T, 3, Cartesian}( (x_int, y_int, z_int), spacing_surface_refinement )
+    return World{T, 3, Cartesian}( x_int, y_int, z_int; kwargs... )
 end
 
-function CylindricalWorld(r_max::T, zl::T, zr::T; spacing_surface_refinement::NTuple{3,T} = ntuple(i->T(NaN),3))::World where {T <: SSDFloat}
+function CylindricalWorld(r_max::T, zl::T, zr::T; kwargs...)::World where {T <: SSDFloat}
     r_int = SSDInterval{T, :closed, :closed, :r0, :infinite}(T(0), abs(r_max * T(1.1)))
     φ_int = SSDInterval{T, :closed, :open, :periodic, :periodic}(T(0), T(2π))
     Δz::T = zr - zl
     z_int = SSDInterval{T, :closed, :closed, :infinite, :infinite}(zl - (Δz / 10), zr + (Δz / 10))
-    return World{T, 3, Cylindrical}( (r_int, φ_int, z_int), spacing_surface_refinement )
+    return World{T, 3, Cylindrical}( r_int, φ_int, z_int; kwargs... )
 end
 
 function World(::Type{Cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}

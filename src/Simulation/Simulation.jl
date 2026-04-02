@@ -815,8 +815,8 @@ function refine!(sim::Simulation{T}, ::Type{WeightingPotential}, contact_id::Int
 end
 
 """
-    refine_surface!(sim::Simulation{T};
-                    min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4)),
+    refine_surface!(sim::Simulation{T},
+                    min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
                     not_only_paint_contacts::Bool = true,
                     paint_contacts::Bool = true,
                     update_other_fields::Bool = true) where {T <: SSDFloat}
