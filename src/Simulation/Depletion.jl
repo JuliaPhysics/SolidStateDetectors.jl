@@ -1,3 +1,18 @@
+"""
+    set_point_type_depletion_handling!(sim::Simulation, depletion_handling::Bool)
+
+Update the `depletion_handling` flag of the `PointTypes` saved in a simulation `sim` to the given value.
+
+## Arguments
+* `sim::Simulation{T}`: [`Simulation`](@ref) for which the [`PointTypes`](@ref) depletion handling should be updated.
+* `depletion_handling::Bool`: Value to which it should be updated to.
+"""
+function set_point_type_depletion_handling!(sim::Simulation, depletion_handling::Bool)
+    sim.point_types = PointTypes(sim.point_types.data, sim.point_types.grid, depletion_handling)
+    nothing
+end
+
+
 # """
 #     _adapt_weighting_potential_to_electric_potential_grid!(sim::Simulation, contact_id::Int)
 # 

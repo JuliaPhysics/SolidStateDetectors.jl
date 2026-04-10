@@ -71,7 +71,7 @@ export calculate_electric_potential!, calculate_weighting_potential!, calculate_
 export ElectricFieldChargeDriftModel, ADLChargeDriftModel, ADL2016ChargeDriftModel, IsotropicChargeDriftModel
 export ConstantImpurityDensity, LinearImpurityDensity
 export NoChargeTrappingModel, BoggsChargeTrappingModel
-export get_active_volume, is_depleted, estimate_depletion_voltage
+export get_active_volume, is_depleted, estimate_depletion_voltage, set_point_type_depletion_handling!
 export calculate_stored_energy, calculate_mutual_capacitance, calculate_capacitance_matrix
 export simulate_waveforms
 export run_geant4_simulation
