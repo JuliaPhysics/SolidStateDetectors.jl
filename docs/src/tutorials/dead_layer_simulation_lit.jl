@@ -25,7 +25,7 @@ plot(sim.detector, xunit = u"mm", yunit = u"mm", zunit = u"mm")
 #md savefig("tutorial_det_dl.svg"); nothing # hide
 #md # [![tutorial_det_dl](tutorial_det_dl.svg)](tutorial_det_dl.pdf)
 
-# > In the configuration file shown above, the position of the PN junction boundary `pn_r` was calculated as the position  where the density is zero.
+# > In the configuration file shown above, the position of the PN junction boundary `pn_r` was calculated as the position where the density is zero.
 
 # ## Display the impurity profile defined
 
@@ -41,13 +41,13 @@ vline!([pn_r], lw = 2, ls = :dash, color = :darkred, label = "PN junction bounda
 #md savefig("tutorial_imp_dl.svg"); nothing # hide
 #md # [![tutorial_imp_dl](tutorial_imp_dl.svg)](tutorial_imp_dl.pdf)
 
-# ## Dispaly the mobility curve
+# ## Display the mobility curve
 using SolidStateDetectors: Electron, Hole
 cdm = sim.detector.semiconductor.charge_drift_model
 depth_list = 0u"mm":0.01u"mm":(det_r-pn_r)
 mobility_list = map(depth -> let pt::CartesianPoint{T} = CartesianPoint(det_r - depth, 0, z_draw)
-    (µe = SolidStateDetectors.calculate_mobility(cdm, pt, Hole) * 10000u"cm^2/(V*s)",
-     µh = SolidStateDetectors.calculate_mobility(cdm, pt, Electron) * 10000u"cm^2/(V*s)")
+    (µe = SolidStateDetectors.calculate_mobility(cdm, pt, Electron) * 10000u"cm^2/(V*s)",
+     µh = SolidStateDetectors.calculate_mobility(cdm, pt, Hole) * 10000u"cm^2/(V*s)")
 end, depth_list)
 plot(depth_list,  getfield.(mobility_list, :µh), label = "Hole", lw = 4)
 plot!(depth_list, getfield.(mobility_list, :µe), label = "Electron", lw = 4)

@@ -91,7 +91,7 @@ end
                     max_nsteps = 5000,
                     sampling = 2u"mm", # Specifies in what density the Contacts are sampled to generate equally spaced surface charges. Also see spacing.
                     offset = 0.5u"mm", # should be at least as big as sampling. In doubt sampling can be reduced and the spacing keyword can be used to thin out the lines.
-                    spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows to skip some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
+                    spacing = 1, # If, due to fine sampling, too many lines would clutter the plot, the spacing keyword allows skipping some fieldlines. Spacing = 2 means plot every second line. Spacing = 3 every third.
                     Δt = 1u"ns",
                     full_det = false,
                     skip_contact = 1) # Usually the "core" contact is skipped, and the other contacts are equally sampled for charges to drift

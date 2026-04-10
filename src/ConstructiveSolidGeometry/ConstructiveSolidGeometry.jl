@@ -85,7 +85,7 @@ module ConstructiveSolidGeometry
     rotation(p::AbstractPrimitive) = p.rotation
     origin(p::AbstractPrimitive) = p.origin
 
-    # ToDo: Completely replace by frame_transformation and remove:
+    # TODO: Completely replace by frame_transformation and remove:
     _transform_into_global_coordinate_system(pt::CartesianPoint, p::AbstractPrimitive) = frame_transformation(p, global_frame, pt)
     _transform_into_global_coordinate_system(v::CartesianVector, p::AbstractPrimitive) = frame_transformation(p, global_frame, v)
     _transform_into_global_coordinate_system(pts::AbstractVector{<:CartesianPoint}, p::AbstractPrimitive) =

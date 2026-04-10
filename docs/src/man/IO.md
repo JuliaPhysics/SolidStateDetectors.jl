@@ -19,7 +19,7 @@ FileIO.save("<name-of-simulation-file>.jld", Dict("Simulation" => sim))
 It can be read back in using `FileIO.load`:
 ```julia
 using FileIO
-sim = FileIO.load("<name-of-simulation.file>.jld", "Simulation")
+sim = FileIO.load("<name-of-simulation-file>.jld", "Simulation")
 ```
 
 ## Saving output with HDF5

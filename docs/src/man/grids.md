@@ -29,7 +29,7 @@ in areas where the gradient of the electric potential is large.
 
 In the potential calculation, the potential value at a given grid point is determined by the potential values of its nearest neighbors.
 At the boundaries of the world, there are no nearest neighbors.
-This requires to choose boundary conditions on how to continue the potential beyond the volume of the world.
+This requires choosing boundary conditions on how to continue the potential beyond the volume of the world.
 
 ````@example grid
 using Plots, LaTeXStrings #hide
@@ -68,7 +68,7 @@ plot!(A, [maximum(xs) .+ (-1,1)...], [ys[end-1],ys[end-1]], arrow = arrow(:both,
 scatter!([0,length(xs)+1], [ys[begin+1], ys[end-1]], label = "reflecting", color = :purple) #hide
 ````
 
-`fixed` (or `fix`): This set the potential beyond the world volume to the potential at the world boundary, i.e. `ϕ(x0) = ϕ(x1)` and `ϕ(xN+1) = ϕ(xN)`:
+`fixed` (or `fix`): This sets the potential beyond the world volume to the potential at the world boundary, i.e. `ϕ(x0) = ϕ(x1)` and `ϕ(xN+1) = ϕ(xN)`:
 ````@example grid
 A = deepcopy(P) #hide
 plot!(A, xticks = (0:10, [L"\"x$_0$\""; latexstring.("x\$_".*string.(1:9).*"\$"); L"\"x$_{10}$\""])) #hide
@@ -95,7 +95,7 @@ The grid can be specified in the configuration files, see [Grid](@ref), of `sim:
 There is a constructor method for grid: [`Grid(sim::Simulation)`](@ref).
 
 In [`calculate_electric_potential!`](@ref),[`calculate_weighting_potential!`](@ref) and [`simulate!(sim::Simulation)`](@ref)
-the calculation of the potentials start with an initial grid, which can be passed to these functions via the keyword `grid`.
+the calculation of the potentials starts with an initial grid, which can be passed to these functions via the keyword `grid`.
 If no grid is passed, the grid is generated via [`Grid(::Simulation)`](@ref).
 
 The two keywords `max_tick_distance` and `max_distance_ratio` can also be passed to the functions
@@ -142,7 +142,7 @@ The potential values at the added grid points are determined through linear inte
 Then, the potential values of all grid points are updated (through the SOR) until convergence
 is reached again and the next refinement with `0.1` is executed.
 
-Another keyword can be used to set a minimum allowed distance between to ticks: `min_tick_distance`, see e.g. [`calculate_electric_potential!`](@ref), which prohibits the insertion of new ticks if the new resulting distances between the ticks would be below this limit.
+Another keyword can be used to set a minimum allowed distance between two ticks: `min_tick_distance`, see e.g. [`calculate_electric_potential!`](@ref), which prohibits the insertion of new ticks if the new resulting distances between the ticks would be below this limit.
 
 !!! note
     It is usually favourable to make more refinements with smaller differences in the limits.

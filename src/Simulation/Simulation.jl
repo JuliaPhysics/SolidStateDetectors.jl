@@ -466,7 +466,7 @@ end
 
 """
     apply_initial_state!(sim::Simulation{T}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
-            not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat}
+            not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat}
 
 Applies the initial state for the calculation of the [`ElectricPotential`](@ref).
 It overwrites `sim.electric_potential`, `sim.q_eff_imp`, `sim.q_eff_fix`, `sim.ϵ` and `sim.point_types`
@@ -482,6 +482,7 @@ with the material properties and fixed potentials defined in `sim.detector`.
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
 * `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
+* `depletion_handling::Bool = false`: passes the depletion_handling value to point_types for informational purposes. This value is set and passed from `calculate_potential` to `apply_initial_state!`.
 
 ## Examples
 ```julia
@@ -489,7 +490,7 @@ apply_initial_state!(sim, ElectricPotential, paint_contacts = false)
 ```
 """
 function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential}, grid::Grid{T} = Grid(sim);
-        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::Nothing where {T <: SSDFloat, CS}
+        not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, depletion_handling::Bool = false)::Nothing where {T <: SSDFloat, CS}
     pcs = PotentialCalculationSetup(
                 sim.detector, grid, sim.medium; 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
@@ -500,7 +501,7 @@ function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential},
     sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
-    sim.point_types = PointTypes(PointTypeArray(pcs), grid)
+    sim.point_types = PointTypes(PointTypeArray(pcs), grid, depletion_handling)
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
     nothing
 end
@@ -633,8 +634,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
     sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
-    sim.point_types = PointTypes(PointTypeArray(pcs), grid)
-
+    sim.point_types = PointTypes(PointTypeArray(pcs), grid, depletion_handling)
     cf
 end
 
@@ -765,7 +765,8 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
                     not_only_paint_contacts::Bool = true, 
                     paint_contacts::Bool = true,
-                    update_other_fields::Bool = false) where {T <: SSDFloat}
+                    update_other_fields::Bool = false,
+                    depletion_handling::Bool = false) where {T <: SSDFloat}
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
@@ -777,7 +778,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(sim.electric_potential.grid))
-        sim.point_types = PointTypes(PointTypeArray(pcs), sim.electric_potential.grid)
+        sim.point_types = PointTypes(PointTypeArray(pcs), sim.electric_potential.grid, depletion_handling)
     end
     nothing
 end
@@ -1110,17 +1111,15 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     end
     if initialize 
         if isEP
-            apply_initial_state!(sim, potential_type, grid; not_only_paint_contacts, paint_contacts)
+            apply_initial_state!(sim, potential_type, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
             update_till_convergence!( sim, potential_type, convergence_limit,
                                     n_iterations_between_checks = n_iterations_between_checks,
                                     max_n_iterations = max_n_iterations,
                                     depletion_handling = depletion_handling,
                                     device_array_type = device_array_type,
                                     use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
-                                    sor_consts = sor_consts )
-
-
-            
+                                    sor_consts = sor_consts,
+                                    verbose = verbose )
         else
             apply_initial_state!(sim, potential_type, contact_id, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
             update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
@@ -1129,7 +1128,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                         depletion_handling = depletion_handling,
                                         device_array_type = device_array_type,
                                         use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
-                                        sor_consts = sor_consts )
+                                        sor_consts = sor_consts,
+                                        verbose = verbose )
         end
     end
     # refinement_counter::Int = 1
@@ -1146,8 +1146,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 else
                     abs.(ref_limits .* bias_voltage)
                 end
-                
-                refine!(sim, ElectricPotential, max_diffs, new_min_tick_distance)
+                refine!(sim, ElectricPotential, max_diffs, new_min_tick_distance, depletion_handling = depletion_handling)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                 update_till_convergence!( sim, potential_type, convergence_limit,
@@ -1158,7 +1157,8 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 device_array_type = device_array_type,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
-                                                sor_consts = is_last_ref ? T(1) : sor_consts )
+                                                sor_consts = is_last_ref ? T(1) : sor_consts,
+                                                verbose = verbose )
                 
                 if has_surface_model && iref==3 && !any(isnan, sim.world.spacing_surface_refinement)
                     # perform surface refinement
@@ -1189,40 +1189,39 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 device_array_type = device_array_type,
                                                 not_only_paint_contacts = not_only_paint_contacts, 
                                                 paint_contacts = paint_contacts,
-                                                sor_consts = is_last_ref ? T(1) : sor_consts )
+                                                sor_consts = is_last_ref ? T(1) : sor_consts,
+                                                verbose = verbose )
             end
         end
     end
-    if verbose && depletion_handling && isEP
-        maximum_applied_potential = maximum(broadcast(c -> c.potential, sim.detector.contacts))
-        minimum_applied_potential = minimum(broadcast(c -> c.potential, sim.detector.contacts))
-        @inbounds for i in eachindex(sim.electric_potential.data)
-            if sim.electric_potential.data[i] < minimum_applied_potential # p-type
-                @warn """Detector seems not to be fully depleted at a bias voltage of $(bias_voltage) V.
-                    At least one grid point has a smaller potential value ($(sim.electric_potential.data[i]) V)
-                    than the minimum applied potential ($(minimum_applied_potential) V). This should not be.
-                    However, small overshoots could be due to numerical precision."""
-                break
+    if isEP 
+        mark_bulk_bits!(sim.point_types.data)
+        if depletion_handling
+            mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
+            if has_surface_model
+                mark_inactivelayer_bits!(sim.point_types.data)
             end
-            if sim.electric_potential.data[i] > maximum_applied_potential # n-type
-                @warn """Detector seems not to be not fully depleted at a bias voltage of $(bias_voltage) V.
-                    At least one grid point has a higher potential value ($(sim.electric_potential.data[i]) V)
-                    than the maximum applied potential ($(maximum_applied_potential) V). This should not be.
-                    However, small overshoots could be due to numerical precision."""
-                break
+            
+            maximum_applied_potential = maximum(broadcast(c -> c.potential, sim.detector.contacts))
+            minimum_applied_potential = minimum(broadcast(c -> c.potential, sim.detector.contacts))
+            @inbounds for i in eachindex(sim.electric_potential.data)
+                if sim.electric_potential.data[i] < minimum_applied_potential && sim.point_types.data[i] & bulk_bit > 0 # p-type
+                    @warn """At least one grid point in the detector has a smaller potential value ($(sim.electric_potential.data[i]) V)
+                        than the minimum applied potential ($(minimum_applied_potential) V). 
+                        A fully depleted detector should not have local extrema in a converged electric potential.
+                        However, small overshoots can occur due to numerical precision."""
+                    break
+                end
+                if sim.electric_potential.data[i] > maximum_applied_potential && sim.point_types.data[i] & bulk_bit > 0 # n-type
+                    @warn """At least one grid point in the detector has a higher potential value ($(sim.electric_potential.data[i]) V)
+                        than the maximum applied potential ($(maximum_applied_potential) V). 
+                        A fully depleted detector should not have local extrema in a converged electric potential.
+                        However, small overshoots can occur due to numerical precision."""
+                    break
+                end
             end
         end
     end
-    
-    if isEP mark_bulk_bits!(sim.point_types.data) end
-    if depletion_handling && isEP
-        mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
-        
-        if has_surface_model
-            mark_inactivelayer_bits!(sim.point_types.data)
-        end
-    end
-    
     nothing
 end
 
@@ -1531,4 +1530,4 @@ end
 
 include("ElectricFieldEnergy.jl")
 include("Capacitance.jl")
-include("DepletionVoltage.jl")
+include("Depletion.jl")

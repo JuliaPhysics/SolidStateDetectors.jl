@@ -9,7 +9,7 @@ using SolidStateDetectors
 using Geant4
 
 # In order to run Geant4 simulations, a `Geant4.G4JLApplication` needs to be defined, which needs to include both the detector geometry and the particle source.
-# The extension features a function that creates a `Geant4.G4JLApplcation` object from a SSD `Simulation` object and a particle source.
+# The extension features a function that creates a `Geant4.G4JLApplication` object from a SSD `Simulation` object and a particle source.
 
 using Plots
 using ArraysOfArrays, Unitful

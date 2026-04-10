@@ -362,7 +362,7 @@ Add files to an array in the main configuration file
 detectors:
   - include: first_file_in_array.yaml
   - include: second_file_in_array.yaml
-  - include: thrid_file_in_array.yaml
+  - include: third_file_in_array.yaml
 ```
 
 A fully working example can be seen in `SSD_examples[:InvertedCoaxInCryostat]`. Here, the channels, the geometry and other parts are split into separate configuration files.

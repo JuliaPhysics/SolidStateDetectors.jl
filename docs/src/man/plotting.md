@@ -140,7 +140,7 @@ plot!(det, st = :slice, z = 30u"mm", proj = :polar, lw = 2)
       Only plot the detector over scalar potentials with `seriestype = :slice`. When plotting the detector over a polar projection of the potential (such as above), `proj = :polar` must be selected in the detector plot.
 
 In addition to all plot attributes that are implemented in [Plots.jl](https://github.com/JuliaPlots/Plots.jl), plots of scalar potentials can take two additional keyword arguments, `contours_equal_potential` and `full_det`, which both are of type `Bool`:
-* `contours_equal_potential`: If this set to `true`, the plot will additionally display contour lines at points with equal potential value.
+* `contours_equal_potential`: If this is set to `true`, the plot will additionally display contour lines at points with equal potential value.
 * `full_det`: By default, cross sections in `φ` are only displayed for positive radii `r`. If `full_det` is set to `true`, cross sections in `φ` are also extended to "negative" `r`, by additionally plotting the potential values at `φ + 180°` on the left side of the plot.
 
 ````@example tutorial

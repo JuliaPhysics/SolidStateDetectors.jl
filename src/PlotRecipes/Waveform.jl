@@ -15,7 +15,7 @@ of a [`Contact`](@ref) with a given `contact_id` of an [`Event`](@ref).
 ## Example
 ```julia 
 using Plots
-using SolidStateDetector
+using SolidStateDetectors
 T = Float32
 
 simulation = Simulation{T}(SSD_examples[:InvertedCoax])
@@ -31,7 +31,7 @@ plot_electron_and_hole_contribution(evt, sim, contact_id, n_samples = 300)
     The drift paths in `evt` need to be calculated using [`drift_charges!`](@ref) before calling this function.
     
 !!! note 
-    This method requires to load the package [Plots.jl](https://github.com/JuliaPlots/Plots.jl).
+    This method requires loading the package [Plots.jl](https://github.com/JuliaPlots/Plots.jl).
     
 See also [`get_electron_and_hole_contribution`](@ref).
 """

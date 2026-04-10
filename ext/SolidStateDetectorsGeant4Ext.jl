@@ -180,7 +180,7 @@ function Geant4.G4JLApplication(
 
     return app
 
-    # ToDo:
+    # TODO:
     #=
     generator = G4JLGunGenerator(...)
 
