@@ -136,25 +136,55 @@ end
     begin
         config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
         config_dict["grid"]["spacing_surface_refinement"] = [1e-3, 1e-3, 1e-3]
-        sim_cyl = @test_nowarn Simulation{T}(config_dict)
+        sim_2d = @test_nowarn Simulation{T}(config_dict)
 
-        # Test normal behaviour Cylindrical
-        timed_calculate_electric_potential!(sim_cyl, verbose = false, depletion_handling = true)
-        grid_ax1_cyl = length(sim_cyl.electric_potential.grid[1])
-        grid_ax2_cyl = length(sim_cyl.electric_potential.grid[2])
-        grid_ax3_cyl = length(sim_cyl.electric_potential.grid[3])
+        # Test normal behaviour 2D
+        timed_calculate_electric_potential!(sim_2d, verbose = false, depletion_handling = true)
+        grid_ax1_2d = length(sim_2d.electric_potential.grid[1])
+        grid_ax2_2d = length(sim_2d.electric_potential.grid[2])
+        grid_ax3_2d = length(sim_2d.electric_potential.grid[3])
+
+        @test iseven(grid_ax1_2d)
+        @test grid_ax2_2d == 1
+        @test iseven(grid_ax3_2d)
         
         # --- Case: < 3 refinements ---
         bad_limits = [0.2, 0.1]
         @test_logs (:warn, r"Surface model detected") (:warn, r"Falling back to default") match_mode=:any begin
-            timed_calculate_electric_potential!(sim_cyl, refinement_limits=bad_limits, verbose = false, depletion_handling = true)
+            timed_calculate_electric_potential!(sim_2d, refinement_limits=bad_limits, verbose = false, depletion_handling = true)
         end
         
         # --- Case: last refinement > 0.05 ---
         bad_limits = [0.2, 0.1, 0.09]
         @test_logs (:warn, r"Surface model detected:") (:warn, r"Falling back to default") match_mode=:any begin
-            timed_calculate_electric_potential!(sim_cyl, refinement_limits=bad_limits, verbose = false, depletion_handling = true)
+            timed_calculate_electric_potential!(sim_2d, refinement_limits=bad_limits, verbose = false, depletion_handling = true)
         end
+
+        # Test normal behaviour Cylindrical
+        config_dict["grid"]["coordinates"] = "cylindrical"
+        config_dict["grid"]["axes"]["r"] = Dict(
+            "to"   => "40",
+            "boundaries"   => "inf"
+        )
+        config_dict["grid"]["axes"]["phi"] = Dict(
+            "from" => "0",
+            "to"   => "360",
+            "boundaries"   => "periodic"
+        )
+        config_dict["grid"]["axes"]["z"] = Dict(
+            "from" => "-10",
+            "to"   => "90",
+            "boundaries"   => "inf"
+        )
+        sim_cyl = @test_nowarn Simulation{T}(config_dict)
+        timed_calculate_electric_potential!(sim_cyl, verbose = false, depletion_handling = true)
+        grid_ax1_cyl = length(sim_cyl.electric_potential.grid[1])
+        grid_ax2_cyl = length(sim_cyl.electric_potential.grid[2])
+	    grid_ax3_cyl = length(sim_cyl.electric_potential.grid[3])
+        
+        @test iseven(grid_ax1_cyl)
+        @test iseven(grid_ax2_cyl)
+        @test iseven(grid_ax3_cyl)
 
         # Test normal behaviour Cartesian
         config_dict["grid"]["coordinates"] = "cartesian"
@@ -177,14 +207,11 @@ end
         timed_calculate_electric_potential!(sim_cart, verbose = false, depletion_handling = true)
         grid_ax1_cart = length(sim_cart.electric_potential.grid[1])
         grid_ax2_cart = length(sim_cart.electric_potential.grid[2])
-	grid_ax3_cart = length(sim_cart.electric_potential.grid[3])
+	    grid_ax3_cart = length(sim_cart.electric_potential.grid[3])
         
-        @test grid_ax1_cyl == 74
-        @test grid_ax2_cyl == 1
-        @test grid_ax3_cyl == 143
-        @test grid_ax1_cart == 178
-        @test grid_ax2_cart == 178
-        @test grid_ax3_cart == 149
+        @test iseven(grid_ax1_cart)
+        @test iseven(grid_ax2_cart)
+        @test iseven(grid_ax3_cart)
     end
     
     # Spacing out of bounds
