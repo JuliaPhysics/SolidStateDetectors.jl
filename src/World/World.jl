@@ -58,8 +58,8 @@ struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N}
     spacing_surface_refinement::NTuple{N, T}
 end
 
-function World{T, N, S}(args...; surface_refinement_limits::NTuple{N,T} = ntuple(i -> T(NaN), N)) where {T <: SSDFloat, N, S} 
-    return World{T, N, S}(args, surface_refinement_limits)
+function World{T, N, S}(args...; spacing_surface_refinement::NTuple{N,T} = ntuple(i -> T(NaN), N)) where {T <: SSDFloat, N, S} 
+    return World{T, N, S}(args, spacing_surface_refinement)
 end
 
 function World(T, dict::AbstractDict, input_units::NamedTuple)::World
@@ -71,9 +71,9 @@ function World(T, dict::AbstractDict, input_units::NamedTuple)::World
     end
     
     if dict["coordinates"] == "cylindrical"
-        return CylindricalWorld(T, dict["axes"], input_units, spacing_surface_refinement)
+        return CylindricalWorld(T, dict["axes"], input_units; spacing_surface_refinement)
     elseif dict["coordinates"] == "cartesian"
-        return CartesianWorld(T, dict["axes"], input_units, spacing_surface_refinement)
+        return CartesianWorld(T, dict["axes"], input_units; spacing_surface_refinement)
     else
         error("Gridtype must be \"cylindrical\" or \"cartesian\"")
     end
@@ -164,19 +164,19 @@ function get_cartesian_SSDInterval(T, dict::AbstractDict, input_units::NamedTupl
     return SSDInterval{T, L, R, BL, BR}(from, to)
 end
 
-function CylindricalWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_surface_refinement::NTuple)::World
+function CylindricalWorld(T, dict::AbstractDict, input_units::NamedTuple; kwargs...)::World
     r_int = get_r_SSDInterval(T, dict["r"], input_units)
     φ_int = get_φ_SSDInterval(T, dict, input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
-    return World{T, 3, Cylindrical}( (r_int, φ_int, z_int), spacing_surface_refinement )
+    return World{T, 3, Cylindrical}( r_int, φ_int, z_int; kwargs... )
 end
 
 
-function CartesianWorld(T, dict::AbstractDict, input_units::NamedTuple, spacing_surface_refinement::NTuple)::World
+function CartesianWorld(T, dict::AbstractDict, input_units::NamedTuple; kwargs...)::World
     x_int = get_cartesian_SSDInterval(T, dict["x"], input_units)
     y_int = get_cartesian_SSDInterval(T, dict["y"], input_units)
     z_int = get_cartesian_SSDInterval(T, dict["z"], input_units)
-    return World{T, 3, Cartesian}( (x_int, y_int, z_int), spacing_surface_refinement )
+    return World{T, 3, Cartesian}( x_int, y_int, z_int; kwargs...)
 end
 
 function CartesianWorld(xl::T, xr::T, yl::T, yr::T, zl::T, zr::T; kwargs...)::World where {T <: SSDFloat}
@@ -197,11 +197,11 @@ function CylindricalWorld(r_max::T, zl::T, zr::T; kwargs...)::World where {T <: 
     return World{T, 3, Cylindrical}( r_int, φ_int, z_int; kwargs... )
 end
 
-function World(::Type{Cylindrical}, limits::NTuple{6, T})::World where {T <: SSDFloat}
-    return CylindricalWorld(limits[2], limits[5], limits[6])
+function World(::Type{Cylindrical}, limits::NTuple{6, T}; kwargs...)::World where {T <: SSDFloat}
+    return CylindricalWorld(limits[2], limits[5], limits[6]; kwargs...)
 end
-function World(::Type{Cartesian}, limits::NTuple{6, T})::World where {T <: SSDFloat}
-    return CartesianWorld(limits...)
+function World(::Type{Cartesian}, limits::NTuple{6, T}; kwargs...)::World where {T <: SSDFloat}
+    return CartesianWorld(limits...; kwargs...)
 end
 
 function max_tick_distance_default(w::World{T, 3, Cylindrical}; n = 50) where {T}
