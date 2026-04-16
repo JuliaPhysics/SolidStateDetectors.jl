@@ -226,7 +226,9 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
         for i in r
             Δ = old_ticks[i+1] - old_ticks[i]
             if Δ > min_spacing
-                ns[i] = ceil(Int, Δ/min_spacing) - 1
+                _ns = ceil(Int, Δ/min_spacing)
+                # always add an even number of ticks
+                ns[i] = isodd(_ns) ? _ns - 1 : _ns
             end
         end
     end
