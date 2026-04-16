@@ -222,15 +222,22 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
 
     # Compute number of points to add per interval
     ns = zeros(Int, n_int)
+    tmp = (1.0, -1)
     for r in merged
         for i in r
-            Δ = old_ticks[i+1] - old_ticks[i]
-            if Δ > min_spacing
-                _ns = ceil(Int, Δ/min_spacing)
-                # always add an even number of ticks
-                ns[i] = isodd(_ns) ? _ns - 1 : _ns
+            Δ = (old_ticks[i+1] - old_ticks[i])/min_spacing
+            if Δ > 1
+                ns[i] = ceil(Int, Δ) - 1
+                if (Δ % 1) < tmp[1]
+                    tmp = (Δ % 1, i)
+                end
             end
         end
+    end
+
+    # Ensure that the number of ticks is even
+    if isodd(sum(ns))
+        ns[tmp[2]] -= 1
     end
 
     # Subdivide intervals
