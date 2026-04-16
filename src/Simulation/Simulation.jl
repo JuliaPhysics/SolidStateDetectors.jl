@@ -1160,21 +1160,24 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                                 sor_consts = is_last_ref ? T(1) : sor_consts,
                                                 verbose = verbose )
                 
-                if has_surface_model && iref==3 && !any(isnan, sim.world.spacing_surface_refinement)
+                if has_surface_model && iref == 3 && !any(isnan, sim.world.spacing_surface_refinement)
                     # perform surface refinement
                     mark_bulk_bits!(sim.point_types.data)
                     mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
                     mark_inactivelayer_bits!(sim.point_types.data)
                     # Maximum spacing between (refined) surface ticks (if min_spacing = 1e-4m, only surface intervals wider than 0.1mm get new ticks)
+                    verbose && println("Refining the grid close to the surface")
                     refine_surface!(sim, sim.world.spacing_surface_refinement; update_other_fields=true)
-                    verbose && println("End Surface Refinement")
+                    nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
+                    verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
                     update_till_convergence!( sim, potential_type, convergence_limit,
                                               n_iterations_between_checks = n_iterations_between_checks,
                                               max_n_iterations = max_n_iterations,
                                               depletion_handling = depletion_handling,
                                               device_array_type = device_array_type,
-                                              use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid),
-                                              max_nthreads[1], CS) : max_nthreads[1], sor_consts = T(1) )
+                                              use_nthreads = nt,
+                                              sor_consts = T(1),
+                                              verbose = verbose )
                 end
             else
                 max_diffs = abs.(ref_limits)
