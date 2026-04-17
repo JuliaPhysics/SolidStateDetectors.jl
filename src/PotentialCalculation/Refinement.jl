@@ -179,22 +179,19 @@ _extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl
     return any(is_in_inactive_layer, slice)
 end
 
-function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, surface_intervals::AbstractVector{Bool}, max_spacing::T;
+function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, refine_flags::AbstractVector{Bool}, max_spacing::T;
     extra_before::Int = 5,  # intervals to refine before first surface interval
     extra_after::Int = 5    # intervals to refine after last surface interval
 ) where {T}
 
     old_ticks = ax.ticks
-    n_int = length(surface_intervals)
+    n_int = length(refine_flags)
 
     # Find first and last surface intervals
-    first_surface = findfirst(surface_intervals)
-    last_surface  = findlast(surface_intervals)
+    first_surface = findfirst(refine_flags)
+    last_surface  = findlast(refine_flags)
 
     (isnothing(first_surface) || isnothing(last_surface)) && return ax
-
-    # Create flags for all intervals to refine
-    refine_flags = copy(surface_intervals)
 
     # Add extra intervals before first surface interval
     start_idx = max(first_surface - extra_before, 1)
@@ -204,27 +201,11 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
     end_idx = min(last_surface + extra_after, n_int)
     refine_flags[last_surface+1:end_idx] .= true
 
-    # Merge consecutive intervals to refine
-    merged = Vector{UnitRange{Int}}()
-    i = 1
-    while i <= n_int
-        if refine_flags[i]
-            j = i
-            while j < n_int && refine_flags[j+1]
-                j += 1
-            end
-            push!(merged, i:j)
-            i = j + 1
-        else
-            i += 1
-        end
-    end
-
     # Compute number of points to add per interval
     ns = zeros(Int, n_int)
     tmp = (zero(T), 1)
-    for r in merged
-        for i in r
+    for i in eachindex(refine_flags)
+        if refine_flags[i]
             Δ::T = (old_ticks[i+1] - old_ticks[i]) / max_spacing
             if Δ > 1
                 ns[i] = ceil(Int, Δ) - 1
@@ -242,14 +223,14 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
     end
 
     # Subdivide intervals
-    sub_widths = [(old_ticks[i+1] - old_ticks[i]) / (ns[i]+1) for i in 1:n_int]
     ticks = Vector{T}(undef, length(old_ticks) + sum(ns))
     i_tick = 1
     for j in 1:n_int
         ticks[i_tick] = old_ticks[j]
+        sub_width = (old_ticks[j+1] - old_ticks[j]) / (ns[j]+1)
         for k in 1:ns[j]
             i_tick += 1
-            ticks[i_tick] = old_ticks[j] + k*sub_widths[j]
+            ticks[i_tick] = old_ticks[j] + k*sub_width
         end
         i_tick += 1
     end
