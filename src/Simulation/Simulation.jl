@@ -845,24 +845,19 @@ function refine_surface!(sim::Simulation{T,CS}, max_spacing::NTuple{3,T} = (T(1e
                          update_other_fields::Bool = true) where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     
     old_grid = sim.electric_potential.grid
-    max_spacing = collect(max_spacing)
-    
-    for d in 1:3
-        if length(old_grid.axes[d].ticks) != 1
-            axis_width = rightendpoint(old_grid.axes[d].interval) - leftendpoint(old_grid.axes[d].interval)
-            min_allowed = axis_width * T(5e-5)
-            max_allowed = axis_width * T(1e-1)
-            
-            val = T(max_spacing[d])
-            
-            if val < min_allowed || val > max_allowed
-                @warn "max_spacing[$d] = $val m is out of bounds (min_allowed = $min_allowed, max_allowed = $max_allowed)."
-                max_spacing[d] = clamp(val, min_allowed, max_allowed)
-            end
+
+    max_spacing = ntuple(d -> if length(old_grid.axes[d].ticks) != 1
+        axis_width = width(old_grid.axes[d].interval)
+        min_allowed = axis_width * T(5e-5)
+        max_allowed = axis_width * T(1e-1)
+        val = T(max_spacing[d])
+        if val < min_allowed || val > max_allowed
+            @warn "max_spacing[$d] = $val m is out of bounds (min_allowed = $min_allowed, max_allowed = $max_allowed)."
         end
-    end
-    
-    max_spacing = ntuple(d -> length(old_grid.axes[d].ticks) == 1 ? T(0.0) : max_spacing[d], 3)
+        clamp(val, min_allowed, max_allowed)
+    else 
+        zero(T)
+    end, 3)
 
     # Determine which intervals have surface points
     surface_intervals = ntuple(d -> begin
@@ -882,15 +877,15 @@ function refine_surface!(sim::Simulation{T,CS}, max_spacing::NTuple{3,T} = (T(1e
     # Refine axes: skip phi-axis if Cylindrical
     is_cyl = CS === Cylindrical
     new_axes = ntuple(i -> begin
-                          if is_cyl && i == 2
-                              # Keep φ-axis type but close it for interpolation
-                              _get_closed_axis(old_grid.axes[i])
-                          else
-                              _refine_axis_surface(old_grid.axes[i], surface_intervals[i], max_spacing[i])
-                          end
-                      end, 3)
+        if is_cyl && i == 2
+            # Keep φ-axis type but close it for interpolation
+            _get_closed_axis(old_grid.axes[i])
+        else
+            _refine_axis_surface(old_grid.axes[i], surface_intervals[i], max_spacing[i])
+        end
+    end, 3)
 
-    new_grid = Grid{T, 3, CS}((new_axes[1], new_axes[2], new_axes[3]))
+    new_grid = Grid{T, 3, CS}(new_axes)
     
     # Interpolate potential onto new grid
     closed_pot = _get_closed_potential(sim.electric_potential)
