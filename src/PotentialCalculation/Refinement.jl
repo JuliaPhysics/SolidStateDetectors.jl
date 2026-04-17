@@ -179,7 +179,7 @@ _extend_refinement_limits(rl::Tuple{<:Real,<:Real,<:Real}) = rl
     return any(is_in_inactive_layer, slice)
 end
 
-function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, surface_intervals::AbstractVector{Bool}, min_spacing::T;
+function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{T}}, surface_intervals::AbstractVector{Bool}, max_spacing::T;
     extra_before::Int = 5,  # intervals to refine before first surface interval
     extra_after::Int = 5    # intervals to refine after last surface interval
 ) where {T}
@@ -222,14 +222,15 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
 
     # Compute number of points to add per interval
     ns = zeros(Int, n_int)
-    tmp = (1.0, -1)
+    tmp = (zero(T), 1)
     for r in merged
         for i in r
-            Δ = (old_ticks[i+1] - old_ticks[i])/min_spacing
+            Δ::T = (old_ticks[i+1] - old_ticks[i]) / max_spacing
             if Δ > 1
                 ns[i] = ceil(Int, Δ) - 1
-                if (Δ % 1) < tmp[1]
-                    tmp = (Δ % 1, i)
+                Δr::T = Δ % 1 > 0 ? Δ % 1 : one(Δ)
+                if Δr > tmp[1]
+                    tmp = (Δr, i)
                 end
             end
         end
@@ -237,7 +238,7 @@ function _refine_axis_surface( ax::DiscreteAxis{T, <:Any, <:Any, ClosedInterval{
 
     # Ensure that the number of ticks is even
     if isodd(sum(ns))
-        ns[tmp[2]] -= 1
+        ns[tmp[2]] += 1
     end
 
     # Subdivide intervals

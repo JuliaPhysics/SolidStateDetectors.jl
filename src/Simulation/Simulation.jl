@@ -816,7 +816,7 @@ end
 
 """
     refine_surface!(sim::Simulation{T},
-                    min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
+                    max_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
                     not_only_paint_contacts::Bool = true,
                     paint_contacts::Bool = true,
                     update_other_fields::Bool = true) where {T <: SSDFloat}
@@ -826,7 +826,7 @@ Refine the simulation's electric potential grid **only in regions containing sur
 This function:
 
 1. Identifies which intervals along each axis contain surface points.
-2. Refines these intervals by adding extra grid points while respecting `min_spacing`.
+2. Refines these intervals by adding extra grid points while respecting `max_spacing`.
 3. Interpolates the existing electric potential onto the refined grid.
 4. Updates the simulation's `electric_potential` and optionally dependent fields (`imp_scale`, `q_eff_imp`, `q_eff_fix`, `ϵ_r`, `point_types`).
 
@@ -837,16 +837,15 @@ Special behaviour:
 
 # Arguments
 - `sim::Simulation{T}`: The simulation object containing the electric potential to refine.
-- `min_spacing::NTuple{3,T}`: Minimum allowed spacing in the surface after refinement.
+- `max_spacing::NTuple{3,T}`: Maximum allowed spacing in the surface after refinement.
 """
-
-function refine_surface!(sim::Simulation{T,CS}, min_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
+function refine_surface!(sim::Simulation{T,CS}, max_spacing::NTuple{3,T} = (T(1e-4), T(1e-4), T(1e-4));
                          not_only_paint_contacts::Bool = true,
                          paint_contacts::Bool = true,
                          update_other_fields::Bool = true) where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
     
     old_grid = sim.electric_potential.grid
-    min_spacing = collect(min_spacing)
+    max_spacing = collect(max_spacing)
     
     for d in 1:3
         if length(old_grid.axes[d].ticks) != 1
@@ -854,16 +853,16 @@ function refine_surface!(sim::Simulation{T,CS}, min_spacing::NTuple{3,T} = (T(1e
             min_allowed = axis_width * T(5e-5)
             max_allowed = axis_width * T(1e-1)
             
-            val = T(min_spacing[d])
+            val = T(max_spacing[d])
             
             if val < min_allowed || val > max_allowed
-                @warn "min_spacing[$d] = $val m is out of bounds (min_allowed = $min_allowed, max_allowed = $max_allowed)."
-                min_spacing[d] = clamp(val, min_allowed, max_allowed)
+                @warn "max_spacing[$d] = $val m is out of bounds (min_allowed = $min_allowed, max_allowed = $max_allowed)."
+                max_spacing[d] = clamp(val, min_allowed, max_allowed)
             end
         end
     end
     
-    min_spacing = ntuple(d -> length(old_grid.axes[d].ticks) == 1 ? T(0.0) : min_spacing[d], 3)
+    max_spacing = ntuple(d -> length(old_grid.axes[d].ticks) == 1 ? T(0.0) : max_spacing[d], 3)
 
     # Determine which intervals have surface points
     surface_intervals = ntuple(d -> begin
@@ -887,7 +886,7 @@ function refine_surface!(sim::Simulation{T,CS}, min_spacing::NTuple{3,T} = (T(1e
                               # Keep φ-axis type but close it for interpolation
                               _get_closed_axis(old_grid.axes[i])
                           else
-                              _refine_axis_surface( old_grid.axes[i], surface_intervals[i], min_spacing[i],)
+                              _refine_axis_surface(old_grid.axes[i], surface_intervals[i], max_spacing[i])
                           end
                       end, 3)
 
@@ -1164,7 +1163,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                     mark_bulk_bits!(sim.point_types.data)
                     mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
                     mark_inactivelayer_bits!(sim.point_types.data)
-                    # Maximum spacing between (refined) surface ticks (if min_spacing = 1e-4m, only surface intervals wider than 0.1mm get new ticks)
+                    # Maximum spacing between (refined) surface ticks (if max_spacing = 1e-4m, only surface intervals wider than 0.1mm get new ticks)
                     verbose && println("Refining the grid close to the surface")
                     refine_surface!(sim, sim.world.spacing_surface_refinement; update_other_fields=true)
                     nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
