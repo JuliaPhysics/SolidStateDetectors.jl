@@ -1114,7 +1114,17 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                                     sor_consts = sor_consts,
                                     verbose = verbose )
         else
-            apply_initial_state!(sim, potential_type, contact_id, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
+            default_grid = Grid(sim, for_weighting_potential=true)
+            apply_initial_state!(sim, potential_type, contact_id, default_grid; not_only_paint_contacts, paint_contacts, depletion_handling)
+            update_till_convergence!(sim, potential_type, contact_id, convergence_limit,
+                n_iterations_between_checks=n_iterations_between_checks,
+                max_n_iterations=max_n_iterations,
+                depletion_handling=depletion_handling,
+                device_array_type=device_array_type,
+                use_nthreads=guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
+                sor_consts=sor_consts)
+            new_wp = sim.weighting_potentials[contact_id][grid]
+            sim.weighting_potentials[contact_id] = new_wp
             update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
                                         n_iterations_between_checks = n_iterations_between_checks,
                                         max_n_iterations = max_n_iterations,
