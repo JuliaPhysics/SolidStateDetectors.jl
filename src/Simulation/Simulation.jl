@@ -1105,34 +1105,42 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
     if initialize 
         if isEP
             apply_initial_state!(sim, potential_type, grid; not_only_paint_contacts, paint_contacts, depletion_handling)
-            update_till_convergence!( sim, potential_type, convergence_limit,
-                                    n_iterations_between_checks = n_iterations_between_checks,
-                                    max_n_iterations = max_n_iterations,
-                                    depletion_handling = depletion_handling,
-                                    device_array_type = device_array_type,
-                                    use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1],
-                                    sor_consts = sor_consts,
-                                    verbose = verbose )
+            nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[1], CS) : max_nthreads[1]
+            update_till_convergence!( sim, potential_type, convergence_limit;
+                                    n_iterations_between_checks,
+                                    max_n_iterations,
+                                    depletion_handling,
+                                    device_array_type,
+                                    use_nthreads = nt,
+                                    sor_consts,
+                                    verbose )
         else
-            default_grid = Grid(sim, for_weighting_potential=true)
+            # Calculate a coarse initial state on the default grid
+            default_grid = Grid(sim, for_weighting_potential = true)
             apply_initial_state!(sim, potential_type, contact_id, default_grid; not_only_paint_contacts, paint_contacts, depletion_handling)
-            update_till_convergence!(sim, potential_type, contact_id, convergence_limit,
-                n_iterations_between_checks=n_iterations_between_checks,
-                max_n_iterations=max_n_iterations,
-                depletion_handling=depletion_handling,
-                device_array_type=device_array_type,
-                use_nthreads=guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
-                sor_consts=sor_consts)
-            new_wp = sim.weighting_potentials[contact_id][grid]
-            sim.weighting_potentials[contact_id] = new_wp
-            update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
-                                        n_iterations_between_checks = n_iterations_between_checks,
-                                        max_n_iterations = max_n_iterations,
-                                        depletion_handling = depletion_handling,
-                                        device_array_type = device_array_type,
-                                        use_nthreads = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1],
-                                        sor_consts = sor_consts,
-                                        verbose = verbose )
+            nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(default_grid), max_nthreads[1], CS) : max_nthreads[1]
+            update_till_convergence!(sim, potential_type, contact_id, convergence_limit;
+                                    n_iterations_between_checks,
+                                    max_n_iterations,
+                                    depletion_handling,
+                                    device_array_type,
+                                    use_nthreads = nt,
+                                    sor_consts,
+                                    verbose )
+
+            # Map it onto the desired grid
+            sim.weighting_potentials[contact_id] = sim.weighting_potentials[contact_id][grid]
+
+            # Perform the SOR until reaching convergence
+            nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1]
+            update_till_convergence!( sim, potential_type, contact_id, convergence_limit;
+                                    n_iterations_between_checks,
+                                    max_n_iterations,
+                                    depletion_handling,
+                                    device_array_type,
+                                    use_nthreads = nt,
+                                    sor_consts,
+                                    verbose )
         end
     end
     # refinement_counter::Int = 1
@@ -1152,16 +1160,16 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                 refine!(sim, ElectricPotential, max_diffs, new_min_tick_distance, depletion_handling = depletion_handling)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
-                update_till_convergence!( sim, potential_type, convergence_limit,
-                                                n_iterations_between_checks = n_iterations_between_checks,
-                                                max_n_iterations = max_n_iterations,
-                                                depletion_handling = depletion_handling,
-                                                use_nthreads = nt,
-                                                device_array_type = device_array_type,
-                                                not_only_paint_contacts = not_only_paint_contacts, 
-                                                paint_contacts = paint_contacts,
-                                                sor_consts = is_last_ref ? T(1) : sor_consts,
-                                                verbose = verbose )
+                update_till_convergence!( sim, potential_type, convergence_limit;
+                                        n_iterations_between_checks,
+                                        max_n_iterations,
+                                        depletion_handling,
+                                        use_nthreads = nt,
+                                        device_array_type,
+                                        not_only_paint_contacts, 
+                                        paint_contacts,
+                                        sor_consts = is_last_ref ? T(1) : sor_consts,
+                                        verbose )
                 
                 if has_surface_model && iref == 3 && !any(isnan, sim.world.spacing_surface_refinement)
                     # perform surface refinement
@@ -1173,30 +1181,30 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
                     refine_surface!(sim, sim.world.spacing_surface_refinement; update_other_fields=true)
                     nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                     verbose && println("Grid size: $(size(sim.electric_potential.data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
-                    update_till_convergence!( sim, potential_type, convergence_limit,
-                                              n_iterations_between_checks = n_iterations_between_checks,
-                                              max_n_iterations = max_n_iterations,
-                                              depletion_handling = depletion_handling,
-                                              device_array_type = device_array_type,
-                                              use_nthreads = nt,
-                                              sor_consts = T(1),
-                                              verbose = verbose )
+                    update_till_convergence!( sim, potential_type, convergence_limit;
+                                            n_iterations_between_checks,
+                                            max_n_iterations,
+                                            depletion_handling,
+                                            device_array_type,
+                                            use_nthreads = nt,
+                                            sor_consts = T(1),
+                                            verbose )
                 end
             else
                 max_diffs = abs.(ref_limits)
                 refine!(sim, WeightingPotential, contact_id, max_diffs, new_min_tick_distance)
                 nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[iref+1], CS) : max_nthreads[iref+1]
                 verbose && println("Grid size: $(size(sim.weighting_potentials[contact_id].data)) - $(onCPU ? "using $(nt) threads now" : "GPU")") 
-                update_till_convergence!( sim, potential_type, contact_id, convergence_limit,
-                                                n_iterations_between_checks = n_iterations_between_checks,
-                                                max_n_iterations = max_n_iterations,
-                                                depletion_handling = depletion_handling,
-                                                use_nthreads = nt,
-                                                device_array_type = device_array_type,
-                                                not_only_paint_contacts = not_only_paint_contacts, 
-                                                paint_contacts = paint_contacts,
-                                                sor_consts = is_last_ref ? T(1) : sor_consts,
-                                                verbose = verbose )
+                update_till_convergence!( sim, potential_type, contact_id, convergence_limit;
+                                        n_iterations_between_checks,
+                                        max_n_iterations,
+                                        depletion_handling,
+                                        use_nthreads = nt,
+                                        device_array_type,
+                                        not_only_paint_contacts, 
+                                        paint_contacts,
+                                        sor_consts = is_last_ref ? T(1) : sor_consts,
+                                        verbose )
             end
         end
     end
