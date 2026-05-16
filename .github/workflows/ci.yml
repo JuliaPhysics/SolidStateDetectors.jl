@@ -27,6 +27,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       JULIA_NUM_THREADS: ${{ matrix.threads }}
+      JULIA_PKG_PRECOMPILE_AUTO: 0
     continue-on-error: ${{ matrix.version == 'pre' }}
     strategy:
       fail-fast: false
@@ -71,6 +72,10 @@ jobs:
         run: julia --project="test" -e 'using Pkg; Pkg.resolve(); Pkg.rm("Geant4"); Pkg.develop(path = pwd())'
         shell: bash
         if: matrix.arch == 'x86'
+      - name: Restrict Geant4_jll to < 11.4 # Temporary fix: this is needed until Geant4.jl is compatible with Geant4_jll@11.4
+        run: julia --project=. -e 'using Pkg; Pkg.add(Pkg.PackageSpec(name="Geant4_jll", version="11.3")); Pkg.compat("Geant4_jll", "<11.4")'; rm Manifest.toml
+        shell: bash
+        if: matrix.arch != 'x86'
       - uses: julia-actions/julia-runtest@v1
         with:
           coverage: ${{ matrix.version == '1.10' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64' }}
@@ -90,7 +95,10 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.10'
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@v3
+      - name: Restrict Geant4_jll to < 11.4 # Temporary fix: this is needed until Geant4.jl is compatible with Geant4_jll@11.4
+        run: julia --project=. -e 'using Pkg; Pkg.add(Pkg.PackageSpec(name="Geant4_jll", version="11.3")); Pkg.compat("Geant4_jll", "<11.4")'
+        shell: bash
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: 'Conda'
