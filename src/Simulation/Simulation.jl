@@ -1118,18 +1118,21 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
             # Calculate a coarse initial state on the default grid
             default_grid = Grid(sim, for_weighting_potential = true)
             apply_initial_state!(sim, potential_type, contact_id, default_grid; not_only_paint_contacts, paint_contacts, depletion_handling)
-            nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(default_grid), max_nthreads[1], CS) : max_nthreads[1]
-            update_till_convergence!(sim, potential_type, contact_id, convergence_limit;
-                                    n_iterations_between_checks,
-                                    max_n_iterations,
-                                    depletion_handling,
-                                    device_array_type,
-                                    use_nthreads = nt,
-                                    sor_consts,
-                                    verbose )
 
-            # Map it onto the desired grid
-            sim.weighting_potentials[contact_id] = sim.weighting_potentials[contact_id][grid]
+            if grid != default_grid
+                nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(default_grid), max_nthreads[1], CS) : max_nthreads[1]
+                update_till_convergence!(sim, potential_type, contact_id, convergence_limit;
+                                        n_iterations_between_checks,
+                                        max_n_iterations,
+                                        depletion_handling,
+                                        device_array_type,
+                                        use_nthreads = nt,
+                                        sor_consts,
+                                        verbose )
+
+                # Map it onto the desired grid
+                sim.weighting_potentials[contact_id] = sim.weighting_potentials[contact_id][grid]
+            end
 
             # Perform the SOR until reaching convergence
             nt = guess_nt ? _guess_optimal_number_of_threads_for_SOR(size(sim.weighting_potentials[contact_id].grid), max_nthreads[1], CS) : max_nthreads[1]
