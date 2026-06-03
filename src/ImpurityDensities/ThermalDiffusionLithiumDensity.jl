@@ -1,7 +1,11 @@
 """
-    struct ThermalDiffusionLithiumDensity{T <: SSDFloat} <: AbstractImpurityDensity{T}
+    struct ThermalDiffusionLithiumDensity{T <: SSDFloat, N} <: AbstractImpurityDensity{T}
 
 Lithium impurity density model. Ref: [Dai _et al._ (2023)](https://doi.org/10.1016/j.apradiso.2022.110638)
+
+## Parametric types 
+* `T`: Precision type.
+* `N`: Number of lithium-drifted contacts.
  
 ## Fields
 * `lithium_annealing_temperature::T`: lithium annealing temperature in Kelvin, when the lithium is diffused into the crystal. The default value is 623 K.
@@ -29,6 +33,25 @@ struct ThermalDiffusionLithiumDensity{T <: SSDFloat, N} <: AbstractImpurityDensi
     distance_to_contact::Function
     lithium_density_on_contact::T
     lithium_diffusivity::T
+    function ThermalDiffusionLithiumDensity{T}(
+        lithium_annealing_temperature::T,
+        lithium_annealing_time::T,
+        inactive_contact_id::Union{<:Integer, <:NTuple{<:Any,<:Integer}, <:AbstractVector{<:Integer}},
+        distance_to_contact::Function,
+        lithium_density_on_contact::T,
+        lithium_diffusivity::T,
+    ) where {T}
+        formatted_contact_id = format_contact_id(inactive_contact_id)
+        N = length(formatted_contact_id)
+        new{T,N}(
+            lithium_annealing_temperature,
+            lithium_annealing_time,
+            formatted_contact_id,
+            distance_to_contact,
+            lithium_density_on_contact,
+            lithium_diffusivity
+        )
+    end
 end
 
 include("ThermalDiffusionLithiumDensityParameters.jl")
@@ -37,13 +60,13 @@ function ThermalDiffusionLithiumDensity{T}(
     lithium_annealing_temperature::T,
     lithium_annealing_time::T,
     contact_with_lithium_doped::G,
-    inactive_contact_id::NTuple{N,Int};
+    inactive_contact_id::Union{<:Integer, <:NTuple{<:Any,<:Integer}, <:AbstractVector{<:Integer}};
     model_parameters::ThermalDiffusionLithiumDensityParameters{T} = ThermalDiffusionLithiumParameters(T=T), 
     distance_to_contact::Function = pt::AbstractCoordinatePoint{T} -> ConstructiveSolidGeometry.distance_to_surface(pt, contact_with_lithium_doped),
     lithium_density_on_contact::T = calculate_lithium_saturated_density(lithium_annealing_temperature, model_parameters.saturation),
     lithium_diffusivity::T = calculate_lithium_diffusivity(lithium_annealing_temperature, model_parameters.diffusion),
-) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}, N}
-    ThermalDiffusionLithiumDensity{T,N}(lithium_annealing_temperature, lithium_annealing_time, inactive_contact_id, distance_to_contact, lithium_density_on_contact, lithium_diffusivity)
+) where {T <: SSDFloat, G <: Union{<:AbstractGeometry, Nothing}}
+    ThermalDiffusionLithiumDensity{T}(lithium_annealing_temperature, lithium_annealing_time, inactive_contact_id, distance_to_contact, lithium_density_on_contact, lithium_diffusivity)
 end
 
 function ImpurityDensity(T::DataType, t::Val{:li_diffusion}, dict::AbstractDict, input_units::NamedTuple)
@@ -62,6 +85,6 @@ function get_impurity_density(li_diffusion::ThermalDiffusionLithiumDensity{T}, p
     li_diffusion.lithium_density_on_contact * SpecialFunctions.erfc(depth/2/sqrt(li_diffusion.lithium_diffusivity*li_diffusion.lithium_annealing_time))
 end
 
-(*)(scale::Real, tidm::ThermalDiffusionLithiumDensity{T,N}) where {T,N} = ThermalDiffusionLithiumDensity{T,N}(tidm.lithium_annealing_temperature, tidm.lithium_annealing_time, tidm.inactive_contact_id, tidm.distance_to_contact, T(scale * tidm.lithium_density_on_contact), tidm.lithium_diffusivity)
+(*)(scale::Real, tidm::ThermalDiffusionLithiumDensity{T}) where {T} = ThermalDiffusionLithiumDensity{T}(tidm.lithium_annealing_temperature, tidm.lithium_annealing_time, tidm.inactive_contact_id, tidm.distance_to_contact, T(scale * tidm.lithium_density_on_contact), tidm.lithium_diffusivity)
 
-(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, tidm::ThermalDiffusionLithiumDensity{T,N}) where {T,N} = ThermalDiffusionLithiumDensity{T,N}(tidm.lithium_annealing_temperature, tidm.lithium_annealing_time, tidm.inactive_contact_id, tidm.distance_to_contact, T(to_internal_units(offset) + tidm.lithium_density_on_contact), tidm.lithium_diffusivity)
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, tidm::ThermalDiffusionLithiumDensity{T}) where {T} = ThermalDiffusionLithiumDensity{T}(tidm.lithium_annealing_temperature, tidm.lithium_annealing_time, tidm.inactive_contact_id, tidm.distance_to_contact, T(to_internal_units(offset) + tidm.lithium_density_on_contact), tidm.lithium_diffusivity)

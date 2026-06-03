@@ -98,7 +98,7 @@ function get_world_limits_from_objects(::Type{Cartesian}, det::SolidStateDetecto
 end
 
 format_contact_id(id::Integer) = (id,)
-format_contact_id(id::AbstractArray{<:Integer}) = tuple(sort(id)...)
+format_contact_id(id::AbstractVector{<:Integer}) = tuple(sort(id)...)
 format_contact_id(id::NTuple{<:Any,<:Integer}) = format_contact_id(collect(id))
 
 function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTuple) where {T <: SSDFloat}
@@ -134,14 +134,14 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
             end 
             imp_doped_contact_id = format_contact_id(config_detector["semiconductor"]["impurity_density"]["doped_contact_id"])
             if !all(i -> in(i, getfield.(contacts, :id)), imp_doped_contact_id)
-                ids = findall(i -> !in(i, getfield.(contacts, :id)), imp_doped_contact_id)
-                throw(ConfigFileError("The imp_doped_contact_ids $(ids) are not defined in the configuration file."))
+                invalid_ids = filter(i -> !in(i, getfield.(contacts, :id)), collect(imp_doped_contact_id))
+                throw(ConfigFileError("The imp_doped_contact_ids $(invalid_ids) are not defined in the configuration file."))
             end
         elseif doped_geometry_for_drift && haskey(config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"], "doped_contact_id")
             drift_doped_contact_id = format_contact_id(config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"]["doped_contact_id"])
             if !all(i -> in(i, getfield.(contacts, :id)), drift_doped_contact_id)
-                ids = findall(i -> !in(i, getfield.(contacts, :id)), drift_doped_contact_id)
-                throw(ConfigFileError("The drift_doped_contact_ids $(ids) are not defined in the configuration file."))
+                invalid_ids = filter(i -> !in(i, getfield.(contacts, :id)), collect(drift_doped_contact_id))
+                throw(ConfigFileError("The imp_doped_contact_ids $(invalid_ids) are not defined in the configuration file."))
             end
         else
             contact_potentials = T[c.potential for c in det.contacts]
