@@ -11,7 +11,7 @@ T = Float32
     timed_calculate_weighting_potential!(sim, id, refinement_limits=0.01)
     SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(
         sim, id)
-    U_est = timed_estimate_depletion_voltage(sim) # around 2600
+    U_est = timed_estimate_depletion_voltage(sim, check_for_depletion = false) # around 2600
     ΔU = 50u"V"
     # simulate over and under depletion voltage
     U₋ = U_est - ΔU

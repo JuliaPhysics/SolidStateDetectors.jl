@@ -223,7 +223,7 @@ end
 
     sim.detector = SolidStateDetector(sim.detector, idm)
     timed_calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
-    U_est = timed_estimate_depletion_voltage(sim)
+    U_est = timed_estimate_depletion_voltage(sim, check_for_depletion = false)
 
     # ParBouleImpurityDensity
     d = Dict("impurity_density" => Dict(
@@ -265,7 +265,7 @@ end
     @test ((1 * idm_spline) + 0).ρ == idm_spline.ρ
     sim.detector = SolidStateDetector(sim.detector, idm_spline)
     timed_calculate_electric_potential!(sim, refinement_limits=0.01, depletion_handling=true)
-    U_est_spline = timed_estimate_depletion_voltage(sim)
+    U_est_spline = timed_estimate_depletion_voltage(sim, check_for_depletion = false)
     @test isapprox(U_est, U_est_spline; atol=10u"V")
 end
 

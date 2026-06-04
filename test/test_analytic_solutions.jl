@@ -154,10 +154,10 @@ end
     intV = (R2^2 - R1^2) * π * L
 
     timed_calculate_electric_potential!(sim_cyl, device_array_type = device_array_type, grid = Grid(sim_cyl, max_tick_distance = (0.3u"cm", 15u"°", 1u"m")),
-        convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
+        convergence_limit = 1e-6, depletion_handling = true, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
     timed_calculate_electric_potential!(sim_car, device_array_type = device_array_type, grid = Grid(sim_car, max_tick_distance = (0.3u"cm", 0.3u"cm", 1u"m")),
-        convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
+        convergence_limit = 1e-6, depletion_handling = true, refinement_limits = [0.2, 0.1, 0.05, 0.01], use_nthreads = 1, verbose = false
     )
 
     zmin, zmax = SolidStateDetectors.from_internal_units.(extrema(midpoints(SolidStateDetectors.get_extended_ticks(sim_cyl.point_types.grid.z))), u"cm")

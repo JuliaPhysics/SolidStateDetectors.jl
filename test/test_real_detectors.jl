@@ -23,7 +23,7 @@ T = Float32
     @test isapprox( signalsum, T(2), atol = 5e-3 )
     nt = NamedTuple(sim)
     @test sim == Simulation(nt)
-    deplV = timed_estimate_depletion_voltage(sim, verbose = false)
+    deplV = timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false)
     @info "Depletion voltage: $deplV"
     @test isapprox(deplV, 1871*u"V", atol = 10.0*u"V") 
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
@@ -98,7 +98,7 @@ end
         l = vcat(wp.data[rmin:-1:2,φidx2,zidx], wp.data[1:rmax,φidx1,zidx])
         @test all(diff(l) .< 0) # the weighting potential should monotonously decrease from rmin to rmax
     end
-    @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
+    @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
 end
 @testset "CartesianGrid3D" begin
     ticks = collect(0.0f0:0.25f0:1.0f0)
@@ -149,7 +149,7 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
-    @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false), T(-13.15)*u"V", atol = 1.0u"V") 
+    @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false), T(-13.15)*u"V", atol = 1.0u"V") 
 end
 @timed_testset "CGD" begin
     sim = Simulation{T}(SSD_examples[:CGD])
