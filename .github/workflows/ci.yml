@@ -77,7 +77,7 @@ jobs:
           coverage: ${{ matrix.version == '1.10' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64' }}
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1.10' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-      - uses: codecov/codecov-action@v6
+      - uses: codecov/codecov-action@v7
         if: matrix.version == '1.10' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         with:
           files: lcov.info
