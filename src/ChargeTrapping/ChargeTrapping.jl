@@ -66,7 +66,6 @@ Charge trapping model presented in [Boggs _et al._ (2023)](https://doi.org/10.10
 ## Fields
 * `nσe::T`: Trapping product for electrons (default: `(nσe)^-1 = 1020cm`).
 * `nσh::T`: Trapping product for holes (default: `(nσh)^-1 = 2040cm`).
-* `temperature::T`: Temperature of the crystal (default: `78K`).
 
 See also [Charge Trapping Models](@ref).
 """
@@ -124,7 +123,7 @@ end
 
 
 BoggsChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = BoggsChargeTrappingModel{T}(args...; kwargs...)
-function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temperature::RealQuantity = T(78)) where {T <: SSDFloat}
+function BoggsChargeTrappingModel{T}(temperature::RealQuantity, config_dict::AbstractDict = Dict()) where {T <: SSDFloat}
     nσe::T = ustrip(u"m^-1", inv(1020u"cm"))
     nσh::T = ustrip(u"m^-1", inv(2040u"cm"))
     meffe::T = 0.12
@@ -147,7 +146,7 @@ function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); tempera
     if haskey(parameters, "nσh-1") nσh = inv(_parse_value(T, parameters["nσh-1"], internal_length_unit)) end
     if haskey(parameters, "meffe") meffe =   _parse_value(T, parameters["meffe"], Unitful.NoUnits) end
     if haskey(parameters, "meffh") meffh =   _parse_value(T, parameters["meffh"], Unitful.NoUnits) end
-    if haskey(parameters, "temperature") temperature = _parse_value(T, parameters["temperature"], internal_temperature_unit) end
+    
     BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temperature)
 end
 
@@ -330,7 +329,7 @@ end
 
 
 CombinedChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = CombinedChargeTrappingModel{T}(args...; kwargs...)
-function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temperature::RealQuantity = T(78)) where {T <: SSDFloat}
+function CombinedChargeTrappingModel{T}(temperature::RealQuantity, config_dict::AbstractDict = Dict()) where {T <: SSDFloat}
 
     if haskey(config_dict, "model") && config_dict["model"] !== nothing && !(haskey(config_dict, "parameters"))
         throw(ConfigFileError("`CombinedChargeTrappingModel` does not have `parameters`"))
@@ -347,7 +346,7 @@ function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temp
             if isnothing(model)
                 throw(ConfigFileError("`model` is defined but empty in config. Remove it or provide a valid name."))
         elseif model == "Boggs"
-                BoggsChargeTrappingModel{T}(config_dict; temperature)
+                BoggsChargeTrappingModel{T}(temperature, config_dict)
             elseif model == "ConstantLifetime"
                 ConstantLifetimeChargeTrappingModel{T}(config_dict)
             else

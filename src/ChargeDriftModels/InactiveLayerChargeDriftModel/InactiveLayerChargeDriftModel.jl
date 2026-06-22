@@ -63,11 +63,14 @@ function _calculate_mobility_with_impurities(
 end
 
 function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
-        imp_model::AbstractImpurityDensity, input_units::NamedTuple,
+        imp_model::AbstractImpurityDensity, input_units::NamedTuple, temperature::RealQuantity
     ) where {T <: SSDFloat}
 
-    temperature = _parse_value(T, get(config, "temperature", 90u"K"), input_units.temperature)
+    temperature::T = _parse_value(T, temperature, input_units.temperature)
 
+    if temperature < 50 || temperature > 150
+        @warn "Temperature = $(temperature) K is outside the typical validated range (50–150 K)."
+    end
     neutral_imp_model = if haskey(config, "neutral_impurity_density")
         ImpurityDensity(T, config["neutral_impurity_density"], input_units)
     else

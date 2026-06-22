@@ -70,7 +70,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
             if model == :InactiveLayerChargeDriftModel
-                InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units)
+                InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units, temperature)
             else
                 getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"], input_units, temperature = temperature)
             end
@@ -98,11 +98,11 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
             ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
             ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
         else
-            CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+            CombinedChargeTrappingModel{T}(temperature, ctm_dict)
         end
         
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+        BoggsChargeTrappingModel{T}(temperature, ctm_dict)
         
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
