@@ -76,7 +76,7 @@ end
 end
 
 @timed_testset "Charge Trapping: BoggsChargeTrappingModel" begin
-    sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}())
+    sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}(sim.detector.semiconductor.temperature))
     evt = Event(pos, Edep)
     timed_simulate!(evt, sim)
     signalsum = T(0)
@@ -92,15 +92,13 @@ end
             "model" => "Boggs",
             "parameters" => Dict(
                 "nσe" => "0.001cm^-1",
-                "nσh" => "0.0005cm^-1",
-                "temperature" => "78K"
+                "nσh" => "0.0005cm^-1"
             )
         )
         simA = @test_nowarn Simulation{T}(config_dict)
         @test simA.detector.semiconductor.charge_trapping_model isa BoggsChargeTrappingModel{T}
         @test simA.detector.semiconductor.charge_trapping_model.nσe == T(0.1)
         @test simA.detector.semiconductor.charge_trapping_model.nσh == T(0.05)
-        @test simA.detector.semiconductor.charge_trapping_model.temperature == T(78)
     end
     @testset "Parse config file 2" begin
         config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
@@ -109,8 +107,7 @@ end
                 "nσe-1" => "500cm",
                 "nσh-1" => "500cm",
                 "meffe" => 0.1,
-                "meffh" => 0.2,
-                "temperature" => "100K"
+                "meffh" => 0.2
             )
         )
         simB = @test_nowarn Simulation{T}(config_dict)
@@ -119,7 +116,6 @@ end
         @test simB.detector.semiconductor.charge_trapping_model.nσh == T(0.2)
         @test simB.detector.semiconductor.charge_trapping_model.meffe == T(0.1)
         @test simB.detector.semiconductor.charge_trapping_model.meffh == T(0.2)
-        @test simB.detector.semiconductor.charge_trapping_model.temperature == T(100)
 
     end
 end
@@ -175,7 +171,7 @@ end
     for (τ,τ_inactive) in zip(τ_list, τ_inactive_list)
         parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive),
             "inactive_layer_geometry" => simA_inactive_layer_geometry)
-        trapping_model=CombinedChargeTrappingModel{T}(parameters)
+        trapping_model=CombinedChargeTrappingModel{T}(simA.detector.semiconductor.temperature, parameters)
         simA.detector = SolidStateDetector(simA.detector, trapping_model)
         evt_bulk = Event(pos_bulk , Edep)
         timed_simulate!(evt_bulk, simA)
@@ -205,7 +201,7 @@ end
     τ, τ_inactive = 1u"ms", 100u"ns"
     parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive),
         "inactive_layer_geometry" => simA_inactive_layer_geometry)
-    trapping_model=CombinedChargeTrappingModel{T}(parameters)
+    trapping_model=CombinedChargeTrappingModel{T}(simA.detector.semiconductor.temperature, parameters)
     simA.detector = SolidStateDetector(simA.detector, trapping_model)
     signalsum_list_inactive = T[]
     for depth in (0.1:0.1:0.9)/1000
