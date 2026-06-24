@@ -76,7 +76,7 @@ end
 end
 
 @timed_testset "Charge Trapping: BoggsChargeTrappingModel" begin
-    sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}(sim.detector.semiconductor.temperature))
+    sim.detector = SolidStateDetector(sim.detector, BoggsChargeTrappingModel{T}(Dict(), sim.detector.semiconductor.temperature))
     evt = Event(pos, Edep)
     timed_simulate!(evt, sim)
     signalsum = T(0)
@@ -92,13 +92,15 @@ end
             "model" => "Boggs",
             "parameters" => Dict(
                 "nσe" => "0.001cm^-1",
-                "nσh" => "0.0005cm^-1"
+                "nσh" => "0.0005cm^-1",
+                "temperature" => "78K"
             )
         )
         simA = @test_nowarn Simulation{T}(config_dict)
         @test simA.detector.semiconductor.charge_trapping_model isa BoggsChargeTrappingModel{T}
         @test simA.detector.semiconductor.charge_trapping_model.nσe == T(0.1)
         @test simA.detector.semiconductor.charge_trapping_model.nσh == T(0.05)
+        @test simA.detector.semiconductor.charge_trapping_model.temperature == T(78)
     end
     @testset "Parse config file 2" begin
         config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
@@ -107,7 +109,8 @@ end
                 "nσe-1" => "500cm",
                 "nσh-1" => "500cm",
                 "meffe" => 0.1,
-                "meffh" => 0.2
+                "meffh" => 0.2,
+                "temperature" => "78K"
             )
         )
         simB = @test_nowarn Simulation{T}(config_dict)
@@ -116,7 +119,30 @@ end
         @test simB.detector.semiconductor.charge_trapping_model.nσh == T(0.2)
         @test simB.detector.semiconductor.charge_trapping_model.meffe == T(0.1)
         @test simB.detector.semiconductor.charge_trapping_model.meffh == T(0.2)
-
+        @test simB.detector.semiconductor.charge_trapping_model.temperature == T(78)
+    end
+    @testset "CTM temperature is inherited from semiconductor when not in config" begin
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:InvertedCoax])
+        config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
+            "model" => "Boggs",
+            "parameters" => Dict("nσe" => "0.001cm^-1", "nσh" => "0.0005cm^-1")
+        )
+        sim_boggs = @test_nowarn Simulation{T}(config_dict)
+        @test sim_boggs.detector.semiconductor.charge_trapping_model.temperature == sim_boggs.detector.semiconductor.temperature
+    end
+    @testset "Temperature mismatch in parameters raises ConfigFileError" begin
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:InvertedCoax])
+        config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"] = Dict(
+            "model" => "Boggs",
+            "parameters" => Dict("nσe" => "0.001cm^-1", "nσh" => "0.0005cm^-1", "temperature" => "100K")
+        )
+        @test_throws SolidStateDetectors.ConfigFileError Simulation{T}(config_dict)
+    end
+    @testset "Temperature from config only (no argument)" begin
+        ctm = @test_nowarn BoggsChargeTrappingModel{T}(Dict(
+            "parameters" => Dict("nσe" => "0.001cm^-1", "temperature" => "78K")
+        ))
+        @test ctm.temperature == T(78)
     end
 end
 @timed_testset "Charge Trapping: ConstantLifetimeChargeTrappingModel" begin
@@ -171,7 +197,7 @@ end
     for (τ,τ_inactive) in zip(τ_list, τ_inactive_list)
         parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive),
             "inactive_layer_geometry" => simA_inactive_layer_geometry)
-        trapping_model=CombinedChargeTrappingModel{T}(simA.detector.semiconductor.temperature, parameters)
+        trapping_model=CombinedChargeTrappingModel{T}(parameters, simA.detector.semiconductor.temperature)
         simA.detector = SolidStateDetector(simA.detector, trapping_model)
         evt_bulk = Event(pos_bulk , Edep)
         timed_simulate!(evt_bulk, simA)
@@ -201,7 +227,7 @@ end
     τ, τ_inactive = 1u"ms", 100u"ns"
     parameters = Dict("model" => "ConstantLifetime", "model_inactive" => "ConstantLifetime", "parameters" => Dict("τh" => τ, "τe" => τ), "parameters_inactive" => Dict("τh" => τ_inactive, "τe" => τ_inactive),
         "inactive_layer_geometry" => simA_inactive_layer_geometry)
-    trapping_model=CombinedChargeTrappingModel{T}(simA.detector.semiconductor.temperature, parameters)
+    trapping_model=CombinedChargeTrappingModel{T}(parameters, simA.detector.semiconductor.temperature)
     simA.detector = SolidStateDetector(simA.detector, trapping_model)
     signalsum_list_inactive = T[]
     for depth in (0.1:0.1:0.9)/1000
@@ -218,6 +244,17 @@ end
     end
     @test all(signalsum_list_inactive .< T(2.0))
     @test all(diff(signalsum_list_inactive) .> 0)
+
+    @testset "Matching temperature in CombinedCTM config is allowed" begin
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:TrueCoaxial])
+        config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"]["temperature"] = 90
+        @test_nowarn Simulation{T}(config_dict)
+    end
+    @testset "Temperature mismatch in CombinedCTM config raises ConfigFileError" begin
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:TrueCoaxial])
+        config_dict["detectors"][1]["semiconductor"]["charge_trapping_model"]["temperature"] = 100
+        @test_throws SolidStateDetectors.ConfigFileError Simulation{T}(config_dict)
+    end
 end
 
 @timed_testset "Test completeness of charge drift models" begin
@@ -284,6 +321,22 @@ end
         pt_inactive = CartesianPoint{T}(0.0095, 0.0, 0.005)
         @test SolidStateDetectors.in_inactive_layer(pt_active, nothing, simA.point_types) == false
         @test SolidStateDetectors.in_inactive_layer(pt_inactive, nothing, simA.point_types) == true
+    end
+
+    @testset "CDM temperature is inherited from semiconductor when not in config" begin
+        @test simA.detector.semiconductor.charge_drift_model.temperature == simA.detector.semiconductor.temperature
+
+        # A matching temperature in the Charge Drift Model config entry is allowed
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:TrueCoaxial])
+        config_dict["detectors"][1]["semiconductor"]["charge_drift_model"]["temperature"] = 90
+        @test_nowarn Simulation{T}(config_dict)
+    end
+
+    @testset "Temperature mismatch in Charge Drift Model config raises ConfigFileError" begin
+        config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:TrueCoaxial])
+        # semiconductor temperature is 90 K; setting Charge Drift Model temperature to a different value must throw
+        config_dict["detectors"][1]["semiconductor"]["charge_drift_model"]["temperature"] = 100
+        @test_throws SolidStateDetectors.ConfigFileError Simulation{T}(config_dict)
     end
 end
 
