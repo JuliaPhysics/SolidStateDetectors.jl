@@ -98,11 +98,11 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
             ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
             ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
         else
-            CombinedChargeTrappingModel{T}(temperature, ctm_dict)
+            CombinedChargeTrappingModel{T}(ctm_dict, temperature)
         end
         
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(temperature, ctm_dict)
+        BoggsChargeTrappingModel{T}(ctm_dict, temperature)
         
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(ctm_dict)

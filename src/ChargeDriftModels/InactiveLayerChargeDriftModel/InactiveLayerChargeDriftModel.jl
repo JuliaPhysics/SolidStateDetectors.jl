@@ -68,6 +68,17 @@ function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
 
     temperature::T = _parse_value(T, temperature, input_units.temperature)
 
+    if haskey(config, "temperature")
+        cdm_temperature::T = _parse_value(T, config["temperature"], input_units.temperature)
+        if cdm_temperature != temperature
+            throw(ConfigFileError(
+                "Temperature mismatch: InactiveLayerChargeDriftModel defines temperature = $(cdm_temperature) K, " *
+                "but the semiconductor temperature is $(temperature) K. " *
+                "Remove `temperature` from the charge drift model and define it only in the semiconductor."
+            ))
+        end
+    end
+
     if temperature < 50 || temperature > 150
         @warn "Temperature = $(temperature) K is outside the typical validated range (50–150 K)."
     end

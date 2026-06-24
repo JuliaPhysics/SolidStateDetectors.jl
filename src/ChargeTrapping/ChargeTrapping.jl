@@ -123,19 +123,34 @@ end
 
 
 BoggsChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = BoggsChargeTrappingModel{T}(args...; kwargs...)
-function BoggsChargeTrappingModel{T}(temperature::RealQuantity, config_dict::AbstractDict = Dict()) where {T <: SSDFloat}
+function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::Union{RealQuantity, Missing} = missing) where {T <: SSDFloat}
     nσe::T = ustrip(u"m^-1", inv(1020u"cm"))
     nσh::T = ustrip(u"m^-1", inv(2040u"cm"))
     meffe::T = 0.12
     meffh::T = 0.21
-    temperature::T = _parse_value(T, temperature, internal_temperature_unit)
 
     if haskey(config_dict, "model") && !haskey(config_dict, "parameters")
         throw(ConfigFileError("`BoggsChargeTrappingModel` does not have `parameters`"))
     end
 
     parameters = haskey(config_dict, "parameters") ? config_dict["parameters"] : config_dict
-    
+
+    temp::Union{T, Missing} = temperature === missing ? missing : _parse_value(T, temperature, internal_temperature_unit)
+
+    if haskey(parameters, "temperature")
+        cfg_temp::T = _parse_value(T, parameters["temperature"], internal_temperature_unit)
+        if temp !== missing && cfg_temp != temp
+            throw(ConfigFileError(
+                "Temperature mismatch: BoggsChargeTrappingModel defines temperature = $(cfg_temp) K, " *
+                "but the semiconductor temperature is $(temp) K. " *
+                "Remove `temperature` from the charge trapping model and define it only in the semiconductor."
+            ))
+        end
+        temp = cfg_temp
+    end
+
+    temp === missing && throw(ConfigFileError("No temperature specified for `BoggsChargeTrappingModel`"))
+
     allowed_keys = ("nσe","nσe-1","nσh","nσh-1","meffe","meffh","temperature")
     k = filter(k -> !(k in allowed_keys), keys(parameters))
     !isempty(k) && @warn "The following keys will be ignored: $(k).\nAllowed keys are: $(allowed_keys)"
@@ -146,8 +161,8 @@ function BoggsChargeTrappingModel{T}(temperature::RealQuantity, config_dict::Abs
     if haskey(parameters, "nσh-1") nσh = inv(_parse_value(T, parameters["nσh-1"], internal_length_unit)) end
     if haskey(parameters, "meffe") meffe =   _parse_value(T, parameters["meffe"], Unitful.NoUnits) end
     if haskey(parameters, "meffh") meffh =   _parse_value(T, parameters["meffh"], Unitful.NoUnits) end
-    
-    BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temperature)
+
+    BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temp)
 end
 
 
@@ -329,7 +344,23 @@ end
 
 
 CombinedChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = CombinedChargeTrappingModel{T}(args...; kwargs...)
-function CombinedChargeTrappingModel{T}(temperature::RealQuantity, config_dict::AbstractDict = Dict()) where {T <: SSDFloat}
+function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::Union{RealQuantity, Missing} = missing) where {T <: SSDFloat}
+
+    temp::Union{T, Missing} = temperature === missing ? missing : _parse_value(T, temperature, internal_temperature_unit)
+
+    if haskey(config_dict, "temperature")
+        cfg_temp::T = _parse_value(T, config_dict["temperature"], internal_temperature_unit)
+        if temp !== missing && cfg_temp != temp
+            throw(ConfigFileError(
+                "Temperature mismatch: CombinedChargeTrappingModel defines temperature = $(cfg_temp) K, " *
+                "but the semiconductor temperature is $(temp) K. " *
+                "Remove `temperature` from the charge trapping model and define it only in the semiconductor."
+            ))
+        end
+        temp = cfg_temp
+    end
+
+    temp === missing && throw(ConfigFileError("No temperature specified for `CombinedChargeTrappingModel`"))
 
     if haskey(config_dict, "model") && config_dict["model"] !== nothing && !(haskey(config_dict, "parameters"))
         throw(ConfigFileError("`CombinedChargeTrappingModel` does not have `parameters`"))
@@ -345,8 +376,8 @@ function CombinedChargeTrappingModel{T}(temperature::RealQuantity, config_dict::
             model = config_dict["model"]
             if isnothing(model)
                 throw(ConfigFileError("`model` is defined but empty in config. Remove it or provide a valid name."))
-        elseif model == "Boggs"
-                BoggsChargeTrappingModel{T}(temperature, config_dict)
+            elseif model == "Boggs"
+                BoggsChargeTrappingModel{T}(config_dict, temp)
             elseif model == "ConstantLifetime"
                 ConstantLifetimeChargeTrappingModel{T}(config_dict)
             else
