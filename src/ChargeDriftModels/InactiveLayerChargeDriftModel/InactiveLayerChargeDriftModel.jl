@@ -74,7 +74,7 @@ function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
             throw(ConfigFileError(
                 "Temperature mismatch: InactiveLayerChargeDriftModel defines temperature = $(cdm_temperature) K, " *
                 "but the semiconductor temperature is $(temperature) K. " *
-                "Remove `temperature` from the charge drift model and define it only in the semiconductor."
+                "Define `temperature` in the semiconductor and either remove it from the charge drift model or make sure that the temperatures match."
             ))
         end
     end

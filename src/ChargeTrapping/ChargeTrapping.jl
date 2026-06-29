@@ -123,7 +123,7 @@ end
 
 
 BoggsChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = BoggsChargeTrappingModel{T}(args...; kwargs...)
-function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::Union{RealQuantity, Missing} = missing) where {T <: SSDFloat}
+function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::RealQuantity = NaN) where {T <: SSDFloat}
     nσe::T = ustrip(u"m^-1", inv(1020u"cm"))
     nσh::T = ustrip(u"m^-1", inv(2040u"cm"))
     meffe::T = 0.12
@@ -135,21 +135,21 @@ function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), tempera
 
     parameters = haskey(config_dict, "parameters") ? config_dict["parameters"] : config_dict
 
-    temp::Union{T, Missing} = temperature === missing ? missing : _parse_value(T, temperature, internal_temperature_unit)
+    temp::T = isnan(temperature) ? T(NaN) : _parse_value(T, temperature, internal_temperature_unit)
 
     if haskey(parameters, "temperature")
         cfg_temp::T = _parse_value(T, parameters["temperature"], internal_temperature_unit)
-        if temp !== missing && cfg_temp != temp
+        if !isnan(temp) && cfg_temp != temp
             throw(ConfigFileError(
                 "Temperature mismatch: BoggsChargeTrappingModel defines temperature = $(cfg_temp) K, " *
                 "but the semiconductor temperature is $(temp) K. " *
-                "Remove `temperature` from the charge trapping model and define it only in the semiconductor."
+                "Define `temperature` in the semiconductor and either remove it from the charge trapping model or make sure that the temperatures match."
             ))
         end
         temp = cfg_temp
     end
 
-    temp === missing && throw(ConfigFileError("No temperature specified for `BoggsChargeTrappingModel`"))
+    isnan(temp) && throw(ConfigFileError("No temperature specified for `BoggsChargeTrappingModel`"))
 
     allowed_keys = ("nσe","nσe-1","nσh","nσh-1","meffe","meffh","temperature")
     k = filter(k -> !(k in allowed_keys), keys(parameters))
@@ -344,23 +344,23 @@ end
 
 
 CombinedChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = CombinedChargeTrappingModel{T}(args...; kwargs...)
-function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::Union{RealQuantity, Missing} = missing) where {T <: SSDFloat}
+function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::RealQuantity = NaN) where {T <: SSDFloat}
 
-    temp::Union{T, Missing} = temperature === missing ? missing : _parse_value(T, temperature, internal_temperature_unit)
+    temp::T = isnan(temperature) ? T(NaN) : _parse_value(T, temperature, internal_temperature_unit)
 
     if haskey(config_dict, "temperature")
         cfg_temp::T = _parse_value(T, config_dict["temperature"], internal_temperature_unit)
-        if temp !== missing && cfg_temp != temp
+        if !isnan(temp) && cfg_temp != temp
             throw(ConfigFileError(
                 "Temperature mismatch: CombinedChargeTrappingModel defines temperature = $(cfg_temp) K, " *
                 "but the semiconductor temperature is $(temp) K. " *
-                "Remove `temperature` from the charge trapping model and define it only in the semiconductor."
+                "Define `temperature` in the semiconductor and either remove it from the charge trapping model or make sure that the temperatures match."
             ))
         end
         temp = cfg_temp
     end
 
-    temp === missing && throw(ConfigFileError("No temperature specified for `CombinedChargeTrappingModel`"))
+    isnan(temp) && throw(ConfigFileError("No temperature specified for `CombinedChargeTrappingModel`"))
 
     if haskey(config_dict, "model") && config_dict["model"] !== nothing && !(haskey(config_dict, "parameters"))
         throw(ConfigFileError("`CombinedChargeTrappingModel` does not have `parameters`"))
