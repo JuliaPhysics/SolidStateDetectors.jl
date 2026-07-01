@@ -565,13 +565,15 @@ There are several keyword arguments which can be used to tune the simulation.
 * `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `-1`. If set to `-1` there will be no limit.
-* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Defaults to the depletion-handling
+    state of the current `sim.point_types` (i.e. `has_depletion_handling(sim.point_types)`), or `false` if
+    `sim.point_types` is `missing`.
 * `use_nthreads::Int`: Number of threads to use in the computation. Default is `Base.Threads.nthreads()`.
     The environment variable `JULIA_NUM_THREADS` must be set appropriately before the Julia session was
     started (e.g. `export JULIA_NUM_THREADS=8` in case of bash).
 * `not_only_paint_contacts::Bool = true`: Whether to only use the painting algorithm of the surfaces of [`Contact`](@ref)
     without checking if points are actually inside them.
-    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
+    Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.
 * `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
 * `sor_consts::Union{<:Real, NTuple{2, <:Real}}`: Two element tuple in case of cylindrical coordinates.
     First element contains the SOR constant for `r` = 0.
@@ -579,8 +581,8 @@ There are several keyword arguments which can be used to tune the simulation.
     First element should be smaller than the second one and both should be `∈ [1.0, 2.0]`. Default is `[1.4, 1.85]`.
     In case of Cartesian coordinates, only one value is taken.
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
-    
-## Example 
+
+## Example
 ```julia
 SolidStateDetectors.update_till_convergence!(sim, ElectricPotential, 1e-6, depletion_handling = true)
 ```
@@ -590,7 +592,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
                                    convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
-                                   depletion_handling::Bool = false,
+                                   depletion_handling::Bool = ismissing(sim.point_types) ? false : has_depletion_handling(sim.point_types),
                                    use_nthreads::Int = Base.Threads.nthreads(),
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
@@ -638,6 +640,34 @@ function update_till_convergence!( sim::Simulation{T,CS},
     cf
 end
 
+
+# """
+#     mark_bits!(sim::Simulation)
+#
+# Re-derive the geometric/physical bit flags of `sim.point_types` from the current state of `sim`.
+#
+# `update_till_convergence!(sim, ElectricPotential)` relaxes the potential values but does not refresh
+# these flags, so this helper restores them after an in-place potential update. It sets:
+# * the bulk bits (via `mark_bulk_bits!`), always; and, only when the `point_types` carry depletion
+#   handling (`has_depletion_handling(sim.point_types)`),
+# * the undepleted bits (via `mark_undep_bits!`, from `sim.imp_scale`), and
+# * the inactive-layer bits (via `mark_inactivelayer_bits!`), if the impurity density model defines a
+#   `surface_imp_model`.
+#
+# ## Arguments
+# * `sim::Simulation{T}`: [`Simulation`](@ref) whose `point_types` flags are updated in place.
+# """
+function mark_bits!(sim::Simulation)
+    mark_bulk_bits!(sim.point_types.data)
+    if has_depletion_handling(sim.point_types)
+        mark_undep_bits!(sim.point_types.data, sim.imp_scale.data)
+        if isdefined(sim.detector.semiconductor.impurity_density_model, :surface_imp_model)
+            mark_inactivelayer_bits!(sim.point_types.data)
+        end
+    end
+    nothing
+end
+
 """
     update_till_convergence!( sim::Simulation{T} ::Type{WeightingPotential}, contact_id::Int, convergence_limit::Real; kwargs...)::T
 
@@ -656,7 +686,9 @@ There are several keyword arguments which can be used to tune the simulation.
 * `n_iterations_between_checks::Int`: Number of iterations between checks. Default is set to `500`.
 * `max_n_iterations::Int`: Set the maximum number of iterations which are performed after each grid refinement.
     Default is `-1`. If set to `-1` there will be no limit.
-* `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`. This is an experimental feature:
+* `depletion_handling::Bool`: Enables the handling of undepleted regions. Defaults to the depletion-handling
+    state of the current `sim.point_types` (i.e. `has_depletion_handling(sim.point_types)`), or `false` if
+    `sim.point_types` is `missing`. This is an experimental feature:
     In undepleted regions (determined in `calculate_electric_potential!(sim; depletion_handling = true)`), the dielectric permittivity
     of the semiconductor is scaled up to mimic conductive behavior. The scale factor can be tuned via 
     the function [`scaling_factor_for_permittivity_in_undepleted_region`](@ref).
@@ -685,7 +717,7 @@ function update_till_convergence!( sim::Simulation{T, CS},
                                    convergence_limit::Real = 1e-7;
                                    n_iterations_between_checks::Int = 500,
                                    max_n_iterations::Int = -1,
-                                   depletion_handling::Bool = false,
+                                   depletion_handling::Bool = ismissing(sim.point_types) ? false : has_depletion_handling(sim.point_types),
                                    not_only_paint_contacts::Bool = true, 
                                    paint_contacts::Bool = true,
                                    use_nthreads::Int = Base.Threads.nthreads(),
@@ -753,19 +785,26 @@ Takes the current state of `sim.electric_potential` and refines it with respect 
 * `sim::Simulation{T}`: [`Simulation`](@ref) for which `sim.electric_potential` will be refined.
 * `max_diffs::Tuple{<:Real,<:Real,<:Real}`: Maximum potential difference between two discrete ticks of `sim.electric_potential.grid` after refinement.
 * `minimum_distances::Tuple{<:Real,<:Real,<:Real}`: Minimum distance (in SI Units) between two discrete ticks of `sim.electric_potential.grid` after refinement.
-    
-## Examples 
-```julia 
+
+## Keywords
+* `update_other_fields::Bool = false`: If `true`, the impurity scale, effective charge densities, dielectric
+    distribution and `point_types` are rebuilt on the refined grid.
+* `depletion_handling::Bool`: Depletion-handling flag stored in the rebuilt `point_types` (only relevant when
+    `update_other_fields = true`). Defaults to the depletion-handling state of the current `sim.point_types`
+    (`has_depletion_handling(sim.point_types)`), or `false` if `sim.point_types` is `missing`.
+
+## Examples
+```julia
 SolidStateDetectors.refine!(sim, ElectricPotential, max_diffs = (100, 100, 100), minimum_distances = (0.01, 0.02, 0.01))
 ```
 """
 function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
                     max_diffs::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0)),
                     minimum_distances::Tuple{<:Real,<:Real,<:Real} = (T(0), T(0), T(0));
-                    not_only_paint_contacts::Bool = true, 
+                    not_only_paint_contacts::Bool = true,
                     paint_contacts::Bool = true,
                     update_other_fields::Bool = false,
-                    depletion_handling::Bool = false) where {T <: SSDFloat}
+                    depletion_handling::Bool = ismissing(sim.point_types) ? false : has_depletion_handling(sim.point_types)) where {T <: SSDFloat}
     sim.electric_potential = refine_scalar_potential(sim.electric_potential, T.(max_diffs), T.(minimum_distances))
 
     if update_other_fields
