@@ -29,6 +29,7 @@ jobs:
       JULIA_NUM_THREADS: ${{ matrix.threads }}
       JULIA_PKG_PRECOMPILE_AUTO: 0
     continue-on-error: ${{ matrix.version == 'pre' }}
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -36,17 +37,20 @@ jobs:
           - '1'
         os:
           - ubuntu-latest
-          - macOS-latest
           - windows-latest
         arch:
           - x64
         threads: 
           - 4
         include:
+          - version: '1'
+            os: macOS-latest
+            arch: arm64
+            threads: 4
           - version: '1.10'
             os: ubuntu-latest
             arch: x64
-            threads: '1'
+            threads: 1
           - version: pre
             os: ubuntu-latest
             arch: x64
