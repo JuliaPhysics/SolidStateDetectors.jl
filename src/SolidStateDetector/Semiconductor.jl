@@ -58,11 +58,13 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
 
     material = material_properties[materials[dict["material"]]]
 
-    temperature = if haskey(dict, "temperature") 
+    temperature = if haskey(dict, "temperature")
         _parse_value(T, dict["temperature"], input_units.temperature)
     elseif material.name == "High Purity Germanium"
+        @warn "No temperature defined for semiconductor. Using default value of 77 K for High Purity Germanium."
         T(77)
     else
+        @warn "No temperature defined for semiconductor. Using default value of 293 K."
         T(293)
     end
     
