@@ -242,9 +242,11 @@ The `charge_drift_model` needs:
 - `surface_impurity_density` (optional): the density profile of lithium (n-type) in the surface layer.
 - `neutral_impurity_density`: the density profile of the non-ionized impurity in the crystal.
 
-> Note that the fields `bulk_impurity_density` and `surface_impurity_density` do not need to be explicitly defined if `PtypePNJunctionImpurityDensity` is chosen as the overall impurity density profile.
+!!! note 
+    The fields `bulk_impurity_density` and `surface_impurity_density` do not need to be explicitly defined if `PtypePNJunctionImpurityDensity` is chosen as the overall impurity density profile.
 
-> Note that temperature must be defined in `semiconductor.temperature` — it cannot be set only inside the charge drift model config, because the semiconductor temperature is also used independently for diffusion calculations during charge drift. Optionally, a `temperature` field can be added to the `charge_drift_model` config for validation: if provided, it must match `semiconductor.temperature` or an error is raised. If `semiconductor.temperature` is not set, a material-specific default is used (77 K for High Purity Germanium, 293 K otherwise) and a warning is issued — this applies even if a `temperature` is specified in the charge drift model config, since that field only validates, not sets, the semiconductor temperature.
+!!! note
+    The temperature must be defined in `semiconductor.temperature` — it cannot be set only inside the charge drift model config, because the semiconductor temperature is also used independently for diffusion calculations during charge drift. Optionally, a `temperature` field can be added to the `charge_drift_model` config for validation: if provided, it must match `semiconductor.temperature` or an error is raised. If `semiconductor.temperature` is not set, a material-specific default is used (77 K for High Purity Germanium, 293 K otherwise) and a warning is issued — this applies even if a `temperature` is specified in the charge drift model config, since that field only validates, not sets, the semiconductor temperature.
 
 ### Custom Charge Drift Model
 
@@ -363,7 +365,8 @@ detectors:
           # temperature: 78K  # optional: if provided, must match semiconductor.temperature
 ```
 
-> Note that temperature is preferably defined in `semiconductor.temperature` and will be passed automatically to the trapping model. A `temperature` field can also be specified inside `parameters`; if both are provided they must match or an error is raised. Unlike the charge drift model, if no `semiconductor.temperature` is defined, a `temperature` inside `parameters` alone is also accepted. If `semiconductor.temperature` is not set, a material-specific default is used (77 K for High Purity Germanium, 293 K otherwise) and a warning is issued — this applies even if a `temperature` is specified inside `parameters`, since the semiconductor temperature is always resolved first and passed to the trapping model.
+!!! note
+    The temperature is preferably defined in `semiconductor.temperature` and will be passed automatically to the trapping model. A `temperature` field can also be specified inside `parameters`; if both are provided they must match or an error is raised. Unlike the charge drift model, if no `semiconductor.temperature` is defined, a `temperature` inside `parameters` alone is also accepted. If `semiconductor.temperature` is not set, a material-specific default is used (77 K for High Purity Germanium, 293 K otherwise) and a warning is issued — this applies even if a `temperature` is specified inside `parameters`, since the semiconductor temperature is always resolved first and passed to the trapping model.
 
 It can also be applied to an already read-in `SolidStateDetector` using for example:
 ```julia
@@ -445,7 +448,8 @@ charge_trapping_model:
 This model also allows disabling the charge trapping model inside the inactive layer by having `model_inactive:` and the bulk by deleting `model:` from the `charge_trapping_model:` block.
 If `inactive_layer_geometry` is passed to the yaml file, this is the region used for the inactive layer charge trapping model, else, the model will use the inactive layer geometry defined by the impurity density model (`PtypePNJunctionImpurityDensity`) using the point types.
 
-> Note that temperature is preferably defined in `semiconductor.temperature` and will be passed automatically. Optionally, a `temperature` field can be added at the top level of the `charge_trapping_model` config (i.e. alongside `model` and `model_inactive`, not inside `parameters`); if both are provided they must match or an error is raised. Unlike the charge drift model, if no `semiconductor.temperature` is defined, a top-level `temperature` in the `charge_trapping_model` alone is also accepted. If `semiconductor.temperature` is not set, a material-specific default is used (77 K for High Purity Germanium, 293 K otherwise) and a warning is issued — this applies even if a `temperature` is specified in the `charge_trapping_model` config, since the semiconductor temperature is always resolved first and passed to the trapping model.
+!!! note
+    The temperature is preferably defined in `semiconductor.temperature` and will be passed automatically. Optionally, a `temperature` field can be added at the top level of the `charge_trapping_model` config (i.e. alongside `model` and `model_inactive`, not inside `parameters`); if both are provided they must match or an error is raised. Unlike the charge drift model, if no `semiconductor.temperature` is defined, a top-level `temperature` in the `charge_trapping_model` alone is also accepted. If `semiconductor.temperature` is not set, a material-specific default is used (77 K for High Purity Germanium, 293 K otherwise) and a warning is issued — this applies even if a `temperature` is specified in the `charge_trapping_model` config, since the semiconductor temperature is always resolved first and passed to the trapping model.
 
 ```julia
 using SolidStateDetectors, Unitful
