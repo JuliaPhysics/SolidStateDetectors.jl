@@ -63,11 +63,25 @@ function _calculate_mobility_with_impurities(
 end
 
 function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
-        imp_model::AbstractImpurityDensity, input_units::NamedTuple,
+        imp_model::AbstractImpurityDensity, input_units::NamedTuple, temperature::RealQuantity
     ) where {T <: SSDFloat}
 
-    temperature = _parse_value(T, get(config, "temperature", 90u"K"), input_units.temperature)
+    temp::T = _parse_value(T, temperature, input_units.temperature)
 
+    if haskey(config, "temperature")
+        cdm_temperature::T = _parse_value(T, config["temperature"], input_units.temperature)
+        if cdm_temperature != temp
+            throw(ConfigFileError(
+                "Temperature mismatch: InactiveLayerChargeDriftModel defines temperature = $(cdm_temperature) K, " *
+                "but the semiconductor temperature is $(temperature) K. " *
+                "Define `temperature` in the semiconductor and either remove it from the charge drift model or make sure that the temperatures match."
+            ))
+        end
+    end
+
+    if temp < 50 || temp > 150
+        @warn "Temperature = $(temp) K is outside the typical validated range (50–150 K)."
+    end
     neutral_imp_model = if haskey(config, "neutral_impurity_density")
         ImpurityDensity(T, config["neutral_impurity_density"], input_units)
     else
@@ -89,7 +103,7 @@ function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
     else
         throw(ConfigFileError("There is no surface impurity density profile provided."))
     end
-    InactiveLayerChargeDriftModel{T}(temperature, neutral_imp_model, bulk_imp_model, surface_imp_model)
+    InactiveLayerChargeDriftModel{T}(temp, neutral_imp_model, bulk_imp_model, surface_imp_model)
 end
 
 @fastmath function getVe(fv::SVector{3, T}, cdm::InactiveLayerChargeDriftModel{T}, current_pos::CartesianPoint{T} = zero(CartesianPoint{T})) where {T <: SSDFloat}

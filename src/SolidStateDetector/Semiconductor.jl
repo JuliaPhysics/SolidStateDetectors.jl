@@ -58,11 +58,13 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
 
     material = material_properties[materials[dict["material"]]]
 
-    temperature = if haskey(dict, "temperature") 
+    temperature = if haskey(dict, "temperature")
         _parse_value(T, dict["temperature"], input_units.temperature)
     elseif material.name == "High Purity Germanium"
+        @warn "No temperature defined for semiconductor. Using default value of 77 K for High Purity Germanium."
         T(77)
     else
+        @warn "No temperature defined for semiconductor. Using default value of 293 K."
         T(293)
     end
     
@@ -70,7 +72,7 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
         model = Symbol(dict["charge_drift_model"]["model"])
         cdm = if isdefined(SolidStateDetectors, model) && getfield(SolidStateDetectors, model) <: AbstractChargeDriftModel
             if model == :InactiveLayerChargeDriftModel
-                InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units)
+                InactiveLayerChargeDriftModel{T}(dict["charge_drift_model"], impurity_density_model, input_units, temperature)
             else
                 getfield(SolidStateDetectors, model){T}(dict["charge_drift_model"], input_units, temperature = temperature)
             end
@@ -98,11 +100,11 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
             ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
             ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
         else
-            CombinedChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+            CombinedChargeTrappingModel{T}(ctm_dict, temperature)
         end
         
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
-        BoggsChargeTrappingModel{T}(ctm_dict, temperature = temperature)
+        BoggsChargeTrappingModel{T}(ctm_dict, temperature)
         
     elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(ctm_dict)

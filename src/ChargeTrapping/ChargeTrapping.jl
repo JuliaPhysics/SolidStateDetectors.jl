@@ -66,7 +66,6 @@ Charge trapping model presented in [Boggs _et al._ (2023)](https://doi.org/10.10
 ## Fields
 * `nσe::T`: Trapping product for electrons (default: `(nσe)^-1 = 1020cm`).
 * `nσh::T`: Trapping product for holes (default: `(nσh)^-1 = 2040cm`).
-* `temperature::T`: Temperature of the crystal (default: `78K`).
 
 See also [Charge Trapping Models](@ref).
 """
@@ -124,19 +123,34 @@ end
 
 
 BoggsChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = BoggsChargeTrappingModel{T}(args...; kwargs...)
-function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temperature::RealQuantity = T(78)) where {T <: SSDFloat}
+function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::RealQuantity = NaN) where {T <: SSDFloat}
     nσe::T = ustrip(u"m^-1", inv(1020u"cm"))
     nσh::T = ustrip(u"m^-1", inv(2040u"cm"))
     meffe::T = 0.12
     meffh::T = 0.21
-    temperature::T = _parse_value(T, temperature, internal_temperature_unit)
 
     if haskey(config_dict, "model") && !haskey(config_dict, "parameters")
         throw(ConfigFileError("`BoggsChargeTrappingModel` does not have `parameters`"))
     end
 
     parameters = haskey(config_dict, "parameters") ? config_dict["parameters"] : config_dict
-    
+
+    temp::T = isnan(temperature) ? T(NaN) : _parse_value(T, temperature, internal_temperature_unit)
+
+    if haskey(parameters, "temperature")
+        cfg_temp::T = _parse_value(T, parameters["temperature"], internal_temperature_unit)
+        if !isnan(temp) && cfg_temp != temp
+            throw(ConfigFileError(
+                "Temperature mismatch: BoggsChargeTrappingModel defines temperature = $(cfg_temp) K, " *
+                "but the semiconductor temperature is $(temp) K. " *
+                "Define `temperature` in the semiconductor and either remove it from the charge trapping model or make sure that the temperatures match."
+            ))
+        end
+        temp = cfg_temp
+    end
+
+    isnan(temp) && throw(ConfigFileError("No temperature specified for `BoggsChargeTrappingModel`"))
+
     allowed_keys = ("nσe","nσe-1","nσh","nσh-1","meffe","meffh","temperature")
     k = filter(k -> !(k in allowed_keys), keys(parameters))
     !isempty(k) && @warn "The following keys will be ignored: $(k).\nAllowed keys are: $(allowed_keys)"
@@ -147,8 +161,8 @@ function BoggsChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); tempera
     if haskey(parameters, "nσh-1") nσh = inv(_parse_value(T, parameters["nσh-1"], internal_length_unit)) end
     if haskey(parameters, "meffe") meffe =   _parse_value(T, parameters["meffe"], Unitful.NoUnits) end
     if haskey(parameters, "meffh") meffh =   _parse_value(T, parameters["meffh"], Unitful.NoUnits) end
-    if haskey(parameters, "temperature") temperature = _parse_value(T, parameters["temperature"], internal_temperature_unit) end
-    BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temperature)
+
+    BoggsChargeTrappingModel{T}(nσe, nσh, meffe, meffh, temp)
 end
 
 
@@ -330,7 +344,23 @@ end
 
 
 CombinedChargeTrappingModel(args...; T::Type{<:SSDFloat}, kwargs...) = CombinedChargeTrappingModel{T}(args...; kwargs...)
-function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temperature::RealQuantity = T(78)) where {T <: SSDFloat}
+function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(), temperature::RealQuantity = NaN) where {T <: SSDFloat}
+
+    temp::T = isnan(temperature) ? T(NaN) : _parse_value(T, temperature, internal_temperature_unit)
+
+    if haskey(config_dict, "temperature")
+        cfg_temp::T = _parse_value(T, config_dict["temperature"], internal_temperature_unit)
+        if !isnan(temp) && cfg_temp != temp
+            throw(ConfigFileError(
+                "Temperature mismatch: CombinedChargeTrappingModel defines temperature = $(cfg_temp) K, " *
+                "but the semiconductor temperature is $(temp) K. " *
+                "Define `temperature` in the semiconductor and either remove it from the charge trapping model or make sure that the temperatures match."
+            ))
+        end
+        temp = cfg_temp
+    end
+
+    isnan(temp) && throw(ConfigFileError("No temperature specified for `CombinedChargeTrappingModel`"))
 
     if haskey(config_dict, "model") && config_dict["model"] !== nothing && !(haskey(config_dict, "parameters"))
         throw(ConfigFileError("`CombinedChargeTrappingModel` does not have `parameters`"))
@@ -346,8 +376,8 @@ function CombinedChargeTrappingModel{T}(config_dict::AbstractDict = Dict(); temp
             model = config_dict["model"]
             if isnothing(model)
                 throw(ConfigFileError("`model` is defined but empty in config. Remove it or provide a valid name."))
-        elseif model == "Boggs"
-                BoggsChargeTrappingModel{T}(config_dict; temperature)
+            elseif model == "Boggs"
+                BoggsChargeTrappingModel{T}(config_dict, temp)
             elseif model == "ConstantLifetime"
                 ConstantLifetimeChargeTrappingModel{T}(config_dict)
             else
