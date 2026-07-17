@@ -21,6 +21,10 @@ end
     include("ConstructiveSolidGeometry/CSG_primitives.jl")
 end
 
+@timed_testset "Electric field" begin
+    include("test_electric_field.jl")
+end
+
 @timed_testset "Test real detectors" begin
     include("test_real_detectors.jl")
 end
