@@ -77,3 +77,92 @@ T = Float32
     @test_throws ArgumentError adjust_bias_and_electric_potential!(sim, 1000u"V", check_against_depletion_voltage = true, check_for_depletion = false, verbose = false)          # opposite sign
     @test_throws ArgumentError adjust_bias_and_electric_potential!(sim, dep_target / 2, check_against_depletion_voltage = true, check_for_depletion = false, verbose = false)    # |bias| < |dep|
 end
+
+@testset "Test Full Depletion Depth" begin
+    sim = Simulation{T}(SSD_examples[:IVCIlayer])
+    timed_calculate_electric_potential!(sim, depletion_handling = true)
+
+    fdd = get_FDD(sim)
+
+    @test fdd isa Vector
+    @test !isempty(fdd)
+
+    # Correct field names
+    @test hasproperty(first(fdd), :r_inner)
+    @test hasproperty(first(fdd), :z_inner)
+    @test hasproperty(first(fdd), :r_outer)
+    @test hasproperty(first(fdd), :z_outer)
+    @test hasproperty(first(fdd), :thickness)
+
+    # Physical constraints
+    @test all(p -> p.thickness > 0, fdd)
+    @test all(p -> p.r_inner >= 0, fdd)
+    @test all(p -> p.r_outer >= 0, fdd)
+
+    # Maximum FDD thickness ≈ 1 mm
+    max_t = maximum(p -> p.thickness, fdd)
+    @test max_t ≈ T(1e-3) atol=T(2e-4)
+
+    # r_outer/z_outer are on the contact surface, so for axis-aligned surfaces the Euclidean
+    # distance from inner to outer equals thickness to floating-point precision.
+    euclid(p) = sqrt((p.r_inner - p.r_outer)^2 + (p.z_inner - p.z_outer)^2)
+
+    # Outer cylindrical wall (contact at r = 35 mm, z ∈ [1 mm, 20 mm])
+    outer_side = filter(p -> p.r_outer > p.r_inner &&
+                             isapprox(p.r_outer, T(0.035), atol=T(1e-6)) &&
+                             p.z_inner > T(1e-3) && p.z_inner < T(0.020) &&
+                             abs(p.z_inner - p.z_outer) < T(1e-4), fdd)
+    @test !isempty(outer_side)
+    @test all(p -> isapprox(p.thickness, euclid(p), atol=T(1e-7)), outer_side)
+
+    # Inner bore wall (contact at r = 5 mm):
+    inner_bore = filter(p -> p.r_inner > p.r_outer &&
+                             isapprox(p.r_outer, T(0.005), atol=T(1e-6)) &&
+                             abs(p.z_inner - p.z_outer) < T(1e-4), fdd)
+    @test !isempty(inner_bore)
+    @test all(p -> isapprox(p.thickness, euclid(p), atol=T(1e-7)), inner_bore)
+
+    # Top face (contact at z = 80 mm):
+    top_face = filter(p -> p.z_outer > p.z_inner &&
+                           isapprox(p.z_outer, T(0.080), atol=T(1e-6)) &&
+                           abs(p.r_inner - p.r_outer) < T(1e-4), fdd)
+    @test !isempty(top_face)
+    @test all(p -> isapprox(p.thickness, euclid(p), atol=T(1e-7)), top_face)
+
+    # Bottom face (contact at z = 0, r ∈ [15 mm, 35 mm]):
+    bottom_face = filter(p -> p.z_outer < T(1e-6) &&
+                              p.z_inner > p.z_outer &&
+                              abs(p.r_inner - p.r_outer) < T(1e-4) &&
+                              p.r_inner > T(0.015) && p.r_inner < T(0.035), fdd)
+    @test !isempty(bottom_face)
+    @test all(p -> isapprox(p.thickness, euclid(p), atol=T(1e-7)), bottom_face)
+
+    # Cone face (diagonal surface from (r=35 mm, z=20 mm) to (r=24.42 mm, z=80 mm))
+    let
+        r_A, z_A = T(0.035),   T(0.020)   # cone base (35 mm, 20 mm)
+        r_B, z_B = T(0.02442), T(0.080)   # cone top  (24.42 mm, 80 mm)
+        Δr = r_B - r_A                     # ≈ −0.01058 m
+        Δz = z_B - z_A                     # = 0.060 m
+        cone_len = sqrt(Δr^2 + Δz^2)       # ≈ 0.060924 m
+        r_cone_at_z(z) = r_A + (Δr / Δz) * (z - z_A)
+        perp_dist(r, z) = abs((r - r_A) * (Δz / cone_len) - (z - z_A) * (Δr / cone_len))
+
+        cone_face = filter(fdd) do p
+            T(0.025) <= p.z_inner <= T(0.075) &&
+            p.r_inner < r_cone_at_z(p.z_inner) &&
+            p.r_outer > p.r_inner &&
+            p.r_outer < T(0.035)
+        end
+
+        @test !isempty(cone_face)
+        # Perpendicular distance is strictly less than the purely radial distance to the cone surface
+        @test all(p -> p.thickness < r_cone_at_z(p.z_inner) - p.r_inner, cone_face)
+        # Thickness matches the analytical perpendicular distance formula
+        @test all(p -> isapprox(p.thickness, perp_dist(p.r_inner, p.z_inner), atol = T(1e-4)), cone_face)
+    end
+
+    # Filter by r: all returned entries snap to the same r_inner grid tick
+    fdd_r = get_FDD(sim; r = 5u"mm")
+    @test !isempty(fdd_r)
+    @test length(unique([p.r_inner for p in fdd_r])) == 1
+end
