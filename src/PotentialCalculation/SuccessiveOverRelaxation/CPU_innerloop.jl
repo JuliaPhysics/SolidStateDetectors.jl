@@ -236,7 +236,11 @@ end
 @inline function r0_handling_depletion_handling(
     np::NTuple{6, T}, ::Type{Cylindrical}, i::Int
 ) where {T}
-    return (ifelse(i == 1, np[2], np[1]), np[2:6]...)
+    # Cylindrical red-black layout is (z, φ, r): at r = 0 (i == 1) the
+    # radially-inward neighbor np[5] is a ghost entry no boundary condition
+    # ever writes; replace it by the outward neighbor so the stale value
+    # cannot skew the extremum check of handle_depletion.
+    return (np[1], np[2], np[3], np[4], ifelse(i == 1, np[6], np[5]), np[6])
 end
 @inline function r0_handling_depletion_handling(
     np::NTuple{6, T}, ::Type{Cartesian}, i::Int

@@ -4,6 +4,14 @@ using Unitful
 
 T = Float32
 
+@testset "r0 handling in handle_depletion" begin
+    np = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    # at r = 0 (i == 1) the stale radially-inward ghost np[5] must be masked
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 1) == (1.0, 2.0, 3.0, 4.0, 6.0, 6.0)
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 2) == np
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cartesian, 1) == np
+end
+
 @testset "Test depletion estimation" begin
     sim = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim, refinement_limits=0.01)
