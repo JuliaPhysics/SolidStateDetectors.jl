@@ -172,9 +172,9 @@ function Dictionary(t::Torus{T,<:Any,TR})::OrderedDict{String, Any} where {T,TR}
     if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => "0°", "to" => string(rad2deg(t.φ))*"°") end
     if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(rad2deg(t.θ[1]))*"°", "to" => string(rad2deg(t.θ[2]))*"°") end
     if !iszero(t.origin) dict["origin"] = Dictionary(t.origin) end
-    if !isone(t.rotation) 
+    if !isone(t.rotation)
         d = Dictionary(t.rotation)
-        if unique(keys(d)) == ["Z"]
+        if unique(keys(d)) == ["Z"] && !isnothing(t.φ)
             φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
             dict["phi"] = OrderedDict("from" => string(rad2deg(φ0))*"°", "to" => string(rad2deg(φ0 + t.φ))*"°")
         else

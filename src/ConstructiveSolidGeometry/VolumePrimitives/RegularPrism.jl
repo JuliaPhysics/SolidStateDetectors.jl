@@ -99,10 +99,8 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     rotation = get_rotation(T, dict, angle_unit)
 
     r = parse_r_of_primitive(T, dict, length_unit)
-    @assert haskey(dict,"h") || haskey(dict,"z") "Please specify 'h' or 'z'."
-    hZ = if haskey(dict, "h")
-        _parse_value(T, dict["h"], length_unit) / 2
-    end
+    @assert haskey(dict,"h") "Please specify 'h'."
+    hZ = _parse_value(T, dict["h"], length_unit) / 2
     
     g = if r isa Tuple # lazy workaround for now
         _get_N_prism(T,P,ClosedPrimitive, r[2], hZ, origin, rotation) -

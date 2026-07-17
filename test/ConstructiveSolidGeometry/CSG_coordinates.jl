@@ -56,6 +56,12 @@ using Unitful
         @test @inferred(gg(a)) ≈ a
         @test @inferred (ff(a)) ≈ a
 
+        # transformation between two distinct frames: a -> global -> b
+        frame2 = LocalAffineFrame(CartesianPoint(-1.0, 0.5, 2.0), SMatrix{3,3}(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
+        f12 = frame_transformation(frame, frame2)
+        f2g = frame_transformation(frame2, global_frame)
+        @test f2g(f12(a)) ≈ f(a)
+
         # test keys and getindex
         c = CartesianPoint(1.0, 1.0, 1.0)
         @test all(map(k -> c[k] == 1.0, keys(c)))

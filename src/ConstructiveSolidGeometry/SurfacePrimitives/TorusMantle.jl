@@ -338,11 +338,12 @@ function _Δθ(θ1::T, θ2::T)::T where {T}
 end
 _θNear(θ::Real, θMin::T, θMax::T) where {T} = _Δθ(T(θ),θMin) ≤ _Δθ(T(θ),θMax) ? θMin : θMax
 
+distance_to_surface(::AbstractCoordinatePoint{T}, ::TorusMantle{T, T}) where {T} =
+    throw(ArgumentError("distance_to_surface is not implemented yet for φ-partial TorusMantle"))
+
 function distance_to_surface(pt::AbstractCoordinatePoint{T}, t::TorusMantle{T, Nothing})::T where {T}
 
     pt_cyl  = CylindricalPoint(_transform_into_object_coordinate_system(CartesianPoint(pt), t))
-
-    _in_φ(pt_cyl, t.φ) || throw(ArgumentError("φ-Partial Torus not implemented yet"))
 
     pt_r = pt_cyl.r - t.r_torus
     pt_z = pt_cyl.z

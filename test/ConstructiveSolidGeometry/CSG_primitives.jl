@@ -1381,3 +1381,28 @@ end
     @test CSG.distance_to_surface(pt_outφ2 + CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
     @test CSG.distance_to_surface(pt_outφ2 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
 end
+
+@testset "Serialization and parsing edge cases" begin
+    # full-φ primitives with a pure-Z rotation must serialize (regression: MethodError on nothing + angle)
+    d_tube = Dict("tube" => Dict("r" => 1.0, "h" => 2.0, "rotate" => Dict("Z" => 45)))
+    g = Geometry(T, d_tube, default_units, no_translations)
+    gd = Dictionary(g)
+    @test gd isa AbstractDict
+    @test Geometry(T, gd, default_units, no_translations).rotation ≈ g.rotation
+
+    d_torus = Dict("torus" => Dict("r_torus" => 3.0, "r_tube" => 1.0, "rotate" => Dict("Z" => 45)))
+    gt = Geometry(T, d_torus, default_units, no_translations)
+    gtd = Dictionary(gt)
+    @test gtd isa AbstractDict
+    @test Geometry(T, gtd, default_units, no_translations).rotation ≈ gt.rotation
+
+    # Box config validation must require all three half-widths, with a clean error
+    @test_throws CSG.ConfigFileError Geometry(T, Dict("box" => Dict("hX" => 1.0, "hZ" => 1.0)), default_units, no_translations)
+
+    # CartesianPoint{T}(v) must honor the requested precision
+    @test CartesianPoint{Float64}(SVector{3, Float32}(1, 2, 3)) isa CartesianPoint{Float64}
+
+    # φ-partial torus mantle: clean error instead of MethodError
+    tm_partial = CSG.TorusMantle{Float64, Float64, Nothing, :outwards}(3.0, 1.0, π/2, nothing, CartesianPoint{Float64}(0, 0, 0), one(SMatrix{3, 3, Float64, 9}))
+    @test_throws ArgumentError CSG.distance_to_surface(CartesianPoint{Float64}(0.0, 0.0, 0.0), tm_partial)
+end
