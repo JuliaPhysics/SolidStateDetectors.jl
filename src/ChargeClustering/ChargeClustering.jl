@@ -24,7 +24,7 @@ function cluster_detector_hits(
         d_hits = TypedTables.Table(d_hits_nt)
         d_detno = first(d_hits.detno)
         @assert all(isequal(d_detno), d_hits.detno)
-        if length(d_hits) > 3
+        if length(d_hits) > 1
             
             clusters = Clustering.dbscan(hcat((to_internal_units.(getindex.(d_hits.pos,i)) for i in 1:3)...)', 
                 ustripped_cradius, leafsize = 20, min_neighbors = 1, min_cluster_size = 1).clusters

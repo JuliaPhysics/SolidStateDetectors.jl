@@ -203,9 +203,10 @@ function _check_and_update_position!(
         current_pos .+= step_vectors
         drift_path[:,istep] .= current_pos
     else
+        scale::T = one(T)
         #all charges that would not be inside after the drift step
         for n in findall(.!normal)
-            crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = 
+            crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} =
                 get_crossing_pos(det, point_types, copy(current_pos[n]), current_pos[n] + step_vectors[n])
             if cd_point_type == CD_ELECTRODE
                 if !geometry_check || crossing_pos in det.contacts
@@ -232,21 +233,21 @@ function _check_and_update_position!(
                     continue
                 end
                 drift_path[n,istep] = next_pos
-                step_vectors *= (1 - i * T(0.001))  # scale down the step_vectors for all other charge clouds
-                Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
+                scale = min(scale, 1 - i * T(0.001))  # slow down all charge clouds to the strongest reduction
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
             elseif cd_point_type!= CD_ELECTRODE # if cd_point_type == CD_BULK or CD_OUTSIDE
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
-            end  
-        end    
-        #drift all other charge clouds normally according to the new Δt_min
+            end
+        end
+        #drift all other charge clouds normally, slowed down to the reduced Δt
         for n in findall(normal)
-            current_pos[n] += step_vectors[n]
+            current_pos[n] += step_vectors[n] * scale
             drift_path[n,istep] = current_pos[n]
         end
+        Δt *= scale
     end
     timestamps[istep] = timestamps[istep-1] + Δt
     nothing

@@ -411,3 +411,13 @@ end
     @test @inferred(SolidStateDetectors.get_charge_density(lcd, cart_pt)) isa Float32
     @test @inferred(SolidStateDetectors.get_charge_density(ccd, cyl_pt)) isa Float32
 end
+
+@testset "Offset corrections apply once for composite impurity models" begin
+    sim = Simulation{Float32}(SSD_examples[:IVCIlayer])
+    idm = sim.detector.semiconductor.impurity_density_model
+    @test idm isa PtypePNJunctionImpurityDensity{Float32}
+    pt = CartesianPoint{Float32}(0.02, 0, 0.04)
+    off = 1f15
+    @test SolidStateDetectors.get_impurity_density(off + idm, pt) ≈
+        SolidStateDetectors.get_impurity_density(idm, pt) + off
+end
