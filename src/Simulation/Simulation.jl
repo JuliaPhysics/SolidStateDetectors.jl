@@ -1346,7 +1346,7 @@ There are several keyword arguments which can be used to tune the calculation.
 calculate_weighting_potential!(sim, 1, refinement_limits = [0.3, 0.1, 0.05], max_distance_ratio = 4, max_n_iterations = 20000)
 ```
 """
-function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
+function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; kwargs...)::Nothing where {T <: SSDFloat}
     _calculate_potential!(sim, WeightingPotential, contact_id, args...; kwargs...)
     nothing
 end
