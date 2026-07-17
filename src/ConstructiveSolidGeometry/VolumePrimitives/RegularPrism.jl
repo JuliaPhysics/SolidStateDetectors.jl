@@ -1,5 +1,5 @@
 """
-    struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
+    struct RegularPrism{N,T,CO,TR} <: AbstractVolumePrimitive{T, CO}
 
 Volume primitive describing a [Prism](@ref) with base plates are regular polygons
 which are parallel to the `xy` plane. If the regular polygon base plate is projected to 

@@ -24,7 +24,7 @@ event = Event([CartesianPoint{T}(0.02,0.01,0.05)])
 simulate!(event, simulation)
 
 contact_id = 1
-plot_electron_and_hole_contribution(evt, sim, contact_id, n_samples = 300)
+plot_electron_and_hole_contribution(event, simulation, contact_id, n_samples = 300)
 ```
 
 !!! note 

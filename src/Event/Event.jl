@@ -333,7 +333,7 @@ Returns the electron and hole contribution to the waveform of a [`Contact`](@ref
 ## Example
 ```julia 
 using Plots
-using SolidStateDetector
+using SolidStateDetectors
 T = Float32
 
 simulation = Simulation{T}(SSD_examples[:InvertedCoax])
@@ -342,7 +342,7 @@ event = Event([CartesianPoint{T}(0.02,0.01,0.05)])
 simulate!(event, simulation)
 
 contact_id = 1
-wf = get_electron_and_hole_contribution(evt, sim, contact_id)
+wf = get_electron_and_hole_contribution(event, simulation, contact_id)
 ```
 
 !!! note 
