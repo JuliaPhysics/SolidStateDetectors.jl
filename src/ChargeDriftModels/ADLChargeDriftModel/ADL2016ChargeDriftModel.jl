@@ -11,6 +11,7 @@ published in [Bruyneel _et al._, EPJA 52, 70 (2016)](https://doi.org/10.1140/epj
 - `holes::CarrierParameters{T}`: Parameters to describe the hole drift along the <100> and <111> axes.
 - `crystal_orientation::SMatrix{3,3,T,9}`: Rotation matrix that transforms the global coordinate system to the crystal coordinate system given by the <100>, <010> and <001> axes of the crystal.
 - `γ::SVector{N,SMatrix{3,3,T,9}}`: Reciprocal mass tensors to the `N` valleys of the conduction band.
+- `sqrtγ::SVector{N,SMatrix{3,3,T,9}}`: Matrix square roots of the reciprocal mass tensors (precomputed for the drift-velocity evaluation).
 - `parameters::ADLParameters{T}`: Parameters needed for the calculation of the electron drift velocity.
 - `temperaturemodel::TM`: Models to scale the resulting drift velocities with respect to temperature
 
@@ -21,9 +22,16 @@ struct ADL2016ChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM 
     holes::CarrierParameters{T}
     crystal_orientation::SMatrix{3,3,T,9}
     γ::SVector{N,SMatrix{3,3,T,9}}
+    sqrtγ::SVector{N,SMatrix{3,3,T,9}}
     parameters::ADLParameters{T}
     temperaturemodel::TM
 end
+
+ADL2016ChargeDriftModel{T,M,N,TM}(
+    electrons::VelocityParameters{T}, holes::CarrierParameters{T}, crystal_orientation::SMatrix{3,3,T,9},
+    γ::SVector{N,SMatrix{3,3,T,9}}, parameters::ADLParameters{T}, temperaturemodel::TM
+) where {T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}} =
+    ADL2016ChargeDriftModel{T,M,N,TM}(electrons, holes, crystal_orientation, γ, sqrt.(γ), parameters, temperaturemodel)
 
 function _ADL2016ChargeDriftModel(
         config::AbstractDict; 
