@@ -94,14 +94,15 @@ Two contours are extracted from the point types grid:
 - **Inner contour** (`r_inner`, `z_inner`): the inactive-layer / active-bulk transition.
   A grid point belongs to the inner contour when it carries `inactive_layer_bit = 1` **and** has at least one face-adjacent neighbour with `inactive_layer_bit = 0` and `pn_junction_bit = 1` (i.e. a neighbour that is inside the semiconductor but outside the inactive layer).
 
-- **Outer contour** (`r_outer`, `z_outer`): the doped-contact surface where the inactive layer meets the detector boundary.
-  A grid point belongs to the outer contour when it carries `inactive_contact_bit = 1` (i.e. it is part of the lithium-doped contact adjacent to the inactive layer).
-  Because SSD places grid ticks at contact boundaries, these grid points lie on the contact surface itself.
-  For each inner contour point the nearest such contact tick is selected as `r_outer`/`z_outer`.
+- **Outer contour** (`r_outer`, `z_outer`): the inner surface of the doped contact, where the inactive layer meets the detector boundary.
+  Every grid tick that falls inside the doped contact geometry carries `inactive_contact_bit = 1`.
+  For each inner contour point the nearest such contact tick (by Euclidean distance in the r-z plane) is selected as `r_outer`/`z_outer`.
+  For standard detector geometries the nearest tick is on the innermost layer of the contact, so the contact's own physical thickness is not traversed.
+  The `thickness` field is computed analytically as the distance to the nearest surface of the contact geometry (`ConstructiveSolidGeometry.distance_to_surface`), which is always the inner face regardless of contact thickness.
 
 The `thickness` is computed differently depending on the impurity density model:
 
-- **When the model stores a `distance_to_contact` function** (e.g. `ThermalDiffusionLithiumDensity` or `PtypePNJunctionImpurityDensity`): `thickness` is evaluated by calling that function at the inner contour point. The function itself wraps `ConstructiveSolidGeometry.distance_to_surface` on the actual contact geometry, giving an exact analytical perpendicular distance regardless of surface orientation (vertical, horizontal, or diagonal).
+- **When the model stores a `distance_to_contact` function** (e.g. `ThermalDiffusionLithiumDensity` or `PtypePNJunctionImpurityDensity`): `thickness` is evaluated by calling that function at the inner contour point. The function itself wraps `ConstructiveSolidGeometry.distance_to_surface` on the actual contact geometry, giving an exact analytical perpendicular distance to the inner surface of the contact (the face touching the inactive layer) regardless of surface orientation (vertical, horizontal, or diagonal). The physical thickness of the contact itself is not included.
 - **Fallback**: Euclidean distance from the inner contour point to the nearest contact grid point (r-z plane for cylindrical, 3D for Cartesian).
 
 For **axis-aligned surfaces** (vertical bore wall, horizontal top/bottom face, vertical outer wall) the nearest contact tick lies exactly along the surface normal, so the Euclidean distance from `(r_inner, z_inner)` to `(r_outer, z_outer)` equals `thickness` exactly.
