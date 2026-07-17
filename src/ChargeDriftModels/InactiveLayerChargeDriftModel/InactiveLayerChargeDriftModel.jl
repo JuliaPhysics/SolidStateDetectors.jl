@@ -66,14 +66,14 @@ function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
         imp_model::AbstractImpurityDensity, input_units::NamedTuple, temperature::RealQuantity
     ) where {T <: SSDFloat}
 
-    temp::T = _parse_value(T, temperature, input_units.temperature)
+    temp::T = _parse_value(T, temperature, internal_temperature_unit)
 
     if haskey(config, "temperature")
         cdm_temperature::T = _parse_value(T, config["temperature"], input_units.temperature)
         if cdm_temperature != temp
             throw(ConfigFileError(
                 "Temperature mismatch: InactiveLayerChargeDriftModel defines temperature = $(cdm_temperature) K, " *
-                "but the semiconductor temperature is $(temperature) K. " *
+                "but the semiconductor temperature is $(temp) K. " *
                 "Define `temperature` in the semiconductor and either remove it from the charge drift model or make sure that the temperatures match."
             ))
         end
