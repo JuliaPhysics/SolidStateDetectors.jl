@@ -54,7 +54,7 @@ function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes
 end
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.threadid())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.nthreads())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = epot.data
     axr::Vector{T} = collect(epot.grid.axes[1])
     axφ::Vector{T} = collect(epot.grid.axes[2])
@@ -91,7 +91,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                 elseif iφ == size(ef,2)
                     Δp_φ_1 = p[ir ,1, iz]-p[ir ,iφ, iz]
                     Δp_φ_2 = p[ir ,iφ, iz]-p[ir ,iφ-1, iz]
-                    d_φ_1 = (axφ[1]-axφ[iφ]) * axr[ir]# to get the proper value in length units
+                    d_φ_1 = (cyclic + axφ[1] - axφ[iφ]) * axr[ir] # forward difference wraps around the period
                     d_φ_2 = (axφ[iφ]-axφ[iφ-1]) * axr[ir]
                     eφ = ( Δp_φ_1/d_φ_1 + Δp_φ_2/d_φ_2) / 2
                 else
@@ -101,7 +101,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     d_φ_2 = (axφ[iφ]-axφ[iφ-1]) * axr[ir]
                     eφ = ( Δp_φ_1/d_φ_1 + Δp_φ_2/d_φ_2) / 2
                 end
-                isinf(eφ) || isnan(eφ) ? eφ = 0.0 : nothing # for small radii and small distances(center of the grid) it would yield Infs or Nans
+                if isinf(eφ) || isnan(eφ) eφ = zero(T) end # for small radii and small distances (center of the grid) it would yield Infs or NaNs
                 if iz-1<1
                     Δp_z_1 = p[ir ,iφ, iz+1]-p[ir ,iφ, iz]
                     d_z_1 = axz[iz+1]-axz[iz]
@@ -153,7 +153,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     end
 
                 end
-                ef[ir,iφ,iz] = [-er, -eφ, -ez]
+                ef[ir,iφ,iz] = SVector{3, T}(-er, -eφ, -ez)
             end
         end
     end
