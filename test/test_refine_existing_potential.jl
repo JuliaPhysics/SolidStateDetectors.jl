@@ -4,10 +4,10 @@ using Test
 @timed_testset "Test simulating in two refinement steps" begin
 
     T = Float32
-    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
+    sim = Simulation{T}(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim, refinement_limits = [0.2, 0.1], depletion_handling = true)
 
-    sim2 = Simulation{T}("test_config_files/BEGe_01.yaml")
+    sim2 = Simulation{T}(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim2, refinement_limits = [0.2], depletion_handling = true)
     timed_calculate_electric_potential!(sim2, refinement_limits = [0.1], depletion_handling = true, initialize = false)
 
@@ -20,6 +20,8 @@ using Test
     timed_calculate_weighting_potential!(sim2, 1, refinement_limits = [0.1], depletion_handling = true, initialize = false)
 
     @test size(sim.weighting_potentials[1].data) == size(sim2.weighting_potentials[1].data)
+    @test sim.weighting_potentials[1].grid == sim2.weighting_potentials[1].grid
+    @test all(isapprox.(sim.weighting_potentials[1].data, sim2.weighting_potentials[1].data, atol = 1e-5))
 end
 
 @timed_testset "Test compute min_tick_distance" begin
@@ -73,7 +75,7 @@ end
     
     #Test for compute_min_tick_distance in simulation 
     # Cylindrical Case
-    cf = SolidStateDetectors.parse_config_file("test_config_files/BEGe_01.yaml")
+    cf = SolidStateDetectors.parse_config_file(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     
     cf["units"]["length"] = "µm"
     cf["detectors"][1]["semiconductor"]["impurity_density"] = Dict(

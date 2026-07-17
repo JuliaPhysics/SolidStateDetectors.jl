@@ -356,7 +356,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         # PartialTopClosedTube (ClosedPrimitive)
         p_tube_closed = CSG.PartialTopClosedTube{Float64, CSG.ClosedPrimitive}(r_cone, phi_partial, hZ, origin, rotation)
         @test CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_closed)
-        @test CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_closed)
+        @test CSG._in(CartesianPoint(0.0, 1.0, 1.0), p_tube_closed)  # on the φ-boundary of the closed wedge
         @test !CSG._in(CartesianPoint(-1.0, 0.0, 1.0), p_tube_closed)
         @test CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_closed)
         @test CSG._in(CartesianPoint(0.3, 0.0, -1.0), p_tube_closed)
@@ -369,7 +369,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_open)
         @test !CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_open)
         @test !CSG._in(CartesianPoint(0.0, 0.0, -1.5), p_tube_open)
-        @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_open)
+        @test !CSG._in(CartesianPoint(0.0, 0.412, -0.9), p_tube_open)  # on the φ-boundary of the open wedge
         @test !CSG._in(CartesianPoint(0.3, 0.0, -1.0), p_tube_open)
         
         surfs_closed = CSG.surfaces(p_tube_closed)

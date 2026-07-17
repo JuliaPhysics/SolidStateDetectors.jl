@@ -179,7 +179,7 @@ end
 
 @timed_testset "Boule impurity densities and corrections" begin
 
-    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
+    sim = Simulation{T}(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     @test SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0)) == T(0.8*T(SolidStateDetectors.to_internal_units(-5e9u"cm^-3")) + T(SolidStateDetectors.to_internal_units(-5e8u"cm^-3")))
 
     det_z0 = T(0.05)
