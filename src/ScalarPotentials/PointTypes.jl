@@ -59,6 +59,11 @@ See also [`PointType`](@ref).
 struct PointTypes{T, N, S, AT, D} <: AbstractArray{T, N}
     data::Array{PointType, N}
     grid::Grid{T, N, S, AT}
+
+    # the inner constructor suppresses the default outer constructor, which the
+    # convenience constructor below would otherwise overwrite (D is a phantom parameter)
+    PointTypes{T,N,S,AT,D}(data::Array{PointType,N}, grid::Grid{T,N,S,AT}) where {T,N,S,AT,D} =
+        new{T,N,S,AT,D}(data, grid)
 end
 
 PointTypes(data::Array{PointType,N}, grid::Grid{T,N,S,AT}, depletion_handling::Bool = false) where {T,N,S,AT} = PointTypes{T,N,S,AT,depletion_handling}(data, grid)
