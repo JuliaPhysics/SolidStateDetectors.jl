@@ -216,8 +216,8 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
 
     λ1, λ2 = if f1 == 0 # one intersection
         term1 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2*hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
-        term2 = L1*sqrt(D3^2*S^2 - D2^2) - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
-        λ = term1 / (2term2) 
+        term2 = -D1*L1 - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
+        λ = term1 / (2term2)
         λ, λ
     else # two or no intersections 
         λ = inv(f1)

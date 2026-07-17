@@ -662,7 +662,7 @@ function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, T
     if !iszero(c.origin) dict["origin"] = Dictionary(c.origin) end
     if !isone(c.rotation)
         d = Dictionary(c.rotation)
-        if unique(keys(d)) == ["Z"]
+        if unique(keys(d)) == ["Z"] && !isnothing(c.φ)
             φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
             dict["phi"] = OrderedDict("from" => string(rad2deg(φ0))*"°", "to" => string(rad2deg(φ0 + c.φ))*"°")
         else
