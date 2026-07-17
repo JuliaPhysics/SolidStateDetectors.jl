@@ -38,3 +38,23 @@ end
     @test searchsortednearest(ax, -0.01) == 1
     @test searchsortednearest(ax, ax.ticks[end] + 0.01) == 36
 end
+
+@testset "Periodic BC on the compressed red-black dimension" begin
+    nr, nφ, nz = 3, 4, 6
+    axr = DiscreteAxis(0.0, 1.0, :r0, :infinite, :closed, :closed, collect(range(0.0, 1.0, length = nr)))
+    axφ = DiscreteAxis(0.0, 2π, :periodic, :periodic, :closed, :open, collect(range(0.0, 2π, length = nφ + 1))[1:end-1])
+    axz = DiscreteAxis(0.0, 1.0, :periodic, :periodic, :closed, :open, collect(range(0.0, 1.0, length = nz + 1))[1:end-1])
+    grid = CylindricalGrid{Float64}((axr, axφ, axz))
+    a = [1000.0 * ir + 100.0 * iφ + iz for ir in 1:nr, iφ in 1:nφ, iz in 1:nz]
+    rb = SolidStateDetectors.RBExtBy2Array(a, grid)
+    for rbi in (SolidStateDetectors.rb_even, SolidStateDetectors.rb_odd)
+        SolidStateDetectors.apply_boundary_conditions_on_x_axis!(rb, rbi, axz, axz.interval, (1.0, 1.0))
+    end
+    for ir in 1:nr, iφ in 1:nφ
+        # the ghost below real z=1 must hold real z=nz of the matching color, and vice versa
+        c_zN = iseven(nz + iφ + ir) ? SolidStateDetectors.rb_even : SolidStateDetectors.rb_odd
+        c_z1 = iseven(1 + iφ + ir) ? SolidStateDetectors.rb_even : SolidStateDetectors.rb_odd
+        @test rb[1, iφ + 1, ir + 1, c_zN] == a[ir, iφ, nz]
+        @test rb[end, iφ + 1, ir + 1, c_z1] == a[ir, iφ, 1]
+    end
+end
