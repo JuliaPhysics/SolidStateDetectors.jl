@@ -228,20 +228,22 @@ end
     return searchsortednearest(ax.ticks, x)
 end
 function searchsortednearest(ax::DiscreteAxis{T, :periodic, :periodic}, x::T)::Int where {T <: Real}
-    if x in ax.interval
-        return searchsortednearest(ax.ticks, x)
-    else
-        period::T = width(ax.interval)
-        v::T = x
-        while v >= ax.interval.right
-            v -= period
-        end
-        while v < ax.interval.left
-            v += period
-        end
-        return searchsortednearest(ax.ticks, v)
-    end    
-
+    period::T = width(ax.interval)
+    v::T = x
+    while v >= ax.interval.right
+        v -= period
+    end
+    while v < ax.interval.left
+        v += period
+    end
+    idx::Int = searchsortednearest(ax.ticks, v)
+    dd::T = abs(v - ax.ticks[idx])
+    if abs(v - period - first(ax.ticks)) < dd
+        idx = firstindex(ax.ticks)
+    elseif abs(v + period - last(ax.ticks)) < dd
+        idx = lastindex(ax.ticks)
+    end
+    idx
 end
 
 function DiscreteAxis(nt::NamedTuple; unit = Unitful.NoUnits)
@@ -436,20 +438,24 @@ function fill_up_ticks(v::AbstractVector{T}, max_diff::T) where {T}
     r
 end
 
-function even_tick_axis(ax::DiscreteAxis) 
-    if isodd(length(ax)) 
+function even_tick_axis(ax::DiscreteAxis)
+    if isodd(length(ax))
         int = ax.interval
-        ticks = ax.ticks
+        ticks = copy(ax.ticks)
         imax = findmax(diff(ticks))[2]
         push!(ticks, (ticks[imax] + ticks[imax+1]) / 2)
         sort!(ticks)
         typeof(ax)(int, ticks)
-    else 
+    else
         ax
     end
 end
 
 multiplicity(g::DiscreteAxis{T, :infinite, :infinite, I}, ::Type{Cartesian}) where {T, I} = one(T)
+function multiplicity(g::DiscreteAxis{T, :periodic, :periodic, I}, ::Type{Cartesian}) where {T, I}
+    @warn "Multiplicity of Cartesian axis, $(g) (:periodic, :periodic), would be infinite. It is set to 1 here."
+    one(T)
+end
 multiplicity(g::DiscreteAxis{T, :reflecting, :infinite, I}, ::Type{Cartesian}) where {T, I} = T(2)
 multiplicity(g::DiscreteAxis{T, :infinite, :reflecting, I}, ::Type{Cartesian}) where {T, I} = T(2)
 multiplicity(g::DiscreteAxis{T, :fixed, :fixed, I}, ::Type{Cartesian}) where {T, I} = one(T)

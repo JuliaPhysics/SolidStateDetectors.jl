@@ -358,8 +358,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
 
                         volume_weight = wrr_eps * Δr_ext_inv[ ir] * mpr[ ir] * 2π * Δmpz[inz]
                         volume_weight += wrl_eps * Δr_ext_inv[inr] * mpr[inr] * Δmpφ[inφ] * Δmpz[inz]
-                        volume_weight += wφr_eps * r_inv[inr] * 0.15915494f0 * Δmpr[inr] * Δmpz[inz]
-                        volume_weight += wφl_eps * r_inv[inr] * 0.15915494f0 * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wφr_eps * r_inv[inr] * inv(T(2π)) * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wφl_eps * r_inv[inr] * inv(T(2π)) * Δmpr[inr] * Δmpz[inz]
                         volume_weight += wzr_eps * Δz_ext_inv[ iz] * 2π * Δmpr_squared[inr]
                         volume_weight += wzl_eps * Δz_ext_inv[inz] * 2π * Δmpr_squared[inr]
 
