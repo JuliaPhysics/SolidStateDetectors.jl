@@ -12,7 +12,7 @@ grid:
       boundaries: inf
     phi:
       from: 0
-      to: 0
+      to: 360
       boundaries: periodic
     z:
       from: -9
