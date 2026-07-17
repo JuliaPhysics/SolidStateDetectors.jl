@@ -862,21 +862,22 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         # Inward normal must point toward center
         @test dot(n_in,  v_pt2) < 0
         
+        # normal must follow the gradient of (x/rx)² + (y/ry)² + (z/rz)²
         p_local = CSG._transform_into_object_coordinate_system(pt2, em_out)
-        x = p_local.x
-        y = p_local.y
-        z = p_local.z
-
-        expected_local = CartesianVector(
-            sign(x) * (x / em_out.r[1])^2,
-            sign(y) * (y / em_out.r[2])^2,
-            sign(z) * (z / em_out.r[3])^2
-        )
-
+        expected_local = normalize(CartesianVector(
+            p_local.x / em_out.r[1]^2,
+            p_local.y / em_out.r[2]^2,
+            p_local.z / em_out.r[3]^2
+        ))
         expected_global = CSG._transform_into_global_coordinate_system(expected_local, em_out)
 
         @test norm(n_out - expected_global) < 1e-6
         @test norm(n_in  + expected_global) < 1e-6
+
+        # sphere: normal is the radial direction
+        sp = CSG.EllipsoidMantle{Float32}(:outwards; r = 0.01f0)
+        pt_sp = CartesianPoint{Float32}(0.006f0, 0.008f0, 0f0)
+        @test norm(CSG.normal(sp, pt_sp) - CartesianVector(0.6f0, 0.8f0, 0f0)) < 1f-6
         
         # Test vertices
         verts = CSG.vertices(em, 8)
@@ -986,6 +987,19 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         v_pt = CartesianVector(pt.x, pt.y, pt.z)
         @test dot(normal_out, v_pt) > 0
         @test dot(normal_in,  v_pt) < 0
+
+        # analytic direction: ∇(hypot(x,y) - R(z)) with slope dR/dz = Δr/(2hZ)
+        r_pt = hypot(pt.x, pt.y)
+        n_ref = normalize(CartesianVector(pt.x / r_pt, pt.y / r_pt, -(2f0 - 1f0) / 2f0))
+        @test norm(normal_out - n_ref) < 1f-6
+
+        # SI-scale taper (regression: radial part must be unit-scaled, not ∝ r)
+        cm_si = CSG.ConeMantle{Float32}(:outwards; r = (0.01f0, 0.02f0), φ = nothing, hZ = 0.025f0)
+        z_si, φ_si = 0.011f0, 0.3f0
+        r_si = 0.01f0 + (0.025f0 + z_si) * (0.02f0 - 0.01f0) / 0.05f0
+        pt_si = CartesianPoint{Float32}(r_si * cos(φ_si), r_si * sin(φ_si), z_si)
+        n_si_ref = normalize(CartesianVector(cos(φ_si), sin(φ_si), -0.2f0))
+        @test norm(CSG.normal(cm_si, pt_si) - n_si_ref) < 1f-6
 
         # Cylindrical ConeMantle
         cm_cyl_out = CSG.ConeMantle{Float32}(:outwards; r=1f0, φ=nothing, hZ=1f0)
