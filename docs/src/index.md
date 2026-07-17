@@ -18,6 +18,9 @@ Pages = ["man/grids.md"]
 Pages = ["man/electric_potential.md"]
 ```
 ```@contents
+Pages = ["man/point_types.md"]
+```
+```@contents
 Pages = ["man/electric_field.md"]
 ```
 ```@contents
