@@ -2,6 +2,9 @@
 
 using Test
 using SolidStateDetectors
+using Unitful
+
+T = Float32
 
 abstract type pseudoGPUArray <: SolidStateDetectors.GPUArrays.AbstractGPUArray{T where T, N where N} end
 
@@ -32,7 +35,7 @@ end
     )    
 
     W = SolidStateDetectors.calculate_stored_energy(sim)
-    @test isapprox(ustrip(W), 4.39e-6, atol = 1e-5)        
+    @test isapprox(ustrip(W), 4.39e-6, rtol = 0.05)
 end
 
 
