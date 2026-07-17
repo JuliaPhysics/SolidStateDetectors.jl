@@ -147,3 +147,13 @@ end
     pt_off_vert = CartesianPoint{T}(1,0,0.5)
     @test SolidStateDetectors.ConstructiveSolidGeometry.distance(pt_off_vert, e_vert) ≈ T(1)
 end
+
+@testset "NBodyChargeCloud conserves the deposited energy" begin
+    T = Float32
+    center = CartesianPoint{T}(0.01, 0, 0.02)
+    E = T(1e6)
+    for n_shells in (1, 2), n in (4, 6, 12, 20)
+        nbcc = NBodyChargeCloud(center, E, n, number_of_shells = n_shells)
+        @test sum(nbcc.energies) ≈ E rtol = 1e-5
+    end
+end

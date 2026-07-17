@@ -782,3 +782,13 @@ end
     @test getVe(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
     @test getVh(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
 end
+
+@timed_testset "Simple drift models: numeric velocities" begin
+    fv = SVector{3, T}(100, -200, 300)
+    efcdm = ElectricFieldChargeDriftModel{T}()
+    @test getVe(fv, efcdm) == -fv
+    @test getVh(fv, efcdm) == fv
+    icdm = IsotropicChargeDriftModel{T}()
+    @test getVe(fv, icdm) ≈ -icdm.μ_e * fv
+    @test getVh(fv, icdm) ≈ icdm.μ_h * fv
+end

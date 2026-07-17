@@ -58,3 +58,27 @@ end
         @test rb[end, iφ + 1, ir + 1, c_z1] == a[ir, iφ, 1]
     end
 end
+
+@testset "get_2π_potential extensions" begin
+    axr = DiscreteAxis(0.0, 0.02, :r0, :infinite, :closed, :closed, collect(range(0.0, 0.02, length = 3)))
+    axz = DiscreteAxis(0.0, 0.03, :infinite, :infinite, :closed, :closed, collect(range(0.0, 0.03, length = 3)))
+
+    # periodic wedge with 3-fold symmetry: V = r sin(3φ) + z
+    axφw = DiscreteAxis(0.0, 2π/3, :periodic, :periodic, :closed, :open, collect(range(0.0, 2π/3, length = 4))[1:end-1])
+    gw = CylindricalGrid{Float64}((axr, axφw, axz))
+    epw = ElectricPotential([r * sin(3φ) + z for r in axr.ticks, φ in axφw.ticks, z in axz.ticks], gw)
+    epw2 = SolidStateDetectors.get_2π_potential(epw)
+    @test epw2.grid[2].interval.right ≈ 2π
+    @test length(epw2.grid[2]) == 9
+    @test all(isapprox.(epw2.data,
+        [r * sin(3φ) + z for r in axr.ticks, φ in epw2.grid[2].ticks, z in axz.ticks]; atol = 1e-12))
+
+    # reflecting half-plane with mirror symmetry: V = r cos(φ) + z
+    axφm = DiscreteAxis(0.0, Float64(π), :reflecting, :reflecting, :closed, :closed, collect(range(0.0, π, length = 5)))
+    gm = CylindricalGrid{Float64}((axr, axφm, axz))
+    epm = ElectricPotential([r * cos(φ) + z for r in axr.ticks, φ in axφm.ticks, z in axz.ticks], gm)
+    epm2 = SolidStateDetectors.get_2π_potential(epm)
+    @test epm2.grid[2].interval.right ≈ 2π
+    @test all(isapprox.(epm2.data,
+        [r * cos(φ) + z for r in axr.ticks, φ in epm2.grid[2].ticks, z in axz.ticks]; atol = 1e-12))
+end
