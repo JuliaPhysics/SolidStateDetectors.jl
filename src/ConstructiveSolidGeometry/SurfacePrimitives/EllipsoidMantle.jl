@@ -172,7 +172,8 @@ Calculates the intersections of a `Line` with a `EllipsoidMantle`.
 !!! note 
     The function will always return 2 CartesianPoint's.
     If the line just touches the mantle, the two points will be the same. 
-    If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+    If the line does not touch the mantle at all, two finite points off the mantle are returned
+    (callers filter intersection candidates via `in`).
 """
 function intersection(em::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, em) # direction is not normalized
