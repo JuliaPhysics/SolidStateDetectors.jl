@@ -4,7 +4,7 @@ using SolidStateDetectors
 using Test
 
 using SolidStateDetectors: DiscreteAxis, CylindricalGrid, PointTypes, update_bit,
-    get_electric_field_from_potential
+    get_electric_field_from_potential, searchsortednearest
 
 @testset "Cylindrical E field at the periodic φ wrap" begin
     T = Float64
@@ -28,4 +28,13 @@ using SolidStateDetectors: DiscreteAxis, CylindricalGrid, PointTypes, update_bit
         @test abs(E[2]) < 0.02 * A
         @test abs(E[3]) < 1e-9 * A
     end
+end
+
+@testset "Periodic axis searchsortednearest wraps at the seam" begin
+    ax = DiscreteAxis(0.0, 2π, :periodic, :periodic, :closed, :open, collect(range(0.0, 2π, length = 37))[1:end-1])
+    @test searchsortednearest(ax, 0.01) == 1
+    @test searchsortednearest(ax, 2π - 0.01) == 1       # closest through the wrap
+    @test searchsortednearest(ax, 2π + 0.01) == 1
+    @test searchsortednearest(ax, -0.01) == 1
+    @test searchsortednearest(ax, ax.ticks[end] + 0.01) == 36
 end
