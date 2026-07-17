@@ -155,20 +155,20 @@ function Simulation{T}(dict::AbstractDict)::Simulation{T} where {T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
     if haskey(dict, "grid")
         if isa(dict["grid"], AbstractDict)
-            CS = if dict["grid"]["coordinates"] == "cartesian" 
+            CS = if dict["grid"]["coordinates"] == "cartesian"
                 Cartesian
             elseif dict["grid"]["coordinates"]  == "cylindrical"
                 Cylindrical
             else
-                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
+                throw(ConfigFileError("`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"))
             end
         elseif isa(dict["grid"], String)
-            CS = if dict["grid"] == "cartesian" 
+            CS = if dict["grid"] == "cartesian"
                 Cartesian
             elseif dict["grid"] == "cylindrical"
                 Cylindrical
             else
-                @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
+                throw(ConfigFileError("`grid` type in config file needs to be either `cartesian` or `cylindrical`"))
             end
         end
     end
