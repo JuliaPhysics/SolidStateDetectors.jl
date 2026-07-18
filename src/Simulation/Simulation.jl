@@ -197,6 +197,72 @@ function Simulation(config_file::AbstractString)::Simulation{Float32}
 end
 
 # Functions
+
+
+
+# Sampled (heuristic) check whether all field-relevant inputs of the detector —
+# object geometries plus the impurity/charge density models of semiconductor and
+# passives — are invariant under the given φ shifts. Guards 2D and φ-reduced
+# grids against detectors without the corresponding symmetry (which would
+# silently give wrong fields). A single mismatching sample is tolerated to be
+# robust against points landing exactly on object surfaces.
+function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}, φ_shifts::AbstractVector{T};
+        n_r::Int = 16, n_φ::Int = 4, n_z::Int = 16)::Bool where {T}
+    objects = Any[det.semiconductor, det.contacts...]
+    !ismissing(det.passives) && append!(objects, det.passives)
+    rmax = world.intervals[1].right
+    zint = world.intervals[3]
+    n_mismatch = 0
+    for obj in objects
+        has_density = obj isa Semiconductor || obj isa Passive
+        for ir in 1:n_r, iφ in 1:n_φ, iz in 1:n_z
+            r = (ir - T(0.5)) / n_r * rmax
+            φ = (iφ - T(0.5)) / n_φ * T(2π)
+            z = zint.left + (iz - T(0.5)) / n_z * width(zint)
+            pt = CylindricalPoint{T}(r, φ, z)
+            ref = pt in obj
+            ref_ρ = has_density && ref ? get_charge_density(obj, pt) : zero(T)
+            for Δφ in φ_shifts
+                spt = CylindricalPoint{T}(r, φ + Δφ, z)
+                if (spt in obj) != ref ||
+                        (has_density && ref && !isapprox(get_charge_density(obj, spt), ref_ρ, rtol = T(1e-3)))
+                    n_mismatch += 1
+                    break
+                end
+            end
+            n_mismatch > 1 && return false
+        end
+    end
+    return true
+end
+
+function _check_φ_symmetry(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}) where {T}
+    world_Δφ = width(world.intervals[2])
+    if iszero(world_Δφ)
+        # a 2D grid needs continuous axisymmetry: sample discrete C8 rotations plus
+        # two shifts incommensurate with 2π to reject merely n-fold symmetric shapes
+        φ_shifts = T.(vcat(2π * (1:7) / 8, 2π * (√5 - 1) / 2, 1))
+        _is_φ_invariant(det, world, φ_shifts) || throw(ConfigFileError(
+            "The φ interval of the world is empty, requesting a 2D simulation, " *
+            "but the detector geometry is not φ-symmetric. Simulating it in 2D would give wrong results. " *
+            "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+            "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
+    elseif world_Δφ < T(2π) * (1 - sqrt(eps(T))) && world.intervals[2] isa SSDInterval{T, <:Any, <:Any, :periodic, :periodic}
+        n_sym = round(Int, T(2π) / world_Δφ)
+        if n_sym ≥ 2 && isapprox(n_sym * world_Δφ, T(2π), rtol = 1e-3)
+            φ_shifts = T.(world_Δφ * (1:n_sym-1))
+            _is_φ_invariant(det, world, φ_shifts) || throw(ConfigFileError(
+                "The φ interval of the world covers 1/$(n_sym) of the full circle with periodic boundaries, " *
+                "but the detector geometry is not $(n_sym)-fold periodic in φ. " *
+                "Simulating the reduced range would give wrong results. " *
+                "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+                "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
+        end
+    end
+    nothing
+end
+
+
 """
     Grid(sim::Simulation{T, Cartesian}; kwargs...)
     Grid(sim::Simulation{T, Cylindrical}; kwargs...)
@@ -226,18 +292,24 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
 * `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of 
-    an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
+    a [`WeightingPotential`](@ref) if set to `true`, and of an [`ElectricPotential`](@ref)
     if set to `false`.
+* `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced periodic
+    φ range, verify (by sampling) that the detector geometry actually has the corresponding
+    φ-symmetry and raise a `ConfigFileError` if not. Set to `false` to skip the check and
+    pass the resulting grid explicitly via the `grid` keyword of the calculation functions.
 """
 function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_ticks_between_important_ticks::Bool = true)::CylindricalGrid{T} where {T}
+                add_ticks_between_important_ticks::Bool = true,
+                check_φ_symmetry::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
-    world = sim.world 
+    world = sim.world
     world_Δs = width.(world.intervals)
     world_Δr, world_Δφ, world_Δz = world_Δs
+    check_φ_symmetry && !for_weighting_potential && _check_φ_symmetry(det, world)
                 
     samples::Vector{CylindricalPoint{T}} = sample(det, Cylindrical)
     important_r_ticks::Vector{T} = map(p -> p.r, samples)
