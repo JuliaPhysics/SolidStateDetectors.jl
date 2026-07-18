@@ -6,8 +6,9 @@ T = Float32
 
 @testset "r0 handling in handle_depletion" begin
     np = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
-    # at r = 0 (i == 1) the stale radially-inward ghost np[5] must be masked
-    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 1) == (1.0, 2.0, 3.0, 4.0, 6.0, 6.0)
+    # at r = 0 (i == 1) slot 5 carries the sub-axis ghost (0), which acts as a
+    # potential floor in the extremum check; the z-left slot is replaced by z-right
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 1) == (2.0, 2.0, 3.0, 4.0, 5.0, 6.0)
     @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 2) == np
     @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cartesian, 1) == np
 end
