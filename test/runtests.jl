@@ -19,6 +19,7 @@ end
     include("ConstructiveSolidGeometry/CSG_IO.jl")
     include("ConstructiveSolidGeometry/CSG_coordinates.jl")
     include("ConstructiveSolidGeometry/CSG_primitives.jl")
+    include("ConstructiveSolidGeometry/CSG_bounding_sphere.jl")
 end
 
 @timed_testset "Electric field" begin
