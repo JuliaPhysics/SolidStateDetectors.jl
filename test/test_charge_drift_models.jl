@@ -846,3 +846,26 @@ end
     av_nohook = SolidStateDetectors.ArbitraryDriftModificationVolume{T}(av.name, 1043, av.geometry)
     @test_throws ErrorException SolidStateDetectors.modulate_driftvector(sv, origin, av_nohook)
 end
+
+@timed_testset "InactiveLayerChargeDriftModel mobility regression" begin
+    # Pins the mobility formulas verified against Dai et al. (2023) eqs. 5-8
+    # (holes; the paper's neutral-impurity prefactor 4.46e29 is an exponent
+    # typo for 4.46e19 in its cm-based units) and Ma et al. (arXiv:1705.09562)
+    # (electrons). SI units: densities in m^-3, mobilities in m^2/V/s.
+    import SolidStateDetectors: _calculate_mobility_with_impurities, Hole, Electron
+    for TT in (Float32, Float64)
+        μh = _calculate_mobility_with_impurities(TT(1e21), TT(-1e16), TT(0), TT(90), Hole)
+        μe = _calculate_mobility_with_impurities(TT(1e21), TT(-1e16), TT(0), TT(90), Electron)
+        @test isapprox(μh, TT(7.548779), rtol = 1e-5)
+        @test isapprox(μe, TT(7.932908), rtol = 1e-5)
+    end
+    # the hole neutral-impurity term is the collapsed Sclar form
+    T90, Nn = 90.0, 1e21
+    μN_code = 1e2/Nn * (2.31e18 + 2.36e20) * 0.82 * (0.228*sqrt(T90) + 0.976/sqrt(T90))
+    @test isapprox(μN_code, 4.4554e21/Nn * (sqrt(T90) + 4.2807/sqrt(T90)), rtol = 1e-4)
+    # drift directions: electrons against the field, holes along it
+    cdm_il = SolidStateDetectors.InactiveLayerChargeDriftModel{T}()
+    fv = SVector{3, T}(0, 0, 100)
+    @test getVe(fv, cdm_il)[3] < 0
+    @test getVh(fv, cdm_il)[3] > 0
+end
