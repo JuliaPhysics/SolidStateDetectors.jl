@@ -7,7 +7,8 @@ function set_passive_or_contact_points(point_types::Array{PointType, 3}, potenti
             @inbounds for iφ in axes(potential, 2)
                 for ir in axes(potential, 1)
                     pt::CylindricalPoint{T} = CylindricalPoint{T}( grid.axes[1].ticks[ir], grid.axes[2].ticks[iφ], grid.axes[3].ticks[iz] )
-                    if distance_squared(CartesianPoint(pt) - bs_c) <= bs_r2 && pt in obj
+                    cpt::CartesianPoint{T} = CartesianPoint(pt)
+                    if distance_squared(cpt - bs_c) <= bs_r2 && cpt in obj
                         potential[ ir, iφ, iz ] = pot
                         point_types[ ir, iφ, iz ] = zero(PointType)
                         point_types[ ir, iφ, iz ] |= inactive_contact_bit * is_inactive_layer_contact
@@ -32,7 +33,8 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
         @inbounds for iφ in axes(potential, 2)
             for ir in axes(potential, 1)
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( grid.axes[1].ticks[ir], grid.axes[2].ticks[iφ], grid.axes[3].ticks[iz] )
-                if distance_squared(CartesianPoint(pt) - sc_bs_c) <= sc_bs_r2 && in(pt, det.semiconductor)
+                cpt::CartesianPoint{T} = CartesianPoint(pt)
+                if distance_squared(cpt - sc_bs_c) <= sc_bs_r2 && in(cpt, det.semiconductor)
                     point_types[ ir, iφ, iz ] += pn_junction_bit
                 end
             end
@@ -80,7 +82,8 @@ function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_
                     pos_r::T = mpr[ir]
                     if (ir == 1 && axr[1] == 0) pos_r = axr[2] * 0.5 end
                     pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                    if distance_squared(CartesianPoint(pt) - bs_c) <= bs_r2 && pt in obj
+                    cpt::CartesianPoint{T} = CartesianPoint(pt)
+                    if distance_squared(cpt - bs_c) <= bs_r2 && cpt in obj
                         ρ_eff_imp_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_eff_fix_tmp[ir, iφ, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
