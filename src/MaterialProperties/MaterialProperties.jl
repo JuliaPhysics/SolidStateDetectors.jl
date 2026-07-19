@@ -60,6 +60,11 @@ material_properties[:CsPbBr3] = (
     ρ = 4.73u"g*cm^-3"
 )
 
+# Note on metals: only Pb uses a large conductor-like ϵ_r. Al and Cu carry
+# moderate effective values, so *floating* passives made of them are treated
+# as dielectrics, not conductors; grounded/biased metal parts are unaffected
+# (their potential is fixed). Model conductor-like floating metal parts as
+# contacts or with a large ϵ_r if screening matters.
 material_properties[:Al] = (
     name = "Aluminium",
     ϵ_r = 10.8, # Aluminium Foil
