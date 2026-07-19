@@ -1406,3 +1406,28 @@ end
     tm_partial = CSG.TorusMantle{Float64, Float64, Nothing, :outwards}(3.0, 1.0, π/2, nothing, CartesianPoint{Float64}(0, 0, 0), one(SMatrix{3, 3, Float64, 9}))
     @test_throws ArgumentError CSG.distance_to_surface(CartesianPoint{Float64}(0.0, 0.0, 0.0), tm_partial)
 end
+
+@testset "Height from z: {from, to}" begin
+    import SolidStateDetectors.ConstructiveSolidGeometry: ConfigFileError
+    # tube between z = 1 and z = 3: half-height 1, origin shifted to z = 2
+    c = Geometry(T, Dict("tube" => Dict("r" => 1.0, "z" => Dict("from" => 1.0, "to" => 3.0))), default_units, no_translations)
+    @test c.hZ ≈ 1.0
+    @test c.origin ≈ CartesianPoint{T}(0, 0, 2)
+    @test CartesianPoint{T}(0, 0, 2.5) in c
+    @test !(CartesianPoint{T}(0, 0, 0.5) in c)
+    # equivalent to the same tube given via h and origin
+    c2 = Geometry(T, Dict("tube" => Dict("r" => 1.0, "h" => 2.0, "origin" => [0.0, 0.0, 2.0])), default_units, no_translations)
+    @test c.hZ == c2.hZ && c.origin == c2.origin
+    # prisms support the same syntax
+    hp = Geometry(T, Dict("HexagonalPrism" => Dict("r" => 1.0, "z" => Dict("from" => -2.0, "to" => -1.0))), default_units, no_translations)
+    @test hp.hZ ≈ 0.5
+    @test hp.origin ≈ CartesianPoint{T}(0, 0, -1.5)
+    # the z extent refers to the primitive's local frame: the center shift follows its rotation
+    cr = Geometry(T, Dict("tube" => Dict("r" => 1.0, "z" => Dict("from" => 1.0, "to" => 3.0), "rotation" => Dict("X" => 90))), default_units, no_translations)
+    @test isapprox(cr.origin, CartesianPoint{T}(0, -2, 0), atol = 1e-12)
+    # invalid combinations are rejected
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0, "h" => 2.0, "z" => Dict("from" => 1.0, "to" => 3.0))), default_units, no_translations)
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0)), default_units, no_translations)
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0, "z" => 2.0)), default_units, no_translations)
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0, "h" => Dict("from" => 1.0, "to" => 3.0))), default_units, no_translations)
+end
