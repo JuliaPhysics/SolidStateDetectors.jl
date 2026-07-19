@@ -111,6 +111,9 @@ excluding the inactive layer.
 It can be used to determine whether the [`SolidStateDetector`](@ref) is
 depleted at the provided bias voltage.
 
+Throws an `ArgumentError` if the electric potential was calculated without
+`depletion_handling = true`, as the depletion state is unknown in that case.
+
 ## Arguments
 * `point_types::PointTypes`: [`PointTypes`](@ref) of a [`Simulation`](@ref).
 
@@ -123,13 +126,12 @@ function is_depleted(point_types::PointTypes)::Bool
     return if has_depletion_handling(point_types)
         !any(b -> (bulk_bit & b > 0) && (undepleted_bit & b > 0) &&
         (inactive_layer_bit & b == 0), point_types.data)
-    else 
-        @warn """Electric potential calculation was not run with depletion handling enabled. 
-        The result of `is_depleted` may be inaccurate. 
-        Consider running the electric potential calculation with `depletion_handling = true` for accurate results.
-        When loading simulations from <v0.11.1, the depletion handling state is ambiguous if no `undepleted_bit` was set, 
-        in this case use `set_point_type_depletion_handling!(sim, true)` as needed."""
-        true
+    else
+        throw(ArgumentError("""
+        The electric potential was not calculated with depletion handling enabled, so the depletion state is unknown.
+        Run the electric potential calculation with `depletion_handling = true` first.
+        When loading simulations from <v0.11.1, the depletion handling state is ambiguous if no `undepleted_bit` was set,
+        in this case use `set_point_type_depletion_handling!(sim, true)` as needed."""))
     end
 end
 

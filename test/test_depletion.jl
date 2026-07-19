@@ -16,6 +16,8 @@ end
 @testset "Test depletion estimation" begin
     sim = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim, refinement_limits=0.01)
+    # without depletion handling the depletion state is unknown
+    @test_throws ArgumentError is_depleted(sim.point_types)
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     timed_calculate_weighting_potential!(sim, id, refinement_limits=0.01)
     SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(
