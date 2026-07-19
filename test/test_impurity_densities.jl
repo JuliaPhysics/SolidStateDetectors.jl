@@ -329,10 +329,12 @@ end
     # Apply to segmented detector
     config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:BEGe])
     config_dict["grid"]["axes"]["phi"]["to"] = 360
-    config_dict["grid"]["spacing_surface_refinement"] = [5e-4, 5e-4, 5e-4]
+    # 0.5 mm in the config's length unit (mm); parsed relative to units.length
+    config_dict["grid"]["spacing_surface_refinement"] = [0.5, 0.5, 0.5]
     config_dict["detectors"][1]["semiconductor"]["impurity_density"] = d["impurity_density"]
     config_dict["detectors"][1]["contacts"][1]["potential"] = -3000
     sim = Simulation{T}(config_dict)
+    @test all(sim.world.spacing_surface_refinement .≈ T(5e-4))  # 0.5 mm in internal units
     timed_calculate_electric_potential!(sim, depletion_handling = true, max_tick_distance = (1u"mm", 360u"°",1u"mm"))
     
     # Test that each slice passing through a smaller segment (ids 2, 3 and 4) have at least one undepleted bit
