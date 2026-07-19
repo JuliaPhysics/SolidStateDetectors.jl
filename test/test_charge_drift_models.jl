@@ -51,10 +51,10 @@ end
 
 @timed_testset "Move charges inside semiconductor" begin
 
-    # define a charge cloud very outside of the detector => should throw an AssertionError
+    # define a charge cloud very outside of the detector => should throw an ArgumentError
     nbcc_top = NBodyChargeCloud(CartesianPoint{T}(0.01,0,0.081), Edep, 10, radius = T(0.002), number_of_shells = 1)
     evt = Event(nbcc_top)
-    @test_throws AssertionError timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
+    @test_throws ArgumentError timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
 
     # define a charge cloud very close to the top surface of the example inverted coax detector (top = 80mm) => should throw a warning
     nbcc_top = NBodyChargeCloud(CartesianPoint{T}(0.01,0,0.079), Edep, 10, radius = T(0.002), number_of_shells = 1)
