@@ -79,10 +79,14 @@ T = Float32
 end
 
 @testset "Test Full Depletion Depth" begin
+    # Calling get_fdd before the electric potential is calculated should throw ArgumentError
+    sim_empty = Simulation{T}(SSD_examples[:IVCIlayer])
+    @test_throws ArgumentError get_fdd(sim_empty)
+
     sim = Simulation{T}(SSD_examples[:IVCIlayer])
     timed_calculate_electric_potential!(sim, depletion_handling = true)
 
-    fdd = get_FDD(sim)
+    fdd = get_fdd(sim)
 
     @test fdd isa Vector
     @test !isempty(fdd)
@@ -138,31 +142,29 @@ end
     @test all(p -> isapprox(p.thickness, euclid(p), atol=T(1e-7)), bottom_face)
 
     # Cone face (diagonal surface from (r=35 mm, z=20 mm) to (r=24.42 mm, z=80 mm))
-    let
-        r_A, z_A = T(0.035),   T(0.020)   # cone base (35 mm, 20 mm)
-        r_B, z_B = T(0.02442), T(0.080)   # cone top  (24.42 mm, 80 mm)
-        Δr = r_B - r_A                     # ≈ −0.01058 m
-        Δz = z_B - z_A                     # = 0.060 m
-        cone_len = sqrt(Δr^2 + Δz^2)       # ≈ 0.060924 m
-        r_cone_at_z(z) = r_A + (Δr / Δz) * (z - z_A)
-        perp_dist(r, z) = abs((r - r_A) * (Δz / cone_len) - (z - z_A) * (Δr / cone_len))
+    r_A, z_A = T(0.035),   T(0.020)   # cone base (35 mm, 20 mm)
+    r_B, z_B = T(0.02442), T(0.080)   # cone top  (24.42 mm, 80 mm)
+    Δr = r_B - r_A                     # ≈ −0.01058 m
+    Δz = z_B - z_A                     # = 0.060 m
+    cone_len = sqrt(Δr^2 + Δz^2)       # ≈ 0.060924 m
+    r_cone_at_z(z) = r_A + (Δr / Δz) * (z - z_A)
+    perp_dist(r, z) = abs((r - r_A) * (Δz / cone_len) - (z - z_A) * (Δr / cone_len))
 
-        cone_face = filter(fdd) do p
-            T(0.025) <= p.z_inner <= T(0.075) &&
-            p.r_inner < r_cone_at_z(p.z_inner) &&
-            p.r_outer > p.r_inner &&
-            p.r_outer < T(0.035)
-        end
-
-        @test !isempty(cone_face)
-        # Perpendicular distance is strictly less than the purely radial distance to the cone surface
-        @test all(p -> p.thickness < r_cone_at_z(p.z_inner) - p.r_inner, cone_face)
-        # Thickness matches the analytical perpendicular distance formula
-        @test all(p -> isapprox(p.thickness, perp_dist(p.r_inner, p.z_inner), atol = T(1e-4)), cone_face)
+    cone_face = filter(fdd) do p
+        T(0.025) <= p.z_inner <= T(0.075) &&
+        p.r_inner < r_cone_at_z(p.z_inner) &&
+        p.r_outer > p.r_inner &&
+        p.r_outer < T(0.035)
     end
 
+    @test !isempty(cone_face)
+    # Perpendicular distance is strictly less than the purely radial distance to the cone surface
+    @test all(p -> p.thickness < r_cone_at_z(p.z_inner) - p.r_inner, cone_face)
+    # Thickness matches the analytical perpendicular distance formula
+    @test all(p -> isapprox(p.thickness, perp_dist(p.r_inner, p.z_inner), atol = T(1e-4)), cone_face)
+
     # Filter by r: all returned entries snap to the same r_inner grid tick
-    fdd_r = get_FDD(sim; r = 5u"mm")
+    fdd_r = get_fdd(sim; r = 5u"mm")
     @test !isempty(fdd_r)
     @test length(unique([p.r_inner for p in fdd_r])) == 1
 end
