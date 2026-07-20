@@ -392,14 +392,14 @@ function adjust_bias_and_electric_potential!(sim::Simulation{T}, bias::RealQuant
 end
 
 """
-    _dist_to_inactive_contact(sim::Simulation)
+    _distance_to_inactive_contact(sim::Simulation)
 
 Extracts the `distance_to_contact` function from the semiconductor impurity density model,
 or returns `nothing` if the model does not provide one. This distance is independent of grid 
 spacing and handles vertical, horizontal, and diagonal contact surfaces without approximation.
 
 """
-function _dist_to_inactive_contact(sim::Simulation)
+function _distance_to_inactive_contact(sim::Simulation)
     imp = sim.detector.semiconductor.impurity_density_model
     if hasproperty(imp, :surface_imp_model) && hasproperty(imp.surface_imp_model, :distance_to_contact)
         return imp.surface_imp_model.distance_to_contact
@@ -411,14 +411,17 @@ function _dist_to_inactive_contact(sim::Simulation)
 end
 
 """
-    get_FDD(sim::Simulation{T}; <keywords>)
+    get_fdd(sim::Simulation{T}; <keywords>)
+    get_fdd(pt::PointTypes{T, 3, Cylindrical}; dist_fn = nothing, <keywords>)
+    get_fdd(pt::PointTypes{T, 3, Cartesian};   dist_fn = nothing, <keywords>)
 
 Estimates the Full Depletion Depth (FDD), the thickness of the inactive layer.
 
+Can be called on a [`Simulation`](@ref) or directly on a [`PointTypes`](@ref) object.
+
 When the semiconductor uses a `PtypePNJunctionImpurityDensity` or `ThermalDiffusionLithiumDensity`
-impurity model, the thickness is computed via `ConstructiveSolidGeometry.distance_to_surface`
-on the actual contact geometry, this is a grid-independent calculation that gives the true
-perpendicular distance to diagonal and curved surfaces.
+impurity model, the thickness is computed by evaluating `distance_to_contact` at the inner contour point,
+giving a grid-independent perpendicular distance to the contact surface regardless of its orientation.
 For other impurity models the thickness falls back to the Euclidean distance to the nearest
 contact-surface grid point (subject to grid-spacing discretization error on diagonal surfaces).
 
@@ -427,8 +430,9 @@ contact-surface grid point (subject to grid-spacing discretization error on diag
     surface (carries `inactive_contact_bit`).  Because SSD places grid ticks at
     contact boundaries, these coordinates lie on the contact surface itself.
 
-    For diagonal surfaces, the nearest contact tick on the slanted surface may not be exactly along
-    the perpendicular, so the Euclidean distance can differ from the thickness of the FDD (either direction, depending on grid snapping).  
+    For non-axis-aligned surfaces (diagonal, rotated, or curved), the nearest contact tick may not
+    lie along the surface normal, so the Euclidean distance can differ from the thickness of the FDD
+    (either direction, depending on grid snapping).
     Always use the `thickness` field for the correct perpendicular value.
 
 ## Keywords (Cylindrical)
@@ -442,25 +446,23 @@ At a given `r` (or `z`) there may be more than one entry — for example an inac
 both the top and bottom face of the detector at the same radius.
 
 ## Returns
-* `r_inner`, `z_inner` (Cylindrical) or `x_inner`, `y_inner`, `z_inner` (Cartesian): 
-position of the inner boundary point (inactive layer / active bulk transition).
+A `Vector{NamedTuple}` where each element corresponds to one grid point on the inner boundary of the
+inactive layer. The vector has as many entries as there are inner contour grid points; it is empty if
+`sim.point_types` contains no inactive layer. Each `NamedTuple` has the following fields:
+* `r_inner`, `z_inner` (Cylindrical) or `x_inner`, `y_inner`, `z_inner` (Cartesian):
+ position of the inner boundary point (inactive layer / active bulk transition).
 * `r_outer`, `z_outer` / `x_outer`, `y_outer`, `z_outer`: nearest grid point on the doped contact surface
-(where the inactive layer meets the lithium-doped contact).
+ (where the inactive layer meets the lithium-doped contact).
 * `thickness`: perpendicular distance from the inner boundary to the contact surface = FDD thickness.
 
-Returns an empty vector if no inactive layer is present in `sim.point_types`.
-
 """
-function get_FDD(sim::Simulation{T, Cylindrical};
+function get_fdd(pt::PointTypes{T, 3, Cylindrical};
+                 dist_fn = nothing,
                  r::Union{Nothing, RealQuantity} = nothing,
-                 z::Union{Nothing, RealQuantity} = nothing) where {T <: AbstractFloat}
-    @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim, depletion_handling = true)`"
-
-    pt      = sim.point_types.data
-    g       = sim.electric_potential.grid
-    r_ticks = g.axes[1].ticks
-    z_ticks = g.axes[3].ticks
-    sz1, sz2, sz3 = size(pt)
+                 z::Union{Nothing, RealQuantity} = nothing) where {T}
+    r_ticks = pt.grid.axes[1].ticks
+    z_ticks = pt.grid.axes[3].ticks
+    sz1, sz2, sz3 = size(pt.data)
 
     face_neighbors = ((-1,0,0),(1,0,0),(0,-1,0),(0,1,0),(0,0,-1),(0,0,1))
 
@@ -468,7 +470,7 @@ function get_FDD(sim::Simulation{T, Cylindrical};
     outer_ik = Set{NTuple{2,Int}}()
 
     for i in 1:sz1, j in 1:sz2, k in 1:sz3
-        b        = pt[i,j,k]
+        b        = pt.data[i,j,k]
         is_inact = b & inactive_layer_bit > 0
 
         if b & inactive_contact_bit > 0
@@ -478,7 +480,7 @@ function get_FDD(sim::Simulation{T, Cylindrical};
         for (di, dj, dk) in face_neighbors
             ni, nj, nk = i+di, j+dj, k+dk
             (1 ≤ ni ≤ sz1 && 1 ≤ nj ≤ sz2 && 1 ≤ nk ≤ sz3) || continue
-            nb = pt[ni,nj,nk]
+            nb = pt.data[ni,nj,nk]
 
             if is_inact && nb & inactive_layer_bit == 0 && nb & pn_junction_bit > 0
                 push!(inner_ik, (i, k))
@@ -490,16 +492,12 @@ function get_FDD(sim::Simulation{T, Cylindrical};
 
     outer_rz = [(T(r_ticks[oi]), T(z_ticks[ok])) for (oi, ok) in outer_ik]
 
-    # Exact analytical distance from the contact geometry when available;
-    # falls back to nearest-outer-grid-point distance otherwise.
-    dist_fn = _dist_to_inactive_contact(sim)
-
     result = NamedTuple{(:r_inner, :z_inner, :r_outer, :z_outer, :thickness), Tuple{T,T,T,T,T}}[]
     for (i, k) in inner_ik
         ri, zi   = T(r_ticks[i]), T(z_ticks[k])
         min_d2   = typemax(T)
-        ro_best  = zero(T)
-        zo_best  = zero(T)
+        ro_best  = T(NaN)
+        zo_best  = T(NaN)
         for (ro, zo) in outer_rz
             d2 = (ri - ro)^2 + (zi - zo)^2
             if d2 < min_d2
@@ -514,30 +512,27 @@ function get_FDD(sim::Simulation{T, Cylindrical};
 
     if !isnothing(r)
         r_val     = _parse_value(T, r, internal_length_unit)
-        r_nearest = T(r_ticks[argmin(abs.(r_ticks .- r_val))])
+        r_nearest = T(r_ticks[searchsortednearest(r_ticks, r_val)])
         filter!(p -> p.r_inner == r_nearest, result)
     end
     if !isnothing(z)
         z_val     = _parse_value(T, z, internal_length_unit)
-        z_nearest = T(z_ticks[argmin(abs.(z_ticks .- z_val))])
+        z_nearest = T(z_ticks[searchsortednearest(z_ticks, z_val)])
         filter!(p -> p.z_inner == z_nearest, result)
     end
 
     return result
 end
 
-function get_FDD(sim::Simulation{T, Cartesian};
+function get_fdd(pt::PointTypes{T, 3, Cartesian};
+                 dist_fn = nothing,
                  x::Union{Nothing, RealQuantity} = nothing,
                  y::Union{Nothing, RealQuantity} = nothing,
-                 z::Union{Nothing, RealQuantity} = nothing) where {T <: AbstractFloat}
-    @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim, depletion_handling = true)`"
-
-    pt      = sim.point_types.data
-    g       = sim.electric_potential.grid
-    x_ticks = g.axes[1].ticks
-    y_ticks = g.axes[2].ticks
-    z_ticks = g.axes[3].ticks
-    sz1, sz2, sz3 = size(pt)
+                 z::Union{Nothing, RealQuantity} = nothing) where {T}
+    x_ticks = pt.grid.axes[1].ticks
+    y_ticks = pt.grid.axes[2].ticks
+    z_ticks = pt.grid.axes[3].ticks
+    sz1, sz2, sz3 = size(pt.data)
 
     face_neighbors = ((-1,0,0),(1,0,0),(0,-1,0),(0,1,0),(0,0,-1),(0,0,1))
 
@@ -545,7 +540,7 @@ function get_FDD(sim::Simulation{T, Cartesian};
     outer_ijk = Set{NTuple{3,Int}}()
 
     for i in 1:sz1, j in 1:sz2, k in 1:sz3
-        b        = pt[i,j,k]
+        b        = pt.data[i,j,k]
         is_inact = b & inactive_layer_bit > 0
 
         if b & inactive_contact_bit > 0
@@ -555,7 +550,7 @@ function get_FDD(sim::Simulation{T, Cartesian};
         for (di, dj, dk) in face_neighbors
             ni, nj, nk = i+di, j+dj, k+dk
             (1 ≤ ni ≤ sz1 && 1 ≤ nj ≤ sz2 && 1 ≤ nk ≤ sz3) || continue
-            nb = pt[ni,nj,nk]
+            nb = pt.data[ni,nj,nk]
 
             if is_inact && nb & inactive_layer_bit == 0 && nb & pn_junction_bit > 0
                 push!(inner_ijk, (i, j, k))
@@ -567,15 +562,13 @@ function get_FDD(sim::Simulation{T, Cartesian};
 
     outer_xyz = [(T(x_ticks[oi]), T(y_ticks[oj]), T(z_ticks[ok])) for (oi, oj, ok) in outer_ijk]
 
-    dist_fn = _dist_to_inactive_contact(sim)
-
     result = NamedTuple{(:x_inner, :y_inner, :z_inner, :x_outer, :y_outer, :z_outer, :thickness), Tuple{T,T,T,T,T,T,T}}[]
     for (i, j, k) in inner_ijk
         xi, yi, zi = T(x_ticks[i]), T(y_ticks[j]), T(z_ticks[k])
         min_d2     = typemax(T)
-        xo_best    = zero(T)
-        yo_best    = zero(T)
-        zo_best    = zero(T)
+        xo_best    = T(NaN)
+        yo_best    = T(NaN)
+        zo_best    = T(NaN)
         for (xo, yo, zo) in outer_xyz
             d2 = (xi - xo)^2 + (yi - yo)^2 + (zi - zo)^2
             if d2 < min_d2
@@ -591,21 +584,29 @@ function get_FDD(sim::Simulation{T, Cartesian};
 
     if !isnothing(x)
         x_val     = _parse_value(T, x, internal_length_unit)
-        x_nearest = T(x_ticks[argmin(abs.(x_ticks .- x_val))])
+        x_nearest = T(x_ticks[searchsortednearest(x_ticks, x_val)])
         filter!(p -> p.x_inner == x_nearest, result)
     end
     if !isnothing(y)
         y_val     = _parse_value(T, y, internal_length_unit)
-        y_nearest = T(y_ticks[argmin(abs.(y_ticks .- y_val))])
+        y_nearest = T(y_ticks[searchsortednearest(y_ticks, y_val)])
         filter!(p -> p.y_inner == y_nearest, result)
     end
     if !isnothing(z)
         z_val     = _parse_value(T, z, internal_length_unit)
-        z_nearest = T(z_ticks[argmin(abs.(z_ticks .- z_val))])
+        z_nearest = T(z_ticks[searchsortednearest(z_ticks, z_val)])
         filter!(p -> p.z_inner == z_nearest, result)
     end
 
     return result
+end
+
+function get_fdd(sim::Simulation; kwargs...)
+    get_fdd(sim.point_types; dist_fn = _distance_to_inactive_contact(sim), kwargs...)
+end
+
+function get_fdd(::Missing; kwargs...)
+    throw(ArgumentError("Please calculate the electric potential first using `calculate_electric_potential!(sim, depletion_handling = true)`"))
 end
 
 #=
