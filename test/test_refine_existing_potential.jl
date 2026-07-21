@@ -137,7 +137,7 @@ end
     # Wrong refinement limits
     begin
         config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
-        config_dict["grid"]["spacing_surface_refinement"] = [1e-3, 1e-3, 1e-3]
+        config_dict["grid"]["spacing_surface_refinement"] = ["1mm", "1mm", "1mm"]
         sim_2d = @test_nowarn Simulation{T}(config_dict)
 
         # Test normal behaviour 2D
@@ -218,7 +218,7 @@ end
     
     # Spacing out of bounds
     config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
-    config_dict["grid"]["spacing_surface_refinement"] = [1e-2, 1e-2, 1e-2]
+    config_dict["grid"]["spacing_surface_refinement"] = ["10mm", "10mm", "10mm"]
     sim = @test_nowarn Simulation{T}(config_dict)
     
     @test_logs (
@@ -243,7 +243,7 @@ end
         timed_calculate_electric_potential!(sim_phi_noref, verbose = false, depletion_handling = true)
         notref_phi_len = length(sim_phi_noref.electric_potential.grid.axes[2].ticks)
 
-        config_dict["grid"]["spacing_surface_refinement"] = [1e-3,1e-3,1e-3]
+        config_dict["grid"]["spacing_surface_refinement"] = ["1mm","1mm","1mm"]
         sim_phi_ref = @test_nowarn Simulation{T}(config_dict)
         timed_calculate_electric_potential!(sim_phi_ref, verbose = false, depletion_handling = true)
         ref_phi_len = length(sim_phi_ref.electric_potential.grid.axes[2].ticks)
