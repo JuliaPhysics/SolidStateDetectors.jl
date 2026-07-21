@@ -60,6 +60,22 @@ end
     end
 end
 
+@testset "Scalar interpolation on a periodic wedge wraps with the wedge period" begin
+    axr = DiscreteAxis(0.0, 0.02, :r0, :infinite, :closed, :closed, collect(range(0.0, 0.02, length = 3)))
+    axz = DiscreteAxis(0.0, 0.03, :infinite, :infinite, :closed, :closed, collect(range(0.0, 0.03, length = 3)))
+    nφ = 24
+    axφ = DiscreteAxis(0.0, 2π/3, :periodic, :periodic, :closed, :open, collect(range(0.0, 2π/3, length = nφ + 1))[1:end-1])
+    grid = CylindricalGrid{Float64}((axr, axφ, axz))
+
+    # V = r * sin(3φ) + z is exactly 3-fold periodic
+    ep = ElectricPotential([r * sin(3φ) + z for r in axr.ticks, φ in axφ.ticks, z in axz.ticks], grid)
+    itp = SolidStateDetectors.interpolated_scalarfield(ep)
+    r, z = 0.02, 0.015
+    for φ in (2π/3 - 0.01, 2π/3, 2π/3 + 0.3, 5.0)  # wedge end and beyond
+        @test itp(r, φ, z) ≈ r * sin(3φ) + z atol = 1e-3
+    end
+end
+
 @testset "Periodic axis searchsortednearest wraps at the seam" begin
     ax = DiscreteAxis(0.0, 2π, :periodic, :periodic, :closed, :open, collect(range(0.0, 2π, length = 37))[1:end-1])
     @test searchsortednearest(ax, 0.01) == 1
