@@ -60,7 +60,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
     axφ::Vector{T} = collect(epot.grid.axes[2])
     axz::Vector{T} = collect(epot.grid.axes[3])
 
-    cyclic::T = epot.grid.axes[2].interval.right
+    cyclic::T = width(epot.grid.axes[2].interval) # φ period; the interval does not need to start at 0
     ef = Array{SVector{3, T}}(undef, size(p)...)
     @onthreads 1:use_nthreads for iz in workpart(1:size(ef, 3), 1:use_nthreads, Base.Threads.threadid())
         for iφ in 1:size(ef, 2)
@@ -177,8 +177,14 @@ end
 
 
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
-    @inbounds knots = spot.grid.axes[1].ticks, cat(spot.grid.axes[2].ticks,T(2π),dims=1), spot.grid.axes[3].ticks
-    ext_data = cat(spot.data, spot.data[:,1:1,:], dims=2)
+    φticks = spot.grid.axes[2].ticks
+    # close the φ axis at ticks[1] + 2π (the interval does not need to start at 0),
+    # unless the ticks already contain the wrap point
+    add_wrap_knot = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + T(2π))
+    @inbounds knots = spot.grid.axes[1].ticks,
+        add_wrap_knot ? cat(φticks, φticks[1] + T(2π), dims = 1) : φticks,
+        spot.grid.axes[3].ticks
+    ext_data = add_wrap_knot ? cat(spot.data, spot.data[:,1:1,:], dims = 2) : spot.data
     i = interpolate!(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
@@ -192,8 +198,12 @@ end
 
 
 function interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
-    extended_vectorfield = cat(vectorfield, vectorfield[:,1:1,:], dims=2)
-    @inbounds knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
+    φticks = grid.axes[2].ticks
+    add_wrap_knot = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + T(2π))
+    extended_vectorfield = add_wrap_knot ? cat(vectorfield, vectorfield[:,1:1,:], dims = 2) : vectorfield
+    @inbounds knots = grid.axes[1].ticks,
+        add_wrap_knot ? cat(φticks, φticks[1] + T(2π), dims = 1) : φticks,
+        grid.axes[3].ticks
     i = interpolate!(knots, extended_vectorfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
