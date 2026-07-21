@@ -122,15 +122,13 @@ to numerical precision in the integration due to the different grids of the two 
 """
 function calculate_capacitance_matrix(sim::Simulation{T}; consider_multiplicity::Bool = true) where {T}
     @assert !ismissing(sim.ϵ_r) "The electric potential needs to be calculated first."
-    @assert !ismissing(sim.weighting_potentials) "The weighting_potentials needs to be calculated first."
+    @assert !ismissing(sim.weighting_potentials) && !any(ismissing, sim.weighting_potentials) "All weighting potentials need to be calculated first."
     n = length(sim.weighting_potentials)
-    C = Matrix{Union{Missing, typeof(one(T) * u"pF")}}(missing, n, n)
+    C = Matrix{typeof(one(T) * u"pF")}(undef, n, n)
     for i in 1:n
         for j in 1:n
-            if !ismissing(sim.weighting_potentials[i]) && !ismissing(sim.weighting_potentials[j])
-                C[j, i] = calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
-            end
+            C[j, i] = calculate_mutual_capacitance(sim, (i, j); consider_multiplicity)
         end
     end
-    return any(ismissing, C) ? C : identity.(C)
+    return C
 end

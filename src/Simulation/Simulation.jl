@@ -225,9 +225,13 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     will be added in between the important points obtained from sampling the objects of the
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
-* `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of 
+* `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of
     an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
     if set to `false`.
+* `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced periodic
+    φ range, verify (by sampling) that the detector geometry actually has the corresponding
+    φ-symmetry and raise a `ConfigFileError` if not. Set to `false` to skip the check and
+    pass the resulting grid explicitly via the `grid` keyword of the calculation functions.
 """
 # Sampled check whether all field-relevant objects of the detector are invariant
 # under the given φ shifts. Guards 2D and φ-reduced grids against detectors
@@ -266,7 +270,8 @@ function _check_φ_symmetry(det::SolidStateDetector{T}, world::World{T, 3, Cylin
         _is_φ_invariant(det, world, φ_shifts) || throw(ConfigFileError(
             "The φ interval of the world is empty, requesting a 2D simulation, " *
             "but the detector geometry is not φ-symmetric. Simulating it in 2D would give wrong results. " *
-            "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`)."))
+            "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+            "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
     elseif world_Δφ < T(2π) * (1 - sqrt(eps(T))) && world.intervals[2] isa SSDInterval{T, <:Any, <:Any, :periodic, :periodic}
         n_sym = round(Int, T(2π) / world_Δφ)
         if n_sym ≥ 2 && isapprox(n_sym * world_Δφ, T(2π), rtol = 1e-3)
@@ -275,7 +280,8 @@ function _check_φ_symmetry(det::SolidStateDetector{T}, world::World{T, 3, Cylin
                 "The φ interval of the world covers 1/$(n_sym) of the full circle with periodic boundaries, " *
                 "but the detector geometry is not $(n_sym)-fold periodic in φ. " *
                 "Simulating the reduced range would give wrong results. " *
-                "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`)."))
+                "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+            "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
         end
     end
     nothing
@@ -285,12 +291,13 @@ function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_ticks_between_important_ticks::Bool = true)::CylindricalGrid{T} where {T}
+                add_ticks_between_important_ticks::Bool = true,
+                check_φ_symmetry::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
     world = sim.world
     world_Δs = width.(world.intervals)
     world_Δr, world_Δφ, world_Δz = world_Δs
-    for_weighting_potential || _check_φ_symmetry(det, world)
+    check_φ_symmetry && !for_weighting_potential && _check_φ_symmetry(det, world)
                 
     samples::Vector{CylindricalPoint{T}} = sample(det, Cylindrical)
     important_r_ticks::Vector{T} = map(p -> p.r, samples)

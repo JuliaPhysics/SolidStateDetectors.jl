@@ -175,7 +175,7 @@ getVe(fv::SVector{3, T}, cdm::ADL2016ChargeDriftModel{T}, ::CartesianPoint{T}, E
         if norm(fv) < Emag_threshold return SVector{3,T}(0, 0, 0) end
 
         Γ0::T = sqrt((2 * cdm.parameters.mt_inv + cdm.parameters.ml_inv)/3)
-        invν = broadcast(γ½ -> inv(ν(γ½ * fv, cdm.parameters)), cdm.sqrtγ)
+        invν = broadcast(sqrtγ -> inv(ν(sqrtγ * fv, cdm.parameters)), cdm.sqrtγ)
         invν_sum_inv::T = inv(sum(invν))
 
         v::SVector{3,T} = @SVector T[0,0,0]
