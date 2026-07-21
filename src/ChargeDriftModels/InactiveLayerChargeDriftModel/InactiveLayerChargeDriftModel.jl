@@ -55,8 +55,9 @@ function _calculate_mobility_with_impurities(
     1/(1/μI + 1/μA + 1/μN)
 end
 
-# Electron mobility: Ma et al. (arXiv:1705.09562), Erginsoy (1.07e20 cm-units
-# -> 1.07e22 SI) with Sclar's temperature correction (0.28*T^0.5 + 0.54*T^-0.5)
+# Electron mobility: neutral-impurity term in the Sclar variant as presented in
+# Mei et al. (arXiv:1705.09562), Erginsoy (1.07e20 cm-units -> 1.07e22 SI) with
+# Sclar's temperature correction (0.28*T^0.5 + 0.54*T^-0.5)
 # and Bardeen-Shockley acoustic term (9.32e7 cm-units -> 9.32e3 SI).
 function _calculate_mobility_with_impurities(
     Nn::T, bulk_imp::T, surface_imp::T,
