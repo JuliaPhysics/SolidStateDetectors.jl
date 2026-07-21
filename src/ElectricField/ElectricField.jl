@@ -176,15 +176,24 @@ end
 
 
 
+# Period with which a cylindrical φ axis repeats: periodic axes (full circles as
+# well as symmetry-reduced wedges) repeat with their interval width, everything
+# else with the full circle. Used to close the axis for periodic interpolation.
+_φ_wrap_period(ax::DiscreteAxis{T, :periodic, :periodic}) where {T} = width(ax.interval)
+_φ_wrap_period(ax::DiscreteAxis{T}) where {T} = T(2π)
+
+function _φ_wrap_knots_and_data(axφ::DiscreteAxis{T}, data::AbstractArray) where {T}
+    φticks = axφ.ticks
+    period = length(φticks) == 1 ? T(2π) : _φ_wrap_period(axφ)
+    add_wrap_knot = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + period)
+    knots = add_wrap_knot ? cat(φticks, φticks[1] + period, dims = 1) : φticks
+    ext_data = add_wrap_knot ? cat(data, data[:,1:1,:], dims = 2) : data
+    knots, ext_data
+end
+
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
-    φticks = spot.grid.axes[2].ticks
-    # close the φ axis at ticks[1] + 2π (the interval does not need to start at 0),
-    # unless the ticks already contain the wrap point
-    add_wrap_knot = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + T(2π))
-    @inbounds knots = spot.grid.axes[1].ticks,
-        add_wrap_knot ? cat(φticks, φticks[1] + T(2π), dims = 1) : φticks,
-        spot.grid.axes[3].ticks
-    ext_data = add_wrap_knot ? cat(spot.data, spot.data[:,1:1,:], dims = 2) : spot.data
+    φknots, ext_data = _φ_wrap_knots_and_data(spot.grid.axes[2], spot.data)
+    @inbounds knots = spot.grid.axes[1].ticks, φknots, spot.grid.axes[3].ticks
     i = interpolate!(knots, ext_data, Gridded(Linear()))
     vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return vector_field_itp
@@ -197,13 +206,12 @@ function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cartesian}) where 
 end
 
 
+# Note: the stored vectors are Cartesian, which do not transform trivially under a
+# reduced symmetry, so evaluating a wedge-grid vector field outside its φ range is
+# only meaningful for scalars; vector fields should live on full-circle grids.
 function interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
-    φticks = grid.axes[2].ticks
-    add_wrap_knot = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + T(2π))
-    extended_vectorfield = add_wrap_knot ? cat(vectorfield, vectorfield[:,1:1,:], dims = 2) : vectorfield
-    @inbounds knots = grid.axes[1].ticks,
-        add_wrap_knot ? cat(φticks, φticks[1] + T(2π), dims = 1) : φticks,
-        grid.axes[3].ticks
+    φknots, extended_vectorfield = _φ_wrap_knots_and_data(grid.axes[2], vectorfield)
+    @inbounds knots = grid.axes[1].ticks, φknots, grid.axes[3].ticks
     i = interpolate!(knots, extended_vectorfield, Gridded(Linear()))
     velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
     return velocity_field_itp
