@@ -216,25 +216,50 @@ function _check_and_update_position!(
             if cd_point_type == CD_FLOATING_BOUNDARY
                 projected_vector = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
-                next_pos::CartesianPoint{T} = current_pos[n] + projected_vector
-                small_projected_vector = projected_vector * T(0.001)
+                s::T = one(T)
                 i::Int = 0
-                while i < 1000 && !(next_pos in det.semiconductor)
-                    next_pos -= small_projected_vector
+                while i < 1000 && !(current_pos[n] + projected_vector * s in det.semiconductor)
+                    s -= T(0.001)
                     i += 1
                 end
                 if i == 1000
                     if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $(startpos[n])") end
                     cd_point_type = CD_BULK # treated as internal error below
                 else
-                    scale = min(scale, 1 - i * T(0.001))
+                    scale = min(scale, s)
                 end
             end
             cd_point_types[k] = cd_point_type
             crossing_positions[k] = crossing_pos
             projected_vectors[k] = projected_vector
         end
-        # second pass: commit the crossing clouds using the common scale
+        # the common fraction must itself be admissible for every crossing cloud
+        # (non-convex surfaces may block intermediate positions), so shrink it
+        # until all clouds fit before committing anything
+        refined::Bool = true
+        while refined
+            refined = false
+            for (k, n) in enumerate(boundary_clouds)
+                cd_point_types[k] == CD_FLOATING_BOUNDARY || continue
+                s = scale
+                i = 0
+                while i < 1000 && s > 0 && !(current_pos[n] + projected_vectors[k] * s in det.semiconductor)
+                    s -= T(0.001)
+                    i += 1
+                end
+                s = max(s, zero(T))
+                if i == 1000
+                    if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $(startpos[n])") end
+                    cd_point_types[k] = CD_BULK # treated as internal error below
+                elseif s < scale
+                    scale = s
+                    refined = true
+                end
+            end
+        end
+        # second pass: commit all crossing clouds using the common scale
+        # (clouds collected on a contact keep their crossing position; their arrival
+        # time is thus accurate only to within one Δt)
         for (k, n) in enumerate(boundary_clouds)
             if cd_point_types[k] == CD_ELECTRODE
                 done[n] = true
@@ -242,22 +267,10 @@ function _check_and_update_position!(
                 current_pos[n] = crossing_positions[k]
             elseif cd_point_types[k] == CD_FLOATING_BOUNDARY
                 next_pos = current_pos[n] + projected_vectors[k] * scale
-                small_projected_vector = projected_vectors[k] * T(0.001)
-                i = 0 # non-convex surfaces: the reduced step may still end outside
-                while i < 1000 && !(next_pos in det.semiconductor)
-                    next_pos -= small_projected_vector
-                    i += 1
-                end
-                if i == 1000
-                    if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $(startpos[n])") end
-                    done[n] = true
-                    drift_path[n,istep] = current_pos[n]
-                    continue
-                end
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
                 drift_path[n,istep] = next_pos
-            else # CD_BULK or CD_OUTSIDE
+            else # CD_BULK or CD_OUTSIDE (or failed floating-boundary handling)
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
