@@ -229,15 +229,17 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
     if set to `false`.
 * `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced periodic
-    φ range, verify (by sampling) that the detector geometry actually has the corresponding
-    φ-symmetry and raise a `ConfigFileError` if not. Set to `false` to skip the check and
+    φ range, verify (by a sampling heuristic) that the detector geometry and its
+    impurity/charge density models actually have the corresponding φ-symmetry and raise a
+    `ConfigFileError` if not. Set to `false` to skip the check and
     pass the resulting grid explicitly via the `grid` keyword of the calculation functions.
 """
-# Sampled check whether all field-relevant objects of the detector are invariant
-# under the given φ shifts. Guards 2D and φ-reduced grids against detectors
-# without the corresponding symmetry (which would silently give wrong fields).
-# A single mismatching sample is tolerated to be robust against points landing
-# exactly on object surfaces.
+# Sampled (heuristic) check whether all field-relevant inputs of the detector —
+# object geometries plus the impurity/charge density models of semiconductor and
+# passives — are invariant under the given φ shifts. Guards 2D and φ-reduced
+# grids against detectors without the corresponding symmetry (which would
+# silently give wrong fields). A single mismatching sample is tolerated to be
+# robust against points landing exactly on object surfaces.
 function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}, φ_shifts::AbstractVector{T};
         n_r::Int = 16, n_φ::Int = 4, n_z::Int = 16)::Bool where {T}
     objects = Any[det.semiconductor, det.contacts...]
@@ -246,13 +248,18 @@ function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindr
     zint = world.intervals[3]
     n_mismatch = 0
     for obj in objects
+        has_density = obj isa Semiconductor || obj isa Passive
         for ir in 1:n_r, iφ in 1:n_φ, iz in 1:n_z
             r = (ir - T(0.5)) / n_r * rmax
             φ = (iφ - T(0.5)) / n_φ * T(2π)
             z = zint.left + (iz - T(0.5)) / n_z * width(zint)
-            ref = CylindricalPoint{T}(r, φ, z) in obj
+            pt = CylindricalPoint{T}(r, φ, z)
+            ref = pt in obj
+            ref_ρ = has_density ? get_charge_density(obj, pt) : zero(T)
             for Δφ in φ_shifts
-                if (CylindricalPoint{T}(r, φ + Δφ, z) in obj) != ref
+                spt = CylindricalPoint{T}(r, φ + Δφ, z)
+                if (spt in obj) != ref ||
+                        (has_density && !isapprox(get_charge_density(obj, spt), ref_ρ, rtol = T(1e-3)))
                     n_mismatch += 1
                     break
                 end
@@ -266,7 +273,9 @@ end
 function _check_φ_symmetry(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}) where {T}
     world_Δφ = width(world.intervals[2])
     if iszero(world_Δφ)
-        φ_shifts = T.(2π * (1:7) / 8)
+        # a 2D grid needs continuous axisymmetry: sample discrete C8 rotations plus
+        # two shifts incommensurate with 2π to reject merely n-fold symmetric shapes
+        φ_shifts = T.(vcat(2π * (1:7) / 8, 2π * (√5 - 1) / 2, 1))
         _is_φ_invariant(det, world, φ_shifts) || throw(ConfigFileError(
             "The φ interval of the world is empty, requesting a 2D simulation, " *
             "but the detector geometry is not φ-symmetric. Simulating it in 2D would give wrong results. " *
