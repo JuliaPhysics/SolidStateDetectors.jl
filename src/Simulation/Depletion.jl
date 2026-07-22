@@ -411,9 +411,9 @@ function _distance_to_inactive_contact(sim::Simulation)
 end
 
 """
-    get_fdd(sim::Simulation{T}; <keywords>)
-    get_fdd(pt::PointTypes{T, 3, Cylindrical}; dist_fn = nothing, <keywords>)
-    get_fdd(pt::PointTypes{T, 3, Cartesian};   dist_fn = nothing, <keywords>)
+    get_full_depletion_depth(sim::Simulation{T}; <keywords>)
+    get_full_depletion_depth(pt::PointTypes{T, 3, Cylindrical}; dist_fn = nothing, <keywords>)
+    get_full_depletion_depth(pt::PointTypes{T, 3, Cartesian};   dist_fn = nothing, <keywords>)
 
 Estimates the Full Depletion Depth (FDD), the thickness of the inactive layer.
 
@@ -456,7 +456,7 @@ inactive layer. The vector has as many entries as there are inner contour grid p
 * `thickness`: perpendicular distance from the inner boundary to the contact surface = FDD thickness.
 
 """
-function get_fdd(pt::PointTypes{T, 3, Cylindrical};
+function get_full_depletion_depth(pt::PointTypes{T, 3, Cylindrical};
                  dist_fn = nothing,
                  r::Union{Nothing, RealQuantity} = nothing,
                  z::Union{Nothing, RealQuantity} = nothing) where {T}
@@ -524,7 +524,7 @@ function get_fdd(pt::PointTypes{T, 3, Cylindrical};
     return result
 end
 
-function get_fdd(pt::PointTypes{T, 3, Cartesian};
+function get_full_depletion_depth(pt::PointTypes{T, 3, Cartesian};
                  dist_fn = nothing,
                  x::Union{Nothing, RealQuantity} = nothing,
                  y::Union{Nothing, RealQuantity} = nothing,
@@ -601,11 +601,11 @@ function get_fdd(pt::PointTypes{T, 3, Cartesian};
     return result
 end
 
-function get_fdd(sim::Simulation; kwargs...)
-    get_fdd(sim.point_types; dist_fn = _distance_to_inactive_contact(sim), kwargs...)
+function get_full_depletion_depth(sim::Simulation; kwargs...)
+    get_full_depletion_depth(sim.point_types; dist_fn = _distance_to_inactive_contact(sim), kwargs...)
 end
 
-function get_fdd(::Missing; kwargs...)
+function get_full_depletion_depth(::Missing; kwargs...)
     throw(ArgumentError("Please calculate the electric potential first using `calculate_electric_potential!(sim, depletion_handling = true)`"))
 end
 

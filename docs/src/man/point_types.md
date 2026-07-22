@@ -89,10 +89,10 @@ All consecutive points where `pn_junction_bit`, `undepleted_bit`, and `update_bi
 
 The contact carrying `inactive_contact_bit` is identified through the semiconductor impurity density model (`PtypePNJunctionImpurityDensity`).
 
-### Full Depletion Depth via `get_fdd`
+### Full Depletion Depth via `get_full_depletion_depth`
 
-`get_fdd(sim)` computes the Full Depletion Depth (FDD) — the thickness of the inactive layer — at every point on the inner boundary of the inactive layer.
-It can also be called directly on a `PointTypes` object as `get_fdd(pt)`.
+`get_full_depletion_depth(sim)` computes the Full Depletion Depth (FDD) — the thickness of the inactive layer — at every point on the inner boundary of the inactive layer.
+It can also be called directly on a `PointTypes` object as `get_full_depletion_depth(pt)`.
 
 Two contours are extracted from the point types grid:
 
@@ -133,8 +133,8 @@ T = Float64
 sim = Simulation{T}(SSD_examples[:IVCIlayer])
 sim.world = typeof(sim.world)(sim.world.intervals, ntuple(_ -> T(9e-5), 3))  # surface refinement spacing
 calculate_electric_potential!(sim, depletion_handling = true, use_nthreads = 4)
-all_fdd = get_fdd(sim)                             # full contour, all coordinates
-fdd_at_r = get_fdd(sim; r = 5u"mm")                # only inner-contour points nearest r = 5 mm
+all_fdd = get_full_depletion_depth(sim)                             # full contour, all coordinates
+fdd_at_r = get_full_depletion_depth(sim; r = 5u"mm")                # only inner-contour points nearest r = 5 mm
 ````
 
 ````@example fdd
@@ -152,7 +152,7 @@ p2 = scatter(
     [pt.z_inner * 1000 for pt in all_fdd],
     marker_z = t_mm,
     color = :heat, colorbar = true, colorbar_title = "thickness [mm]",
-    clims = (minimum(t_mm), maximum(t_mm)),
+    clims = extrema(t_mm),
     xlabel = "r [mm]", ylabel = "z [mm]",
     title = "FDD thickness",
     markersize = 3, markerstrokewidth = 0,

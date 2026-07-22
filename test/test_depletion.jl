@@ -79,14 +79,14 @@ T = Float32
 end
 
 @testset "Test Full Depletion Depth" begin
-    # Calling get_fdd before the electric potential is calculated should throw ArgumentError
+    # Calling get_full_depletion_depth before the electric potential is calculated should throw ArgumentError
     sim_empty = Simulation{T}(SSD_examples[:IVCIlayer])
-    @test_throws ArgumentError get_fdd(sim_empty)
+    @test_throws ArgumentError get_full_depletion_depth(sim_empty)
 
     sim = Simulation{T}(SSD_examples[:IVCIlayer])
     timed_calculate_electric_potential!(sim, depletion_handling = true)
 
-    fdd = get_fdd(sim)
+    fdd = get_full_depletion_depth(sim)
 
     @test fdd isa Vector
     @test !isempty(fdd)
@@ -164,7 +164,7 @@ end
     @test all(p -> isapprox(p.thickness, perp_dist(p.r_inner, p.z_inner), atol = T(1e-4)), cone_face)
 
     # Filter by r: all returned entries snap to the same r_inner grid tick
-    fdd_r = get_fdd(sim; r = 5u"mm")
+    fdd_r = get_full_depletion_depth(sim; r = 5u"mm")
     @test !isempty(fdd_r)
     @test length(unique([p.r_inner for p in fdd_r])) == 1
 end
