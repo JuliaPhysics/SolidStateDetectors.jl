@@ -144,10 +144,16 @@ function SolidStateDetector{T}(config_file::AbstractDict, input_units::NamedTupl
                 throw(ConfigFileError("The imp_doped_contact_ids $(invalid_ids) are not defined in the configuration file."))
             end
         else
-            contact_potentials = T[c.potential for c in det.contacts]
+            contact_potentials = T[c.potential for c in contacts]
             max_potential = maximum(contact_potentials)
             inds = findall(==(max_potential), contact_potentials)
             imp_doped_contact_id = drift_doped_contact_id = format_contact_id(inds)
+            if doped_geometry_for_imp
+                config_detector["semiconductor"]["impurity_density"]["doped_contact_id"] = collect(imp_doped_contact_id)
+            end
+            if doped_geometry_for_drift
+                config_detector["semiconductor"]["charge_drift_model"]["surface_impurity_density"]["doped_contact_id"] = collect(drift_doped_contact_id)
+            end
         end
 
         if doped_geometry_for_imp

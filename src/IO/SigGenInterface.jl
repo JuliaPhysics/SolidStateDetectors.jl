@@ -86,8 +86,8 @@ function readsiggen(file_path::String; dicttype::Type = Dict{String,Any}, T::Typ
             if key == "wp_name" || key == "drift_name" || key == "field_name"
                 config[key] = string(file[key])
             elseif key == "taper_angle" && parse(Float64, file["taper_angle"]) != 0
-                config["outer_taper_width"] = tan(deg2rad(parse(T, file[key]))) * parse(T, file["outer_taper_length"])
-                config["inner_taper_width"] = tan(deg2rad(parse(T, file[key]))) * parse(T, file["inner_taper_length"])
+                config["outer_taper_width"] = tan(deg2rad(parse(T, file[key]))) * parse(T, get(file, "outer_taper_length", "0"))
+                config["inner_taper_width"] = tan(deg2rad(parse(T, file[key]))) * parse(T, get(file, "inner_taper_length", "0"))
                 config[key]                 = parse(T, file[key])
             else
                 config[key] = parse(T, file[key])

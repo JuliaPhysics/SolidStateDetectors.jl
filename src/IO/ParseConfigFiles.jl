@@ -31,7 +31,7 @@ function parse_config_file(filename::AbstractString; dicttype::Type = Dict)::dic
         siggen_dict = readsiggen(filename, dicttype = dicttype)
         dict = siggentodict(siggen_dict, dicttype = dicttype)
     else
-        error("Currently only .json and .yaml files are supported.")
+        error("Currently only .json, .yaml and .config files are supported.")
     end
     dict
 end

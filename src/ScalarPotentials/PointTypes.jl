@@ -59,6 +59,15 @@ See also [`PointType`](@ref).
 struct PointTypes{T, N, S, AT, D} <: AbstractArray{T, N}
     data::Array{PointType, N}
     grid::Grid{T, N, S, AT}
+
+    # D is a type parameter with no corresponding field: it records whether the
+    # potential was calculated with depletion handling. The explicit inner
+    # constructor keeps the convenience constructor below (which selects D via
+    # its `depletion_handling` argument) from overwriting an implicitly
+    # generated constructor method; Julia flags such method overwrites and
+    # newer versions reject them during precompilation.
+    PointTypes{T,N,S,AT,D}(data::Array{PointType,N}, grid::Grid{T,N,S,AT}) where {T,N,S,AT,D} =
+        new{T,N,S,AT,D}(data, grid)
 end
 
 PointTypes(data::Array{PointType,N}, grid::Grid{T,N,S,AT}, depletion_handling::Bool = false) where {T,N,S,AT} = PointTypes{T,N,S,AT,depletion_handling}(data, grid)
@@ -106,6 +115,9 @@ excluding the inactive layer.
 It can be used to determine whether the [`SolidStateDetector`](@ref) is
 depleted at the provided bias voltage.
 
+If the electric potential was calculated without `depletion_handling = true`,
+the depletion state is unknown: a warning is issued and `true` is returned.
+
 ## Arguments
 * `point_types::PointTypes`: [`PointTypes`](@ref) of a [`Simulation`](@ref).
 
@@ -118,11 +130,11 @@ function is_depleted(point_types::PointTypes)::Bool
     return if has_depletion_handling(point_types)
         !any(b -> (bulk_bit & b > 0) && (undepleted_bit & b > 0) &&
         (inactive_layer_bit & b == 0), point_types.data)
-    else 
-        @warn """Electric potential calculation was not run with depletion handling enabled. 
-        The result of `is_depleted` may be inaccurate. 
+    else
+        @warn """Electric potential calculation was not run with depletion handling enabled.
+        The result of `is_depleted` may be inaccurate.
         Consider running the electric potential calculation with `depletion_handling = true` for accurate results.
-        When loading simulations from <v0.11.1, the depletion handling state is ambiguous if no `undepleted_bit` was set, 
+        When loading simulations from <v0.11.1, the depletion handling state is ambiguous if no `undepleted_bit` was set,
         in this case use `set_point_type_depletion_handling!(sim, true)` as needed."""
         true
     end

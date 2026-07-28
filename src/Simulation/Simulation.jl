@@ -155,20 +155,20 @@ function Simulation{T}(dict::AbstractDict)::Simulation{T} where {T <: SSDFloat}
     CS::CoordinateSystemType = Cartesian
     if haskey(dict, "grid")
         if isa(dict["grid"], AbstractDict)
-            CS = if dict["grid"]["coordinates"] == "cartesian" 
+            CS = if dict["grid"]["coordinates"] == "cartesian"
                 Cartesian
             elseif dict["grid"]["coordinates"]  == "cylindrical"
                 Cylindrical
             else
-                @assert "`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"
+                throw(ConfigFileError("`grid` in config file needs `coordinates` that are either `cartesian` or `cylindrical`"))
             end
         elseif isa(dict["grid"], String)
-            CS = if dict["grid"] == "cartesian" 
+            CS = if dict["grid"] == "cartesian"
                 Cartesian
             elseif dict["grid"] == "cylindrical"
                 Cylindrical
             else
-                @assert "`grid` type in config file needs to be either `cartesian` or `cylindrical`"
+                throw(ConfigFileError("`grid` type in config file needs to be either `cartesian` or `cylindrical`"))
             end
         end
     end
@@ -225,19 +225,88 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     will be added in between the important points obtained from sampling the objects of the
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
-* `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of 
+* `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of
     an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
     if set to `false`.
+* `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced periodic
+    φ range, verify (by a sampling heuristic) that the detector geometry and its
+    impurity/charge density models actually have the corresponding φ-symmetry and raise a
+    `ConfigFileError` if not. Set to `false` to skip the check and
+    pass the resulting grid explicitly via the `grid` keyword of the calculation functions.
 """
+# Sampled (heuristic) check whether all field-relevant inputs of the detector —
+# object geometries plus the impurity/charge density models of semiconductor and
+# passives — are invariant under the given φ shifts. Guards 2D and φ-reduced
+# grids against detectors without the corresponding symmetry (which would
+# silently give wrong fields). A single mismatching sample is tolerated to be
+# robust against points landing exactly on object surfaces.
+function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}, φ_shifts::AbstractVector{T};
+        n_r::Int = 16, n_φ::Int = 4, n_z::Int = 16)::Bool where {T}
+    objects = Any[det.semiconductor, det.contacts...]
+    !ismissing(det.passives) && append!(objects, det.passives)
+    rmax = world.intervals[1].right
+    zint = world.intervals[3]
+    n_mismatch = 0
+    for obj in objects
+        has_density = obj isa Semiconductor || obj isa Passive
+        for ir in 1:n_r, iφ in 1:n_φ, iz in 1:n_z
+            r = (ir - T(0.5)) / n_r * rmax
+            φ = (iφ - T(0.5)) / n_φ * T(2π)
+            z = zint.left + (iz - T(0.5)) / n_z * width(zint)
+            pt = CylindricalPoint{T}(r, φ, z)
+            ref = pt in obj
+            ref_ρ = has_density ? get_charge_density(obj, pt) : zero(T)
+            for Δφ in φ_shifts
+                spt = CylindricalPoint{T}(r, φ + Δφ, z)
+                if (spt in obj) != ref ||
+                        (has_density && !isapprox(get_charge_density(obj, spt), ref_ρ, rtol = T(1e-3)))
+                    n_mismatch += 1
+                    break
+                end
+            end
+            n_mismatch > 1 && return false
+        end
+    end
+    return true
+end
+
+function _check_φ_symmetry(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}) where {T}
+    world_Δφ = width(world.intervals[2])
+    if iszero(world_Δφ)
+        # a 2D grid needs continuous axisymmetry: sample discrete C8 rotations plus
+        # two shifts incommensurate with 2π to reject merely n-fold symmetric shapes
+        φ_shifts = T.(vcat(2π * (1:7) / 8, 2π * (√5 - 1) / 2, 1))
+        _is_φ_invariant(det, world, φ_shifts) || throw(ConfigFileError(
+            "The φ interval of the world is empty, requesting a 2D simulation, " *
+            "but the detector geometry is not φ-symmetric. Simulating it in 2D would give wrong results. " *
+            "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+            "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
+    elseif world_Δφ < T(2π) * (1 - sqrt(eps(T))) && world.intervals[2] isa SSDInterval{T, <:Any, <:Any, :periodic, :periodic}
+        n_sym = round(Int, T(2π) / world_Δφ)
+        if n_sym ≥ 2 && isapprox(n_sym * world_Δφ, T(2π), rtol = 1e-3)
+            φ_shifts = T.(world_Δφ * (1:n_sym-1))
+            _is_φ_invariant(det, world, φ_shifts) || throw(ConfigFileError(
+                "The φ interval of the world covers 1/$(n_sym) of the full circle with periodic boundaries, " *
+                "but the detector geometry is not $(n_sym)-fold periodic in φ. " *
+                "Simulating the reduced range would give wrong results. " *
+                "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+            "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
+        end
+    end
+    nothing
+end
+
 function Grid(sim::Simulation{T, Cylindrical};
                 for_weighting_potential::Bool = false,
                 max_tick_distance::Union{Missing, LengthQuantity, Tuple{LengthQuantity, AngleQuantity, LengthQuantity}} = missing,
                 max_distance_ratio::Real = 5,
-                add_ticks_between_important_ticks::Bool = true)::CylindricalGrid{T} where {T}
+                add_ticks_between_important_ticks::Bool = true,
+                check_φ_symmetry::Bool = true)::CylindricalGrid{T} where {T}
     det = sim.detector
-    world = sim.world 
+    world = sim.world
     world_Δs = width.(world.intervals)
     world_Δr, world_Δφ, world_Δz = world_Δs
+    check_φ_symmetry && !for_weighting_potential && _check_φ_symmetry(det, world)
                 
     samples::Vector{CylindricalPoint{T}} = sample(det, Cylindrical)
     important_r_ticks::Vector{T} = map(p -> p.r, samples)
@@ -1310,7 +1379,8 @@ There are several keyword arguments which can be used to tune the calculation.
     - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the `i`-th refinement.
 * `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid too fine.
-    Default is `1e-5` for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical `grid`.
+    Default per linear axis is its world extent times `1e-3`, clamped to `[1e-12, 1e-5]` (in m);
+    for the polar axis of a cylindrical `grid` the radial default is divided by the mean radius.
 * `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
     two grid ticks for each dimension used in the initialization of the grid.
     Default is 1/4 of size of the world of the respective dimension.
@@ -1345,7 +1415,7 @@ There are several keyword arguments which can be used to tune the calculation.
 calculate_weighting_potential!(sim, 1, refinement_limits = [0.3, 0.1, 0.05], max_distance_ratio = 4, max_n_iterations = 20000)
 ```
 """
-function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; n_points_in_φ::Union{Missing, Int} = missing, kwargs...)::Nothing where {T <: SSDFloat}
+function calculate_weighting_potential!(sim::Simulation{T}, contact_id::Int, args...; kwargs...)::Nothing where {T <: SSDFloat}
     _calculate_potential!(sim, WeightingPotential, contact_id, args...; kwargs...)
     nothing
 end
@@ -1376,7 +1446,8 @@ There are several keyword arguments which can be used to tune the calculation.
     - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the `i`-th refinement.
 * `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid too fine.
-    Default is `1e-5` for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical `grid`.
+    Default per linear axis is its world extent times `1e-3`, clamped to `[1e-12, 1e-5]` (in m);
+    for the polar axis of a cylindrical `grid` the radial default is divided by the mean radius.
 * `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
     two grid ticks for each dimension used in the initialization of the grid.
     Default is 1/4 of size of the world of the respective dimension.
@@ -1508,7 +1579,8 @@ There are several keyword arguments which can be used to tune the simulation.
     - `rl::Vector{<:Real,<:Real,<:Real}}` -> `length(rl)` refinements with `rl[i]` being the limits for the `i`-th refinement.
 * `min_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the minimum allowed distance between 
     two grid ticks for each dimension. It prevents the refinement to make the grid too fine.
-    Default is `1e-5` for linear axes and `1e-5 / (0.25 * r_max)` for the polar axis in case of a cylindrical `grid`.
+    Default per linear axis is its world extent times `1e-3`, clamped to `[1e-12, 1e-5]` (in m);
+    for the polar axis of a cylindrical `grid` the radial default is divided by the mean radius.
 * `max_tick_distance::Tuple{<:Quantity, <:Quantity, <:Quantity}`: Tuple of the maximum allowed distance between 
     two grid ticks for each dimension used in the initialization of the grid.
     Default is 1/4 of size of the world of the respective dimension.

@@ -36,6 +36,12 @@ function calculate_mobility(cdm::InactiveLayerChargeDriftModel{T}, pt::AbstractC
         cdm.temperature, CC)
 end
 
+# Hole mobility: Dai et al. (2023), eqs. 5-8, converted from their cm-based
+# units to SI (densities m^-3, mobilities m^2/V/s). The neutral-impurity term
+# keeps the Sclar form 0.82 * (light+heavy hole Erginsoy constants) * f(T); it
+# collapses to 4.455e21/Nn * (T^0.5 + 4.281*T^-0.5), i.e. 4.46e19 in the
+# paper's cm-units - the paper's printed 4.46e29 is an exponent typo (with it,
+# no physical Nn could reproduce the mobility matching described there).
 function _calculate_mobility_with_impurities(
     Nn::T, bulk_imp::T, surface_imp::T,
     temperature::T,
@@ -49,6 +55,10 @@ function _calculate_mobility_with_impurities(
     1/(1/μI + 1/μA + 1/μN)
 end
 
+# Electron mobility: neutral-impurity term in the Sclar variant as presented in
+# Mei et al. (arXiv:1705.09562), Erginsoy (1.07e20 cm-units -> 1.07e22 SI) with
+# Sclar's temperature correction (0.28*T^0.5 + 0.54*T^-0.5)
+# and Bardeen-Shockley acoustic term (9.32e7 cm-units -> 9.32e3 SI).
 function _calculate_mobility_with_impurities(
     Nn::T, bulk_imp::T, surface_imp::T,
     temperature::T,
@@ -66,14 +76,14 @@ function InactiveLayerChargeDriftModel{T}(config::AbstractDict,
         imp_model::AbstractImpurityDensity, input_units::NamedTuple, temperature::RealQuantity
     ) where {T <: SSDFloat}
 
-    temp::T = _parse_value(T, temperature, input_units.temperature)
+    temp::T = _parse_value(T, temperature, internal_temperature_unit)
 
     if haskey(config, "temperature")
         cdm_temperature::T = _parse_value(T, config["temperature"], input_units.temperature)
         if cdm_temperature != temp
             throw(ConfigFileError(
                 "Temperature mismatch: InactiveLayerChargeDriftModel defines temperature = $(cdm_temperature) K, " *
-                "but the semiconductor temperature is $(temperature) K. " *
+                "but the semiconductor temperature is $(temp) K. " *
                 "Define `temperature` in the semiconductor and either remove it from the charge drift model or make sure that the temperatures match."
             ))
         end

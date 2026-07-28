@@ -92,6 +92,7 @@ function estimate_depletion_voltage(sim::Simulation{T},
     
     @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim)`"
     if check_for_depletion
+        @assert has_depletion_handling(sim.point_types) "The electric potential was not calculated with `depletion_handling = true`, so the depletion state cannot be verified. Recalculate with depletion handling or pass `check_for_depletion = false`."
         @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
     end
     @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
@@ -135,8 +136,7 @@ function estimate_depletion_voltage(sim::Simulation{T},
     end
     bulk = findall((sim.point_types.data .& bulk_bit .> 0) .& (sim.point_types.data .& inactive_layer_bit .== 0))
     U_min_max = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
-    U2 = isempty(U_min_max) ? U : only(U_min_max)    
-    U = U > 0 ? max(U, U2) : min(U, U2)
+    U = U > 0 ? max(U, U_min_max...) : min(U, U_min_max...)
     if verbose
         @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tol))))) ± $(tol) $(internal_voltage_unit) applied to contact $(contact_id)."
     end
@@ -145,6 +145,7 @@ function estimate_depletion_voltage(sim::Simulation{T},
     end
     return U * internal_voltage_unit
 end
+
 
 # function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
 #     bulk_points::Vector{CartesianIndex{3}}) where {T}
@@ -169,7 +170,7 @@ end
 #     has_local_maxima
 # end
 
-function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3}, 
+function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3},
         bulk_points::Vector{CartesianIndex{3}}) where {T}
 
     L = length(bulk_points)
