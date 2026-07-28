@@ -391,6 +391,224 @@ function adjust_bias_and_electric_potential!(sim::Simulation{T}, bias::RealQuant
     nothing
 end
 
+"""
+    _distance_to_inactive_contact(sim::Simulation)
+
+Extracts the `distance_to_contact` function from the semiconductor impurity density model,
+or returns `nothing` if the model does not provide one. This distance is independent of grid 
+spacing and handles vertical, horizontal, and diagonal contact surfaces without approximation.
+
+"""
+function _distance_to_inactive_contact(sim::Simulation)
+    imp = sim.detector.semiconductor.impurity_density_model
+    if hasproperty(imp, :surface_imp_model) && hasproperty(imp.surface_imp_model, :distance_to_contact)
+        return imp.surface_imp_model.distance_to_contact
+    elseif hasproperty(imp, :distance_to_contact)
+        return imp.distance_to_contact
+    else
+        return nothing
+    end
+end
+
+"""
+    get_full_depletion_depth(sim::Simulation{T}; <keywords>)
+    get_full_depletion_depth(pt::PointTypes{T, 3, Cylindrical}; dist_fn = nothing, <keywords>)
+    get_full_depletion_depth(pt::PointTypes{T, 3, Cartesian};   dist_fn = nothing, <keywords>)
+
+Estimates the Full Depletion Depth (FDD), the thickness of the inactive layer.
+
+Can be called on a [`Simulation`](@ref) or directly on a [`PointTypes`](@ref) object.
+
+When the semiconductor uses a `PtypePNJunctionImpurityDensity` or `ThermalDiffusionLithiumDensity`
+impurity model, the thickness is computed by evaluating `distance_to_contact` at the inner contour point,
+giving a grid-independent perpendicular distance to the contact surface regardless of its orientation.
+For other impurity models the thickness falls back to the Euclidean distance to the nearest
+contact-surface grid point (subject to grid-spacing discretization error on diagonal surfaces).
+
+!!! note "r_outer/z_outer and thickness"
+    `r_outer`/`z_outer` (and the Cartesian equivalents) are the nearest grid tick on the doped contact
+    surface (carries `inactive_contact_bit`).  Because SSD places grid ticks at
+    contact boundaries, these coordinates lie on the contact surface itself.
+
+    For non-axis-aligned surfaces (diagonal, rotated, or curved), the nearest contact tick may not
+    lie along the surface normal, so the Euclidean distance can differ from the thickness of the FDD
+    (either direction, depending on grid snapping).
+    Always use the `thickness` field for the correct perpendicular value.
+
+## Keywords (Cylindrical)
+* `r::RealQuantity`: if provided, return only entries whose inner contour point (`r_inner`) lies at the grid tick nearest to this value.
+* `z::RealQuantity`: if provided, return only entries whose inner contour point (`z_inner`) lies at the grid tick nearest to this value.
+
+## Keywords (Cartesian)
+* `x`, `y`, `z`: same as above for the respective Cartesian axes (`x_inner`, `y_inner`, `z_inner`).
+
+At a given `r` (or `z`) there may be more than one entry — for example an inactive layer on
+both the top and bottom face of the detector at the same radius.
+
+## Returns
+A `Vector{NamedTuple}` where each element corresponds to one grid point on the inner boundary of the
+inactive layer. The vector has as many entries as there are inner contour grid points; it is empty if
+`sim.point_types` contains no inactive layer. Each `NamedTuple` has the following fields:
+* `r_inner`, `z_inner` (Cylindrical) or `x_inner`, `y_inner`, `z_inner` (Cartesian):
+  position of the inner boundary point (inactive layer / active bulk transition).
+* `r_outer`, `z_outer` / `x_outer`, `y_outer`, `z_outer`: nearest grid point on the doped contact surface
+  (where the inactive layer meets the lithium-doped contact).
+* `thickness`: perpendicular distance from the inner boundary to the contact surface = FDD thickness.
+
+"""
+function get_full_depletion_depth(pt::PointTypes{T, 3, Cylindrical};
+                 dist_fn = nothing,
+                 r::Union{Nothing, RealQuantity} = nothing,
+                 z::Union{Nothing, RealQuantity} = nothing) where {T}
+    r_ticks = pt.grid.axes[1].ticks
+    z_ticks = pt.grid.axes[3].ticks
+    sz1, sz2, sz3 = size(pt.data)
+
+    face_neighbors = ((-1,0,0),(1,0,0),(0,-1,0),(0,1,0),(0,0,-1),(0,0,1))
+
+    inner_ik = Set{NTuple{2,Int}}()
+    outer_ik = Set{NTuple{2,Int}}()
+
+    for i in 1:sz1, j in 1:sz2, k in 1:sz3
+        b        = pt.data[i,j,k]
+        is_inact = b & inactive_layer_bit > 0
+
+        if b & inactive_contact_bit > 0
+            push!(outer_ik, (i, k))
+        end
+
+        for (di, dj, dk) in face_neighbors
+            ni, nj, nk = i+di, j+dj, k+dk
+            (1 ≤ ni ≤ sz1 && 1 ≤ nj ≤ sz2 && 1 ≤ nk ≤ sz3) || continue
+            nb = pt.data[ni,nj,nk]
+
+            if is_inact && nb & inactive_layer_bit == 0 && nb & pn_junction_bit > 0
+                push!(inner_ik, (i, k))
+            end
+        end
+    end
+
+    isempty(inner_ik) && return NamedTuple{(:r_inner, :z_inner, :r_outer, :z_outer, :thickness), Tuple{T,T,T,T,T}}[]
+
+    outer_rz = [(T(r_ticks[oi]), T(z_ticks[ok])) for (oi, ok) in outer_ik]
+
+    result = NamedTuple{(:r_inner, :z_inner, :r_outer, :z_outer, :thickness), Tuple{T,T,T,T,T}}[]
+    for (i, k) in inner_ik
+        ri, zi   = T(r_ticks[i]), T(z_ticks[k])
+        min_d2   = typemax(T)
+        ro_best  = T(NaN)
+        zo_best  = T(NaN)
+        for (ro, zo) in outer_rz
+            d2 = (ri - ro)^2 + (zi - zo)^2
+            if d2 < min_d2
+                min_d2  = d2
+                ro_best = ro
+                zo_best = zo
+            end
+        end
+        thickness = isnothing(dist_fn) ? sqrt(min_d2) : dist_fn(CylindricalPoint{T}(ri, T(0), zi))
+        push!(result, (r_inner = ri, z_inner = zi, r_outer = ro_best, z_outer = zo_best, thickness = thickness))
+    end
+
+    if !isnothing(r)
+        r_val     = _parse_value(T, r, internal_length_unit)
+        r_nearest = T(r_ticks[searchsortednearest(r_ticks, r_val)])
+        filter!(p -> p.r_inner == r_nearest, result)
+    end
+    if !isnothing(z)
+        z_val     = _parse_value(T, z, internal_length_unit)
+        z_nearest = T(z_ticks[searchsortednearest(z_ticks, z_val)])
+        filter!(p -> p.z_inner == z_nearest, result)
+    end
+
+    return result
+end
+
+function get_full_depletion_depth(pt::PointTypes{T, 3, Cartesian};
+                 dist_fn = nothing,
+                 x::Union{Nothing, RealQuantity} = nothing,
+                 y::Union{Nothing, RealQuantity} = nothing,
+                 z::Union{Nothing, RealQuantity} = nothing) where {T}
+    x_ticks = pt.grid.axes[1].ticks
+    y_ticks = pt.grid.axes[2].ticks
+    z_ticks = pt.grid.axes[3].ticks
+    sz1, sz2, sz3 = size(pt.data)
+
+    face_neighbors = ((-1,0,0),(1,0,0),(0,-1,0),(0,1,0),(0,0,-1),(0,0,1))
+
+    inner_ijk = Set{NTuple{3,Int}}()
+    outer_ijk = Set{NTuple{3,Int}}()
+
+    for i in 1:sz1, j in 1:sz2, k in 1:sz3
+        b        = pt.data[i,j,k]
+        is_inact = b & inactive_layer_bit > 0
+
+        if b & inactive_contact_bit > 0
+            push!(outer_ijk, (i, j, k))
+        end
+
+        for (di, dj, dk) in face_neighbors
+            ni, nj, nk = i+di, j+dj, k+dk
+            (1 ≤ ni ≤ sz1 && 1 ≤ nj ≤ sz2 && 1 ≤ nk ≤ sz3) || continue
+            nb = pt.data[ni,nj,nk]
+
+            if is_inact && nb & inactive_layer_bit == 0 && nb & pn_junction_bit > 0
+                push!(inner_ijk, (i, j, k))
+            end
+        end
+    end
+
+    isempty(inner_ijk) && return NamedTuple{(:x_inner, :y_inner, :z_inner, :x_outer, :y_outer, :z_outer, :thickness), Tuple{T,T,T,T,T,T,T}}[]
+
+    outer_xyz = [(T(x_ticks[oi]), T(y_ticks[oj]), T(z_ticks[ok])) for (oi, oj, ok) in outer_ijk]
+
+    result = NamedTuple{(:x_inner, :y_inner, :z_inner, :x_outer, :y_outer, :z_outer, :thickness), Tuple{T,T,T,T,T,T,T}}[]
+    for (i, j, k) in inner_ijk
+        xi, yi, zi = T(x_ticks[i]), T(y_ticks[j]), T(z_ticks[k])
+        min_d2     = typemax(T)
+        xo_best    = T(NaN)
+        yo_best    = T(NaN)
+        zo_best    = T(NaN)
+        for (xo, yo, zo) in outer_xyz
+            d2 = (xi - xo)^2 + (yi - yo)^2 + (zi - zo)^2
+            if d2 < min_d2
+                min_d2  = d2
+                xo_best = xo
+                yo_best = yo
+                zo_best = zo
+            end
+        end
+        thickness = isnothing(dist_fn) ? sqrt(min_d2) : dist_fn(CartesianPoint{T}(xi, yi, zi))
+        push!(result, (x_inner = xi, y_inner = yi, z_inner = zi, x_outer = xo_best, y_outer = yo_best, z_outer = zo_best, thickness = thickness))
+    end
+
+    if !isnothing(x)
+        x_val     = _parse_value(T, x, internal_length_unit)
+        x_nearest = T(x_ticks[searchsortednearest(x_ticks, x_val)])
+        filter!(p -> p.x_inner == x_nearest, result)
+    end
+    if !isnothing(y)
+        y_val     = _parse_value(T, y, internal_length_unit)
+        y_nearest = T(y_ticks[searchsortednearest(y_ticks, y_val)])
+        filter!(p -> p.y_inner == y_nearest, result)
+    end
+    if !isnothing(z)
+        z_val     = _parse_value(T, z, internal_length_unit)
+        z_nearest = T(z_ticks[searchsortednearest(z_ticks, z_val)])
+        filter!(p -> p.z_inner == z_nearest, result)
+    end
+
+    return result
+end
+
+function get_full_depletion_depth(sim::Simulation; kwargs...)
+    get_full_depletion_depth(sim.point_types; dist_fn = _distance_to_inactive_contact(sim), kwargs...)
+end
+
+function get_full_depletion_depth(::Missing; kwargs...)
+    throw(ArgumentError("Please calculate the electric potential first using `calculate_electric_potential!(sim, depletion_handling = true)`"))
+end
+
 #=
 """
     old_estimate_depletion_voltage( sim::Simulation{T}, contact_id::Int, field_sim_settings = (verbose = true,))::T
