@@ -79,11 +79,10 @@ T = Float32
 end
 
 @testset "Test Full Depletion Depth" begin
-    # Calling get_full_depletion_depth before the electric potential is calculated should throw ArgumentError
-    sim_empty = Simulation{T}(SSD_examples[:IVCIlayer])
-    @test_throws ArgumentError get_full_depletion_depth(sim_empty)
 
     sim = Simulation{T}(SSD_examples[:IVCIlayer])
+    # Calling get_full_depletion_depth before the electric potential is calculated should throw ArgumentError
+    @test_throws ArgumentError get_full_depletion_depth(sim)
     timed_calculate_electric_potential!(sim, depletion_handling = true)
 
     fdd = get_full_depletion_depth(sim)

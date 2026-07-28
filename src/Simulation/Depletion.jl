@@ -450,9 +450,9 @@ A `Vector{NamedTuple}` where each element corresponds to one grid point on the i
 inactive layer. The vector has as many entries as there are inner contour grid points; it is empty if
 `sim.point_types` contains no inactive layer. Each `NamedTuple` has the following fields:
 * `r_inner`, `z_inner` (Cylindrical) or `x_inner`, `y_inner`, `z_inner` (Cartesian):
- position of the inner boundary point (inactive layer / active bulk transition).
+  position of the inner boundary point (inactive layer / active bulk transition).
 * `r_outer`, `z_outer` / `x_outer`, `y_outer`, `z_outer`: nearest grid point on the doped contact surface
- (where the inactive layer meets the lithium-doped contact).
+  (where the inactive layer meets the lithium-doped contact).
 * `thickness`: perpendicular distance from the inner boundary to the contact surface = FDD thickness.
 
 """

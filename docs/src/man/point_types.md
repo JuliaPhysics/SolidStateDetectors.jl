@@ -89,7 +89,7 @@ All consecutive points where `pn_junction_bit`, `undepleted_bit`, and `update_bi
 
 The contact carrying `inactive_contact_bit` is identified through the semiconductor impurity density model (`PtypePNJunctionImpurityDensity`).
 
-### Full Depletion Depth via `get_full_depletion_depth`
+### Full Depletion Depth
 
 `get_full_depletion_depth(sim)` computes the Full Depletion Depth (FDD) — the thickness of the inactive layer — at every point on the inner boundary of the inactive layer.
 It can also be called directly on a `PointTypes` object as `get_full_depletion_depth(pt)`.
