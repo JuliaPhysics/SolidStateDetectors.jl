@@ -112,9 +112,7 @@ plot!(flatview(events[1:1000].pos), ms = 0.5, msw = 0, color=:black, label = "")
 # In order to visualize the energy spectrum of the events in a histogram, the following code can be used:
 
 using StatsBase
-
 h = fit(Histogram, ustrip.(u"keV", sum.(events.edep)), Weights(fill(10,length(events.edep))), 0:10:3000)
-
 plot(h, title = "Energy spectrum", bins = 500, yscale = :log10, st = :step, label = "")
 xlims!(0,3000, xlabel = "E in keV", ylabel = "counts")
 #jl savefig("spectrum.pdf") # hide
@@ -151,3 +149,26 @@ plot(w[1:20], label = "")
 #md savefig("wf_and_amplitude.pdf") # hide
 #md savefig("wf_and_amplitude.svg"); nothing # hide
 #md # [![wf_and_amplitude](wf_and_amplitude.svg)](wf_and_amplitude.pdf) 
+
+
+# The electric field calculated with SolidStateDetectors.jl can also be passed to the `G4JLApplication` via the `field` keyword argument to include it in the Geant4 simulation
+
+# ```Julia
+# app = G4JLApplication(sim, source_1, field = G4JLElectricField(sim), verbose = false)
+# ```
+
+#md ef = G4JLElectricField(sim) # hide
+#md sf = Geant4.make_callback(ef.data, ef.getfield, Nothing, (CxxRef{G4ThreeVector}, ConstCxxRef{G4ThreeVector})) |> Geant4.closure # hide
+#md E = G4JLElecField(sf...) # hide
+#md ef.base = [E] # hide
+#md G4JL_setupElectroMagneticField(G4TransportationManager!GetTransportationManager() |> GetFieldManager, CxxPtr(E), 0.010Geant4.SystemOfUnits.mm) # hide
+
+#md events_ef = run_geant4_simulation(app, N_events)
+#md stephist(sum.(events.edep), bins = 2614.7:0.005:2615.3, label = "Excluding electric field\nin Geant4")
+#md stephist!(sum.(events_ef.edep), bins = 2614.7:0.005:2615.3, label = "Including electric field\nin Geant4")
+#md xlims!(2614.7,2615.3, xlabel = "E", unitformat = " in ", ylabel = "counts", title = "Energy spectrum")
+#md ylims!(0,580, legend = :topleft)
+#md savefig("spectrum_electric_field.pdf") # hide
+#md savefig("spectrum_electric_field.svg"); nothing # hide
+#md # [![spectrum_electric_field](spectrum_electric_field.svg)](spectrum_electric_field.pdf) 
+
