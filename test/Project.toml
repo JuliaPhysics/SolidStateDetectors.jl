@@ -21,5 +21,6 @@ TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+Geant4 = "0.3.1"
 LegendDataTypes = "0.1.3"
 LegendHDF5IO = "0.1"

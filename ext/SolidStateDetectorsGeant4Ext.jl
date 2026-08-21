@@ -17,6 +17,8 @@ using Suppressor
 using TypedTables
 using Unitful
 
+const GEANT4VERSION = pkgversion(Geant4)
+
 include(joinpath(@__DIR__, "Geant4", "io_gdml.jl"))
 include(joinpath(@__DIR__, "Geant4", "g4jl_application.jl"))
 
@@ -203,6 +205,8 @@ function Geant4.G4JLApplication(
 end
 
 
+@static if GEANT4VERSION >= v"0.3.1"
+
 """
     G4JLElectricField(sim::Simulation)
 
@@ -253,6 +257,7 @@ function Geant4.G4JLElectricField(sim::Simulation{T,CS}) where {T,CS}
         return
     end
     G4JLElectricField("SSDElectricField", data; getfield_method = getfield!)
+end
 end
 
 
