@@ -5,6 +5,7 @@ module SolidStateDetectorsGeant4Ext
 using Geant4
 using Geant4.SystemOfUnits
 
+using Interpolations
 using LightXML
 using LinearAlgebra
 using Parameters
@@ -199,6 +200,61 @@ function Geant4.G4JLApplication(
         endeventaction_method = endevent            # end-event action (fill histogram per event data)
     )
     =#
+end
+
+
+"""
+    G4JLElectricField(sim::Simulation)
+
+Creates a `Geant4.G4JLElectricField` from the electric field of an SSD simulation,
+that can be passed via the `field` keyword argument to `Geant4.G4JLApplication`.
+
+## Arguments
+* `sim::Simulation`: SSD Simulation.
+
+## Examples
+```julia 
+source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.065, 0., 0.05), CartesianVector(-1,0,0))
+sim = Simulation{Float32}(SSD_examples[:InvertedCoax])
+calculate_electric_potential!(sim)
+calculate_electric_field!(sim)
+app = G4JLApplication(sim, source, field = G4JLElectricField(sim))
+```
+
+!!! note
+    The electric field in `sim` needs to be calculated using [`calculate_electric_field!`](@ref) before calling this function.
+"""
+function Geant4.G4JLElectricField(sim::Simulation{T,CS}) where {T,CS}
+    if ismissing(sim.electric_field)
+        throw(ArgumentError("Electric field has not been calculated yet. Please run `calculate_electric_field!(sim)` first."))
+    end
+    data = SSDElectricFieldData(sim)
+    function getfield!(result::G4ThreeVector, pos::G4ThreeVector, data::SSDElectricFieldData{T,CS})
+
+        # convert all coordinates into units of meter for SolidStateDetectors.jl
+        car_pt = CartesianPoint{T}(
+            x(pos) / Geant4.SystemOfUnits.meter,
+            y(pos) / Geant4.SystemOfUnits.meter,
+            z(pos) / Geant4.SystemOfUnits.meter
+        )
+
+        # convert to the position to the same coordinates as the electric field
+        pt = SolidStateDetectors._convert_point(car_pt, CS)
+
+        # evaluate the electric field at the given position
+        E::CartesianVector{T} = SolidStateDetectors.get_velocity_vector(data.efield_itp, pt)
+
+        # return the electric field as G4ThreeVector (interpreted in units of V/m)
+        G4E = G4ThreeVector(
+                E.x * Geant4.SystemOfUnits.volt / Geant4.SystemOfUnits.meter,
+                E.y * Geant4.SystemOfUnits.volt / Geant4.SystemOfUnits.meter,
+                E.z * Geant4.SystemOfUnits.volt / Geant4.SystemOfUnits.meter
+        )
+        assign(result, G4E)
+
+        return
+    end
+    G4JLElectricField("SSDElectricField", data; getfield_method = getfield!)
 end
 
 

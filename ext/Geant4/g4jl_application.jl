@@ -158,3 +158,13 @@ function SSDGenerator(source::SolidStateDetectors.IsotopeSource; kwargs...)
     
     G4JLPrimaryGenerator("SSDGenerator", data; init_method=_init, generate_method=_gen)
 end
+
+
+struct SSDElectricFieldData{T,CS <: SolidStateDetectors.AbstractCoordinateSystem} <: G4JLFieldData
+    efield_itp::Interpolations.Extrapolation{<:StaticArrays.SVector{3}, 3}
+    SSDElectricFieldData(sim::Simulation{T,CS}) where {T,CS} = new{T,CS}(SolidStateDetectors.interpolated_vectorfield(sim.electric_field))
+end
+
+Base.print(io::IO, d::SSDElectricFieldData) = print(io, "SSD electric field interpolation - $(size(Interpolations.coefficients(d.efield_itp.itp)))")
+Base.show(io::IO, d::SSDElectricFieldData) = print(io, d)
+Base.show(io::IO,::MIME"text/plain", d::SSDElectricFieldData) = show(io, d)
