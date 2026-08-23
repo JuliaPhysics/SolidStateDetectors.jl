@@ -37,6 +37,7 @@ makedocs(
             "Constructive Solid Geometry (CSG)" => "man/csg.md",
             "Grids" => "man/grids.md",
             "Electric Potential" => "man/electric_potential.md",
+            "Point Types" => "man/point_types.md",
             "Electric Field" => "man/electric_field.md",
             "Charge Drift" => "man/charge_drift.md",
             "Weighting Potentials" => "man/weighting_potentials.md",

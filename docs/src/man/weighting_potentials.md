@@ -5,7 +5,7 @@ The weighting potential is a theoretical potential that describes what fraction 
 \nabla \left( \epsilon_r(\vec{r}) \nabla \Phi_i^w(\vec{r})\right) = 0\\
 \Phi_i^w(\vec{r})\vert_{C_j} = \left\{ \begin{array}{ll} 1, & \text{if $i = j$} \\ 0, & \text{if $i \neq j$} \end{array} \right.
 ```
-where $\Phi_i^w$ is the electric potential and $\epsilon_r$ is the dielectric distribution.
+where $\Phi_i^w$ is the weighting potential and $\epsilon_r$ is the dielectric distribution.
 
 
 The net charge induced on each electrode $C_i$, $Q_i$, by electrons and hole with absolute charge $Q$ is given by the Shockley-Ramo theorem:

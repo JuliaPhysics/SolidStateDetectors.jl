@@ -94,7 +94,7 @@ function _ADL2016ChargeDriftModel(
         elseif config_material == "Si"
             material = Si
         else
-            @warn "Material \"$(config_material)\" not supported for ADLChargeDriftModel.\nSupported materials are \"Si\" and \"HPGe\".\nUsing \"$(Symbol(material))\" as default."
+            @warn "Material \"$(config_material)\" not supported for ADL2016ChargeDriftModel.\nSupported materials are \"Si\" and \"HPGe\".\nUsing \"$(Symbol(material))\" as default."
         end
     end
 
@@ -146,11 +146,11 @@ function ADL2016ChargeDriftModel(config::AbstractDict, input_units::Union{Missin
 
     for axis in ("e100", "escattering", "h100", "h111")
         if !haskey(config["drift"]["velocity"]["parameters"], axis)
-            throw(ConfigFileError("ADLCharge2016DriftModel config file needs entry 'drift/velocity/parameters/$(axis)'."))
+            throw(ConfigFileError("ADL2016ChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)'."))
         end
         for param in (axis == "escattering" ? ("eta0", "b", "Eref") : ("mu0", "beta", "E0", "mun"))
             if !haskey(config["drift"]["velocity"]["parameters"][axis], param) && !(axis[1] == 'h' && param == "mun") # holes have no μn
-                throw(ConfigFileError("ADLCharge2016DriftModel config file needs entry 'drift/velocity/parameters/$(axis)/$(param)'."))
+                throw(ConfigFileError("ADL2016ChargeDriftModel config file needs entry 'drift/velocity/parameters/$(axis)/$(param)'."))
             end
         end
     end
