@@ -226,8 +226,8 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
     simulation. If some objects are too close together, this will ensure a noticeable gap
     between them in the calculation of potentials and fields.
 * `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of
-    an [`ElectricPotential`](@ref) if set to `true`, and of a [`WeightingPotential`](@ref)
-    if set to `false`.
+   a [`WeightingPotential`](@ref) if set to `true`, and of an [`ElectricPotential`](@ref)
+   if set to `false`.
 * `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced periodic
     φ range, verify (by a sampling heuristic) that the detector geometry and its
     impurity/charge density models actually have the corresponding φ-symmetry and raise a
@@ -255,11 +255,11 @@ function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindr
             z = zint.left + (iz - T(0.5)) / n_z * width(zint)
             pt = CylindricalPoint{T}(r, φ, z)
             ref = pt in obj
-            ref_ρ = has_density ? get_charge_density(obj, pt) : zero(T)
+            ref_ρ = has_density && ref ? get_charge_density(obj, pt) : zero(T)
             for Δφ in φ_shifts
                 spt = CylindricalPoint{T}(r, φ + Δφ, z)
                 if (spt in obj) != ref ||
-                        (has_density && !isapprox(get_charge_density(obj, spt), ref_ρ, rtol = T(1e-3)))
+                        (has_density && ref && !isapprox(get_charge_density(obj, spt), ref_ρ, rtol = T(1e-3)))
                     n_mismatch += 1
                     break
                 end
