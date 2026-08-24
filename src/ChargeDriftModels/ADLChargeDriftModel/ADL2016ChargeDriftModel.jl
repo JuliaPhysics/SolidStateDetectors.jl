@@ -25,13 +25,27 @@ struct ADL2016ChargeDriftModel{T <: SSDFloat, M <: AbstractDriftMaterial, N, TM 
     sqrtγ::SVector{N,SMatrix{3,3,T,9}}
     parameters::ADLParameters{T}
     temperaturemodel::TM
+
+    # Check in the constructor that crystal_orientation is a pure rotation matrix and keeps the length of vectors invariant
+    function ADL2016ChargeDriftModel{T,M,N,TM}(
+            electrons::VelocityParameters{T}, 
+            holes::CarrierParameters{T}, 
+            crystal_orientation::StaticMatrix{3,3,T},
+            γ::SVector{N,<:StaticMatrix{3,3,T}},
+            sqrtγ::SVector{N,<:StaticMatrix{3,3,T}},
+            parameters::ADLParameters{T},
+            temperaturemodel::TM
+        ) where {T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}}
+        isrotation(crystal_orientation) || throw(ConfigFileError("Crystal orientation of ADLChargeDriftModel is not a pure rotation matrix"))
+        new{T,M,N,TM}(electrons, holes, crystal_orientation, γ, sqrtγ, parameters, temperaturemodel)
+    end
 end
 
 ADL2016ChargeDriftModel{T,M,N,TM}(
     electrons::VelocityParameters{T}, holes::CarrierParameters{T}, crystal_orientation::SMatrix{3,3,T,9},
     γ::SVector{N,SMatrix{3,3,T,9}}, parameters::ADLParameters{T}, temperaturemodel::TM
 ) where {T <: SSDFloat, M <: AbstractDriftMaterial, N, TM <: AbstractTemperatureModel{T}} =
-    ADL2016ChargeDriftModel{T,M,N,TM}(electrons, holes, crystal_orientation, γ, sqrt.(γ), parameters, temperaturemodel)
+    ADL2016ChargeDriftModel{T,M,N,TM}(electrons, holes, crystal_orientation, γ, sqrt.(γ) .|> SMatrix, parameters, temperaturemodel)
 
 function _ADL2016ChargeDriftModel(
         config::AbstractDict; 
