@@ -228,19 +228,25 @@ The grid initialization can be tuned using a set of keyword arguments listed bel
 * `for_weighting_potential::Bool = false`: Grid will be optimized for the calculation of
    a [`WeightingPotential`](@ref) if set to `true`, and of an [`ElectricPotential`](@ref)
    if set to `false`.
-* `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced periodic
-    φ range, verify (by a sampling heuristic) that the detector geometry and its
-    impurity/charge density models actually have the corresponding φ-symmetry and raise a
+* `check_φ_symmetry::Bool = true`: For cylindrical grids with an empty or reduced
+    (periodic or reflecting) φ range, verify (by a sampling heuristic) that the detector
+    geometry and its impurity/charge density models actually have the corresponding
+    φ-symmetry (rotational for periodic wedges, mirror for reflecting wedges) and raise a
     `ConfigFileError` if not. Set to `false` to skip the check and
     pass the resulting grid explicitly via the `grid` keyword of the calculation functions.
 """
 # Sampled (heuristic) check whether all field-relevant inputs of the detector —
 # object geometries plus the impurity/charge density models of semiconductor and
-# passives — are invariant under the given φ shifts. Guards 2D and φ-reduced
-# grids against detectors without the corresponding symmetry (which would
-# silently give wrong fields). A single mismatching sample is tolerated to be
-# robust against points landing exactly on object surfaces.
+# passives — are invariant under the given φ maps (shifts for rotational
+# symmetry, reflections for mirror symmetry). Guards 2D and φ-reduced grids
+# against detectors without the corresponding symmetry (which would silently
+# give wrong fields). A single mismatching sample is tolerated to be robust
+# against points landing exactly on object surfaces.
 function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}, φ_shifts::AbstractVector{T};
+        kwargs...)::Bool where {T}
+    _is_φ_invariant(det, world, [φ -> φ + Δφ for Δφ in φ_shifts]; kwargs...)
+end
+function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindrical}, φ_maps::AbstractVector{<:Base.Callable};
         n_r::Int = 16, n_φ::Int = 4, n_z::Int = 16)::Bool where {T}
     objects = Any[det.semiconductor, det.contacts...]
     !ismissing(det.passives) && append!(objects, det.passives)
@@ -256,8 +262,8 @@ function _is_φ_invariant(det::SolidStateDetector{T}, world::World{T, 3, Cylindr
             pt = CylindricalPoint{T}(r, φ, z)
             ref = pt in obj
             ref_ρ = has_density && ref ? get_charge_density(obj, pt) : zero(T)
-            for Δφ in φ_shifts
-                spt = CylindricalPoint{T}(r, φ + Δφ, z)
+            for f in φ_maps
+                spt = CylindricalPoint{T}(r, T(f(φ)), z)
                 if (spt in obj) != ref ||
                         (has_density && ref && !isapprox(get_charge_density(obj, spt), ref_ρ, rtol = T(1e-3)))
                     n_mismatch += 1
@@ -292,6 +298,23 @@ function _check_φ_symmetry(det::SolidStateDetector{T}, world::World{T, 3, Cylin
                 "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
             "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
         end
+    elseif world_Δφ < T(2π) * (1 - sqrt(eps(T))) && world.intervals[2] isa SSDInterval{T, <:Any, <:Any, :reflecting, :reflecting}
+        # mirror wedge (also what `:periodic, :reflecting` configs parse to): the
+        # potential extension assumes mirror symmetry at both boundary planes,
+        # which generates a rotational symmetry with period 2·width
+        φL, φR = endpoints(world.intervals[2])
+        φ_maps = Function[φ -> 2φL - φ, φ -> 2φR - φ]
+        n_sym = round(Int, T(2π) / (2 * world_Δφ))
+        if n_sym ≥ 1 && isapprox(n_sym * 2 * world_Δφ, T(2π), rtol = 1e-3)
+            append!(φ_maps, [φ -> φ + 2k * world_Δφ for k in 1:n_sym-1])
+        end
+        _is_φ_invariant(det, world, φ_maps) || throw(ConfigFileError(
+            "The φ interval of the world is a wedge with reflecting boundaries, " *
+            "but the detector is not mirror-symmetric about the wedge boundary planes " *
+            "(φ = $(rad2deg(φL))° and φ = $(rad2deg(φR))°). " *
+            "Simulating the reduced range would give wrong results. " *
+            "Set the φ range of the grid to the full circle (e.g. `phi: {from: 0, to: 360}`), " *
+            "or override with `Grid(sim; check_φ_symmetry = false)` and pass the grid to the calculation."))
     end
     nothing
 end
