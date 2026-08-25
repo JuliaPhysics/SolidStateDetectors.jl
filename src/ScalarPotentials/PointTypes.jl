@@ -59,15 +59,6 @@ See also [`PointType`](@ref).
 struct PointTypes{T, N, S, AT, D} <: AbstractArray{T, N}
     data::Array{PointType, N}
     grid::Grid{T, N, S, AT}
-
-    # D is a type parameter with no corresponding field: it records whether the
-    # potential was calculated with depletion handling. The explicit inner
-    # constructor keeps the convenience constructor below (which selects D via
-    # its `depletion_handling` argument) from overwriting an implicitly
-    # generated constructor method; Julia flags such method overwrites and
-    # newer versions reject them during precompilation.
-    PointTypes{T,N,S,AT,D}(data::Array{PointType,N}, grid::Grid{T,N,S,AT}) where {T,N,S,AT,D} =
-        new{T,N,S,AT,D}(data, grid)
 end
 
 PointTypes(data::Array{PointType,N}, grid::Grid{T,N,S,AT}, depletion_handling::Bool = false) where {T,N,S,AT} = PointTypes{T,N,S,AT,depletion_handling}(data, grid)
