@@ -92,7 +92,10 @@ function estimate_depletion_voltage(sim::Simulation{T},
     
     @assert !ismissing(sim.point_types) "Please calculate the electric potential first using `calculate_electric_potential!(sim)`"
     if check_for_depletion
-        @assert has_depletion_handling(sim.point_types) "The electric potential was not calculated with `depletion_handling = true`, so the depletion state cannot be verified. Recalculate with depletion handling or pass `check_for_depletion = false`."
+        @assert has_depletion_handling(sim.point_types) """The electric potential was not calculated with `depletion_handling = true`, so the depletion state cannot be verified.
+        Recalculate with depletion handling or pass `check_for_depletion = false`.
+        When loading simulations from <v0.11.1, the depletion handling state is ambiguous if no `undepleted_bit` was set,
+        in this case use `set_point_type_depletion_handling!(sim, true)` as needed."""
         @assert is_depleted(sim.point_types) "This method only works for fully depleted simulations. Please increase the potentials in the configuration file to a greater value."
     end
     @assert Umax * Umin ≥ 0 "The voltage range needs to be positive or negative. Please adjust the voltage range."
