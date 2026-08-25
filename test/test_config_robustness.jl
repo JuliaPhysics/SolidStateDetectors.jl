@@ -23,7 +23,7 @@ end
 @testset "Doped-contact auto-detection without doped_contact_id" begin
     cfg = parse_config_file(SSD_examples[:IVCIlayer])
     delete!(cfg["detectors"][1]["semiconductor"]["impurity_density"], "doped_contact_id")
-    det = SolidStateDetector{T}(cfg, construct_units(cfg))
+    det = @test_logs (:warn, r"auto-selected contact id") match_mode=:any SolidStateDetector{T}(cfg, construct_units(cfg))
     @test det isa SolidStateDetector
 end
 
@@ -55,6 +55,53 @@ end
 
     # the segmented BEGe example (3-fold symmetric, reduced φ range) stays fine
     @test Grid(Simulation{T}(SSD_examples[:BEGe])) isa SolidStateDetectors.CylindricalGrid{T}
+end
+
+@testset "Mirror (reflecting) φ wedges require the matching dihedral symmetry" begin
+    # axisymmetric detector on a 60° wedge given as periodic+reflecting
+    # (which parses to a reflecting-reflecting mirror wedge): fine
+    cfg = parse_config_file(SSD_examples[:InvertedCoax])
+    cfg["grid"]["axes"]["phi"] = Dict("from" => 0, "to" => 60,
+        "boundaries" => Dict("left" => "periodic", "right" => "reflecting"))
+    @test Grid(Simulation{T}(cfg)) isa SolidStateDetectors.CylindricalGrid{T}
+
+    # segmented BEGe on a 60° mirror wedge: the segmentation's mirror planes
+    # sit at 30° + k*60°, so the wedge boundaries must be placed there
+    cfgb = parse_config_file(SSD_examples[:BEGe])
+    cfgb["grid"]["axes"]["phi"] = Dict("from" => 30, "to" => 90,
+        "boundaries" => Dict("left" => "reflecting", "right" => "periodic"))
+    @test Grid(Simulation{T}(cfgb)) isa SolidStateDetectors.CylindricalGrid{T}
+
+    # cuboid detector on a 60° mirror wedge: not mirror-symmetric about φ = 60°
+    cfgc = parse_config_file(SSD_examples[:CGD_CylGrid])
+    cfgc["grid"]["axes"]["phi"] = Dict("from" => 0, "to" => 60,
+        "boundaries" => Dict("left" => "reflecting", "right" => "reflecting"))
+    @test_throws ConfigFileError Grid(Simulation{T}(cfgc))
+end
+
+# rotationally symmetric but mirror-antisymmetric: discriminates the two wedge checks
+struct Sin3PhiImpurityDensity{T} <: SolidStateDetectors.AbstractImpurityDensity{T} end
+function SolidStateDetectors.get_impurity_density(
+        ::Sin3PhiImpurityDensity{T}, pt::SolidStateDetectors.AbstractCoordinatePoint{T}) where {T}
+    cpt = SolidStateDetectors.CylindricalPoint(pt)
+    T(1e16) * (1 + sin(3 * cpt.φ) / 2)
+end
+
+@testset "Mirror wedges check reflections, not just rotations" begin
+    cfg = parse_config_file(SSD_examples[:InvertedCoax])
+    # sin(3φ) density is 3-fold rotationally symmetric: 120° periodic wedge is fine
+    cfg["grid"]["axes"]["phi"] = Dict("from" => 0, "to" => 120,
+        "boundaries" => Dict("left" => "periodic", "right" => "periodic"))
+    simp = Simulation{T}(cfg)
+    simp.detector = SolidStateDetector(simp.detector, Sin3PhiImpurityDensity{T}())
+    @test Grid(simp) isa SolidStateDetectors.CylindricalGrid{T}
+
+    # ... but antisymmetric under reflection at φ = 0: 60° mirror wedge is not
+    cfg["grid"]["axes"]["phi"] = Dict("from" => 0, "to" => 60,
+        "boundaries" => Dict("left" => "reflecting", "right" => "reflecting"))
+    simm = Simulation{T}(cfg)
+    simm.detector = SolidStateDetector(simm.detector, Sin3PhiImpurityDensity{T}())
+    @test_throws ConfigFileError Grid(simm)
 end
 
 @testset "2D symmetry guard rejects discretely-but-not-continuously symmetric detectors" begin
