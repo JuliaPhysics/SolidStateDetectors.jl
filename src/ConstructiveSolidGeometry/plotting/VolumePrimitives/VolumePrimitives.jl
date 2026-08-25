@@ -31,7 +31,7 @@ end
 
 @recipe function f(p::AbstractPrimitive{T}, axis::Symbol, slice::T, st::Symbol; n_samples = 40, CSG_scale = missing, projection = :none, full_det = false, linewidth = :auto) where {T}
     if st == :samplesurface
-        label --> l
+        label --> get_label_name(p)
         seriesalpha --> 0.2
         seriescolor --> 1
         markerstrokewidth --> 0

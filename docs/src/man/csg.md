@@ -52,6 +52,17 @@ cfn = joinpath(path_to_example_primitives_config_files, "Cone_tube.yaml")
 print(open(f -> read(f, String), cfn))
 ````
 
+Instead of a height `h` (centered around the origin), tubes, cones and prisms
+also accept an explicit extent along their local `z` axis, which shifts the
+center accordingly:
+```yaml
+tube:
+  r: 1
+  z:
+    from: 1
+    to: 3
+```
+
 Load the primitive from the configuration file via `CSG.Geometry`
 
 ````@example primitives

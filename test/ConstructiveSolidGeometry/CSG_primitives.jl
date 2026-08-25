@@ -356,7 +356,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         # PartialTopClosedTube (ClosedPrimitive)
         p_tube_closed = CSG.PartialTopClosedTube{Float64, CSG.ClosedPrimitive}(r_cone, phi_partial, hZ, origin, rotation)
         @test CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_closed)
-        @test CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_closed)
+        @test CSG._in(CartesianPoint(0.0, 1.0, 1.0), p_tube_closed)  # on the φ-boundary of the closed wedge
         @test !CSG._in(CartesianPoint(-1.0, 0.0, 1.0), p_tube_closed)
         @test CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_closed)
         @test CSG._in(CartesianPoint(0.3, 0.0, -1.0), p_tube_closed)
@@ -369,7 +369,7 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_open)
         @test !CSG._in(CartesianPoint(1.0, 0.0, 1.0), p_tube_open)
         @test !CSG._in(CartesianPoint(0.0, 0.0, -1.5), p_tube_open)
-        @test !CSG._in(CartesianPoint(0.5, 0.0, -1.0), p_tube_open)
+        @test !CSG._in(CartesianPoint(0.0, 0.412, -0.9), p_tube_open)  # on the φ-boundary of the open wedge
         @test !CSG._in(CartesianPoint(0.3, 0.0, -1.0), p_tube_open)
         
         surfs_closed = CSG.surfaces(p_tube_closed)
@@ -862,21 +862,22 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         # Inward normal must point toward center
         @test dot(n_in,  v_pt2) < 0
         
+        # normal must follow the gradient of (x/rx)² + (y/ry)² + (z/rz)²
         p_local = CSG._transform_into_object_coordinate_system(pt2, em_out)
-        x = p_local.x
-        y = p_local.y
-        z = p_local.z
-
-        expected_local = CartesianVector(
-            sign(x) * (x / em_out.r[1])^2,
-            sign(y) * (y / em_out.r[2])^2,
-            sign(z) * (z / em_out.r[3])^2
-        )
-
+        expected_local = normalize(CartesianVector(
+            p_local.x / em_out.r[1]^2,
+            p_local.y / em_out.r[2]^2,
+            p_local.z / em_out.r[3]^2
+        ))
         expected_global = CSG._transform_into_global_coordinate_system(expected_local, em_out)
 
         @test norm(n_out - expected_global) < 1e-6
         @test norm(n_in  + expected_global) < 1e-6
+
+        # sphere: normal is the radial direction
+        sp = CSG.EllipsoidMantle{Float32}(:outwards; r = 0.01f0)
+        pt_sp = CartesianPoint{Float32}(0.006f0, 0.008f0, 0f0)
+        @test norm(CSG.normal(sp, pt_sp) - CartesianVector(0.6f0, 0.8f0, 0f0)) < 1f-6
         
         # Test vertices
         verts = CSG.vertices(em, 8)
@@ -986,6 +987,19 @@ no_translations = (rotation = one(SMatrix{3, 3, T, 9}), translation = zero(Carte
         v_pt = CartesianVector(pt.x, pt.y, pt.z)
         @test dot(normal_out, v_pt) > 0
         @test dot(normal_in,  v_pt) < 0
+
+        # analytic direction: ∇(hypot(x,y) - R(z)) with slope dR/dz = Δr/(2hZ)
+        r_pt = hypot(pt.x, pt.y)
+        n_ref = normalize(CartesianVector(pt.x / r_pt, pt.y / r_pt, -(2f0 - 1f0) / 2f0))
+        @test norm(normal_out - n_ref) < 1f-6
+
+        # SI-scale taper (regression: radial part must be unit-scaled, not ∝ r)
+        cm_si = CSG.ConeMantle{Float32}(:outwards; r = (0.01f0, 0.02f0), φ = nothing, hZ = 0.025f0)
+        z_si, φ_si = 0.011f0, 0.3f0
+        r_si = 0.01f0 + (0.025f0 + z_si) * (0.02f0 - 0.01f0) / 0.05f0
+        pt_si = CartesianPoint{Float32}(r_si * cos(φ_si), r_si * sin(φ_si), z_si)
+        n_si_ref = normalize(CartesianVector(cos(φ_si), sin(φ_si), -0.2f0))
+        @test norm(CSG.normal(cm_si, pt_si) - n_si_ref) < 1f-6
 
         # Cylindrical ConeMantle
         cm_cyl_out = CSG.ConeMantle{Float32}(:outwards; r=1f0, φ=nothing, hZ=1f0)
@@ -1366,4 +1380,54 @@ end
     @test CSG.distance_to_surface(pt_outφ1 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(1.0)
     @test CSG.distance_to_surface(pt_outφ2 + CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
     @test CSG.distance_to_surface(pt_outφ2 - CartesianVector{T}(0,0,1.0), seg_cone) ≈ T(sqrt(8))
+end
+
+@testset "Serialization and parsing edge cases" begin
+    # full-φ primitives with a pure-Z rotation must serialize (regression: MethodError on nothing + angle)
+    d_tube = Dict("tube" => Dict("r" => 1.0, "h" => 2.0, "rotate" => Dict("Z" => 45)))
+    g = Geometry(T, d_tube, default_units, no_translations)
+    gd = Dictionary(g)
+    @test gd isa AbstractDict
+    @test Geometry(T, gd, default_units, no_translations).rotation ≈ g.rotation
+
+    d_torus = Dict("torus" => Dict("r_torus" => 3.0, "r_tube" => 1.0, "rotate" => Dict("Z" => 45)))
+    gt = Geometry(T, d_torus, default_units, no_translations)
+    gtd = Dictionary(gt)
+    @test gtd isa AbstractDict
+    @test Geometry(T, gtd, default_units, no_translations).rotation ≈ gt.rotation
+
+    # Box config validation must require all three half-widths, with a clean error
+    @test_throws CSG.ConfigFileError Geometry(T, Dict("box" => Dict("hX" => 1.0, "hZ" => 1.0)), default_units, no_translations)
+
+    # CartesianPoint{T}(v) must honor the requested precision
+    @test CartesianPoint{Float64}(SVector{3, Float32}(1, 2, 3)) isa CartesianPoint{Float64}
+
+    # φ-partial torus mantle: clean error instead of MethodError
+    tm_partial = CSG.TorusMantle{Float64, Float64, Nothing, :outwards}(3.0, 1.0, π/2, nothing, CartesianPoint{Float64}(0, 0, 0), one(SMatrix{3, 3, Float64, 9}))
+    @test_throws ArgumentError CSG.distance_to_surface(CartesianPoint{Float64}(0.0, 0.0, 0.0), tm_partial)
+end
+
+@testset "Height from z: {from, to}" begin
+    import SolidStateDetectors.ConstructiveSolidGeometry: ConfigFileError
+    # tube between z = 1 and z = 3: half-height 1, origin shifted to z = 2
+    c = Geometry(T, Dict("tube" => Dict("r" => 1.0, "z" => Dict("from" => 1.0, "to" => 3.0))), default_units, no_translations)
+    @test c.hZ ≈ 1.0
+    @test c.origin ≈ CartesianPoint{T}(0, 0, 2)
+    @test CartesianPoint{T}(0, 0, 2.5) in c
+    @test !(CartesianPoint{T}(0, 0, 0.5) in c)
+    # equivalent to the same tube given via h and origin
+    c2 = Geometry(T, Dict("tube" => Dict("r" => 1.0, "h" => 2.0, "origin" => [0.0, 0.0, 2.0])), default_units, no_translations)
+    @test c.hZ == c2.hZ && c.origin == c2.origin
+    # prisms support the same syntax
+    hp = Geometry(T, Dict("HexagonalPrism" => Dict("r" => 1.0, "z" => Dict("from" => -2.0, "to" => -1.0))), default_units, no_translations)
+    @test hp.hZ ≈ 0.5
+    @test hp.origin ≈ CartesianPoint{T}(0, 0, -1.5)
+    # the z extent refers to the primitive's local frame: the center shift follows its rotation
+    cr = Geometry(T, Dict("tube" => Dict("r" => 1.0, "z" => Dict("from" => 1.0, "to" => 3.0), "rotation" => Dict("X" => 90))), default_units, no_translations)
+    @test isapprox(cr.origin, CartesianPoint{T}(0, -2, 0), atol = 1e-12)
+    # invalid combinations are rejected
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0, "h" => 2.0, "z" => Dict("from" => 1.0, "to" => 3.0))), default_units, no_translations)
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0)), default_units, no_translations)
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0, "z" => 2.0)), default_units, no_translations)
+    @test_throws ConfigFileError Geometry(T, Dict("tube" => Dict("r" => 1.0, "h" => Dict("from" => 1.0, "to" => 3.0))), default_units, no_translations)
 end

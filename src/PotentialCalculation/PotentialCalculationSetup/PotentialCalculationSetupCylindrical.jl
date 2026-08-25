@@ -1,11 +1,14 @@
 function set_passive_or_contact_points(point_types::Array{PointType, 3}, potential::Array{T, 3},
                         grid::CylindricalGrid{T}, obj, pot::T, is_inactive_layer_contact::Bool, use_nthreads::Int = 1) where {T}
     if !isnan(pot)
+        bs_c, bs_r = ConstructiveSolidGeometry.bounding_sphere(obj)
+        bs_r2::T = bs_r^2
         @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
             @inbounds for iφ in axes(potential, 2)
                 for ir in axes(potential, 1)
                     pt::CylindricalPoint{T} = CylindricalPoint{T}( grid.axes[1].ticks[ir], grid.axes[2].ticks[iφ], grid.axes[3].ticks[iz] )
-                    if pt in obj
+                    cpt::CartesianPoint{T} = CartesianPoint(pt)
+                    if distance_squared(cpt - bs_c) <= bs_r2 && cpt in obj
                         potential[ ir, iφ, iz ] = pot
                         point_types[ ir, iφ, iz ] = zero(PointType)
                         point_types[ ir, iφ, iz ] |= inactive_contact_bit * is_inactive_layer_contact
@@ -24,11 +27,14 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, NotOnlyPaintContacts, PaintContacts}
 
+    sc_bs_c, sc_bs_r = ConstructiveSolidGeometry.bounding_sphere(det.semiconductor.geometry)
+    sc_bs_r2::T = sc_bs_r^2
     @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
         @inbounds for iφ in axes(potential, 2)
             for ir in axes(potential, 1)
                 pt::CylindricalPoint{T} = CylindricalPoint{T}( grid.axes[1].ticks[ir], grid.axes[2].ticks[iφ], grid.axes[3].ticks[iz] )
-                if in(pt, det.semiconductor)
+                cpt::CartesianPoint{T} = CartesianPoint(pt)
+                if distance_squared(cpt - sc_bs_c) <= sc_bs_r2 && in(cpt, det.semiconductor)
                     point_types[ ir, iφ, iz ] += pn_junction_bit
                 end
             end
@@ -63,8 +69,10 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T},
     ::Type{Cylindrical}, mpz::Vector{T}, mpφ::Vector{T}, mpr::Vector{T}, axr::Vector{T}, use_nthreads::Int, obj) where {T}
+    bs_c, bs_r = ConstructiveSolidGeometry.bounding_sphere(obj.geometry)
+    bs_r2::T = bs_r^2
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
             pos_z::T = mpz[iz]
@@ -74,7 +82,8 @@ function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_
                     pos_r::T = mpr[ir]
                     if (ir == 1 && axr[1] == 0) pos_r = axr[2] * 0.5 end
                     pt::CylindricalPoint{T} = CylindricalPoint{T}(pos_r, pos_φ, pos_z)
-                    if pt in obj
+                    cpt::CartesianPoint{T} = CartesianPoint(pt)
+                    if distance_squared(cpt - bs_c) <= bs_r2 && cpt in obj
                         ρ_eff_imp_tmp[ir, iφ, iz]::T, ϵ[ir, iφ, iz]::T, ρ_eff_fix_tmp[ir, iφ, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
@@ -358,8 +367,8 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
 
                         volume_weight = wrr_eps * Δr_ext_inv[ ir] * mpr[ ir] * 2π * Δmpz[inz]
                         volume_weight += wrl_eps * Δr_ext_inv[inr] * mpr[inr] * Δmpφ[inφ] * Δmpz[inz]
-                        volume_weight += wφr_eps * r_inv[inr] * 0.15915494f0 * Δmpr[inr] * Δmpz[inz]
-                        volume_weight += wφl_eps * r_inv[inr] * 0.15915494f0 * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wφr_eps * r_inv[inr] * inv(T(2π)) * Δmpr[inr] * Δmpz[inz]
+                        volume_weight += wφl_eps * r_inv[inr] * inv(T(2π)) * Δmpr[inr] * Δmpz[inz]
                         volume_weight += wzr_eps * Δz_ext_inv[ iz] * 2π * Δmpr_squared[inr]
                         volume_weight += wzl_eps * Δz_ext_inv[inz] * 2π * Δmpr_squared[inr]
 

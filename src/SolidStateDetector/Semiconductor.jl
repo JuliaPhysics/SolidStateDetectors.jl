@@ -97,18 +97,17 @@ function Semiconductor{T}(dict::AbstractDict, input_units::NamedTuple, outer_tra
     
     charge_trapping_model = if haskey(ctm_dict, "model_inactive")
         if haskey(ctm_dict, "parameters_inactive") && haskey(ctm_dict, "parameters") &&
-            ctm_dict["parameters"]==ctm_dict["parameters_inactive"] && ctm_dict["model"] == "ConstantLifetime"
+            ctm_dict["parameters"] == ctm_dict["parameters_inactive"] && get(ctm_dict, "model", nothing) == "ConstantLifetime"
             ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
         else
             CombinedChargeTrappingModel{T}(ctm_dict, temperature)
         end
-        
-    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "Boggs"
+    elseif haskey(ctm_dict, "model") && ctm_dict["model"] == "Boggs"
         BoggsChargeTrappingModel{T}(ctm_dict, temperature)
-        
-    elseif haskey(ctm_dict, "model") && !haskey(ctm_dict, "model_inactive") && ctm_dict["model"] == "ConstantLifetime"
+    elseif haskey(ctm_dict, "model") && ctm_dict["model"] == "ConstantLifetime"
         ConstantLifetimeChargeTrappingModel{T}(ctm_dict)
-
+    elseif haskey(ctm_dict, "model")
+        throw(ConfigFileError("There is no charge trapping model called `$(ctm_dict["model"])`."))
     else
         NoChargeTrappingModel{T}()
     end

@@ -237,3 +237,52 @@ end
         end
     end
 end
+@testset "GDML export geometry fidelity" begin
+    T = Float32
+    # rotated primitives must carry their rotation into the physvol placement
+    cfg_rot = Dict{String,Any}(
+        "name" => "RotBoxTest",
+        "units" => Dict("length"=>"mm","angle"=>"deg","potential"=>"V","temperature"=>"K"),
+        "grid" => Dict("coordinates"=>"cartesian",
+            "axes"=>Dict("x"=>Dict("from"=>-50,"to"=>50,"boundaries"=>"inf"),
+                         "y"=>Dict("from"=>-50,"to"=>50,"boundaries"=>"inf"),
+                         "z"=>Dict("from"=>-50,"to"=>50,"boundaries"=>"inf"))),
+        "medium" => "vacuum",
+        "detectors" => [Dict{String,Any}(
+            "semiconductor"=>Dict{String,Any}("material"=>"HPGe", "temperature"=>90,
+                "impurity_density"=>Dict("name"=>"constant","value"=>0),
+                "geometry"=>Dict("difference"=>[
+                    Dict("box"=>Dict{String,Any}("hX"=>10,"hY"=>10,"hZ"=>5,"rotate"=>Dict("Z"=>30))),
+                    Dict("box"=>Dict{String,Any}("hX"=>6,"hY"=>2,"hZ"=>6,"origin"=>[5,0,0],"rotate"=>Dict("Z"=>50)))
+                ])),
+            "contacts"=>[
+                Dict{String,Any}("id"=>1,"material"=>"HPGe","potential"=>0,
+                    "geometry"=>Dict("box"=>Dict{String,Any}("hX"=>1,"hY"=>1,"hZ"=>0.5,"origin"=>[0,0,-6]))),
+                Dict{String,Any}("id"=>2,"material"=>"HPGe","potential"=>100,
+                    "geometry"=>Dict("box"=>Dict{String,Any}("hX"=>1,"hY"=>1,"hZ"=>0.5,"origin"=>[0,0,6])))
+            ])])
+    fn_rot = tempname() * ".gdml"
+    @test Geant4.G4JLDetector(Simulation{T}(cfg_rot), fn_rot, save_gdml = true, verbose = false) isa Geant4.G4JLDetector
+    s = read(fn_rot, String)
+    # physvol placement rotation of the semiconductor (passive: -30° about z)
+    @test occursin("<rotationref ref=\"rot_sc\"/>", s)
+    m_pv = match(r"<rotation name=\"rot_sc\"[^>]* z=\"([-0-9.e]+)\"", s)
+    @test m_pv !== nothing && isapprox(parse(Float64, m_pv[1]), -deg2rad(30), rtol = 1e-4)
+    # boolean second-operand: relative rotation (+20° about z, applied actively by the reader)
+    m_rel = match(r"<rotation name=\"sc_rot_1\"[^>]* z=\"([-0-9.e]+)\"", s)
+    @test m_rel !== nothing && isapprox(parse(Float64, m_rel[1]), deg2rad(20), rtol = 1e-4)
+    # boolean second-operand offset must be expressed in the frame of the first solid
+    m_pos = match(r"<position name=\"sc_pos_1\" x=\"([-0-9.e]+)\" y=\"([-0-9.e]+)\"", s)
+    @test m_pos !== nothing && isapprox(parse(Float64, m_pos[1]), 0.005 * cosd(30), rtol = 1e-4)
+    @test m_pos !== nothing && isapprox(parse(Float64, m_pos[2]), -0.005 * sind(30), rtol = 1e-4)
+    rm(fn_rot)
+
+    # GDML polyhedra radii are apothems: SSD circumradius must be scaled by cos(pi/N)
+    fn_hex = tempname() * ".gdml"
+    @test Geant4.G4JLDetector(SSD_examples[:Hexagon], fn_hex, save_gdml = true, verbose = false) isa Geant4.G4JLDetector
+    s_hex = read(fn_hex, String)
+    @test occursin(r"<polyhedra name=\"sc_1\"[^>]*numsides=\"6\"", s_hex)
+    m_hex = match(r"<zplane rmax=\"([-0-9.e]+)\"", s_hex)
+    @test m_hex !== nothing && isapprox(parse(Float64, m_hex[1]), 0.001 * cosd(30), rtol = 1e-4)
+    rm(fn_hex)
+end
