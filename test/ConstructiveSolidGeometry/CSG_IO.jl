@@ -6,7 +6,7 @@ import SolidStateDetectors.ConstructiveSolidGeometry: Geometry
 
 import LegendHDF5IO
 import Unitful: @u_str
-import ArraysOfArrays: VectorOfVectors
+import ArraysOfArrays: VectorOfArrays
 
 T = Float64
 
@@ -84,7 +84,7 @@ end
                     
                     @testset "I/O for Vector of AbstractCoordinatePoints" begin
                         
-                        y = x isa Vector ? VectorOfVectors([x]) : [x]
+                        y = x isa Vector ? VectorOfArrays([x]) : [x]
 
                         # write to file using writedata and LH5Array
                         @test_nowarn LegendHDF5IO.writedata(h, "y1", y)

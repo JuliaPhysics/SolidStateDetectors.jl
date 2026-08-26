@@ -91,9 +91,9 @@ end
         evt_table = Table(
             evtno = Int32[1], 
             detno = Int32[1],
-            thit = VectorOfVectors([T[0] * u"s"]),
-            edep = VectorOfVectors([T[1] * u"eV"]),
-            pos = VectorOfVectors([pos])
+            thit = VectorOfArrays([T[0] * u"s"]),
+            edep = VectorOfArrays([T[1] * u"eV"]),
+            pos = VectorOfArrays([pos])
         )
 
         contact_charge_signals = timed_simulate_waveforms(      

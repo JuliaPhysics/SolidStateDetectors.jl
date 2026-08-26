@@ -649,8 +649,8 @@ end
             # Test correctness
             s0 = Set(pts)
 
-            # result should be a VectorOfVectors
-            @test ptsg isa VectorOfVectors{<:CartesianPoint{T}}
+            # result should be a VectorOfArrays
+            @test ptsg isa VectorOfArrays{<:CartesianPoint{T},1}
 
             # all points should appear in the result
             @test Set(flatview(ptsg))    == Set(pts)

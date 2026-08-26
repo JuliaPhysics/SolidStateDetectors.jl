@@ -71,7 +71,7 @@ function cluster_detector_hits(table::TypedTables.Table, cluster_radius::RealQua
     TypedTables.Table(merge(
         TypedTables.columns(table),
         map(
-            VectorOfVectors,
+            PartsView,
             TypedTables.columns(clustered_nt)
         )
     ))
@@ -114,19 +114,19 @@ function _group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group
     clustersidx, elem_ptr[begin:Cidx]
 end
 
-function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::VectorOfVectors{CartesianPoint{T}} where {T <: SSDFloat}
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, group_distance::T)::PartsView{CartesianPoint{T}} where {T <: SSDFloat}
     clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
-    VectorOfVectors(pts[clustersidx], elem_ptr)
+    PartsView(pts[clustersidx], elem_ptr)
 end
 
-function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}} where {T <: SSDFloat}
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, group_distance::T)::Tuple{PartsView{CartesianPoint{T}}, PartsView{T}} where {T <: SSDFloat}
     @assert eachindex(pts) == eachindex(energies)
     clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
-    VectorOfVectors(pts[clustersidx], elem_ptr), VectorOfVectors(energies[clustersidx], elem_ptr)
+    PartsView(pts[clustersidx], elem_ptr), PartsView(energies[clustersidx], elem_ptr)
 end
 
-function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, radius::AbstractVector{T}, group_distance::T)::Tuple{VectorOfVectors{CartesianPoint{T}}, VectorOfVectors{T}, VectorOfVectors{T}} where {T <: SSDFloat}
+function group_points_by_distance(pts::AbstractVector{CartesianPoint{T}}, energies::AbstractVector{T}, radius::AbstractVector{T}, group_distance::T)::Tuple{PartsView{CartesianPoint{T}}, PartsView{T}, PartsView{T}} where {T <: SSDFloat}
     @assert eachindex(pts) == eachindex(energies) == eachindex(radius)
     clustersidx, elem_ptr = _group_points_by_distance(pts, group_distance)
-    VectorOfVectors(pts[clustersidx], elem_ptr), VectorOfVectors(energies[clustersidx], elem_ptr), VectorOfVectors(radius[clustersidx], elem_ptr)
+    PartsView(pts[clustersidx], elem_ptr), PartsView(energies[clustersidx], elem_ptr), PartsView(radius[clustersidx], elem_ptr)
 end

@@ -5,7 +5,7 @@ module SolidStateDetectorsLegendHDF5IOExt
 import ..LegendHDF5IO
 
 using ..SolidStateDetectors
-using ..SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity
+using ..SolidStateDetectors: RealQuantity, SSDFloat, to_internal_units, chunked_ranges, LengthQuantity, PartsView
 using ..SolidStateDetectors.ConstructiveSolidGeometry: AbstractCoordinatePoint
 
 using ArraysOfArrays
@@ -58,7 +58,7 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
         mcevents_sub = simulate_waveforms(mcevents[evtrange], sim; Δt, max_nsteps, diffusion, self_repulsion, number_of_carriers, number_of_shells, signal_unit, max_interaction_distance, end_drift_when_no_field, geometry_check, verbose)
 
         # # LH5 couldn't handle CartesianPoint, turn positions into CartesianVectors which will be saved as SVectors
-        # pos_vec = VectorOfVectors([[CartesianPoint(p...) - cartesian_zero for p in ps] for ps in mcevents_sub.pos])
+        # pos_vec = PartsView([[CartesianPoint(p...) - cartesian_zero for p in ps] for ps in mcevents_sub.pos])
         # new_mcevents_sub = TypedTables.Table(merge(Tables.columns(mcevents_sub), (pos = pos_vec,)))
 
         LegendHDF5IO.lh5open(ofn, "w") do h5f
@@ -94,18 +94,18 @@ end
 # support writing arrays of points to HDF5 file using LH5Array
 function LegendHDF5IO.create_entry(parent::LegendHDF5IO.LHDataStore, name::AbstractString, 
     pts::T; kwargs...) where {T <: AbstractVector{<:AbstractCoordinatePoint}}
-    LegendHDF5IO.create_entry(parent, name, VectorOfVectors([getindex.(Ref(pt), 1:3) for pt in pts]); kwargs...)
+    LegendHDF5IO.create_entry(parent, name, PartsView([getindex.(Ref(pt), 1:3) for pt in pts]); kwargs...)
     LegendHDF5IO.setdatatype!(parent.data_store[name], T)
     return nothing
 end
 
 function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Group, T::Type{<:AbstractVector{<:CartesianPoint}})
-    data = LegendHDF5IO.LH5Array(ds, VectorOfVectors)
+    data = LegendHDF5IO.LH5Array(ds, PartsView)
     Vector([CartesianPoint(d...) for d in data])
 end
 
 function LegendHDF5IO.LH5Array(ds::LegendHDF5IO.HDF5.Group, T::Type{<:AbstractVector{<:CylindricalPoint}})
-    data = LegendHDF5IO.LH5Array(ds, VectorOfVectors)
+    data = LegendHDF5IO.LH5Array(ds, PartsView)
     Vector([CylindricalPoint(d...) for d in data])
 end
 
@@ -134,7 +134,7 @@ function LegendHDF5IO.writedata(
     pts::AbstractVector{<:AbstractCoordinatePoint},
     fulldatatype::DataType = typeof(pts)
 )
-    data = VectorOfVectors([getindex.(Ref(pt), 1:3) for pt in pts])
+    data = PartsView([getindex.(Ref(pt), 1:3) for pt in pts])
     LegendHDF5IO.writedata(output, name, data, fulldatatype)
     LegendHDF5IO.setdatatype!(output[name], fulldatatype)
     return nothing
@@ -144,7 +144,7 @@ function LegendHDF5IO.readdata(
     input::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
     fulldatatype::Type{T}
 ) where {T <:AbstractVector{<:CartesianPoint}}
-    data = LegendHDF5IO.readdata(input, name, VectorOfVectors)
+    data = LegendHDF5IO.readdata(input, name, PartsView)
     output = [CartesianPoint(d...) for d in data]
     @assert output isa T
     return output
@@ -154,7 +154,7 @@ function LegendHDF5IO.readdata(
     input::LegendHDF5IO.HDF5.H5DataStore, name::AbstractString,
     fulldatatype::Type{T}
 ) where {T <:AbstractVector{<:CylindricalPoint}}
-    data = LegendHDF5IO.readdata(input, name, VectorOfVectors)
+    data = LegendHDF5IO.readdata(input, name, PartsView)
     output = [CylindricalPoint(d...) for d in data]
     @assert output isa T
     return output

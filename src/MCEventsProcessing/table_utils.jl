@@ -29,7 +29,7 @@ function common_length(x, y)
 end
 common_length(x, y, z...) = common_length(common_length(x, y), z...)
 
-nested_col(x::AbstractVector, n::AbstractVector{<:Integer}) = VectorOfVectors(Fill.(x, n))
+nested_col(x::AbstractVector, n::AbstractVector{<:Integer}) = PartsView(Fill.(x, n))
 
 function nested_col(x::AbstractVector{<:AbstractVector}, n::AbstractVector{<:Integer})
     @assert length.(x) == n
@@ -76,9 +76,9 @@ function cluster_by_time(table::TypedTables.Table, Δt = 1u"ns")
     if length(inds) > 0
         ranges = vcat( [1:inds[1]], broadcast(:, inds[1:end-1].+1, inds[2:end]), 
                         n_charge_depos > inds[end] ? [inds[end]+1:n_charge_depos] : [] )
-        TypedTables.Table(map(c -> VectorOfVectors(map(r -> c[r], ranges)), TypedTables.columns(table)))
+        TypedTables.Table(map(c -> PartsView(map(r -> c[r], ranges)), TypedTables.columns(table)))
     else
-        TypedTables.Table(map(c -> VectorOfVectors(map(r -> c[r], [1:n_charge_depos])), TypedTables.columns(table)))
+        TypedTables.Table(map(c -> PartsView(map(r -> c[r], [1:n_charge_depos])), TypedTables.columns(table)))
     end
 end
 
@@ -109,7 +109,7 @@ function split_by_time(table::TypedTables.Table, Δt = 1u"ns")
             # columns that have a single entry: clone them
             c[map(p -> findlast(p .>= table.thit.elem_ptr), elem_ptr[1:end-1])] :
             # columns that have multiple entries: split accordingly
-            VectorOfVectors(flatview(c)[idx], elem_ptr), 
+            PartsView(flatview(c)[idx], elem_ptr), 
         TypedTables.columns(table))
     )
 end
@@ -132,7 +132,7 @@ function translate_event_positions(table::TypedTables.Table, tv::AbstractVector{
     hasproperty(table, :pos) || throw(ArgumentError("Expected detector hit events table to have column named `pos`"))
     length(tv) == 3 || throw(ArgumentError("Translation vector must be of length 3"))
     eltype(eltype(eltype(table.pos))) <: Union{<:Real, <:LengthQuantity} || throw(ArgumentError("Expected table positions to be unitless or to have units of length"))
-    newpos = (pos = VectorOfVectors(map(poss -> map(pos -> _translate_event_position(pos, tv), poss), table.pos)),)
+    newpos = (pos = PartsView(map(poss -> map(pos -> _translate_event_position(pos, tv), poss), table.pos)),)
     TypedTables.Table(merge( TypedTables.columns(table), newpos ))
 end
 
@@ -140,7 +140,7 @@ end
 @inline _rotate_event_position(p::P, rot::Rotations.Rotation{3}) where {P <: AbstractVector} = P(rot * p)
 function rotate_event_positions(table, rot::Rotations.Rotation{3}) 
     hasproperty(table, :pos) || throw(ArgumentError("Expected detector hit events table to have column named `pos`"))
-    newpos = (pos = VectorOfVectors(map(poss -> map(pos -> _rotate_event_position(pos, rot), poss), table.pos)),)
+    newpos = (pos = PartsView(map(poss -> map(pos -> _rotate_event_position(pos, rot), poss), table.pos)),)
     TypedTables.Table(merge( TypedTables.columns(table), newpos ))
 end
 

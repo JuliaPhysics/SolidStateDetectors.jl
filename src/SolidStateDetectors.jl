@@ -30,6 +30,12 @@ using Unitful
 using UnitfulAtomic
 using YAML
 
+@static if isdefined(ArraysOfArrays, :PartsView)
+    using ArraysOfArrays: PartsView
+else
+    const PartsView = ArraysOfArrays.VectorOfVectors
+end
+
 include("ka_compat.jl")
 
 include("ConstructiveSolidGeometry/ConstructiveSolidGeometry.jl")
