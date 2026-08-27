@@ -66,6 +66,9 @@ end
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
     app = Geant4.G4JLApplication(sim, source, verbose = false)
 
+    # Test G4JLElectricField throws an ArgumentError if sim.electric_field is missing
+    @test_throws ArgumentError Geant4.G4JLElectricField(sim)
+
     # Simulate Geant4 events
     N = 100
     evts = run_geant4_simulation(app, N)
@@ -222,6 +225,19 @@ end
     @test SolidStateDetectors.is_detector_hits_table(ievts)
     @test length(ievts) == N
 
+    # Test G4JLElectricField using electric field from the simulation
+    g4ef = @test_nowarn @inferred Geant4.G4JLElectricField(sim)
+    
+    # Hack: apply the field to the Field manager (essentially what G4JLApplication(field = g4ef) would do)
+    sf = Geant4.make_callback(g4ef.data, g4ef.getfield, Nothing, (Geant4.CxxRef{Geant4.G4ThreeVector}, Geant4.ConstCxxRef{Geant4.G4ThreeVector})) |> Geant4.closure
+    E = Geant4.G4JLElecField(sf...)
+    g4ef.base = [E]
+    Geant4.G4JL_setupElectroMagneticField(Geant4.G4TransportationManager!GetTransportationManager() |> Geant4.GetFieldManager, Geant4.CxxPtr(E), 0.010Geant4.SystemOfUnits.mm)
+    eevts = run_geant4_simulation(app, N)
+
+    @test eevts isa Table
+    @test SolidStateDetectors.is_detector_hits_table(eevts)
+    @test length(eevts) == N
 end
 
 @testset "Construct G4JLDetectors from config files" begin
