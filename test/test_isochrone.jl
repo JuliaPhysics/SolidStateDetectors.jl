@@ -31,7 +31,10 @@ max_nsteps = 10000
 drift_charges!(ev, sim, Δt = time_step, max_nsteps = max_nsteps, verbose = false)
 SolidStateDetectors.get_signal!(ev, sim, 1, signal_unit = u"keV", Δt = time_step)
 @test length(add_baseline_and_extend_tail(ev.waveforms[1], 0, max_nsteps).signal) == max_nsteps
+@test add_baseline_and_extend_tail(ev.waveforms[1], 0, max_nsteps).signal isa SizedVector
+
 @test length(add_baseline_and_extend_tail(ev.waveforms[1], max_nsteps, max_nsteps).signal) == max_nsteps
+@test add_baseline_and_extend_tail(ev.waveforms[1], max_nsteps, max_nsteps).signal isa SizedVector
 
 DT_h = Array{typeof(time_step),2}(fill(typeof(time_step)(NaN),length(x_axis),length(z_axis)))
 DT_e = Array{typeof(time_step),2}(fill(typeof(time_step)(NaN),length(x_axis),length(z_axis)))
