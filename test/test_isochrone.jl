@@ -1,6 +1,7 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
 using Test
+using StaticArrays
 
 using SolidStateDetectors
 using Unitful
