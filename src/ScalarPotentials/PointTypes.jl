@@ -116,7 +116,15 @@ is_depleted(sim.point_types)
 """
 function is_depleted(point_types::PointTypes)::Bool
     return if has_depletion_handling(point_types)
-        !any(b -> (bulk_bit & b > 0) && (undepleted_bit & b > 0) &&
+        # Checks pn_junction_bit & update_bit, not bulk_bit. bulk_bit only
+        # gets set when ALL 26 neighbors of a point are also pn_junction --
+        # so any point one grid step from a contact can never count as
+        # "bulk", even if it's genuinely undepleted. That's exactly where an
+        # undepleted sliver ends up right before full depletion: as bias
+        # approaches V_d, the undepleted region shrinks toward whichever
+        # contact it's pinching off against. So checking bulk_bit made
+        # is_depleted blind to tese cases.
+        !any(b -> (pn_junction_bit & b > 0) && (update_bit & b > 0) && (undepleted_bit & b > 0) &&
         (inactive_layer_bit & b == 0), point_types.data)
     else 
         @warn """Electric potential calculation was not run with depletion handling enabled. 
