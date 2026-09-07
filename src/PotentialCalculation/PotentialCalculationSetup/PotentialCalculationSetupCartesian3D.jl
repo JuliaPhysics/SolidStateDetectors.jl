@@ -169,7 +169,19 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-        contact_bias_voltages::Vector{T} = if length(det.contacts) > 0 
+        # Weighting-potential solves don't use the detector's real bias
+        # voltages at all: by convention the target contact is fixed at 1
+        # and every other contact at 0. contact_bias_voltages must reflect
+        # that 0/1 convention here, not the real contact.potential values.
+        # Otherwise minimum_applied_potential/maximum_applied_potential
+        # used below for the interior seed and for the :infinite boundary's
+        # gauge-consistency shift, would be computed from voltages that
+        # have nothing to do with this solve. Mirrors the
+        # is_weighting_potential guard convergence.jl already uses for its
+        # own c_limit.
+        contact_bias_voltages::Vector{T} = if is_weighting_potential
+            T[0, 1]
+        elseif length(det.contacts) > 0
             T[contact.potential for contact in det.contacts]
         else
             T[0]
@@ -293,7 +305,14 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
             end
         end
 
-        potential = ismissing(potential_array) ? zeros(T, size(grid)...) : potential_array
+        # Seed the interior at minimum_applied_potential, not a hardcoded 0.
+        # A literal-0 start isn't gauge invariant -- it sits at a different
+        # point relative to the contacts depending on which one is
+        # grounded. Since depletion handling's clamp is bistable (issue
+        # #618), starting two gauge-equivalent solves from
+        # non-corresponding states can make them converge to different
+        # fixed points, even with a shift-invariant update rule.
+        potential = ismissing(potential_array) ? fill(minimum_applied_potential, size(grid)...) : potential_array
         point_types = ones(PointType, size(grid)...)
         set_point_types_and_fixed_potentials!( point_types, potential, grid, det, 
                 weighting_potential_contact_id = weighting_potential_contact_id,
