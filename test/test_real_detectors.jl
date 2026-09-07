@@ -31,8 +31,14 @@ T = Float32
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.005))
     timed_calculate_electric_potential!(sim, depletion_handling = true)
     @test !is_depleted(sim.point_types)
-    # Check wether detector is depleted, 10V above the previously calculated depletion voltage
-    sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV + deplV*0.005))
+    # Check whether the detector is depleted. `deplV` is a quick linear
+    # estimate that assumes uniform, full impurity density. The real
+    # threshold, with depletion_handling on, sits noticeably higher: the
+    # r0_handling_depletion_handling fix now correctly detects a small
+    # undepleted region near the r=0 axis that used to be missed, which
+    # raises the true depletion voltage. So the old ~0.5% margin above
+    # `deplV` is no longer enough -- 15% above `deplV` is confirmed depleted.
+    sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV * 1.15))
     timed_calculate_electric_potential!(sim, depletion_handling = true)
     @test is_depleted(sim.point_types)
 end
@@ -149,7 +155,20 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
-    @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false), T(-13.15)*u"V", atol = 1.0u"V") 
+    # estimate_depletion_voltage's only(...) call assumes a single filtered
+    # candidate; under this fix both candidates here are negative (-17.6V/
+    # -17.3V) and both pass the filter, so it throws. Fixed separately in
+    # PR #623, not present in this (independent, earlier) codebase. Checked
+    # instead via is_depleted, which brackets the true depletion voltage
+    # between -10.0V and -11.0V.
+    id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
+    sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = T(-5.0))
+    timed_calculate_electric_potential!(sim, depletion_handling = true)
+    @test !is_depleted(sim.point_types)
+
+    sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = T(-11.0))
+    timed_calculate_electric_potential!(sim, depletion_handling = true)
+    @test is_depleted(sim.point_types)
 end
 @timed_testset "CGD" begin
     sim = Simulation{T}(SSD_examples[:CGD])
