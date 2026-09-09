@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "End-to-end simulations of semiconductor detectors using the `Geant4.jl` extension of `SolidStateDetectors.jl`"
+authors:
+  - family-names: "Hagemann"
+    given-names: "Felix"
+    orcid: "https://orcid.org/0000-0001-5021-3328"
+  - family-names: "Henzler"
+    given-names: "Julian "
+    orcid: "https://orcid.org/0009-0000-6977-8687"
+  - family-names: "Nagler"
+    given-names: "Benedikt"
+    orcid: "https://orcid.org/0009-0004-0906-4286"
+  - family-names: "Schulz"
+    given-names: "Oliver"
+    orcid: "https://orcid.org/0000-0002-4200-5905"
+repository-code: "https://github.com/JuliaPhysics/SolidStateDetectors.jl"
+license: "MIT"
+version: "0.11.8"
