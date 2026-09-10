@@ -34,6 +34,8 @@ authors:
   - family-names: Zsigmond
     given-names: Anna Julia
     orcid: "https://orcid.org/0000-0002-3368-8863"
+  - name: "SolidStateDetectors.jl contributors"
+  - website: "https://github.com/JuliaPhysics/SolidStateDetectors.jl/graphs/contributors"
 license: "MIT"
 
 # First paper on SolidStateDetectors.jl at v0.5
