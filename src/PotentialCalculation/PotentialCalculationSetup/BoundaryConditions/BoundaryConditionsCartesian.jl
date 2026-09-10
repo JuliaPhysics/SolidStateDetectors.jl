@@ -157,8 +157,10 @@ end
 
 # Helper for apply_boundary_conditions! : shifts just the outer edge
 # cells along `dim` (`margin` cells on each side, one red/black color) by
-# ΔV, so the `:infinite` formula can be run in a gauge-shifted frame
-# without touching the whole grid, this runs every SOR iteration, so a
+# Δ, so the `:infinite` formula (which decays each edge cell toward
+# literal 0 in whatever frame `rbpot` is currently in) can be made to
+# decay toward `minimum_applied_potential` in real terms without shifting
+# the whole grid every iteration -- this runs every SOR iteration, so a
 # full-array shift would be a real slowdown.
 #
 # margin=3 matches the deepest read/write of any boundary variant in this
@@ -185,20 +187,16 @@ end
 
 function apply_boundary_conditions!(pcs::PotentialCalculationSetup{T, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
-    # `:infinite` decays each edge cell toward 0 (`factor * neighbor`),
-    # this is correct only when V_ref is actually 0.
-    # A gauge shift ({point=0,mantle=U} -> {point=-U,mantle=0}) moves V_ref to -U even though mantle
-    # now reads 0. Fix: decay toward V_ref, not 0: n -> n - V_ref -> f*(n - V_ref) -> f*(n - V_ref) + V_ref
-    V_ref = pcs.minimum_applied_potential
-    _shift_axis_margin!(pcs.potential, 1, rbi, -V_ref)
+    Δ::T = pcs.minimum_applied_potential - pcs.gauge_ref_potential
+    _shift_axis_margin!(pcs.potential, 1, rbi, -Δ)
     apply_boundary_conditions_on_x_axis!( pcs.potential, rbi, pcs.grid.axes[1], pcs.grid.axes[1].interval, pcs.grid_boundary_factors[1])
-    _shift_axis_margin!(pcs.potential, 1, rbi, V_ref)
-    _shift_axis_margin!(pcs.potential, 2, rbi, -V_ref)
+    _shift_axis_margin!(pcs.potential, 1, rbi, Δ)
+    _shift_axis_margin!(pcs.potential, 2, rbi, -Δ)
     apply_boundary_conditions_on_y_axis!( pcs.potential, rbi, pcs.grid.axes[2], pcs.grid.axes[2].interval, pcs.grid_boundary_factors[2])
-    _shift_axis_margin!(pcs.potential, 2, rbi, V_ref)
-    _shift_axis_margin!(pcs.potential, 3, rbi, -V_ref)
+    _shift_axis_margin!(pcs.potential, 2, rbi, Δ)
+    _shift_axis_margin!(pcs.potential, 3, rbi, -Δ)
     apply_boundary_conditions_on_z_axis!( pcs.potential, rbi, pcs.grid.axes[3], pcs.grid.axes[3].interval, pcs.grid_boundary_factors[3])
-    _shift_axis_margin!(pcs.potential, 3, rbi, V_ref)
+    _shift_axis_margin!(pcs.potential, 3, rbi, Δ)
     nothing
 end
 
