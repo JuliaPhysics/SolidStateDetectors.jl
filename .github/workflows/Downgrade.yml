@@ -33,8 +33,8 @@ jobs:
         run: julia --project=. -e 'using Pkg; Pkg.add(name = "NearestNeighbors", version = "0.4.13"); Pkg.compat("NearestNeighbors", "0.4.13")'
         shell: bash
         if: matrix.version == '1.10'
-      - name: Downgrade NearestNeighbors # Temporary fix: this is needed for Unitful to downgrade to a version that works with julia-1.13
-        run: julia --project=. -e 'using Pkg; Pkg.add(name = "Unitful", version = "1.25.1"); Pkg.compat("Unitful", "1.25.1")'
+      - name: Fix dependencies for julia-1.13 # Temporary fix: this is needed for Unitful and KernelAbstractions to downgrade to a version that works with julia-1.13
+        run: julia --project=. -e 'using Pkg; Pkg.add(name = "Unitful", version = "1.25.1"); Pkg.compat("Unitful", "1.25.1"); Pkg.compat("KernelAbstractions", "0.8.1, 0.9")'
         shell: bash
         if: matrix.version == '1'
       - uses: julia-actions/julia-downgrade-compat@v2
