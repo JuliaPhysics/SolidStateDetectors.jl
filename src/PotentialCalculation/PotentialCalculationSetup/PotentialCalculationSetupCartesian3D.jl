@@ -169,26 +169,27 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                                                                 (grid_boundary_factor_z_left, grid_boundary_factor_z_right))
         end
 
-        # Weighting-potential solves don't use the detector's real bias
-        # voltages at all: by convention the target contact is fixed at 1
-        # and every other contact at 0. contact_bias_voltages must reflect
+        # Weighting-potential solves don't use the detector's real contact
+        # potentials at all: by convention the target contact is fixed at 1
+        # and every other contact at 0. contact_potentials must reflect
         # that 0/1 convention here, not the real contact.potential values.
-        # Otherwise minimum_applied_potential/maximum_applied_potential
-        # used below for the interior seed and for the :infinite boundary's
-        # gauge-consistency shift, would be computed from voltages that
-        # have nothing to do with this solve. Mirrors the
-        # is_weighting_potential guard convergence.jl already uses for its
-        # own c_limit.
-        contact_bias_voltages::Vector{T} = if is_weighting_potential
+        # Otherwise minimum_applied_potential/maximum_applied_potential/
+        # gauge_ref_potential used below for the interior seed and for the
+        # :infinite boundary's gauge-consistency shift, would be computed
+        # from voltages that have nothing to do with this solve. Mirrors
+        # the is_weighting_potential guard convergence.jl already uses for
+        # its own c_limit.
+        contact_potentials::Vector{T} = if is_weighting_potential
             T[0, 1]
         elseif length(det.contacts) > 0
             T[contact.potential for contact in det.contacts]
         else
             T[0]
         end
-        minimum_applied_potential::T = minimum(contact_bias_voltages)
-        maximum_applied_potential::T = maximum(contact_bias_voltages)
+        minimum_applied_potential::T = minimum(contact_potentials)
+        maximum_applied_potential::T = maximum(contact_potentials)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
+        gauge_ref_potential::T = is_weighting_potential ? zero(T) : sum(contact_potentials) / length(contact_potentials)
         sor_consts = [sor_consts]
 
         medium_ϵ_r::T = medium.ϵ_r
@@ -305,20 +306,25 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
             end
         end
 
-        # Seed the interior at minimum_applied_potential, not a hardcoded 0.
+        # Seed the interior at gauge_ref_potential, not a hardcoded 0.
         # A literal-0 start isn't gauge invariant -- it sits at a different
         # point relative to the contacts depending on which one is
         # grounded. Since depletion handling's clamp is bistable (issue
         # #618), starting two gauge-equivalent solves from
         # non-corresponding states can make them converge to different
-        # fixed points, even with a shift-invariant update rule.
-        potential = ismissing(potential_array) ? fill(minimum_applied_potential, size(grid)...) : potential_array
+        # fixed points, even with a shift- and sign-flip update rule.
+        potential = ismissing(potential_array) ? fill(gauge_ref_potential, size(grid)...) : copy(potential_array)
         point_types = ones(PointType, size(grid)...)
-        set_point_types_and_fixed_potentials!( point_types, potential, grid, det, 
+        set_point_types_and_fixed_potentials!( point_types, potential, grid, det,
                 weighting_potential_contact_id = weighting_potential_contact_id,
                 use_nthreads = use_nthreads,
-                not_only_paint_contacts = Val(not_only_paint_contacts), 
+                not_only_paint_contacts = Val(not_only_paint_contacts),
                 paint_contacts = Val(paint_contacts)  )
+        # Shift the whole problem into the V_ref = 0 frame once, here, so the
+        # SOR (and its `:infinite` boundary decay) can run at its
+        # original, pre-gauge-fix literal-0 target instead of re-deriving a
+        # shifted frame on every iteration.
+        potential .-= gauge_ref_potential
         rbpotential = RBExtBy2Array( potential, grid )
         rbpoint_types = RBExtBy2Array( point_types, grid )
     end # @inbounds
@@ -337,6 +343,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         bias_voltage,
         maximum_applied_potential,
         minimum_applied_potential,
+        gauge_ref_potential,
         grid_boundary_factors
     )
     return pcs
