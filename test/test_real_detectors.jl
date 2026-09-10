@@ -155,12 +155,7 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
-    # estimate_depletion_voltage's only(...) call assumes a single filtered
-    # candidate; under this fix both candidates here are negative (-17.6V/
-    # -17.3V) and both pass the filter, so it throws. Fixed separately in
-    # PR #623, not present in this (independent, earlier) codebase. Checked
-    # instead via is_depleted, which brackets the true depletion voltage
-    # between -10.0V and -11.0V.
+    @test (timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false); true)
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = T(-5.0))
     timed_calculate_electric_potential!(sim, depletion_handling = true)
