@@ -66,8 +66,10 @@ end
     source = MonoenergeticSource("gamma", 2.615u"MeV", CartesianPoint(0.04, 0, 0.05), CartesianVector(-1,0,0))
     app = Geant4.G4JLApplication(sim, source, verbose = false)
 
+    if pkgversion(Geant4) >= v"0.3.1"
     # Test G4JLElectricField throws an ArgumentError if sim.electric_field is missing
     @test_throws ArgumentError Geant4.G4JLElectricField(sim)
+    end
 
     # Simulate Geant4 events
     N = 100
@@ -225,6 +227,7 @@ end
     @test SolidStateDetectors.is_detector_hits_table(ievts)
     @test length(ievts) == N
 
+    if pkgversion(Geant4) >= v"0.3.1"
     # Test G4JLElectricField using electric field from the simulation
     g4ef = @test_nowarn @inferred Geant4.G4JLElectricField(sim)
     
@@ -238,6 +241,7 @@ end
     @test eevts isa Table
     @test SolidStateDetectors.is_detector_hits_table(eevts)
     @test length(eevts) == N
+    end
 end
 
 @testset "Construct G4JLDetectors from config files" begin
