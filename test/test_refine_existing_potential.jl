@@ -4,10 +4,10 @@ using Test
 @timed_testset "Test simulating in two refinement steps" begin
 
     T = Float32
-    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
+    sim = Simulation{T}(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim, refinement_limits = [0.2, 0.1], depletion_handling = true)
 
-    sim2 = Simulation{T}("test_config_files/BEGe_01.yaml")
+    sim2 = Simulation{T}(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim2, refinement_limits = [0.2], depletion_handling = true)
     timed_calculate_electric_potential!(sim2, refinement_limits = [0.1], depletion_handling = true, initialize = false)
 
@@ -20,6 +20,8 @@ using Test
     timed_calculate_weighting_potential!(sim2, 1, refinement_limits = [0.1], depletion_handling = true, initialize = false)
 
     @test size(sim.weighting_potentials[1].data) == size(sim2.weighting_potentials[1].data)
+    @test sim.weighting_potentials[1].grid == sim2.weighting_potentials[1].grid
+    @test all(isapprox.(sim.weighting_potentials[1].data, sim2.weighting_potentials[1].data, atol = 1e-5))
 end
 
 @timed_testset "Test compute min_tick_distance" begin
@@ -73,7 +75,7 @@ end
     
     #Test for compute_min_tick_distance in simulation 
     # Cylindrical Case
-    cf = SolidStateDetectors.parse_config_file("test_config_files/BEGe_01.yaml")
+    cf = SolidStateDetectors.parse_config_file(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     
     cf["units"]["length"] = "µm"
     cf["detectors"][1]["semiconductor"]["impurity_density"] = Dict(
@@ -135,7 +137,7 @@ end
     # Wrong refinement limits
     begin
         config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
-        config_dict["grid"]["spacing_surface_refinement"] = [1e-3, 1e-3, 1e-3]
+        config_dict["grid"]["spacing_surface_refinement"] = ["1mm", "1mm", "1mm"]
         sim_2d = @test_nowarn Simulation{T}(config_dict)
 
         # Test normal behaviour 2D
@@ -216,7 +218,7 @@ end
     
     # Spacing out of bounds
     config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:IVCIlayer])
-    config_dict["grid"]["spacing_surface_refinement"] = [1e-2, 1e-2, 1e-2]
+    config_dict["grid"]["spacing_surface_refinement"] = ["10mm", "10mm", "10mm"]
     sim = @test_nowarn Simulation{T}(config_dict)
     
     @test_logs (
@@ -241,7 +243,7 @@ end
         timed_calculate_electric_potential!(sim_phi_noref, verbose = false, depletion_handling = true)
         notref_phi_len = length(sim_phi_noref.electric_potential.grid.axes[2].ticks)
 
-        config_dict["grid"]["spacing_surface_refinement"] = [1e-3,1e-3,1e-3]
+        config_dict["grid"]["spacing_surface_refinement"] = ["1mm","1mm","1mm"]
         sim_phi_ref = @test_nowarn Simulation{T}(config_dict)
         timed_calculate_electric_potential!(sim_phi_ref, verbose = false, depletion_handling = true)
         ref_phi_len = length(sim_phi_ref.electric_potential.grid.axes[2].ticks)

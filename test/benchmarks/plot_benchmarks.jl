@@ -7,7 +7,7 @@ fn_SOR_update_benchmark_df = joinpath(ENV["HOME"], "SSD_SOR_update_benchmark.jld
 fn_pot_calc_benchmark_df = joinpath(ENV["HOME"], "SSD_potential_calculation_benchmark.jld2")
 
 df_SOR_update = load(fn_SOR_update_benchmark_df, "df_SOR_update")
-df_pot_calc = load(fn_pot_calc_benchmark_df, "df_SOR_update")
+df_pot_calc = load(fn_pot_calc_benchmark_df, "df_pot_calc")
 
 function plot_benchmark(df::DataFrame; kwargs...)
     ys = df.time 

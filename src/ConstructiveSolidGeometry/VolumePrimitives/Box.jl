@@ -115,10 +115,12 @@ function Geometry(::Type{T}, ::Type{Box}, dict::AbstractDict, input_units::Named
     elseif haskey(dict, "halfwidths")
         @assert length(dict["halfwidths"]) == 3
         _parse_value(T, dict["halfwidths"], length_unit)
-    elseif haskey(dict, "hX") && haskey(dict, "hZ") && haskey(dict, "hZ")
-        _parse_value(T, dict["hX"], length_unit), 
-        _parse_value(T, dict["hY"], length_unit), 
+    elseif haskey(dict, "hX") && haskey(dict, "hY") && haskey(dict, "hZ")
+        _parse_value(T, dict["hX"], length_unit),
+        _parse_value(T, dict["hY"], length_unit),
         _parse_value(T, dict["hZ"], length_unit)
+    else
+        throw(ConfigFileError("Box needs entries `widths`, `halfwidths` or `hX`, `hY` and `hZ`."))
     end
     box = Box{T}(ClosedPrimitive,
         hX = hX, 

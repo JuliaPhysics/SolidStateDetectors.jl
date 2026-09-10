@@ -236,6 +236,16 @@ end
 @inline function r0_handling_depletion_handling(
     np::NTuple{6, T}, ::Type{Cylindrical}, i::Int
 ) where {T}
+    # Cylindrical red-black layout is (z, φ, r). At r = 0 (i == 1) slot 5 reads
+    # the sub-axis ghost row, which no boundary condition ever writes: it stays
+    # 0 and acts as a potential floor (ceiling, for n-type) in the extremum
+    # check of handle_depletion. This anchors the axis channel, where the
+    # overshoot clamp could otherwise settle into a stable spurious undepleted
+    # state, while still flagging axis points that the impurity term would push
+    # below 0 V. Note that this is only exact while the grounded contact sits
+    # at 0 V; a generalization should use the extrema of the applied potentials
+    # instead of the implicit 0. The z-left neighbor is additionally replaced
+    # by the z-right one at the axis (historical behavior).
     return (ifelse(i == 1, np[2], np[1]), np[2:6]...)
 end
 @inline function r0_handling_depletion_handling(

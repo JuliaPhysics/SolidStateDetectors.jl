@@ -4,9 +4,22 @@ using Unitful
 
 T = Float32
 
+@testset "r0 handling in handle_depletion" begin
+    np = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    # at r = 0 (i == 1) slot 5 carries the sub-axis ghost (0), which acts as a
+    # potential floor in the extremum check; the z-left slot is replaced by z-right
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 1) == (2.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cylindrical, 2) == np
+    @test SolidStateDetectors.r0_handling_depletion_handling(np, SolidStateDetectors.Cartesian, 1) == np
+end
+
 @testset "Test depletion estimation" begin
     sim = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
     timed_calculate_electric_potential!(sim, refinement_limits=0.01)
+    # without depletion handling the depletion state is unknown: is_depleted warns,
+    # and estimate_depletion_voltage refuses to use it as a safety check
+    @test (@test_logs (:warn, r"depletion handling") is_depleted(sim.point_types))
+    @test_throws AssertionError estimate_depletion_voltage(sim)
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
     timed_calculate_weighting_potential!(sim, id, refinement_limits=0.01)
     SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(

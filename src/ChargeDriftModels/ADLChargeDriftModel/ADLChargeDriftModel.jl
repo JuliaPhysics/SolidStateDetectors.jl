@@ -172,16 +172,18 @@ end
 getVe(fv::SVector{3, T}, cdm::ADL2016ChargeDriftModel{T}, ::CartesianPoint{T}, Emag_threshold::T = T(1e-5)) where {T} = getVe(fv, cdm, Emag_threshold)
 @fastmath function SolidStateDetectors.getVe(fv::SVector{3,T}, cdm::ADL2016ChargeDriftModel{T,M}, Emag_threshold::T = T(1e-5))::SVector{3,T} where {T <: SSDFloat, M}
     @inbounds begin
+        if norm(fv) < Emag_threshold return SVector{3,T}(0, 0, 0) end
+
         Γ0::T = sqrt((2 * cdm.parameters.mt_inv + cdm.parameters.ml_inv)/3)
-        sqrtγ = sqrt.(cdm.γ)
-        invν = broadcast(α -> inv(ν(α * fv, cdm.parameters)), sqrtγ)
-        
-        v::SVector{3,T} = SVector{3,T}([0,0,0])
+        invν = broadcast(sqrtγ -> inv(ν(sqrtγ * fv, cdm.parameters)), cdm.sqrtγ)
+        invν_sum_inv::T = inv(sum(invν))
+
+        v::SVector{3,T} = @SVector T[0,0,0]
         for j in eachindex(cdm.γ)
-            Ei::SVector{3,T} = sqrtγ[j] * fv
+            Ei::SVector{3,T} = cdm.sqrtγ[j] * fv
             Ei_mag::T = norm(Ei)
             μ::T = Vl(Ei_mag / Γ0, cdm.electrons) / (Γ0 * Ei_mag)
-            v -= invν[j] / sum(invν) * μ * cdm.γ[j] * fv
+            v -= invν[j] * invν_sum_inv * μ * cdm.γ[j] * fv
         end
 
         return v
@@ -226,7 +228,7 @@ getVh(fv::SVector{3,T}, cdm::Union{ADLChargeDriftModel{T}, ADL2016ChargeDriftMod
         vrel::T = V111h / V100h
         Λvrel::T = Λ(vrel)
         Ωvrel::T = Ω(vrel, M)
-        θ0::T = acos(tmp[3] / Emag)
+        θ0::T = acos(clamp(tmp[3] * Emag_inv, -one(T), one(T)))
         φ0::T = atan(tmp[2], tmp[1])
         sθ0::T, cθ0::T = sincos(θ0)
         s2θ0::T, c2θ0::T = sincos(2*θ0)

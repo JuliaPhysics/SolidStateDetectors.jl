@@ -2,7 +2,7 @@
 @inline remove_column(table::TypedTables.Table, colname::Symbol) =
     TypedTables.Table(Base.structdiff(TypedTables.columns(table), NamedTuple{(colname,),Tuple{Int}}(0)))
 
-@inline add_column(table::TypedTables.Table, nt::NamedTuple) = 
+@inline add_column(table::TypedTables.Table, nt::NamedTuple) =
     TypedTables.Table(merge(nt, TypedTables.columns(table)))
 @inline add_column(table::TypedTables.Table, newname::Symbol, col::CT) where {CT} =
     add_column(table, NamedTuple{(newname,), Tuple{CT}}((col,)) )
@@ -51,10 +51,10 @@ function split_table_by_each_charge_deposition(table::TypedTables.Table)
     end
 end
 
-function sort_by_time(table::TypedTables.Table)  
+function sort_by_time(table::TypedTables.Table)
     @assert length(table.thit[1]) == 1 "Split the table first: split_table_by_each_charge_deposition"
-    sorted_inds = sortperm(table.thit) 
-    TypedTables.Table(map( c -> c[sorted_inds], TypedTables.columns(table))) 
+    sorted_inds = sortperm(table.thit)
+    TypedTables.Table(map( c -> c[sorted_inds], TypedTables.columns(table)))
 end
 
 function cluster_by_time(table::TypedTables.Table, Δt = 1u"ns")
@@ -74,7 +74,7 @@ function cluster_by_time(table::TypedTables.Table, Δt = 1u"ns")
         end
     end
     if length(inds) > 0
-        ranges = vcat( [1:inds[1]], broadcast(:, inds[1:end-1].+1, inds[2:end]), 
+        ranges = vcat( [1:inds[1]], broadcast(:, inds[1:end-1].+1, inds[2:end]),
                         n_charge_depos > inds[end] ? [inds[end]+1:n_charge_depos] : [] )
         TypedTables.Table(map(c -> VectorOfVectors(map(r -> c[r], ranges)), TypedTables.columns(table)))
     else
@@ -82,7 +82,7 @@ function cluster_by_time(table::TypedTables.Table, Δt = 1u"ns")
     end
 end
 
-function split_by_time(table::TypedTables.Table, Δt = 1u"ns") 
+function split_by_time(table::TypedTables.Table, Δt = 1u"ns")
     
     hasproperty(table, :thit) || throw(ArgumentError("Expected detector hit events table to have column named `thit`"))
     elem_ptr = deepcopy(table.thit.elem_ptr)

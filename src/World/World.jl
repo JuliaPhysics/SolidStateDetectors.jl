@@ -65,7 +65,7 @@ end
 function World(T, dict::AbstractDict, input_units::NamedTuple)::World
     
     spacing_surface_refinement = if haskey(dict, "spacing_surface_refinement")
-        ntuple(i -> _parse_value(T, dict["spacing_surface_refinement"][i], internal_length_unit), 3)
+        ntuple(i -> _parse_value(T, dict["spacing_surface_refinement"][i], input_units.length), 3)
     else
         ntuple(i -> T(NaN), 3)
     end

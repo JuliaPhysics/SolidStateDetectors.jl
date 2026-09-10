@@ -11,7 +11,11 @@ function _update_till_convergence!( pcs::PotentialCalculationSetup{T, S, 3},
                                 ) where {T, S, depletion_handling_enabled, only_2d, _is_weighting_potential} #  <: GPUArrays.AbstractGPUArray
     backend = _ka_get_backend(pcs.potential)
     ndrange = size(pcs.potential)[1:3] .- 2
-    kernel = get_sor_kernel(S, backend, Val(via_KernelAbstractions))
+    kernel = if backend isa _KA_Backend && !(backend isa KernelAbstractions.CPU)
+        get_sor_kernel(S, backend, Val(via_KernelAbstractions), _sor_kernel_workgroupsize(ndrange))
+    else
+        get_sor_kernel(S, backend, Val(via_KernelAbstractions))
+    end
     c_limit = _is_weighting_potential ? convergence_limit : abs(convergence_limit * (iszero(pcs.bias_voltage) ? maximum(abs.(pcs.potential)) : pcs.bias_voltage))
     c = (one(c_limit) + c_limit) * 10 # Has to be larger than c_limit at the beginning
     n_performed_iterations = 0
