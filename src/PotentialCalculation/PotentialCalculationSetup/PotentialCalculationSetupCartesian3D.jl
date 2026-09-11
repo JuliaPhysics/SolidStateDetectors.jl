@@ -364,7 +364,7 @@ function ElectricPotentialArray(pcs::PotentialCalculationSetup{T, Cartesian,  3,
             end
         end
     end
-    return pot
+    return pot .+ pcs.gauge_ref_potential
 end
 
 function ImpurityScaleArray(pcs::PotentialCalculationSetup{T, Cartesian, 3, Array{T, 3}})::Array{T, 3} where {T}
