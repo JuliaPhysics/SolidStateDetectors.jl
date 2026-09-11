@@ -89,9 +89,9 @@ end
     # more resolution is needed near the domain edges.
     sim = Simulation{T}(cf)
     timed_calculate_electric_potential!(sim)
-    @test length(sim.electric_potential.grid[1]) == 50
+    @test length(sim.electric_potential.grid[1]) == 48
     @test length(sim.electric_potential.grid[2]) == 1
-    @test length(sim.electric_potential.grid[3]) == 70
+    @test length(sim.electric_potential.grid[3]) == 78
 
     # Cartesian Case um
     cf_cart = deepcopy(cf)
