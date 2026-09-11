@@ -41,7 +41,7 @@ end
     # estimates can differ by more than a few volts even though each is
     # individually converged to within its own `tolerance`. 20V covers the observed spread.
     U_alt = timed_estimate_depletion_voltage(sim, U_est * 1.5, 0u"V", tolerance = 0.1u"V")
-    @test abs(U_est - U_alt) < 20u"V"
+    @test abs(U_est - U_alt) < 6u"V"
 
     @test_throws Exception estimate_depletion_voltage(sim, -abs(U_est), abs(U_est))
     @test_throws Exception estimate_depletion_voltage(sim, -10, 0, tolerance = 20)
@@ -67,20 +67,20 @@ end
     # solve near the depletion threshold, which does carry the near-threshold
     # stagnation noise described above. So the entire gap between the two
     # numbers shows up in this comparison.
-    @test abs(dep_sim - dep_target) < 75u"V"
+    @test abs(dep_sim - dep_target) < 6u"V"
     @test sim.detector.semiconductor.impurity_density_model != imp_model_before
 
     # Re-run simulation in place and check depletion voltage matches again. This is a check that impurity_density_model and
     # contact_potential where adapted correctly.
     timed_calculate_electric_potential!(sim, refinement_limits = 0.01, depletion_handling = true)
-    @test abs(estimate_depletion_voltage(sim, check_for_depletion = false, verbose = false) - dep_sim) < 75u"V"
+    @test abs(estimate_depletion_voltage(sim, check_for_depletion = false, verbose = false) - dep_sim) < 6u"V"
 
     # Finally, compare to fresh simulation which is changed manually
     sim_fresh = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
     sim_fresh.detector = SolidStateDetector(sim_fresh.detector, contact_id = id, contact_potential = bias_target)
     sim_fresh.detector = SolidStateDetector(sim_fresh.detector, sim.detector.semiconductor.impurity_density_model)
     timed_calculate_electric_potential!(sim_fresh, refinement_limits = 0.01, depletion_handling = true)
-    @test abs(estimate_depletion_voltage(sim_fresh, check_for_depletion = false, verbose = false) - dep_sim) < 75u"V"
+    @test abs(estimate_depletion_voltage(sim_fresh, check_for_depletion = false, verbose = false) - dep_sim) < 6u"V"
 
     # Error handling: both functions require the target voltage to share the
     # (non-zero) sign of the relevant reference voltage AND to exceed it in magnitude (the detector
