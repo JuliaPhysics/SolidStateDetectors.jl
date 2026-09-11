@@ -502,8 +502,7 @@ function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential},
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
     sim.point_types = PointTypes(PointTypeArray(pcs), grid, depletion_handling)
-    # pcs.potential lives in the V_ref = 0 (gauge-shifted) frame; shift back to real potentials once, here.
-    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs) .+ pcs.gauge_ref_potential, grid)
+    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
     nothing
 end
 
@@ -636,9 +635,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
     sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), grid)
     sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), grid)
     sim.ϵ_r = DielectricDistribution(DielectricDistributionArray(pcs), get_extended_midpoints_grid(grid))
-    # pcs.potential lives in the V_ref = 0 (gauge-shifted) frame for the
-    # whole SOR run; shift back to real potentials exactly once, here, after convergence.
-    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs) .+ pcs.gauge_ref_potential, grid)
+    sim.electric_potential = ElectricPotential(ElectricPotentialArray(pcs), grid)
     sim.point_types = PointTypes(PointTypeArray(pcs), grid, depletion_handling)
     cf
 end
