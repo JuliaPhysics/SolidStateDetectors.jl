@@ -25,6 +25,7 @@ using RecipesBase
 using Requires
 using Rotations
 using StaticArrays
+using FixedSizeArrays
 using StatsBase
 using Unitful
 using UnitfulAtomic
