@@ -25,10 +25,11 @@ Precalculated parameters:
 * `geom_weights`: The parts of the calculation of the six weights in the SOR can be precalculated. Those are stored here for each axis/dimension.
 * `sor_const`: Vector holding the SOR constants. In the cartesian case only the first entry is used. As the optimal value for the SOR constant
 depends on the grid, the constant is linear increased and the array holds the respective value for each radial axis tick. 
-* `bias_voltage`: `maximum_applied_potential - minimum_applied_potential`. Used for depletion handling, but might be obsolete by now. 
-* `maximum_applied_potential`: Used for depletion handling, but might be obsolete by now. 
-* `minimum_applied_potential`: Used for depletion handling, but might be obsolete by now. 
-* `grid_boundary_factors`: Used in the application of boundary conditions in the field calculation for decaying (infinite) boundary conditions 
+* `bias_voltage`: `maximum_applied_potential - minimum_applied_potential`. Used for depletion handling, but might be obsolete by now.
+* `maximum_applied_potential`: Used for depletion handling, but might be obsolete by now.
+* `minimum_applied_potential`: Used for depletion handling. Also the value the `:infinite` boundary condition decays towards (instead of a hardcoded `0`) -- not `gauge_ref_potential`, since decaying toward the mean was found to corrupt the near-boundary field for realistic asymmetric detectors.
+* `gauge_ref_potential`: The reference potential used as the interior SOR seed (instead of a hardcoded `0`). Defined as the mean of the applied contact potentials (or `0` for a weighting-potential solve), this is equivariant under both a uniform additive shift of all contact potentials AND a global sign flip, so it stays gauge-consistent under both transformations. Note this is a different reference than the one `:infinite` decays towards (see `minimum_applied_potential` above); `apply_boundary_conditions!` translates between the two frames each SOR pass.
+* `grid_boundary_factors`: Used in the application of boundary conditions in the field calculation for decaying (infinite) boundary conditions
 to approximate the decay of the potential (depending on the grid).
 """
 struct PotentialCalculationSetup{
@@ -51,7 +52,8 @@ struct PotentialCalculationSetup{
     sor_const::DATSOR # Array{T, 1}
     bias_voltage::T
     maximum_applied_potential::T
-    minimum_applied_potential::T    
+    minimum_applied_potential::T
+    gauge_ref_potential::T
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
@@ -70,6 +72,7 @@ function Adapt.adapt_structure(to, pcs::PotentialCalculationSetup{T, S, 3}) wher
         pcs.bias_voltage,
         pcs.maximum_applied_potential,
         pcs.minimum_applied_potential,
+        pcs.gauge_ref_potential,
         pcs.grid_boundary_factors
     )
 end

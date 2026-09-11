@@ -81,12 +81,18 @@ end
         "value" => 0
     )
     
+    # BEGe_01's contacts are {-3000V, 0V} (not {0V, +V}), so
+    # minimum_applied_potential = -3000V genuinely matters for the gauge-consistency
+    # even with zeroimpurity density / depletion_handling=false: the `:infinite` boundary
+    # and the interior initial state now correctly reference -3000V instead
+    # of a hardcoded 0V, which changes where the adaptive refinement decides
+    # more resolution is needed near the domain edges.
     sim = Simulation{T}(cf)
     timed_calculate_electric_potential!(sim)
-    @test length(sim.electric_potential.grid[1]) == 36
+    @test length(sim.electric_potential.grid[1]) == 48
     @test length(sim.electric_potential.grid[2]) == 1
-    @test length(sim.electric_potential.grid[3]) == 62
-    
+    @test length(sim.electric_potential.grid[3]) == 78
+
     # Cartesian Case um
     cf_cart = deepcopy(cf)
     cf_cart["grid"]["coordinates"] = "cartesian"
@@ -102,10 +108,11 @@ end
     )
     sim_cart = Simulation{T}(cf_cart)
     timed_calculate_electric_potential!(sim_cart)
-    
-    @test length(sim_cart.electric_potential.grid[1]) == 60
-    @test length(sim_cart.electric_potential.grid[2]) == 60
-    @test length(sim_cart.electric_potential.grid[3]) == 62
+
+    # See the -3000V/0V gauge-consistency note above.
+    @test length(sim_cart.electric_potential.grid[1]) == 90
+    @test length(sim_cart.electric_potential.grid[2]) == 90
+    @test length(sim_cart.electric_potential.grid[3]) == 58
 
     grid_lengths = length.(sim_cart.electric_potential.grid)
     @test maximum(grid_lengths) - minimum(grid_lengths) <= 2
@@ -116,9 +123,9 @@ end
     sim_cart_mm = Simulation{T}(cf_cart_mm)
     timed_calculate_electric_potential!(sim_cart_mm)
 
-    @test length(sim_cart_mm.electric_potential.grid[1]) == 60
-    @test length(sim_cart_mm.electric_potential.grid[2]) == 60
-    @test length(sim_cart_mm.electric_potential.grid[3]) == 64
+    @test length(sim_cart_mm.electric_potential.grid[1]) == 86
+    @test length(sim_cart_mm.electric_potential.grid[2]) == 86
+    @test length(sim_cart_mm.electric_potential.grid[3]) == 58
 end
 
 @testset "Surface refinement edge cases" begin

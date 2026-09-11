@@ -135,8 +135,7 @@ function estimate_depletion_voltage(sim::Simulation{T},
     end
     bulk = findall((sim.point_types.data .& bulk_bit .> 0) .& (sim.point_types.data .& inactive_layer_bit .== 0))
     U_min_max = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
-    U2 = isempty(U_min_max) ? U : only(U_min_max)    
-    U = U > 0 ? max(U, U2) : min(U, U2)
+    U = U > 0 ? max(U, U_min_max...) : min(U, U_min_max...)
     if verbose
         @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tol))))) ± $(tol) $(internal_voltage_unit) applied to contact $(contact_id)."
     end

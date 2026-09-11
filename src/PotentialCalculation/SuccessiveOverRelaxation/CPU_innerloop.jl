@@ -236,7 +236,7 @@ end
 @inline function r0_handling_depletion_handling(
     np::NTuple{6, T}, ::Type{Cylindrical}, i::Int
 ) where {T}
-    return (ifelse(i == 1, np[2], np[1]), np[2:6]...)
+    return (np[1], np[2], np[3], np[4], ifelse(i == 1, np[6], np[5]), np[6])
 end
 @inline function r0_handling_depletion_handling(
     np::NTuple{6, T}, ::Type{Cartesian}, i::Int
