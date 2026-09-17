@@ -156,7 +156,7 @@ end
         @test simA.detector.semiconductor.charge_trapping_model.inactive_charge_trapping_model.τh == T(1e-6)
         @test simA.detector.semiconductor.charge_trapping_model.inactive_charge_trapping_model.τe  == T(1e-6)
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.origin == CartesianPoint{T}(0.0, 0.0, 0.005)
-        r0, r1 = T.((0.008957282, 0.01))
+        r0, r1 = T.((8.957282/1000, 0.01))
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.r == tuple((r0, r1), (r0, r1))
         @test simA.detector.semiconductor.charge_trapping_model.inactive_layer_geometry.hZ == T(0.005)
     end
@@ -344,8 +344,8 @@ end
 
     @testset "Test constructors of IsotropicChargeDriftModel" begin
         cdm0 = IsotropicChargeDriftModel{T}() # default charge drift model
-        @test cdm0.μ_e  == 0.1f0
-        @test cdm0.μ_h == 0.1f0
+        @test cdm0.μ_e  == T(0.1)
+        @test cdm0.μ_h == T(0.1)
 
         cdm1 = IsotropicChargeDriftModel{T}(μ_e = 1000u"cm^2/(V*s)", μ_h = 1000u"cm^2/(V*s)")
         @test cdm1 == cdm0
@@ -573,19 +573,19 @@ end
 
     @testset "Test parsing of ADL2016ChargeDriftModel config files with units" begin
         cdm0 = ADL2016ChargeDriftModel(T=T) # default charge drift model
-        @test cdm0.electrons.mu0      == 3.7165f0
-        @test cdm0.electrons.beta     == 0.804f0
-        @test cdm0.electrons.E0       == 50770f0
-        @test cdm0.electrons.mun      == -0.0145f0
-        @test cdm0.parameters.Γ0      == 0.496f0  # η0
-        @test cdm0.parameters.Γ1      == 0.0296f0 # b
-        @test cdm0.parameters.Γ2      == 120000f0 # Eref
-        @test cdm0.holes.axis100.mu0  == 6.2934f0
-        @test cdm0.holes.axis100.beta == 0.735f0
-        @test cdm0.holes.axis100.E0   == 18190f0
-        @test cdm0.holes.axis111.mu0  == 6.2383f0
-        @test cdm0.holes.axis111.beta == 0.749f0
-        @test cdm0.holes.axis111.E0   == 14390f0
+        @test cdm0.electrons.mu0      ≈ T(3.7165)
+        @test cdm0.electrons.beta     ≈ T(0.804)
+        @test cdm0.electrons.E0       ≈ T(50770)
+        @test cdm0.electrons.mun      ≈ T(-0.0145)
+        @test cdm0.parameters.Γ0      ≈ T(0.496)  # η0
+        @test cdm0.parameters.Γ1      ≈ T(0.0296) # b
+        @test cdm0.parameters.Γ2      ≈ T(120000) # Eref
+        @test cdm0.holes.axis100.mu0  ≈ T(6.2934)
+        @test cdm0.holes.axis100.beta ≈ T(0.735)
+        @test cdm0.holes.axis100.E0   ≈ T(18190)
+        @test cdm0.holes.axis111.mu0  ≈ T(6.2383)
+        @test cdm0.holes.axis111.beta ≈ T(0.749)
+        @test cdm0.holes.axis111.E0   ≈ T(14390)
     end
 
     @testset "Test equivalence of longitudinal drift parameter implementation" begin

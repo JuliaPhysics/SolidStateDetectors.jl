@@ -14,14 +14,14 @@ T = Float32
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa ConstantImpurityDensity{T}
-        @test cd.ρ == -5f15
+        @test cd.ρ == T(-5e15)
         pt = CartesianPoint{T}(1.0, 0.0, 0.0)
-        @test SolidStateDetectors.get_impurity_density(cd, pt) == -5f15
-        @test cd == ConstantImpurityDensity(-5f9u"cm^-3")
+        @test SolidStateDetectors.get_impurity_density(cd, pt) == T(-5e15)
+        @test cd == ConstantImpurityDensity(T(-5e9)u"cm^-3")
         cd_scaled = @test_nowarn (cd * 1.2)
-        @test cd_scaled.ρ ≈ -6f15
-        cd_offset = @test_nowarn cd + 1f9u"cm^-3"
-        @test cd_offset.ρ ≈ -4f15
+        @test cd_scaled.ρ ≈ T(-6e15)
+        cd_offset = @test_nowarn cd + T(1e9)u"cm^-3"
+        @test cd_offset.ρ ≈ T(-4e15)
 
         # passing an incompatible unit will throw a ConfigFileError
         @test_throws SolidStateDetectors.ConfigFileError ConstantImpurityDensity{T}(-5u"K")
@@ -37,13 +37,13 @@ T = Float32
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa LinearImpurityDensity{T}
-        @test cd.offset == 1f10
-        @test cd.gradients[1] == 1f11
+        @test cd.offset == T(1e10)
+        @test cd.gradients[1] == T(1e11)
         cd_scaled = @test_nowarn (cd * 1.2)
-        @test cd_scaled.offset ≈ 1.2f10
-        @test cd_scaled.gradients[1] ≈ 1.2f11
-        cd_offset = @test_nowarn cd + 1f10u"m^-3"
-        @test cd_offset.offset ≈ 2f10
+        @test cd_scaled.offset ≈ T(1.2e10)
+        @test cd_scaled.gradients[1] ≈ T(1.2e11)
+        cd_offset = @test_nowarn cd + T(1e10)u"m^-3"
+        @test cd_offset.offset ≈ T(2e10)
         @test cd_offset.gradients == cd.gradients
 
         # should throw a warning, but still work and give the same results
@@ -87,13 +87,13 @@ T = Float32
         )
         cd = SolidStateDetectors.ImpurityDensity(T, d["impurity_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.CylindricalImpurityDensity{T}
-        @test cd.offset == 1f10
-        @test cd.gradients[1] == 1f11
+        @test cd.offset == T(1e10)
+        @test cd.gradients[1] == T(1e11)
         cd_scaled = @test_nowarn (cd * 1.2)
-        @test cd_scaled.offset ≈ 1.2f10
-        @test cd_scaled.gradients[1] ≈ 1.2f11
-        cd_offset = @test_nowarn cd + 1f10u"m^-3"
-        @test cd_offset.offset ≈ 2f10
+        @test cd_scaled.offset ≈ T(1.2e10)
+        @test cd_scaled.gradients[1] ≈ T(1.2e11)
+        cd_offset = @test_nowarn cd + T(1e10)u"m^-3"
+        @test cd_offset.offset ≈ T(2e10)
         @test cd_offset.gradients == cd.gradients
 
         d_deprecated = Dict("impurity_density" => Dict(
@@ -126,8 +126,8 @@ end
         )
         cd = SolidStateDetectors.ChargeDensity(T, d["charge_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.LinearChargeDensity{T}
-        @test cd.offset == 1f-10
-        @test cd.gradients[1] == 1f-11
+        @test cd.offset == T(1e-10)
+        @test cd.gradients[1] == T(1e-11)
 
         d_deprecated = Dict("charge_density" => Dict(
                 "name" => "linear",
@@ -156,8 +156,8 @@ end
         )
         cd = SolidStateDetectors.ChargeDensity(T, d["charge_density"], SolidStateDetectors.default_unit_tuple())
         @test cd isa SolidStateDetectors.CylindricalChargeDensity{T}
-        @test cd.offset == 1f-10
-        @test cd.gradients[1] == 1f-11
+        @test cd.offset == T(1e-10)
+        @test cd.gradients[1] == T(1e-11)
 
         d_deprecated = Dict("charge_density" => Dict(
                 "name" => "cylindrical",
