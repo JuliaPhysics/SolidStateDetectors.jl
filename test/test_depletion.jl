@@ -28,10 +28,43 @@ T = Float32
     U_alt = timed_estimate_depletion_voltage(sim, U_est * 1.5, 0u"V", tolerance = 0.1u"V")
     @test abs(U_est - U_alt) < 5u"V"
 
+    # The analytic local-extremum scan and the bisection fallback should agree on the depletion voltage.
+    # Build the same inputs `estimate_depletion_voltage` uses internally.
+    simDV = deepcopy(sim)
+    SolidStateDetectors._adapt_weighting_potential_to_electric_potential_grid!(simDV, id)
+    ϕV = simDV.weighting_potentials[id].data
+    ϕρ = simDV.electric_potential.data .- simDV.detector.contacts[id].potential .* ϕV
+    pt = simDV.point_types.data
+    bulk = findall((pt .& SolidStateDetectors.bulk_bit .> 0) .& (pt .& SolidStateDetectors.inactive_layer_bit .== 0))
+    inside = findall((pt .& SolidStateDetectors.pn_junction_bit .> 0) .& (pt .& SolidStateDetectors.inactive_layer_bit .== 0))
+    Umin, Umax = minmax(zero(T), T(1.5 * ustrip(u"V", U_est)))
+    U_cand = filter(u -> Umin <= u <= Umax, SolidStateDetectors._find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
+    @test length(U_cand) == 1
+    U_bis = SolidStateDetectors._find_depletion_voltage_by_bisection(ϕρ, ϕV, inside, bulk, Umin, Umax, T(0.1))
+    @test abs(only(U_cand) - U_bis) < 5
+    @test abs(only(U_cand) - ustrip(u"V", U_est)) < 5
+
     @test_throws Exception estimate_depletion_voltage(sim, -abs(U_est), abs(U_est))
     @test_throws Exception estimate_depletion_voltage(sim, -10, 0, tolerance = 20)
     @test_throws Exception estimate_depletion_voltage(sim, 0u"kg", 20u"kg")
     @test_throws ArgumentError estimate_depletion_voltage(sim, U_est/3, 0)
+
+    # The depletion voltage is linear in the impurity density: doubling the impurities should double it.
+    # Use a fresh simulation so `sim` keeps its state for the tests below. The search range is widened
+    # since the doubled depletion voltage lies outside the default range given by the contact potentials.
+    sim_2x = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
+    sim_2x.detector = SolidStateDetector(sim_2x.detector, 2 * sim_2x.detector.semiconductor.impurity_density_model)
+    timed_calculate_electric_potential!(sim_2x, refinement_limits=0.01)
+    U_est_2x = timed_estimate_depletion_voltage(sim_2x, 3 * U_est, 0u"V", check_for_depletion = false)
+    @test isapprox(U_est_2x, 2 * U_est, rtol = 0.02)
+    # The depletion voltage is linear in the impurity density: doubling the impurities should double it.
+    # Use a fresh simulation so `sim` keeps its state for the tests below. The search range is widened
+    # since the doubled depletion voltage lies outside the default range given by the contact potentials.
+    sim_2x = Simulation{T}(joinpath(@__DIR__, "test_config_files/BEGe_01.yaml"))
+    sim_2x.detector = SolidStateDetector(sim_2x.detector, 2 * sim_2x.detector.semiconductor.impurity_density_model)
+    timed_calculate_electric_potential!(sim_2x, refinement_limits=0.01)
+    U_est_2x = timed_estimate_depletion_voltage(sim_2x, 3 * U_est, 0u"V", check_for_depletion = false)
+    @test isapprox(U_est_2x, 2 * U_est, rtol = 0.02)
 
     # `adjust_impurity_and_electric_potential_to_match_depletion!` rescales the impurity density and
     # `adjust_bias_and_electric_potential!` swaps in a new contact potential, both
