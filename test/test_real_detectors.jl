@@ -27,11 +27,11 @@ T = Float32
     @info "Depletion voltage: $deplV"
     @test isapprox(deplV, 1871*u"V", atol = 10.0*u"V") 
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
-    # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
+    # Check wether detector is undepleted, 0.5% below the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.005))
     timed_calculate_electric_potential!(sim, depletion_handling = true)
     @test !is_depleted(sim.point_types)
-    # Check wether detector is depleted, 10V above the previously calculated depletion voltage
+    # Check wether detector is depleted, 0.5% above the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV + deplV*0.005))
     timed_calculate_electric_potential!(sim, depletion_handling = true)
     @test is_depleted(sim.point_types)
@@ -101,13 +101,13 @@ end
     @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
 end
 @testset "CartesianGrid3D" begin
-    ticks = collect(0.0f0:0.25f0:1.0f0)
-    ax_x = SolidStateDetectors.DiscreteAxis(0.0f0, 1.0f0, :infinite, :none, :closed, :closed, ticks)
-    ax_y = SolidStateDetectors.DiscreteAxis(0.0f0, 1.0f0, :infinite, :none, :closed, :closed, ticks)
-    ax_z = SolidStateDetectors.DiscreteAxis(0.0f0, 1.0f0, :infinite, :none, :closed, :closed, ticks)
+    ticks = T.(collect(0.0:0.25:1.0))
+    ax_x = SolidStateDetectors.DiscreteAxis(T(0), T(1), :infinite, :none, :closed, :closed, ticks)
+    ax_y = SolidStateDetectors.DiscreteAxis(T(0), T(1), :infinite, :none, :closed, :closed, ticks)
+    ax_z = SolidStateDetectors.DiscreteAxis(T(0), T(1), :infinite, :none, :closed, :closed, ticks)
 
     grid = SolidStateDetectors.CartesianGrid3D{T}((ax_x, ax_y, ax_z))
-    pt = CartesianPoint{T}(0.33f0, 0.61f0, 0.12f0)
+    pt = CartesianPoint{T}(0.33, 0.61, 0.12)
     
     nearest_pt = SolidStateDetectors.searchsortednearest(grid, pt)
     @test nearest_pt isa CartesianPoint{T}
@@ -128,7 +128,7 @@ end
     @test idxs_cart[3] == SolidStateDetectors.searchsortednearest(ticks, pt.z)
     
     # CylindricalPoint version
-    pt_cyl = CylindricalPoint{T}(0.33f0, π/3, 0.12f0)
+    pt_cyl = CylindricalPoint{T}(0.33, π/3, 0.12)
     idxs_cyl = SolidStateDetectors.find_closest_gridpoint(pt_cyl, grid)
     
     # Convert Cylindrical to Cartesian for comparison
@@ -168,7 +168,7 @@ end
 end
 @timed_testset "Spherical" begin
     sim = Simulation{T}(SSD_examples[:Spherical])
-    sim.detector = SolidStateDetector(sim.detector, ADL2016ChargeDriftModel())
+    sim.detector = SolidStateDetector(sim.detector, ADL2016ChargeDriftModel{T}())
     timed_simulate!(sim, convergence_limit = 1e-5, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
     evt = Event([CartesianPoint{T}(0,0,0)])
     timed_simulate!(evt, sim)
@@ -196,10 +196,10 @@ end
 end
 @timed_testset "Coaxial for partial phi range" begin
     sim = Simulation{T}(SSD_examples[:Cone2D])
-    timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
+    timed_calculate_electric_potential!(sim, convergence_limit = 1e-7, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
     
     sim_alt = Simulation{T}(SSD_examples[:ConeSym])
-    timed_calculate_electric_potential!(sim_alt, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
+    timed_calculate_electric_potential!(sim_alt, convergence_limit = 1e-7, device_array_type = device_array_type, refinement_limits = missing, verbose = false)
     
     # Test equal initial grid spacing in r and z, no matter the phi range
     @test sim.electric_potential.grid.r == sim_alt.electric_potential.grid.r 
