@@ -27,13 +27,13 @@ T = Float32
     @info "Depletion voltage: $deplV"
     @test isapprox(deplV, 1871*u"V", atol = 10.0*u"V") 
     id = SolidStateDetectors.determine_bias_voltage_contact_id(sim.detector)
-    # Check wether detector is undepleted, 10V below the previously calculated depletion voltage
+    # Check wether detector is undepleted, 0.5% below the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV - deplV*0.005))
-    timed_calculate_electric_potential!(sim, depletion_handling = true)
+    timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.02], depletion_handling = true)
     @test !is_depleted(sim.point_types)
-    # Check wether detector is depleted, 10V above the previously calculated depletion voltage
+    # Check wether detector is depleted, 0.5% above the previously calculated depletion voltage
     sim.detector = SolidStateDetector(sim.detector, contact_id = id, contact_potential = ustrip(deplV + deplV*0.005))
-    timed_calculate_electric_potential!(sim, depletion_handling = true)
+    timed_calculate_electric_potential!(sim, convergence_limit = 1e-6, refinement_limits = [0.2, 0.1, 0.05, 0.02], depletion_handling = true)
     @test is_depleted(sim.point_types)
 end
 @timed_testset "Inverted Coax (in cryostat)" begin

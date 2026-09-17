@@ -115,26 +115,23 @@ function estimate_depletion_voltage(sim::Simulation{T},
 
     ϕρ .-= simDV.detector.contacts[contact_id].potential .* ϕV
     Urng = Umin..Umax
-    inside = findall(simDV.point_types .& 4 .> 0)
-    U::T = NaN
-    ϕ̃ = similar(ϕV)
-    while Umax-Umin>tolerance
-        U = (Umax + Umin)/2    
-        ϕ̃ .= ϕρ .+ T(U) .* ϕV
-        ϕmax = maximum(ϕ̃[inside])
-        ϕmin = minimum(ϕ̃[inside])
-        if U>0
-            ϕmax - ϕmin < abs(U) ? Umax = U : Umin = U
-        else
-            ϕmax - ϕmin < abs(U) ? Umin = U : Umax = U
-        end        
-    end
-    bulk = findall(sim.point_types.data .& bulk_bit .> 0)
-    U_min_max = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
-    U2 = isempty(U_min_max) ? U : only(U_min_max)    
-    U = U > 0 ? max(U, U2) : min(U, U2)
-    if verbose
-        @info "The depletion voltage is around $(round(U, digits = Int(ceil(-log10(tolerance))))) ± $(tolerance) $(internal_voltage_unit) applied to contact $(contact_id)."
+
+    bulk = findall((sim.point_types.data .& bulk_bit .> 0))
+    U_cand = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
+    U::T = if length(U_cand) == 0
+        inside = findall(simDV.point_types .& 4 .> 0)
+        U_bisection = _find_depletion_voltage_by_bisection(ϕρ, ϕV, inside, bulk, Umin, Umax, T(tolerance))
+        if verbose
+            @info """The local extremum scan returned no candidates (or no unique candidate). Using alternate bisection calculation.
+            The depletion voltage is $(round(U_bisection, digits = Int(ceil(-log10(tolerance))))) ± $(tolerance) $(internal_voltage_unit) applied to contact $(contact_id)."""
+        end
+        U_bisection
+    else
+        U_cand = mean(Urng) > 0 ? max(U_cand...) : min(U_cand...)
+        if verbose
+            @info "The depletion voltage is $(round(U_cand, digits = 2)) $(internal_voltage_unit) applied to contact $(contact_id)."
+        end
+        U_cand
     end
     if (potential_range[2] - U) < tolerance || (U - potential_range[1]) < tolerance
         throw(ArgumentError("The depletion voltage ($(U * internal_voltage_unit)) is outside or too close to the edge of the search range $(potential_range .* internal_voltage_unit). Widen the range via `Umin`/`Umax`."))
@@ -142,53 +139,98 @@ function estimate_depletion_voltage(sim::Simulation{T},
     return U * u"V"
 end
 
-function _has_local_maxima(ϕ::AbstractArray{T, 3}, 
-    bulk_points::Vector{CartesianIndex{3}}) where {T}
-
+function _has_local_extremum(ϕ::AbstractArray{T, 3}, bulk_points::Vector{CartesianIndex{3}}; verbose::Bool = false) where {T}
     indices = CartesianIndices(ϕ)
     maxI = last(indices)
     minI = first(indices)
     Δ = oneunit(minI)
-    has_local_maxima = 0
     for x₀ in bulk_points
-        is_local_maxima = true
+        is_local_minimum = true
+        is_local_maximum = true
         ϕ₀ = ϕ[x₀]
         neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
         for x in neighbours
             Δx = sum(abs.((x₀ - x).I))
-            ((x₀ == x) || Δx > 1)  && continue
-            is_local_maxima &= ϕ[x] >= ϕ₀
+            ((x₀ == x) || Δx > 1) && continue
+            is_local_minimum &= ϕ[x] > ϕ₀
+            is_local_maximum &= ϕ[x] < ϕ₀
+            (is_local_minimum || is_local_maximum) || break
         end
-        has_local_maxima += is_local_maxima
-        has_local_maxima > 0 && ((@info x₀); break)
+        if is_local_minimum || is_local_maximum
+            verbose && @info "interior local $(is_local_minimum ? "minimum" : "maximum") of the potential at $(x₀.I), ϕ = $ϕ₀"
+            return true
+        end
     end
-    has_local_maxima
+    return false
 end
 
+"""
+    _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3},
+        bulk_points::Vector{CartesianIndex{3}}) where {T}
+
+Determines the range of bias voltages `U` for which at least one of the `bulk_points`
+is a local extremum of the electric potential, i.e. for which the detector is not fully depleted.
+
+The electric potential is linear in the bias voltage,
+
+`ϕ(U) = ϕᵨ + U·ϕᵥ`,
+
+so for a bulk point `x₀` and one of its grid neighbours `x` the sign of the difference
+`ϕ(x₀) - ϕ(x) = δ1 + U·δ2`, with `δ1 = ϕᵨ[x₀] - ϕᵨ[x]` and `δ2 = ϕᵥ[x₀] - ϕᵥ[x]`,
+flips exactly once at `U = -δ1/δ2`. Intersecting these thresholds over all neighbours in the
+surrounding `3×3×3` block yields, for every bulk point, the interval of `U` in which it is a
+local maximum (undepleted n-type region) and the interval in which it is a local minimum
+(undepleted p-type region). Neighbours with `ϕᵥ[x] ≈ ϕᵥ[x₀]` have a `U`-independent ordering
+and can rule out one of the two cases entirely.
+
+The union of all valid intervals is the range of bias voltages for which the detector is undepleted.
+Its extrema are returned: for a positive (negative) bias the detector is fully depleted for all
+`U` above `Umax` (below `Umin`), so `Umax` (`Umin`) is the depletion voltage candidate.
+[`estimate_depletion_voltage`](@ref) uses the candidate lying in its search range to refine the
+result.
+
+## Arguments
+* `ϕᵨ::AbstractArray{T, 3}`: Electric potential resulting only from the impurity density, i.e. the
+    full electric potential minus `V·ϕᵥ`, where `V` is the potential currently applied to the bias contact.
+* `ϕᵥ::AbstractArray{T, 3}`: [`WeightingPotential`](@ref) of the bias contact, on the same grid as `ϕᵨ`.
+* `bulk_points::Vector{CartesianIndex{3}}`: Indices of the grid points to check.
+
+## Returns
+A tuple `(Umin, Umax)` in units of `$(internal_voltage_unit)`. If no bulk point is a local extremum
+for any `U`, the tuple `(Inf, -Inf)` is returned.
+"""
 function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3}, 
         bulk_points::Vector{CartesianIndex{3}}) where {T}
 
-    L = length(bulk_points)
-    Umin = zeros(L)
-    Umax = zeros(L)
+    Umin_all = Inf
+    Umax_all = -Inf
     indices = CartesianIndices(ϕᵥ)
     maxI = last(indices)
     minI = first(indices)
     Δ = oneunit(minI)
-    for (i, x₀) in enumerate(bulk_points)
+    for x₀ in bulk_points
         ϕᵨ₀ = ϕᵨ[x₀]
         ϕᵥ₀ = ϕᵥ[x₀]
         neighbours = max(x₀ - Δ, minI):min(x₀ + Δ, maxI)
-       _uminl = -Inf
-       _uminr = Inf
-       _umaxl = -Inf
-       _umaxr = Inf
+       _uminl = -Inf # local min left bound, to be maximized for most stringent bound
+       _uminr = Inf # local min right bound, to be minimized for most stringent bound
+       _umaxl = -Inf # local max left bound, to be maximized for most stringent bound
+       _umaxr = Inf # local max right bound, to be minimized for most stringent bound
+        min_ok = true
+        max_ok = true
         for x in neighbours
             x₀ == x && continue
             δ1 = ϕᵨ₀ - ϕᵨ[x]
             δ2 = ϕᵥ₀ - ϕᵥ[x]
-            isapprox(δ2, zero(T)) && continue
-            U = -(δ1 / δ2)
+            # min -> p-type: Find U range that solves δϕ = δ1 + U*δ2 < 0  
+            # max -> n-type: Find U range that solves δϕ = δ1 + U*δ2 > 0 
+            # TODO: Optimize the tolerance. Detectors with large regions of very small weighting potential, ϕᵥ, can return no candidates.
+            if isapprox(ϕᵥ₀, ϕᵥ[x], atol = 20*eps(T)) # ordering independent of U
+                δ1 >= 0 && (min_ok = false) # no local minimum for any U, local maximum for every U -> keep [_umaxl, _uminr] = [-Inf, Inf]
+                δ1 <= 0 && (max_ok = false) # no local maximum for any U, local minimum for every U -> keep [_uminl, _uminr] = [-Inf, Inf]
+                continue
+            end
+            U = -(δ1 / δ2) 
             if δ2 > 0
                 _umaxl = max(_umaxl, U)
                 _uminr = min(_uminr, U)
@@ -197,11 +239,35 @@ function _find_depletion_voltage_candidates(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::A
                 _umaxr = min(_umaxr, U)
                 _uminl = max(_uminl, U)
             end
+        end 
+        max_ok &= _umaxl < _umaxr # if out of order -> no local maximum for any U
+        min_ok &= _uminl < _uminr # if out of order -> no local minimum for any U
+        # find greatest (lowest) U for which any bulk point is a local minimum (maximum) -> Above (below) this U depletion is achived
+        for (ok, l, r) in ((max_ok, _umaxl, _umaxr), (min_ok, _uminl, _uminr))
+            ok || continue  # only check valid bounds
+            Umax_all = max(Umax_all, r)
+            Umin_all = min(Umin_all, l)
         end
-        Umin[i] = min((_uminl < _uminr) ? _uminl : Inf, (_umaxl < _umaxr) ? _umaxl : Inf)
-        Umax[i] = max((_uminl < _uminr) ? _uminr : -Inf, (_umaxl < _umaxr) ? _umaxr : -Inf)
     end
-    minimum(Umin), maximum(Umax)
+    Umin_all, Umax_all
+end
+
+function _find_depletion_voltage_by_bisection(ϕᵨ::AbstractArray{T, 3}, ϕᵥ::AbstractArray{T, 3}, 
+        inside_points::Vector{CartesianIndex{3}}, bulk_points::Vector{CartesianIndex{3}}, Umin::T, Umax::T, tol::T) where {T}
+    U::T = NaN
+    ϕ̃ = similar(ϕᵥ)
+    while Umax - Umin > tol
+        U = (Umax + Umin)/2    
+        ϕ̃ .= ϕᵨ .+ T(U) .* ϕᵥ
+        ϕmax = maximum(ϕ̃[inside_points])
+        ϕmin = minimum(ϕ̃[inside_points])
+        if U>0
+            ϕmax - ϕmin < abs(U) && !_has_local_extremum(ϕ̃, bulk_points) ? Umax = U : Umin = U
+        else
+            ϕmax - ϕmin < abs(U) && !_has_local_extremum(ϕ̃, bulk_points) ? Umin = U : Umax = U
+        end        
+    end
+    U
 end
 
 """
