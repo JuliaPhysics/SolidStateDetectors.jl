@@ -2,8 +2,8 @@
     struct EffectiveChargeDensity{T, N, S, AT} <: AbstractArray{T, N}
         
 Effective charge density needed to calculate the [`ElectricPotential`](@ref).
-The effective charge density is the charge density (in C/m³) times the volume of the voxel of the respective
-grid point (in m³). Thus, the unit of the effective charge density is Coulomb (C).
+The effective charge density is the charge density (in C/m³) multiplied with the vacuum permittivity 
+ϵ0 = 8.854 × 10⁻¹² F/m. Thus, the unit of the effective charge density is Coulomb (V/m²).
         
 ## Parametric types 
 * `T`: Element type of `data`.
@@ -29,6 +29,7 @@ end
 
 
 function Base.NamedTuple(ρ::EffectiveChargeDensity{T}) where {T <: SSDFloat}
+    # Legacy: the effective charge density is stored in units of V instead of the correct unit V/m²
     return (
         grid = NamedTuple(ρ.grid),
         values = ρ.data * internal_voltage_unit,
@@ -41,6 +42,7 @@ function EffectiveChargeDensity(nt::NamedTuple)
     T = typeof(ustrip(nt.values[1]))
     S = get_coordinate_system(grid)
     N = get_number_of_dimensions(grid)
+    # Legacy: the effective charge density is parsed in units of V instead of the correct unit V/m²
     EffectiveChargeDensity{T, N, S, typeof(grid.axes)}( ustrip.(uconvert.(internal_voltage_unit, nt.values)), grid)
 end
 Base.convert(T::Type{EffectiveChargeDensity}, x::NamedTuple) = T(x)
