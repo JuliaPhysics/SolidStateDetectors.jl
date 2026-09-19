@@ -1,5 +1,5 @@
 """
-    struct RegularPrism{T,CO,N,TR} <: AbstractVolumePrimitive{T, CO}
+    struct RegularPrism{N,T,CO,TR} <: AbstractVolumePrimitive{T, CO}
 
 Volume primitive describing a [Prism](@ref) with base plates are regular polygons
 which are parallel to the `xy` plane. If the regular polygon base plate is projected to 
@@ -99,11 +99,11 @@ function Geometry(::Type{T}, ::Type{P}, dict::AbstractDict, input_units::NamedTu
     rotation = get_rotation(T, dict, angle_unit)
 
     r = parse_r_of_primitive(T, dict, length_unit)
-    @assert haskey(dict,"h") || haskey(dict,"z") "Please specify 'h' or 'z'."
-    hZ = if haskey(dict, "h")
-        _parse_value(T, dict["h"], length_unit) / 2
+    hZ, z_center = parse_height_of_primitive(T, dict, length_unit)
+    if !iszero(z_center)
+        origin += rotation * CartesianVector{T}(0, 0, z_center)
     end
-    
+
     g = if r isa Tuple # lazy workaround for now
         _get_N_prism(T,P,ClosedPrimitive, r[2], hZ, origin, rotation) -
         _get_N_prism(T,P,ClosedPrimitive, r[1], T(1.1) * hZ, origin, rotation) # increase volume to subtract

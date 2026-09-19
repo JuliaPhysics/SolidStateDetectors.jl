@@ -88,6 +88,12 @@ end
 function check_grid(grid::CartesianGrid3D{T})::Nothing where {T}
     nx::Int, ny::Int, nz::Int = size(grid)
     @assert iseven(nx) "GridError: Field simulation algorithm in cartesian coordinates needs an even number of grid points in x. This is not the case. #x-ticks = $(nx)."
+    if grid.axes[2] isa DiscreteAxis{T, :periodic, :periodic}
+        @assert iseven(ny) "GridError: Field simulation algorithm needs an even number of grid points on the periodic y-axis. This is not the case. #y-ticks = $(ny)."
+    end
+    if grid.axes[3] isa DiscreteAxis{T, :periodic, :periodic}
+        @assert iseven(nz) "GridError: Field simulation algorithm needs an even number of grid points on the periodic z-axis. This is not the case. #z-ticks = $(nz)."
+    end
     return nothing
 end
 
@@ -165,14 +171,14 @@ Base.convert(T::Type{NamedTuple}, x::Grid) = T(x)
 
 
 function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
-    return (searchsortednearest(grid.axes[1].ticks, pt.r), searchsortednearest(grid.axes[2].ticks, pt.φ), searchsortednearest(grid.axes[3].ticks, pt.z))
+    return (searchsortednearest(grid.axes[1], pt.r), searchsortednearest(grid.axes[2], pt.φ), searchsortednearest(grid.axes[3], pt.z))
 end
 function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CylindricalGrid{T})::NTuple{3,Int} where {T <: SSDFloat}
     find_closest_gridpoint(CylindricalPoint(pt),grid)
 end
 
 function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
-    @inbounds return (searchsortednearest(grid.axes[1].ticks, pt.x), searchsortednearest(grid.axes[2].ticks, pt.y), searchsortednearest(grid.axes[3].ticks, pt.z))
+    @inbounds return (searchsortednearest(grid.axes[1], pt.x), searchsortednearest(grid.axes[2], pt.y), searchsortednearest(grid.axes[3], pt.z))
 end
 function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
     find_closest_gridpoint(CartesianPoint(pt),grid)

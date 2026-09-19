@@ -25,9 +25,11 @@ using LightXML
 
 # Add <position> to <define> section, referenced in the geometry definition (in <solids>) via the name
 function create_position(e::AbstractConstructiveGeometry, x_define::XMLElement, name::String, v::Bool)
-    # Calculate relative position of the volumes contained in the parent volume
-    x, y, z = parse_origin(e.b) - parse_origin(e.a)
-   
+    # Offset of the second solid relative to the first, expressed in the frame
+    # of the first solid (the frame the boolean solid is defined in)
+    R1 = RotMatrix{3}(parse_rotation(e.a))
+    x, y, z = transpose(R1) * (parse_origin(e.b) - parse_origin(e.a))
+
     xpos = new_child(x_define, "position")
     set_attributes(xpos, OrderedDict(
         "name" => name,
@@ -71,15 +73,17 @@ function create_rotation(e::AbstractConstructiveGeometry, x_define::XMLElement, 
 
     R_rel = transpose(R1) * R2
 
-    m = RotXYZ(R_rel)
+    # the GDML reader composes Rz(z)Ry(y)Rx(x) and applies it actively
+    # to the second solid, so decompose in Z-Y-X order
+    q = RotZYX(R_rel)
 
     x_rot = new_child(x_define, "rotation")
     set_attributes(x_rot, OrderedDict(
         "name" => name,
-        "x" => m.theta1,
-        "y" => m.theta2,
-        "z" => m.theta3,
-        "unit" => "rad" 
+        "x" => q.theta3,
+        "y" => q.theta2,
+        "z" => q.theta1,
+        "unit" => "rad"
     ))
 end
 
@@ -213,12 +217,12 @@ function parse_geometry(e::AbstractConstructiveGeometry, x_solids::XMLElement, x
         set_attribute(z_1, "ref", pf * string(2 * id))
         set_attribute(z_2, "ref", pf * string(2 * id + 1))
 
-        if !iszero(parse_origin(e))
+        if !iszero(parse_origin(e.b) - parse_origin(e.a))
             z_pos = new_child(y, "positionref")
             posname = pf * "pos_" * string(id)
             set_attribute(z_pos, "ref", posname)
             create_position(e, x_define, posname, v)
-        end 
+        end
 
         if !(parse_rotation(e.a) ≈ parse_rotation(e.b))
             z_rot = new_child(y, "rotationref")
@@ -402,8 +406,10 @@ end
 function parse_geometry(e::RegularPrism{N,T,<:Any}, x_solids::XMLElement, x_define::XMLElement, id::Integer, pf::AbstractString, v::Bool)::Nothing where {T, N}
     if has_volume(e, v)
         y = new_child(x_solids, "polyhedra")
-        
-        r = e.r
+
+        # GDML polyhedra radii are distances to the flat sides (apothem),
+        # SSD RegularPrism.r is the vertex distance (circumradius)
+        r = e.r * cospi(1 / N)
         hZ = e.hZ
         set_attributes(y, OrderedDict(
             "name" => pf * string(id),
@@ -512,20 +518,40 @@ end
 function add_to_world(x_world::XMLElement, x_define::XMLElement, e::AbstractGeometry, name::AbstractString)::Nothing
     x_vol_ref = new_child(x_world, "volumeref")
     set_attribute(x_vol_ref, "ref", name)
-    
+
     x_pos_ref = new_child(x_world, "positionref")
     set_attribute(x_pos_ref, "ref", "pos_" * name)
-    
-    x_pos_ref = new_child(x_define, "position")
+
+    R = RotMatrix{3}(parse_rotation(e))
+    if !isone(R)
+        x_rot_ref = new_child(x_world, "rotationref")
+        set_attribute(x_rot_ref, "ref", "rot_" * name)
+    end
+
+    x_pos = new_child(x_define, "position")
     parsed_e = parse_origin(e)
     x, y, z = parsed_e.x, parsed_e.y, parsed_e.z
-    set_attributes(x_pos_ref, OrderedDict(
+    set_attributes(x_pos, OrderedDict(
         "name" => "pos_" * name,
         "x" => x,
         "y" => y,
         "z" => z,
         "unit" => SolidStateDetectors.internal_length_unit
     ))
+
+    if !isone(R)
+        # GDML physvol rotations are passive: the reader builds Rz(z)Ry(y)Rx(x)
+        # and the daughter solid appears rotated by its inverse in the mother frame
+        q = RotZYX(transpose(R))
+        x_rot = new_child(x_define, "rotation")
+        set_attributes(x_rot, OrderedDict(
+            "name" => "rot_" * name,
+            "x" => q.theta3,
+            "y" => q.theta2,
+            "z" => q.theta1,
+            "unit" => "rad"
+        ))
+    end
     nothing
 end
 

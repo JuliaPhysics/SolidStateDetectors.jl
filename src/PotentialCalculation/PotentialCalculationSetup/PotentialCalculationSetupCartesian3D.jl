@@ -2,11 +2,13 @@
 function set_passive_or_contact_points(point_types::Array{PointType, 3}, potential::Array{T, 3},
                         grid::CartesianGrid3D{T}, obj, pot::T, is_inactive_layer_contact::Bool, use_nthreads::Int = 1) where {T}
     if !isnan(pot)
+        bs_c, bs_r = ConstructiveSolidGeometry.bounding_sphere(obj)
+        bs_r2::T = bs_r^2
         @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
             @inbounds for iy in axes(potential, 2)
                 for ix in axes(potential, 1)
                     pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
-                    if pt in obj
+                    if distance_squared(pt - bs_c) <= bs_r2 && pt in obj
                         potential[ ix, iy, iz ] = pot
                         point_types[ ix, iy, iz ] = zero(PointType)
                         point_types[ ix, iy, iz ] |= inactive_contact_bit * is_inactive_layer_contact
@@ -25,17 +27,19 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
         not_only_paint_contacts::Val{NotOnlyPaintContacts} = Val{true}(),
         paint_contacts::Val{PaintContacts} = Val{true}())::Nothing where {T <: SSDFloat, NotOnlyPaintContacts, PaintContacts}
 
+    sc_bs_c, sc_bs_r = ConstructiveSolidGeometry.bounding_sphere(det.semiconductor.geometry)
+    sc_bs_r2::T = sc_bs_r^2
     @onthreads 1:use_nthreads for iz in workpart(axes(potential, 3), 1:use_nthreads, Base.Threads.threadid())
         @inbounds for iy in axes(potential, 2)
             for ix in axes(potential, 1)
                 pt::CartesianPoint{T} = CartesianPoint{T}( grid.axes[1].ticks[ix], grid.axes[2].ticks[iy], grid.axes[3].ticks[iz] )
-                if in(pt, det.semiconductor)
+                if distance_squared(pt - sc_bs_c) <= sc_bs_r2 && in(pt, det.semiconductor)
                     point_types[ ix, iy, iz ] += pn_junction_bit
                 end
             end
         end
     end
-    
+
     isEP = ismissing(weighting_potential_contact_id)
     is_inactive_layer_contact::Bool = false
     
@@ -66,14 +70,16 @@ function set_point_types_and_fixed_potentials!(point_types::Array{PointType, 3},
     nothing
 end
 
-function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T}, 
+function fill_ρimp_ϵ_ρfix(ρ_eff_imp_tmp::Array{T}, ϵ::Array{T}, ρ_eff_fix_tmp::Array{T},
     ::Type{Cartesian}, mpz::Vector{T}, mpy::Vector{T}, mpx::Vector{T}, use_nthreads::Int, obj) where {T}
+    bs_c, bs_r = ConstructiveSolidGeometry.bounding_sphere(obj.geometry)
+    bs_r2::T = bs_r^2
     @inbounds begin
         @onthreads 1:use_nthreads for iz in workpart(axes(ϵ, 3), 1:use_nthreads, Base.Threads.threadid())
             for iy in axes(ϵ, 2)
                 for ix in axes(ϵ, 1)
                     pt::CartesianPoint{T} = CartesianPoint{T}(mpx[ix], mpy[iy], mpz[iz])
-                    if pt in obj
+                    if distance_squared(pt - bs_c) <= bs_r2 && pt in obj
                         ρ_eff_imp_tmp[ix, iy, iz]::T, ϵ[ix, iy, iz]::T, ρ_eff_fix_tmp[ix, iy, iz]::T = get_ρimp_ϵ_ρfix(pt, obj)
                     end
                 end
