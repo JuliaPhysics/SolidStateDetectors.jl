@@ -1,0 +1,117 @@
+cff-version: 1.2.0
+message: "When using SolidStateDetectors.jl for research, teaching or similar, please cite it as below."
+repository-code: "https://github.com/JuliaPhysics/SolidStateDetectors.jl"
+title: "SolidStateDetectors.jl: Solid state detector field and charge drift simulation in Julia"
+type: software
+authors:
+  - family-names: Abt
+    given-names: Iris
+    orcid: "https://orcid.org/0009-0003-8821-5048"
+  - family-names: Alvarez Garcia
+    given-names: Claudia
+    orcid: "https://orcid.org/0000-0003-4768-8589"
+  - family-names: Fischer
+    given-names: Felix
+    orcid: "https://orcid.org/0009-0008-8340-1104"
+  - family-names: Hagemann
+    given-names: Felix
+    orcid: "https://orcid.org/0000-0001-5021-3328"
+  - family-names: Hauertmann
+    given-names: Lukas
+    orcid: "https://orcid.org/0000-0002-7570-7540"
+  - family-names: Hervas Aguilar
+    given-names: David
+    orcid: "https://orcid.org/0000-0002-9686-0659"
+  - family-names: Schulz
+    given-names: Oliver
+    orcid: "https://orcid.org/0000-0002-4200-5905"
+  - family-names: Schuster
+    given-names: Martin
+    orcid: "https://orcid.org/0009-0000-1713-6391"
+  - family-names: Zhang
+    given-names: Peng
+    orcid: "https://orcid.org/0009-0005-0472-0130"
+  - family-names: Zsigmond
+    given-names: Anna Julia
+    orcid: "https://orcid.org/0000-0002-3368-8863"
+  - name: "SolidStateDetectors.jl contributors"
+  - website: "https://github.com/JuliaPhysics/SolidStateDetectors.jl/graphs/contributors"
+license: "MIT"
+
+# First paper on SolidStateDetectors.jl at v0.5
+preferred-citation:
+  type: article
+  title: "Simulation of semiconductor detectors in 3D with SolidStateDetectors.jl"
+  authors:
+    - family-names: Abt
+      given-names: Iris
+      orcid: "https://orcid.org/0009-0003-8821-5048"
+    - family-names: Fischer
+      given-names: Felix
+      orcid: "https://orcid.org/0009-0008-8340-1104"
+    - family-names: Hagemann
+      given-names: Felix
+      orcid: "https://orcid.org/0000-0001-5021-3328"
+    - family-names: Hauertmann
+      given-names: Lukas
+      orcid: "https://orcid.org/0000-0002-7570-7540"
+    - family-names: Schulz
+      given-names: Oliver
+      orcid: "https://orcid.org/0000-0002-4200-5905"
+    - family-names: Schuster
+      given-names: Martin
+      orcid: "https://orcid.org/0009-0000-1713-6391"
+    - family-names: Zsigmond
+      given-names: Anna Julia
+      orcid: "https://orcid.org/0000-0002-3368-8863"
+  year: 2021
+  journal: "Journal of Instrumentation"
+  volume: 16
+  issue: 8
+  start: P08007
+  doi: "10.1088/1748-0221/16/08/P08007"
+
+references:
+  # Reference for the reduced-charge collection layer work introduced in v0.11
+  - type: article
+    title: "Pulse shape simulation for the reduced charge collection layer in p-type high-purity germanium detectors"
+    authors:
+      - family-names: Zhang
+        given-names: Peng
+        orcid: "https://orcid.org/0009-0005-0472-0130"
+      - family-names: Dai
+        given-names: Wenhan
+        orcid: "https://orcid.org/0000-0003-1732-7985"
+      - family-names: Zhang
+        given-names: Qiuli
+        orcid: "https://orcid.org/0009-0004-9929-640X"
+      - family-names: Hagemann
+        given-names: Felix
+        orcid: "https://orcid.org/0000-0001-5021-3328"
+      - family-names: Schulz
+        given-names: Oliver
+        orcid: "https://orcid.org/0000-0002-4200-5905"
+      - family-names: Alvarez Garcia
+        given-names: Claudia
+        orcid: "https://orcid.org/0000-0002-4200-5905"
+      - family-names: Yang
+        given-names: Litao
+        orcid: "https://orcid.org/0000-0002-1859-3655"
+      - family-names: Yue
+        given-names: Qian
+        orcid: "https://orcid.org/0000-0002-6968-8953"
+      - family-names: Zeng
+        given-names: Zhi
+        orcid: "https://orcid.org/0000-0003-1243-7675"
+      - family-names: Cheng
+        given-names: Jianping
+      - family-names: Ma
+        given-names: Hao
+        orcid: "https://orcid.org/0000-0001-8585-6665"
+    year: 2026
+    journal: "European Journal of Physics C"
+    volume: 86
+    issue: 3
+    start: 303
+    doi: "10.1140/epjc/s10052-026-15508-3"
+
