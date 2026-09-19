@@ -122,16 +122,16 @@ function estimate_depletion_voltage(sim::Simulation{T},
 
     bulk = findall((sim.point_types.data .& bulk_bit .> 0) .& (sim.point_types.data .& inactive_layer_bit .== 0))
     U_cand = filter(in(Urng), _find_depletion_voltage_candidates(ϕρ, ϕV, bulk))
-    U::T = if length(U_cand) != 1 
+    U::T = if length(U_cand) == 0 
         inside = findall((simDV.point_types .& 4 .> 0) .& (simDV.point_types .& inactive_layer_bit .== 0))
         U_bisection = _find_depletion_voltage_by_bisection(ϕρ, ϕV, inside, bulk, Umin, Umax, tol)
         if verbose
-            @info """The local extremum scan returned no candidates (or no unique candidate). Using alternate bisection calculation.
+            @info """The local extremum scan returned no candidates. Using alternate bisection calculation.
             The depletion voltage is $(round(U_bisection, digits = Int(ceil(-log10(tol))))) ± $(tol) $(internal_voltage_unit) applied to contact $(contact_id)."""
         end
         U_bisection
     else
-        U_cand = only(U_cand)
+        U_cand = mean(Urng) > 0 ? max(U_cand...) : min(U_cand...)
         if verbose
             @info "The depletion voltage is $(round(U_cand, digits = 2)) $(internal_voltage_unit) applied to contact $(contact_id)."
         end
