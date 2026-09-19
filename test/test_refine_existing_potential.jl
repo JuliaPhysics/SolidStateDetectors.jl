@@ -139,7 +139,7 @@ end
         sim_2d = @test_nowarn Simulation{T}(config_dict)
 
         # Test normal behaviour 2D
-        timed_calculate_electric_potential!(sim_2d, verbose = false, depletion_handling = true)
+        timed_calculate_electric_potential!(sim_2d, verbose = false, depletion_handling = true, convergence_limit = 1e-5)
         grid_ax1_2d = length(sim_2d.electric_potential.grid[1])
         grid_ax2_2d = length(sim_2d.electric_potential.grid[2])
         grid_ax3_2d = length(sim_2d.electric_potential.grid[3])
@@ -177,7 +177,7 @@ end
             "boundaries"   => "inf"
         )
         sim_cyl = @test_nowarn Simulation{T}(config_dict)
-        timed_calculate_electric_potential!(sim_cyl, verbose = false, depletion_handling = true)
+        timed_calculate_electric_potential!(sim_cyl, verbose = false, depletion_handling = true, convergence_limit = 1e-5)
         grid_ax1_cyl = length(sim_cyl.electric_potential.grid[1])
         grid_ax2_cyl = length(sim_cyl.electric_potential.grid[2])
 	    grid_ax3_cyl = length(sim_cyl.electric_potential.grid[3])
@@ -204,7 +204,7 @@ end
             "boundaries"   => "inf"
         )
         sim_cart = @test_nowarn Simulation{T}(config_dict)
-        timed_calculate_electric_potential!(sim_cart, verbose = false, depletion_handling = true)
+        timed_calculate_electric_potential!(sim_cart, verbose = false, depletion_handling = true, convergence_limit = 1e-5)
         grid_ax1_cart = length(sim_cart.electric_potential.grid[1])
         grid_ax2_cart = length(sim_cart.electric_potential.grid[2])
 	    grid_ax3_cart = length(sim_cart.electric_potential.grid[3])
