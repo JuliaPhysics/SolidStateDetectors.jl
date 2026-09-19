@@ -2,8 +2,8 @@
     struct EffectiveChargeDensity{T, N, S, AT} <: AbstractArray{T, N}
         
 Effective charge density needed to calculate the [`ElectricPotential`](@ref).
-The effective charge density is the charge density (in C/m³) times the volume of the voxel of the respective
-grid point (in m³). Thus, the unit of the effective charge density is Coulomb (C).
+The effective charge density is the charge density (in C/m³) multiplied with the vacuum permittivity
+ϵ0 = 8.854 × 10⁻¹² F/m. Thus, the unit of the effective charge density is V/m².
         
 ## Parametric types 
 * `T`: Element type of `data`.
