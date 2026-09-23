@@ -190,6 +190,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         maximum_applied_potential::T = maximum(contact_potentials)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
         gauge_ref_potential::T = is_weighting_potential ? zero(T) : sum(contact_potentials) / length(contact_potentials)
+        boundary_ref_potential::T = is_weighting_potential ? minimum_applied_potential : _infinite_boundary_reference_potential(det, minimum_applied_potential)
         sor_consts = [sor_consts]
 
         medium_ϵ_r::T = medium.ϵ_r
@@ -344,6 +345,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         maximum_applied_potential,
         minimum_applied_potential,
         gauge_ref_potential,
+        boundary_ref_potential,
         grid_boundary_factors
     )
     return pcs

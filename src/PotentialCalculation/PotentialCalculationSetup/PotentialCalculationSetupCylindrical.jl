@@ -210,6 +210,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
 
         gauge_ref_potential::T = is_weighting_potential ? zero(T) : sum(contact_potentials) / length(contact_potentials)
+        boundary_ref_potential::T = is_weighting_potential ? minimum_applied_potential : _infinite_boundary_reference_potential(det, minimum_applied_potential)
         sor_slope = (sor_consts[2] .- sor_consts[1]) / (nr - 1 )
         sor_const::Vector{T} = T[ sor_consts[1] + (i - 1) * sor_slope for i in 1:nr]
 
@@ -424,6 +425,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         maximum_applied_potential,
         minimum_applied_potential,
         gauge_ref_potential,
+        boundary_ref_potential,
         grid_boundary_factors
      )
 

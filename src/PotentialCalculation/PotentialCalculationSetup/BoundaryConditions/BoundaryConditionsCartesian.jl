@@ -159,7 +159,7 @@ end
 # cells along `dim` (`margin` cells on each side, one red/black color) by
 # Δ, so the `:infinite` formula (which decays each edge cell toward
 # literal 0 in whatever frame `rbpot` is currently in) can be made to
-# decay toward `minimum_applied_potential` in real terms without shifting
+# decay toward `boundary_ref_potential` in real terms without shifting
 # the whole grid every iteration -- this runs every SOR iteration, so a
 # full-array shift would be a real slowdown.
 #
@@ -187,7 +187,7 @@ end
 
 function apply_boundary_conditions!(pcs::PotentialCalculationSetup{T, Cartesian}, update_even_points::Val{even_points}, only2d::Val{only_2d}) where {T, even_points, only_2d}
     rbi::Int = even_points ? rb_even::Int : rb_odd::Int
-    Δ::T = pcs.minimum_applied_potential - pcs.gauge_ref_potential
+    Δ::T = pcs.boundary_ref_potential - pcs.gauge_ref_potential
     _shift_axis_margin!(pcs.potential, 1, rbi, -Δ)
     apply_boundary_conditions_on_x_axis!( pcs.potential, rbi, pcs.grid.axes[1], pcs.grid.axes[1].interval, pcs.grid_boundary_factors[1])
     _shift_axis_margin!(pcs.potential, 1, rbi, Δ)
