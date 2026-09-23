@@ -8,7 +8,7 @@ grid:
   coordinates: cylindrical
   axes:
     r:
-      to: 300
+      to: 60
       boundaries: inf
     phi:
       from: 0
@@ -17,8 +17,8 @@ grid:
         left: periodic
         right: periodic
     z:
-      from: -300
-      to: 300
+      from: -20
+      to: 60
       boundaries:
         left: inf
         right: inf

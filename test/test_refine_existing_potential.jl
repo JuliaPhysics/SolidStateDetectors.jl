@@ -89,9 +89,9 @@ end
     # more resolution is needed near the domain edges.
     sim = Simulation{T}(cf)
     timed_calculate_electric_potential!(sim)
-    @test length(sim.electric_potential.grid[1]) == 48
+    @test length(sim.electric_potential.grid[1]) == 36
     @test length(sim.electric_potential.grid[2]) == 1
-    @test length(sim.electric_potential.grid[3]) == 78
+    @test length(sim.electric_potential.grid[3]) == 62
 
     # Cartesian Case um
     cf_cart = deepcopy(cf)
@@ -110,9 +110,9 @@ end
     timed_calculate_electric_potential!(sim_cart)
 
     # See the -3000V/0V gauge-consistency note above.
-    @test length(sim_cart.electric_potential.grid[1]) == 90
-    @test length(sim_cart.electric_potential.grid[2]) == 90
-    @test length(sim_cart.electric_potential.grid[3]) == 58
+    @test length(sim_cart.electric_potential.grid[1]) == 60
+    @test length(sim_cart.electric_potential.grid[2]) == 60
+    @test length(sim_cart.electric_potential.grid[3]) == 62
 
     grid_lengths = length.(sim_cart.electric_potential.grid)
     @test maximum(grid_lengths) - minimum(grid_lengths) <= 2
@@ -123,9 +123,9 @@ end
     sim_cart_mm = Simulation{T}(cf_cart_mm)
     timed_calculate_electric_potential!(sim_cart_mm)
 
-    @test length(sim_cart_mm.electric_potential.grid[1]) == 86
-    @test length(sim_cart_mm.electric_potential.grid[2]) == 86
-    @test length(sim_cart_mm.electric_potential.grid[3]) == 58
+    @test length(sim_cart_mm.electric_potential.grid[1]) == 60
+    @test length(sim_cart_mm.electric_potential.grid[2]) == 60
+    @test length(sim_cart_mm.electric_potential.grid[3]) == 64
 end
 
 @testset "Surface refinement edge cases" begin
