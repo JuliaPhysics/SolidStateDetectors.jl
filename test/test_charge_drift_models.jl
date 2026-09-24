@@ -776,3 +776,9 @@ end
     @test isapprox(sum(nb_zero_cyl.energies), ustrip.(u"eV", Edep))
     @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero_cyl.locations)
 end
+
+@timed_testset "ADL2016 zero-field guard" begin
+    cdm2016 = ADL2016ChargeDriftModel(T = T)
+    @test getVe(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
+    @test getVh(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
+end
