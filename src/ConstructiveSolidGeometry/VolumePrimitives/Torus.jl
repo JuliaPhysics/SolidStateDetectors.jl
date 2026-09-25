@@ -132,8 +132,8 @@ const HollowThetaTorus{T,CO} = Torus{T,CO,Tuple{T,T},T,Nothing,Nothing,Nothing}
 
 function _get_conemantle_type(θ::Tuple{T,T})::Tuple{Symbol, Symbol} where {T}
     θ1::T, θ2::T = θ
-    return ( mod(θ1, π) == 0 ? :flat : (mod(θ1, 2π) in 0..π ? :inwards : :outwards), 
-             mod(θ2, π) == 0 ? :flat : (mod(θ2, 2π) in 0..π ? :outwards : :inwards))
+    return ( mod(θ1, T(π)) == 0 ? :flat : (mod(θ1, T(2π)) in 0..π ? :inwards : :outwards), 
+             mod(θ2, T(π)) == 0 ? :flat : (mod(θ2, T(2π)) in 0..π ? :outwards : :inwards))
 end
 
 _get_conemantle_type(::Nothing) = (Nothing, Nothing)
@@ -172,9 +172,9 @@ function Dictionary(t::Torus{T,<:Any,TR})::OrderedDict{String, Any} where {T,TR}
     if !isnothing(t.φ) dict["phi"]   = OrderedDict("from" => "0°", "to" => string(rad2deg(t.φ))*"°") end
     if !isnothing(t.θ) dict["theta"] = OrderedDict("from" => string(rad2deg(t.θ[1]))*"°", "to" => string(rad2deg(t.θ[2]))*"°") end
     if !iszero(t.origin) dict["origin"] = Dictionary(t.origin) end
-    if !isone(t.rotation) 
+    if !isone(t.rotation)
         d = Dictionary(t.rotation)
-        if unique(keys(d)) == ["Z"]
+        if unique(keys(d)) == ["Z"] && !isnothing(t.φ)
             φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
             dict["phi"] = OrderedDict("from" => string(rad2deg(φ0))*"°", "to" => string(rad2deg(φ0 + t.φ))*"°")
         else

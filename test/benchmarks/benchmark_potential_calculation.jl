@@ -6,12 +6,11 @@ exec julia --color=yes --startup-file=no --threads=auto "${BASH_SOURCE[0]}" "$@"
 
 recalculate = in("overwrite", ARGS)
 
-using CUDAKernels, CUDA
+using CUDA
 using SolidStateDetectors
 using DataFrames, JLD2
 using BenchmarkTools
 using KernelAbstractions
-using KernelAbstractions: get_device
 
 using SolidStateDetectors: 
     ConstructiveSolidGeometry.AbstractCoordinateSystem,
