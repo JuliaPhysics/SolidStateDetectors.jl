@@ -178,7 +178,7 @@ function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CylindricalGrid{T})
 end
 
 function find_closest_gridpoint(pt::CartesianPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
-    @inbounds return (searchsortednearest(grid.axes[1], pt.x), searchsortednearest(grid.axes[2], pt.y), searchsortednearest(grid.axes[3], pt.z))
+    return (searchsortednearest(grid.axes[1], pt.x), searchsortednearest(grid.axes[2], pt.y), searchsortednearest(grid.axes[3], pt.z))
 end
 function find_closest_gridpoint(pt::CylindricalPoint{T}, grid::CartesianGrid3D{T})::NTuple{3,Int} where {T <: SSDFloat}
     find_closest_gridpoint(CartesianPoint(pt),grid)
