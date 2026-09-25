@@ -11,6 +11,8 @@ import SolidStateDetectors.ConstructiveSolidGeometry as CSG
     # Surface sample points of CSG differences may lie on the (oversized)
     # subtracted solid outside the actual geometry, so filter by membership.
     T = Float32
+    
+    # Run tests on example detector configuration files
     for (key, path) in SSD_examples
         endswith(path, ".yaml") || continue
         sim = try Simulation{T}(path) catch; continue end
@@ -29,7 +31,22 @@ import SolidStateDetectors.ConstructiveSolidGeometry as CSG
             @test n_out == 0
         end
     end
+
+    # Run tests on example primitive configuration files
+    CSGdir = joinpath(SolidStateDetectors.get_path_to_example_config_files(), "..", "example_primitive_files")
+    for path in joinpath.(CSGdir, readdir(CSGdir))
+        endswith(path, ".yaml") || continue
+        g = try CSG.Geometry(T, path) catch; continue end
+        center, radius = CSG.bounding_sphere(g)
+        r2 = radius^2
+        n_out = count(CSG.sample(g, radius / 100)) do p
+            cp = CartesianPoint(p)
+            in(cp, g) && CSG.distance_squared(cp - center) > r2
+        end
+        @test n_out == 0
+    end
 end
+
 
 @testset "Bounding sphere set operations" begin
     T = Float64
