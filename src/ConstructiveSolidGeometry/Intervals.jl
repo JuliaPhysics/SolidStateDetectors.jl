@@ -37,8 +37,8 @@ end
 Return the nearest azimuthal boundary (0 or φMax) for segmented surfaces with φ ∈ [0, φMax].
 """
 @inline function _φNear(φ::T, φMax::T) where T
-    φ = mod(φ, 2π)
-    φMax = mod(φMax, 2π)
+    φ = mod(φ, T(2π))
+    φMax = mod(φMax, T(2π))
     # distance to lower boundary (0)
     d0 = min(φ, 2π - φ)
     # distance to upper boundary (φMax)

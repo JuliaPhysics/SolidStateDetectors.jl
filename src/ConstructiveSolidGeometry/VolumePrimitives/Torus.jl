@@ -132,8 +132,8 @@ const HollowThetaTorus{T,CO} = Torus{T,CO,Tuple{T,T},T,Nothing,Nothing,Nothing}
 
 function _get_conemantle_type(θ::Tuple{T,T})::Tuple{Symbol, Symbol} where {T}
     θ1::T, θ2::T = θ
-    return ( mod(θ1, π) == 0 ? :flat : (mod(θ1, 2π) in 0..π ? :inwards : :outwards), 
-             mod(θ2, π) == 0 ? :flat : (mod(θ2, 2π) in 0..π ? :outwards : :inwards))
+    return ( mod(θ1, T(π)) == 0 ? :flat : (mod(θ1, T(2π)) in 0..π ? :inwards : :outwards), 
+             mod(θ2, T(π)) == 0 ? :flat : (mod(θ2, T(2π)) in 0..π ? :outwards : :inwards))
 end
 
 _get_conemantle_type(::Nothing) = (Nothing, Nothing)
