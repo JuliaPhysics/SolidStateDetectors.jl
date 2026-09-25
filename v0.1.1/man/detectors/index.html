@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Detectors · SolidStateDetectors.jl</title><link rel="canonical" href="https://JuliaHEP.github.io/SolidStateDetectors.jl/stable/man/detectors/index.html"/><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>SolidStateDetectors.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><span class="toctext">Manual</span><ul><li><a class="toctext" href="../installation/">Installation</a></li><li class="current"><a class="toctext" href>Detectors</a><ul class="internal"><li><a class="toctext" href="#Example-1)-Inverted-Coax-1">Example 1) Inverted Coax</a></li></ul></li><li><a class="toctext" href="../electric_potentials/">Electric Potentials</a></li><li><a class="toctext" href="../weighting_potentials/">Weighting Potentials</a></li><li><a class="toctext" href="../electric_fields/">Electric Fields</a></li><li><a class="toctext" href="../drift_fields/">Drift Fields</a></li><li><a class="toctext" href="../IO/">IO</a></li></ul></li><li><a class="toctext" href="../../api/">API</a></li><li><a class="toctext" href="../../LICENSE/">LICENSE</a></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href>Detectors</a></li></ul><a class="edit-page" href="https://github.com/JuliaHEP/SolidStateDetectors.jl/blob/master/docs/src/man/detectors.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Detectors</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Detectors-1" href="#Detectors-1">Detectors</a></h1><p>Currently, three classes of detectors are supported: Coaxial, Inverted Coax, and BEGe type detectors. </p><p>All detector properties are specified in a one-for-all .json file. </p><h2><a class="nav-anchor" id="Example-1)-Inverted-Coax-1" href="#Example-1)-Inverted-Coax-1">Example 1) Inverted Coax</a></h2><p>Example minimum config file for an Inverted Coax detector (IVC) plus explanations.  <strong>Remember</strong>, comments are not allowed in JSON files and have to be deleted if you want to use it.</p><pre><code class="language-json">{
+    &quot;name&quot;:&quot;ExampleInvertedCoax&quot;, // Arbitrary name of the detector
+    &quot;class&quot;:&quot;InvertedCoax&quot;,  // either &quot;Coax&quot;, &quot;BEGe&quot;, &quot;InvertedCoax&quot;
+    &quot;type&quot;:&quot;p&quot;, // either &quot;p&quot;, &quot;ptype&quot;, &quot;p-type&quot;, &quot;n&quot;, &quot;ntype&quot; or &quot;n-type&quot;
+    &quot;cyclic&quot;:0, // The periodicity of the detector in degree. 
+                // `0` means complete symmetric in ϕ -&gt; 2D simulation. 
+                // The condition &quot;360 / `cyclic` = n; n = 1, 2, 3, ...&quot; must be fulfilled.
+    &quot;materials&quot;:{
+        &quot;detector&quot;:&quot;HPGe&quot;,  // Material of the detector 
+        &quot;environment&quot;:&quot;Vacuum&quot; // Material of the environment
+    },
+    &quot;geometry&quot;:
+    {
+        &quot;unit&quot;: &quot;mm&quot;, // unit of the values which the user specifies in this config file
+        &quot;crystal&quot;:
+        {
+            &quot;length&quot;: 80.0, // crystal goes from z=0mm to z=80mm
+            &quot;radius&quot;: 35.0  // crystal goes from r=0mm to r=35mm
+        },
+        &quot;point_contact&quot;:
+        {
+            &quot;endplate&quot;:&quot;bot&quot;,
+            &quot;depth&quot;:3e-4,
+            &quot;radius&quot;:9.5
+        },
+        &quot;groove&quot;:
+        {
+            &quot;endplate&quot;:&quot;bot&quot;,
+            &quot;rInner&quot;:13.5,
+            &quot;width&quot;:0.0,
+            &quot;depth&quot;:0.0
+        },
+        &quot;borehole&quot;: // IVC: Borehole starts at the top of the crystal 
+        {
+          &quot;length&quot;:55.0,
+          &quot;radius&quot;:5.0
+        },
+        &quot;taper&quot;: 
+        {
+            &quot;outer&quot;:
+            {
+                &quot;rInner&quot;:24.42,
+                &quot;length&quot;:60
+            },
+            &quot;inner&quot;:
+            {
+                &quot;rOuter&quot;:0,
+                &quot;length&quot;:0
+            }
+        }
+    },
+    &quot;charge_carrier_density&quot;:
+    {
+        &quot;unit&quot;: &quot;cm-3&quot;,
+        &quot;top&quot;: 0.94, // times 10^10
+        &quot;bot&quot;: 1.10  // just the absolute value. The sign is determined through the bulk material
+    },
+    &quot;segmentation&quot;:
+    {
+        &quot;n_contacts_total&quot;: 3, // n-contacts + p-contacts
+        &quot;core&quot;: // core = n-contact of the detector
+        {
+            &quot;type&quot;: &quot;Tubs&quot;, // &quot;Box&quot; volume in cylindrical coordinates
+            &quot;rStart&quot;: 0.0,
+            &quot;rStop&quot;: 3.0,
+            &quot;phiStart&quot;: 0,
+            &quot;phiStop&quot;: 360,
+            &quot;zStart&quot;: 0.0,
+            &quot;zStop&quot;: 0.0,
+            &quot;potential&quot;: 0.0 // Bias voltage of the core
+        },        
+        &quot;n_individual_segments&quot;: 2, // now the p-contacts
+        &quot;S1&quot;:
+        {
+            &quot;type&quot;: &quot;Tubs&quot;,
+            &quot;rStart&quot;: 15.0,
+            &quot;rStop&quot;: 35.0,
+            &quot;phiStart&quot;: 0,
+            &quot;phiStop&quot;: 360,
+            &quot;zStart&quot;: 0,
+            &quot;zStop&quot;: 0,
+            &quot;potential&quot;: 3500.0, // Bias voltage of this segment
+            &quot;boundaryWidth&quot;:
+            {
+                &quot;radial&quot;:0.0,
+                &quot;vertical&quot;: 0.0,
+                &quot;horizontal&quot;: 0.0
+            },
+            &quot;repetitive&quot;:false,
+            &quot;repetitions&quot;:
+            {
+                &quot;radial&quot;:0,
+                &quot;vertical&quot;: 0,
+                &quot;horizontal&quot;: 5
+            }
+        },
+        &quot;S2&quot;:
+        {
+            &quot;type&quot;: &quot;Tubs&quot;,
+            &quot;rStart&quot;: 35.0,
+            &quot;rStop&quot;: 35.0,
+            &quot;phiStart&quot;: 0,
+            &quot;phiStop&quot;: 360,
+            &quot;zStart&quot;: 0.0,
+            &quot;zStop&quot;: 20.0,
+            &quot;potential&quot;: 3500.0, // Bias voltage of this segment
+            &quot;boundaryWidth&quot;:
+            {
+                &quot;radial&quot;:0.0,
+                &quot;vertical&quot;: 0.0,
+                &quot;horizontal&quot;: 0.0
+            },
+            &quot;repetitive&quot;:false,
+            &quot;repetitions&quot;:
+            {
+                &quot;radial&quot;: 0,
+                &quot;vertical&quot;: 0,
+                &quot;horizontal&quot;: 5
+            }
+        },
+        &quot;custom_grouping&quot;:false, // Multiple geometrical segments can build up one contact:
+                                 // Specify which geometrical segments belong to which contact
+                                 // To specify geometrical segments `3`, `4`, `5`, `6` use &quot;3-4-5-6&quot; (not only &quot;3-6&quot;)
+        &quot;Chn1&quot;:&quot;1&quot;,    // contact &quot;Chn1&quot; is build through the geometrical segment `1`. (This is the core in this case)
+        &quot;Chn2&quot;:&quot;2-3&quot;   // contact &quot;Chn2&quot; is build through the geometrical segments `2` &amp; `3`. 
+    }
+}</code></pre><footer><hr/><a class="previous" href="../installation/"><span class="direction">Previous</span><span class="title">Installation</span></a><a class="next" href="../electric_potentials/"><span class="direction">Next</span><span class="title">Electric Potentials</span></a></footer></article></body></html>
