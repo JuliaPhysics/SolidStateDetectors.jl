@@ -29,7 +29,7 @@ depends on the grid, the constant is linear increased and the array holds the re
 * `maximum_applied_potential`: Used for depletion handling, but might be obsolete by now.
 * `minimum_applied_potential`: Used for depletion handling.
 * `gauge_ref_potential`: The reference potential used as the interior SOR seed (instead of a hardcoded `0`). Defined as the mean of the applied contact potentials (or `0` for a weighting-potential solve), this is equivariant under both a uniform additive shift of all contact potentials AND a global sign flip, so it stays gauge-consistent under both transformations. Note this is a different reference than the one `:infinite` decays towards (see `boundary_ref_potential` below); `apply_boundary_conditions!` translates between the two frames each SOR pass.
-* `boundary_ref_potential`: The value the `:infinite` boundary condition decays towards (instead of a hardcoded `0`). For a weighting-potential solve this is `minimum_applied_potential`. For an electric-potential solve, see `_infinite_boundary_reference_potential`.
+* `boundary_ref_potential`: The value the `:infinite` boundary condition decays towards (instead of a hardcoded `0`). For an electric-potential solve this is the potential of the surroundings (`World.surroundings_potential`, default `0`), to which `:fixed` boundaries are fixed as well. For a weighting-potential solve it is `0`.
 * `grid_boundary_factors`: Used in the application of boundary conditions in the field calculation for decaying (infinite) boundary conditions
 to approximate the decay of the potential (depending on the grid).
 """
@@ -59,13 +59,15 @@ struct PotentialCalculationSetup{
     grid_boundary_factors::NTuple{3, NTuple{2, T}}
 end
 
-# By this codebase's convention (see `determine_bias_voltage_contact_id`), exactly one contact
-# carries the bias and every other contact is grounded at `0`, so decay toward `0` when that
-# holds. Falls back to `minimum_applied_potential` (exactly translation invariant) otherwise.
-function _infinite_boundary_reference_potential(det::SolidStateDetector{T}, minimum_applied_potential::T) where {T}
-    contact_potentials = T[c.potential for c in det.contacts]
-    isempty(contact_potentials) && return zero(T)
-    count(!iszero, contact_potentials) == 1 ? zero(T) : minimum_applied_potential
+# `:fixed` boundaries never update the extended (ghost) layer of the red-black array, so it holds the
+# potential beyond the world: set it to `value` (in the SOR frame). `rb_dims[i]`: red-black dimension of grid axis `i`.
+function _set_fixed_boundary_ghost_cells!(rbpot::AbstractArray{T, 4}, grid::Grid, rb_dims::NTuple{3, Int}, value::T) where {T}
+    for (iax, d) in enumerate(rb_dims)
+        BL, BR = typeof(grid.axes[iax]).parameters[2:3]
+        BL == :fixed && (selectdim(rbpot, d, 1) .= value)
+        BR == :fixed && (selectdim(rbpot, d, size(rbpot, d)) .= value)
+    end
+    rbpot
 end
 
 function Adapt.adapt_structure(to, pcs::PotentialCalculationSetup{T, S, 3}) where {T, S}

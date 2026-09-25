@@ -93,7 +93,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
                 sor_consts = (1.0, 1.0),
-                not_only_paint_contacts::Bool = true, paint_contacts::Bool = true)::PotentialCalculationSetup{T} where {T}
+                not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, surroundings_potential::Real = 0)::PotentialCalculationSetup{T} where {T}
     r0_handling::Bool = typeof(grid.axes[1]).parameters[2] == :r0
     only_2d::Bool = length(grid.axes[2]) == 1 ? true : false
     @assert grid.axes[1][1] == 0 "Something is wrong. R-axis has `:r0`-boundary handling but first tick is $(axr[1]) and not 0."
@@ -210,7 +210,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
 
         gauge_ref_potential::T = is_weighting_potential ? zero(T) : sum(contact_potentials) / length(contact_potentials)
-        boundary_ref_potential::T = is_weighting_potential ? minimum_applied_potential : _infinite_boundary_reference_potential(det, minimum_applied_potential)
+        boundary_ref_potential::T = is_weighting_potential ? minimum_applied_potential : T(surroundings_potential)
         sor_slope = (sor_consts[2] .- sor_consts[1]) / (nr - 1 )
         sor_const::Vector{T} = T[ sor_consts[1] + (i - 1) * sor_slope for i in 1:nr]
 
@@ -401,12 +401,10 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::Cylindrical
                 use_nthreads = use_nthreads,
                 not_only_paint_contacts = Val(not_only_paint_contacts),
                 paint_contacts = Val(paint_contacts)  )
-        # Shift the whole problem into the V_ref = 0 frame once, here, so the
-        # SOR (and its `:infinite` boundary decay) can run at its
-        # original, pre-gauge-fix literal-0 target instead of re-deriving a
-        # shifted frame on every iteration.
+        # The SOR runs in the frame shifted by `gauge_ref_potential` (shifted back in `ElectricPotentialArray`).
         potential .-= gauge_ref_potential
         rbpotential  = RBExtBy2Array( potential, grid )
+        _set_fixed_boundary_ghost_cells!(rbpotential, grid, (3, 2, 1), boundary_ref_potential - gauge_ref_potential)
         rbpoint_types = RBExtBy2Array( point_types, grid )
     end # @inbounds
 

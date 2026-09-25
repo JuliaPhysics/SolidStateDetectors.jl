@@ -90,7 +90,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                 weighting_potential_contact_id::Union{Missing, Int} = missing,
                 point_types = missing,
                 use_nthreads::Int = Base.Threads.nthreads(),
-                sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true ) where {T}
+                sor_consts::T = T(1), not_only_paint_contacts::Bool = true, paint_contacts::Bool = true, surroundings_potential::Real = 0 ) where {T}
     
     is_weighting_potential::Bool = !ismissing(weighting_potential_contact_id)
     depletion_handling::Bool = is_weighting_potential && !ismissing(point_types)
@@ -190,7 +190,7 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
         maximum_applied_potential::T = maximum(contact_potentials)
         bias_voltage::T = maximum_applied_potential - minimum_applied_potential
         gauge_ref_potential::T = is_weighting_potential ? zero(T) : sum(contact_potentials) / length(contact_potentials)
-        boundary_ref_potential::T = is_weighting_potential ? minimum_applied_potential : _infinite_boundary_reference_potential(det, minimum_applied_potential)
+        boundary_ref_potential::T = is_weighting_potential ? minimum_applied_potential : T(surroundings_potential)
         sor_consts = [sor_consts]
 
         medium_ϵ_r::T = medium.ϵ_r
@@ -321,12 +321,10 @@ function PotentialCalculationSetup(det::SolidStateDetector{T}, grid::CartesianGr
                 use_nthreads = use_nthreads,
                 not_only_paint_contacts = Val(not_only_paint_contacts),
                 paint_contacts = Val(paint_contacts)  )
-        # Shift the whole problem into the V_ref = 0 frame once, here, so the
-        # SOR (and its `:infinite` boundary decay) can run at its
-        # original, pre-gauge-fix literal-0 target instead of re-deriving a
-        # shifted frame on every iteration.
+        # The SOR runs in the frame shifted by `gauge_ref_potential` (shifted back in `ElectricPotentialArray`).
         potential .-= gauge_ref_potential
         rbpotential = RBExtBy2Array( potential, grid )
+        _set_fixed_boundary_ghost_cells!(rbpotential, grid, (1, 2, 3), boundary_ref_potential - gauge_ref_potential)
         rbpoint_types = RBExtBy2Array( point_types, grid )
     end # @inbounds
 

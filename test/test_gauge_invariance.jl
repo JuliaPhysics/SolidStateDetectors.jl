@@ -52,7 +52,7 @@ _to_mm3(N_per_m3::Real) = N_per_m3 * (1e-3)^3
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
         is_depleted(sim.point_types)
     end
 
@@ -74,7 +74,7 @@ _to_mm3(N_per_m3::Real) = N_per_m3 * (1e-3)^3
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = true, refinement_limits = [refinement_limits; 0.01; 0.002], use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = true, refinement_limits = [refinement_limits; 0.01; 0.002], use_nthreads = 4, verbose = false)
         is_depleted(sim.point_types)
     end
     U = 0.95 * Vd
@@ -97,7 +97,7 @@ _to_mm3(N_per_m3::Real) = N_per_m3 * (1e-3)^3
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = depletion_handling, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = depletion_handling, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
         sim.electric_potential
     end
 
@@ -160,7 +160,7 @@ end
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
         is_depleted(sim.point_types)
     end
 
@@ -180,7 +180,7 @@ end
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = true, refinement_limits = [refinement_limits; 0.02], use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = true, refinement_limits = [refinement_limits; 0.02], use_nthreads = 4, verbose = false)
         pt = sim.point_types.data
         r = sim.point_types.grid.r
         undep = SolidStateDetectors.undepleted_bit
@@ -245,7 +245,7 @@ end
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
         is_depleted(sim.point_types)
     end
 
@@ -263,12 +263,13 @@ end
 
     # Two related but distinct claims checked together here, since both reuse the same geometry:
     #  1. depletion_handling = false: a strictly linear Poisson problem, so shifting all
-    #     contact potentials by the same Δ must shift the converged potential by exactly Δ
+    #     contact potentials AND `surroundings_potential` by the same Δ must shift the
+    #     converged potential by exactly Δ
     #     everywhere, including at the `:infinite`-boundary edge cells that
     #     `_shift_axis_margin!`/`apply_boundary_conditions!` handle. Isolates the
     #     `:infinite`-specific Δ/gauge_ref_potential fix.
     #  2. depletion_handling = true: the same shift claim, but with the nonlinear
-    #     undepleted-region clamp active. Shifting all contacts by Δ is a pure gauge
+    #     undepleted-region clamp active. Shifting all contacts and the surroundings by Δ is a pure gauge
     #     transformation -- it can't change the field or the depletion state, only the
     #     absolute reference -- so epotΔ ≈ epot0 + Δ must still hold. If the interior seed
     #     (gauge_ref_potential, the mean-based fix) weren't gauge-consistent, the bistable
@@ -276,9 +277,8 @@ end
     #     showing up here as a mismatch localized near that region, not just a coarse
     #     `is_depleted` disagreement.
     #
-    # `boundary_ref_potential` breaks exact translation invariance for `Δ = -U` specifically:
-    # that shift relabels which contact reads `0`, which nothing in the current potentials alone
-    # can distinguish from the original state. Every other Δ holds exactly; see the loop below.
+    # Shifting only the contacts (surroundings kept at 0) is not a gauge transformation but a
+    # different physical setup, so it is not expected to be invariant for these boundaries.
 
     N_m3, d_mm, L_mm = 1e16, 10.0, 30.0
     Vd = _Q_E * N_m3 * (d_mm * 1e-3)^2 / (2 * _EPS_HPGE)
@@ -315,7 +315,8 @@ end
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = depletion_handling, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, depletion_handling = depletion_handling, surroundings_potential = ground_offset,
+            refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
         sim.electric_potential
     end
 
@@ -323,19 +324,13 @@ end
 
     for depletion_handling in (false, true)
         epot0 = electric_potential_planar_inf(U, 0.0; depletion_handling)
-        for Δ in (-0.37 * Vd, 2.0 * Vd)   # generic shifts: no contact lands on 0, exactly invariant
+        # Δ = -U swaps which contact reads 0, exact like any other Δ. Pointwise max, as the default
+        # Euclidean-norm `isapprox` scales with the number of grid points.
+        for Δ in (-0.37 * Vd, 2.0 * Vd, -U)
             epotΔ = electric_potential_planar_inf(U, Δ; depletion_handling)
             @test size(epotΔ) == size(epot0)
-            @test epotΔ.data ≈ epot0.data .+ Δ atol = 1e-3 * Vd
+            @test maximum(abs.(epotΔ.data .- (epot0.data .+ Δ))) < 1e-3 * Vd
         end
-
-        # Δ = -U relabels which contact reads 0 (see note above `cfg`), so this can't be exactly
-        # invariant; using the pointwise max, not the default Euclidean-norm `isapprox`, since the
-        # latter blows up from the sheer number of grid points, not from any one point being off.
-        Δ = -U
-        epotΔ = electric_potential_planar_inf(U, Δ; depletion_handling)
-        @test size(epotΔ) == size(epot0)
-        @test maximum(abs.(epotΔ.data .- (epot0.data .+ Δ))) < 0.03 * Vd
     end
 end
 
@@ -376,7 +371,7 @@ end
         det = SolidStateDetector(det, contact_id = 2, contact_potential = T(U + ground_offset))
         sim.detector = det
         apply_initial_state!(sim, ElectricPotential, Grid(sim))
-        timed_calculate_electric_potential!(sim, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        timed_calculate_electric_potential!(sim, surroundings_potential = ground_offset, depletion_handling = true, refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
         is_depleted(sim.point_types)
     end
 
@@ -568,7 +563,7 @@ end
     @test isapprox(abs(ustrip(dep_p)), abs(ustrip(dep_n)), atol = 1.0)
 end
 
-@testset "gauge invariance inside a grounded cryostat (Faraday cage), and why `:infinite` can't be made exactly gauge invariant" begin
+@testset "shifting only the contacts inside a grounded cryostat (Faraday cage): why `:infinite` needs the potential of the surroundings" begin
 
     function cryostat_cfg(R_shell::Real, Z_shell::Real; V_point::Real = 0.0, V_mantle::Real = 4000.0)
         point_contact = Dict(
@@ -635,18 +630,17 @@ end
     v_shift = at(pot_shift, r_mid, z_mid)
     @test isapprox(v_shift + 4000, v_orig, atol = 1.0)   # <1V out of a 4000V shift, near the detector
 
-    # (2) ...but NOT right at the shell itself, which is pinned to an absolute reference and
-    # cannot float with the contacts -- confirming shift invariance is an interior/emergent
-    # property of a large enough grounded enclosure, not a property `:infinite` could ever
-    # bake into its truncation edge exactly, since there is no explicit shell there to anchor to.
+    # (2) ...but NOT right at the shell itself, which stays grounded while only the contacts are
+    # shifted -- so this shift is not a pure relabeling, and near the shell the difference is real.
+    # Shifting the surroundings too (`surroundings_potential`) makes it exact, see the testset below.
     r_edge, z_edge = R_big * 1e-3 * 0.9, Z_big * 1e-3 * 0.9
     v_orig_edge  = at(pot_orig, r_edge, z_edge)
     v_shift_edge = at(pot_shift, r_edge, z_edge)
     @test abs((v_shift_edge + 4000) - v_orig_edge) > 100.0   # large, real mismatch near the shell
 
-    # (3) Sample the vacuum right next to the crystal surface -- exactly where `:infinite` would
-    # have to guess a reference -- as the distant shell moves farther out (50mm -> 100mm ->
-    # 300mm). T
+    # (3) Sample the vacuum right next to the crystal surface -- where `:infinite` needs the
+    # potential of the surroundings -- as the distant shell moves farther out (50mm -> 100mm ->
+    # 300mm). This shows:
     #  (a) the value is converging to a real limit, not drifting forever -- each step's change is
     #      smaller than the last.
     #  (b) that limit is neither `gauge_ref_potential` (mean of the two contact potentials) nor
@@ -677,9 +671,9 @@ end
         is_depleted(sim.point_types)
     end
 
-    # U = 2016.0 is excluded: it's only ~2V past this detector's depletion voltage, close enough
-    # that the swapped-labeling truncation mismatch (see the "direct comparison" testset above)
-    # flips the coarse boolean. Every value with real margin (4V+) agrees under the swap.
+    # Only the contacts are shifted (surroundings grounded): a different physical setup, as the mantle instead of
+    # the point contact is then at the potential of the surroundings. This flips `is_depleted` at U = 2016.0
+    # (~2V past the depletion voltage), so it is excluded. Exact gauge checks: `surroundings_potential` testset.
     for U in (2012.0, 2014.0, 2018.0, 2020.0, 2022.0)
         @test is_depleted_ivc(U, 0.0) == is_depleted_ivc(U, -U)   # 0.0: {point=0, mantle=U}; -U: {point=-U, mantle=0}
     end
@@ -690,4 +684,77 @@ end
     @test is_depleted_ivc(2018.0, 0.0)
     @test is_depleted_ivc(2020.0, 0.0)
     @test is_depleted_ivc(2022.0, 0.0)
+end
+
+@testset "`surroundings_potential`: potential of the surroundings for `:infinite` and `:fixed` boundaries" begin
+    # InvertedCoax with the same boundary type on every outer edge of the world (r_max, z_min, z_max)
+    function cfg_ivc(boundary::String)
+        cfg = SolidStateDetectors.parse_config_file(SSD_examples[:InvertedCoax])
+        cfg["grid"]["axes"]["r"]["boundaries"] = boundary
+        cfg["grid"]["axes"]["z"]["boundaries"] = Dict("left" => boundary, "right" => boundary)
+        cfg
+    end
+    function sim_ivc(boundary::String, V_point::Real, V_mantle::Real)
+        sim = Simulation{T}(cfg_ivc(boundary))
+        sim.detector = SolidStateDetector(sim.detector, contact_id = 1, contact_potential = T(V_point))
+        sim.detector = SolidStateDetector(sim.detector, contact_id = 2, contact_potential = T(V_mantle))
+        sim
+    end
+
+    # default: grounded surroundings; a passed value is stored in `sim.world` and reused by later re-solves
+    sim = sim_ivc("inf", 0, 2000)
+    @test sim.world.surroundings_potential == 0
+    timed_calculate_electric_potential!(sim, refinement_limits = missing, surroundings_potential = -1.5u"kV", verbose = false)
+    @test sim.world.surroundings_potential == -1500
+    # a plain re-solve keeps the solution (with grounded surroundings, the edge would move by hundreds of volts)
+    pot_before = copy(sim.electric_potential.data)
+    SolidStateDetectors.update_till_convergence!(sim, ElectricPotential, 1e-7)
+    @test maximum(abs.(sim.electric_potential.data .- pot_before)) < 1
+    # `simulate!` passes it on as well
+    sim = sim_ivc("inf", 0, 2000)
+    timed_simulate!(sim, refinement_limits = missing, surroundings_potential = 500)
+    @test sim.world.surroundings_potential == 500
+
+    # the value reaches the SOR setup, independent of the contacts (e.g. {-1500, +1500}: no grounded contact), and
+    # `:fixed` holds it in the ghost layer of the red-black array (SOR frame, shifted by `gauge_ref_potential`).
+    # Weighting potentials keep 0.
+    sim = sim_ivc("fixed", -1500, 1500)
+    grid = Grid(sim)
+    pcs = SolidStateDetectors.PotentialCalculationSetup(sim.detector, grid, sim.medium)
+    @test pcs.boundary_ref_potential == 0
+    @test all(pcs.potential[end, :, :, :] .+ pcs.gauge_ref_potential .== 0)   # z_max (red-black dimension 1)
+    @test all(pcs.potential[:, :, end, :] .+ pcs.gauge_ref_potential .== 0)   # r_max (red-black dimension 3)
+    pcs = SolidStateDetectors.PotentialCalculationSetup(sim.detector, grid, sim.medium; surroundings_potential = 100)
+    @test pcs.boundary_ref_potential == 100
+    @test all(pcs.potential[1, :, :, :] .+ pcs.gauge_ref_potential .== 100)   # z_min
+    pcs = SolidStateDetectors.PotentialCalculationSetup(sim.detector, grid, sim.medium; weighting_potential_contact_id = 1, surroundings_potential = 100)
+    @test pcs.boundary_ref_potential == 0
+    @test all(pcs.potential[end, :, :, :] .== 0)
+
+    # the usual {point=0, mantle=U}: the `:fixed` box is grounded as before (not at the mean contact potential U/2)
+    sim = sim_ivc("fixed", 0, 2000)
+    pcs = SolidStateDetectors.PotentialCalculationSetup(sim.detector, Grid(sim), sim.medium)
+    @test pcs.gauge_ref_potential == 1000
+    @test all(pcs.potential[end, :, :, :] .+ pcs.gauge_ref_potential .== 0)
+    @test all(pcs.potential[:, :, end, :] .+ pcs.gauge_ref_potential .== 0)
+
+    # shifting the contacts AND the surroundings by Δ = -U is a pure relabeling: exact for `:infinite` and `:fixed`,
+    # also at U = 2016 V, right at the depletion threshold (where shifting only the contacts flips `is_depleted`)
+    function solve_ivc(boundary::String, U::Real, ground_offset::Real; depletion_handling::Bool)
+        sim = sim_ivc(boundary, ground_offset, U + ground_offset)
+        timed_calculate_electric_potential!(sim; depletion_handling, surroundings_potential = ground_offset,
+            refinement_limits = refinement_limits, use_nthreads = 4, verbose = false)
+        sim
+    end
+    for boundary in ("inf", "fixed")
+        U = 2016.0
+        @test is_depleted(solve_ivc(boundary, U, 0.0; depletion_handling = true).point_types) ==
+              is_depleted(solve_ivc(boundary, U, -U; depletion_handling = true).point_types)
+        # direct field comparison (linear problem): the shifted solution is the original one shifted by -U
+        U = 2000.0
+        pot_orig  = solve_ivc(boundary, U, 0.0; depletion_handling = false).electric_potential
+        pot_shift = solve_ivc(boundary, U, -U;  depletion_handling = false).electric_potential
+        @test size(pot_orig.data) == size(pot_shift.data)
+        @test maximum(abs.(pot_orig.data .- (pot_shift.data .+ U))) < 1e-3 * U
+    end
 end

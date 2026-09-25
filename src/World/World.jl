@@ -52,15 +52,27 @@ Definition of the finite volume on which a [`Simulation`](@ref) is performed.
         
 ## Fields 
 * `intervals::NTuple{N, SSDInterval{T}}`: A set of [`SSDInterval`](@ref) defining the dimensions of the world.
+* `spacing_surface_refinement::NTuple{N, T}`: Grid spacing used for the refinement close to surfaces (`NaN` if not set).
+* `surroundings_potential::T`: Potential of the surroundings (default `0`, grounded), towards which the electric potential
+    decays at `:infinite` boundaries and to which it is fixed beyond `:fixed` boundaries.
+    Set via `calculate_electric_potential!(sim; surroundings_potential)` or `SolidStateDetectors.World(sim.world; surroundings_potential)`.
 """
 struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N} 
     intervals::NTuple{N, SSDInterval{T}}
     spacing_surface_refinement::NTuple{N, T}
+    surroundings_potential::T
+    # Typed, so that `World{T, N, S}(int_1, int_2, int_3; kwargs...)` below is not caught by a default constructor
+    World{T, N, S}(intervals::NTuple{N, SSDInterval{T}}, spacing_surface_refinement::NTuple{N, T}, surroundings_potential::T) where {T <: SSDFloat, N, S} =
+        new{T, N, S}(intervals, spacing_surface_refinement, surroundings_potential)
 end
 
-function World{T, N, S}(args...; spacing_surface_refinement::NTuple{N,T} = ntuple(i -> T(NaN), N)) where {T <: SSDFloat, N, S} 
-    return World{T, N, S}(args, spacing_surface_refinement)
+function World{T, N, S}(args...; spacing_surface_refinement::NTuple{N,T} = ntuple(i -> T(NaN), N), surroundings_potential::Real = 0) where {T <: SSDFloat, N, S}
+    return World{T, N, S}(args, spacing_surface_refinement, T(surroundings_potential))
 end
+
+# Copy of `w` with a different potential of the surroundings.
+World(w::World{T, N, S}; surroundings_potential::Real = w.surroundings_potential) where {T, N, S} =
+    World{T, N, S}(w.intervals, w.spacing_surface_refinement, T(surroundings_potential))
 
 function World(T, dict::AbstractDict, input_units::NamedTuple)::World
     
