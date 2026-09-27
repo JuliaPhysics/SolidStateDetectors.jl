@@ -332,7 +332,7 @@ function _in(pt::CartesianPoint{T}, t::Torus{T,CO}; csgtol::T = csg_default_tol(
     (isnothing(t.φ) || _in(pt, Torus{T,CO}(t.r_torus, rmax, t.φ, nothing, t.origin, t.rotation); csgtol))
 end
 
-extremum(t::Torus{T}) where {T} = t.r_torus + max(t.r_tube...)
+extremum(t::Torus{T}) where {T} = abs(t.r_torus) + max(t.r_tube...)
 
 # function Dictionary(t::Torus{T}) where {T}
 #     dict = OrderedDict{String,Any}()
