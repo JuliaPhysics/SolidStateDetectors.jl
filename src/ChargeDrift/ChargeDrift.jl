@@ -1,8 +1,3 @@
-struct DriftPath{T <: SSDFloat}
-    path::Vector{CartesianPoint{T}}
-    timestamps::Vector{T}
-end
-
 struct EHDriftPath{T <: SSDFloat}
     e_path::Vector{CartesianPoint{T}}
     h_path::Vector{CartesianPoint{T}}
@@ -106,7 +101,7 @@ function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, curre
     nothing
 end
 
-function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
+function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T)::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if done[n] continue end
         sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))
@@ -203,50 +198,90 @@ function _check_and_update_position!(
         current_pos .+= step_vectors
         drift_path[:,istep] .= current_pos
     else
-        #all charges that would not be inside after the drift step
-        for n in findall(.!normal)
-            crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} = 
+        scale::T = one(T)
+        boundary_clouds = findall(.!normal)
+        cd_point_types = Vector{UInt8}(undef, length(boundary_clouds))
+        crossing_positions = Vector{CartesianPoint{T}}(undef, length(boundary_clouds))
+        projected_vectors = Vector{CartesianVector{T}}(undef, length(boundary_clouds))
+        # first pass: determine each crossing cloud's admissible step fraction without
+        # moving it, so that afterwards ALL clouds can advance consistently with the
+        # common (minimal) fraction that also rescales Δt
+        for (k, n) in enumerate(boundary_clouds)
+            crossing_pos::CartesianPoint{T}, cd_point_type::UInt8, surface_normal::CartesianVector{T} =
                 get_crossing_pos(det, point_types, copy(current_pos[n]), current_pos[n] + step_vectors[n])
-            if cd_point_type == CD_ELECTRODE
-                if !geometry_check || crossing_pos in det.contacts
-                    done[n] = true
-                    drift_path[n,istep] = crossing_pos
-                    current_pos[n] = crossing_pos
-                else
-                    cd_point_type = CD_FLOATING_BOUNDARY
-                end
+            if cd_point_type == CD_ELECTRODE && geometry_check && !(crossing_pos in det.contacts)
+                cd_point_type = CD_FLOATING_BOUNDARY
             end
+            projected_vector::CartesianVector{T} = zero(CartesianVector{T})
             if cd_point_type == CD_FLOATING_BOUNDARY
-                projected_vector::CartesianVector{T} = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
+                projected_vector = CartesianVector{T}(project_to_plane(step_vectors[n], surface_normal))
                 projected_vector = modulate_surface_drift(projected_vector)
-                next_pos::CartesianPoint{T} = current_pos[n] + projected_vector
-                small_projected_vector = projected_vector * T(0.001)
+                s::T = one(T)
                 i::Int = 0
-                while i < 1000 && !(next_pos in det.semiconductor)
-                    next_pos -= small_projected_vector
+                while i < 1000 && !(current_pos[n] + projected_vector * s in det.semiconductor)
+                    s -= T(0.001)
                     i += 1
                 end
                 if i == 1000
                     if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $(startpos[n])") end
-                    done[n] = true
-                    continue
+                    cd_point_type = CD_BULK # treated as internal error below
+                else
+                    scale = min(scale, s)
                 end
-                drift_path[n,istep] = next_pos
-                step_vectors *= (1 - i * T(0.001))  # scale down the step_vectors for all other charge clouds
-                Δt *= (1 - i * T(0.001))            # scale down Δt for all charge clouds
+            end
+            cd_point_types[k] = cd_point_type
+            crossing_positions[k] = crossing_pos
+            projected_vectors[k] = projected_vector
+        end
+        # the common fraction must itself be admissible for every crossing cloud
+        # (non-convex surfaces may block intermediate positions), so shrink it
+        # until all clouds fit before committing anything
+        refined::Bool = true
+        while refined
+            refined = false
+            for (k, n) in enumerate(boundary_clouds)
+                cd_point_types[k] == CD_FLOATING_BOUNDARY || continue
+                s = scale
+                i = 0
+                while i < 1000 && s > 0 && !(current_pos[n] + projected_vectors[k] * s in det.semiconductor)
+                    s -= T(0.001)
+                    i += 1
+                end
+                s = max(s, zero(T))
+                if i == 1000
+                    if verbose @warn("Handling of charge at floating boundary did not work as intended. Start Position (Cart): $(startpos[n])") end
+                    cd_point_types[k] = CD_BULK # treated as internal error below
+                elseif s < scale
+                    scale = s
+                    refined = true
+                end
+            end
+        end
+        # second pass: commit all crossing clouds using the common scale
+        # (clouds collected on a contact keep their crossing position; their arrival
+        # time is thus accurate only to within one Δt)
+        for (k, n) in enumerate(boundary_clouds)
+            if cd_point_types[k] == CD_ELECTRODE
+                done[n] = true
+                drift_path[n,istep] = crossing_positions[k]
+                current_pos[n] = crossing_positions[k]
+            elseif cd_point_types[k] == CD_FLOATING_BOUNDARY
+                next_pos = current_pos[n] + projected_vectors[k] * scale
                 done[n] = next_pos == current_pos[n]
                 current_pos[n] = next_pos
-            elseif cd_point_type!= CD_ELECTRODE # if cd_point_type == CD_BULK or CD_OUTSIDE
+                drift_path[n,istep] = next_pos
+            else # CD_BULK or CD_OUTSIDE (or failed floating-boundary handling)
                 if verbose @warn ("Internal error for charge starting at $(startpos[n])") end
                 done[n] = true
                 drift_path[n,istep] = current_pos[n]
-            end  
-        end    
-        #drift all other charge clouds normally according to the new Δt_min
+            end
+        end
+        #drift all other charge clouds normally, slowed down to the reduced Δt
         for n in findall(normal)
-            current_pos[n] += step_vectors[n]
+            current_pos[n] += step_vectors[n] * scale
             drift_path[n,istep] = current_pos[n]
         end
+        Δt *= scale
     end
     timestamps[istep] = timestamps[istep-1] + Δt
     nothing
