@@ -776,3 +776,73 @@ end
     @test isapprox(sum(nb_zero_cyl.energies), ustrip.(u"eV", Edep))
     @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero_cyl.locations)
 end
+
+@timed_testset "ADL2016 zero-field guard" begin
+    cdm2016 = ADL2016ChargeDriftModel(T = T)
+    @test getVe(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
+    @test getVh(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
+end
+
+@timed_testset "Simple drift models: numeric velocities" begin
+    fv = SVector{3, T}(100, -200, 300)
+    efcdm = ElectricFieldChargeDriftModel{T}()
+    @test getVe(fv, efcdm) == -fv
+    @test getVh(fv, efcdm) == fv
+    icdm = IsotropicChargeDriftModel{T}()
+    @test getVe(fv, icdm) ≈ -icdm.μ_e * fv
+    @test getVh(fv, icdm) ≈ icdm.μ_h * fv
+end
+
+@timed_testset "Temperature model selection and vacuum scaling" begin
+    @test SolidStateDetectors.VacuumTemperatureModel() isa SolidStateDetectors.VacuumTemperatureModel{Float32}
+    @test SolidStateDetectors.VacuumTemperatureModel{Float64}() isa SolidStateDetectors.VacuumTemperatureModel{Float64}
+    # no temperature_dependence entry => no rescaling (vacuum model)
+    @test SolidStateDetectors.TemperatureModel(T, Dict{String, Any}()) isa SolidStateDetectors.VacuumTemperatureModel{T}
+    # deprecated step-level scaling models fall back to vacuum with a warning
+    cfg_deprecated = Dict("temperature_dependence" => Dict("model" => "Boltzmann"))
+    @test (@test_logs (:warn, r"deprecated") SolidStateDetectors.TemperatureModel(T, cfg_deprecated)) isa SolidStateDetectors.VacuumTemperatureModel{T}
+    # unknown model names fall back to vacuum with an info message
+    cfg_unknown = Dict("temperature_dependence" => Dict("model" => "DoesNotExist"))
+    @test (@test_logs (:info, r"predefined temperature models") SolidStateDetectors.TemperatureModel(T, cfg_unknown)) isa SolidStateDetectors.VacuumTemperatureModel{T}
+    # a vacuum-model drift model is returned unchanged by temperature scaling
+    adl_cfg = SolidStateDetectors.parse_config_file(SolidStateDetectors.default_ADL_config_file)
+    delete!(adl_cfg["temperature_dependence"], "model")
+    cdm_vac = ADLChargeDriftModel(adl_cfg, T = T)
+    @test cdm_vac.temperaturemodel isa SolidStateDetectors.VacuumTemperatureModel{T}
+    @test scale_to_temperature(cdm_vac, T(300)) === cdm_vac
+    @test scale_to_temperature(cdm_vac, missing) === cdm_vac
+end
+
+# user hook for ArbitraryDriftModificationVolume, dispatched on the config id
+function SolidStateDetectors.modulate_driftvector(sv::CartesianVector{TV}, pt::CartesianPoint{TV},
+        tl::SolidStateDetectors.ArbitraryDriftModificationVolume{TV}, ::Type{Val{1042}}) where {TV <: SolidStateDetectors.SSDFloat}
+    sv / 2
+end
+
+@timed_testset "Virtual drift volumes" begin
+    cfg = SolidStateDetectors.parse_config_file(SSD_examples[:CGD])
+    cfg["detectors"][1]["virtual_drift_volumes"] = [
+        Dict("name" => "dead region", "model" => "dead",
+             "geometry" => Dict("box" => Dict("widths" => [2, 2, 2], "origin" => [0, 0, 0])))
+    ]
+    sim = Simulation{T}(cfg)
+    dv = sim.detector.virtual_drift_volumes[1]
+    @test dv isa SolidStateDetectors.DeadVolume{T}
+    origin = CartesianPoint{T}(0, 0, 0)
+    @test origin in dv
+    @test !(CartesianPoint{T}(0.1, 0, 0) in dv)
+    sv = CartesianVector{T}(1, 2, 3)
+    @test SolidStateDetectors.modulate_driftvector(sv, origin, dv) == CartesianVector{T}(0, 0, 0)
+
+    cfg["detectors"][1]["virtual_drift_volumes"] = [
+        Dict("model" => "arbitrary", "id" => 1042,
+             "geometry" => Dict("box" => Dict("widths" => [2, 2, 2], "origin" => [0, 0, 0])))
+    ]
+    sim2 = Simulation{T}(cfg)
+    av = sim2.detector.virtual_drift_volumes[1]
+    @test av isa SolidStateDetectors.ArbitraryDriftModificationVolume{T}
+    @test SolidStateDetectors.modulate_driftvector(sv, origin, av) == sv / 2
+    # without a user-defined method for the id, modulation must fail loudly
+    av_nohook = SolidStateDetectors.ArbitraryDriftModificationVolume{T}(av.name, 1043, av.geometry)
+    @test_throws ErrorException SolidStateDetectors.modulate_driftvector(sv, origin, av_nohook)
+end

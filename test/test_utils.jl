@@ -1,9 +1,9 @@
 # This file is a part of SolidStateDetectors.jl, licensed under the MIT License (MIT).
 
 using TimerOutputs
-# using CUDAKernels # Uncomment this line in order to run all tests on (CUDA) GPU
+# using CUDA # Uncomment this line in order to run all tests on (CUDA) GPU
 
-device_array_type = (@isdefined CUDAKernels) ? CUDAKernels.CUDA.CuArray : Array
+device_array_type = (@isdefined CUDA) ? CUDA.CuArray : Array
 
 testtimer() = get_timer("_default_testtimer_")
 
