@@ -41,6 +41,10 @@ end
     include("test_depletion.jl")
 end
 
+@timed_testset "Gauge invariance" begin
+    include("test_gauge_invariance.jl")
+end
+
 @timed_testset "Two step potential refinement" begin
     include("test_refine_existing_potential.jl")
 end
