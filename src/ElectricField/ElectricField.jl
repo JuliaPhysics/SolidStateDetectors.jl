@@ -129,14 +129,14 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                             er *= 2
                         end
                     end
-                    if (1 < iφ < size(point_types, 2))
-                        if (point_types[ir, iφ - 1, iz] & update_bit > 0) && (point_types[ir, iφ + 1, iz] & update_bit > 0)
-                            if (point_types[ir, iφ - 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ + 1, iz] & pn_junction_bit == 0)
+                    let iφL = iφ == 1 ? size(point_types, 2) : iφ - 1, iφR = iφ == size(point_types,2) ? 1 : iφ + 1
+                        if (point_types[ir, iφL, iz] & update_bit > 0) && (point_types[ir, iφR, iz] & update_bit > 0)
+                            if (point_types[ir, iφL, iz] & pn_junction_bit > 0) && (point_types[ir, iφR, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_2 / d_φ_2
-                            elseif (point_types[ir, iφ + 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ - 1, iz] & pn_junction_bit == 0)
+                            elseif (point_types[ir, iφR, iz] & pn_junction_bit > 0) && (point_types[ir, iφL, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_1 / d_φ_1
                             end
-                        elseif (point_types[ir, iφ - 1, iz] & update_bit > 0) || (point_types[ir, iφ + 1, iz] & update_bit > 0)
+                        elseif (point_types[ir, iφL, iz] & update_bit > 0) || (point_types[ir, iφR, iz] & update_bit > 0)
                             eφ *= 2
                         end
                     end
