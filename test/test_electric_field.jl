@@ -30,6 +30,25 @@ using SolidStateDetectors: DiscreteAxis, CylindricalGrid, PointTypes, update_bit
     end
 end
 
+@testset "Interpolation on reflecting φ wedges mirrors at the interval boundaries" begin
+    axr = DiscreteAxis(0.0, 0.02, :r0, :infinite, :closed, :closed, collect(range(0.0, 0.02, length = 3)))
+    axz = DiscreteAxis(0.0, 0.03, :infinite, :infinite, :closed, :closed, collect(range(0.0, 0.03, length = 3)))
+    wedge(φticks) = CylindricalGrid{Float64}((axr, DiscreteAxis(0.0, π/6, :reflecting, :reflecting, :closed, :closed, φticks), axz))
+    f(r, φ, z) = 1 + r + φ + z    # linear in φ: interpolation is exact and the mirror images are known 
+    # 0°-30° wedge: extended midpoints grid as for `sim.ϵ_r` of :Coax (ticks beyond 0° and 30°),
+    # and a grid whose ticks (2°-28°) do not reach the boundaries                                             
+    for g in (SolidStateDetectors.get_extended_midpoints_grid(wedge(collect(range(0.0, π/6, length = 7)))),
+              wedge(collect(range(deg2rad(2), deg2rad(28), length = 6))))
+        ϵ = DielectricDistribution([f(r, φ, z) for r in g.axes[1].ticks, φ in g.axes[2].ticks, z in g.axes[3].ticks], g)
+	itp = SolidStateDetectors.interpolated_scalarfield(ϵ)
+        for φ in range(deg2rad(2), deg2rad(28), length = 7)
+            @test itp(0.01, φ, 0.015)        ≈ f(0.01, φ, 0.015)    # inside: unchanged                                                                 
+            @test itp(0.01, π/3 - φ, 0.015)  ≈ f(0.01, φ, 0.015)    # mirrored at 30°                                                                   
+            @test itp(0.01, -φ, 0.015)       ≈ f(0.01, φ, 0.015)    # mirrored at 0°                                                                    
+        end
+    end
+end
+
 @testset "Cylindrical E field on a full-circle φ interval not starting at 0" begin
     T = Float64
     nr, nφ, nz = 6, 36, 5

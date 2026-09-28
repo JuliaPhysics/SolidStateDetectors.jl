@@ -129,14 +129,14 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                             er *= 2
                         end
                     end
-                    if (1 < iφ < size(point_types, 2))
-                        if (point_types[ir, iφ - 1, iz] & update_bit > 0) && (point_types[ir, iφ + 1, iz] & update_bit > 0)
-                            if (point_types[ir, iφ - 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ + 1, iz] & pn_junction_bit == 0)
+                    let iφL = iφ == 1 ? size(point_types, 2) : iφ - 1, iφR = iφ == size(point_types,2) ? 1 : iφ + 1
+                        if (point_types[ir, iφL, iz] & update_bit > 0) && (point_types[ir, iφR, iz] & update_bit > 0)
+                            if (point_types[ir, iφL, iz] & pn_junction_bit > 0) && (point_types[ir, iφR, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_2 / d_φ_2
-                            elseif (point_types[ir, iφ + 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ - 1, iz] & pn_junction_bit == 0)
+                            elseif (point_types[ir, iφR, iz] & pn_junction_bit > 0) && (point_types[ir, iφL, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_1 / d_φ_1
                             end
-                        elseif (point_types[ir, iφ - 1, iz] & update_bit > 0) || (point_types[ir, iφ + 1, iz] & update_bit > 0)
+                        elseif (point_types[ir, iφL, iz] & update_bit > 0) || (point_types[ir, iφR, iz] & update_bit > 0)
                             eφ *= 2
                         end
                     end
@@ -179,12 +179,27 @@ _φ_interpolation(ax::DiscreteAxis{T, :periodic, :periodic}) where {T} = Interpo
 _φ_interpolation(ax::DiscreteAxis{T, :reflecting, :reflecting}) where {T} = Interpolations.Reflect()
 
 # For open intervals: add a tick
+function _φ_wrap_ticks_and_data(axφ::DiscreteAxis{T, :periodic, :periodic}, data::AbstractArray) where {T}
+    φticks = axφ.ticks
+    period = iszero(width(axφ.interval)) ? T(2π) : width(axφ.interval)
+    φticks[end] - φticks[1] ≈ period && return φticks, data
+    cat(φticks, φticks[1] + period, dims = 1), cat(data, data[:, 1:1, :], dims = 2)
+end
+
+function _φ_slice_at(φticks::AbstractVector{T}, data::AbstractArray, φ::T) where {T}
+    i = clamp(searchsortedlast(φticks, φ), 1, length(φticks) - 1)
+    w = clamp((φ - φticks[i]) / (φticks[i+1] - φticks[i]), zero(T), one(T))
+    (1 - w) .* data[:, i:i, :] .+ w .* data[:, i+1:i+1, :]
+end
+
 function _φ_wrap_ticks_and_data(axφ::DiscreteAxis{T}, data::AbstractArray) where {T}
     φticks = axφ.ticks
-    period = length(φticks) == 1 ? T(2π) : width(axφ.interval)
-    add_wrap_tick = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + period)
-    ticks = add_wrap_tick ? cat(φticks, φticks[1] + period, dims = 1) : φticks
-    ext_data = add_wrap_tick ? cat(data, data[:,1:1,:], dims = 2) : data
+    length(φticks) == 1 && return cat(φticks, φticks[1] + T(2π), dims = 1), cat(data, data[:, 1:1, :], dims = 2)
+    a, b = axφ.interval.left, axφ.interval.right
+    (iszero(b - a) || (φticks[1] == a && φticks[end] == b)) && return φticks, data
+    inside = findall(φ -> a < φ < b, φticks)
+    ticks = vcat(a, φticks[inside], b)
+    ext_data = cat(_φ_slice_at(φticks, data, a), data[:, inside, :], _φ_slice_at(φticks, data, b), dims = 2)
     ticks, ext_data
 end
 
