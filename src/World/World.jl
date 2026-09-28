@@ -66,9 +66,12 @@ struct World{T <: SSDFloat, N, S} <: AbstractWorld{T, N}
         new{T, N, S}(intervals, spacing_surface_refinement, surroundings_potential)
 end
 
-function World{T, N, S}(args...; spacing_surface_refinement::NTuple{N,T} = ntuple(i -> T(NaN), N), surroundings_potential::Real = 0) where {T <: SSDFloat, N, S}
-    return World{T, N, S}(args, spacing_surface_refinement, T(surroundings_potential))
+function World{T, N, S}(intervals::Vararg{SSDInterval{T}, N}; spacing_surface_refinement::NTuple{N,T} = ntuple(i -> T(NaN), N), surroundings_potential::Real = 0) where {T <: SSDFloat, N, S}
+    return World{T, N, S}(intervals, spacing_surface_refinement, T(surroundings_potential))
 end
+
+World{T, N, S}(intervals::NTuple{N, SSDInterval{T}}, spacing_surface_refinement::NTuple{N, T}; surroundings_potential::Real = 0) where {T <: SSDFloat, N, S} =
+    World{T, N, S}(intervals, spacing_surface_refinement, T(surroundings_potential))
 
 # Copy of `w` with a different potential of the surroundings.
 World(w::World{T, N, S}; surroundings_potential::Real = w.surroundings_potential) where {T, N, S} =
