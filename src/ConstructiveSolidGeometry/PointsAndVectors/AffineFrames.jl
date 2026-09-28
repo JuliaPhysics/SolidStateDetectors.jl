@@ -62,5 +62,5 @@ end
 end
 
 function frame_transformation(a::LocalAffineFrame, b::LocalAffineFrame)
-    return frame_transformation(a, global_frame) ∘ frame_transformation(global_frame, b)
+    return frame_transformation(global_frame, b) ∘ frame_transformation(a, global_frame)
 end

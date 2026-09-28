@@ -19,6 +19,11 @@ end
     include("ConstructiveSolidGeometry/CSG_IO.jl")
     include("ConstructiveSolidGeometry/CSG_coordinates.jl")
     include("ConstructiveSolidGeometry/CSG_primitives.jl")
+    include("ConstructiveSolidGeometry/CSG_bounding_sphere.jl")
+end
+
+@timed_testset "Electric field" begin
+    include("test_electric_field.jl")
 end
 
 @timed_testset "Test real detectors" begin
@@ -35,7 +40,11 @@ end
 
 @timed_testset "IO" begin
     include("test_io.jl")
-end 
+end
+
+@timed_testset "Config file robustness" begin
+    include("test_config_robustness.jl")
+end
 
 @timed_testset "Depletion estimation" begin
     include("test_depletion.jl")

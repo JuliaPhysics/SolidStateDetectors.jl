@@ -127,14 +127,13 @@ function _inpolygon(pt::Tuple{T,T}, polygon::NTuple{N,Tuple{T,T}}; csgtol::T = c
     return false
 end
 
+# Polycone is full-φ only (φ::Nothing by construction)
 function _in(pt::CartesianPoint{T}, c::Polycone{<:Any, ClosedPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
-    return (isnothing(c.φ) || _in_angular_interval_closed(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)) && 
-        _inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z); csgtol) 
+    _inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z); csgtol)
 end
 
 function _in(pt::CartesianPoint{T}, c::Polycone{<:Any, OpenPrimitive}; csgtol::T = csg_default_tol(T)) where {T}
-    return (isnothing(c.φ) || _in_angular_interval_open(atan(pt.y, pt.x), c.φ, csgtol = csgtol / r)) && 
-        PolygonOps.inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z), in = true, on = iszero(pt.x) && iszero(pt.y), out = false)
+    PolygonOps.inpolygon((hypot(pt.x, pt.y), pt.z), tuple.(c.r, c.z), in = true, on = iszero(pt.x) && iszero(pt.y), out = false)
 end
 
 function surfaces(c::Polycone{T,ClosedPrimitive,N,Nothing}) where {T,N}

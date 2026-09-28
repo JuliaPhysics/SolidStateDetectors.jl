@@ -86,7 +86,7 @@ CartesianPoint(; x = 0, y = 0, z = 0) = CartesianPoint(x, y, z)
 CartesianPoint{T}(;x = 0, y = 0, z = 0) where {T} = CartesianPoint{T}(T(x),T(y),T(z))
 
 # TODO: Remove this, if possible
-CartesianPoint{T}(v::AbstractVector) where {T} = cartesian_zero + v
+CartesianPoint{T}(v::AbstractVector) where {T} = CartesianPoint{T}(T(v[1]), T(v[2]), T(v[3]))
 
 CartesianPoint{T}(pt::CartesianPoint{T}) where {T} = pt
 

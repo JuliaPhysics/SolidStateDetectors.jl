@@ -1,9 +1,9 @@
-"""
+@doc raw"""
     struct LithiumDiffusionParameters{T <: SSDFloat}
 
 Set of parameters to calculate the lithium diffusivity `D` at a given annealing temperature `T_an` using
 ```math
-D(T_\text{an}) = D_0 \exp(-H / RT+\text{an})
+D(T_\text{an}) = D_0 \exp(-H / (R\, T_\text{an}))
 ```
 
 ## Parametric types
@@ -35,12 +35,12 @@ function calculate_lithium_diffusivity(lithium_annealing_temperature::T, paramet
 end
 
 
-"""
+@doc raw"""
     struct LithiumSaturationParameters{T <: SSDFloat}
 
 Set of experimental fit parameters to calculate the lithium saturated density `N_s` in 1/cm³ at a given annealing temperature `T_an` using
 ```math
-N_s(T_\text{an}) = 10^{a - b/T_\text{an})
+N_s(T_\text{an}) = 10^{a - b/T_\text{an}}
 ```
 
 ## Parametric types

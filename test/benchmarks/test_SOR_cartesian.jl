@@ -131,8 +131,8 @@ SolidStateDetectors.innerloop!(line_weights, pcs_car, iy, iny, iz, inz, rb_tar_i
 
             
 using KernelAbstractions
-using CUDAKernels, SolidStateDetectors, Unitful
-using CUDAKernels.CUDA: CuArray
+using CUDA, SolidStateDetectors, Unitful
+using CUDA: CuArray
 
 T = Float32
 sim_car = Simulation{T}(SSD_examples[:CGD]);

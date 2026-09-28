@@ -47,5 +47,6 @@ function get_impurity_density(PtypePNjunction::PtypePNJunctionImpurityDensity{T}
 end
 
 (*)(scale::Real, pidm::PtypePNJunctionImpurityDensity{T}) where {T} = PtypePNJunctionImpurityDensity{T}(scale * pidm.surface_imp_model, scale * pidm.bulk_imp_model)
-(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, pidm::PtypePNJunctionImpurityDensity{T}) where {T} = PtypePNJunctionImpurityDensity{T}(offset + pidm.surface_imp_model, offset + pidm.bulk_imp_model)
+# get_impurity_density sums both sub-models, so an offset must be applied only once
+(+)(offset::Union{<:Real, <:Quantity{<:Real, Unitful.𝐋^(-3)}}, pidm::PtypePNJunctionImpurityDensity{T}) where {T} = PtypePNJunctionImpurityDensity{T}(pidm.surface_imp_model, offset + pidm.bulk_imp_model)
 

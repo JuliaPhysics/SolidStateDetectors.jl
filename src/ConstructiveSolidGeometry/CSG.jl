@@ -223,3 +223,32 @@ function get_scale(csg::AbstractConstructiveGeometry{T}) where {T}
     Δz = maximum(z) - minimum(z)
     hypot(Δx/2,Δy/2,Δz/2)
 end
+
+"""
+    bounding_sphere(geo::AbstractGeometry{T})::Tuple{CartesianPoint{T}, T}
+
+Conservative bounding sphere `(center, radius)` of a geometry in world
+coordinates: every point of `geo` lies inside the sphere. Intended to cull
+expensive containment tests; the radius is slightly inflated so that points on
+the surface always pass the sphere test despite floating-point rounding.
+"""
+bounding_sphere(p::AbstractPrimitive{T}) where {T} =
+    (p.origin, extremum(p) * (one(T) + sqrt(eps(T))))
+bounding_sphere(g::CSGUnion{T}) where {T} =
+    _merge_bounding_spheres(bounding_sphere(g.a), bounding_sphere(g.b))
+bounding_sphere(g::CSGDifference{T}) where {T} = bounding_sphere(g.a)
+function bounding_sphere(g::CSGIntersection{T}) where {T}
+    a = bounding_sphere(g.a)
+    b = bounding_sphere(g.b)
+    a[2] <= b[2] ? a : b
+end
+
+function _merge_bounding_spheres(a::Tuple{CartesianPoint{T}, T}, b::Tuple{CartesianPoint{T}, T}) where {T}
+    ca, ra = a
+    cb, rb = b
+    d = norm(cb - ca)
+    d + rb <= ra && return a
+    d + ra <= rb && return b
+    R = (d + ra + rb) / 2
+    (ca + ((R - ra) / d) * (cb - ca), R)
+end

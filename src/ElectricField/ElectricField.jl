@@ -54,13 +54,13 @@ function ElectricField(epot::ElectricPotential{T, 3, S}, point_types::PointTypes
 end
 
 
-function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.threadid())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
+function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindrical}, point_types::PointTypes{T}; use_nthreads::Int = Base.Threads.nthreads())::ElectricField{T, 3, Cylindrical} where {T <: SSDFloat}
     p = epot.data
     axr::Vector{T} = collect(epot.grid.axes[1])
     axφ::Vector{T} = collect(epot.grid.axes[2])
     axz::Vector{T} = collect(epot.grid.axes[3])
 
-    cyclic::T = epot.grid.axes[2].interval.right
+    cyclic::T = width(epot.grid.axes[2].interval) # φ period; the interval does not need to start at 0
     ef = Array{SVector{3, T}}(undef, size(p)...)
     @onthreads 1:use_nthreads for iz in workpart(1:size(ef, 3), 1:use_nthreads, Base.Threads.threadid())
         for iφ in 1:size(ef, 2)
@@ -91,7 +91,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                 elseif iφ == size(ef,2)
                     Δp_φ_1 = p[ir ,1, iz]-p[ir ,iφ, iz]
                     Δp_φ_2 = p[ir ,iφ, iz]-p[ir ,iφ-1, iz]
-                    d_φ_1 = (axφ[1]-axφ[iφ]) * axr[ir]# to get the proper value in length units
+                    d_φ_1 = (cyclic + axφ[1] - axφ[iφ]) * axr[ir] # forward difference wraps around the period
                     d_φ_2 = (axφ[iφ]-axφ[iφ-1]) * axr[ir]
                     eφ = ( Δp_φ_1/d_φ_1 + Δp_φ_2/d_φ_2) / 2
                 else
@@ -101,7 +101,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     d_φ_2 = (axφ[iφ]-axφ[iφ-1]) * axr[ir]
                     eφ = ( Δp_φ_1/d_φ_1 + Δp_φ_2/d_φ_2) / 2
                 end
-                isinf(eφ) || isnan(eφ) ? eφ = 0.0 : nothing # for small radii and small distances(center of the grid) it would yield Infs or Nans
+                if isinf(eφ) || isnan(eφ) eφ = zero(T) end # for small radii and small distances (center of the grid) it would yield Infs or NaNs
                 if iz-1<1
                     Δp_z_1 = p[ir ,iφ, iz+1]-p[ir ,iφ, iz]
                     d_z_1 = axz[iz+1]-axz[iz]
@@ -129,14 +129,14 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                             er *= 2
                         end
                     end
-                    if (1 < iφ < size(point_types, 2))
-                        if (point_types[ir, iφ - 1, iz] & update_bit > 0) && (point_types[ir, iφ + 1, iz] & update_bit > 0)
-                            if (point_types[ir, iφ - 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ + 1, iz] & pn_junction_bit == 0)
+                    let iφL = iφ == 1 ? size(point_types, 2) : iφ - 1, iφR = iφ == size(point_types,2) ? 1 : iφ + 1
+                        if (point_types[ir, iφL, iz] & update_bit > 0) && (point_types[ir, iφR, iz] & update_bit > 0)
+                            if (point_types[ir, iφL, iz] & pn_junction_bit > 0) && (point_types[ir, iφR, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_2 / d_φ_2
-                            elseif (point_types[ir, iφ + 1, iz] & pn_junction_bit > 0) && (point_types[ir, iφ - 1, iz] & pn_junction_bit == 0)
+                            elseif (point_types[ir, iφR, iz] & pn_junction_bit > 0) && (point_types[ir, iφL, iz] & pn_junction_bit == 0)
                                 eφ = Δp_φ_1 / d_φ_1
                             end
-                        elseif (point_types[ir, iφ - 1, iz] & update_bit > 0) || (point_types[ir, iφ + 1, iz] & update_bit > 0)
+                        elseif (point_types[ir, iφL, iz] & update_bit > 0) || (point_types[ir, iφR, iz] & update_bit > 0)
                             eφ *= 2
                         end
                     end
@@ -153,7 +153,7 @@ function get_electric_field_from_potential(epot::ElectricPotential{T, 3, Cylindr
                     end
 
                 end
-                ef[ir,iφ,iz] = [-er, -eφ, -ez]
+                ef[ir,iφ,iz] = SVector{3, T}(-er, -eφ, -ez)
             end
         end
     end
@@ -175,34 +175,45 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
 end
 
 
+_φ_interpolation(ax::DiscreteAxis{T, :periodic, :periodic}) where {T} = Interpolations.Periodic()
+_φ_interpolation(ax::DiscreteAxis{T, :reflecting, :reflecting}) where {T} = Interpolations.Reflect()
+
+# For open intervals: add a tick
+function _φ_wrap_ticks_and_data(axφ::DiscreteAxis{T}, data::AbstractArray) where {T}
+    φticks = axφ.ticks
+    period = length(φticks) == 1 ? T(2π) : width(axφ.interval)
+    add_wrap_tick = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + period)
+    ticks = add_wrap_tick ? cat(φticks, φticks[1] + period, dims = 1) : φticks
+    ext_data = add_wrap_tick ? cat(data, data[:,1:1,:], dims = 2) : data
+    ticks, ext_data
+end
 
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
-    @inbounds knots = spot.grid.axes[1].ticks, cat(spot.grid.axes[2].ticks,T(2π),dims=1), spot.grid.axes[3].ticks
-    ext_data = cat(spot.data, spot.data[:,1:1,:], dims=2)
-    i = interpolate!(knots, ext_data, Gridded(Linear()))
-    vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
-    return vector_field_itp
+    φticks, ext_data = _φ_wrap_ticks_and_data(spot.grid.axes[2], spot.data)
+    @inbounds ticks = spot.grid.axes[1].ticks, φticks, spot.grid.axes[3].ticks
+    i = interpolate!(ticks, ext_data, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), _φ_interpolation(spot.grid.axes[2]), Interpolations.Line()))
 end
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cartesian}) where {T}
-    @inbounds knots = spot.grid.axes[1].ticks, spot.grid.axes[2].ticks, spot.grid.axes[3].ticks
-    i = interpolate!(knots, spot.data, Gridded(Linear()))
-    vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
-    return vector_field_itp
+    @inbounds ticks = spot.grid.axes[1].ticks, spot.grid.axes[2].ticks, spot.grid.axes[3].ticks
+    i = interpolate!(ticks, spot.data, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
 end
 
 
+# Note: the stored vectors are Cartesian, which do not transform trivially under a
+# reduced symmetry, so evaluating a wedge-grid vector field outside its φ range is
+# only meaningful for scalars; vector fields should live on full-circle grids.
 function interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
-    extended_vectorfield = cat(vectorfield, vectorfield[:,1:1,:], dims=2)
-    @inbounds knots = grid.axes[1].ticks, cat(grid.axes[2].ticks,T(2π),dims=1), grid.axes[3].ticks
-    i = interpolate!(knots, extended_vectorfield, Gridded(Linear()))
-    velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
-    return velocity_field_itp
+    φticks, extended_vectorfield = _φ_wrap_ticks_and_data(grid.axes[2], vectorfield)
+    @inbounds ticks = grid.axes[1].ticks, φticks, grid.axes[3].ticks
+    i = interpolate!(ticks, extended_vectorfield, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), _φ_interpolation(grid.axes[2]), Interpolations.Line()))
 end
 function interpolated_vectorfield(vectorfield, grid::CartesianGrid3D{T}) where {T}
-    @inbounds knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
-    i = interpolate!(knots, vectorfield, Gridded(Linear()))
-    velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
-    return velocity_field_itp
+    @inbounds ticks = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
+    i = interpolate!(ticks, vectorfield, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
 end
 
 function interpolated_vectorfield(ef::ElectricField)

@@ -179,7 +179,7 @@ end
 
 @timed_testset "Boule impurity densities and corrections" begin
 
-    sim = Simulation{T}("test_config_files/BEGe_01.yaml")
+    sim = Simulation{T}(joinpath(@__DIR__, "test_config_files", "BEGe_01.yaml"))
     @test SolidStateDetectors.get_impurity_density(sim.detector.semiconductor.impurity_density_model, CylindricalPoint{T}(0,0,0)) == T(0.8*T(SolidStateDetectors.to_internal_units(-5e9u"cm^-3")) + T(SolidStateDetectors.to_internal_units(-5e8u"cm^-3")))
 
     det_z0 = T(0.05)
@@ -329,10 +329,12 @@ end
     # Apply to segmented detector
     config_dict = SolidStateDetectors.parse_config_file(SSD_examples[:BEGe])
     config_dict["grid"]["axes"]["phi"]["to"] = 360
-    config_dict["grid"]["spacing_surface_refinement"] = [5e-4, 5e-4, 5e-4]
+    # 0.5 mm in the config's length unit (mm); parsed relative to units.length
+    config_dict["grid"]["spacing_surface_refinement"] = [0.5, 0.5, 0.5]
     config_dict["detectors"][1]["semiconductor"]["impurity_density"] = d["impurity_density"]
     config_dict["detectors"][1]["contacts"][1]["potential"] = -3000
     sim = Simulation{T}(config_dict)
+    @test all(sim.world.spacing_surface_refinement .≈ T(5e-4))  # 0.5 mm in internal units
     timed_calculate_electric_potential!(sim, depletion_handling = true, max_tick_distance = (1u"mm", 360u"°",1u"mm"))
     
     # Test that each slice passing through a smaller segment (ids 2, 3 and 4) have at least one undepleted bit
@@ -410,4 +412,14 @@ end
 
     @test @inferred(SolidStateDetectors.get_charge_density(lcd, cart_pt)) isa Float32
     @test @inferred(SolidStateDetectors.get_charge_density(ccd, cyl_pt)) isa Float32
+end
+
+@testset "Offset corrections apply once for composite impurity models" begin
+    sim = Simulation{Float32}(SSD_examples[:IVCIlayer])
+    idm = sim.detector.semiconductor.impurity_density_model
+    @test idm isa PtypePNJunctionImpurityDensity{Float32}
+    pt = CartesianPoint{Float32}(0.02, 0, 0.04)
+    off = 1f15
+    @test SolidStateDetectors.get_impurity_density(off + idm, pt) ≈
+        SolidStateDetectors.get_impurity_density(idm, pt) + off
 end

@@ -221,3 +221,11 @@ end
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
 end
+
+@timed_testset "CGD on a cylindrical grid matches the Cartesian grid" begin
+    sim_cyl = Simulation{T}(SSD_examples[:CGD_CylGrid])
+    timed_calculate_electric_potential!(sim_cyl, refinement_limits = [0.2])
+    sim_car = Simulation{T}(SSD_examples[:CGD])
+    timed_calculate_electric_potential!(sim_car, refinement_limits = [0.2])
+    @test isapprox(get_active_volume(sim_cyl.point_types), get_active_volume(sim_car.point_types), rtol = 0.1)
+end

@@ -51,10 +51,10 @@ end
 
 @timed_testset "Move charges inside semiconductor" begin
 
-    # define a charge cloud very outside of the detector => should throw an AssertionError
+    # define a charge cloud very outside of the detector => should throw an ArgumentError
     nbcc_top = NBodyChargeCloud(CartesianPoint{T}(0.01,0,0.081), Edep, 10, radius = T(0.002), number_of_shells = 1)
     evt = Event(nbcc_top)
-    @test_throws AssertionError timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
+    @test_throws ArgumentError timed_simulate!(evt, sim, self_repulsion = true, diffusion = true)
 
     # define a charge cloud very close to the top surface of the example inverted coax detector (top = 80mm) => should throw a warning
     nbcc_top = NBodyChargeCloud(CartesianPoint{T}(0.01,0,0.079), Edep, 10, radius = T(0.002), number_of_shells = 1)
@@ -448,7 +448,7 @@ end
                 end
             end
         
-            config = "test_config_files/drift_velocity_config_axes.yaml"
+            config = joinpath(@__DIR__, "test_config_files", "drift_velocity_config_axes.yaml")
 
             @testset "All axes in one plane" begin
 
@@ -510,13 +510,13 @@ end
         @test cdm0.holes == cdm0_inputunits.holes
 
         # charge drift model config has no units, internal units are assumed
-        cdm_nounits = ADLChargeDriftModel("test_config_files/drift_velocity_config_nounits.yaml")
+        cdm_nounits = ADLChargeDriftModel(joinpath(@__DIR__, "test_config_files", "drift_velocity_config_nounits.yaml"))
         @test cdm0.electrons == cdm_nounits.electrons
         @test cdm0.holes == cdm_nounits.holes
         @test cdm0.crystal_orientation ≈ cdm_nounits.crystal_orientation
 
         # charge drift model config has no units, input units will be applied
-        cdm_nounits_inputunits = ADLChargeDriftModel("test_config_files/drift_velocity_config_nounits.yaml", input_units)
+        cdm_nounits_inputunits = ADLChargeDriftModel(joinpath(@__DIR__, "test_config_files", "drift_velocity_config_nounits.yaml"), input_units)
         @test cdm_nounits.electrons != cdm_nounits_inputunits.electrons
         @test cdm_nounits.holes != cdm_nounits_inputunits.holes
     end
@@ -775,4 +775,97 @@ end
     @test all(x -> x == nb_zero_cyl.locations[1], nb_zero_cyl.locations) 
     @test isapprox(sum(nb_zero_cyl.energies), ustrip.(u"eV", Edep))
     @test all(x -> all(isfinite, (x.x, x.y, x.z)), nb_zero_cyl.locations)
+end
+
+@timed_testset "ADL2016 zero-field guard" begin
+    cdm2016 = ADL2016ChargeDriftModel(T = T)
+    @test getVe(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
+    @test getVh(zero(SVector{3, T}), cdm2016) == zero(SVector{3, T})
+end
+
+@timed_testset "Simple drift models: numeric velocities" begin
+    fv = SVector{3, T}(100, -200, 300)
+    efcdm = ElectricFieldChargeDriftModel{T}()
+    @test getVe(fv, efcdm) == -fv
+    @test getVh(fv, efcdm) == fv
+    icdm = IsotropicChargeDriftModel{T}()
+    @test getVe(fv, icdm) ≈ -icdm.μ_e * fv
+    @test getVh(fv, icdm) ≈ icdm.μ_h * fv
+end
+
+@timed_testset "Temperature model selection and vacuum scaling" begin
+    @test SolidStateDetectors.VacuumTemperatureModel() isa SolidStateDetectors.VacuumTemperatureModel{Float32}
+    @test SolidStateDetectors.VacuumTemperatureModel{Float64}() isa SolidStateDetectors.VacuumTemperatureModel{Float64}
+    # no temperature_dependence entry => no rescaling (vacuum model)
+    @test SolidStateDetectors.TemperatureModel(T, Dict{String, Any}()) isa SolidStateDetectors.VacuumTemperatureModel{T}
+    # deprecated step-level scaling models fall back to vacuum with a warning
+    cfg_deprecated = Dict("temperature_dependence" => Dict("model" => "Boltzmann"))
+    @test (@test_logs (:warn, r"deprecated") SolidStateDetectors.TemperatureModel(T, cfg_deprecated)) isa SolidStateDetectors.VacuumTemperatureModel{T}
+    # unknown model names fall back to vacuum with an info message
+    cfg_unknown = Dict("temperature_dependence" => Dict("model" => "DoesNotExist"))
+    @test (@test_logs (:info, r"predefined temperature models") SolidStateDetectors.TemperatureModel(T, cfg_unknown)) isa SolidStateDetectors.VacuumTemperatureModel{T}
+    # a vacuum-model drift model is returned unchanged by temperature scaling
+    adl_cfg = SolidStateDetectors.parse_config_file(SolidStateDetectors.default_ADL_config_file)
+    delete!(adl_cfg["temperature_dependence"], "model")
+    cdm_vac = ADLChargeDriftModel(adl_cfg, T = T)
+    @test cdm_vac.temperaturemodel isa SolidStateDetectors.VacuumTemperatureModel{T}
+    @test scale_to_temperature(cdm_vac, T(300)) === cdm_vac
+    @test scale_to_temperature(cdm_vac, missing) === cdm_vac
+end
+
+# user hook for ArbitraryDriftModificationVolume, dispatched on the config id
+function SolidStateDetectors.modulate_driftvector(sv::CartesianVector{TV}, pt::CartesianPoint{TV},
+        tl::SolidStateDetectors.ArbitraryDriftModificationVolume{TV}, ::Type{Val{1042}}) where {TV <: SolidStateDetectors.SSDFloat}
+    sv / 2
+end
+
+@timed_testset "Virtual drift volumes" begin
+    cfg = SolidStateDetectors.parse_config_file(SSD_examples[:CGD])
+    cfg["detectors"][1]["virtual_drift_volumes"] = [
+        Dict("name" => "dead region", "model" => "dead",
+             "geometry" => Dict("box" => Dict("widths" => [2, 2, 2], "origin" => [0, 0, 0])))
+    ]
+    sim = Simulation{T}(cfg)
+    dv = sim.detector.virtual_drift_volumes[1]
+    @test dv isa SolidStateDetectors.DeadVolume{T}
+    origin = CartesianPoint{T}(0, 0, 0)
+    @test origin in dv
+    @test !(CartesianPoint{T}(0.1, 0, 0) in dv)
+    sv = CartesianVector{T}(1, 2, 3)
+    @test SolidStateDetectors.modulate_driftvector(sv, origin, dv) == CartesianVector{T}(0, 0, 0)
+
+    cfg["detectors"][1]["virtual_drift_volumes"] = [
+        Dict("model" => "arbitrary", "id" => 1042,
+             "geometry" => Dict("box" => Dict("widths" => [2, 2, 2], "origin" => [0, 0, 0])))
+    ]
+    sim2 = Simulation{T}(cfg)
+    av = sim2.detector.virtual_drift_volumes[1]
+    @test av isa SolidStateDetectors.ArbitraryDriftModificationVolume{T}
+    @test SolidStateDetectors.modulate_driftvector(sv, origin, av) == sv / 2
+    # without a user-defined method for the id, modulation must fail loudly
+    av_nohook = SolidStateDetectors.ArbitraryDriftModificationVolume{T}(av.name, 1043, av.geometry)
+    @test_throws ErrorException SolidStateDetectors.modulate_driftvector(sv, origin, av_nohook)
+end
+
+@timed_testset "InactiveLayerChargeDriftModel mobility regression" begin
+    # Pins the mobility formulas verified against Dai et al. (2023) eqs. 5-8
+    # (holes; the paper's neutral-impurity prefactor 4.46e29 is an exponent
+    # typo for 4.46e19 in its cm-based units) and Ma et al. (arXiv:1705.09562)
+    # (electrons). SI units: densities in m^-3, mobilities in m^2/V/s.
+    import SolidStateDetectors: _calculate_mobility_with_impurities, Hole, Electron
+    for TT in (Float32, Float64)
+        μh = _calculate_mobility_with_impurities(TT(1e21), TT(-1e16), TT(0), TT(90), Hole)
+        μe = _calculate_mobility_with_impurities(TT(1e21), TT(-1e16), TT(0), TT(90), Electron)
+        @test isapprox(μh, TT(7.548779), rtol = 1e-5)
+        @test isapprox(μe, TT(7.932908), rtol = 1e-5)
+    end
+    # the hole neutral-impurity term is the collapsed Sclar form
+    T90, Nn = 90.0, 1e21
+    μN_code = 1e2/Nn * (2.31e18 + 2.36e20) * 0.82 * (0.228*sqrt(T90) + 0.976/sqrt(T90))
+    @test isapprox(μN_code, 4.4554e21/Nn * (sqrt(T90) + 4.2807/sqrt(T90)), rtol = 1e-4)
+    # drift directions: electrons against the field, holes along it
+    cdm_il = SolidStateDetectors.InactiveLayerChargeDriftModel{T}()
+    fv = SVector{3, T}(0, 0, 100)
+    @test getVe(fv, cdm_il)[3] < 0
+    @test getVh(fv, cdm_il)[3] > 0
 end
