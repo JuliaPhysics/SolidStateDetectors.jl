@@ -175,34 +175,29 @@ function convert_field_vectors_to_xyz(field::Array{SArray{Tuple{3},T,1,3},3}, φ
 end
 
 
+_φ_interpolation(ax::DiscreteAxis{T, :periodic, :periodic}) where {T} = Interpolations.Periodic()
+_φ_interpolation(ax::DiscreteAxis{T, :reflecting, :reflecting}) where {T} = Interpolations.Reflect()
 
-# Period with which a cylindrical φ axis repeats: periodic axes (full circles as
-# well as symmetry-reduced wedges) repeat with their interval width, everything
-# else with the full circle. Used to close the axis for periodic interpolation.
-_φ_wrap_period(ax::DiscreteAxis{T, :periodic, :periodic}) where {T} = width(ax.interval)
-_φ_wrap_period(ax::DiscreteAxis{T}) where {T} = T(2π)
-
-function _φ_wrap_knots_and_data(axφ::DiscreteAxis{T}, data::AbstractArray) where {T}
+# For open intervals: add a tick
+function _φ_wrap_ticks_and_data(axφ::DiscreteAxis{T}, data::AbstractArray) where {T}
     φticks = axφ.ticks
-    period = length(φticks) == 1 ? T(2π) : _φ_wrap_period(axφ)
-    add_wrap_knot = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + period)
-    knots = add_wrap_knot ? cat(φticks, φticks[1] + period, dims = 1) : φticks
-    ext_data = add_wrap_knot ? cat(data, data[:,1:1,:], dims = 2) : data
-    knots, ext_data
+    period = length(φticks) == 1 ? T(2π) : width(axφ.interval)
+    add_wrap_tick = length(φticks) == 1 || !(φticks[end] ≈ φticks[1] + period)
+    ticks = add_wrap_tick ? cat(φticks, φticks[1] + period, dims = 1) : φticks
+    ext_data = add_wrap_tick ? cat(data, data[:,1:1,:], dims = 2) : data
+    ticks, ext_data
 end
 
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cylindrical}) where {T}
-    φknots, ext_data = _φ_wrap_knots_and_data(spot.grid.axes[2], spot.data)
-    @inbounds knots = spot.grid.axes[1].ticks, φknots, spot.grid.axes[3].ticks
-    i = interpolate!(knots, ext_data, Gridded(Linear()))
-    vector_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
-    return vector_field_itp
+    φticks, ext_data = _φ_wrap_ticks_and_data(spot.grid.axes[2], spot.data)
+    @inbounds ticks = spot.grid.axes[1].ticks, φticks, spot.grid.axes[3].ticks
+    i = interpolate!(ticks, ext_data, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), _φ_interpolation(spot.grid.axes[2]), Interpolations.Line()))
 end
 function interpolated_scalarfield(spot::ScalarPotential{T, 3, Cartesian}) where {T}
-    @inbounds knots = spot.grid.axes[1].ticks, spot.grid.axes[2].ticks, spot.grid.axes[3].ticks
-    i = interpolate!(knots, spot.data, Gridded(Linear()))
-    vector_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
-    return vector_field_itp
+    @inbounds ticks = spot.grid.axes[1].ticks, spot.grid.axes[2].ticks, spot.grid.axes[3].ticks
+    i = interpolate!(ticks, spot.data, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
 end
 
 
@@ -210,17 +205,15 @@ end
 # reduced symmetry, so evaluating a wedge-grid vector field outside its φ range is
 # only meaningful for scalars; vector fields should live on full-circle grids.
 function interpolated_vectorfield(vectorfield, grid::CylindricalGrid{T}) where {T}
-    φknots, extended_vectorfield = _φ_wrap_knots_and_data(grid.axes[2], vectorfield)
-    @inbounds knots = grid.axes[1].ticks, φknots, grid.axes[3].ticks
-    i = interpolate!(knots, extended_vectorfield, Gridded(Linear()))
-    velocity_field_itp = extrapolate(i, (Interpolations.Line(), Periodic(), Interpolations.Line()))
-    return velocity_field_itp
+    φticks, extended_vectorfield = _φ_wrap_ticks_and_data(grid.axes[2], vectorfield)
+    @inbounds ticks = grid.axes[1].ticks, φticks, grid.axes[3].ticks
+    i = interpolate!(ticks, extended_vectorfield, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), _φ_interpolation(grid.axes[2]), Interpolations.Line()))
 end
 function interpolated_vectorfield(vectorfield, grid::CartesianGrid3D{T}) where {T}
-    @inbounds knots = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
-    i = interpolate!(knots, vectorfield, Gridded(Linear()))
-    velocity_field_itp = extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
-    return velocity_field_itp
+    @inbounds ticks = grid.axes[1].ticks, grid.axes[2].ticks, grid.axes[3].ticks
+    i = interpolate!(ticks, vectorfield, Gridded(Linear()))
+    return extrapolate(i, (Interpolations.Line(), Interpolations.Line(), Interpolations.Line()))
 end
 
 function interpolated_vectorfield(ef::ElectricField)
