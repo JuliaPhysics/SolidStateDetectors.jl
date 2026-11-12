@@ -68,14 +68,23 @@ function SolidStateDetectors.simulate_waveforms( mcevents::AbstractVector{<:Name
 end
 
 
-# Add support for reading and writing CartesianPoint and CylindricalPoint using LegendHDF5IO
-function __init__()
-    LegendHDF5IO._datatype_dict["cartesianpoint"] = CartesianPoint
-    LegendHDF5IO._datatype_dict["cylindricalpoint"] = CylindricalPoint
-end
+# Add support for reading and writing CartesianPoint and CylindricalPoint using LegendHDF5IO.
+# LegendHDF5IO v0.2 registers datatype names with `register_datatype!`, v0.1 through its
+# datatype dictionary and `datatype_to_string`:
+if isdefined(LegendHDF5IO, :register_datatype!)
+    function __init__()
+        LegendHDF5IO.register_datatype!("cartesianpoint", CartesianPoint)
+        LegendHDF5IO.register_datatype!("cylindricalpoint", CylindricalPoint)
+    end
+else
+    function __init__()
+        LegendHDF5IO._datatype_dict["cartesianpoint"] = CartesianPoint
+        LegendHDF5IO._datatype_dict["cylindricalpoint"] = CylindricalPoint
+    end
 
-LegendHDF5IO.datatype_to_string(::Type{<:CartesianPoint}) = "cartesianpoint"
-LegendHDF5IO.datatype_to_string(::Type{<:CylindricalPoint}) = "cylindricalpoint"
+    LegendHDF5IO.datatype_to_string(::Type{<:CartesianPoint}) = "cartesianpoint"
+    LegendHDF5IO.datatype_to_string(::Type{<:CylindricalPoint}) = "cylindricalpoint"
+end
 
 
 
