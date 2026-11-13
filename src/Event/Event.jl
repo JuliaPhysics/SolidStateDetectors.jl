@@ -143,7 +143,9 @@ function move_charges_inside_semiconductor!(
         if !all(idx_in)
             edep_weights = ustrip.(energies[n])
             charge_center = barycenter(locations[n], Weights(edep_weights))
-            @assert charge_center in det.semiconductor "The center of the charge cloud ($(charge_center)) is not inside the semiconductor."
+            if !(charge_center in det.semiconductor)
+                throw(ArgumentError("The center of the charge cloud ($(charge_center)) is not inside the semiconductor."))
+            end
             surf = ConstructiveSolidGeometry.surfaces(det.semiconductor.geometry)
             for (k,m) in enumerate(findall(.!idx_in))
                 l = locations[n][m]
@@ -333,13 +335,13 @@ Returns the electron and hole contribution to the waveform of a [`Contact`](@ref
 ## Example
 ```julia 
 using Plots
-using SolidStateDetector
+using SolidStateDetectors
 T = Float32
 
-simulation = Simulation{T}(SSD_examples[:InvertedCoax])
-simulate!(simulation)
-event = Event([CartesianPoint{T}(0.02,0.01,0.05)])
-simulate!(event, simulation)
+sim = Simulation{T}(SSD_examples[:InvertedCoax])
+simulate!(sim)
+evt = Event([CartesianPoint{T}(0.02,0.01,0.05)])
+simulate!(evt, sim)
 
 contact_id = 1
 wf = get_electron_and_hole_contribution(evt, sim, contact_id)

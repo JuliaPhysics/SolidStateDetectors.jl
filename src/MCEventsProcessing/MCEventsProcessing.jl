@@ -125,7 +125,7 @@ end
 _get_unitless_positions(points::AbstractVector{<:CartesianPoint}) = to_internal_units.(points)
 
 function _convertEnergyDepsToChargeDeps(
-        positions::AbstractVector, edep::AbstractVector{<:Quantity}, det::SolidStateDetector{T}; 
+        positions::AbstractVector, edep::AbstractVector{<:RealQuantity}, det::SolidStateDetector{T};
         particle_type::Type{PT} = Gamma, 
         radius::Vector{<:Union{<:Real, <:LengthQuantity}} = radius_guess.(T.(to_internal_units.(edep)), particle_type),
         max_interaction_distance::Union{<:Real, <:LengthQuantity} = NaN,
@@ -190,8 +190,8 @@ function _simulate_charge_drifts( mcevents::TypedTables.Table, sim::Simulation{T
     @assert is_detector_hits_table(mcevents) "Table does not have the correct format"
     @showprogress map(mcevents) do phyevt
         locations, edeps = _convertEnergyDepsToChargeDeps(to_internal_units.(phyevt.pos), phyevt.edep, sim.detector; number_of_carriers, number_of_shells, max_interaction_distance, verbose)
-        drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types, 
-                VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, T(Δt.val) * unit(Δt);
+        drift_paths = map( i -> _drift_charges(sim.detector, sim.electric_field.grid, sim.point_types,
+                VectorOfArrays(locations[i]), VectorOfArrays(edeps[i]), electric_field, Δt;
                 max_nsteps, diffusion, self_repulsion, end_drift_when_no_field, geometry_check, verbose
             ),
             eachindex(edeps)

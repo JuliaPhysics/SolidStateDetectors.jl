@@ -76,19 +76,6 @@ radius_at_z(cm::ConeMantle{T,Tuple{T,T}}, z::T) where {T} = radius_at_z(cm.hZ, c
 get_φ_limits(cm::ConeMantle{T,<:Any,T}) where {T} = T(0), cm.φ
 get_φ_limits(cm::ConeMantle{T,<:Any,Nothing}) where {T} = T(0), T(2π)
 
-# function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-#     pto = _transform_into_object_coordinate_system(pt, cm)
-#     cyl = CylindricalPoint(pto)
-#     return _transform_into_global_coordinate_system(
-#             CartesianVector(CartesianPoint(CylindricalPoint{T}(-cyl.r, cyl.φ, zero(T)))), cm)
-# end
-# function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-#     pto = _transform_into_object_coordinate_system(pt, cm)
-#     cyl = CylindricalPoint(pto)
-#     return _transform_into_global_coordinate_system(
-#             CartesianVector(CartesianPoint(CylindricalPoint{T}(cyl.r, cyl.φ, zero(T)))), cm)
-# end
-
 function normal(cm::ConeMantle{T,T,<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
     x = p_local.x
@@ -105,45 +92,22 @@ function normal(cm::ConeMantle{T,T,<:Any,:inwards}, pt::CartesianPoint{T})::Cart
     return _transform_into_global_coordinate_system(normal_local, cm)
 end
 
-# function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-#     pto = _transform_into_object_coordinate_system(pt, cm)
-#     cyl = CylindricalPoint(pto)
-#     Δr = cm.r[2] - cm.r[1]
-#     Δz = 2cm.hZ
-#     return _transform_into_global_coordinate_system(
-#             CartesianVector(CartesianPoint(CylindricalPoint{T}(-one(T), cyl.φ, Δr / Δz))), cm)
-# end
 function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:inwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
-    x = p_local.x
-    y = p_local.y
-    
+    s, c = sincos(atan(p_local.y, p_local.x))
     Δr = cm.r[2] - cm.r[1]
     Δz = 2cm.hZ
-    norm_vec_local = normalize(CartesianVector(-x, -y, Δr / Δz))
+    norm_vec_local = normalize(CartesianVector(-c, -s, Δr / Δz))
     return _transform_into_global_coordinate_system(norm_vec_local, cm)
-
 end
-
-# function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
-#     pto = _transform_into_object_coordinate_system(pt, cm)
-#     cyl = CylindricalPoint(pto)
-#     Δr = cm.r[2] - cm.r[1]
-#     Δz = 2cm.hZ
-#     return _transform_into_global_coordinate_system(
-#             CartesianVector(CartesianPoint(CylindricalPoint{T}( one(T), cyl.φ, -Δr / Δz))), cm)
-# end
 
 function normal(cm::ConeMantle{T,Tuple{T,T},<:Any,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T}
     p_local = _transform_into_object_coordinate_system(pt, cm)
-    x = p_local.x
-    y = p_local.y
-
+    s, c = sincos(atan(p_local.y, p_local.x))
     Δr = cm.r[2] - cm.r[1]
     Δz = 2cm.hZ
-    norm_vec_local = normalize(CartesianVector(x, y, -Δr / Δz))
+    norm_vec_local = normalize(CartesianVector(c, s, -Δr / Δz))
     return _transform_into_global_coordinate_system(norm_vec_local, cm)
-
 end
 
 function vertices(cm::ConeMantle{T}, n_arc::Int)::Vector{CartesianPoint{T}} where {T}
@@ -228,7 +192,8 @@ Calculates the intersections of a `Line` with a `ConeMantle`.
 !!! note 
     The function will always return 2 CartesianPoint's.
     If the line just touches the mantle, the two points will be the same. 
-    If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+    If the line does not touch the mantle at all, two finite points off the mantle are returned
+    (callers filter intersection candidates via `in`).
     If the line crosses the mantle only once, two points will be returned. The two points will be the same point (the intersection).
     If the line lies inside the mantle and is parallel to it. The same point will be returned which is the origin of the line. 
 """
@@ -252,8 +217,8 @@ function intersection(cm::ConeMantle{T,Tuple{T,T}}, l::Line{T}) where {T}
 
     λ1, λ2 = if f1 == 0 # one intersection
         term1 = -hZ^2*S^2 - 2hZ*L3*S^2 - 2*hZ*R0*S + L1^2 + L2^2 - L3^2*S^2 - 2L3*R0*S - R0^2
-        term2 = L1*sqrt(D3^2*S^2 - D2^2) - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
-        λ = term1 / (2term2) 
+        term2 = -D1*L1 - D2*L2 + D3*hZ*S^2 + D3*L3*S^2 + D3*R0*S
+        λ = term1 / (2term2)
         λ, λ
     else # two or no intersections 
         λ = inv(f1)

@@ -92,8 +92,9 @@ function apply_boundary_conditions_on_x_axis!(  rbpot::AbstractArray{T, 4}, rbi:
 end
 function apply_boundary_conditions_on_x_axis!(  rbpot::AbstractArray{T, 4}, rbi::Int, ax::DiscreteAxis{T, :periodic, :periodic}, int::Interval{:closed, :open, T},
                                                 grid_boundary_factors::NTuple{2, T})::Nothing where {T}
-    rbpot[  1, :, :, rbi] .= view(rbpot, size(rbpot, 1), :, :, rbi) 
-    rbpot[end, :, :, rbi] .= view(rbpot, 1, :, :, rbi) 
+    # compressed (red-black) dimension: real index 1 sits at row 2, real index N at row size-1
+    rbpot[  1, :, :, rbi] .= view(rbpot, size(rbpot, 1) - 1, :, :, rbi) # cycling boundary
+    rbpot[end, :, :, rbi] .= view(rbpot, 2, :, :, rbi)                  # cycling boundary
     nothing
 end
 

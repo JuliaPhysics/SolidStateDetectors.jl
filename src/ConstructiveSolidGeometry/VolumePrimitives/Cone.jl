@@ -615,8 +615,9 @@ function Geometry(::Type{T}, t::Type{Cone}, dict::AbstractDict, input_units::Nam
         throw(ConfigFileError("Error when trying to parse φ from configuration file."))
     end
 
-    hZ = if haskey(dict, "h")
-        _parse_value(T, dict["h"], length_unit) / 2
+    hZ, z_center = parse_height_of_primitive(T, dict, length_unit)
+    if !iszero(z_center)
+        origin += rotation * CartesianVector{T}(0, 0, z_center)
     end
 
     # TODO: throw error if hZ == 0 and different radii at top and bottom ?
@@ -662,7 +663,7 @@ function Dictionary(c::Cone{T, <:Any, TR})::OrderedDict{String, Any} where {T, T
     if !iszero(c.origin) dict["origin"] = Dictionary(c.origin) end
     if !isone(c.rotation)
         d = Dictionary(c.rotation)
-        if unique(keys(d)) == ["Z"]
+        if unique(keys(d)) == ["Z"] && !isnothing(c.φ)
             φ0 = mod2pi(_parse_value(T, d["Z"], internal_angle_unit))
             dict["phi"] = OrderedDict("from" => string(rad2deg(φ0))*"°", "to" => string(rad2deg(φ0 + c.φ))*"°")
         else

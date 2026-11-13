@@ -44,7 +44,7 @@ plot(
 
 # Next, calculate the electric potential:
 
-calculate_electric_potential!( sim,
+calculate_electric_potential!( sim, depletion_handling = true,
                                refinement_limits = [0.2, 0.1, 0.05, 0.01])
 
 plot(
@@ -160,7 +160,7 @@ plot!(evt.drift_paths)
 # We need weighting potentials to simulate the detector charge signal induced by drifting charges. We'll calculate the weighting potential for the point contact and the outer shell of the detector:
 
 for contact in sim.detector.contacts
-    calculate_weighting_potential!(sim, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], n_points_in_φ = 2, verbose = false)
+    calculate_weighting_potential!(sim, contact.id, refinement_limits = [0.2, 0.1, 0.05, 0.01], verbose = false)
 end
 
 wp1 = plot(sim.weighting_potentials[1])

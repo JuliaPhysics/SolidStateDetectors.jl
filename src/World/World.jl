@@ -65,7 +65,7 @@ end
 function World(T, dict::AbstractDict, input_units::NamedTuple)::World
     
     spacing_surface_refinement = if haskey(dict, "spacing_surface_refinement")
-        ntuple(i -> _parse_value(T, dict["spacing_surface_refinement"][i], internal_length_unit), 3)
+        ntuple(i -> _parse_value(T, dict["spacing_surface_refinement"][i], input_units.length), 3)
     else
         ntuple(i -> T(NaN), 3)
     end
@@ -105,7 +105,7 @@ function get_interval_boundary_types(dict::AbstractDict)
 end
 
 function is_periodic_plus_mirror_symmetric(BL::Symbol, BR::Symbol)::Bool
-    return (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic)
+    return (BL == :periodic && BR == :reflecting) || (BL == :reflecting && BR == :periodic) || (BL == :reflecting && BR == :reflecting)
 end
 
 function get_r_SSDInterval(T, dict, input_units::NamedTuple)
@@ -130,20 +130,30 @@ function get_φ_SSDInterval(T, dict::AbstractDict, input_units::NamedTuple)
         dp = dict["phi"]
         from::T = "from" in keys(dp) ?  _parse_value(T, dp["from"], input_units.angle) : T(0)
         to::T = "to" in keys(dp) ? _parse_value(T, dp["to"], input_units.angle) : T(2π)
+        if to < from 
+            throw(ConfigFileError("The φ interval of the world has a right endpoint smaller than the left endpoint"))
+        end
+        Δφ::T = to - from
         L = :closed
         R = :open
         BL = :periodic
         BR = :periodic
         cfBL, cfBR = get_interval_boundary_types(dp)
         if !ismissing(cfBL) BL = cfBL; BR = cfBR; end
-        if is_periodic_plus_mirror_symmetric(BL, BR) 
-            L = :closed; R = :closed;
-            BL = :reflecting; BR = :reflecting
-        end
         if from == to # 2D
             L = :closed; R = :closed;
             BL = :reflecting; BR = :reflecting
-        end
+        elseif is_periodic_plus_mirror_symmetric(BL, BR)
+            L = :closed; R = :closed;
+            BL = :reflecting; BR = :reflecting
+            # A double-reflecting interval needs to be expandable to π
+            if !(round(T(π) / Δφ) * Δφ ≈ T(π)) 
+                throw(ConfigFileError("The double-reflecting φ interval of the world cannot be expanded to π"))
+            end
+        elseif BL == :periodic && BR == :periodic && !(round(T(2π) / Δφ) * Δφ ≈ T(2π))
+            # A double-reflecting interval needs to be expandable to 2π
+            throw(ConfigFileError("The double-periodic φ interval of the world cannot be expanded to 2π"))
+        end 
         return SSDInterval{T, L, R, BL, BR}(from, to)
     else
         return SSDInterval{T, :closed, :open, :periodic, :periodic}(T(0), T(2π))

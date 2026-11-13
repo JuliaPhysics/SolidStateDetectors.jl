@@ -1,13 +1,5 @@
-abstract type AbstractRBArray{T, N} <: AbstractArray{T, N} end
-
-abstract type RBEven end
-abstract type RBOdd end
-
 const rb_even = Int(2)
 const rb_odd  = Int(1)
-
-const rb_bool_even = true
-const rb_bool_odd  = false
 
 
 @inline function rbidx( nidx::Int )::Int
@@ -65,31 +57,6 @@ end
     end
 end
 
-
-# """
-#     RBExtBy2Array( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
-# 
-# Returns a RedBlack array for the `grid`. 
-# """
-function RBArray( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
-    nr, nφ, nz = size(grid)
-    # new ordering in memory: r, φ, z -> z, φ, r (so inner loop goes over z)
-    return zeros(T, div(nz, 2) + mod(nz, 2), nφ, nr, 2)
-end
-function RBArray( a::Array{T, N}, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {T, N, TG}
-    rbarray::Array{T, N + 1} = RBArray(T, grid)
-    for iz in axes(a, 3)
-        irbz::Int = div(iz, 2) + mod(iz, 2) 
-        for iφ in axes(a, 2)
-            idxsum::Int = iz + iφ
-            for ir in axes(a, 1)
-                rbi::Int = iseven(idxsum + ir) ? rb_even::Int : rb_odd::Int
-                rbarray[ irbz, iφ, ir, rbi ] = a[ir, iφ, iz]
-            end
-        end
-    end
-    return rbarray
-end
 
 # """
 #     RBExtBy2Array( T::Type, grid::Grid{TG, N, Cylindrical} )::Array{T, N + 1} where {TG, N}
