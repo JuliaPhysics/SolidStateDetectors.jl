@@ -494,7 +494,7 @@ function apply_initial_state!(sim::Simulation{T, CS}, ::Type{ElectricPotential},
     pcs = PotentialCalculationSetup(
                 sim.detector, grid, sim.medium; 
                 use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(grid), Base.Threads.nthreads(), CS), 
-                not_only_paint_contacts, paint_contacts
+                not_only_paint_contacts, paint_contacts, surroundings_potential = sim.world.surroundings_potential
     );
 
     sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), grid)
@@ -613,6 +613,7 @@ function update_till_convergence!( sim::Simulation{T,CS},
         sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, sor_consts = T.(sor_consts),
         use_nthreads = _guess_optimal_number_of_threads_for_SOR(size(sim.electric_potential.grid), Base.Threads.nthreads(), CS),    
         not_only_paint_contacts = not_only_paint_contacts, paint_contacts = paint_contacts,
+        surroundings_potential = sim.world.surroundings_potential,
     ))
 
     via_KernelAbstractions = device_array_type <: GPUArrays.AnyGPUArray
@@ -809,7 +810,7 @@ function refine!(sim::Simulation{T}, ::Type{ElectricPotential},
 
     if update_other_fields
         pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data;
-                                        not_only_paint_contacts, paint_contacts)
+                                        not_only_paint_contacts, paint_contacts, surroundings_potential = sim.world.surroundings_potential)
 
         
         sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
@@ -954,7 +955,7 @@ function refine_surface!(sim::Simulation{T,CS}, max_spacing::NTuple{3,T} = (T(1e
     if update_other_fields
 
         pcs = PotentialCalculationSetup(sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data;
-                                        not_only_paint_contacts, paint_contacts)
+                                        not_only_paint_contacts, paint_contacts, surroundings_potential = sim.world.surroundings_potential)
         sim.imp_scale = ImpurityScale(ImpurityScaleArray(pcs), sim.electric_potential.grid)
         sim.q_eff_imp = EffectiveChargeDensity(EffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
         sim.q_eff_fix = EffectiveChargeDensity(FixedEffectiveChargeDensityArray(pcs), sim.electric_potential.grid)
@@ -1034,6 +1035,7 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         verbose::Bool = true,
         device_array_type::Type{<:AbstractArray} = Array,
         initialize::Bool = true,
+        surroundings_potential::Union{Missing, RealQuantity} = missing,
         grid::Union{Missing, Grid{T}} = initialize ? missing : (potential_type == ElectricPotential ? sim.electric_potential.grid : sim.weighting_potentials[contact_id].grid)
     )::Nothing where {T <: SSDFloat, CS <: AbstractCoordinateSystem}
 
@@ -1042,6 +1044,10 @@ function _calculate_potential!( sim::Simulation{T, CS}, potential_type::UnionAll
         convergence_limit::T = T(convergence_limit)
         isEP::Bool = potential_type == ElectricPotential
         isWP::Bool = !isEP
+        # Stored on the world, so that later re-solves use it too. Weighting potentials always have grounded surroundings.
+        if isEP && !ismissing(surroundings_potential)
+            sim.world = World(sim.world, surroundings_potential = _parse_value(T, surroundings_potential, internal_voltage_unit))
+        end
         if ismissing(grid)
             grid = Grid(sim, for_weighting_potential = isWP, max_tick_distance = max_tick_distance, max_distance_ratio = max_distance_ratio)
         end
@@ -1385,6 +1391,9 @@ There are several keyword arguments which can be used to tune the calculation.
         Default is `5`.
 * `grid::Grid`: Initial grid used to start the simulation. Default is `Grid(sim)`.
 * `depletion_handling::Bool`: Enables the handling of undepleted regions. Default is `false`.
+* `surroundings_potential::Union{Real, Quantity}`: Potential of the surroundings (e.g. a cryostat), used by `infinite` and `fixed` boundaries.
+    If given, it is stored in `sim.world` for all later calculations of the electric potential of `sim`.
+    Default is the stored value, `0` (grounded) unless set before. See [Potential of the Surroundings](@ref).
 * `use_nthreads::Union{Int, Vector{Int}}`: If `<:Int`, `use_nthreads` defines the maximum number of threads to be used in the computation. 
     Fewer threads might be used depending on the current grid size due to threading overhead. Default is `Base.Threads.nthreads()`.
     If `<:Vector{Int}`, `use_nthreads[i]` defines the number of threads used for each grid (refinement) stage of the field simulation.
@@ -1530,6 +1539,7 @@ There are several keyword arguments which can be used to tune the simulation.
     without checking if points are actually inside them.
     Setting it to `false` should improve the performance but the points inside of [`Contact`](@ref) are not fixed anymore.    
 * `paint_contacts::Bool = true`: Enable or disable the painting of the surfaces of the [`Contact`](@ref) onto the `grid`.
+* `surroundings_potential`: Potential of the surroundings of the world, see [`calculate_electric_potential!`](@ref).
 * `verbose::Bool=true`: Boolean whether info output is produced or not.
 
 See also [`calculate_electric_potential!`](@ref), [`calculate_electric_field!`](@ref) and [`calculate_weighting_potential!`](@ref).
@@ -1552,6 +1562,7 @@ function simulate!( sim::Simulation{T, S};
                     device_array_type::Type{<:AbstractArray} = Array,
                     not_only_paint_contacts::Bool = true, 
                     paint_contacts::Bool = true,
+                    surroundings_potential::Union{Missing, RealQuantity} = missing,
                     verbose::Bool = false) where {T <: SSDFloat, S}
     calculate_electric_potential!(  sim,
                                     convergence_limit = convergence_limit,
@@ -1566,6 +1577,7 @@ function simulate!( sim::Simulation{T, S};
                                     device_array_type = device_array_type,
                                     not_only_paint_contacts = not_only_paint_contacts,
                                     paint_contacts = paint_contacts,
+                                    surroundings_potential = surroundings_potential,
                                     verbose = verbose
                                     )
     for contact in sim.detector.contacts

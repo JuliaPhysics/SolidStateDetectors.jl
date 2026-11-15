@@ -68,13 +68,11 @@ plot!(A, [maximum(xs) .+ (-1,1)...], [ys[end-1],ys[end-1]], arrow = arrow(:both,
 scatter!([0,length(xs)+1], [ys[begin+1], ys[end-1]], label = "reflecting", color = :purple) #hide
 ````
 
-`fixed` (or `fix`): This sets the potential beyond the world volume to the potential at the world boundary, i.e. `ϕ(x0) = ϕ(x1)` and `ϕ(xN+1) = ϕ(xN)`:
+`fixed` (or `fix`): This fixes the potential beyond the world volume to the potential of the surroundings (`0` by default, see below), i.e. `ϕ(x0) = ϕ(xN+1) = surroundings_potential`:
 ````@example grid
 A = deepcopy(P) #hide
 plot!(A, xticks = (0:10, [L"\"x$_0$\""; latexstring.("x\$_".*string.(1:9).*"\$"); L"\"x$_{10}$\""])) #hide
-plot!(A, [minimum(xs) .+ (-1,0)...], [ys[begin],ys[begin]], arrow = arrow(:both, :closed), label = "", color = :green) #hide
-plot!(A, [maximum(xs) .+ (1,0)...], [ys[end],ys[end]], arrow = arrow(:both, :closed), label = "", color = :green) #hide
-scatter!(A, [0,length(xs)+1], [ys[begin], ys[end]], label = "fix / fixed", color = :green) #hide
+scatter!(A, [0,length(xs)+1], [0, 0], label = "fix / fixed", color = :green) #hide
 ````
 
 `infinite` (or `inf`): Assumes the potential to follow a relationship beyond the world volume, where the ratio between neighboring ticks is expected to stay constant, i.e. `ϕ(x0)/ϕ(x1) = ϕ(x1)/ϕ(x2)` and `ϕ(xN+1)/ϕ(xN) = ϕ(xN)/ϕ(xN-1)`:
@@ -85,6 +83,8 @@ plot!(A, -1:0.01:11, x -> ys[end] * (ys[end]/ys[end-1])^(x - xs[end]), color = :
 plot!(A, -1:0.01:11, x -> ys[begin] * (ys[begin+1]/ys[begin])^(x - xs[begin]), color = :red, ls = :dash, label = "") #hide
 scatter!(A, [0,length(xs)+1], [ys[begin]^2/ys[begin+1], ys[end]^2 / ys[end-1]], label = "inf / infinite", color = :red) #hide
 ````
+
+For `infinite` boundaries, the ratio is taken relative to the potential of the surroundings, i.e. the potential decays towards it. The surroundings are grounded (`0`) by default, see [Potential of the Surroundings](@ref).
 
 
 
