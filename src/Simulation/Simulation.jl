@@ -398,6 +398,13 @@ function Grid(sim::Simulation{T, Cylindrical};
     important_z_ticks = initialize_axis_ticks(important_z_ticks; max_ratio = T(max_distance_ratio))
     important_z_ticks = fill_up_ticks(important_z_ticks, max_distance_z)
 
+    # map the important points into the φ-interval through modulo 2π
+    function wrap_φ(φ::T)::T where {T}
+        offset::T = mod(φ - world_φ_int.left, T(2π))
+        return (T(2π) - offset <= eps(T(2π))) ? world_φ_int.left : world_φ_int.left + offset
+    end
+    
+    important_φ_ticks = map(wrap_φ, important_φ_ticks)
     append!(important_φ_ticks, endpoints(world_φ_int)...)
     important_φ_ticks = unique!(sort!(important_φ_ticks))
     if add_ticks_between_important_ticks
@@ -407,7 +414,7 @@ function Grid(sim::Simulation{T, Cylindrical};
     iR = searchsortedfirst(important_φ_ticks, world_φ_int.right)
     important_φ_ticks = unique(map(t -> isapprox(t, 0, atol = 1e-3) ? zero(T) : t, important_φ_ticks[iL:iR]))
     important_φ_ticks = merge_close_ticks(important_φ_ticks, min_diff = T(1e-3))
-    imp2order_φ_ticks = merge_close_ticks(second_order_imp_ticks[2], min_diff = world_Δs[2] / 20)
+    imp2order_φ_ticks = merge_close_ticks(map(wrap_φ, second_order_imp_ticks[2]), min_diff = world_Δs[2] / 20)
     important_φ_ticks = merge_second_order_important_ticks(important_φ_ticks, imp2order_φ_ticks, min_diff = world_Δs[2] / 20)
     important_φ_ticks = initialize_axis_ticks(important_φ_ticks; max_ratio = T(max_distance_ratio))
     important_φ_ticks = fill_up_ticks(important_φ_ticks, max_distance_φ)

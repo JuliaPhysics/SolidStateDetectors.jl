@@ -37,7 +37,7 @@ function getindex(ep::P, grid::Grid{T, N, S}) where {T, N, S, P <: ScalarPotenti
 end
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :periodic, :periodic}, int::Interval{:closed, :open, AT}) where {T, AT}
-    @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
+    # @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = length( axφ )
     Δφ::AT = width(int)
     min_step::AT = l > 1 ? min(minimum(diff(axφ.ticks)), Δφ - (axφ.ticks[end] - axφ.ticks[1])) : Δφ
@@ -80,7 +80,7 @@ end
 
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT}) where {T, AT}
-    @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
+    # @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = 2 * length( axφ ) - 2
     Δφ::AT = width(int)
     new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(int.left, int.right + Δφ)
