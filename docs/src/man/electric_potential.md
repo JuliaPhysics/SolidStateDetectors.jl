@@ -144,7 +144,8 @@ lithium_annealing_time::T = 18*60 # seconds
 p_type_density::T = -1e16 # m^-3
 bulk_imp_model = ConstantImpurityDensity{T}(p_type_density)
 
-pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(lithium_annealing_temperature, lithium_annealing_time, nothing, bulk_imp_model, distance_to_contact)
+doped_contact_id = 2
+pn_junction_impurity_density = PtypePNJunctionImpurityDensity{T}(lithium_annealing_temperature, lithium_annealing_time, nothing, doped_contact_id, bulk_imp_model, distance_to_contact)
 sim.detector = SolidStateDetector(sim.detector, pn_junction_impurity_density)
 ```
 

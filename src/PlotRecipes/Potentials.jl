@@ -119,7 +119,7 @@ end
             projection --> :polar
             xguide --> ""
             yguide --> ""
-            grid.φ*internal_angle_unit, grid.r*internal_length_unit, data[:,:,idx].*punit
+            midpoints(get_extended_ticks(grid.φ))*internal_angle_unit, clamp.(midpoints(get_extended_ticks(grid.r)), extrema(grid.r.ticks)...)*internal_length_unit, data[:,:,idx].*punit
         end
     end
 

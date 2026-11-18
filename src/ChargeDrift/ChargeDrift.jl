@@ -1,8 +1,3 @@
-struct DriftPath{T <: SSDFloat}
-    path::Vector{CartesianPoint{T}}
-    timestamps::Vector{T}
-end
-
 struct EHDriftPath{T <: SSDFloat}
     e_path::Vector{CartesianPoint{T}}
     h_path::Vector{CartesianPoint{T}}
@@ -106,7 +101,7 @@ function _add_fieldvector_drift!(step_vectors::Vector{CartesianVector{T}}, curre
     nothing
 end
 
-function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T = T(0.5e3))::Nothing where {T <: SSDFloat}
+function _add_fieldvector_diffusion!(step_vectors::Vector{CartesianVector{T}}, done::Vector{Bool}, length::T)::Nothing where {T <: SSDFloat}
     for n in eachindex(step_vectors)
         if done[n] continue end
         sinθ::T, cosθ::T = sincos(acos(T(2*rand() - 1)))

@@ -127,7 +127,7 @@ end
 get_label_name(::EllipticalSurface) = "Elliptical Surface"
 
 extremum(es::EllipticalSurface{T,T}) where {T} = es.r
-extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[2]
+extremum(es::EllipticalSurface{T,Tuple{T,T}}) where {T} = es.r[2] # r_out always larger r_in: es.r[2] > es.r[1]
 
 get_φ_limits(es::EllipticalSurface{T,<:Any,T}) where {T} = T(0), es.φ
 get_φ_limits(cm::EllipticalSurface{T,<:Any,Nothing}) where {T} = T(0), T(2π)

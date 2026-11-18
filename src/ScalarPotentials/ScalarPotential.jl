@@ -37,17 +37,21 @@ function getindex(ep::P, grid::Grid{T, N, S}) where {T, N, S, P <: ScalarPotenti
 end
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :periodic, :periodic}, int::Interval{:closed, :open, AT}) where {T, AT}
-    @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
+    # @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = length( axφ )
     Δφ::AT = width(int)
+    min_step::AT = l > 1 ? min(minimum(diff(axφ.ticks)), Δφ - (axφ.ticks[end] - axφ.ticks[1])) : Δφ
+    min_step > 2 * eps(AT(2π)) || @warn "φ grid spacing is finer than floating-point resolution at 2π"
+    tol::AT = min(8 * eps(AT(2π)), min_step / 2)
     new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(0, 2π)
-    n::Int = Int(round(T(2π) / Δφ, sigdigits = 6))
+    n::Int = Int(round(AT(2π) / Δφ, sigdigits = 6))
     new_ticks::Vector{AT} = Vector{AT}(undef, l * n)
     new_pot = Array{eltype(sp.data), 3}(undef, size(sp, 1), l * n, size(sp, 3))
     for idx_n in 1:n
         for il in 1:l
             idx::Int = il + (idx_n - 1) * l
-            new_ticks[idx] = mod((idx_n - 1) * Δφ + axφ.ticks[il], T(2π))
+            t_mod::AT = mod((idx_n - 1) * Δφ + axφ.ticks[il], AT(2π))
+            new_ticks[idx] = (t_mod <= tol || (AT(2π) - t_mod) <= tol) ? zero(AT) : t_mod
             new_pot[:, idx, :] = sp[:, il, :]
         end
     end
@@ -59,7 +63,7 @@ function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::Discret
         ScalarPotential(sp, new_pot[:,P,:], new_grid)
     else
         new_ticks_new_zero::Vector{AT} = Vector{AT}(undef, l * n + 1)
-        new_ticks_new_zero[1] = T(0)
+        new_ticks_new_zero[1] = zero(AT)
         new_ticks_new_zero[2:end] = new_ticks[P]
         new_pot_new_zero = new_pot[:,P[vcat(1,1:end)],:]
         if (eltype(sp.data) <: AbstractFloat) # do not interpolate for PointTypes
@@ -76,7 +80,7 @@ end
 
 
 function get_2π_potential(sp::ScalarPotential{T, 3, Cylindrical}, axφ::DiscreteAxis{AT, :reflecting, :reflecting}, int::Interval{:closed, :closed, AT}) where {T, AT}
-    @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
+    # @assert int.right != 0 "Right boundary of φ interval is not allowed to be 0"
     l::Int = 2 * length( axφ ) - 2
     Δφ::AT = width(int)
     new_int::Interval{:closed, :open, AT} = Interval{:closed, :open, AT}(int.left, int.right + Δφ)

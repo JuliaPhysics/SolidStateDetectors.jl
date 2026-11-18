@@ -62,8 +62,10 @@ function EllipsoidMantle{T}(D::Symbol=:outwards;
     EllipsoidMantle{T}(D, r, φ, θ, origin, rotation)
 end
 
-flip(em::EllipsoidMantle{T,TR,TP,TT,:inwards}) where {T,TR,TP,TT} = 
+flip(em::EllipsoidMantle{T,TR,TP,TT,:inwards}) where {T,TR,TP,TT} =
     EllipsoidMantle{T,TR,TP,TT,:outwards}(em.r, em.φ, em.θ, em.origin, em.rotation )
+flip(em::EllipsoidMantle{T,TR,TP,TT,:outwards}) where {T,TR,TP,TT} =
+    EllipsoidMantle{T,TR,TP,TT,:inwards}(em.r, em.φ, em.θ, em.origin, em.rotation )
 
 const FullSphereMantle{T,D} = EllipsoidMantle{T,T,Nothing,Nothing,D}
 const FullEllipsoidMantle{T,D} = EllipsoidMantle{T,NTuple{3,T},Nothing,Nothing,D}
@@ -94,17 +96,13 @@ extremum(e::EllipsoidMantle{T,T}) where {T} = e.r
 extremum(e::EllipsoidMantle{T,NTuple{3,T}}) where {T} = max(e.r...)
 
 function normal(em::EllipsoidMantle{T,NTuple{3,T},TP,TT,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T,TP,TT}
-    # not normalized, do we want this?
-    # Or wrap this into somehting like `normal(em, pt) = normalize(direction(em, pt))` ?
     p = _transform_into_object_coordinate_system(pt, em)
-    obj_normal = CartesianVector{T}(sign(p.x)*(p.x/em.r[1])^2, sign(p.y)*(p.y/em.r[2])^2, sign(p.z)*(p.z/em.r[3])^2) # We might want to store the inv(em.r) in the struct?
+    obj_normal = normalize(CartesianVector{T}(p.x/em.r[1]^2, p.y/em.r[2]^2, p.z/em.r[3]^2))
     _transform_into_global_coordinate_system(obj_normal, em)
 end
 function normal(em::EllipsoidMantle{T,T,TP,TT,:outwards}, pt::CartesianPoint{T})::CartesianVector{T} where {T,TP,TT}
-    # not normalized, do we want this?
-    # Or wrap this into somehting like `normal(em, pt) = normalize(direction(em, pt))` ?
     p = _transform_into_object_coordinate_system(pt, em)
-    obj_normal = CartesianVector{T}(sign(p.x)*(p.x/em.r)^2, sign(p.y)*(p.y/em.r)^2, sign(p.z)*(p.z/em.r)^2) # We might want to store the inv(em.r) in the struct?
+    obj_normal = normalize(CartesianVector{T}(p.x, p.y, p.z))
     _transform_into_global_coordinate_system(obj_normal, em)
 end
 normal(em::EllipsoidMantle{T,TR,TP,TT,:inwards}, pt::CartesianPoint{T}) where {T,TR,TP,TT} = -normal(flip(em), pt)
@@ -174,7 +172,8 @@ Calculates the intersections of a `Line` with a `EllipsoidMantle`.
 !!! note 
     The function will always return 2 CartesianPoint's.
     If the line just touches the mantle, the two points will be the same. 
-    If the line does not touch the mantle at all, the two points will have NaN's as there coordinates.
+    If the line does not touch the mantle at all, two finite points off the mantle are returned
+    (callers filter intersection candidates via `in`).
 """
 function intersection(em::EllipsoidMantle{T,NTuple{3,T}}, l::Line{T}) where {T}
     obj_l = _transform_into_object_coordinate_system(l, em) # direction is not normalized

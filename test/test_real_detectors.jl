@@ -99,6 +99,15 @@ end
         @test all(diff(l) .< 0) # the weighting potential should monotonously decrease from rmin to rmax
     end
     @test isapprox(timed_estimate_depletion_voltage(sim, verbose = false, check_for_depletion = false), 0u"V", atol = 0.2u"V") # This detector has no impurity profile
+
+    # Check for invariance after a -360° shift of the periodic φ-axis
+    config_dict = deepcopy(sim.config_dict)
+    config_dict["grid"]["axes"]["phi"]["from"] -= 360
+    config_dict["grid"]["axes"]["phi"]["to"] -= 360
+    sim_new = Simulation{T}(config_dict)
+    timed_calculate_electric_potential!(sim_new, convergence_limit = 1e-6, device_array_type = device_array_type, refinement_limits = [0.2, 0.1], verbose = false)
+    @test sim_new.electric_potential.grid[2].ticks .+ T(2π) ≈ sim.electric_potential.grid[2].ticks
+    @test sim_new.electric_potential.data ≈ sim.electric_potential.data
 end
 @testset "CartesianGrid3D" begin
     ticks = T.(collect(0.0:0.25:1.0))
@@ -220,4 +229,12 @@ end
     signalsum *= inv(ustrip(SolidStateDetectors._convert_internal_energy_to_external_charge(sim.detector.semiconductor.material)))
     @info signalsum
     @test isapprox( signalsum, T(2), atol = 5e-3 )
+end
+
+@timed_testset "CGD on a cylindrical grid matches the Cartesian grid" begin
+    sim_cyl = Simulation{T}(SSD_examples[:CGD_CylGrid])
+    timed_calculate_electric_potential!(sim_cyl, refinement_limits = [0.2])
+    sim_car = Simulation{T}(SSD_examples[:CGD])
+    timed_calculate_electric_potential!(sim_car, refinement_limits = [0.2])
+    @test isapprox(get_active_volume(sim_cyl.point_types), get_active_volume(sim_car.point_types), rtol = 0.1)
 end

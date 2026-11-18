@@ -6,7 +6,7 @@ exec julia --color=yes --startup-file=no --threads=auto "${BASH_SOURCE[0]}" "$@"
 
 recalculate = in("overwrite", ARGS)
 
-using CUDAKernels, CUDA
+using CUDA
 using SolidStateDetectors
 using DataFrames, JLD2
 using BenchmarkTools
@@ -64,9 +64,9 @@ df_SOR_update = if !isfile(fn_SOR_update_benchmark_df) || recalculate
                 sim.detector, sim.electric_potential.grid, sim.medium, sim.electric_potential.data, sim.imp_scale.data, 
             ));
             ndrange = size(pcs.potential)[1:3] .- 2
-            backend = _ka_get_backend(pcs.potential)
-            via_KernelAbstractions = false
-            kernel = get_sor_kernel(S, backend, Val(via_KernelAbstractions))
+            ka_backend = _ka_get_backend(pcs.potential)
+            via_KernelAbstractions = device_array_type <: SolidStateDetectors.GPUArrays.AnyGPUArray
+            kernel = get_sor_kernel(S, ka_backend, Val(via_KernelAbstractions))
             use_nthreads = backend.use_nthreads
             update!(pcs, kernel, ndrange; use_nthreads, depletion_handling, is_weighting_potential, only2d)
             bm = @benchmark update!($pcs, $kernel, $ndrange; 

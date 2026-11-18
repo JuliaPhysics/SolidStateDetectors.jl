@@ -190,10 +190,22 @@ function parse_θ_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Unit
     end
 end
 
-# converts either "h" or "z" to the respective AbstractFloat/Interval
+# Height of a primitive from either "h" (scalar height, centered around the
+# origin) or "z" ({from, to} extent along the local z axis). Returns
+# (hZ, z_center): the half-height and the center offset along local z.
 function parse_height_of_primitive(::Type{T}, dict::AbstractDict, unit::Unitful.Units) where {T}
-    @assert haskey(dict,"h") || haskey(dict,"z") "Please specify 'h' or 'z'."
-    haskey(dict,"h") ? _parse_linear_interval(T, dict["h"], unit) : _parse_linear_interval(T, dict["z"], unit)
+    if haskey(dict, "h") == haskey(dict, "z")
+        throw(ConfigFileError("Specify exactly one of 'h' (height) or 'z' ({from, to} extent)."))
+    end
+    if haskey(dict, "h")
+        h = _parse_linear_interval(T, dict["h"], unit)
+        h isa Tuple && throw(ConfigFileError("'h' is a height; use 'z': {from, to} for an explicit extent."))
+        (h, zero(T))
+    else
+        z = _parse_linear_interval(T, dict["z"], unit)
+        z isa Tuple || throw(ConfigFileError("'z' must be given as {from, to}; use 'h' for a centered height."))
+        ((z[2] - z[1]) / 2, (z[1] + z[2]) / 2)
+    end
 end
 
 # converts the content of the dictionary to respective AbstractFloat/Interval.

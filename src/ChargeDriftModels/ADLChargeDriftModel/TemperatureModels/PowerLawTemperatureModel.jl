@@ -120,7 +120,7 @@ function scale_to_temperature(cdm::CDM, Temp::Union{<:Real,Unitful.Temperature})
         p_h = cdm.temperaturemodel.p_h
         # scale electron parameters
         electrons = scale_to_temperature_powerlaw(cdm.electrons, Temp, reftemp, p_e, theta_e)
-        # scale hole parameters (take <100> values and assume no anisotropy)
+        # scale hole parameters (same p and θ for both axes; the anisotropy in μ0/E0 is preserved)
         h100 = scale_to_temperature_powerlaw(cdm.holes.axis100, Temp, reftemp, p_h, theta_h)
         h111 = scale_to_temperature_powerlaw(cdm.holes.axis111, Temp, reftemp, p_h, theta_h)
         holes = CarrierParameters(h100, h111)
@@ -140,11 +140,11 @@ function scale_to_temperature(cdm::CDM, Temp::Union{<:Real,Unitful.Temperature})
         theta_h = cdm.temperaturemodel.theta_h
         p_e = cdm.temperaturemodel.p_e
         p_h = cdm.temperaturemodel.p_h
-        # scale electron parameters (take <100> values and assume no anisotropy)
+        # scale electron parameters (same p and θ for both axes; the anisotropy in μ0/E0 is preserved)
         e100 = scale_to_temperature_powerlaw(cdm.electrons.axis100, Temp, reftemp, p_e, theta_e)
         e111 = scale_to_temperature_powerlaw(cdm.electrons.axis111, Temp, reftemp, p_e, theta_e)
         electrons = CarrierParameters(e100, e111)
-        # scale hole parameters (take <100> values and assume no anisotropy)
+        # scale hole parameters (same p and θ for both axes; the anisotropy in μ0/E0 is preserved)
         h100 = scale_to_temperature_powerlaw(cdm.holes.axis100, Temp, reftemp, p_h, theta_h)
         h111 = scale_to_temperature_powerlaw(cdm.holes.axis111, Temp, reftemp, p_h, theta_h)
         holes = CarrierParameters(h100, h111)

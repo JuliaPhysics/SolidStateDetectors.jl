@@ -13,7 +13,7 @@ Describes a three-dimensional vector in Cartesian coordinates.
 * `y`: y-coordinate (in m).
 * `z`: z-coordinate (in m).
 
-Given a vector `v = CartesianPoint(Δx, Δy, Δz)`, use `cartesian_zero + v` to
+Given a vector `v = CartesianVector(Δx, Δy, Δz)`, use `cartesian_zero + v` to
 get the `CartesianPoint(0 + Δx, 0 + Δy, 0 + Δz)`.
 
 See also [`CartesianPoint`](@ref) .
