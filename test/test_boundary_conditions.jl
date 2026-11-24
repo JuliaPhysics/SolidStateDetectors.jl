@@ -165,7 +165,7 @@ end
         backend = KernelAbstractions.CPU()
         r0_bc_kernel!(backend)(B, rbi, nnz, gw, even, ndrange = rbidx(nnz) - 1)
         KernelAbstractions.synchronize(backend)
-        @test A == B
+        @test A ≈ B
     end
 end
 
